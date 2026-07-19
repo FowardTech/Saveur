@@ -1,0 +1,139 @@
+import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {EKeyAsyncStorage, GamificationStreakProps, LeaderboardEntryProps} from 'constants/Types';
+import apiClient from './apiClient';
+
+// ---------------------------------------------------------------------------
+// gamificationService — real backend implementation of the streak/XP/
+// leaderboard half of gamification.
+//
+//   GET  /api/v1/gamification/streak      — current streak + XP
+//   POST /api/v1/gamification/checkin     — daily check-in
+//   GET  /api/v1/gamification/leaderboard — top users
+//
+// Backs the streak/check-in/leaderboard UI on src/home/HomeSrc.tsx. Badge
+// *definitions* (constants/Data.ts -> DATA_BADGES) and badge unlock state
+// stay client-computed for now (see docs/BACKEND_API_SPEC.md §15 — that's
+// explicitly out of scope here; only streak/XP/leaderboard talk to the real
+// backend in this pass), but the streak day-count that feeds two of the
+// badge unlock conditions (three_day_streak/five_day_streak) now comes from
+// the real GET /streak response instead of a hardcoded value.
+//
+// Wire format note: like authService/billingService, assumed snake_case
+// (`streak_days`, `checked_in_today`, `user_id`, `avatar_url`).
+// ---------------------------------------------------------------------------
+
+interface StreakWire {
+  streak_days: number;
+  longest_streak?: number;
+  xp: number;
+  checked_in_today: boolean;
+}
+
+interface LeaderboardEntryWire {
+  user_id: string;
+  name: string;
+  avatar_url?: string;
+  xp: number;
+  rank: number;
+}
+
+function fromStreakWire(wire: StreakWire): GamificationStreakProps {
+  return {
+    streakDays: wire.streak_days ?? 0,
+    longestStreak: wire.longest_streak,
+    xp: wire.xp ?? 0,
+    checkedInToday: wire.checked_in_today ?? false,
+  };
+}
+
+function fromLeaderboardWire(wire: LeaderboardEntryWire): LeaderboardEntryProps {
+  // The backend isn't assumed to flag "is this row the caller" itself —
+  // that's derived client-side by comparing against the signed-in Firebase
+  // uid, the same identity apiClient's request interceptor uses to attach
+  // the bearer token.
+  const currentUid = auth().currentUser?.uid;
+  return {
+    id: wire.user_id,
+    name: wire.name,
+    avatarUrl: wire.avatar_url,
+    xp: wire.xp ?? 0,
+    rank: wire.rank,
+    isCurrentUser: !!currentUid && wire.user_id === currentUid,
+  };
+}
+
+const readStreakCache = async (): Promise<GamificationStreakProps | null> => {
+  const raw = await AsyncStorage.getItem(EKeyAsyncStorage.gamificationStreak);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as GamificationStreakProps;
+  } catch {
+    return null;
+  }
+};
+
+const readLeaderboardCache = async (): Promise<LeaderboardEntryProps[] | null> => {
+  const raw = await AsyncStorage.getItem(EKeyAsyncStorage.gamificationLeaderboard);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as LeaderboardEntryProps[];
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * GET /api/v1/gamification/streak. Falls back to the last-known cached
+ * value on a network failure (offline-read fallback only, not source of
+ * truth) so the Home dashboard doesn't just show a blank stat card on a
+ * flaky connection; propagates the error if nothing is cached yet.
+ */
+export async function getStreak(): Promise<GamificationStreakProps> {
+  try {
+    const {data} = await apiClient.get<StreakWire>('/api/v1/gamification/streak');
+    const streak = fromStreakWire(data);
+    await AsyncStorage.setItem(EKeyAsyncStorage.gamificationStreak, JSON.stringify(streak));
+    return streak;
+  } catch (error) {
+    const cached = await readStreakCache();
+    if (cached) return cached;
+    throw error;
+  }
+}
+
+/**
+ * POST /api/v1/gamification/checkin — records today's daily check-in.
+ * Assumed to respond with the updated streak/XP object (same shape as
+ * GET /gamification/streak) so the caller can update its state directly
+ * without a second round trip — mirrors billingService's checkout endpoint
+ * returning state the caller needs immediately. Deliberately has no offline
+ * fallback: a check-in is a write, not a read, so it has to actually reach
+ * the server to count — silently "succeeding" from a stale local cache
+ * while offline would let the user believe they extended their streak when
+ * they didn't.
+ */
+export async function checkin(): Promise<GamificationStreakProps> {
+  const {data} = await apiClient.post<StreakWire>('/api/v1/gamification/checkin', {});
+  const streak = fromStreakWire(data);
+  await AsyncStorage.setItem(EKeyAsyncStorage.gamificationStreak, JSON.stringify(streak));
+  return streak;
+}
+
+/**
+ * GET /api/v1/gamification/leaderboard. Falls back to the last-known cached
+ * list on a network failure, same offline-read-fallback pattern as the rest
+ * of this file.
+ */
+export async function getLeaderboard(): Promise<LeaderboardEntryProps[]> {
+  try {
+    const {data} = await apiClient.get<LeaderboardEntryWire[]>('/api/v1/gamification/leaderboard');
+    const entries = data.map(fromLeaderboardWire);
+    await AsyncStorage.setItem(EKeyAsyncStorage.gamificationLeaderboard, JSON.stringify(entries));
+    return entries;
+  } catch (error) {
+    const cached = await readLeaderboardCache();
+    if (cached) return cached;
+    throw error;
+  }
+}

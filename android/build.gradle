@@ -1,0 +1,35 @@
+buildscript {
+    ext {
+        buildToolsVersion = "36.0.0"
+        // react-native-vision-camera-face-detector's ML Kit face detection
+        // dependency requires API 26+ — Gradle's manifest merger fails below
+        // API 26 with "uses-sdk:minSdkVersion 24 cannot be smaller than
+        // version 26 declared in library [...face-detector]". Raised from 24
+        // to 26 (Android 8.0, released 2017 — still >99% of active devices)
+        // rather than using tools:overrideLibrary, which Android's own error
+        // message flags as risking runtime failures instead of a build-time
+        // error.
+        minSdkVersion = 26
+        compileSdkVersion = 36
+        targetSdkVersion = 36
+        ndkVersion = "27.1.12297006"
+        kotlinVersion = "2.1.20"
+    }
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle")
+        classpath("com.facebook.react:react-native-gradle-plugin")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
+        // Required by the "com.google.gms.google-services" plugin applied in
+        // android/app/build.gradle for real Firebase Auth (@react-native-firebase).
+        // Reads android/app/google-services.json — currently a placeholder;
+        // replace with the real file from the Firebase console before this
+        // will actually authenticate anyone.
+        classpath("com.google.gms:google-services:4.4.2")
+    }
+}
+
+apply plugin: "com.facebook.react.rootproject"

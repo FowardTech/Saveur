@@ -1,0 +1,6 @@
+module Pods_caren_family {
+  umbrella header "Pods-caren_family-umbrella.h"
+
+  export *
+  module * { export * }
+}

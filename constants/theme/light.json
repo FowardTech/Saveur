@@ -1,0 +1,23 @@
+{
+  "background-basic-color-1": "$color-basic-200",
+  "background-basic-color-2": "$color-basic-100",
+  "background-basic-color-3": "$color-basic-300",
+  "background-basic-color-4": "$color-basic-400",
+  "background-basic-color-5": "$text-placeholder-color",
+  "background-basic-color-6": "$text-basic-color",
+  "background-basic-color-7": "$color-success-300",
+  "background-basic-color-8": "$color-primary-300",
+  "text-basic-color": "$color-basic-500",
+  "text-primary-color": "$color-basic-100",
+  "text-link-color": "$color-primary-100",
+  "text-placeholder-color": "$color-basic-600",
+  "button-basic-color": "$color-primary-100",
+  "button-primary-border": "$color-basic-400",
+  "button-outline-text": "$color-primary-100",
+  "button-outline-border": "$color-primary-100",
+  "color-danger-default": "$color-danger-100",
+  "color-warning-default": "$color-warning-100",
+  "text-success-color-100": "color-success-100",
+  "text-completed-color": "color-success-200",
+  "text-twitter-color":"color-primary-300"
+}

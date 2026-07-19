@@ -1,0 +1,23 @@
+{
+  "background-basic-color-1": "#12121F",
+  "background-basic-color-2": "#1B1B2E",
+  "background-basic-color-3": "#2A2A42",
+  "background-basic-color-4": "#3A3A57",
+  "background-basic-color-5": "#6E6E8F",
+  "background-basic-color-6": "#F5F5FA",
+  "background-basic-color-7": "#123C2C",
+  "background-basic-color-8": "#2C2C55",
+  "text-basic-color": "#F5F5FA",
+  "text-primary-color": "#FFFFFF",
+  "text-link-color": "#8FB4FF",
+  "text-placeholder-color": "#9393AA",
+  "button-basic-color": "#2574FF",
+  "button-primary-border": "#3A3A57",
+  "button-outline-text": "#8FB4FF",
+  "button-outline-border": "#8FB4FF",
+  "color-danger-default": "#FA4169",
+  "color-warning-default": "#FE9870",
+  "text-success-color-100": "#00D65B",
+  "text-completed-color": "#0EAD69",
+  "text-twitter-color": "#53D0EC"
+}

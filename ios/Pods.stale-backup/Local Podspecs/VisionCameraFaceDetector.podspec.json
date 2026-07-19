@@ -1,0 +1,23 @@
+{
+  "name": "VisionCameraFaceDetector",
+  "version": "1.10.1",
+  "summary": "Frame Processor Plugin to detect faces using MLKit Vision Face Detector for React Native Vision Camera!",
+  "homepage": "https://github.com/luicfrr/react-native-vision-camera-face-detector",
+  "license": "MIT",
+  "authors": "luicfrr",
+  "platforms": {
+    "ios": "15.5"
+  },
+  "source": {
+    "git": "https://github.com/luicfrr/react-native-vision-camera-face-detector.git",
+    "tag": "1.10.1"
+  },
+  "source_files": "ios/**/*.{h,m,mm,swift}",
+  "dependencies": {
+    "React-Core": [],
+    "GoogleMLKit/FaceDetection": [
+      "8.0.0"
+    ],
+    "VisionCamera": []
+  }
+}

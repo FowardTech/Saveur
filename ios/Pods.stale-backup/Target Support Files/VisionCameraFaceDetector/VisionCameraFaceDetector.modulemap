@@ -1,0 +1,6 @@
+module VisionCameraFaceDetector {
+  umbrella header "VisionCameraFaceDetector-umbrella.h"
+
+  export *
+  module * { export * }
+}

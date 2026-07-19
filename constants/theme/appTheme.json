@@ -1,0 +1,21 @@
+{
+  "color-primary-100": "#2574FF",
+  "color-primary-200": "#1DA1F2",
+  "color-primary-300": "#53D0EC",
+  "color-primary-400": "#CFDFFB",
+  "color-success-100": "#00D65B",
+  "color-success-200": "#0EAD69",
+  "color-success-300": "#D6FFE7",
+  "color-success-400": "#D6FFE780",
+  "color-basic-100": "#FFFFFF",
+  "color-basic-200": "#FAFAFA",
+  "color-basic-300": "#F0F0F0",
+  "color-basic-400": "#E0E0E0",
+  "color-basic-500": "#272755",
+  "color-basic-600": "#9393AA",
+  "color-basic-700": "#27275570",
+  "color-facebook-100": "#3B5998",
+  "color-twitter-100": "#1DA1F2",
+  "color-danger-100": "#FA4169",
+  "color-warning-100": "#FE9870"
+}

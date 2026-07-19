@@ -1,0 +1,17 @@
+{
+  "migIndex": 2,
+  "data": [
+    {
+      "path": "assets/fonts/DCondensed-Bold.ttf",
+      "sha1": "a241a05ce8c9e8102af34050527e233365dfe732"
+    },
+    {
+      "path": "assets/fonts/GothamPro-Medium.ttf",
+      "sha1": "14baecf985d12ef2ab55a7b4d292d260101fa3b9"
+    },
+    {
+      "path": "assets/fonts/GothamPro-Regular.ttf",
+      "sha1": "4747880718b9b417a627a6c76cbd20084877961e"
+    }
+  ]
+}

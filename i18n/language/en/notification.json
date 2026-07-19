@@ -1,0 +1,9 @@
+{
+    "title": "Notifications",
+    "mark_all_read": "Mark all read",
+    "load_failed": "Could not load your notifications.",
+    "mark_read_failed_title": "Couldn't update notification",
+    "mark_read_failed_body": "Please try again in a moment.",
+    "empty_title": "You're all caught up!",
+    "empty_description": "New notifications about your interview practice will show up here."
+}

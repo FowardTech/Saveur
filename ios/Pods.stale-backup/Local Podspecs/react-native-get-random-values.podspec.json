@@ -1,0 +1,58 @@
+{
+  "name": "react-native-get-random-values",
+  "version": "2.0.0",
+  "summary": "getRandomValues for React Native",
+  "homepage": "https://github.com/LinusU/react-native-get-random-values",
+  "license": "MIT",
+  "authors": {
+    "Linus Unnebäck": "linus@folkdatorn.se"
+  },
+  "platforms": {
+    "ios": "9.0",
+    "tvos": "9.0",
+    "osx": "10.14",
+    "visionos": "1.0"
+  },
+  "source": {
+    "git": "https://github.com/LinusU/react-native-get-random-values.git",
+    "tag": "v2.0.0"
+  },
+  "source_files": "ios/**/*.{h,m,mm,cpp}",
+  "private_header_files": "ios/**/*.h",
+  "compiler_flags": "-DRCT_NEW_ARCH_ENABLED=1",
+  "dependencies": {
+    "React-Core": [],
+    "React-RCTFabric": [],
+    "ReactCodegen": [],
+    "RCTRequired": [],
+    "RCTTypeSafety": [],
+    "ReactCommon/turbomodule/bridging": [],
+    "ReactCommon/turbomodule/core": [],
+    "React-NativeModulesApple": [],
+    "Yoga": [],
+    "React-Fabric": [],
+    "React-graphics": [],
+    "React-utils": [],
+    "React-featureflags": [],
+    "React-debug": [],
+    "React-ImageManager": [],
+    "React-rendererdebug": [],
+    "React-jsi": [],
+    "React-renderercss": [],
+    "hermes-engine": [],
+    "glog": [],
+    "boost": [],
+    "DoubleConversion": [],
+    "fast_float": [],
+    "fmt": [],
+    "RCT-Folly": [],
+    "SocketRocket": [],
+    "RCT-Folly/Fabric": []
+  },
+  "pod_target_xcconfig": {
+    "HEADER_SEARCH_PATHS": "\"$(PODS_ROOT)/Headers/Private/Yoga\"",
+    "CLANG_CXX_LANGUAGE_STANDARD": "c++20",
+    "OTHER_CPLUSPLUSFLAGS": "$(inherited) -DRCT_NEW_ARCH_ENABLED=1 ",
+    "OTHER_SWIFT_FLAGS": "$(inherited) -DRCT_NEW_ARCH_ENABLED"
+  }
+}

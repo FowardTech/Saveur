@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Saveur</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Google Sign-In's REVERSED_CLIENT_ID from
+				     GoogleService-Info.plist — this is what lets Safari/the
+				     Google app hand control back to Saveur after the user
+				     picks an account. -->
+				<string>com.googleusercontent.apps.679326954548-35emkamsh1t03e4md0ukaqnnm19hp806</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Matches `returnURL: 'saveur://stripe-redirect'` in
+				     services/billingService.ts's initPaymentSheet call, and
+				     the urlScheme="saveur" prop on <StripeProvider> in
+				     App.tsx. Needed so iOS can hand control back to the app
+				     after certain payment methods redirect out (e.g. bank
+				     app authentication, 3D Secure) — not used for plain
+				     card payments, but required for the Payment Sheet to
+				     initialize without erroring regardless of which payment
+				     method the user ends up choosing. -->
+				<string>saveur</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>We use your camera to record video mock interviews so we can give you feedback on eye contact, expressions, and posture.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Saveur connects to your local development server while testing during development.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string></string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We use your microphone to record voice and video mock interviews so we can give you feedback on your speaking.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We save exported reports and documents to your photo library when you choose to.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library so you can upload your resume, certificates, and other documents.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>DCondensed-Bold.ttf</string>
+		<string>GothamPro-Medium.ttf</string>
+		<string>GothamPro-Regular.ttf</string>
+	</array>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>arm64</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
+</dict>
+</plist>

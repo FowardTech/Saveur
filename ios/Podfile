@@ -1,0 +1,54 @@
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+platform :ios, '16.0'
+prepare_react_native_project!
+
+# FirebaseAuth (via @react-native-firebase/auth) ships Swift source. Per
+# Firebase's own CocoaPods integration requirements, that means this app
+# MUST be linked as static frameworks, not plain static libraries — a
+# Swift pod's generated Objective-C compatibility header (e.g.
+# `FirebaseAuth/FirebaseAuth-Swift.h`, which Firebase's own umbrella
+# `Firebase.h` imports) is only produced at the path other pods expect
+# when CocoaPods builds it as a .framework. Plain static-library linking
+# (this Podfile's old default — the block below was previously gated
+# behind an opt-in USE_FRAMEWORKS env var, off unless set) breaks that
+# resolution outright: "'FirebaseAuth/FirebaseAuth-Swift.h' file not
+# found". Hardcoding `:static` here (rather than requiring the env var)
+# makes it the default for this project, since Firebase auth is a hard
+# requirement, not an opt-in.
+#
+# This also incidentally fixes an earlier problem: two React Native pods
+# (React-RuntimeCore and React-jsitooling) both set
+# `header_dir = "react/runtime"` in their podspecs, which caused a
+# "Redefinition of module 'react_runtime'" collision under modular-headers
+# + static-library linking (when CocoaPods has to auto-derive a module
+# name from header_dir). Under static-framework linking, CocoaPods uses
+# each pod's own explicit module name instead (both podspecs already
+# declare distinct ones — `React_RuntimeCore` and `JSITooling` — via their
+# `resolve_use_frameworks(..., module_name: ...)` calls), so that
+# collision doesn't happen here.
+use_frameworks! :linkage => :static
+
+target 'caren_family' do
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false,
+      # :ccache_enabled => true
+    )
+  end
+end
