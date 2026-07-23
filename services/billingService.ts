@@ -422,6 +422,31 @@ export async function getSubscription(): Promise<SubscriptionStatusProps> {
   }
 }
 
+/**
+ * POST /api/v1/billing/subscription/confirm — call this immediately after
+ * `presentPaymentSheet()` resolves successfully in Subscription.tsx, instead
+ * of (or before) blindly polling `getSubscription()`. `/payment-sheet`
+ * creates the Stripe Subscription synchronously but never itself sets the
+ * local plan/status — historically only the async
+ * customer.subscription.updated/created webhook did that, so the success
+ * screen depended entirely on that webhook arriving within the client's
+ * poll window. This endpoint instead has the backend read the subscription
+ * straight from Stripe's live API and update the local record in the same
+ * request, so the true post-payment status is available on the very next
+ * call — no waiting on webhook delivery timing at all. `subscriptionId` is
+ * optional (the backend already knows it from `createPaymentSheet`'s own
+ * response) but passed through here anyway since Subscription.tsx already
+ * has it in hand from that same response.
+ */
+export async function confirmSubscription(subscriptionId?: string): Promise<SubscriptionStatusProps> {
+  const {data} = await apiClient.post<SubscriptionWire>('/api/v1/billing/subscription/confirm', {
+    subscription_id: subscriptionId,
+  });
+  const status = fromSubscriptionWire(data);
+  await AsyncStorage.setItem(EKeyAsyncStorage.subscriptionStatus, JSON.stringify(status));
+  return status;
+}
+
 // ---- Payment History / receipts ------------------------------------------
 //   GET  /api/v1/billing/payments                       — list past payments
 //   GET  /api/v1/billing/payments/:id/receipt.pdf        — download the PDF

@@ -255,12 +255,32 @@ const Subscription = memo(() => {
       if (presentError.code === 'Canceled') return;
       throw new Error(presentError.message);
     }
-    // Unlike the portal/browser path, payment is confirmed by the time
-    // presentPaymentSheet resolves — poll rather than waiting on an
-    // AppState foreground event, but still poll (not a single read) since
-    // this backend's own record can lag Stripe's webhook by a few seconds
-    // (see pollForSubscriptionTier above).
-    const { status: subscriptionData, matched } = await pollForSubscriptionTier(plan.tier);
+    // Payment is confirmed by the time presentPaymentSheet resolves, but
+    // this backend's own plan/status only used to get set once its
+    // customer.subscription.updated/created webhook separately arrived —
+    // an async hop this screen had no control over, and which the "Payment
+    // received... pull down to refresh" message was really describing.
+    // confirmSubscription() closes that gap: it asks the backend to read
+    // the subscription straight from Stripe's live API and update its own
+    // record synchronously, right now, instead of waiting on a webhook that
+    // might be slow, or in some environments never arrive at all. Try that
+    // first — it's a single fast round-trip — and only fall back to the
+    // webhook-lag poll below if it didn't come back matched (e.g. a flaky
+    // network blip on this one call, or Stripe itself hasn't settled the
+    // subscription to active/trialing yet for some other reason).
+    let subscriptionData: SubscriptionStatusProps;
+    let matched: boolean;
+    try {
+      subscriptionData = await billingService.confirmSubscription(sheet.subscriptionId);
+      matched = subscriptionData.tier === plan.tier
+        && (subscriptionData.status === 'active' || subscriptionData.status === 'trialing');
+    } catch {
+      matched = false;
+      subscriptionData = subscription ?? (await billingService.getSubscription());
+    }
+    if (!matched) {
+      ({ status: subscriptionData, matched } = await pollForSubscriptionTier(plan.tier));
+    }
     setSubscription(subscriptionData);
     refreshAuthSubscription();
     if (matched) {

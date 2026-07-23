@@ -170,12 +170,12 @@ const PaymentHistory = memo(() => {
                     </Text>
                   </Flex>
                 ) : null}
-                <Flex justify="flex-start" itemsCenter mt={16}>
+                <Flex justify="flex-start" itemsCenter mt={16} wrap>
                   <Button
                     size="small"
                     status="basic"
                     appearance="outline"
-                    style={{marginRight: 10}}
+                    style={{marginRight: 10, marginBottom: 10}}
                     disabled={sendingId === payment.id}
                     accessoryLeft={sendingId === payment.id ? () => <Spinner size="small" status="basic" /> : undefined}
                     onPress={() => onSendReceipt(payment)}>
@@ -187,6 +187,7 @@ const PaymentHistory = memo(() => {
                     size="small"
                     status="primary"
                     appearance="ghost"
+                    style={{marginBottom: 10}}
                     disabled={downloadingId === payment.id}
                     accessoryLeft={downloadingId === payment.id ? () => <Spinner size="small" status="primary" /> : undefined}
                     onPress={() => onDownloadReceipt(payment)}>
