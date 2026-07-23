@@ -27,10 +27,22 @@ module.exports = {
     // system from Reanimated 4's react-native-worklets below. Both plugins
     // transform functions marked with a 'worklet' directive, so this is a
     // real risk area — see services/videoAnalysisService.ts for the
-    // corresponding runtime risk notes. If builds fail with duplicate
-    // worklet-transform errors, this ordering (and/or dropping one of the
-    // two plugins) is the first thing to try.
+    // corresponding runtime risk notes.
+    //
+    // ORDER SWAPPED as a first experiment against the video-interview-screen
+    // crash (instant, silent, full-app-close on opening the screen, before
+    // the camera preview even appears — reported, not yet confirmed via an
+    // actual Xcode crash trace). react-native-worklets/plugin (Reanimated 4)
+    // now runs first and react-native-worklets-core/plugin (VisionCamera's
+    // face detector) runs last. This is a real behavior change (which
+    // runtime's Babel transform "wins" when both plugins see the same
+    // 'worklet'-directive function can differ by order) and is genuinely a
+    // guess — if the crash persists after a clean Metro cache reset
+    // (`npx react-native start --reset-cache`) and reinstall, this ordering
+    // isn't the cause and should be reverted; the real fix will need the
+    // actual native crash trace (see LiveInterviewSession.tsx for what to
+    // capture from Xcode's debugger panel when it happens).
+    ['react-native-worklets/plugin'],
     ['react-native-worklets-core/plugin'],
-    ['react-native-worklets/plugin'], // must be last
   ],
 };

@@ -1,13 +1,13 @@
 import React, { memo } from 'react';
 import { Alert, AppState, View } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner, Avatar } from '@ui-kitten/components';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
+import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BarChart } from 'react-native-chart-kit';
 
 import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
-import { Images } from 'assets/images';
+import UserAvatar from 'components/UserAvatar';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -16,16 +16,20 @@ import { globalStyle } from 'styles/globalStyle';
 import { chartConfig } from 'utils/chartConfig';
 import useLayout from 'hooks/useLayout';
 import {
-  DATA_WEEKLY_PRACTICE,
-  DATA_UPCOMING_SESSIONS,
-  DATA_PAST_SESSIONS,
   DATA_BADGES,
 } from 'constants/Data';
-import { GamificationStreakProps, Interview_Type_Enum, LeaderboardEntryProps } from 'constants/Types';
+import { AdvertisementProps, GamificationStreakProps, GoalTipProps, Interview_Type_Enum, LeaderboardEntryProps, MockInterviewSessionProps, ScheduledInterviewProps } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as resumeService from 'services/resumeService';
 import * as networkingService from 'services/networkingService';
 import * as gamificationService from 'services/gamificationService';
+import * as notificationService from 'services/notificationService';
+import * as goalTipsService from 'services/goalTipsService';
+import * as scheduledInterviewService from 'services/scheduledInterviewService';
+import * as adsService from 'services/adsService';
+import ModalRequest from 'components/ModalRequest';
+import useModal from 'hooks/useModal';
+import { Images } from 'assets/images';
 import { AuthContext } from '../../AuthContext';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
@@ -43,8 +47,62 @@ const HomeSrc = memo(() => {
   const { width } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
-  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified } =
+  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
+
+  // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
+  // Replaces a hardcoded `notification={3}` that never changed no matter how
+  // many notifications existed or had been read.
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  const loadUnreadCount = React.useCallback(async () => {
+    try {
+      const list = await notificationService.listNotifications();
+      setUnreadCount(list.filter(n => !n.read).length);
+    } catch {
+      // Non-critical — the badge just stays at its last-known count on a
+      // failed refresh rather than surfacing an error for a header icon.
+    }
+  }, []);
+  React.useEffect(() => {
+    loadUnreadCount();
+  }, [loadUnreadCount]);
+  // Refresh whenever the app returns to the foreground (e.g. after visiting
+  // the Notification screen and marking things read) — same AppState pattern
+  // used elsewhere in this file/Subscription.tsx.
+  React.useEffect(() => {
+    const listener = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') loadUnreadCount();
+    });
+    return () => listener.remove();
+  }, [loadUnreadCount]);
+
+  // "Today's Goal Tips" card — GET /api/v1/goals/tips/today (see
+  // services/goalTipsService.ts), one AI-generated tip per goal the user set
+  // at signup (profile.goals). Only fetched when there's at least one goal
+  // to have tips about.
+  const [goalTips, setGoalTips] = React.useState<GoalTipProps[] | null>(null);
+  const [goalTipsLoading, setGoalTipsLoading] = React.useState(false);
+  const hasGoals = (profile?.goals?.length ?? 0) > 0;
+  React.useEffect(() => {
+    if (!hasGoals) return;
+    let cancelled = false;
+    setGoalTipsLoading(true);
+    goalTipsService
+      .getTodayTips()
+      .then(tips => {
+        if (!cancelled) setGoalTips(tips);
+      })
+      .catch(() => {
+        // Non-critical — the card just doesn't render if this fails, same
+        // treatment as the notification badge count above.
+      })
+      .finally(() => {
+        if (!cancelled) setGoalTipsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasGoals]);
 
   // Non-blocking "verify your email" banner — see AuthContext.emailVerified's
   // doc comment. Deliberately NOT a hard gate on the rest of the app: an
@@ -86,11 +144,47 @@ const HomeSrc = memo(() => {
     return () => listener.remove();
   }, [isSignedIn, emailVerified, refreshEmailVerified]);
 
-  const sessionsThisWeek = DATA_WEEKLY_PRACTICE.reduce((sum, d) => sum + d.sessions, 0);
-  const avgScore = Math.round(
-    DATA_PAST_SESSIONS.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) /
-      DATA_PAST_SESSIONS.length,
+  // Real practice history (GET /api/v1/interviews/sessions) — was fetched
+  // below already (for badge-unlock logic) but its result was discarded
+  // everywhere else on this screen, leaving the weekly chart and these two
+  // stat cards reading DATA_WEEKLY_PRACTICE/DATA_PAST_SESSIONS, two static
+  // arrays that never reflected what any real account had actually done.
+  // Now stored so all three can derive from the same real fetch.
+  const [practiceHistory, setPracticeHistory] = React.useState<MockInterviewSessionProps[]>([]);
+  const completedSessions = React.useMemo(
+    () => practiceHistory.filter(s => s.status === 'Completed'),
+    [practiceHistory],
   );
+  const weeklyPractice = React.useMemo(
+    () => interviewService.computeWeeklyPractice(completedSessions),
+    [completedSessions],
+  );
+  const sessionsThisWeek = weeklyPractice.reduce((sum, d) => sum + d.sessions, 0);
+  const scoredSessions = completedSessions.filter(s => typeof s.overallScore === 'number');
+  const avgScore = scoredSessions.length
+    ? Math.round(scoredSessions.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) / scoredSessions.length)
+    : 0;
+
+  // Upcoming Session — GET /api/v1/interviews/scheduled (see
+  // services/scheduledInterviewService.ts). Was a single hardcoded
+  // DATA_UPCOMING_SESSIONS entry that never changed and couldn't be
+  // created/canceled — now shows the user's actual soonest scheduled
+  // interview (or an empty-state prompting them to set one), and refreshes
+  // whenever this screen regains focus so a reminder just created on
+  // ScheduleInterview shows up immediately on the way back.
+  const [upcomingSessions, setUpcomingSessions] = React.useState<ScheduledInterviewProps[]>([]);
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      scheduledInterviewService.listUpcoming().then(list => {
+        if (!cancelled) setUpcomingSessions(list);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
+  const nextSession = upcomingSessions[0];
 
   // Gamification streak/XP — GET /api/v1/gamification/streak (see
   // services/gamificationService.ts). Replaces the old hardcoded
@@ -173,44 +267,104 @@ const HomeSrc = memo(() => {
   // out of scope for this pass, which only wires streak/XP/leaderboard.
   const [unlockedBadgeIds, setUnlockedBadgeIds] = React.useState<Set<string>>(new Set());
 
+  // Was a plain useEffect keyed only on [streakDays] — practice history (and
+  // therefore the Weekly Practice chart, Sessions This Week / Average Score
+  // stat cards, all derived from it via the useMemos above) only ever
+  // refetched on mount or when the streak day-count happened to change.
+  // Completing another interview and coming back to Home doesn't bump
+  // streakDays if the user already checked in today, so the chart looked
+  // permanently frozen no matter how many sessions were completed —
+  // reported as "the chart just remained static." useFocusEffect (already
+  // used below for upcomingSessions) re-runs this every time the Home tab
+  // regains focus, which is exactly when a just-finished interview would
+  // land back here.
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        const [history, importedSources, contacts] = await Promise.all([
+          interviewService.getPracticeHistory(),
+          resumeService.getImportedSources(),
+          networkingService.listContacts(),
+        ]);
+        if (cancelled) return;
+        setPracticeHistory(history);
+        const completed = history.filter(s => s.status === 'Completed');
+        const importedCount = Object.keys(importedSources).length;
+
+        const unlocked = new Set<string>();
+        if (completed.length >= 1) unlocked.add('first_interview');
+        if (completed.length >= 5) unlocked.add('five_sessions');
+        if (completed.length >= 10) unlocked.add('ten_sessions');
+        if (streakDays >= 3) unlocked.add('three_day_streak');
+        if (streakDays >= 5) unlocked.add('five_day_streak');
+        if (completed.some(s => (s.overallScore ?? 0) >= 90)) unlocked.add('perfect_score');
+        if (importedCount > 0) unlocked.add('resume_uploaded');
+        if (importedCount >= 3) unlocked.add('ats_optimized');
+        if (completed.some(s => s.interviewType === Interview_Type_Enum.Coding)) unlocked.add('coding_complete');
+        if (contacts.length >= 3) unlocked.add('networker');
+
+        setUnlockedBadgeIds(unlocked);
+      })();
+      return () => {
+        cancelled = true;
+      };
+    }, [streakDays]),
+  );
+
+  // Admin-configured ad popup — GET /api/v1/ads/next (see
+  // services/adsService.ts). Mirrors the existing "AI Coach feedback ready"
+  // popup pattern (navigation/MainBottomTab.tsx): only shown when there's a
+  // real, still-eligible ad (the backend already enforces the admin's own
+  // "how many times to show" cap per user), fetched once per mount rather
+  // than on every focus so revisiting the Home tab within one sitting can't
+  // burn through that cap. adRef mirrors the feedbackNotifRef pattern
+  // elsewhere in this codebase — lets the dismiss/tap handlers below read
+  // the latest fetched ad without needing it in their own dependency arrays.
+  const [pendingAd, setPendingAd] = React.useState<AdvertisementProps | null>(null);
+  const adRef = React.useRef<AdvertisementProps | null>(null);
+  const {visible: adVisible, show: showAd, hide: hideAd} = useModal();
   React.useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const [history, importedSources, contacts] = await Promise.all([
-        interviewService.getPracticeHistory(),
-        resumeService.getImportedSources(),
-        networkingService.listContacts(),
-      ]);
-      if (cancelled) return;
-      const completed = history.filter(s => s.status === 'Completed');
-      const importedCount = Object.keys(importedSources).length;
-
-      const unlocked = new Set<string>();
-      if (completed.length >= 1) unlocked.add('first_interview');
-      if (completed.length >= 5) unlocked.add('five_sessions');
-      if (completed.length >= 10) unlocked.add('ten_sessions');
-      if (streakDays >= 3) unlocked.add('three_day_streak');
-      if (streakDays >= 5) unlocked.add('five_day_streak');
-      if (completed.some(s => (s.overallScore ?? 0) >= 90)) unlocked.add('perfect_score');
-      if (importedCount > 0) unlocked.add('resume_uploaded');
-      if (importedCount >= 3) unlocked.add('ats_optimized');
-      if (completed.some(s => s.interviewType === Interview_Type_Enum.Coding)) unlocked.add('coding_complete');
-      if (contacts.length >= 3) unlocked.add('networker');
-
-      setUnlockedBadgeIds(unlocked);
-    })();
+    adsService.getNextAd().then(ad => {
+      if (cancelled || !ad) return;
+      adRef.current = ad;
+      setPendingAd(ad);
+      setTimeout(() => {
+        if (cancelled) return;
+        showAd();
+        // Recorded once the popup actually renders, not on fetch — a
+        // fetched-but-never-shown ad (e.g. the user left the screen before
+        // the delay above fired) shouldn't burn one of its limited views.
+        adsService.recordImpression(ad.id).catch(() => {});
+      }, 1500);
+    }).catch(() => {
+      // Offline or the request failed — no ad this session, same
+      // fail-quiet behavior as checkFeedbackNotification's catch in
+      // MainBottomTab.tsx.
+    });
     return () => {
       cancelled = true;
     };
-  }, [streakDays]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const onDismissAd = React.useCallback(() => {
+    hideAd();
+  }, [hideAd]);
+  const onOpenAd = React.useCallback(() => {
+    hideAd();
+    if (adRef.current) {
+      navigate('AdDetails', {ad: adRef.current});
+    }
+  }, [hideAd, navigate]);
 
   return (
     <Container style={styles.container}>
       <HeaderHome
-        name={'Edith Johnson'}
-        avatar={Images.avatar2}
-        email={'lehieuds@gmail.com'}
-        notification={3}
+        name={profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
+        avatarUrl={profile?.avatarUrl}
+        email={profile?.email ?? ''}
+        notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
         {isSignedIn && !emailVerified ? (
@@ -242,35 +396,81 @@ const HomeSrc = memo(() => {
             </Button>
           </Flex>
         ) : null}
+        {goalTipsLoading && !goalTips ? (
+          <Flex vertical center style={[styles.goalTipsCard, {paddingVertical: 24}]}>
+            <Spinner size="small" />
+          </Flex>
+        ) : goalTips && goalTips.length > 0 ? (
+          <View style={styles.goalTipsCard}>
+            <Text category="h7" bold mb={12}>
+              {t('home:goal_tips_title', { defaultValue: "Today's Goal Tips" })}
+            </Text>
+            {goalTips.map(tip => (
+              <View key={tip.id} style={styles.goalTipRow}>
+                <Text category="h10" status="link" bold mb={4}>
+                  {tip.goal}
+                </Text>
+                <Text category="h9-s">{tip.tip}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        {/* Quick link into MyProgress — was previously only reachable via the
+            AI Coach chat's "View My Progress" attachment action, with no
+            entry point from the Home dashboard itself. Placed right under
+            Today's Goal Tips per explicit request. */}
+        <Flex
+          level="2"
+          style={styles.progressCard}
+          justify="flex-start"
+          itemsCenter
+          onPress={() => navigate('MyProgress')}>
+          <View style={[styles.progressIconWrap, { backgroundColor: theme['color-primary-transparent-200'] ?? theme['background-basic-color-2'] }]}>
+            <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
+          </View>
+          <View style={globalStyle.flexOne}>
+            <Text category="h7" bold>
+              {t('home:your_progress', { defaultValue: 'Your Progress' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={2}>
+              {t('home:your_progress_subtitle', {
+                defaultValue: '{{sessions}} sessions this week · {{score}}% avg score',
+                sessions: sessionsThisWeek,
+                score: avgScore,
+              })}
+            </Text>
+          </View>
+          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+        </Flex>
         <View style={styles.statsRow}>
           <Layout level="2" style={styles.statCard}>
             <Icon pack="assets" name="stats" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
             {streakLoading && !streak ? (
               <Spinner size="small" style={styles.streakSpinner} />
             ) : (
-              <Text category="h3" bold mt={8}>
+              <Text category="h3" bold center mt={8}>
                 {streakDays}
               </Text>
             )}
-            <Text category="h9-s" status="placeholder">
+            <Text category="h9-s" status="placeholder" center>
               {t('home:day_streak', { defaultValue: 'Day Streak' })}
             </Text>
           </Layout>
           <Layout level="2" style={styles.statCard}>
             <Icon pack="assets" name="interview" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
-            <Text category="h3" bold mt={8}>
+            <Text category="h3" bold center mt={8}>
               {sessionsThisWeek}
             </Text>
-            <Text category="h9-s" status="placeholder">
+            <Text category="h9-s" status="placeholder" center>
               {t('home:sessions_this_week', { defaultValue: 'Sessions This Week' })}
             </Text>
           </Layout>
           <Layout level="2" style={styles.statCard}>
             <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
-            <Text category="h3" bold mt={8}>
+            <Text category="h3" bold center mt={8}>
               {avgScore}%
             </Text>
-            <Text category="h9-s" status="placeholder">
+            <Text category="h9-s" status="placeholder" center>
               {t('home:average_score', { defaultValue: 'Average Score' })}
             </Text>
           </Layout>
@@ -297,7 +497,10 @@ const HomeSrc = memo(() => {
           </View>
           <Button
             size="small"
-            status={streak?.checkedInToday ? 'basic' : 'primary'}
+            // Was 'primary' (bright blue) — clashed against the card's new
+            // warning/amber tint. 'warning' keeps the button in the same
+            // color family as the card it sits in.
+            status={streak?.checkedInToday ? 'basic' : 'warning'}
             disabled={checkingIn || streakLoading || !!streakError || !!streak?.checkedInToday}
             onPress={onCheckIn}
             accessoryLeft={checkingIn ? renderCheckInSpinner : undefined}>
@@ -312,8 +515,8 @@ const HomeSrc = memo(() => {
         </Text>
         <BarChart
           data={{
-            labels: DATA_WEEKLY_PRACTICE.map(d => d.day),
-            datasets: [{ data: DATA_WEEKLY_PRACTICE.map(d => d.sessions) }],
+            labels: weeklyPractice.map(d => d.day),
+            datasets: [{ data: weeklyPractice.map(d => d.sessions) }],
           }}
           width={width - 48}
           height={180}
@@ -326,36 +529,72 @@ const HomeSrc = memo(() => {
           style={styles.chart}
         />
 
-        {DATA_UPCOMING_SESSIONS.length > 0 ? (
-          <>
-            <Text category="h6" bold mt={16} mb={16}>
-              {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
-            </Text>
-            <Flex
-              level="2"
-              style={styles.upcomingCard}
-              justify="flex-start"
-              itemsCenter
-              onPress={() => navigate('MockInterviewSetup', {})}>
-              <View style={globalStyle.flexOne}>
-                <Text category="h7" bold>
-                  {DATA_UPCOMING_SESSIONS[0].interviewType}
-                </Text>
-                <Text category="h9-s" status="placeholder" mt={4}>
-                  {DATA_UPCOMING_SESSIONS[0].mode} · {DATA_UPCOMING_SESSIONS[0].difficulty} ·{' '}
-                  {DATA_UPCOMING_SESSIONS[0].durationMin} min
-                </Text>
-              </View>
-              <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
-            </Flex>
-          </>
-        ) : null}
+        <Flex justify="space-between" itemsCenter mt={16} mb={16}>
+          <Text category="h6" bold>
+            {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
+          </Text>
+          <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')}>
+            {t('home:schedule_new', { defaultValue: '+ Schedule' })}
+          </Text>
+        </Flex>
+        {nextSession ? (
+          <Flex
+            level="2"
+            style={styles.upcomingCard}
+            justify="flex-start"
+            itemsCenter
+            onPress={() =>
+              navigate('MockInterviewSetup', {
+                interviewType: nextSession.interviewType,
+                mode: nextSession.mode,
+                difficulty: nextSession.difficulty,
+                role: nextSession.role,
+                company: nextSession.company,
+                durationMin: nextSession.durationMin,
+              })
+            }>
+            <View style={globalStyle.flexOne}>
+              <Text category="h7" bold>
+                {nextSession.interviewType}
+              </Text>
+              <Text category="h9-s" status="placeholder" mt={4}>
+                {new Date(nextSession.scheduledAt).toLocaleString(undefined, {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: 'numeric',
+                  minute: '2-digit',
+                })}
+              </Text>
+              <Text category="h9-s" status="placeholder" mt={2}>
+                {nextSession.mode} · {nextSession.difficulty} · {nextSession.durationMin} min
+              </Text>
+            </View>
+            <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+          </Flex>
+        ) : (
+          <Flex
+            level="2"
+            style={styles.upcomingCard}
+            justify="flex-start"
+            itemsCenter
+            onPress={() => navigate('ScheduleInterview')}>
+            <View style={globalStyle.flexOne}>
+              <Text category="h9-s" status="placeholder">
+                {t('home:no_upcoming_session', {
+                  defaultValue: 'Nothing scheduled yet — set a reminder for your next mock interview.',
+                })}
+              </Text>
+            </View>
+            <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+          </Flex>
+        )}
 
         <Flex
           style={styles.ctaCard}
           justify="flex-start"
           vertical
-          onPress={() => navigate('MainBottomTab')}>
+          onPress={() => navigate('MockInterviewSetup', {})}>
           <Text category="h6" status="control" bold mb={4}>
             {t('home:ready_to_practice', { defaultValue: 'Ready to practice?' })}
           </Text>
@@ -401,9 +640,16 @@ const HomeSrc = memo(() => {
           })}
         </View>
 
-        <Text category="h6" bold mt={32} mb={16}>
-          {t('home:leaderboard', { defaultValue: 'Leaderboard' })}
-        </Text>
+        <Flex justify="space-between" itemsCenter mt={32} mb={16}>
+          <Text category="h6" bold>
+            {t('home:leaderboard', { defaultValue: 'Leaderboard' })}
+          </Text>
+          {!leaderboardLoading && !leaderboardError && leaderboard.length > 4 ? (
+            <Text category="h9" status="link" bold onPress={() => navigate('Leaderboard')}>
+              {t('home:view_all', { defaultValue: 'View all' })}
+            </Text>
+          ) : null}
+        </Flex>
         {leaderboardLoading ? (
           <Flex itemsCenter justify="center" style={styles.leaderboardStatus}>
             <Spinner size="small" />
@@ -423,7 +669,11 @@ const HomeSrc = memo(() => {
           </Text>
         ) : (
           <View>
-            {leaderboard.slice(0, 10).map(entry => (
+            {/* Top 4 only here — see the "View all" link above, which opens
+                src/home/Leaderboard.tsx for the full ranked list (same fetch,
+                unsliced). Keeps the Home dashboard card compact instead of
+                showing up to 10 rows inline. */}
+            {leaderboard.slice(0, 4).map(entry => (
               <Flex
                 key={entry.id}
                 justify="flex-start"
@@ -433,11 +683,10 @@ const HomeSrc = memo(() => {
                 <Text category="h8" bold status="placeholder" style={styles.leaderboardRank}>
                   #{entry.rank}
                 </Text>
-                <Avatar
-                  source={entry.avatarUrl ? { uri: entry.avatarUrl } : Images.avatar1}
-                  shape="rounded"
+                <UserAvatar
+                  uri={entry.avatarUrl}
+                  name={entry.name}
                   size="tiny"
-                  /* @ts-ignore */
                   style={styles.leaderboardAvatar}
                 />
                 <Text category="h8" bold style={globalStyle.flexOne} numberOfLines={1}>
@@ -452,6 +701,22 @@ const HomeSrc = memo(() => {
           </View>
         )}
       </Content>
+      {/* Admin-configured ad popup — only rendered visible when a real,
+          still-eligible ad was found (see the effect above); tapping its
+          single action opens AdDetails.tsx with that ad's full write-up,
+          matching "when users click on the advert it takes them to the
+          screen that gives them more detail." */}
+      <ModalRequest
+        visible={adVisible}
+        show={showAd}
+        hide={onDismissAd}
+        name={pendingAd?.title ?? ''}
+        avatar={Images.logoBadge}
+        isOnl={false}
+        message={pendingAd?.body}
+        onDetails={onOpenAd}
+        detailsLabel="View Details"
+      />
     </Container>
   );
 });
@@ -473,8 +738,36 @@ const themedStyles = StyleService.create({
     borderWidth: 1,
     borderColor: 'color-warning-500',
   },
+  goalTipsCard: {
+    borderRadius: 16,
+    marginTop: 16,
+  },
+  goalTipRow: {
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    // Subtle purple to make the AI-generated tip visually distinct from the
+    // neutral cards around it — was a plain themed Layout level="2" (same
+    // gray as every other card on the screen).
+    backgroundColor: 'rgba(124, 58, 237, 0.08)',
+    borderWidth: 1,
+    borderColor: '#6D28D9',
+  },
   verifyBannerText: {
     marginHorizontal: 10,
+  },
+  progressCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+  },
+  progressIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   statsRow: {
     flexDirection: 'row',
@@ -535,6 +828,11 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginTop: 16,
+    // Subtle warning tint to make the daily XP check-in stand out from the
+    // neutral stat cards above it — was a plain themed Layout level="2".
+    backgroundColor: 'color-warning-transparent-200',
+    borderWidth: 1,
+    borderColor: 'color-warning-500',
   },
   leaderboardStatus: {
     paddingVertical: 16,

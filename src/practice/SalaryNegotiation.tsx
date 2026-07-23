@@ -10,6 +10,7 @@ import {
   Icon,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -42,6 +43,7 @@ const SalaryNegotiation = memo(() => {
   const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
+  const { t } = useTranslation(['find', 'common']);
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [initialOffer, setInitialOffer] = React.useState<SalaryOffer | null>(null);
@@ -95,8 +97,8 @@ const SalaryNegotiation = memo(() => {
       // stalling the round; the user stays on the current offer and can
       // retry the same or a different approach.
       Alert.alert(
-        'Negotiation round failed',
-        e?.message ?? "Couldn't reach the negotiation coach. Please try again."
+        t('find:negotiation_round_failed_title', {defaultValue: 'Negotiation round failed'}),
+        e?.message ?? t('find:negotiation_round_failed_body', {defaultValue: "Couldn't reach the negotiation coach. Please try again."}),
       );
     } finally {
       setIsSubmitting(null);
@@ -106,9 +108,9 @@ const SalaryNegotiation = memo(() => {
   if (isLoading || !currentOffer) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title="Salary Negotiation" accessoryLeft={<NavigationAction onPress={goBack} />} />
-        <Flex vertical center style={globalStyle.flexOne}>
-          <Text category="h9-s" status="placeholder">Loading a scenario…</Text>
+        <TopNavigation title={t('find:salary_negotiation', {defaultValue: 'Salary Negotiation'})} accessoryLeft={<NavigationAction onPress={goBack} />} />
+        <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
+          <Text category="h9-s" status="placeholder" center>{t('find:loading_scenario', {defaultValue: 'Loading a scenario…'})}</Text>
         </Flex>
       </Container>
     );
@@ -129,15 +131,15 @@ const SalaryNegotiation = memo(() => {
           </Text>
           <View style={styles.offerDetailsRow}>
             <View style={styles.offerDetail}>
-              <Text category="h10" status="placeholder">Bonus</Text>
+              <Text category="h10" status="placeholder">{t('find:bonus', {defaultValue: 'Bonus'})}</Text>
               <Text category="h8" bold>${currentOffer.bonus.toLocaleString()}</Text>
             </View>
             <View style={styles.offerDetail}>
-              <Text category="h10" status="placeholder">Signing Bonus</Text>
+              <Text category="h10" status="placeholder">{t('find:signing_bonus', {defaultValue: 'Signing Bonus'})}</Text>
               <Text category="h8" bold>${currentOffer.signingBonus.toLocaleString()}</Text>
             </View>
             <View style={styles.offerDetail}>
-              <Text category="h10" status="placeholder">Equity</Text>
+              <Text category="h10" status="placeholder">{t('find:equity', {defaultValue: 'Equity'})}</Text>
               <Text category="h8" bold numberOfLines={1}>{currentOffer.equity}</Text>
             </View>
           </View>
@@ -145,11 +147,15 @@ const SalaryNegotiation = memo(() => {
 
         {log.length > 0 ? (
           <View style={{ marginTop: 24 }}>
-            <Text category="h7" bold mb={12}>Negotiation So Far</Text>
+            <Text category="h7" bold mb={12}>{t('find:negotiation_so_far', {defaultValue: 'Negotiation So Far'})}</Text>
             {log.map((entry, i) => (
               <Layout key={i} level="2" style={styles.logRow}>
                 <Text category="h10" status="placeholder" mb={4}>
-                  Round {entry.round} · You chose: {entry.approachTitle}
+                  {t('find:negotiation_round_log', {
+                    defaultValue: 'Round {{round}} · You chose: {{approach}}',
+                    round: entry.round,
+                    approach: entry.approachTitle,
+                  })}
                 </Text>
                 <Text category="h9-s">“{entry.recruiterResponse}”</Text>
               </Layout>
@@ -162,17 +168,17 @@ const SalaryNegotiation = memo(() => {
             <Layout level="2" style={[styles.offerCard, { borderColor: theme['color-primary-500'], borderWidth: 1 }]}>
               <Flex justify="flex-start" itemsCenter mb={8}>
                 <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
-                <Text category="h7" bold ml={8}>Negotiation Summary</Text>
+                <Text category="h7" bold ml={8}>{t('find:negotiation_summary', {defaultValue: 'Negotiation Summary'})}</Text>
               </Flex>
               <Text category="h9-s">{summary}</Text>
             </Layout>
             <Button
-              children="Try Another Scenario"
+              children={t('find:try_another_scenario', {defaultValue: 'Try Another Scenario'})}
               onPress={loadScenario}
               style={[globalStyle.shadowBtn, { marginTop: 24 }]}
             />
             <Button
-              children="Done"
+              children={t('common:done', {defaultValue: 'Done'})}
               status="outline"
               onPress={() => navigate('MainBottomTab')}
               style={{ marginTop: 16 }}
@@ -181,10 +187,10 @@ const SalaryNegotiation = memo(() => {
         ) : (
           <View style={{ marginTop: 24 }}>
             <Text category="h7" bold mb={4}>
-              Round {round} of {totalRounds}
+              {t('find:negotiation_round_of', {defaultValue: 'Round {{round}} of {{total}}', round, total: totalRounds})}
             </Text>
             <Text category="h9-s" status="placeholder" mb={16}>
-              How do you want to respond?
+              {t('find:negotiation_how_respond', {defaultValue: 'How do you want to respond?'})}
             </Text>
             {approaches.map(approach => (
               <Layout key={approach.id} level="2" style={styles.approachCard}>
@@ -199,7 +205,7 @@ const SalaryNegotiation = memo(() => {
                   onPress={() => onChooseApproach(approach)}
                   style={{ marginTop: 12 }}
                 >
-                  {isSubmitting === approach.id ? 'Sending…' : 'Choose'}
+                  {isSubmitting === approach.id ? t('find:sending', {defaultValue: 'Sending…'}) : t('find:choose', {defaultValue: 'Choose'})}
                 </Button>
               </Layout>
             ))}

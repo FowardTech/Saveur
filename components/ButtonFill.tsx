@@ -21,6 +21,11 @@ interface ButtonFillProps {
   onPress?(): void;
   style?: StyleProp<ViewStyle>;
   iconColor?: string | ColorValue;
+  // Overrides the status-derived circle color with an exact value (e.g. the
+  // More screen's icon rows, which now use one flat brand blue across the
+  // board instead of the varied per-row status colors — see MoreSrc.tsx).
+  // `status` is still accepted/used for the icon glyph's own tint fallback.
+  backgroundColor?: string | ColorValue;
   status?:
     | 'basic'
     | 'danger'
@@ -43,6 +48,7 @@ const ButtonFill = ({
   status = 'basic',
   onPress,
   iconColor,
+  backgroundColor,
   style,
 }: ButtonFillProps) => {
   const styles = useStyleSheet(themedStyles);
@@ -175,7 +181,7 @@ const ButtonFill = ({
       imageStyle={{
         width: getSize(size),
         height: getSize(size),
-        tintColor: getColor(status),
+        tintColor: backgroundColor ? backgroundColor : getColor(status),
       }}
       style={[
         styles.container,

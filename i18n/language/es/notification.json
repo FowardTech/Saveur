@@ -1,0 +1,9 @@
+{
+    "title": "Notificaciones",
+    "mark_all_read": "Marcar todo como leído",
+    "load_failed": "No se pudieron cargar tus notificaciones.",
+    "mark_read_failed_title": "No se pudo actualizar la notificación",
+    "mark_read_failed_body": "Por favor, inténtalo de nuevo en un momento.",
+    "empty_title": "¡Estás al día!",
+    "empty_description": "Las nuevas notificaciones sobre tu práctica de entrevistas aparecerán aquí."
+}

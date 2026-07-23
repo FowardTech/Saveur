@@ -20,6 +20,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
+import { renderCenteredLabel } from 'utils/buttonLabel';
 import { CodingInterviewScreenNavigationProp, RootStackParamList } from 'navigation/types';
 import * as interviewService from 'services/interviewService';
 import * as codingService from 'services/codingService';
@@ -310,7 +311,10 @@ const CodingInterview = memo(() => {
           );
         })}
         <Button
-          children={runningTests ? t('find:running_tests') : t('find:run_tests')}
+          children={renderCenteredLabel(
+            runningTests ? t('find:running_tests') : t('find:run_tests'),
+            {stretch: false},
+          )}
           disabled={runningTests}
           onPress={onRunTests}
           accessoryLeft={props => <Icon {...props} pack="assets" name="edit_full" />}

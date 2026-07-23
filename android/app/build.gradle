@@ -116,6 +116,17 @@ dependencies {
     } else {
         implementation jscFlavor
     }
+
+    // Explicit Android SplashScreen API support — targetSdkVersion 36 means
+    // the OS *mandatorily* shows its own system splash screen on API 31+
+    // before MainActivity draws, auto-derived from the launcher icon if we
+    // don't configure it ourselves. That auto-derivation was rendering the
+    // logo blown up edge-to-edge instead of a modest centered mark (see
+    // Theme.App.SplashScreen in styles.xml + installSplashScreen() in
+    // MainActivity.kt). This library also back-ports the same behavior to
+    // API < 31 so it's consistent everywhere, replacing the old plain
+    // AppTheme.Main windowBackground trick as the actual first-paint theme.
+    implementation("androidx.core:core-splashscreen:1.0.1")
 }
 
 // Must be applied after the android {} block. Reads google-services.json in

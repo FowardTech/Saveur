@@ -135,8 +135,8 @@ const ApplicationDetails = memo(() => {
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
           title={<Text status={'primary'} center category="h6">{t('request:requestDetails')}</Text>}
         />
-        <Flex vertical center style={globalStyle.flexOne}>
-          <Text category="h9-s" status="placeholder">Loading…</Text>
+        <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
+          <Text category="h9-s" status="placeholder" center>Loading…</Text>
         </Flex>
       </Container>
     );
@@ -149,7 +149,7 @@ const ApplicationDetails = memo(() => {
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
           title={<Text status={'primary'} center category="h6">{t('request:requestDetails')}</Text>}
         />
-        <Flex vertical center style={globalStyle.flexOne}>
+        <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
           <Text category="h9-s" status="danger" center mh={24}>
             {error ?? 'Application not found.'}
           </Text>

@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
+import dayjs from 'utils/dayjs';
 import {
   Difficulty_Enum,
   EKeyAsyncStorage,
@@ -8,6 +10,14 @@ import {
   VideoAnalysisMetrics,
 } from 'constants/Types';
 import apiClient from './apiClient';
+import {notifyFirstInterviewCompleted} from 'utils/appRating';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16 — so interview questions
+// generate in the user's preferred language, not just get read aloud in it.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // interviewService — real backend implementation for the Interviews domain
@@ -73,6 +83,7 @@ const TYPE_TO_WIRE: Record<Interview_Type_Enum, string> = {
   [Interview_Type_Enum.Executive]: 'executive',
   [Interview_Type_Enum.Graduate]: 'graduate',
   [Interview_Type_Enum.Internship]: 'internship',
+  [Interview_Type_Enum.Sports]: 'sports',
 };
 const WIRE_TO_TYPE: Record<string, Interview_Type_Enum> = Object.entries(TYPE_TO_WIRE).reduce(
   (acc, [type, wire]) => {
@@ -177,6 +188,7 @@ function toStartSessionWire(config: StartSessionConfig) {
     difficulty: DIFFICULTY_TO_WIRE[config.difficulty],
     duration_min: durationMin,
     mode: MODE_TO_WIRE[config.mode],
+    language: currentLanguage(),
   };
 }
 
@@ -237,7 +249,9 @@ export async function startSession(
  * future use.
  */
 export async function getSessionDetail(sessionId: string): Promise<MockInterviewSessionProps> {
-  const {data} = await apiClient.get<SessionWire>(`/api/v1/interviews/sessions/${sessionId}`);
+  const {data} = await apiClient.get<SessionWire>(`/api/v1/interviews/sessions/${sessionId}`, {
+    params: {language: currentLanguage()},
+  });
   return fromSessionWire(data);
 }
 
@@ -258,6 +272,7 @@ export interface NextQuestionResult {
 export async function getNextQuestion(sessionId: string): Promise<NextQuestionResult> {
   const {data} = await apiClient.post<{question_id?: string; text?: string; question?: string}>(
     `/api/v1/interviews/sessions/${sessionId}/next-question`,
+    {language: currentLanguage()},
   );
   const text = data.text ?? data.question;
   if (!text) {
@@ -323,6 +338,11 @@ export async function completeSession(
   await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/end`, {
     asked_questions: askedQuestions,
   });
+  // Centralized here rather than in each of LiveInterviewSession.tsx/
+  // CodingInterview.tsx (both call completeSession) — fires the App Store
+  // review prompt the very first time a session is ever completed, no-ops
+  // every time after. See utils/appRating.ts.
+  notifyFirstInterviewCompleted().catch(() => {});
 }
 
 /**
@@ -348,4 +368,45 @@ export async function getPracticeHistory(): Promise<MockInterviewSessionProps[]>
   } catch {
     return readCache();
   }
+}
+
+export interface WeeklyPracticeDay {
+  day: string;
+  sessions: number;
+}
+
+/**
+ * Groups real practice-history sessions (getPracticeHistory) into the
+ * CURRENT calendar week (Monday–Sunday), oldest first, so the Home
+ * dashboard's "Weekly Practice" chart and the My Progress screen both show a
+ * real bar chart instead of constants/Data.ts's DATA_WEEKLY_PRACTICE (a
+ * static, same-for-everyone array that never reflected an actual account's
+ * activity). Pure/local — takes whatever getPracticeHistory() already
+ * returned rather than making its own network call, so callers control
+ * caching/error-handling once and reuse the result for both a chart and any
+ * other derived stats.
+ *
+ * Was a rolling trailing-7-days window (today back 6 days) — every bar was
+ * always freshly recomputed from real session dates, so it was never
+ * literally "stale", but a Wednesday's bar never actually reset to zero: it
+ * just aged out of the window 7 days later. Per explicit request this now
+ * anchors to Monday of dayjs()'s current week (dayjs's plain `.day()` is
+ * 0=Sun..6=Sat regardless of locale, hence the `(dow + 6) % 7` shift rather
+ * than relying on startOf('week'), which is locale/Sunday-based and not
+ * pulled in as a plugin here anyway) — so every bar, including future days
+ * in the current week that haven't happened yet, genuinely reads 0 until a
+ * real session lands on that date, and the whole chart visibly resets each
+ * Monday rather than just quietly sliding the window.
+ */
+export function computeWeeklyPractice(sessions: MockInterviewSessionProps[]): WeeklyPracticeDay[] {
+  const today = dayjs();
+  const daysSinceMonday = (today.day() + 6) % 7;
+  const monday = today.subtract(daysSinceMonday, 'day').startOf('day');
+  const days: WeeklyPracticeDay[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = monday.add(i, 'day');
+    const count = sessions.filter(s => dayjs(s.date).isSame(d, 'day')).length;
+    days.push({day: d.format('ddd'), sessions: count});
+  }
+  return days;
 }

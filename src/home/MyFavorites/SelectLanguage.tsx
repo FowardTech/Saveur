@@ -13,30 +13,37 @@ import i18n from 'i18next';
 
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
-import keyExtractor from 'utils/keyExtractor';
 import {globalStyle} from 'styles/globalStyle';
 import ICheckbox from 'components/ICheckbox';
+import {SUPPORTED_LANGUAGES} from 'constants/languages';
+import {AuthContext} from '../../../AuthContext';
 
-// Real language switching (see i18n/config.ts) — only the two locales that
-// actually have translations wired up are listed (rather than a long list
-// of fake/unsupported languages) so picking one genuinely re-renders the
-// app in that language via i18next's `changeLanguage`.
-const LANGUAGES: Array<{name: string; code: string}> = [
-  {name: 'English', code: 'en'},
-  {name: 'Español (Spanish)', code: 'es'},
-];
-
+// Real language switching (see i18n/config.ts) — SUPPORTED_LANGUAGES
+// (constants/languages.ts) only lists locales that actually have full
+// translations wired up, shared with the signup language picker
+// (src/auth/Signup/SignupFirstStep.tsx) so both pickers can never drift out
+// of sync with each other.
 const SelectLanguage = memo(() => {
   const {goBack} = useNavigation();
   const {bottom} = useLayout();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['filter', 'common']);
+  const {updateProfile} = React.useContext(AuthContext);
 
   const [selectedCode, setSelectedCode] = React.useState(i18n.language?.startsWith('es') ? 'es' : 'en');
 
+  // Switches the app's UI text immediately (i18next), and separately
+  // persists the choice to the account (PATCH /api/users/me `locale` — see
+  // services/authService.ts) so it's what a) drives the AI coach's TTS
+  // voice (services/speechService.ts) and b) follows the user to a new
+  // device / after a reinstall (AuthContext.tsx's syncLanguageFromProfile).
+  // Fire-and-forget: a failed PATCH shouldn't block the (already-instant)
+  // local language switch — it'll just re-sync next time the profile is
+  // fetched/updated successfully.
   const onSelect = (code: string) => {
     setSelectedCode(code);
     i18n.changeLanguage(code);
+    updateProfile({locale: code}).catch(() => {});
   };
 
   return (
@@ -50,20 +57,20 @@ const SelectLanguage = memo(() => {
         }
       />
       <FlatList
-        data={LANGUAGES}
+        data={SUPPORTED_LANGUAGES}
         contentContainerStyle={styles.content}
         scrollEventThrottle={16}
         renderItem={({item}) => {
           return (
             <ICheckbox
               style={styles.checkbox}
-              title={item.name}
+              title={`${item.nativeLabel} (${item.label})`}
               checked={item.code === selectedCode}
               onChange={() => onSelect(item.code)}
             />
           );
         }}
-        keyExtractor={keyExtractor}
+        keyExtractor={item => item.code}
         showsVerticalScrollIndicator={false}
       />
       <Button

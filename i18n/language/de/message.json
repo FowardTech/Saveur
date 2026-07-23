@@ -1,0 +1,15 @@
+{
+  "empty_description": "Starte ein simuliertes Vorstellungsgespräch oder stelle deinem KI-Coach eine Frage für personalisiertes Feedback und Karrieretipps.",
+  "empty_title": "Noch keine Unterhaltungen.",
+  "placeholder_input": "Coaching-Themen suchen...",
+  "title": "Coach",
+  "voice_initial_line": "Ich höre zu — sprich mit mir, wenn du bereit bist.",
+  "voice_mic_error": "Das Mikrofon konnte nicht gestartet werden.",
+  "voice_retry_line": "Entschuldigung, das habe ich nicht verstanden — kannst du das wiederholen?",
+  "voice_status_listening": "Höre zu…",
+  "voice_status_listening_prompt": "Ich höre zu — leg los",
+  "voice_status_speaking": "Spricht…",
+  "voice_status_starting": "Startet…",
+  "voice_status_thinking": "Denke nach…",
+  "voice_tap_to_interrupt": "Zum Unterbrechen tippen"
+}

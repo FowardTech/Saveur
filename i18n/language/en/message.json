@@ -1,6 +1,15 @@
 {
-    "title": "Coach",
-    "placeholder_input": "Search coaching topics...",
-    "empty_title": "No conversations yet.",
-    "empty_description": "Start a mock interview or ask your AI coach a question to get personalized feedback and career advice."
+  "empty_description": "Start a mock interview or ask your AI coach a question to get personalized feedback and career advice.",
+  "empty_title": "No conversations yet.",
+  "placeholder_input": "Search coaching topics...",
+  "title": "Coach",
+  "voice_initial_line": "I'm listening — talk to me whenever you're ready.",
+  "voice_mic_error": "Could not start the microphone.",
+  "voice_retry_line": "Sorry, I didn't catch that — could you say it again?",
+  "voice_status_listening": "Listening…",
+  "voice_status_listening_prompt": "I'm listening — go ahead",
+  "voice_status_speaking": "Speaking…",
+  "voice_status_starting": "Starting…",
+  "voice_status_thinking": "Thinking…",
+  "voice_tap_to_interrupt": "Tap to interrupt"
 }

@@ -1,0 +1,15 @@
+{
+  "empty_description": "Начните пробное собеседование или задайте вопрос вашему AI-коучу, чтобы получить персонализированную обратную связь и советы по карьере.",
+  "empty_title": "Пока нет разговоров.",
+  "placeholder_input": "Поиск тем для коучинга...",
+  "title": "Коуч",
+  "voice_initial_line": "Я слушаю — говорите, когда будете готовы.",
+  "voice_mic_error": "Не удалось запустить микрофон.",
+  "voice_retry_line": "Извините, я не расслышал — повторите, пожалуйста?",
+  "voice_status_listening": "Слушаю…",
+  "voice_status_listening_prompt": "Я слушаю — говорите",
+  "voice_status_speaking": "Говорю…",
+  "voice_status_starting": "Запуск…",
+  "voice_status_thinking": "Думаю…",
+  "voice_tap_to_interrupt": "Нажмите, чтобы прервать"
+}

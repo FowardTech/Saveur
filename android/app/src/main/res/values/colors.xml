@@ -1,0 +1,8 @@
+<resources>
+    <!-- Brand splash/launch background — see styles.xml's AppTheme
+         android:windowBackground. Previously unset, so the very first frame
+         before RN loads fell back to Theme.AppCompat.DayNight's own default
+         (near-black in dark mode, which is what showed up as a black splash
+         on-device) instead of a deliberate brand color. -->
+    <color name="splash_background">#2574FF</color>
+</resources>

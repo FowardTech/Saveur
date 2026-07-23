@@ -69,7 +69,7 @@ const ForgetPassword = memo(() => {
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />
 
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h2" mb={8}>
           {t('auth:forget_password')}
         </Text>

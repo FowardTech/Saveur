@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { ActivityIndicator, Alert, Linking, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   TopNavigationAction,
@@ -17,6 +17,8 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Camera as FaceDetectorCamera } from 'react-native-vision-camera-face-detector';
+import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
@@ -27,17 +29,26 @@ import { Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import { DATA_INTERVIEW_QUESTION_BANK } from 'constants/Data';
 import { useFakeRecordingTimer } from 'services/recordingService';
 import { useVideoInterviewAnalysis } from 'services/videoAnalysisService';
+import * as speechService from 'services/speechService';
+import { useSpeechToText } from 'services/speechService';
 import * as interviewService from 'services/interviewService';
 import * as feedbackService from 'services/feedbackService';
 
-// Live mock-interview screen. For Voice/Text mode, the pulsing gradient orb
-// stands in for a real voice-assistant UI (à la ChatGPT voice mode) — there
-// is no real audio capture/playback wired up (see services/recordingService.ts)
-// and that path is intentionally left untouched here. For Video mode, this
-// screen renders a real front-facing <Camera> (react-native-vision-camera +
-// react-native-vision-camera-face-detector) and drives on-device face/speech
-// analysis via services/videoAnalysisService.ts — see that file for the
-// real-vs-heuristic breakdown and native-dependency risk notes.
+// Live mock-interview screen. Voice mode now has real audio: the AI's
+// question is actually spoken aloud (services/speechService.ts's speak(),
+// react-native-tts) and the user's spoken answer is actually transcribed
+// on-device (same file's useSpeechToText(), reusing
+// @dev-amirzubair/react-native-voice — already a dependency of this project
+// via services/videoAnalysisService.ts's Video-mode transcript pipeline).
+// The pulsing gradient orb is still a purely visual "who's turn is it"
+// indicator (à la ChatGPT voice mode), not a stand-in for missing audio
+// anymore. Text mode gets its own distinct typed-answer UI (see the render
+// branch below), also backed by a real interviewService.submitAnswer call.
+// For Video mode, this screen renders a real front-facing <Camera>
+// (react-native-vision-camera + react-native-vision-camera-face-detector)
+// and drives on-device face/speech analysis via services/videoAnalysisService.ts
+// — see that file for the real-vs-heuristic breakdown and native-dependency
+// risk notes.
 //
 // Adaptive follow-ups: every ADVANCE_INTERVAL_SEC of "listening" time, the
 // screen asks the real backend for the next question
@@ -51,8 +62,39 @@ import * as feedbackService from 'services/feedbackService';
 // surfaced are tracked in `askedQuestions` and passed into
 // interviewService.completeSession so the ended session's record reflects
 // what was actually asked.
-const DEFAULT_QUESTION = 'Tell me a little about yourself and your background.';
+const DEFAULT_QUESTION = () =>
+  i18n.t('find:live_default_question', {
+    defaultValue: 'Tell me a little about yourself and your background.',
+  });
 const ADVANCE_INTERVAL_SEC = 50;
+// Falls back to this if a caller ever reaches this screen without a
+// durationMin param (only MockInterviewSetup does today, and it always
+// passes one) — better to enforce a sane default than to run unbounded.
+const DEFAULT_DURATION_MIN = 15;
+// Brief, varied spoken transitions played (Voice/Video mode only) between
+// the end of the user's answer and the next question — this is what makes
+// the interview feel like the AI is actually acknowledging what was said,
+// rather than the question just cutting over abruptly. Kept short on
+// purpose so it never meaningfully eats into the user's selected time.
+const ACKNOWLEDGMENT_KEYS = [
+  { key: 'find:live_ack_1', defaultValue: 'Thanks for sharing that.' },
+  { key: 'find:live_ack_2', defaultValue: "Got it — let's continue." },
+  { key: 'find:live_ack_3', defaultValue: "That's helpful, thank you." },
+  { key: 'find:live_ack_4', defaultValue: 'I appreciate that answer.' },
+  { key: 'find:live_ack_5', defaultValue: 'Good — noted.' },
+];
+function pickAcknowledgment(): string {
+  const pick = ACKNOWLEDGMENT_KEYS[Math.floor(Math.random() * ACKNOWLEDGMENT_KEYS.length)];
+  return i18n.t(pick.key, { defaultValue: pick.defaultValue });
+}
+// Played once, right before the session auto-ends because the user's
+// selected duration has elapsed — gives the interview a natural close
+// instead of just silently cutting off.
+const CLOSING_STATEMENT = () =>
+  i18n.t('find:live_closing_statement', {
+    defaultValue:
+      "That's time for today — nice work. Let's wrap up here and take a look at your feedback.",
+  });
 // How often (ms) buffered on-device camera-frame samples are flushed to the
 // backend during a live Video-mode session. Not once per ML-Kit detection
 // (15-30x/sec) — see services/videoAnalysisService.ts's own internal
@@ -63,14 +105,28 @@ const LiveInterviewSession = memo(() => {
   const { navigate, goBack } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<LiveInterviewSessionScreenNavigationProp>();
   const theme = useTheme();
+  const { t } = useTranslation(['find', 'common']);
 
-  const { sessionId, interviewType, mode, company } = route.params ?? { sessionId: '' };
+  const { sessionId, interviewType, mode, company, durationMin } = route.params ?? { sessionId: '' };
+  // Counts DOWN from the selected duration rather than up — see the
+  // time-limit effect below, which is what actually enforces this (the
+  // countdown display alone was never what was missing; nothing compared
+  // elapsed time against a limit at all before).
+  const durationSeconds = (durationMin ?? DEFAULT_DURATION_MIN) * 60;
   const isVideoMode = mode === Practice_Mode_Enum.Video;
+  // Voice and Text used to render the exact same "AI is speaking…" orb UI —
+  // Text mode never actually let you type anything. Text mode now gets its
+  // own real answer-box interface (see the render branch below) backed by
+  // interviewService.submitAnswer, which existed in the service layer
+  // already but had no caller anywhere in the app.
+  const isTextMode = mode === Practice_Mode_Enum.Text;
+  const isVoiceMode = mode === Practice_Mode_Enum.Voice;
 
   const questions = React.useMemo(() => {
     const bank = interviewType && DATA_INTERVIEW_QUESTION_BANK[interviewType];
-    return bank && bank.length > 0 ? bank : [DEFAULT_QUESTION];
-  }, [interviewType]);
+    return bank && bank.length > 0 ? bank : [DEFAULT_QUESTION()];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewType, i18n.language]);
 
   const { isRecording, seconds, start, stop } = useFakeRecordingTimer();
   const [isMuted, setIsMuted] = React.useState(false);
@@ -82,7 +138,15 @@ const LiveInterviewSession = memo(() => {
   // the local bank below. Reset to null whenever a call fails so the local
   // fallback (indexed by questionIndex) is what renders instead.
   const [backendQuestionText, setBackendQuestionText] = React.useState<string | null>(null);
+  // Real question id from the backend, when we have one — needed for Text
+  // mode's submitAnswer call below (POST .../answer takes a questionId).
+  const [backendQuestionId, setBackendQuestionId] = React.useState<string | null>(null);
   const isFetchingQuestionRef = React.useRef(false);
+
+  // Text mode only: what the user is currently typing, and whether their
+  // last submit is in flight.
+  const [answerText, setAnswerText] = React.useState('');
+  const [isSubmittingAnswer, setIsSubmittingAnswer] = React.useState(false);
 
   const question =
     backendQuestionText ?? questions[Math.min(questionIndex, questions.length - 1)];
@@ -93,28 +157,120 @@ const LiveInterviewSession = memo(() => {
   // deciding it's time for a follow-up. Falls back to advancing through the
   // local static bank if the call fails so the session never gets stuck
   // showing no question at all (see file header comment).
+  //
+  // IMPORTANT: questionIndex/backendQuestionText/backendQuestionId are all
+  // set together, in ONE batch, only once we actually know what the next
+  // question is (real or fallback) — never before. `question` (derived
+  // below) is a function of all three, so committing them separately used
+  // to make `question` flip TWICE per advance: once immediately when
+  // questionIndex bumped (showing the local fallback text while the network
+  // call was still in flight), and again moments later once the real text
+  // arrived. That double-flip is what caused the "suddenly changes to the
+  // next question" glitch — the TTS effect below re-runs on every `question`
+  // change, so the first flip started speaking the fallback text and the
+  // second flip yanked it away mid-sentence to speak the real text instead.
+  // Resolving the next question fully before touching any of this state
+  // fixes that at the source.
   const advanceQuestion = React.useCallback(async () => {
     if (isFetchingQuestionRef.current) return;
     isFetchingQuestionRef.current = true;
-    setQuestionIndex(prev => prev + 1);
     try {
-      if (!sessionId) throw new Error('No sessionId — cannot fetch a real next question.');
-      const next = await interviewService.getNextQuestion(sessionId);
-      setBackendQuestionText(next.text);
-    } catch {
-      // Offline, backend down, or no sessionId — fall back to the local
-      // bank at whatever index we've now advanced to (clamped to its end).
-      setBackendQuestionText(null);
+      let nextText: string | null = null;
+      let nextId: string | null = null;
+      if (sessionId) {
+        try {
+          const next = await interviewService.getNextQuestion(sessionId);
+          nextText = next.text;
+          nextId = next.questionId ?? null;
+        } catch {
+          // Offline, backend down — fall back to the local bank at whatever
+          // index we're about to advance to.
+          nextText = null;
+          nextId = null;
+        }
+      }
+      setQuestionIndex(prev => prev + 1);
+      setBackendQuestionText(nextText);
+      setBackendQuestionId(nextId);
     } finally {
       isFetchingQuestionRef.current = false;
     }
   }, [sessionId]);
 
+  // Text mode advances on the user's own "Submit Answer" tap (see
+  // onSubmitTextAnswer below), not on a listening timer — there's no
+  // "AI speaking"/"listening" turn-taking when the user is typing at their
+  // own pace, so this timer-based auto-advance is Video/Voice-mode only. In
+  // Voice mode, the real spoken-answer transcript accumulated since the
+  // question started is submitted (POST .../answer, same real endpoint Text
+  // mode uses) before moving on.
   React.useEffect(() => {
+    if (isTextMode) return;
     if (!isRecording || isAiSpeaking) return;
     if (seconds === 0 || seconds % ADVANCE_INTERVAL_SEC !== 0) return;
-    advanceQuestion();
-  }, [seconds, isRecording, isAiSpeaking, advanceQuestion]);
+    // Don't kick off another follow-up if we're already at/past the
+    // session's selected time limit — the time-up effect below is about to
+    // (or just did) end the session, and starting a fresh question right as
+    // that happens is exactly the kind of race this whole rewrite is trying
+    // to eliminate.
+    if (seconds >= durationSeconds) return;
+    (async () => {
+      if (isVoiceMode) {
+        const finalTranscript = await speechToText.stop();
+        if (sessionId && finalTranscript.trim()) {
+          interviewService
+            .submitAnswer(sessionId, {
+              questionId: backendQuestionId ?? `local_q${questionIndex}`,
+              text: finalTranscript.trim(),
+            })
+            .catch(err => console.warn('[LiveInterviewSession] voice submitAnswer failed', err));
+        }
+      }
+      if (isVoiceMode || isVideoMode) {
+        // Speak a brief acknowledgment and WAIT for it to finish before
+        // moving on — this is the "AI responding to what you said" beat
+        // that was missing entirely before, and awaiting it (rather than
+        // firing-and-forgetting) is what keeps it from being cut off.
+        setIsAiSpeaking(true);
+        try {
+          await speechService.speak(pickAcknowledgment());
+        } catch {
+          // best-effort — a TTS hiccup shouldn't block the interview
+        }
+      }
+      await advanceQuestion();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, isRecording, isAiSpeaking, isTextMode, isVoiceMode, isVideoMode, durationSeconds, advanceQuestion]);
+
+  // Text mode: send the typed answer to the real backend
+  // (POST .../sessions/{id}/answer — previously implemented in
+  // interviewService.ts but never called from anywhere, since no screen had
+  // an actual answer-capture UI), then move to the next question. Falls back
+  // to a locally-generated question id for the very first question (sourced
+  // from the local bank, not a backend next-question call, so it has no real
+  // id yet) rather than skipping the submit entirely.
+  const onSubmitTextAnswer = React.useCallback(async () => {
+    const trimmed = answerText.trim();
+    if (!trimmed || isSubmittingAnswer) return;
+    setIsSubmittingAnswer(true);
+    try {
+      if (sessionId) {
+        await interviewService.submitAnswer(sessionId, {
+          questionId: backendQuestionId ?? `local_q${questionIndex}`,
+          text: trimmed,
+        });
+      }
+    } catch (err) {
+      // Best-effort — don't block the user from moving on to the next
+      // question just because this particular answer failed to sync.
+      console.warn('[LiveInterviewSession] submitAnswer failed', err);
+    } finally {
+      setAnswerText('');
+      setIsSubmittingAnswer(false);
+      advanceQuestion();
+    }
+  }, [answerText, isSubmittingAnswer, sessionId, backendQuestionId, questionIndex, advanceQuestion]);
 
   // Track every question that's actually been shown (including the first)
   // so it can be threaded into completeSession on end.
@@ -128,15 +284,50 @@ const LiveInterviewSession = memo(() => {
   >('checking');
 
   const videoAnalysis = useVideoInterviewAnalysis();
+  // Voice mode only — see services/speechService.ts. Unused (but harmless)
+  // in Video/Text mode.
+  const speechToText = useSpeechToText();
 
   React.useEffect(() => {
     start(isVideoMode ? 'video' : 'audio');
-    // Simulate the AI "finishing" its question after a couple seconds and
-    // handing the floor to the user — purely cosmetic state, no real audio.
-    const toListening = setTimeout(() => setIsAiSpeaking(false), 2600);
-    return () => clearTimeout(toListening);
+    // isAiSpeaking for Voice AND Video mode is now driven entirely by real
+    // TTS completion (see the effect below) — Text mode is the only one
+    // that never speaks, and it doesn't read isAiSpeaking for anything, so
+    // there's nothing left for this mount effect to manage.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Voice AND Video mode: speak each question aloud as it appears (first
+  // question and every follow-up), then — Voice mode only — start listening
+  // for the spoken answer once done. Video mode has its own separate
+  // speech/face pipeline (useVideoInterviewAnalysis, wired below) rather
+  // than useSpeechToText, so it doesn't touch speechToText at all here; it
+  // just needs the audio played so the session feels interactive instead of
+  // silent (the user still answers on camera as before).
+  React.useEffect(() => {
+    if (!isVoiceMode && !isVideoMode) return;
+    let cancelled = false;
+    setIsAiSpeaking(true);
+    if (isVoiceMode) speechToText.reset();
+    (async () => {
+      try {
+        await speechService.speak(question);
+      } catch {
+        // best-effort — a TTS failure shouldn't strand the session with
+        // isAiSpeaking stuck true forever
+      }
+      if (cancelled) return;
+      setIsAiSpeaking(false);
+      if (isVoiceMode && !isMuted) {
+        await speechToText.start();
+      }
+    })();
+    return () => {
+      cancelled = true;
+      speechService.stopSpeaking();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [question, isVoiceMode, isVideoMode]);
 
   // Video mode only: request real camera+mic permission, then kick off the
   // face-detection/speech-recognition pipeline once granted.
@@ -163,6 +354,9 @@ const LiveInterviewSession = memo(() => {
     return () => {
       if (isVideoMode) {
         videoAnalysis.stopAnalysis().catch(() => {});
+      } else if (isVoiceMode) {
+        speechService.stopSpeaking();
+        speechToText.stop();
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,6 +380,35 @@ const LiveInterviewSession = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideoMode, cameraPermissionState, sessionId]);
 
+  // Hard time limit — the actual enforcement of the duration the user
+  // picked in MockInterviewSetup. Nothing compared elapsed time against a
+  // limit before this; the on-screen timer was purely cosmetic and the
+  // adaptive follow-up effect above would happily keep firing forever. Once
+  // `seconds` reaches the selected duration, this fires exactly once (guarded
+  // by the ref so it can't double-fire if `seconds` ticks again before
+  // onEnd's teardown finishes), speaks a short closing line in Voice/Video
+  // mode, then calls the same onEnd() the "End Interview" button uses — so
+  // feedback generation and teardown are identical either way.
+  const hasEndedForTimeRef = React.useRef(false);
+  React.useEffect(() => {
+    if (hasEndedForTimeRef.current) return;
+    if (seconds < durationSeconds) return;
+    hasEndedForTimeRef.current = true;
+    (async () => {
+      if (isVoiceMode || isVideoMode) {
+        setIsAiSpeaking(true);
+        try {
+          await speechService.speak(CLOSING_STATEMENT());
+        } catch {
+          // best-effort — still end the session even if the closing line
+          // fails to play
+        }
+      }
+      onEnd();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, durationSeconds, isVoiceMode, isVideoMode]);
+
   // Breathing pulse animation for the orb.
   const pulse = useSharedValue(0);
   React.useEffect(() => {
@@ -205,14 +428,24 @@ const LiveInterviewSession = memo(() => {
     opacity: 0.35 - pulse.value * 0.2,
   }));
 
-  const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
-  const ss = String(seconds % 60).padStart(2, '0');
+  // Counts DOWN to 0 from the selected duration (was counting up forever
+  // with no relationship to what the user picked) — this is the visible
+  // half of the fix; the time-up effect above is what actually enforces it.
+  const remainingSeconds = Math.max(0, durationSeconds - seconds);
+  const mm = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
+  const ss = String(remainingSeconds % 60).padStart(2, '0');
 
   const onToggleMute = () => {
     setIsMuted(prev => {
       const next = !prev;
       if (isVideoMode) {
         videoAnalysis.setMuted(next);
+      } else if (isVoiceMode) {
+        if (next) {
+          speechToText.stop();
+        } else if (!isAiSpeaking) {
+          speechToText.start();
+        }
       }
       return next;
     });
@@ -222,6 +455,10 @@ const LiveInterviewSession = memo(() => {
     if (isEnding) return;
     setIsEnding(true);
     await stop();
+    speechService.stopSpeaking();
+    if (isVoiceMode) {
+      await speechToText.stop();
+    }
     let videoMetrics = isVideoMode ? await videoAnalysis.stopAnalysis() : undefined;
     try {
       if (isVideoMode && sessionId) {
@@ -258,9 +495,12 @@ const LiveInterviewSession = memo(() => {
           await interviewService.completeSession(sessionId, videoMetrics, askedQuestions);
         } catch (err: any) {
           Alert.alert(
-            'Could not sync interview',
+            t('find:live_sync_failed_title', { defaultValue: 'Could not sync interview' }),
             err?.message ??
-              'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.',
+              t('find:live_sync_failed_message', {
+                defaultValue:
+                  'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.',
+              }),
           );
         }
       }
@@ -299,37 +539,39 @@ const LiveInterviewSession = memo(() => {
           <>
             <View style={styles.cameraWrap}>
               {cameraPermissionState === 'checking' ? (
-                <Flex vertical center style={styles.cameraStateFill}>
+                <Flex vertical center justify="center" style={styles.cameraStateFill}>
                   <ActivityIndicator size="large" color={theme['color-primary-500']} />
                   <Text category="h9-s" center mt={12} status="placeholder">
-                    Requesting camera access…
+                    {t('find:live_requesting_camera', { defaultValue: 'Requesting camera access…' })}
                   </Text>
                 </Flex>
               ) : cameraPermissionState === 'denied' ? (
-                <Flex vertical center style={[styles.cameraStateFill, styles.cameraStatePadded]}>
+                <Flex vertical center justify="center" style={[styles.cameraStateFill, styles.cameraStatePadded]}>
                   <Icon
                     pack="eva"
                     name="video-off-outline"
                     style={[globalStyle.icon40, { tintColor: theme['text-placeholder-color'] }]}
                   />
                   <Text category="h8" bold center mt={16}>
-                    Camera access needed
+                    {t('find:live_camera_access_needed', { defaultValue: 'Camera access needed' })}
                   </Text>
                   <Text category="h9-s" center mt={8} status="placeholder">
-                    Enable Camera and Microphone access in Settings to run a video mock interview.
+                    {t('find:live_camera_access_description', {
+                      defaultValue: 'Enable Camera and Microphone access in Settings to run a video mock interview.',
+                    })}
                   </Text>
                   <Button
                     style={{ marginTop: 20 }}
                     size="small"
                     onPress={() => Linking.openSettings()}
                   >
-                    Open Settings
+                    {t('find:live_open_settings', { defaultValue: 'Open Settings' })}
                   </Button>
                 </Flex>
               ) : !cameraDevice ? (
-                <Flex vertical center style={styles.cameraStateFill}>
+                <Flex vertical center justify="center" style={styles.cameraStateFill}>
                   <Text category="h9-s" center status="placeholder">
-                    No front camera found on this device.
+                    {t('find:live_no_camera', { defaultValue: 'No front camera found on this device.' })}
                   </Text>
                 </Flex>
               ) : (
@@ -345,17 +587,24 @@ const LiveInterviewSession = memo(() => {
                   <View style={styles.liveIndicatorRow}>
                     <View style={styles.liveIndicatorPill}>
                       <Text category="h10" status="control" bold>
-                        {videoAnalysis.liveMetrics.isSmiling ? '😊 Smiling' : '🙂 Looking'}
+                        {videoAnalysis.liveMetrics.isSmiling
+                          ? t('find:live_smiling', { defaultValue: '😊 Smiling' })
+                          : t('find:live_looking', { defaultValue: '🙂 Looking' })}
                       </Text>
                     </View>
                     <View style={styles.liveIndicatorPill}>
                       <Text category="h10" status="control" bold>
-                        {videoAnalysis.liveMetrics.isLookingAtCamera ? '👀 Eye contact' : 'Look at camera'}
+                        {videoAnalysis.liveMetrics.isLookingAtCamera
+                          ? t('find:live_eye_contact', { defaultValue: '👀 Eye contact' })
+                          : t('find:live_look_at_camera', { defaultValue: 'Look at camera' })}
                       </Text>
                     </View>
                     <View style={styles.liveIndicatorPill}>
                       <Text category="h10" status="control" bold>
-                        Fillers: {videoAnalysis.liveMetrics.fillerWordCount}
+                        {t('find:live_fillers_count', {
+                          defaultValue: 'Fillers: {{count}}',
+                          count: videoAnalysis.liveMetrics.fillerWordCount,
+                        })}
                       </Text>
                     </View>
                   </View>
@@ -364,18 +613,90 @@ const LiveInterviewSession = memo(() => {
             </View>
             {company ? (
               <Text category="h10" center mt={16} bold status="link">
-                Practicing for {company}
+                {t('find:live_practicing_for', { defaultValue: 'Practicing for {{company}}', company })}
               </Text>
             ) : null}
             {isFollowUp ? (
               <Text category="h10" center mt={company ? 4 : 16} status="placeholder">
-                Follow-up question {questionIndex + 1}
+                {t('find:live_followup_question', {
+                  defaultValue: 'Follow-up question {{n}}',
+                  n: questionIndex + 1,
+                })}
               </Text>
             ) : null}
-            <Text category="h9-s" center mt={company || isFollowUp ? 6 : 16} maxWidth={300} style={{ color: theme['text-placeholder-color'] }}>
+            <Text
+              category="h9-s"
+              center
+              mt={company || isFollowUp ? 6 : 16}
+              maxWidth={300}
+              numberOfLines={4}
+              ellipsizeMode="tail"
+              style={{ color: theme['text-placeholder-color'] }}>
               {question}
             </Text>
           </>
+        ) : isTextMode ? (
+          <View style={styles.textModeWrap}>
+            {company ? (
+              <Text category="h10" center mb={4} bold status="link">
+                {t('find:live_practicing_for', { defaultValue: 'Practicing for {{company}}', company })}
+              </Text>
+            ) : null}
+            {isFollowUp ? (
+              <Text category="h10" center mb={4} status="placeholder">
+                {t('find:live_followup_question', {
+                  defaultValue: 'Follow-up question {{n}}',
+                  n: questionIndex + 1,
+                })}
+              </Text>
+            ) : null}
+            <Text
+              category="h7"
+              bold
+              center
+              mb={20}
+              maxWidth={320}
+              numberOfLines={4}
+              ellipsizeMode="tail"
+              style={{ color: theme['text-basic-color'] }}>
+              {question}
+            </Text>
+            <TextInput
+              style={[
+                styles.textAnswerInput,
+                {
+                  color: theme['text-basic-color'],
+                  backgroundColor: theme['background-basic-color-2'],
+                  borderColor: theme['border-basic-color-3'],
+                },
+              ]}
+              placeholder={t('find:live_type_answer_placeholder', { defaultValue: 'Type your answer here…' }).toString()}
+              placeholderTextColor={theme['text-placeholder-color']}
+              value={answerText}
+              onChangeText={setAnswerText}
+              multiline
+              textAlignVertical="top"
+              editable={!isSubmittingAnswer}
+            />
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={onSubmitTextAnswer}
+              disabled={!answerText.trim() || isSubmittingAnswer}
+              style={[
+                styles.submitAnswerBtn,
+                {
+                  backgroundColor: theme['color-primary-500'],
+                  opacity: !answerText.trim() || isSubmittingAnswer ? 0.5 : 1,
+                },
+              ]}
+            >
+              <Text category="h8" bold status="control">
+                {isSubmittingAnswer
+                  ? t('find:live_submitting', { defaultValue: 'Submitting…' })
+                  : t('find:live_submit_answer', { defaultValue: 'Submit Answer' })}
+              </Text>
+            </TouchableOpacity>
+          </View>
         ) : (
           <>
             <Flex vertical center style={styles.orbWrap}>
@@ -402,21 +723,40 @@ const LiveInterviewSession = memo(() => {
             </Flex>
 
             <Text category="h7" bold center mt={28} style={{ color: theme['text-basic-color'] }}>
-              {isAiSpeaking ? 'AI is speaking…' : isMuted ? 'Muted' : 'Listening…'}
+              {isAiSpeaking
+                ? t('find:live_ai_speaking', { defaultValue: 'AI is speaking…' })
+                : isMuted
+                ? t('find:live_muted', { defaultValue: 'Muted' })
+                : t('find:live_listening', { defaultValue: 'Listening…' })}
             </Text>
             {company ? (
               <Text category="h10" center mt={12} bold status="link">
-                Practicing for {company}
+                {t('find:live_practicing_for', { defaultValue: 'Practicing for {{company}}', company })}
               </Text>
             ) : null}
             {isFollowUp ? (
               <Text category="h10" center mt={company ? 4 : 12} status="placeholder">
-                Follow-up question {questionIndex + 1}
+                {t('find:live_followup_question', {
+                  defaultValue: 'Follow-up question {{n}}',
+                  n: questionIndex + 1,
+                })}
               </Text>
             ) : null}
-            <Text category="h9-s" center mt={6} maxWidth={300} style={{ color: theme['text-placeholder-color'] }}>
+            <Text
+              category="h9-s"
+              center
+              mt={6}
+              maxWidth={300}
+              numberOfLines={4}
+              ellipsizeMode="tail"
+              style={{ color: theme['text-placeholder-color'] }}>
               {question}
             </Text>
+            {!isAiSpeaking && speechToText.transcript ? (
+              <Text category="h10" center mt={16} maxWidth={300} numberOfLines={3} style={{ color: theme['text-hint-color'] }}>
+                “{speechToText.transcript}”
+              </Text>
+            ) : null}
           </>
         )}
       </View>
@@ -426,20 +766,22 @@ const LiveInterviewSession = memo(() => {
           {mm}:{ss}
         </Text>
         <Flex justify="center" itemsCenter>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={onToggleMute}
-            style={[
-              styles.controlBtn,
-              { backgroundColor: isMuted ? theme['color-danger-500'] : theme['background-basic-color-2'] },
-            ]}
-          >
-            <Icon
-              pack="assets"
-              name={isMuted ? 'mute' : 'call'}
-              style={[globalStyle.icon24, { tintColor: isMuted ? '#fff' : theme['text-basic-color'] }]}
-            />
-          </TouchableOpacity>
+          {isTextMode ? null : (
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={onToggleMute}
+              style={[
+                styles.controlBtn,
+                { backgroundColor: isMuted ? theme['color-danger-500'] : theme['background-basic-color-2'] },
+              ]}
+            >
+              <Icon
+                pack="assets"
+                name={isMuted ? 'mute' : 'call'}
+                style={[globalStyle.icon24, { tintColor: isMuted ? '#fff' : theme['text-basic-color'] }]}
+              />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
             activeOpacity={0.85}
             onPress={onEnd}
@@ -447,7 +789,9 @@ const LiveInterviewSession = memo(() => {
             style={[styles.endBtn, { backgroundColor: theme['color-danger-500'], opacity: isEnding ? 0.6 : 1 }]}
           >
             <Text category="h8" bold status="control">
-              {isEnding ? 'Ending…' : 'End Interview'}
+              {isEnding
+                ? t('find:live_ending', { defaultValue: 'Ending…' })
+                : t('find:live_end_interview', { defaultValue: 'End Interview' })}
             </Text>
           </TouchableOpacity>
         </Flex>
@@ -477,6 +821,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
+    // Was unbounded before — a long backend-generated question plus the
+    // company/follow-up labels plus (Voice mode) the live transcript quote
+    // could add up to more height than this flex region actually has, and
+    // with no clipping the overflow rendered straight through into the
+    // footer below, visually colliding with the timer. Capping question
+    // text to 4 lines (see the Text elements above) keeps this from
+    // happening in the first place; this is just a backstop.
+    overflow: 'hidden',
   },
   orbWrap: {
     width: HALO_SIZE,
@@ -506,6 +858,24 @@ const styles = StyleSheet.create({
   },
   orbHighlight: {
     ...StyleSheet.absoluteFillObject,
+  },
+  textModeWrap: {
+    width: '100%',
+  },
+  textAnswerInput: {
+    width: '100%',
+    minHeight: 160,
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+    fontSize: 15,
+  },
+  submitAnswerBtn: {
+    marginTop: 16,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cameraWrap: {
     width: '100%',

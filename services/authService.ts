@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {EKeyAsyncStorage, UserProfileProps} from 'constants/Types';
 import apiClient from './apiClient';
+import * as referralService from './referralService';
 
 // ---------------------------------------------------------------------------
 // authService — real backend implementation.
@@ -25,8 +26,17 @@ interface UserProfileWire {
   goals?: string[];
   industries?: string[];
   preferred_countries?: string[];
+  desired_roles?: string[];
   locale?: string;
+  avatar_url?: string;
+  avatarUrl?: string;
+  phone_number?: string;
+  home_address?: string;
   subscription_tier?: 'free' | 'premium' | 'premium_plus';
+  notifications_enabled?: boolean;
+  job_alert_refresh_minutes?: number;
+  job_alert_daily_limit?: number;
+  two_factor_enabled?: boolean;
 }
 
 function fromWire(wire: UserProfileWire): UserProfileProps {
@@ -37,8 +47,16 @@ function fromWire(wire: UserProfileWire): UserProfileProps {
     goals: wire.goals ?? [],
     industries: wire.industries ?? [],
     preferredCountries: wire.preferred_countries ?? [],
+    desiredRoles: wire.desired_roles ?? [],
     locale: wire.locale,
+    avatarUrl: wire.avatar_url ?? wire.avatarUrl,
+    phoneNumber: wire.phone_number ?? '',
+    homeAddress: wire.home_address ?? '',
     subscriptionTier: wire.subscription_tier ?? 'free',
+    notificationsEnabled: wire.notifications_enabled ?? true,
+    jobAlertRefreshMinutes: wire.job_alert_refresh_minutes ?? 30,
+    jobAlertDailyLimit: wire.job_alert_daily_limit ?? 10,
+    twoFactorEnabled: wire.two_factor_enabled ?? false,
   };
 }
 
@@ -54,7 +72,14 @@ function toWirePatch(partial: Partial<UserProfileProps>): Record<string, unknown
   if (partial.goals !== undefined) wire.goals = partial.goals;
   if (partial.industries !== undefined) wire.industries = partial.industries;
   if (partial.preferredCountries !== undefined) wire.preferred_countries = partial.preferredCountries;
+  if (partial.desiredRoles !== undefined) wire.desired_roles = partial.desiredRoles;
   if (partial.locale !== undefined) wire.locale = partial.locale;
+  if (partial.avatarUrl !== undefined) wire.avatar_url = partial.avatarUrl;
+  if (partial.phoneNumber !== undefined) wire.phone_number = partial.phoneNumber;
+  if (partial.homeAddress !== undefined) wire.home_address = partial.homeAddress;
+  if (partial.notificationsEnabled !== undefined) wire.notifications_enabled = partial.notificationsEnabled;
+  if (partial.jobAlertRefreshMinutes !== undefined) wire.job_alert_refresh_minutes = partial.jobAlertRefreshMinutes;
+  if (partial.jobAlertDailyLimit !== undefined) wire.job_alert_daily_limit = partial.jobAlertDailyLimit;
   return wire;
 }
 
@@ -79,9 +104,23 @@ const writeCache = async (profile: UserProfileProps): Promise<UserProfileProps> 
  * user's idToken already attached by apiClient's interceptor. The backend
  * verifies the token and upserts the User row, so this is safe to call on
  * every sign-in, not just first sign-up.
+ *
+ * Also forwards any referral code captured from a saveur://referral deep
+ * link (see App.tsx, services/referralService.ts) as `referred_by_code` —
+ * the backend only actually uses it on a genuinely new user's first sync,
+ * but it's harmless to send on every call, so this doesn't need to know
+ * whether the current sign-in is a first-time signup or a returning login.
+ * The pending code is cleared after the call either way, so it's never
+ * resent stale on a later, unrelated sign-in.
  */
 export async function provisionProfile(): Promise<UserProfileProps> {
-  const {data} = await apiClient.post<UserProfileWire>('/api/users/me');
+  const referredByCode = await referralService.getPendingCode();
+  const {data} = await apiClient.post<UserProfileWire>('/api/users/me', {
+    referred_by_code: referredByCode ?? undefined,
+  });
+  if (referredByCode) {
+    referralService.clearPendingCode().catch(() => {});
+  }
   return writeCache(fromWire(data));
 }
 
@@ -114,9 +153,12 @@ export async function updateProfile(
 }
 
 /**
- * DELETE /api/users/me — spec §1. Deletes the backend user row. Callers
- * should also call `auth().currentUser?.delete()` (in AuthContext) to remove
- * the Firebase account itself — this only handles the backend side.
+ * DELETE /api/users/me — permanently deletes the backend user row AND (as of
+ * saveur-backend's account_deletion_service.py) the Firebase Auth account
+ * itself server-side, plus immediately cancels any active Stripe
+ * subscription. Callers don't need to separately delete the Firebase account
+ * client-side afterward — see AuthContext.deleteAccount, which just signs
+ * out locally once this resolves.
  */
 export async function deleteAccount(): Promise<void> {
   await apiClient.delete('/api/users/me');

@@ -1,5 +1,15 @@
+import i18n from 'i18next';
 import {SkillScoreProps, StarBreakdownItemProps} from 'constants/Types';
 import apiClient from './apiClient';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16. Only added to the two endpoints
+// that generate natural-language commentary (session feedback); the
+// camera-frame/camera-summary endpoints are pure numeric telemetry with
+// nothing to localize.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // feedbackService — real backend implementation for the Feedback + camera-
@@ -99,6 +109,24 @@ interface FeedbackWire extends ScoresWire {
   star?: StarWire;
   star_breakdown?: StarBreakdownItemWire[];
   starBreakdown?: StarBreakdownItemWire[];
+  // A few plausible wrapper shapes seen from other endpoints in this app
+  // (e.g. `{data: {...}}` / `{result: {...}}`) — checked in fromFeedbackWire
+  // below before falling back to reading `wire` directly, same defensive
+  // spirit as the scores/star handling above.
+  data?: FeedbackWire;
+  result?: FeedbackWire;
+}
+
+// Statuses meaning "the backend hasn't finished scoring this session yet" —
+// distinct from a session that scored and genuinely got a 0. Not a confirmed
+// backend contract (no real response has been seen yet), so this is
+// deliberately permissive: anything that LOOKS like an in-progress status
+// string is treated as pending rather than only matching one exact spelling.
+const PENDING_STATUSES = new Set([
+  'pending', 'processing', 'queued', 'in_progress', 'inprogress', 'scoring', 'running',
+]);
+export function isFeedbackPending(status?: string): boolean {
+  return !!status && PENDING_STATUSES.has(status.toLowerCase());
 }
 
 function pickScore(wire: FeedbackWire, key: keyof ScoresWire, altKey?: keyof ScoresWire): number {
@@ -111,7 +139,8 @@ function pickScore(wire: FeedbackWire, key: keyof ScoresWire, altKey?: keyof Sco
   return typeof val === 'number' ? Math.round(val) : 0;
 }
 
-function fromFeedbackWire(wire: FeedbackWire): FeedbackReport {
+function fromFeedbackWire(rawWire: FeedbackWire): FeedbackReport {
+  const wire = rawWire.data ?? rawWire.result ?? rawWire;
   const scoreByLabel: Record<(typeof SKILL_LABELS)[number], number> = {
     Confidence: pickScore(wire, 'confidence'),
     Communication: pickScore(wire, 'communication'),
@@ -163,7 +192,9 @@ function fromFeedbackWire(wire: FeedbackWire): FeedbackReport {
  * InterviewFeedback on mount.
  */
 export async function getSessionFeedback(sessionId: string): Promise<FeedbackReport> {
-  const {data} = await apiClient.get<FeedbackWire>(`/api/v1/feedback/session/${sessionId}`);
+  const {data} = await apiClient.get<FeedbackWire>(`/api/v1/feedback/session/${sessionId}`, {
+    params: {language: currentLanguage()},
+  });
   return fromFeedbackWire(data);
 }
 
@@ -175,6 +206,7 @@ export async function getSessionFeedback(sessionId: string): Promise<FeedbackRep
 export async function regenerateFeedback(sessionId: string): Promise<FeedbackReport> {
   const {data} = await apiClient.post<FeedbackWire>(
     `/api/v1/feedback/session/${sessionId}/regenerate`,
+    {language: currentLanguage()},
   );
   return fromFeedbackWire(data);
 }

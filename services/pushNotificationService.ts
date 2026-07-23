@@ -1,0 +1,327 @@
+import {Platform, PermissionsAndroid} from 'react-native';
+import messaging, {FirebaseMessagingTypes} from '@react-native-firebase/messaging';
+import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
+
+import {JobAlertProps} from 'constants/Types';
+import {navigateToJobAlertDetails, navigateToNotifications} from 'navigation/navigationRef';
+import * as notificationService from './notificationService';
+
+// ---------------------------------------------------------------------------
+// Push notifications — the piece notificationService.ts's registerDeviceToken
+// docstring flagged as "not called anywhere yet." Wires
+// @react-native-firebase/messaging (added to package.json) so that:
+//   1. a signed-in user's device gets registered against
+//      POST /api/v1/notifications/device-token (called from AuthContext.tsx
+//      right after sign-in, same fire-and-forget pattern as
+//      gamificationService.checkin()), and
+//   2. tapping an OS push notification for a job alert routes straight to
+//      src/more/JobAlertDetails.tsx — the exact same screen and navigate()
+//      call already used for tapping a job_alert row in the in-app bell
+//      (src/home/Notification/index.tsx) or the Job Alerts list
+//      (src/more/JobAlerts.tsx).
+//
+// Backend contract this assumes for a job-alert push: the notification's
+// `data` payload (FCM data messages are always flat string->string maps,
+// unlike the `notification` block) carries `type: "job_alert"` plus the same
+// fields as job_alert on a GET /api/v1/notifications row, snake_case, all
+// stringified — id, title, company, location?, source?, matched_role?,
+// apply_url, posted_at? (unix ms as a string). This mirrors
+// NotificationJobAlertWire in notificationService.ts; if the backend instead
+// sends only a job id in `data`, this needs a follow-up fetch against
+// GET /api/v1/job-alerts to resolve the full object before navigating.
+//
+// Foreground pushes: Firebase never auto-displays a system notification
+// while the app is in the foreground (true on both platforms) — this used
+// to be papered over with a plain in-app Alert.alert popup, which is not a
+// real system notification (no tray entry, no lock-screen banner, doesn't
+// match how every background/killed-state push already looks). Now uses
+// @notifee/react-native to actually display a real local notification —
+// same tray banner, same "default" Android channel the backend's own
+// push_service.py already targets (channel_id="default"), same tap
+// behavior as a genuine background push — so a foreground push looks
+// identical to a background one instead of a jarring popup dialog. See
+// setupForegroundPushHandler and ensureAndroidChannel below.
+//
+// NOTE: this adds a new native dependency (@notifee/react-native) — after
+// pulling this change, run `npm install` then rebuild natively (`cd ios &&
+// pod install` before the next iOS build; a normal Gradle sync picks it up
+// automatically on Android).
+//
+// Also worth noting: every catch block in this file used to swallow errors
+// completely silently (no logging at all) — meaning a failed permission
+// request, a failed getToken(), or a failed device-token registration call
+// left literally no trace anywhere. That's indistinguishable from "nothing's
+// wrong" from the outside, which is exactly the kind of gap that makes "why
+// am I not getting notifications" hard to debug. Kept these fire-and-forget
+// (a push permission issue still shouldn't block sign-in or throw a user-
+// facing error), but every catch now at least logs what failed.
+// ---------------------------------------------------------------------------
+
+async function requestPermission(): Promise<boolean> {
+  // Android 13+ (API 33) requires a separate OS runtime permission prompt
+  // for notifications — messaging().requestPermission() below only covers
+  // iOS APNs authorization. AndroidManifest.xml already declares
+  // POST_NOTIFICATIONS; this is what actually triggers the user-facing
+  // prompt for it. No-op on older Android (permission is implicitly granted)
+  // and iOS (the check is skipped entirely).
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+    if (granted !== PermissionsAndroid.RESULTS.GRANTED) return false;
+  }
+  const authStatus = await messaging().requestPermission();
+  return (
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL
+  );
+}
+
+function jobFromPushData(
+  data: FirebaseMessagingTypes.RemoteMessage['data'],
+): JobAlertProps | null {
+  if (!data || !data.id || !data.title || !data.company || !data.apply_url) {
+    return null;
+  }
+  const postedAtRaw = data.posted_at ? Number(data.posted_at) : undefined;
+  return {
+    id: String(data.id),
+    title: String(data.title),
+    company: String(data.company),
+    location: data.location ? String(data.location) : undefined,
+    source: data.source ? String(data.source) : undefined,
+    matchedRole: data.matched_role ? String(data.matched_role) : undefined,
+    applyUrl: String(data.apply_url),
+    postedAt: Number.isFinite(postedAtRaw) ? postedAtRaw : undefined,
+    createdAt: Date.now(),
+    read: false,
+  };
+}
+
+/**
+ * Previously only acted on `type: "job_alert"` pushes — tapping ANY other
+ * notification (a plain "normal" push with no `data.type`, or a type this
+ * client doesn't specifically know about) did nothing at all, which looked
+ * identical to "push notifications aren't working" from the outside even
+ * though the OS had genuinely delivered and displayed it. Now falls back to
+ * opening the in-app Notification list for anything that isn't a
+ * recognized job_alert, so a tap always goes somewhere.
+ */
+function handleNotificationTap(
+  remoteMessage: FirebaseMessagingTypes.RemoteMessage | null,
+): void {
+  if (!remoteMessage) return;
+  handleDataTap(remoteMessage.data);
+}
+
+// Shared by both the real background/killed-state tap path above
+// (Firebase's own system tray notification) and the notifee-displayed
+// foreground notification below (setupForegroundPushHandler) — the `data`
+// shape is identical either way (it's the same FCM data payload in both
+// cases), so both taps resolve to the same screen.
+function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Record<string, string> | undefined): void {
+  if (data?.type === 'job_alert') {
+    const job = jobFromPushData(data);
+    if (job) {
+      navigateToJobAlertDetails(job);
+      return;
+    }
+  }
+  navigateToNotifications();
+}
+
+// Android 8+ requires every notification to belong to a channel — this id
+// matches the one the backend's push_service.py already targets
+// (`channel_id="default"` in its AndroidNotification config), so a
+// background push (delivered by FCM/the OS directly) and a foreground push
+// (displayed by notifee below) both land in the same channel with the same
+// user-configurable sound/importance settings. Idempotent — safe to call
+// on every app start; notifee no-ops if the channel already exists.
+let androidChannelReady = false;
+async function ensureAndroidChannel(): Promise<void> {
+  if (Platform.OS !== 'android' || androidChannelReady) return;
+  try {
+    await notifee.createChannel({
+      id: 'default',
+      name: 'Default',
+      importance: AndroidImportance.HIGH,
+    });
+    androidChannelReady = true;
+  } catch (err) {
+    console.warn('[push] ensureAndroidChannel failed', err);
+  }
+}
+
+let tapListenersRegistered = false;
+
+/**
+ * Registers the two tap-handling paths Firebase splits background vs. killed
+ * state across:
+ *   - onNotificationOpenedApp: app was backgrounded, user tapped the push.
+ *   - getInitialNotification: app was fully killed, tapping the push is what
+ *     launched it — checked once on cold start.
+ * Call once, near the app root (App.tsx), independent of auth state (a
+ * killed-app tap can resolve before AuthContext's onAuthStateChanged does).
+ * Returns an unsubscribe function for the onNotificationOpenedApp listener.
+ */
+export function setupNotificationTapListeners(): () => void {
+  if (tapListenersRegistered) return () => {};
+  tapListenersRegistered = true;
+
+  const unsubscribe = messaging().onNotificationOpenedApp(handleNotificationTap);
+
+  messaging()
+    .getInitialNotification()
+    .then(handleNotificationTap)
+    .catch(err => console.warn('[push] getInitialNotification failed', err));
+
+  return unsubscribe;
+}
+
+let foregroundHandlerRegistered = false;
+let foregroundTapListenerRegistered = false;
+
+// Stringifies every data value (notifee, like FCM, only accepts a flat
+// string->string map) and drops undefined entries, since jobFromPushData
+// above expects the same string-valued shape FCM itself sends.
+function stringifyData(data: FirebaseMessagingTypes.RemoteMessage['data']): Record<string, string> {
+  const out: Record<string, string> = {};
+  Object.entries(data ?? {}).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) out[key] = String(value);
+  });
+  return out;
+}
+
+/**
+ * Displays a real local notification (via @notifee/react-native) for a push
+ * that arrives while the app is already open — Firebase itself never shows
+ * a system notification in that state (true on both platforms), so without
+ * this a foreground push was previously either silently invisible or (the
+ * older version of this function) surfaced as a plain in-app Alert.alert
+ * popup, which doesn't look or behave like a real notification. This now
+ * renders in the same Android "default" channel and looks the same as a
+ * background/killed-state push, and tapping it routes through the same
+ * handleDataTap logic as a real system-tray tap (see the
+ * notifee.onForegroundEvent listener registered alongside this).
+ *
+ * Falls back to logging (not displaying anything) only for a push that has
+ * neither a `notification` block nor a recognized `data.type` — there's
+ * nothing human-readable to show in that case.
+ */
+export function setupForegroundPushHandler(): () => void {
+  if (foregroundHandlerRegistered) return () => {};
+  foregroundHandlerRegistered = true;
+
+  ensureAndroidChannel();
+
+  if (!foregroundTapListenerRegistered) {
+    foregroundTapListenerRegistered = true;
+    notifee.onForegroundEvent(({type, detail}) => {
+      if (type === EventType.PRESS) {
+        handleDataTap(detail.notification?.data as Record<string, string> | undefined);
+      }
+    });
+    // notifee requires a background handler to be registered at module
+    // scope even though this app's own foreground-displayed notifications
+    // are only ever pressed while already in the foreground — an unhandled
+    // background event otherwise logs a noisy warning every launch.
+    notifee.onBackgroundEvent(async ({type, detail}) => {
+      if (type === EventType.PRESS) {
+        handleDataTap(detail.notification?.data as Record<string, string> | undefined);
+      }
+    });
+  }
+
+  return messaging().onMessage(async remoteMessage => {
+    const data = stringifyData(remoteMessage.data);
+    let title: string | undefined;
+    let body: string | undefined;
+
+    if (data.type === 'job_alert') {
+      const job = jobFromPushData(remoteMessage.data);
+      if (job) {
+        title = `New role: ${job.title}`;
+        body = [job.company, job.location].filter(Boolean).join(' · ') || 'Tap to view';
+      }
+    }
+    title = title ?? remoteMessage.notification?.title ?? undefined;
+    body = body ?? remoteMessage.notification?.body ?? undefined;
+
+    if (!title && !body) {
+      // A data-only push with no notification block and no recognized
+      // type — nothing human-readable to show; log it instead of
+      // displaying a blank notification, so it's still visible while
+      // debugging "not receiving notifications" reports.
+      console.warn('[push] foreground message with no notification/body and unrecognized type', remoteMessage);
+      return;
+    }
+
+    try {
+      await notifee.displayNotification({
+        title,
+        body,
+        data,
+        android: {
+          channelId: 'default',
+          pressAction: {id: 'default'},
+          smallIcon: 'ic_launcher',
+        },
+        ios: {
+          sound: 'default',
+        },
+      });
+    } catch (err) {
+      console.warn('[push] displayNotification failed', err);
+    }
+  });
+}
+
+let tokenRefreshRegistered = false;
+
+/**
+ * Requests notification permission, gets an FCM token, and registers it via
+ * notificationService.registerDeviceToken (POST
+ * /api/v1/notifications/device-token). Call after a successful sign-in (see
+ * AuthContext.tsx's onAuthStateChanged) — fire-and-forget, same as
+ * gamificationService.checkin(): a denied permission or a simulator without
+ * real push capability shouldn't block sign-in or surface an error the user
+ * can't act on.
+ */
+export async function registerForPushNotifications(): Promise<void> {
+  try {
+    const granted = await requestPermission();
+    if (!granted) {
+      console.warn('[push] permission not granted — device token was not registered');
+      return;
+    }
+
+    const token = await messaging().getToken();
+    if (!token) {
+      console.warn('[push] messaging().getToken() returned empty — device token was not registered');
+      return;
+    }
+    try {
+      await notificationService.registerDeviceToken(token);
+    } catch (err) {
+      // This is the one most likely to explain "I'm not getting
+      // notifications" silently — a failed POST here means the backend
+      // never has a token to send a push to at all, no matter what it does
+      // server-side afterward.
+      console.warn('[push] registerDeviceToken failed', err);
+    }
+
+    if (!tokenRefreshRegistered) {
+      tokenRefreshRegistered = true;
+      messaging().onTokenRefresh(newToken => {
+        notificationService.registerDeviceToken(newToken).catch(err => {
+          console.warn('[push] registerDeviceToken (refresh) failed', err);
+        });
+      });
+    }
+  } catch (err) {
+    // Still swallowed — a push-permission/registration issue shouldn't
+    // block sign-in or surface a user-facing error — but now at least
+    // logged so it's visible while debugging instead of invisible.
+    console.warn('[push] registerForPushNotifications failed', err);
+  }
+}

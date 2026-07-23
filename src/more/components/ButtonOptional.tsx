@@ -30,6 +30,9 @@ export interface ButtonOptionalProps {
     | 'ReferFriend';
   withToggle?: boolean;
   checked?: boolean;
+  // Passed straight through to ButtonFill's own `backgroundColor` override —
+  // see that component for why this exists (MoreSrc.tsx's icon rows).
+  iconBackgroundColor?: string;
   status:
     | 'basic'
     | 'danger'
@@ -53,6 +56,7 @@ const ButtonOptional = ({
   withToggle,
   checked,
   navigateSrc,
+  iconBackgroundColor,
 }: ButtonOptionalProps) => {
   const theme = useTheme();
   const {navigate, goBack} =
@@ -73,7 +77,7 @@ const ButtonOptional = ({
       mt={24}
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
-        <ButtonFill icon={icon} status={status} size="medium" />
+        <ButtonFill icon={icon} status={status} size="medium" backgroundColor={iconBackgroundColor} />
         <Text ml={24} category="para-m">
           {title}
         </Text>

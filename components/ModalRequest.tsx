@@ -5,7 +5,6 @@ import {
   ImageRequireSource,
   ViewStyle,
   TouchableOpacity,
-  Image,
   Modal,
   Pressable,
 } from "react-native";
@@ -21,6 +20,12 @@ interface ModalConfirmProps {
   style?: ViewStyle;
   avatar?: ImageRequireSource;
   onDetails?(): void;
+  // Was hardcoded to "OK, Thanks!" — fine for the original "dismiss this
+  // acknowledgement" use (feedback-ready), but the ad popup
+  // (src/home/HomeSrc.tsx) wants its single action to read as an actual
+  // "go look at this" prompt rather than a plain acknowledgement, since
+  // tapping it there navigates to AdDetails.tsx instead of just dismissing.
+  detailsLabel?: string;
   isOnl: boolean;
   visible: boolean;
   show(): void;
@@ -31,6 +36,7 @@ interface ModalConfirmProps {
 function ModalRequest({
   name,
   onDetails,
+  detailsLabel,
   avatar,
   visible,
   hide,
@@ -47,24 +53,18 @@ function ModalRequest({
     <Modal visible={visible} transparent animationType="fade">
       <Pressable onPress={hide} style={styles.container}>
         <Layout
+          level="1"
           style={{
             width: width - 80,
             height: 334 * (height / 812),
             borderRadius: 24,
             overflow: "hidden",
+            // Was a decorative Image (Images.modalBg — scattered pastel
+            // polka-dot/confetti shapes) covering the whole card. Plain
+            // Layout background per explicit request; `level="1"` is
+            // UI Kitten's flat white/basic surface, not a themed tint.
           }}
         >
-          <Image
-            source={Images.modalBg}
-            style={{
-              width: width - 80,
-              height: 334 * (height / 812),
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-            }}
-          />
           <View style={styles.avatarView}>
             <Avatar
               source={avatar ? avatar : Images.avatar}
@@ -101,33 +101,19 @@ function ModalRequest({
               />
             </Text>
           </Flex>
-          <View style={styles.buttonView}>
-            <TouchableOpacity
-              activeOpacity={0.54}
-              onPress={hide}
-              style={[
-                styles.btnOk,
-                {
-                  borderColor: themes["color-basic-300"],
-                },
-              ]}
-            >
-              <Text
-                category="para-m"
-                center
-                status={"placeholder"}
-                mt={16}
-                mb={10}
-              >
-                Send a message
-              </Text>
-            </TouchableOpacity>
+          <View
+            style={[
+              styles.buttonView,
+              styles.btnOk,
+              { borderColor: themes["color-basic-300"] },
+            ]}
+          >
             <TouchableOpacity
               activeOpacity={0.54}
               onPress={onDetails !== undefined ? onDetails : hide}
             >
               <Text category="h7" status={"link"} center mt={16} mb={20}>
-                OK, Thanks!
+                {detailsLabel ?? 'OK, Thanks!'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -165,8 +151,10 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   btnOk: {
+    // Was borderTopWidth + borderBottomWidth, boxing in a "Send a message"
+    // row that sat above "OK, Thanks!" — now that row is gone, just a top
+    // divider separating the single remaining action from the text above.
     borderTopWidth: 1,
-    borderBottomWidth: 1,
   },
   onlineIcon: {
     width: 16,

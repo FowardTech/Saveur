@@ -26,6 +26,7 @@ import useToggle from 'hooks/useToggle';
 import Flex from 'components/Flex';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
+import {mapFirebaseAuthError} from 'utils/authErrors';
 import {AuthContext} from '../../../AuthContext';
 
 const Login = memo(() => {
@@ -34,7 +35,7 @@ const Login = memo(() => {
   const {bottom} = useLayout();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['auth', 'common']);
-  const {signIn, signInWithGoogle, signInWithApple} = React.useContext(AuthContext);
+  const {signIn, signInWithGoogle, signInWithLinkedIn} = React.useContext(AuthContext);
 
   const nextScreen = React.useCallback((screenName: string) => {
     const resetAction = CommonActions.reset({
@@ -55,9 +56,13 @@ const Login = memo(() => {
     handleSubmit,
     formState: {errors},
   } = useForm({
+    // Was hardcoded to a leftover template account (same class of bug as
+    // EditProfile's old "Edith Johnson" fake data) — every visit to this
+    // screen silently prefilled someone else's login. Should always start
+    // blank.
     defaultValues: {
-      email: 'lehieuds@gmail.com',
-      password: '123456Aa',
+      email: '',
+      password: '',
     },
   });
   const [canContinue, setCanContinue] = React.useState(false);
@@ -79,18 +84,12 @@ const Login = memo(() => {
       // account, network error) — surface it instead of swallowing it.
       Alert.alert(
         t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-        e?.message ?? 'Something went wrong. Please try again.',
+        mapFirebaseAuthError(e),
       );
     } finally {
       setIsSubmitting(false);
     }
   });
-  const onSocialComingSoon = React.useCallback((provider: string) => {
-    Alert.alert(
-      t('common:coming_soon', {defaultValue: 'Coming soon'}),
-      `${provider} sign-in isn't connected yet — use email for now.`,
-    );
-  }, [t]);
   const [isSocialSubmitting, setIsSocialSubmitting] = React.useState(false);
   const onGoogle = React.useCallback(async () => {
     if (isSocialSubmitting) return;
@@ -99,33 +98,46 @@ const Login = memo(() => {
       await signInWithGoogle();
       nextScreen('MainBottomTab');
     } catch (e: any) {
+      // mapFirebaseAuthError swallows anything not in its known-codes list
+      // (e.g. GoogleSignin's native statusCodes like SIGN_IN_FAILED/12500)
+      // down to a generic fallback string, and nothing was ever logging the
+      // raw error — so a real native failure code never reached logcat or
+      // the Metro terminal, only ever a friendly Alert with no diagnostic
+      // value. Logging it here (console.warn shows up directly in the Metro
+      // bundler terminal, no logcat grepping needed) surfaces e.code/e.message
+      // /e.nativeErrorMessage on the next reproduction.
+      console.warn('[Google Sign-In failed]', {
+        code: e?.code,
+        message: e?.message,
+        nativeErrorMessage: e?.nativeErrorMessage,
+      });
       Alert.alert(
         t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-        e?.message ?? 'Google sign-in was cancelled or failed.',
+        mapFirebaseAuthError(e, 'Google sign-in was cancelled or failed.'),
       );
     } finally {
       setIsSocialSubmitting(false);
     }
   }, [signInWithGoogle, nextScreen, isSocialSubmitting, t]);
-  const onApple = React.useCallback(async () => {
+  // LinkedIn has no first-party Firebase/RN SDK — AuthContext's
+  // signInWithLinkedIn drives a custom OAuth2 flow (system browser +
+  // backend code exchange) instead. Shares the same busy-state/error
+  // handling as Google above.
+  const onLinkedIn = React.useCallback(async () => {
     if (isSocialSubmitting) return;
     setIsSocialSubmitting(true);
     try {
-      await signInWithApple();
+      await signInWithLinkedIn();
       nextScreen('MainBottomTab');
     } catch (e: any) {
       Alert.alert(
         t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-        e?.message ?? 'Apple sign-in was cancelled or failed.',
+        mapFirebaseAuthError(e, 'LinkedIn sign-in was cancelled or failed.'),
       );
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithApple, nextScreen, isSocialSubmitting, t]);
-  // LinkedIn has no first-party Firebase/RN SDK — stays a clear "coming
-  // soon" until a custom OAuth2 flow is built for it (see
-  // docs/BACKEND_API_SPEC.md §2).
-  const onLinkedIn = React.useCallback(() => onSocialComingSoon('LinkedIn'), [onSocialComingSoon]);
+  }, [signInWithLinkedIn, nextScreen, isSocialSubmitting, t]);
   const onAuth = React.useCallback(
     screen => () => {
       navigate('AuthStack', {screen: screen});
@@ -214,19 +226,11 @@ const Login = memo(() => {
             children={<Text>{`${t('auth:google_login')}`}</Text>}
           />
         </View>
-        <View style={styles.facebook}>
-          <Icon pack="eva" name={'smartphone-outline'} style={styles.logoSocial} />
-          <Button
-            status="outline"
-            disabled={isSocialSubmitting}
-            onPress={onApple}
-            children={<Text>{`${t('auth:apple_login')}`}</Text>}
-          />
-        </View>
         <View>
           <Icon pack="eva" name={'briefcase-outline'} style={styles.logoSocial} />
           <Button
             status="outline"
+            disabled={isSocialSubmitting}
             onPress={onLinkedIn}
             children={<Text>{`${t('auth:linkedin_login')}`}</Text>}
           />

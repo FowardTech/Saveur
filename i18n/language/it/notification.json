@@ -1,0 +1,9 @@
+{
+  "title": "Notifiche",
+  "mark_all_read": "Segna tutte come lette",
+  "load_failed": "Impossibile caricare le tue notifiche.",
+  "mark_read_failed_title": "Impossibile aggiornare la notifica",
+  "mark_read_failed_body": "Riprova tra un momento.",
+  "empty_title": "Sei aggiornato!",
+  "empty_description": "Le nuove notifiche sulla tua pratica di colloquio appariranno qui."
+}

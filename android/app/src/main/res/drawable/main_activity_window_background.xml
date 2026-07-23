@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- MainActivity's windowBackground — plain blue with the Saveur logo
+     centered at a fixed, known size we fully control. Deliberately NOT
+     using the system SplashScreen API's windowSplashScreenAnimatedIcon for
+     this logo (see Theme.App.SplashScreen in styles.xml, which now sets no
+     icon at all) — that mechanism was tried twice with well-padded assets
+     and still rendered the logo huge/cropped on-device, seemingly ignoring
+     the source PNG's own transparent padding. A plain windowBackground
+     drawable has no such platform-side auto-sizing: this <item>'s
+     width/height directly control the on-screen box.
+
+     @mipmap/ic_launcher_foreground is used as the source (not a separate
+     splash_logo asset) because it already has generous transparent padding
+     baked in (~46% content occupancy, from the adaptive-icon safe-zone fix)
+     — sized into a 480dp box here so the actual visible glyph renders at
+     roughly 220dp, matching the original splash design's intended size
+     (verified by compositing this exact box size over a mock phone canvas
+     before committing — the glyph sits well clear of the screen edges,
+     nothing cropped). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/splash_background" />
+    <item android:gravity="center" android:width="480dp" android:height="480dp">
+        <bitmap android:src="@mipmap/ic_launcher_foreground" android:gravity="center" />
+    </item>
+</layer-list>

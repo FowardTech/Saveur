@@ -1,0 +1,9 @@
+{
+  "title": "通知",
+  "mark_all_read": "全部标记为已读",
+  "load_failed": "无法加载您的通知。",
+  "mark_read_failed_title": "无法更新通知",
+  "mark_read_failed_body": "请稍后再试。",
+  "empty_title": "您已全部处理完毕！",
+  "empty_description": "有关您面试练习的新通知将显示在此处。"
+}

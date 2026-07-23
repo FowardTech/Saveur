@@ -1,0 +1,9 @@
+{
+  "title": "通知",
+  "mark_all_read": "すべて既読にする",
+  "load_failed": "通知を読み込めませんでした。",
+  "mark_read_failed_title": "通知を更新できませんでした",
+  "mark_read_failed_body": "しばらくしてからもう一度お試しください。",
+  "empty_title": "すべて確認済みです！",
+  "empty_description": "面接練習に関する新しい通知はここに表示されます。"
+}

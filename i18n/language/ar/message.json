@@ -1,0 +1,15 @@
+{
+  "empty_description": "ابدأ مقابلة تجريبية أو اطرح سؤالًا على مدرب الذكاء الاصطناعي للحصول على تعليقات مخصصة ونصائح مهنية.",
+  "empty_title": "لا توجد محادثات بعد.",
+  "placeholder_input": "البحث عن مواضيع التدريب...",
+  "title": "المدرب",
+  "voice_initial_line": "أنا أستمع — تحدث معي عندما تكون مستعدًا.",
+  "voice_mic_error": "تعذر تشغيل الميكروفون.",
+  "voice_retry_line": "آسف، لم أفهم ذلك — هل يمكنك تكراره؟",
+  "voice_status_listening": "أستمع…",
+  "voice_status_listening_prompt": "أنا أستمع — تفضل",
+  "voice_status_speaking": "أتحدث…",
+  "voice_status_starting": "جارٍ البدء…",
+  "voice_status_thinking": "أفكر…",
+  "voice_tap_to_interrupt": "اضغط للمقاطعة"
+}

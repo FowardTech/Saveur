@@ -1,9 +1,16 @@
 export const RulePassword = {
   required: {value: true, message: 'Password is required'},
+  // Was `[a-zA-Z\d]{8,}` — that character class only ever allowed letters
+  // and digits (alphanumeric), so a password with a symbol in it didn't
+  // just skip getting "credit" for one, it failed the pattern outright.
+  // Now requires a lowercase letter, an uppercase letter, a digit, AND at
+  // least one non-alphanumeric, non-whitespace character (the last
+  // lookahead), and the overall allowed character set is opened up to
+  // include symbols (still no whitespace, via \S).
   pattern: {
-    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s])\S{8,}$/,
     message:
-      'Password must be at least one uppercase letter,one lowercase letter, and a number.',
+      'Password must include an uppercase letter, a lowercase letter, a number, and a special character (e.g. ! @ # $ %).',
   },
   minLength: {
     value: 8,

@@ -12,7 +12,20 @@
           "package_name": "com.saveur.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "679326954548-r7s5a8os8a547pccqkfcnscr9o0b2hrm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.saveur.app",
+            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+          }
+        },
+        {
+          "client_id": "679326954548-mfpnhhsj9e4qhj5ftvcpkef6ljh6e3g1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCDAKUSo7CbyIGaRTZz_c-B6q5oJV3_2LY"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "679326954548-mfpnhhsj9e4qhj5ftvcpkef6ljh6e3g1.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "679326954548-35emkamsh1t03e4md0ukaqnnm19hp806.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ayotundebalogun.saveur"
+              }
+            }
+          ]
         }
       }
     }

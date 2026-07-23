@@ -63,5 +63,8 @@
   "booking": "Reserva",
   "accept-again": "Aceptar de nuevo",
   "profiles": "Perfiles",
-  "done": "Listo"
+  "done": "Listo",
+  "try_again": "Intentar de nuevo",
+  "try_again_later": "Inténtalo de nuevo en un momento.",
+  "load_more": "Cargar más"
 }

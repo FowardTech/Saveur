@@ -1,0 +1,9 @@
+{
+  "add-new-credit-card": "新しいクレジットカードを追加",
+  "card-number": "カード番号",
+  "select-card": "カードを選択",
+  "pay-now": "今すぐ支払う",
+  "payment-method": "支払い方法",
+  "no-card-yet": "まだカードが登録されていません！",
+  "please-attach-card": "お仕事の支払いのため、カードを登録してください。ありがとうございます！"
+}

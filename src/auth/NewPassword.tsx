@@ -80,7 +80,7 @@ const NewPassword = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h2" mb={8}>
           {t('auth:recovery_password')}
         </Text>

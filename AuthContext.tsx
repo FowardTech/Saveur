@@ -1,14 +1,36 @@
 import React from 'react';
-import {Platform} from 'react-native';
+import {Alert, Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 import {appleAuth} from '@invertase/react-native-apple-authentication';
+import i18n from 'i18next';
 
-import {EKeyAsyncStorage, SignUpPayload, UserProfileProps} from 'constants/Types';
+import {EKeyAsyncStorage, SignUpPayload, SubscriptionStatusProps, UserProfileProps} from 'constants/Types';
+import {isSupportedLanguageCode} from 'constants/languages';
 import * as authService from 'services/authService';
+import * as billingService from 'services/billingService';
 import * as emailService from 'services/emailService';
 import * as gamificationService from 'services/gamificationService';
+import {isProTier} from 'services/entitlementsService';
+import {registerForPushNotifications} from 'services/pushNotificationService';
+import * as linkedinAuthService from 'services/linkedinAuthService';
+import * as twoFactorService from 'services/twoFactorService';
+import {resetToMainAfterExternalSignIn} from 'navigation/navigationRef';
+
+// The account's `locale` (set at signup or from Settings → Language, see
+// constants/languages.ts) is the source of truth for the app's language —
+// more authoritative than whatever's cached in AsyncStorage by i18next's own
+// language-detector (i18n/language-detector.ts), since a user signing into a
+// second device / after a reinstall should see their saved language, not the
+// new device's default. Called every time a profile is fetched/refreshed
+// below (sign-in, sign-up, Google/Apple sign-in) — a no-op if it already
+// matches the current i18next language.
+function syncLanguageFromProfile(profile: UserProfileProps | null): void {
+  if (profile?.locale && isSupportedLanguageCode(profile.locale) && profile.locale !== i18n.language) {
+    i18n.changeLanguage(profile.locale).catch(() => {});
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Real Firebase Auth (native @react-native-firebase, not the JS SDK — see
@@ -51,6 +73,19 @@ const GOOGLE_WEB_CLIENT_ID =
 const GOOGLE_IOS_CLIENT_ID =
   '679326954548-35emkamsh1t03e4md0ukaqnnm19hp806.apps.googleusercontent.com';
 
+// ---------------------------------------------------------------------------
+// Email-code 2FA (see services/twoFactorService.ts). Rather than requiring a
+// fresh code on every single app open — which is what a naive "check on
+// every onAuthStateChanged" would do, since Firebase's persisted session
+// makes every cold start look identical to a fresh sign-in from this
+// listener's point of view — this device is "trusted" for
+// TWO_FACTOR_TRUST_DAYS after a successful verification, tracked per
+// uid+device in AsyncStorage. This matches how most real 2FA
+// implementations behave (verify once, not nagged again on the same device
+// for a while) without needing new backend session-tracking infrastructure.
+const TWO_FACTOR_TRUST_DAYS = 30;
+const twoFactorTrustKey = (uid: string) => `twoFactorTrustedUntil:${uid}`;
+
 GoogleSignin.configure({
   webClientId: GOOGLE_WEB_CLIENT_ID,
   iosClientId: GOOGLE_IOS_CLIENT_ID,
@@ -69,15 +104,38 @@ type Context = {
   // `refreshEmailVerified()` (e.g. on app-foreground) to pick up a change
   // made by tapping the emailed link.
   emailVerified: boolean;
+  // App-wide plan/entitlement state — see services/entitlementsService.ts for
+  // the actual gating rules (e.g. free-tier session caps) built on top of
+  // this. `subscription` is fetched here (not per-screen) so gating checks
+  // anywhere in the app (Practice setup, future premium screens) don't each
+  // need their own GET /billing/subscription call. Screens that show live
+  // billing detail (Subscription.tsx) still keep their own local fetch for
+  // display purposes, but should call `refreshSubscription()` after a
+  // successful purchase/portal-return so this shared copy doesn't go stale.
+  subscription: SubscriptionStatusProps | null;
+  isPro: boolean;
+  refreshSubscription: () => Promise<SubscriptionStatusProps | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (payload: SignUpPayload) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  signInWithApple: () => Promise<void>;
+  signInWithGoogle: (opts?: {isSignup?: boolean}) => Promise<void>;
+  signInWithApple: (opts?: {isSignup?: boolean}) => Promise<void>;
+  signInWithLinkedIn: (opts?: {isSignup?: boolean}) => Promise<void>;
   signOut: () => Promise<void>;
   updateProfile: (partial: Partial<UserProfileProps>) => Promise<void>;
+  refreshProfile: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   refreshEmailVerified: () => Promise<boolean>;
   resendVerificationEmail: () => Promise<void>;
+  // Email-code 2FA — see services/twoFactorService.ts. twoFactorPending true
+  // means a signed-in (Firebase-authenticated) user still needs to enter a
+  // code before AppContainer will show them the real app;
+  // twoFactorEmailHint is the masked address ("j***@example.com") to display
+  // on that screen.
+  twoFactorPending: boolean;
+  twoFactorEmailHint: string | null;
+  verifyTwoFactorLogin: (code: string) => Promise<void>;
+  resendTwoFactorLoginCode: () => Promise<void>;
+  cancelTwoFactorLogin: () => Promise<void>;
 };
 
 export const AuthContext = React.createContext<Context>({
@@ -86,15 +144,25 @@ export const AuthContext = React.createContext<Context>({
   isIntro: false,
   profile: null,
   emailVerified: false,
+  subscription: null,
+  isPro: false,
+  refreshSubscription: async () => null,
   signIn: async () => {},
   signUp: async () => {},
   signInWithGoogle: async () => {},
   signInWithApple: async () => {},
+  signInWithLinkedIn: async () => {},
   signOut: async () => {},
   updateProfile: async () => {},
+  refreshProfile: async () => {},
   deleteAccount: async () => {},
   refreshEmailVerified: async () => false,
   resendVerificationEmail: async () => {},
+  twoFactorPending: false,
+  twoFactorEmailHint: null,
+  verifyTwoFactorLogin: async () => {},
+  resendTwoFactorLoginCode: async () => {},
+  cancelTwoFactorLogin: async () => {},
 });
 
 export const AuthProvider: React.FC = ({children}) => {
@@ -103,6 +171,13 @@ export const AuthProvider: React.FC = ({children}) => {
   const [isIntro, setIsIntro] = React.useState(false);
   const [profile, setProfile] = React.useState<UserProfileProps | null>(null);
   const [emailVerified, setEmailVerified] = React.useState(false);
+  const [subscription, setSubscription] = React.useState<SubscriptionStatusProps | null>(null);
+  // True while a signed-in (Firebase-authenticated) user still has an
+  // unverified 2FA code pending — see the onAuthStateChanged handler below
+  // and AppContainer.tsx, which renders a TwoFactorVerify gate instead of
+  // the normal navigator whenever this is true.
+  const [twoFactorPending, setTwoFactorPending] = React.useState(false);
+  const [twoFactorEmailHint, setTwoFactorEmailHint] = React.useState<string | null>(null);
 
   // Single source of truth for isSignedIn: Firebase persists sessions
   // on-device and replays this listener with the restored user on cold
@@ -113,8 +188,34 @@ export const AuthProvider: React.FC = ({children}) => {
       if (firebaseUser) {
         const nextProfile = await authService.getCurrentProfile();
         setProfile(nextProfile);
+        syncLanguageFromProfile(nextProfile);
         setSignedIn(true);
         setEmailVerified(firebaseUser.emailVerified);
+
+        // 2FA gate — see the TWO_FACTOR_TRUST_DAYS comment above. Checked
+        // here (not inside signIn/signInWithGoogle/etc.) because this
+        // listener is the one place that's guaranteed to fire after EVERY
+        // way a user ends up authenticated, including cold-start session
+        // restore, so gating here covers every sign-in method uniformly
+        // instead of needing to duplicate this check in each of them.
+        if (nextProfile?.twoFactorEnabled) {
+          const trustedUntilRaw = await AsyncStorage.getItem(twoFactorTrustKey(firebaseUser.uid));
+          const trustedUntil = trustedUntilRaw ? parseInt(trustedUntilRaw, 10) : 0;
+          if (Date.now() > trustedUntil) {
+            setTwoFactorPending(true);
+            // Auto-send the first code so the user doesn't have to tap
+            // anything to get started — best-effort, the verify screen also
+            // has its own "Resend" action if this fails silently.
+            twoFactorService
+              .sendCode('login')
+              .then(setTwoFactorEmailHint)
+              .catch(() => {});
+          } else {
+            setTwoFactorPending(false);
+          }
+        } else {
+          setTwoFactorPending(false);
+        }
         // POST /gamification/checkin — fires here rather than from a
         // dedicated "app open" hook because this listener already covers
         // both real triggers for that: cold start with a restored session,
@@ -124,14 +225,88 @@ export const AuthProvider: React.FC = ({children}) => {
         // more than once in a day — the backend response just reflects
         // `checkedInToday` either way, it doesn't double-count.
         gamificationService.checkin().catch(() => {});
+        // Same fire-and-forget rationale as checkin() above — requests
+        // permission, gets an FCM token, and registers it via
+        // POST /api/v1/notifications/device-token. A denied permission
+        // prompt or a simulator without real push capability shouldn't
+        // block auth state from settling. See
+        // services/pushNotificationService.ts.
+        registerForPushNotifications().catch(() => {});
+        // Same fire-and-forget rationale — populates `subscription` for
+        // app-wide entitlement checks (see services/entitlementsService.ts).
+        // A failed fetch just leaves gating on its safe local fallback
+        // rather than blocking auth state from settling.
+        billingService.getSubscription().then(setSubscription).catch(() => {});
       } else {
         setProfile(null);
         setSignedIn(false);
         setEmailVerified(false);
+        setSubscription(null);
+        setTwoFactorPending(false);
+        setTwoFactorEmailHint(null);
       }
       setInitialized(true);
     });
     return unsubscribe;
+  }, []);
+
+  // Cold-start fallback for the LinkedIn OAuth redirect — see
+  // services/linkedinAuthService.ts's setColdStartHandler for the full
+  // reasoning. Android can kill the app while it's backgrounded on
+  // LinkedIn's own login page (easily long enough for someone to type
+  // credentials + consent), so the saveur://linkedin-redirect deep link
+  // often lands on a freshly cold-started process rather than the one that
+  // opened the browser — the in-memory promise signInWithLinkedIn() below
+  // was waiting on no longer exists. This runs the same
+  // signInWithCustomToken + provisionProfile steps directly instead of
+  // letting the token get silently dropped.
+  //
+  // Getting isSignedIn to flip true here is NOT enough on its own to leave
+  // the Login screen — AppContainer.tsx's Stack.Navigator only reads
+  // `initialRouteName` on its first mount, so it doesn't reactively move
+  // anywhere just because isSignedIn changed after that. Every OTHER
+  // sign-in path (email/password, Google) gets to MainBottomTab via each
+  // button handler's own explicit nextScreen('MainBottomTab') stack reset —
+  // this fallback has no button handler to call that from (it's a plain
+  // Firebase-listener callback with no navigation prop in scope), which is
+  // exactly why a cold-start LinkedIn sign-in used to complete successfully
+  // in the background while the screen stayed stuck on Login. Explicitly
+  // resetting via navigationRef below closes that gap.
+  React.useEffect(() => {
+    linkedinAuthService.setColdStartHandler(async result => {
+      if (!result.token) {
+        if (result.error && !/cancel/i.test(result.error)) {
+          Alert.alert(
+            i18n.t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
+            i18n.t('auth:linkedin_failed', {defaultValue: 'LinkedIn sign-in failed. Please try again.'}),
+          );
+        }
+        return;
+      }
+      try {
+        await auth().signInWithCustomToken(result.token);
+        const nextProfile = await authService.provisionProfile();
+        setProfile(nextProfile);
+        syncLanguageFromProfile(nextProfile);
+        resetToMainAfterExternalSignIn();
+      } catch (e: any) {
+        Alert.alert(
+          i18n.t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
+          e?.message ?? i18n.t('auth:linkedin_failed', {defaultValue: 'LinkedIn sign-in failed. Please try again.'}),
+        );
+      }
+    });
+    return () => linkedinAuthService.setColdStartHandler(null);
+  }, []);
+
+  const refreshSubscription = React.useCallback(async () => {
+    try {
+      const status = await billingService.getSubscription();
+      setSubscription(status);
+      return status;
+    } catch {
+      return null;
+    }
   }, []);
 
   const signIn = React.useCallback(async (email: string, password: string) => {
@@ -144,6 +319,7 @@ export const AuthProvider: React.FC = ({children}) => {
     // sign-in, not just first sign-up.
     const nextProfile = await authService.provisionProfile();
     setProfile(nextProfile);
+    syncLanguageFromProfile(nextProfile);
   }, []);
 
   const signUp = React.useCallback(async (payload: SignUpPayload) => {
@@ -154,12 +330,16 @@ export const AuthProvider: React.FC = ({children}) => {
     await authService.provisionProfile();
     // Persist the onboarding data collected across
     // SignupFirstStep/SignupSecondStep/SignupThirdStep in the same PATCH
-    // call (spec §0.5).
+    // call (spec §0.5). `locale` defaults to whatever's currently active in
+    // i18next (SignupFirstStep already called changeLanguage on selection)
+    // so this is never left unset even if a caller skips it.
     const nextProfile = await authService.updateProfile({
       name: payload.name,
       goals: payload.goals,
       industries: payload.industries,
       preferredCountries: payload.preferredCountries,
+      desiredRoles: payload.desiredRoles,
+      locale: payload.locale ?? i18n.language,
     });
     setProfile(nextProfile);
     setEmailVerified(!!auth().currentUser?.emailVerified);
@@ -176,8 +356,21 @@ export const AuthProvider: React.FC = ({children}) => {
     }
   }, []);
 
-  const signInWithGoogle = React.useCallback(async () => {
+  const signInWithGoogle = React.useCallback(async (opts?: {isSignup?: boolean}) => {
     await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+    // Once an account has been picked once and consent granted, GoogleSignin
+    // caches that choice natively and silently reuses it on every later
+    // signIn() call instead of showing the account picker again — expected
+    // SDK behavior, not a bug, but wrong for a "Continue with Google" button
+    // that should let someone pick (or switch to) an account every time.
+    // signOut() here only clears that local native cache; it doesn't touch
+    // the Firebase session or revoke the app's access, so it's safe to call
+    // unconditionally (a no-op if nothing was cached).
+    try {
+      await GoogleSignin.signOut();
+    } catch {
+      // Nothing cached to clear — fine, proceed to signIn() below either way.
+    }
     const response: any = await GoogleSignin.signIn();
     // @react-native-google-signin/google-signin v13+ wraps the result in
     // `{ type: 'success', data: {...} }`; older versions returned the user
@@ -187,13 +380,53 @@ export const AuthProvider: React.FC = ({children}) => {
     if (!idToken) {
       throw new Error('Google Sign-In did not return an ID token.');
     }
-    const googleCredential = auth.GoogleAuthProvider.credential(idToken);
-    await auth().signInWithCredential(googleCredential);
-    const nextProfile = await authService.provisionProfile();
+    // GoogleSignin.signIn()'s response never includes accessToken (only
+    // idToken) — but @react-native-firebase/auth's native Android
+    // implementation of GoogleAuthProvider.credential() throws "accessToken
+    // cannot be empty" if the second argument is omitted, even though the
+    // iOS implementation has no such requirement. That mismatch is exactly
+    // why this worked on iOS and failed on every Android device/emulator
+    // with an unhelpful generic "sign in failed" — GoogleSignin.getTokens()
+    // is the separate call that actually returns both tokens.
+    const {accessToken} = await GoogleSignin.getTokens();
+    const googleCredential = auth.GoogleAuthProvider.credential(idToken, accessToken);
+    const userCredential = await auth().signInWithCredential(googleCredential);
+    // Was surfacing whatever generic error Firebase/the native Google SDK
+    // happened to throw for "this Google account is already registered"
+    // (often nothing recognizable, showing up as a plain "cancelled or
+    // failed" message) — signInWithCredential itself doesn't error just
+    // because the account already exists under the SAME provider, it just
+    // signs them back in, so the SignupThirdStep screen had no reliable way
+    // to tell "brand new account" from "already had one" apart. Firebase's
+    // own additionalUserInfo.isNewUser flag is the documented, reliable
+    // signal for this — only checked when explicitly signing up (Login.tsx
+    // calls this with no opts, where signing into an existing account is
+    // exactly the intended, successful outcome).
+    if (opts?.isSignup && userCredential.additionalUserInfo?.isNewUser === false) {
+      await auth().signOut();
+      const err: any = new Error('An account with this email already exists.');
+      err.code = 'auth/email-already-in-use';
+      throw err;
+    }
+    let nextProfile = await authService.provisionProfile();
+    // Google accounts usually come with a profile photo — grab it once, on
+    // first sign-in, so the real photo shows immediately instead of the
+    // initials fallback. Only fills it in if nothing's already set, so it
+    // never overwrites a photo the person later uploaded themselves in Edit
+    // Profile.
+    const googlePhotoUrl = auth().currentUser?.photoURL;
+    if (googlePhotoUrl && !nextProfile.avatarUrl) {
+      try {
+        nextProfile = await authService.updateProfile({avatarUrl: googlePhotoUrl});
+      } catch {
+        // Best-effort — the initials fallback covers this case either way.
+      }
+    }
     setProfile(nextProfile);
+    syncLanguageFromProfile(nextProfile);
   }, []);
 
-  const signInWithApple = React.useCallback(async () => {
+  const signInWithApple = React.useCallback(async (opts?: {isSignup?: boolean}) => {
     if (Platform.OS !== 'ios') {
       throw new Error('Apple Sign-In is only available on iOS.');
     }
@@ -206,9 +439,65 @@ export const AuthProvider: React.FC = ({children}) => {
       throw new Error('Apple Sign-In did not return an identity token.');
     }
     const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
-    await auth().signInWithCredential(appleCredential);
+    const userCredential = await auth().signInWithCredential(appleCredential);
+    // Same "already registered" detection as signInWithGoogle above.
+    if (opts?.isSignup && userCredential.additionalUserInfo?.isNewUser === false) {
+      await auth().signOut();
+      const err: any = new Error('An account with this email already exists.');
+      err.code = 'auth/email-already-in-use';
+      throw err;
+    }
     const nextProfile = await authService.provisionProfile();
     setProfile(nextProfile);
+    syncLanguageFromProfile(nextProfile);
+  }, []);
+
+  // LinkedIn has no first-party Firebase provider — services/linkedinAuthService.ts
+  // drives a custom OAuth2 code-exchange against the backend (see
+  // app/api/linkedin_auth.py), which hands back a Firebase custom token via a
+  // saveur://linkedin-redirect deep link once the member approves on
+  // LinkedIn's own page. signInWithCustomToken here is what actually
+  // completes Firebase sign-in from that token, same end state as
+  // signInWithCredential for Google/Apple above.
+  const signInWithLinkedIn = React.useCallback(async (opts?: {isSignup?: boolean}) => {
+    const result = await linkedinAuthService.signIn();
+    if (result.error) {
+      const isCancelled = /cancel/i.test(result.error);
+      const isNoEmail = result.error === 'no_email_from_linkedin';
+      const err: any = new Error('LinkedIn sign-in failed.');
+      err.code = isCancelled
+        ? 'auth/popup-closed-by-user'
+        : isNoEmail
+        ? 'linkedin/no-email'
+        : 'linkedin/failed';
+      throw err;
+    }
+    if (!result.token) {
+      const err: any = new Error('LinkedIn sign-in failed.');
+      err.code = 'linkedin/failed';
+      throw err;
+    }
+    await auth().signInWithCustomToken(result.token);
+    // Same "already registered" detection as signInWithGoogle/signInWithApple
+    // above, just sourced from the backend's is_new_user flag (there's no
+    // additionalUserInfo.isNewUser for a manually-minted custom token).
+    if (opts?.isSignup && !result.isNewUser) {
+      await auth().signOut();
+      const err: any = new Error('An account with this email already exists.');
+      err.code = 'auth/email-already-in-use';
+      throw err;
+    }
+    let nextProfile = await authService.provisionProfile();
+    const linkedInPhotoUrl = auth().currentUser?.photoURL;
+    if (linkedInPhotoUrl && !nextProfile.avatarUrl) {
+      try {
+        nextProfile = await authService.updateProfile({avatarUrl: linkedInPhotoUrl});
+      } catch {
+        // Best-effort — the initials fallback covers this case either way.
+      }
+    }
+    setProfile(nextProfile);
+    syncLanguageFromProfile(nextProfile);
   }, []);
 
   const signOut = React.useCallback(async () => {
@@ -221,11 +510,34 @@ export const AuthProvider: React.FC = ({children}) => {
   const updateProfile = React.useCallback(async (partial: Partial<UserProfileProps>) => {
     const nextProfile = await authService.updateProfile(partial);
     setProfile(nextProfile);
+    syncLanguageFromProfile(nextProfile);
+  }, []);
+
+  // Re-fetches the profile without going through updateProfile's PATCH —
+  // needed after actions that change server-side profile fields through
+  // their own dedicated endpoints rather than PATCH /api/users/me, e.g.
+  // toggling 2FA (services/twoFactorService.ts) changes
+  // User.two_factor_enabled directly, and this is how the Security settings
+  // screen picks that up into shared `profile` state afterward.
+  const refreshProfile = React.useCallback(async () => {
+    const nextProfile = await authService.getCurrentProfile();
+    if (nextProfile) setProfile(nextProfile);
   }, []);
 
   const deleteAccount = React.useCallback(async () => {
+    // DELETE /api/users/me now deletes the Firebase Auth account itself
+    // server-side (via the Admin SDK — see
+    // saveur-backend/app/services/account_deletion_service.py), along with
+    // cancelling any active Stripe subscription immediately. Previously this
+    // also called auth().currentUser?.delete() afterward to remove the
+    // Firebase account from the client side — that's not just redundant now,
+    // it's wrong: by the time this resolves, the account it would be
+    // operating on no longer exists, which is exactly the kind of call that
+    // throws (or, worse, prompts a confusing "please sign in again" recent-
+    // login error) for no reason. signOut() just clears the local session,
+    // which is genuinely all that's left to do here.
     await authService.deleteAccount();
-    await auth().currentUser?.delete();
+    await auth().signOut();
     setProfile(null);
     setSignedIn(false);
   }, []);
@@ -252,6 +564,35 @@ export const AuthProvider: React.FC = ({children}) => {
     await emailService.sendVerificationEmail();
   }, []);
 
+  // Completes the pending login-time 2FA check (see twoFactorPending above).
+  // On success, marks this device trusted for TWO_FACTOR_TRUST_DAYS so the
+  // user isn't asked again on every app open.
+  const verifyTwoFactorLogin = React.useCallback(async (code: string) => {
+    await twoFactorService.verifyCode(code, 'login');
+    const uid = auth().currentUser?.uid;
+    if (uid) {
+      const trustedUntil = Date.now() + TWO_FACTOR_TRUST_DAYS * 24 * 60 * 60 * 1000;
+      await AsyncStorage.setItem(twoFactorTrustKey(uid), String(trustedUntil));
+    }
+    setTwoFactorPending(false);
+  }, []);
+
+  const resendTwoFactorLoginCode = React.useCallback(async () => {
+    const hint = await twoFactorService.sendCode('login');
+    setTwoFactorEmailHint(hint);
+  }, []);
+
+  // The user can't get into the app without verifying (there's no "skip" —
+  // that would defeat the point), but they can always back out and sign in
+  // again later rather than being stuck on the verify screen.
+  const cancelTwoFactorLogin = React.useCallback(async () => {
+    await auth().signOut();
+    setTwoFactorPending(false);
+    setTwoFactorEmailHint(null);
+  }, []);
+
+  const isPro = React.useMemo(() => isProTier(subscription), [subscription]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -260,15 +601,25 @@ export const AuthProvider: React.FC = ({children}) => {
         isIntro,
         profile,
         emailVerified,
+        subscription,
+        isPro,
+        refreshSubscription,
         signIn,
         signUp,
         signInWithGoogle,
         signInWithApple,
+        signInWithLinkedIn,
         signOut,
         updateProfile,
+        refreshProfile,
         deleteAccount,
         refreshEmailVerified,
         resendVerificationEmail,
+        twoFactorPending,
+        twoFactorEmailHint,
+        verifyTwoFactorLogin,
+        resendTwoFactorLoginCode,
+        cancelTwoFactorLogin,
       }}>
       {children}
     </AuthContext.Provider>

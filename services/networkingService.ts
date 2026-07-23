@@ -1,7 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {EKeyAsyncStorage, NetworkingContactProps} from 'constants/Types';
-import {DATA_NETWORKING_CONTACTS} from 'constants/Data';
 import apiClient from './apiClient';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // networkingService — partial real backend implementation.
@@ -26,13 +32,16 @@ const readAll = async (): Promise<NetworkingContactProps[]> => {
     try {
       return JSON.parse(raw) as NetworkingContactProps[];
     } catch {
-      // Corrupted/partial write — fall through and re-seed below rather
-      // than crash the Networking Assistant screen.
+      // Corrupted/partial write — fall through and start empty rather than
+      // crash the Networking Assistant screen.
     }
   }
-  const seeded = [...DATA_NETWORKING_CONTACTS];
-  await AsyncStorage.setItem(EKeyAsyncStorage.networkingContacts, JSON.stringify(seeded));
-  return seeded;
+  // Used to seed 3 fake sample contacts (Priya Natarajan/Marcus Feld/Dana
+  // Whitfield from constants/Data.ts's DATA_NETWORKING_CONTACTS) on first
+  // read — every new user saw someone else's made-up contact list instead
+  // of a blank slate. This is a personal contacts tracker; it should start
+  // empty and only ever contain people the user actually added themselves.
+  return [];
 };
 
 const writeAll = async (contacts: NetworkingContactProps[]): Promise<void> => {
@@ -141,6 +150,7 @@ export async function generateOutreachMessage(
     recipient_role: recipientRole,
     context,
     tone,
+    language: currentLanguage(),
   });
   return data.message ?? data.text ?? data.draft ?? '';
 }

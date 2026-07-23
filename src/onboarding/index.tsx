@@ -38,9 +38,11 @@ const Onboarding = memo(() => {
     translationX.value = event.contentOffset.x;
   });
   const DATA = [
-    { id: 0, title: t('intro:title_1'), Art: ONBOARDING_ART[0] },
-    { id: 1, title: t('intro:title_2'), Art: ONBOARDING_ART[1] },
-    { id: 2, title: t('intro:title_3'), Art: ONBOARDING_ART[2] },
+    { id: 0, title: t('intro:title_1'), subtitle: t('intro:subtitle_1'), Art: ONBOARDING_ART[0] },
+    { id: 1, title: t('intro:title_2'), subtitle: t('intro:subtitle_2'), Art: ONBOARDING_ART[1] },
+    { id: 2, title: t('intro:title_3'), subtitle: t('intro:subtitle_3'), Art: ONBOARDING_ART[2] },
+    { id: 3, title: t('intro:title_4'), subtitle: t('intro:subtitle_4'), Art: ONBOARDING_ART[3] },
+    { id: 4, title: t('intro:title_5'), subtitle: t('intro:subtitle_5'), Art: ONBOARDING_ART[4] },
   ];
 
   const onLogin = React.useCallback(
@@ -103,8 +105,11 @@ const Onboarding = memo(() => {
               const Art = i.Art;
               return (
                 <Animated.View key={index} style={style}>
-                  <Text category="h2" mh={24}>
+                  <Text category="h2" bold mh={24} style={styles.title}>
                     {i.title}
+                  </Text>
+                  <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
+                    {i.subtitle}
                   </Text>
                   <View style={styles.image}>
                     <Art size={width * 0.72} />
@@ -147,6 +152,18 @@ export default Onboarding;
 const themedStyles = StyleService.create({
   container: {
     flex: 1,
+  },
+  // `bold` on <Text> already asks for fontWeight 'bold' (700), which matches
+  // what the h2 category already maps to on its own (see mapping.json's
+  // text-heading-2-font-weight) — so it wasn't reading as any bolder. Nudging
+  // to 800 explicitly (this style is last in Text's merge order, so it wins)
+  // is the only further lever available without a dedicated bold font file
+  // (assets/fonts only ships GothamPro Regular + Medium, no Bold weight).
+  title: {
+    fontWeight: '800',
+  },
+  subtitle: {
+    lineHeight: 20,
   },
   content: {
     marginTop: 56,

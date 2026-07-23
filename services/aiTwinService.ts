@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import apiClient from './apiClient';
 
 // ---------------------------------------------------------------------------
@@ -117,7 +118,7 @@ export async function importToAiTwin(
 export async function askAiTwin(question: string): Promise<string> {
   const {data} = await apiClient.post<{answer?: string; response?: string; message?: string}>(
     '/api/v1/ai-twin/ask',
-    {question},
+    {question, language: i18n.language || 'en'},
   );
   return data.answer ?? data.response ?? data.message ?? '';
 }

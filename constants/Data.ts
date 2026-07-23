@@ -896,22 +896,34 @@ export const DATA_APPLICATIONS_CLOSED: JobApplicationProps[] = [
   },
 ];
 
+// Icons here used to mix the custom "assets" PNG pack's filled/badge-style
+// glyphs (e.g. premiumAcc, first_aid — solid art with their own baked-in
+// rounded-square backgrounds) with a few genuinely thin-stroke ones from the
+// same pack (edit, comment) — tinting a filled PNG doesn't turn it into an
+// outline, so those read as visually "bold" next to the line-art ones (the
+// inconsistency reported on the Practice screen). Standardized on eva's
+// outline icon set throughout instead, since every eva icon has a matching
+// `-outline` variant, guaranteeing a uniform line-art look — see FindScreen
+// where these are now rendered with `pack="eva"` rather than "assets". Also
+// de-duplicated icons that were previously reused across unrelated
+// categories (e.g. 'stats' appeared 3x, 'edit_full' 2x).
 export const DATA_INTERVIEW_TYPES = [
-  {type: Interview_Type_Enum.Behavioral, icon: 'stats'},
-  {type: Interview_Type_Enum.Technical, icon: 'edit_full'},
-  {type: Interview_Type_Enum.Coding, icon: 'edit_full'},
-  {type: Interview_Type_Enum.SystemDesign, icon: 'stats'},
-  {type: Interview_Type_Enum.ProductManagement, icon: 'myPost'},
-  {type: Interview_Type_Enum.Sales, icon: 'increase'},
-  {type: Interview_Type_Enum.Marketing, icon: 'quote'},
-  {type: Interview_Type_Enum.Finance, icon: 'dollar'},
-  {type: Interview_Type_Enum.Healthcare, icon: 'first_aid'},
-  {type: Interview_Type_Enum.CustomerService, icon: 'comment'},
-  {type: Interview_Type_Enum.Government, icon: 'security'},
-  {type: Interview_Type_Enum.Consulting, icon: 'stats'},
-  {type: Interview_Type_Enum.Executive, icon: 'premiumAcc'},
-  {type: Interview_Type_Enum.Graduate, icon: 'tutoring'},
-  {type: Interview_Type_Enum.Internship, icon: 'baby'},
+  {type: Interview_Type_Enum.Behavioral, icon: 'message-square-outline'},
+  {type: Interview_Type_Enum.Technical, icon: 'settings-2-outline'},
+  {type: Interview_Type_Enum.Coding, icon: 'code-outline'},
+  {type: Interview_Type_Enum.SystemDesign, icon: 'grid-outline'},
+  {type: Interview_Type_Enum.ProductManagement, icon: 'briefcase-outline'},
+  {type: Interview_Type_Enum.Sales, icon: 'trending-up-outline'},
+  {type: Interview_Type_Enum.Marketing, icon: 'pie-chart-outline'},
+  {type: Interview_Type_Enum.Finance, icon: 'credit-card-outline'},
+  {type: Interview_Type_Enum.Healthcare, icon: 'heart-outline'},
+  {type: Interview_Type_Enum.CustomerService, icon: 'headphones-outline'},
+  {type: Interview_Type_Enum.Government, icon: 'shield-outline'},
+  {type: Interview_Type_Enum.Consulting, icon: 'bulb-outline'},
+  {type: Interview_Type_Enum.Executive, icon: 'award-outline'},
+  {type: Interview_Type_Enum.Graduate, icon: 'book-open-outline'},
+  {type: Interview_Type_Enum.Internship, icon: 'clipboard-outline'},
+  {type: Interview_Type_Enum.Sports, icon: 'activity-outline'},
 ];
 export const DATA_PRACTICE_MODES = [
   {mode: Practice_Mode_Enum.Voice, icon: 'call', description: 'Speak your answers, get spoken feedback'},
@@ -1122,6 +1134,12 @@ export const DATA_INTERVIEW_QUESTION_BANK: Record<Interview_Type_Enum, string[]>
     'Tell me about a project you’re proud of from school.',
     'What do you hope to learn during this internship?',
     'Describe a time you had to teach yourself something quickly.',
+  ],
+  [Interview_Type_Enum.Sports]: [
+    'Tell me about a time you had to perform under pressure in front of an audience or during a big game.',
+    'How do you handle a disagreement with a coach or teammate about strategy?',
+    'Describe a time you had to recover mentally from a loss or a bad performance.',
+    'How do you balance training, competition, and life outside of sport?',
   ],
 };
 

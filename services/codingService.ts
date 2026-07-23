@@ -1,6 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {EKeyAsyncStorage} from 'constants/Types';
 import apiClient from './apiClient';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16. Only added to the two
+// natural-language-feedback endpoints below (review/system-design) — run/
+// run-tests just return raw stdout from Judge0, nothing to localize there.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // codingService — real backend implementation (formerly codeReviewService.ts,
@@ -216,6 +225,14 @@ export async function runTests(
  * actual submitted code and (unlike the old mock) the problem statement
  * itself, so feedback references what was actually asked. Backs
  * CodingInterview.tsx's "Get AI Code Review" action.
+ *
+ * NOTE on the `language` field name collision: this endpoint's existing
+ * `language` param is the *programming* language (e.g. "python") per its
+ * pre-existing contract — it can't double as the UI/response language field
+ * the backend's contract calls `language` (docs/BACKEND_SPEC_ADDENDUM_2026-07.md
+ * §16). Sent as `responseLanguage` here instead to avoid clobbering it —
+ * flagged explicitly for the backend since every other endpoint in this app
+ * uses the literal field name `language`; this is the one exception.
  */
 export async function getCodeReview(
   code: string,
@@ -227,7 +244,7 @@ export async function getCodeReview(
     complexityNote?: string;
     feedback?: string[];
     suggestions?: string[];
-  }>('/api/v1/coding/review', {language, code, problem});
+  }>('/api/v1/coding/review', {language, code, problem, responseLanguage: currentLanguage()});
   return {
     complexityNote: data.complexity_note ?? data.complexityNote ?? '',
     feedback: data.feedback ?? data.suggestions ?? [],
@@ -250,7 +267,7 @@ export async function getSystemDesignFeedback(notes: string): Promise<SystemDesi
     summary?: string;
     feedback?: string[];
     suggestions?: string[];
-  }>('/api/v1/coding/system-design', {notes});
+  }>('/api/v1/coding/system-design', {notes, language: currentLanguage()});
   return {
     summary: data.summary ?? '',
     feedback: data.feedback ?? data.suggestions ?? [],

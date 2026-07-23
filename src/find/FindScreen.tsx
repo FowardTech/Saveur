@@ -4,6 +4,7 @@ import {
   TopNavigation,
   StyleService,
   useStyleSheet,
+  useTheme,
   Icon,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -18,6 +19,7 @@ import { RootStackParamList } from 'navigation/types';
 import { DATA_INTERVIEW_TYPES } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
+import * as configService from 'services/configService';
 
 // "Practice" tab — the entry point for AI mock interviews. Lets a candidate
 // jump straight into a category, or open the full setup wizard (mode /
@@ -26,6 +28,7 @@ import * as interviewService from 'services/interviewService';
 const FindScreen = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const { t } = useTranslation(['find', 'common']);
 
   const onStartSetup = (interviewType?: Interview_Type_Enum) => {
@@ -45,10 +48,16 @@ const FindScreen = memo(() => {
     navigate('CodingInterview', { sessionId, interviewType: Interview_Type_Enum.Coding });
   };
 
+  // eva outline icons (see constants/Data.ts's DATA_INTERVIEW_TYPES comment
+  // for why — same reasoning applies here, this row used to mix the custom
+  // "assets" pack's filled 'myPost' badge icon with thinner line-art ones).
   const TOOLS = [
-    { title: 'Resume Builder', icon: 'myPost', onPress: () => navigate('ResumeBuilder') },
-    { title: 'JD Analyzer', icon: 'edit_full', onPress: () => navigate('JDAnalyzer') },
-    { title: 'Coding Practice', icon: 'edit', onPress: onStartCodingPractice },
+    { title: 'Resume Builder', icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder') },
+    { title: 'JD Analyzer', icon: 'search-outline', onPress: () => navigate('JDAnalyzer') },
+    // Admin-configurable — see the Feature Flags page / services/configService.ts.
+    ...(configService.isFeatureEnabled('coding_practice')
+      ? [{ title: 'Coding Practice', icon: 'code-outline', onPress: onStartCodingPractice }]
+      : []),
   ];
 
   return (
@@ -67,17 +76,21 @@ const FindScreen = memo(() => {
             {t('find:start_mock_interview_description')}
           </Text>
           <View style={styles.heroButton}>
-            <Text category="h8" status="link" bold>
+            <Text style={{color: "#fff"}} category="h8" status="link" bold>
               {t('find:choose_type_mode')}
             </Text>
-            <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+            <Icon
+              pack="assets"
+              name="arrowRight"
+              style={[globalStyle.icon16, { tintColor: theme['text-control-color'] }]}
+            />
           </View>
         </Flex>
 
         <Text category="h6" bold mt={32} mb={16}>
           {t('find:tools')}
         </Text>
-        <Flex justify="flex-start" wrap>
+        <Flex justify="space-between" wrap>
           {TOOLS.map((tool, i) => (
             <TouchableOpacity
               key={i}
@@ -85,9 +98,9 @@ const FindScreen = memo(() => {
               onPress={tool.onPress}
               style={styles.toolCard}>
               <Icon
-                pack="assets"
+                pack="eva"
                 name={tool.icon}
-                style={[globalStyle.icon24, { tintColor: '#181b22' }]}
+                style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
               />
               <Text category="h9" center mt={8} bold>
                 {tool.title}
@@ -107,9 +120,9 @@ const FindScreen = memo(() => {
               onPress={() => onStartSetup(item.type)}
               style={styles.typeCard}>
               <Icon
-                pack="assets"
+                pack="eva"
                 name={item.icon}
-                style={[globalStyle.icon24, { tintColor: '#181b22' }]}
+                style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
               />
               <Text category="h9" mt={12} bold numberOfLines={2}>
                 {item.type}
@@ -143,7 +156,7 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
   },
   toolCard: {
-    width: '31%',
+    width: '30%',
     aspectRatio: 1,
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',

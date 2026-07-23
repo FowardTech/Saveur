@@ -1,5 +1,15 @@
 export const Images = {
   logo: require('./logo.png'),
+  // Real Saveur mark (see assets/images/applogo.png, the source the user
+  // supplied) — square with its brand-blue background baked in, so it drops
+  // cleanly onto a white/light surface as a self-contained badge (Avatar
+  // circles, the success screen) without needing a colored backdrop of its
+  // own. logoMark is the same artwork with the background chroma-keyed to
+  // transparent, for the rarer case of placing it directly on a matching
+  // blue background (see the native splash screens, which use the same
+  // extracted asset outside this bundle).
+  logoBadge: require('./logo_square.png'),
+  logoMark: require('./logo_mark.png'),
   art1: require('./img_art_1.png'),
   art2: require('./img_art_2.png'),
   art3: require('./img_art_3.png'),
@@ -9,7 +19,10 @@ export const Images = {
   handle: require('./img_handle.png'),
   fillActive: require('./img_fillActive.png'),
   fill: require('./img_fill.png'),
-  logoSuccess: require('./img_logo.png'),
+  // Was img_logo.png — a leftover template placeholder (a gradient circle
+  // with a bite taken out of it) that rendered as an odd, unbranded "C."
+  // mark on the post-signup welcome screen. Now the real logo.
+  logoSuccess: require('./logo_square.png'),
   emptyFavorites: require('./img_empty_favorites.png'),
   videoFrame: require('./img_videoFrame.png'),
   avatar: require('./img_avatar.png'),

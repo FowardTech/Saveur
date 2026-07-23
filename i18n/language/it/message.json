@@ -1,0 +1,15 @@
+{
+  "empty_description": "Avvia un colloquio simulato o fai una domanda al tuo coach IA per ricevere feedback personalizzati e consigli di carriera.",
+  "empty_title": "Ancora nessuna conversazione.",
+  "placeholder_input": "Cerca argomenti di coaching...",
+  "title": "Coach",
+  "voice_initial_line": "Ti ascolto — parlami quando sei pronto.",
+  "voice_mic_error": "Impossibile avviare il microfono.",
+  "voice_retry_line": "Scusa, non ho capito — puoi ripetere?",
+  "voice_status_listening": "In ascolto…",
+  "voice_status_listening_prompt": "Ti ascolto — vai pure",
+  "voice_status_speaking": "Sto parlando…",
+  "voice_status_starting": "Avvio in corso…",
+  "voice_status_thinking": "Sto pensando…",
+  "voice_tap_to_interrupt": "Tocca per interrompere"
+}

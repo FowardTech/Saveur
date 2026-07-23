@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- First-open, one-time location-based language detection — see
+         utils/locationLanguage.ts. Coarse only (country-level accuracy is
+         all that's needed to pick a language). -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
@@ -21,10 +25,33 @@
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
+        android:theme="@style/Theme.App.SplashScreen"
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
         android:exported="true">
+        <!-- MainActivity is now the LAUNCHER directly — there used to be a
+             separate SplashActivity shown first for a fixed 900ms, then
+             handed off to this ReactActivity via startActivity(). Even with
+             matching visuals, that handoff is a real Activity transition
+             (its own window creation/animation), which is what actually
+             read as "an extra splash screen" — not just a color mismatch.
+             Removing the extra Activity entirely means there is exactly one
+             screen now, not two that happen to look similar.
+
+             Theme.App.SplashScreen (not AppTheme.Main directly) is the
+             theme here because targetSdkVersion 36 makes Android's own
+             system SplashScreen (API 31+) mandatory — left unconfigured, it
+             auto-derives an icon from the launcher icon with its own
+             padding assumptions, which was rendering the logo blown up
+             edge-to-edge/cropped (a second, OS-level "extra splash" on top
+             of everything above). That icon mechanism proved unreliable
+             even with explicit, well-padded assets, so Theme.App.SplashScreen
+             (styles.xml) now shows no icon at all — just plain blue — and
+             hands off immediately to AppTheme.Main, which shows the actual
+             logo via a plain windowBackground drawable instead (full manual
+             control over its size, not subject to the system splash icon
+             pipeline) — see MainActivity.kt's installSplashScreen() call. -->
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
@@ -32,10 +59,9 @@
         <!-- Matches returnURL: 'saveur://stripe-redirect' in
              services/billingService.ts's initPaymentSheet call — lets
              Android hand control back to the app after a payment method
-             that redirects out (bank auth, 3D Secure). android:exported
-             already true on this activity from the launcher intent-filter
-             above, autoVerify left off since this scheme isn't a real
-             https:// App Link needing domain verification. -->
+             that redirects out (bank auth, 3D Secure).
+             autoVerify left off since this scheme isn't a real https://
+             App Link needing domain verification. -->
         <intent-filter>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />

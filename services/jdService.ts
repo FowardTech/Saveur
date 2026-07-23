@@ -1,4 +1,11 @@
+import i18n from 'i18next';
 import apiClient from './apiClient';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // jdService — real backend implementation.
@@ -47,6 +54,7 @@ interface JDMatchWire {
 export async function analyzeJD(jdText: string): Promise<JDAnalyzeResult> {
   const {data} = await apiClient.post<JDAnalyzeWire>('/api/v1/jd/analyze', {
     jd_text: jdText,
+    language: currentLanguage(),
   });
   return {
     keywords: data.keywords ?? [],
@@ -62,6 +70,7 @@ export async function analyzeJD(jdText: string): Promise<JDAnalyzeResult> {
 export async function matchJD(jdText: string): Promise<JDMatchResult> {
   const {data} = await apiClient.post<JDMatchWire>('/api/v1/jd/match', {
     jd_text: jdText,
+    language: currentLanguage(),
   });
   return {
     score: data.score ?? 0,

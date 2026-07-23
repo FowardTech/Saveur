@@ -1,0 +1,12 @@
+{
+  "title": "Félicitations !",
+  "description": "Vous avez changé votre mot de passe avec succès. Veuillez utiliser le nouveau mot de passe lors de la connexion.",
+  "title_2": "Bienvenue !",
+  "description_2": "Votre coach d'entretien IA est prêt. Préparons-vous à décrocher cette offre.",
+  "see_your_dashboard": "Voir votre tableau de bord",
+  "create_new_job": "Créer un nouvel emploi",
+  "start_practicing": "Commencer à s'entraîner",
+  "payment-successful": "Paiement réussi !",
+  "payment-successful-title": "Merci pour votre paiement rapide ! Les informations de paiement ont été envoyées à votre e-mail.",
+  "success_change_password": "Vous avez changé votre mot de passe avec succès. Veuillez utiliser le nouveau mot de passe lors de la connexion."
+}

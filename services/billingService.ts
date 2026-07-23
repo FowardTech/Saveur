@@ -1,5 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {BillingPlanProps, EKeyAsyncStorage, SubscriptionStatusProps} from 'constants/Types';
+import {Platform} from 'react-native';
+import RNBlobUtil from 'react-native-blob-util';
+import auth from '@react-native-firebase/auth';
+import {BillingPlanProps, EKeyAsyncStorage, PaymentHistoryItemProps, SavedPaymentMethodProps, SubscriptionStatusProps} from 'constants/Types';
+import {API_BASE_URL} from 'constants/env';
 import apiClient from './apiClient';
 
 // ---------------------------------------------------------------------------
@@ -60,6 +64,19 @@ interface BillingPlanWire {
   currency: string; // e.g. 'usd'
   interval?: 'month' | 'year' | null;
   features?: string[];
+  recommended?: boolean;
+  popular?: boolean;
+  is_recommended?: boolean;
+  // GET /billing/plans is now optional-auth (apiClient already attaches
+  // the Firebase Bearer token on every request when signed in, so this
+  // "just works" with no client change beyond reading the field) — when
+  // authenticated, each plan tells us directly whether it's the one this
+  // user is on, including the Free entry for a never-subscribed user. This
+  // is the authoritative source for the "CURRENT PLAN" badge; the
+  // priceId/tier-based matching below is now only a fallback for a backend
+  // response that doesn't include this yet.
+  is_current?: boolean;
+  status?: string;
 }
 
 interface SubscriptionWire {
@@ -68,6 +85,19 @@ interface SubscriptionWire {
   price_id?: string | null;
   period_end?: number | null; // unix seconds
   cancel_at_period_end?: boolean;
+  // Free-tier session gating — see services/entitlementsService.ts.
+  // `sessions_limit: null` (or field entirely absent) means unlimited/not
+  // yet implemented server-side; entitlementsService falls back to a local
+  // count against a hardcoded cap in that case.
+  sessions_used?: number;
+  sessions_limit?: number | null;
+  // Enough to render a "CURRENT PLAN" badge from this one call alone,
+  // without also needing an authenticated /billing/plans fetch — see
+  // is_current above for the (now primary) alternative path via
+  // /billing/plans, and Subscription.tsx for how the two are combined.
+  plan_code?: string | null;
+  plan_name?: string | null;
+  interval?: 'month' | 'year' | null;
 }
 
 const CURRENCY_SYMBOLS: Record<string, string> = {usd: '$', eur: '€', gbp: '£'};
@@ -87,6 +117,15 @@ function fromPlanWire(wire: BillingPlanWire): BillingPlanProps {
     price: formatPrice(wire.amount ?? 0, wire.currency ?? 'usd'),
     period: wire.interval ? `/${wire.interval === 'month' ? 'mo' : 'yr'}` : '',
     features: wire.features ?? [],
+    // Optional — not every backend will send this. Subscription.tsx falls
+    // back to a client-side heuristic (the cheapest paid/non-free tier) when
+    // no plan in the list has this set, so the "Popular" badge always shows
+    // on exactly one card either way.
+    recommended: wire.recommended ?? wire.popular ?? wire.is_recommended ?? false,
+    // Only present when this call was authenticated (GET /billing/plans is
+    // optional-auth) — undefined for a signed-out fetch, which
+    // Subscription.tsx's isCurrent logic already falls back around.
+    isCurrent: typeof wire.is_current === 'boolean' ? wire.is_current : undefined,
   };
 }
 
@@ -96,6 +135,20 @@ function fromSubscriptionWire(wire: SubscriptionWire): SubscriptionStatusProps {
     status: wire.status ?? 'none',
     periodEnd: wire.period_end ? wire.period_end * 1000 : undefined,
     cancelAtPeriodEnd: wire.cancel_at_period_end ?? false,
+    sessionsUsed: typeof wire.sessions_used === 'number' ? wire.sessions_used : undefined,
+    sessionsLimit: wire.sessions_limit !== undefined ? wire.sessions_limit : undefined,
+    // Previously read off `wire` but dropped here — Subscription.tsx now
+    // uses this to tell apart two plans on the same tier (see
+    // SubscriptionStatusProps.priceId's comment in constants/Types.tsx).
+    priceId: wire.price_id ?? null,
+    // planCode/planName — a second, standalone way to identify which exact
+    // plan (not just tier) the user is on, straight from this one call.
+    // Subscription.tsx prefers plans[].isCurrent when present, then falls
+    // back to matching plan.code === planCode here, then priceId, then
+    // plain tier — see that file's isCurrent comment for the full order.
+    planCode: wire.plan_code ?? null,
+    planName: wire.plan_name ?? null,
+    interval: wire.interval ?? null,
   };
 }
 
@@ -194,6 +247,21 @@ export async function createPaymentSheet(req: PaymentSheetRequest): Promise<Paym
   const body =
     'planCode' in req ? {plan_code: req.planCode} : {mode: req.mode, amount: req.amount, currency: req.currency};
   const {data} = await apiClient.post<PaymentSheetWire>('/api/v1/billing/payment-sheet', body);
+  // Guard rail, not paranoia: an empty/missing publishable_key handed
+  // straight to @stripe/stripe-react-native's initStripe() doesn't fail
+  // gracefully — Stripe's native SDK hits a FATAL assertion and takes the
+  // whole app down instantly (confirmed: this exact crash happened once
+  // already, from StripeProvider getting an empty key at boot; the fix for
+  // that surfaced this second instance, from this endpoint's response
+  // itself being incomplete). Every other service in this app just throws
+  // a catchable JS error on a malformed response — this one gets an
+  // explicit check because the failure mode on the other side of it is so
+  // much worse than usual.
+  if (!data.publishable_key || !data.customer || !data.ephemeral_key || !data.client_secret) {
+    throw new Error(
+      'The backend did not return everything the checkout needs (publishable_key/customer/ephemeral_key/client_secret) — cannot start Stripe checkout safely.',
+    );
+  }
   return {
     publishableKey: data.publishable_key,
     customerId: data.customer,
@@ -218,6 +286,123 @@ export async function createPortalSession(): Promise<string> {
 }
 
 /**
+ * POST /api/v1/billing/subscription/cancel — schedules cancellation at the
+ * end of the current billing period (access continues until then; Stripe's
+ * webhook flips the plan to free once it actually ends). This is the direct
+ * in-app counterpart to what used to require sending the user out to
+ * Stripe's hosted Customer Portal (createPortalSession/onManageBilling in
+ * Subscription.tsx) just to turn off auto-renewal.
+ */
+export async function cancelSubscription(): Promise<SubscriptionStatusProps> {
+  const {data} = await apiClient.post<SubscriptionWire>('/api/v1/billing/subscription/cancel', {});
+  return fromSubscriptionWire(data as SubscriptionWire);
+}
+
+/**
+ * POST /api/v1/billing/subscription/resume — undoes a scheduled
+ * cancellation (turns auto-renewal back on), as long as the current period
+ * hasn't actually ended yet.
+ */
+export async function resumeSubscription(): Promise<SubscriptionStatusProps> {
+  const {data} = await apiClient.post<SubscriptionWire>('/api/v1/billing/subscription/resume', {});
+  return fromSubscriptionWire(data as SubscriptionWire);
+}
+
+// ---- Saved payment methods (Payment Methods screen) -----------------------
+//   POST   /api/v1/billing/setup-intent          — SetupIntent to save a
+//                                                   card, no charge
+//   GET    /api/v1/billing/payment-methods        — list saved cards
+//   POST   /api/v1/billing/payment-methods/:id/default — set default card
+//   DELETE /api/v1/billing/payment-methods/:id    — remove a card
+// Same customer as createPaymentSheet above — cards saved here are what a
+// later subscription charge automatically uses (SetupIntent's
+// usage: "off_session", per the backend contract), which is the "make use
+// of the payment method section" integration point.
+
+export interface SetupIntentInit {
+  publishableKey: string;
+  customerId: string;
+  ephemeralKeySecret: string;
+  clientSecret: string;
+  setupIntentId: string;
+}
+
+interface SetupIntentWire {
+  publishable_key: string;
+  customer: string;
+  ephemeral_key: string;
+  client_secret: string;
+  setup_intent_id: string;
+}
+
+/**
+ * POST /api/v1/billing/setup-intent — init params for
+ * @stripe/stripe-react-native's initPaymentSheet in *setup* mode
+ * (setupIntentClientSecret, not paymentIntentClientSecret — see
+ * src/more/PaymentMethod.tsx for the actual initPaymentSheet/
+ * presentPaymentSheet call sequence). Same empty-response guard as
+ * createPaymentSheet above, for the same reason: an empty publishable_key
+ * reaching Stripe's native SDK is a fatal, non-catchable crash, not a
+ * regular JS error.
+ */
+export async function createSetupIntent(): Promise<SetupIntentInit> {
+  const {data} = await apiClient.post<SetupIntentWire>('/api/v1/billing/setup-intent', {});
+  if (!data.publishable_key || !data.customer || !data.ephemeral_key || !data.client_secret) {
+    throw new Error(
+      'The backend did not return everything needed to save a card (publishable_key/customer/ephemeral_key/client_secret) — cannot open the card form safely.',
+    );
+  }
+  return {
+    publishableKey: data.publishable_key,
+    customerId: data.customer,
+    ephemeralKeySecret: data.ephemeral_key,
+    clientSecret: data.client_secret,
+    setupIntentId: data.setup_intent_id,
+  };
+}
+
+interface SavedPaymentMethodWire {
+  id: string;
+  brand: string;
+  last4: string;
+  exp_month: number;
+  exp_year: number;
+  is_default: boolean;
+}
+
+function fromPaymentMethodWire(wire: SavedPaymentMethodWire): SavedPaymentMethodProps {
+  return {
+    id: wire.id,
+    brand: wire.brand,
+    last4: wire.last4,
+    expMonth: wire.exp_month,
+    expYear: wire.exp_year,
+    isDefault: wire.is_default ?? false,
+  };
+}
+
+/**
+ * GET /api/v1/billing/payment-methods — the backend wraps the array in
+ * `{data: [...]}` per the contract (unlike this app's other list
+ * endpoints, which return a bare array) — unwrapped here so the caller
+ * doesn't need to know that.
+ */
+export async function listPaymentMethods(): Promise<SavedPaymentMethodProps[]> {
+  const {data} = await apiClient.get<{data: SavedPaymentMethodWire[]}>('/api/v1/billing/payment-methods');
+  return (data.data ?? []).map(fromPaymentMethodWire);
+}
+
+/** POST /api/v1/billing/payment-methods/{id}/default */
+export async function setDefaultPaymentMethod(id: string): Promise<void> {
+  await apiClient.post(`/api/v1/billing/payment-methods/${id}/default`, {});
+}
+
+/** DELETE /api/v1/billing/payment-methods/{id} */
+export async function deletePaymentMethod(id: string): Promise<void> {
+  await apiClient.delete(`/api/v1/billing/payment-methods/${id}`);
+}
+
+/**
  * GET /api/v1/billing/subscription. Call this on mount and again whenever
  * the app returns to the foreground after the user has been sent to Stripe
  * Checkout/Portal (see the AppState listener in src/more/Subscription.tsx) —
@@ -235,4 +420,96 @@ export async function getSubscription(): Promise<SubscriptionStatusProps> {
     if (cached) return cached;
     throw error;
   }
+}
+
+// ---- Payment History / receipts ------------------------------------------
+//   GET  /api/v1/billing/payments                       — list past payments
+//   GET  /api/v1/billing/payments/:id/receipt.pdf        — download the PDF
+//   POST /api/v1/billing/payments/:id/send-receipt       — re-send to email
+// See src/more/PaymentHistory.tsx for the screen these back, and
+// app/models/payment.py / app/services/receipt_service.py on the backend.
+
+interface PaymentHistoryWire {
+  id: number;
+  amount: number;
+  currency: string;
+  status: string;
+  description: string | null;
+  card_brand: string | null;
+  card_last4: string | null;
+  receipt_sent_at: string | null;
+  created_at: string | null;
+}
+
+function fromPaymentWire(wire: PaymentHistoryWire): PaymentHistoryItemProps {
+  return {
+    id: wire.id,
+    amount: wire.amount ?? 0,
+    currency: wire.currency ?? 'usd',
+    status: wire.status ?? 'succeeded',
+    description: wire.description,
+    cardBrand: wire.card_brand,
+    cardLast4: wire.card_last4,
+    receiptSentAt: wire.receipt_sent_at ? new Date(wire.receipt_sent_at).getTime() : null,
+    createdAt: wire.created_at ? new Date(wire.created_at).getTime() : Date.now(),
+  };
+}
+
+/** GET /api/v1/billing/payments — most-recent-first list for the Payment
+ * History screen. Backend wraps the array in `{data: [...]}`, same
+ * convention as listPaymentMethods above. */
+export async function listPayments(): Promise<PaymentHistoryItemProps[]> {
+  const {data} = await apiClient.get<{data: PaymentHistoryWire[]}>('/api/v1/billing/payments');
+  return (data.data ?? []).map(fromPaymentWire);
+}
+
+/** POST /api/v1/billing/payments/:id/send-receipt — re-sends the receipt
+ * email (with a freshly-generated PDF attached) on demand. Returns the
+ * email address it was sent to, so the caller can show "Sent to
+ * you@example.com" without needing a separate profile lookup. */
+export async function sendReceiptEmail(paymentId: number): Promise<{sentTo: string}> {
+  const {data} = await apiClient.post<{ok: boolean; sent_to: string}>(
+    `/api/v1/billing/payments/${paymentId}/send-receipt`,
+    {},
+  );
+  return {sentTo: data.sent_to};
+}
+
+/**
+ * Downloads the receipt PDF for `paymentId` to the device and returns the
+ * local file path — same react-native-blob-util pattern as
+ * src/more/GenerateResume.tsx's onDownload (Android: DownloadManager into
+ * the public Downloads folder; iOS: CacheDir, then the caller shares it).
+ * Unlike GenerateResume's flow (which downloads an unauthenticated signed
+ * URL), this hits an authenticated backend endpoint directly, so the
+ * Firebase ID token is attached as a header here manually — RNBlobUtil's
+ * fetch doesn't go through apiClient's axios interceptors.
+ */
+export async function downloadReceiptPdf(payment: PaymentHistoryItemProps): Promise<{path: string; filename: string}> {
+  const user = auth().currentUser;
+  if (!user) {
+    throw new Error('You need to be signed in to download a receipt.');
+  }
+  const idToken = await user.getIdToken();
+  const url = `${API_BASE_URL}/api/v1/billing/payments/${payment.id}/receipt.pdf`;
+  const filename = `Saveur-Receipt-${payment.id}.pdf`;
+  const headers = {Authorization: `Bearer ${idToken}`};
+
+  if (Platform.OS === 'android') {
+    const res = await RNBlobUtil.config({
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        title: filename,
+        description: 'Downloading receipt…',
+        mime: 'application/pdf',
+        mediaScannable: true,
+        path: `${RNBlobUtil.fs.dirs.DownloadDir}/${filename}`,
+      },
+    }).fetch('GET', url, headers);
+    return {path: res.path(), filename};
+  }
+  const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
+  const res = await RNBlobUtil.config({path: dest, overwrite: true}).fetch('GET', url, headers);
+  return {path: res.path(), filename};
 }

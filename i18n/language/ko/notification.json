@@ -1,0 +1,9 @@
+{
+  "title": "알림",
+  "mark_all_read": "모두 읽음으로 표시",
+  "load_failed": "알림을 불러올 수 없습니다.",
+  "mark_read_failed_title": "알림을 업데이트할 수 없습니다",
+  "mark_read_failed_body": "잠시 후 다시 시도해 주세요.",
+  "empty_title": "모두 확인했습니다!",
+  "empty_description": "면접 연습에 관한 새로운 알림이 여기에 표시됩니다."
+}

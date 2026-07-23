@@ -1,0 +1,15 @@
+{
+  "empty_description": "模擬面接を開始するか、AIコーチに質問して、パーソナライズされたフィードバックとキャリアアドバイスを受け取りましょう。",
+  "empty_title": "まだ会話がありません。",
+  "placeholder_input": "コーチングトピックを検索...",
+  "title": "コーチ",
+  "voice_initial_line": "聞いています — 準備ができたら話しかけてください。",
+  "voice_mic_error": "マイクを起動できませんでした。",
+  "voice_retry_line": "すみません、聞き取れませんでした。もう一度言っていただけますか？",
+  "voice_status_listening": "聞き取り中…",
+  "voice_status_listening_prompt": "聞いています — どうぞ",
+  "voice_status_speaking": "話しています…",
+  "voice_status_starting": "開始しています…",
+  "voice_status_thinking": "考え中…",
+  "voice_tap_to_interrupt": "タップして中断"
+}

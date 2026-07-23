@@ -20,6 +20,12 @@ interface SwiperCardProps {
   widthAction?: number;
   containerStyle?: StyleProp<ViewStyle>;
   children: React.ReactNode;
+  // Override the default "Edit"/"Delete" swipe-action labels — e.g.
+  // src/more/PaymentMethod.tsx reuses the edit slot for "Default" (setting a
+  // saved card as the default) since you don't "edit" a saved card's
+  // number, just its default/removed status.
+  editLabel?: string;
+  deleteLabel?: string;
 }
 
 const SwiperCard = ({
@@ -29,6 +35,8 @@ const SwiperCard = ({
   onDelete,
   widthAction,
   children,
+  editLabel,
+  deleteLabel,
 }: SwiperCardProps) => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['payment', 'common']);
@@ -58,7 +66,7 @@ const SwiperCard = ({
           <AnimatedView
             style={[{transform: [{scale: scaleDelete}]}, styles.deleteAction]}>
             <Text category="h6" status={'primary'}>
-              {t('common:delete')}
+              {deleteLabel ?? t('common:delete')}
             </Text>
           </AnimatedView>
         </TouchableOpacity>
@@ -69,7 +77,7 @@ const SwiperCard = ({
           <AnimatedView
             style={[{transform: [{scale: scaleEdit}]}, styles.editAction]}>
             <Text category="h6" status={'primary'}>
-              {t('common:edit')}
+              {editLabel ?? t('common:edit')}
             </Text>
           </AnimatedView>
         </TouchableOpacity>

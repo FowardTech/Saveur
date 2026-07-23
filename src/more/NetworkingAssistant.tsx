@@ -21,6 +21,8 @@ import { globalStyle } from 'styles/globalStyle';
 import { NetworkingContactProps } from 'constants/Types';
 import * as networkingService from 'services/networkingService';
 import { MESSAGE_TONES, MessageTone } from 'services/networkingService';
+import { AuthContext } from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
 
 const emptyForm = {name: '', company: '', role: '', note: ''};
 
@@ -35,6 +37,7 @@ const NetworkingAssistant = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
+  const { isPro } = React.useContext(AuthContext);
 
   const [contacts, setContacts] = React.useState<NetworkingContactProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -144,6 +147,15 @@ const NetworkingAssistant = memo(() => {
     }
   };
 
+  if (!isPro) {
+    return (
+      <ProLockGate
+        title="Networking Assistant"
+        description="Track contacts, log outreach, and get AI-drafted messages tailored to each one — Networking Assistant is a Pro feature."
+      />
+    );
+  }
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -151,7 +163,7 @@ const NetworkingAssistant = memo(() => {
         accessoryLeft={<NavigationAction />}
         accessoryRight={<NavigationAction icon="plusImg" size="small" onPress={onOpenAdd} />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {isFormOpen ? (
           <Layout level="2" style={styles.formCard}>
             <Text category="h7" bold mb={12}>
@@ -203,7 +215,7 @@ const NetworkingAssistant = memo(() => {
         ) : null}
 
         {!isLoading && contacts.length === 0 ? (
-          <Flex vertical center style={{ paddingVertical: 40 }}>
+          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
             <Text category="h9-s" status="placeholder" center>
               {t('more:no_contacts', { defaultValue: 'No contacts yet — add someone you met networking.' })}
             </Text>

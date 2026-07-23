@@ -1,12 +1,12 @@
 import React, {memo} from 'react';
-import {TouchableOpacity} from 'react-native';
+import {Alert, TouchableOpacity} from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
-  Avatar,
   Input,
   Icon,
+  Spinner,
 } from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -14,51 +14,113 @@ import {useTranslation} from 'react-i18next';
 import Text from 'components/Text';
 import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
-import {Images} from 'assets/images';
+import Flex from 'components/Flex';
+import UserAvatar from 'components/UserAvatar';
 import {Controller, useForm} from 'react-hook-form';
-import {RuleEmail, RuleName, RulePassword} from 'utils/rules';
-import useToggle from 'hooks/useToggle';
+import {RuleName} from 'utils/rules';
 import {RootStackParamList} from 'navigation/types';
 
 import * as ImagePicker from 'react-native-image-picker';
-import {ImagePickerResponse} from 'react-native-image-picker';
-import {ActionPickerImage} from 'constants/Types';
+import * as documentsService from 'services/documentsService';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
+import {AuthContext} from '../../AuthContext';
 
+// Was entirely disconnected from the real account: hardcoded fake
+// defaultValues ("Edith Johnson" / a fake email+password) and a photo picker
+// that only ever set local component state — `_onSave` was just
+// `() => goBack()`, so nothing here ever persisted. Now loads the real
+// profile from AuthContext and actually saves both name and photo.
 const EditProfile = memo(() => {
   const {goBack} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['auth', 'more', 'common']);
+  const {profile, updateProfile} = React.useContext(AuthContext);
 
-  const [response, setResponse] = React.useState<ImagePickerResponse>();
-  const onButtonPress = React.useCallback((type, options) => {
-    ImagePicker.launchImageLibrary(options, setResponse);
-  }, []);
-  const actions: ActionPickerImage = {
-    type: 'capture',
-    options: {
-      saveToPhotos: true,
-      mediaType: 'photo',
-      includeBase64: false,
-    },
-  };
-  const [invisible, setInvisible] = useToggle(true);
+  // Optimistic local preview while the upload is in flight; falls back to
+  // whatever's already persisted on the profile, then the static placeholder
+  // art if the user has never set one.
+  const [avatarUri, setAvatarUri] = React.useState<string | undefined>(profile?.avatarUrl);
+  const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    setAvatarUri(profile?.avatarUrl);
+  }, [profile?.avatarUrl]);
+
+  const onChangePhoto = React.useCallback(() => {
+    ImagePicker.launchImageLibrary(
+      {mediaType: 'photo', includeBase64: false, selectionLimit: 1},
+      async response => {
+        const asset = response.assets?.[0];
+        if (response.didCancel || !asset?.uri) return;
+        setAvatarUri(asset.uri);
+        setIsUploadingPhoto(true);
+        try {
+          // Generic file-storage endpoint (POST /api/v1/documents/upload,
+          // already used elsewhere for resume/portfolio uploads) — returns a
+          // real fetchable URL, which is what gets persisted as
+          // profile.avatarUrl rather than the device-local picker URI.
+          const doc = await documentsService.uploadDocument({
+            uri: asset.uri,
+            name: asset.fileName ?? `avatar_${Date.now()}.jpg`,
+            mimeType: asset.type,
+            sizeBytes: asset.fileSize,
+            docType: 'avatar',
+          });
+          await updateProfile({avatarUrl: doc.url});
+          setAvatarUri(doc.url);
+        } catch (e: any) {
+          setAvatarUri(profile?.avatarUrl);
+          Alert.alert(
+            "Couldn't update photo",
+            e?.message ?? 'Please try again in a moment.',
+          );
+        } finally {
+          setIsUploadingPhoto(false);
+        }
+      },
+    );
+  }, [profile?.avatarUrl, updateProfile]);
 
   const {
     control,
     handleSubmit,
     formState: {errors},
   } = useForm({
-    defaultValues: {
-      fullName: 'Edith Johnson',
-      email: 'lehieuds@gmail.com',
-      password: '12345678aA',
-      phoneNumber: '965-954-9111',
-      homeAddress: '128 Lincoln St #105, Boston, NY',
+    values: {
+      fullName: profile?.name ?? '',
+      phoneNumber: profile?.phoneNumber ?? '',
+      homeAddress: profile?.homeAddress ?? '',
     },
   });
 
-  const _onSave = () => goBack();
+  const _onSave = handleSubmit(async values => {
+    setIsSaving(true);
+    try {
+      // name/phoneNumber/homeAddress are now all real, backend-supported
+      // fields (PATCH /api/users/me — see saveur-backend/app/api/users.py
+      // and app/models/user.py's phone_number/home_address columns).
+      // phoneNumber/homeAddress previously had no backend column at all, so
+      // edits here silently never persisted and My Profile kept showing
+      // hardcoded placeholder text no matter what was typed.
+      const patch: Partial<typeof values> = {};
+      if (values.fullName !== profile?.name) patch.fullName = values.fullName;
+      if (values.phoneNumber !== (profile?.phoneNumber ?? '')) patch.phoneNumber = values.phoneNumber;
+      if (values.homeAddress !== (profile?.homeAddress ?? '')) patch.homeAddress = values.homeAddress;
+      if (Object.keys(patch).length > 0) {
+        await updateProfile({
+          ...(patch.fullName !== undefined ? {name: patch.fullName} : {}),
+          ...(patch.phoneNumber !== undefined ? {phoneNumber: patch.phoneNumber} : {}),
+          ...(patch.homeAddress !== undefined ? {homeAddress: patch.homeAddress} : {}),
+        });
+      }
+      goBack();
+    } catch (e: any) {
+      Alert.alert("Couldn't save changes", e?.message ?? 'Please try again in a moment.');
+    } finally {
+      setIsSaving(false);
+    }
+  });
   const _onMap = () => {};
   return (
     <Container style={styles.container}>
@@ -66,9 +128,13 @@ const EditProfile = memo(() => {
         title={t('more:edit-profile').toString()}
         accessoryLeft={<NavigationAction />}
         accessoryRight={
-          <Text category="h7" status={'link'} onPress={_onSave} bold mr={12}>
-            {t('common:save')}
-          </Text>
+          isSaving ? (
+            <Spinner size="small" style={{marginRight: 16}} />
+          ) : (
+            <Text category="h7" status={'link'} onPress={_onSave} bold mr={12}>
+              {t('common:save')}
+            </Text>
+          )
         }
       />
       <KeyboardAwareScrollView
@@ -76,28 +142,19 @@ const EditProfile = memo(() => {
         scrollEventThrottle={16}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}>
-        {response?.assets ? (
-          <Avatar
-            source={{uri: response.assets[0].uri}}
-            size="giant"
-            shape="rounded"
-            /* @ts-ignore */
-            style={styles.avatar}
-          />
-        ) : (
-          <Avatar
-            shape="rounded"
-            source={Images.avatar2}
-            size="giant"
-            /* @ts-ignore */
-            style={styles.avatar}
-          />
-        )}
+        <Flex vertical center style={{position: 'relative'}}>
+          <UserAvatar uri={avatarUri} name={profile?.name} size="giant" style={styles.avatar} />
+          {isUploadingPhoto ? (
+            <Flex center style={styles.avatarSpinnerOverlay}>
+              <Spinner size="small" status="control" />
+            </Flex>
+          ) : null}
+        </Flex>
         <Text
           category="h8-s"
           status={'link'}
           center
-          onPress={() => onButtonPress(actions.type, actions.options)}
+          onPress={isUploadingPhoto ? undefined : onChangePhoto}
           mt={24}
           mb={48}
           children={t('more:edit-photo')}
@@ -113,61 +170,16 @@ const EditProfile = memo(() => {
               style={styles.fullName}
               value={value}
               onChangeText={onChange}
-              onTouchStart={handleSubmit(() => {})}
-              onTouchEnd={handleSubmit(() => {})}
               onBlur={onBlur}
-              keyboardType="email-address"
               caption={errors.fullName?.message}
             />
           )}
         />
-        <Controller
-          control={control}
-          name="email"
-          rules={RuleEmail}
-          render={({field: {onChange, onBlur, value}}) => (
-            <Input
-              label={t('auth:email').toString()}
-              status={errors.email ? 'warning' : 'basic'}
-              style={styles.email}
-              value={value}
-              onChangeText={onChange}
-              onTouchStart={handleSubmit(() => {})}
-              onTouchEnd={handleSubmit(() => {})}
-              onBlur={onBlur}
-              keyboardType="email-address"
-              caption={errors.email?.message}
-            />
-          )}
-        />
-        <Controller
-          control={control}
-          name="password"
-          rules={RulePassword}
-          render={({field: {onChange, onBlur, value}}) => (
-            <Input
-              label={t('common:password').toString()}
-              status={errors.password ? 'warning' : 'basic'}
-              style={styles.password}
-              value={value}
-              onChangeText={onChange}
-              secureTextEntry={invisible}
-              onTouchStart={handleSubmit(() => {})}
-              onTouchEnd={handleSubmit(() => {})}
-              onBlur={onBlur}
-              keyboardType="email-address"
-              caption={errors.password?.message}
-              accessoryRight={props => (
-                <TouchableOpacity activeOpacity={0.7} onPress={setInvisible}>
-                  <Icon
-                    {...props}
-                    pack="assets"
-                    name={!invisible ? 'eyeOn' : 'eyeOff'}
-                  />
-                </TouchableOpacity>
-              )}
-            />
-          )}
+        <Input
+          label={t('auth:email').toString()}
+          style={styles.email}
+          value={profile?.email ?? ''}
+          disabled
         />
         <Controller
           control={control}
@@ -228,15 +240,21 @@ const themedStyles = StyleService.create({
   avatar: {
     alignSelf: 'center',
   },
+  avatarSpinnerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
   fullName: {
     borderBottomWidth: 2,
   },
   email: {
     borderBottomWidth: 2,
     marginVertical: 24,
-  },
-  password: {
-    borderBottomWidth: 2,
   },
   phoneNumber: {
     marginVertical: 24,

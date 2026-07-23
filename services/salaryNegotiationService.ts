@@ -1,6 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {EKeyAsyncStorage} from 'constants/Types';
+import i18n from 'i18next';
+import {Application_Stage_Enum, EKeyAsyncStorage} from 'constants/Types';
 import apiClient from './apiClient';
+import * as applicationsService from './applicationsService';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // salaryNegotiationService — partial real backend implementation.
@@ -96,16 +104,97 @@ const SCENARIO_POOL: SalaryOffer[] = [
   {company: 'Lark & Co Consulting', title: 'Associate Consultant', baseSalary: 110000, bonus: 12000, signingBonus: 4000, equity: 'None'},
 ];
 
+interface ScenarioWire {
+  offer?: SalaryOfferWireForScenario;
+  approaches?: Array<{id?: NegotiationApproachId; title?: string; description?: string}>;
+  total_rounds?: number;
+  totalRounds?: number;
+}
+interface SalaryOfferWireForScenario {
+  company?: string;
+  title?: string;
+  base_salary?: number;
+  baseSalary?: number;
+  bonus?: number;
+  signing_bonus?: number;
+  signingBonus?: number;
+  equity?: string;
+}
+
 /**
- * Generate a fresh mock job-offer scenario to negotiate against. No scenario-
- * generation endpoint is part of this pass's contract, so this stays a local
- * random pick from a static pool — only `submitRound` below is a real call.
- *
- * BACKEND TODO: GET /negotiation/scenario — a real implementation might
- *   generate this from the user's actual tracked applications/offers
- *   (see applicationsService.ts) instead of a random mock pool.
+ * Generate a job-offer scenario to negotiate against. Was a hard-coded
+ * random pick from SCENARIO_POOL every time — same 4 fake offers for every
+ * user, forever. Now tries the real backend first (GET
+ * /api/v1/coach/negotiation/scenario), which can generate something
+ * genuinely tailored to the account. If that's not available yet, falls
+ * back to building a scenario from the user's OWN tracked applications (any
+ * at the Offer stage — see applicationsService.ts) so at least the
+ * company/role are real, not fabricated. Only if neither of those has
+ * anything does this fall back to the static pool, as a last resort so the
+ * screen is never left with nothing to show.
  */
 export async function getScenario(): Promise<{offer: SalaryOffer; approaches: NegotiationApproach[]; totalRounds: number}> {
+  try {
+    const {data} = await apiClient.get<ScenarioWire>('/api/v1/coach/negotiation/scenario', {
+      params: {language: currentLanguage()},
+    });
+    // Was accepting ANY truthy `data.offer`, including an empty/partial
+    // object (e.g. `{}` from an endpoint that's stubbed but not fully
+    // implemented yet) — that fell through to the `?? 'Your target company'`
+    // / `?? 'Your target role'` / `?? 0` placeholders below and rendered
+    // them as if they were real data, instead of continuing on to the
+    // applications-based or static-pool fallback further down. Reported as
+    // "just showing placeholders... salary per year is showing $0." Now
+    // requires the offer to actually have a company/title AND a positive
+    // base salary before trusting it as real.
+    const o = data.offer;
+    const baseSalary = o?.base_salary ?? o?.baseSalary ?? 0;
+    const hasRealOffer = !!o && !!(o.company || o.title) && baseSalary > 0;
+    if (hasRealOffer && o) {
+      const offer: SalaryOffer = {
+        company: o.company ?? 'Your target company',
+        title: o.title ?? 'Your target role',
+        baseSalary,
+        bonus: o.bonus ?? 0,
+        signingBonus: o.signing_bonus ?? o.signingBonus ?? 0,
+        equity: o.equity ?? 'None',
+      };
+      const approaches: NegotiationApproach[] =
+        data.approaches && data.approaches.length > 0
+          ? data.approaches.map((a, i) => ({
+              id: a.id ?? APPROACHES[i % APPROACHES.length].id,
+              title: a.title ?? APPROACHES[i % APPROACHES.length].title,
+              description: a.description ?? '',
+            }))
+          : APPROACHES;
+      return {offer, approaches, totalRounds: data.total_rounds ?? data.totalRounds ?? TOTAL_ROUNDS};
+    }
+  } catch {
+    // Not implemented yet / offline — fall through to the personalized
+    // fallback below.
+  }
+
+  try {
+    const applications = await applicationsService.listApplications();
+    const withOffer = applications.find(a => a.stage === Application_Stage_Enum.Offer);
+    if (withOffer) {
+      // Real company/role from the user's own tracker; the dollar figures
+      // are a reasonable estimate (this app doesn't collect real offer
+      // amounts anywhere yet) explicitly framed as a practice baseline
+      // rather than pretending to know their actual number.
+      const base = SCENARIO_POOL[Math.floor(Math.random() * SCENARIO_POOL.length)];
+      const offer: SalaryOffer = {
+        ...base,
+        company: withOffer.company,
+        title: withOffer.role,
+      };
+      return {offer, approaches: APPROACHES, totalRounds: TOTAL_ROUNDS};
+    }
+  } catch {
+    // listApplications already has its own offline fallback and rarely
+    // throws, but guard anyway rather than let this block the screen.
+  }
+
   await delay(500);
   const offer = SCENARIO_POOL[Math.floor(Math.random() * SCENARIO_POOL.length)];
   return {offer: {...offer}, approaches: APPROACHES, totalRounds: TOTAL_ROUNDS};
@@ -173,6 +262,7 @@ export async function submitRound(
   const {data} = await apiClient.post<NegotiationResponseWire>('/api/v1/coach/negotiation', {
     offer: toOfferWire(currentOffer),
     ask: approach.description,
+    language: currentLanguage(),
     context: {
       round,
       totalRounds,

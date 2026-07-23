@@ -1,0 +1,9 @@
+{
+  "title": "Benachrichtigungen",
+  "mark_all_read": "Alle als gelesen markieren",
+  "load_failed": "Deine Benachrichtigungen konnten nicht geladen werden.",
+  "mark_read_failed_title": "Benachrichtigung konnte nicht aktualisiert werden",
+  "mark_read_failed_body": "Bitte versuche es gleich noch einmal.",
+  "empty_title": "Du bist auf dem Laufenden!",
+  "empty_description": "Neue Benachrichtigungen zu deinem Interviewtraining erscheinen hier."
+}

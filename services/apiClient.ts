@@ -20,7 +20,28 @@ export const apiClient = axios.create({
   timeout: 20000,
 });
 
+// Firebase's native SDK persists sessions on-device, but restoring one on a
+// cold start is itself async — auth().currentUser is briefly `null` for a
+// beat after JS starts, before the first onAuthStateChanged fires (whether
+// with a restored user or null). Any request fired in that window (e.g. the
+// notification-badge fetch on Home's very first mount) previously read
+// `currentUser` as null, sent with no Authorization header, and got a 401
+// from the backend even though the user was, in fact, signed in — it just
+// hadn't been confirmed yet. This promise resolves the first time Firebase
+// reports ANY auth state (signed in or not), and every request now waits
+// for it before reading currentUser, so "signed in but not confirmed yet"
+// no longer looks identical to "signed out" to the backend.
+let resolveAuthReady: () => void;
+const authReady = new Promise<void>(resolve => {
+  resolveAuthReady = resolve;
+});
+const unsubscribeAuthReady = auth().onAuthStateChanged(() => {
+  resolveAuthReady();
+  unsubscribeAuthReady();
+});
+
 apiClient.interceptors.request.use(async config => {
+  await authReady;
   const user = auth().currentUser;
   if (user) {
     // Firebase caches the ID token locally and only makes a network call to

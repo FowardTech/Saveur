@@ -4,6 +4,48 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <!-- Was unset, so the very first frame before RN/JS loads fell back
+             to Theme.AppCompat.DayNight's own default background — near-black
+             in dark mode, which is what showed up as a black splash screen.
+             Pinned to the brand blue so it's consistent regardless of the
+             device's light/dark setting. -->
+        <item name="android:windowBackground">@color/splash_background</item>
+    </style>
+
+    <!-- MainActivity's post-splash theme — paints the branded logo-on-blue
+         (see main_activity_window_background.xml) for the brief window
+         after the system splash is dismissed but before RN's JS has
+         actually rendered a first frame. This is no longer MainActivity's
+         manifest theme directly — see Theme.App.SplashScreen, which hands
+         off to this one. -->
+    <style name="AppTheme.Main">
+        <item name="android:windowBackground">@drawable/main_activity_window_background</item>
+    </style>
+
+    <!-- Explicit Android SplashScreen API (API 31+, back-ported to older
+         versions by androidx.core:core-splashscreen) config for MainActivity
+         — see AndroidManifest.xml (this is set as MainActivity's theme) and
+         MainActivity.kt's installSplashScreen() call. Without this, the OS
+         is *required* to show its own system splash screen on API 31+
+         (targetSdkVersion is 36) and auto-derives the icon from the app's
+         launcher icon with its own padding assumptions — that auto
+         derivation was what rendered the logo blown up edge-to-edge/cropped
+         in the first place.
+
+         Deliberately no windowSplashScreenAnimatedIcon (and no spinner —
+         that was tried and explicitly asked to be removed): this mechanism
+         was tested twice with generously-padded source assets and still
+         rendered the logo huge/cropped on-device, so rather than fight an
+         unreliable platform-side icon-sizing pipeline a third time, this
+         phase is just plain windowSplashScreenBackground — no icon at all.
+         It's brief regardless (this phase ends the moment MainActivity's
+         window is ready to draw), and postSplashScreenTheme immediately
+         hands off to AppTheme.Main above, which shows the actual logo at a
+         size we fully control via a plain windowBackground drawable
+         instead. -->
+    <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.Main</item>
     </style>
 
 </resources>

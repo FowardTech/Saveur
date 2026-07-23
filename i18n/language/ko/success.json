@@ -1,0 +1,12 @@
+{
+  "title": "축하합니다!",
+  "description": "비밀번호가 성공적으로 변경되었습니다. 로그인 시 새 비밀번호를 사용하세요.",
+  "title_2": "환영합니다!",
+  "description_2": "AI 면접 코치가 준비되었습니다. 합격을 향해 함께 준비해봐요.",
+  "see_your_dashboard": "대시보드 보기",
+  "create_new_job": "새 채용 공고 만들기",
+  "start_practicing": "연습 시작하기",
+  "payment-successful": "결제 완료!",
+  "payment-successful-title": "빠른 결제 감사합니다! 결제 정보가 이메일로 전송되었습니다.",
+  "success_change_password": "비밀번호가 성공적으로 변경되었습니다. 로그인 시 새 비밀번호를 사용하세요."
+}

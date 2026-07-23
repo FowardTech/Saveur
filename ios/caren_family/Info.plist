@@ -22,36 +22,23 @@
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Google Sign-In's REVERSED_CLIENT_ID from
-				     GoogleService-Info.plist — this is what lets Safari/the
-				     Google app hand control back to Saveur after the user
-				     picks an account. -->
 				<string>com.googleusercontent.apps.679326954548-35emkamsh1t03e4md0ukaqnnm19hp806</string>
 			</array>
 		</dict>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<!-- Matches `returnURL: 'saveur://stripe-redirect'` in
-				     services/billingService.ts's initPaymentSheet call, and
-				     the urlScheme="saveur" prop on <StripeProvider> in
-				     App.tsx. Needed so iOS can hand control back to the app
-				     after certain payment methods redirect out (e.g. bank
-				     app authentication, 3D Secure) — not used for plain
-				     card payments, but required for the Payment Sheet to
-				     initialize without erroring regardless of which payment
-				     method the user ends up choosing. -->
 				<string>saveur</string>
 			</array>
 		</dict>
 	</array>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSAppTransportSecurity</key>
@@ -63,16 +50,20 @@
 	</dict>
 	<key>NSCameraUsageDescription</key>
 	<string>We use your camera to record video mock interviews so we can give you feedback on eye contact, expressions, and posture.</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to sign in to Saveur quickly and securely.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Saveur connects to your local development server while testing during development.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We use your microphone to record voice and video mock interviews so we can give you feedback on your speaking.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>We save exported reports and documents to your photo library when you choose to.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library so you can upload your resume, certificates, and other documents.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>We transcribe your spoken interview answers on-device so we can give you feedback on what you said.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>
@@ -80,6 +71,22 @@
 		<string>DCondensed-Bold.ttf</string>
 		<string>GothamPro-Medium.ttf</string>
 		<string>GothamPro-Regular.ttf</string>
+		<string>MontserratAlternates-Black.ttf</string>
+		<string>MontserratAlternates-Bold.ttf</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+		<string>audio</string>
+		<string>bluetooth-peripheral</string>
+		<string>fetch</string>
+		<string>processing</string>
+		<string>location</string>
+		<string>push-to-talk</string>
+		<string>bluetooth-central</string>
+		<string>voip</string>
+		<string>external-accessory</string>
+		<string>nearby-interaction</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

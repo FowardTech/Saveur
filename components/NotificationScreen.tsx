@@ -20,18 +20,29 @@ const NotificationScreen = memo(
   }: SuccessScreenType) => {
     const {width, height} = useLayout();
     const sizeIMG = 160 * (width / 375);
+    // Medium, not the old oversized 160-wide block the placeholder gradient
+    // circle used to render at (and squashed non-square, 160x142, since
+    // that placeholder wasn't actually meant to be a logo). This is a true
+    // square badge (Images.logoSuccess is now the real app icon artwork —
+    // see assets/images/index.ts) sized down and gently rounded so it reads
+    // as a logo mark, not a hero graphic.
+    const logoSize = 112 * (width / 375);
 
     return (
       <Container style={styles.container}>
         <View style={styles.top}>
           <View>
-            <Image
+            {/* Was Images.successBg — scattered pastel polka-dot/confetti
+                shapes behind the logo/checkmark. Kept as a plain, empty
+                spacer (same reserved height) rather than removed outright,
+                since the logo/checkmark image below is positioned
+                absolutely within this box and relies on it for layout. */}
+            <View
               style={{
                 width: width,
                 marginTop: 36,
                 height: 294 * (height / 812),
               }}
-              source={Images.successBg}
             />
             {logo === undefined ? (
               <Image
@@ -47,8 +58,10 @@ const NotificationScreen = memo(
             ) : (
               <Image
                 style={{
-                  width: sizeIMG,
-                  height: 142 * (width / 375),
+                  width: logoSize,
+                  height: logoSize,
+                  borderRadius: logoSize * 0.22,
+                  overflow: 'hidden',
                   position: 'absolute',
                   bottom: 30,
                   alignSelf: 'center',

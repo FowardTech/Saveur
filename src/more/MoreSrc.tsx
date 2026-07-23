@@ -1,29 +1,94 @@
 import React, {memo} from 'react';
-import {Alert, View} from 'react-native';
-import {StyleService, useStyleSheet} from '@ui-kitten/components';
+import {Alert, TouchableOpacity, View} from 'react-native';
+import {Icon, StyleService, useStyleSheet, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
-import {Images} from 'assets/images';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
 import HeaderMoreOption from './components/HeaderMoreOption';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
 import ThemeContext from '../../ThemeContext';
 import * as emailService from 'services/emailService';
+import {AuthContext} from '../../AuthContext';
+import * as configService from 'services/configService';
+import {FeatureFlags} from 'services/configService';
 
 const MoreSrc = memo(() => {
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const {t} = useTranslation(['more', 'payment', 'common']);
 
   // Was local-only state before (a Toggle that flipped its own visual state
   // but never touched the app's actual theme) — now wired to the real
   // ThemeContext so this switch actually changes the app's light/dark theme.
-  const {theme, toggleTheme} = React.useContext(ThemeContext);
-  const darkMode = theme === 'dark';
+  const {theme: appTheme, toggleTheme} = React.useContext(ThemeContext);
+  const darkMode = appTheme === 'dark';
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
+  const {profile, signOut, updateProfile} = React.useContext(AuthContext);
+
+  // Master push-notification toggle. Defaults true (matches
+  // User.notifications_enabled's server-side default) so existing users who
+  // haven't touched this yet see it "on" rather than misleadingly "off".
+  const notificationsEnabled = profile?.notificationsEnabled ?? true;
+  const [isTogglingNotifications, setIsTogglingNotifications] = React.useState(false);
+  const onToggleNotifications = React.useCallback(async () => {
+    if (isTogglingNotifications) return;
+    setIsTogglingNotifications(true);
+    try {
+      await updateProfile({notificationsEnabled: !notificationsEnabled});
+    } catch (error: any) {
+      Alert.alert(
+        t('more:notifications_toggle_failed_title', {defaultValue: "Couldn't update that"}),
+        error?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
+      );
+    } finally {
+      setIsTogglingNotifications(false);
+    }
+  }, [isTogglingNotifications, notificationsEnabled, updateProfile, t]);
+
+  // There was no way to sign out anywhere in the app before this — once
+  // signed in, a user was stuck signed in. signOut() clears the Firebase
+  // session (AuthContext), and the explicit navigate() below sends them to
+  // Login directly rather than relying on AppContainer's initialRouteName
+  // logic, which only runs once at cold start, not on an in-app sign-out.
+  const [isSigningOut, setIsSigningOut] = React.useState(false);
+  const onLogout = React.useCallback(() => {
+    Alert.alert(
+      t('more:logout_confirm_title', {defaultValue: 'Log out?'}),
+      t('more:logout_confirm_body', {defaultValue: "You'll need to sign back in to use the app."}),
+      [
+        {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
+        {
+          text: t('more:logout', {defaultValue: 'Log out'}),
+          style: 'destructive',
+          onPress: async () => {
+            if (isSigningOut) return;
+            setIsSigningOut(true);
+            try {
+              await signOut();
+              navigate('AuthStack', {screen: 'Login'});
+            } catch (error: any) {
+              Alert.alert(
+                t('more:logout_failed_title', {defaultValue: "Couldn't log out"}),
+                error?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
+              );
+            } finally {
+              setIsSigningOut(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [signOut, navigate, isSigningOut, t]);
+
+  // Permanent account deletion moved to src/more/ProfileSrc.tsx (My Profile)
+  // — was a plain row directly on this main Settings list, right below Log
+  // out, one careless tap away from an irreversible action. Now it only
+  // lives on the My Profile sub-screen, reached deliberately via the row
+  // below or the avatar tap in HeaderMoreOption.
 
   // POST /api/v1/email/resend-welcome — see services/emailService.ts. A
   // `useRef` busy-guard (not state) is enough here since this row doesn't
@@ -49,82 +114,174 @@ const MoreSrc = memo(() => {
     }
   }, [t]);
 
-  // Account & career-prep tools.
-  const DATA_DETAILS: ButtonOptionalProps[] = [
+  // Account & career-prep tools. `featureKey` (when present) gates the row
+  // behind the admin dashboard's Feature Flags page (see
+  // services/configService.ts) — flip it off there and the row disappears
+  // on next app launch, no release needed. Rows with no featureKey are
+  // considered core and always shown.
+  // iconBackgroundColor: flat brand blue on every row's icon circle, per
+  // explicit request — was a different `status` color per row (facebook
+  // blue, twitter blue, warning orange, success green, etc.), left in place
+  // below only because it still drives the icon glyph's own tint fallback.
+  // Deliberately NOT applied to the dark-mode toggle, push-notifications
+  // toggle, or logout row further down — those three keep their existing
+  // colors, per the same request.
+  const ICON_BG = '#2574FF';
+  const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
+    {
+      // Also where account deletion now lives (see ProfileSrc.tsx) — moved
+      // off this main list so it isn't a single careless tap away.
+      title: t('more:my_profile', {defaultValue: 'My Profile'}),
+      icon: 'edit_profile',
+      status: 'facebook',
+      iconBackgroundColor: ICON_BG,
+      navigateSrc: 'ProfileSrc',
+    },
     {
       title: t('more:resume_builder', {defaultValue: 'Resume Builder'}),
       icon: 'myPost',
       status: 'facebook',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate('ResumeBuilder'),
     },
     {
       title: t('more:jd_analyzer', {defaultValue: 'JD Analyzer'}),
       icon: 'edit_full',
       status: 'twitter-3',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate('JDAnalyzer'),
     },
     {
+      // Was mis-navigating to MyChildren, a leftover from the pre-Saveur
+      // childcare template — no real document manager screen existed yet.
       title: t('more:my-documents', {defaultValue: 'My Documents'}),
       icon: 'stats',
       status: 'warning',
-      navigateSrc: 'MyChildren',
+      iconBackgroundColor: ICON_BG,
+      onPress: () => navigate('MyDocuments'),
     },
     {
       title: t('more:career_goal', {defaultValue: 'Career Goal'}),
       icon: 'changeJob',
       status: 'neutral',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate('ChangeCareType'),
+    },
+    {
+      // "Change it later" for the roles/countries collected once at signup
+      // (SignupSecondStep) — see src/more/JobPreferences.tsx. Was previously
+      // impossible to update without deleting and recreating the account.
+      title: t('more:job_preferences', {defaultValue: 'Target Roles & Countries'}),
+      icon: 'search',
+      status: 'twitter-3',
+      iconBackgroundColor: ICON_BG,
+      onPress: () => navigate('JobPreferences'),
     },
     {
       title: t('more:learning_courses', {defaultValue: 'Learning Courses'}),
       icon: 'tutoring',
       status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      featureKey: 'learning_courses',
       onPress: () => navigate('LearningCourses'),
     },
     {
       title: t('more:networking_assistant', {defaultValue: 'Networking Assistant'}),
       icon: 'share',
       status: 'green',
+      iconBackgroundColor: ICON_BG,
+      featureKey: 'networking',
       onPress: () => navigate('NetworkingAssistant'),
+    },
+    {
+      title: t('more:career_diary', {defaultValue: 'Career Diary'}),
+      icon: 'calendar',
+      status: 'basic',
+      iconBackgroundColor: ICON_BG,
+      featureKey: 'career_diary',
+      onPress: () => navigate('CareerDiary'),
+    },
+    {
+      title: t('more:refer_and_earn', {defaultValue: 'Refer & Earn'}),
+      icon: 'share',
+      status: 'success',
+      iconBackgroundColor: ICON_BG,
+      featureKey: 'referral_program',
+      onPress: () => navigate('ReferralProgram'),
+    },
+    {
+      title: t('more:job_alerts', {defaultValue: 'Job Alerts'}),
+      icon: 'notification',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      featureKey: 'job_alerts',
+      onPress: () => navigate('JobAlerts'),
     },
     {
       title: t('more:subscription', {defaultValue: 'Subscription'}),
       icon: 'premiumAcc',
       status: 'success',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate('Subscription'),
     },
     {
       title: t('more:payment_methods', {defaultValue: 'Payment Methods'}),
       icon: 'payment',
       status: 'facebook',
+      iconBackgroundColor: ICON_BG,
       navigateSrc: 'PaymentMethod',
     },
-  ];
+    {
+      title: t('more:payment_history', {defaultValue: 'Payment History'}),
+      icon: 'searchHistory',
+      status: 'warning',
+      iconBackgroundColor: ICON_BG,
+      onPress: () => navigate('PaymentHistory'),
+    },
+    {
+      // Biometric app-lock + email-code 2FA — see src/more/SecuritySettings.tsx.
+      title: t('more:security', {defaultValue: 'Security'}),
+      icon: 'security',
+      status: 'basic',
+      iconBackgroundColor: ICON_BG,
+      onPress: () => navigate('SecuritySettings'),
+    },
+  ].filter(item => !item.featureKey || configService.isFeatureEnabled(item.featureKey));
   // General / support.
   const DATA_APPLICATION: ButtonOptionalProps[] = [
+    {
+      title: t('more:language', {defaultValue: 'Language'}),
+      icon: 'changeJob',
+      status: 'basic',
+      iconBackgroundColor: ICON_BG,
+      onPress: () => navigate('SelectLanguage'),
+    },
     {
       title: t('more:about-caren'),
       icon: 'stats',
       status: 'basic',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate("AboutScreen"),
     },
     {
       title: t('more:help-&-faq'),
       icon: 'helpWhite',
       status: 'placeholder',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate("FaqScreen"),
     },
     {
       title: t('more:privacy-of-policy'),
       icon: 'term',
       status: 'green',
-      navigateSrc: 'ReferFriend',
+      iconBackgroundColor: ICON_BG,
       onPress: () => navigate("PolicyScreen"),
     },
     {
       title: t('more:resend_welcome_email', {defaultValue: 'Resend welcome email'}),
       icon: 'send',
       status: 'facebook',
+      iconBackgroundColor: ICON_BG,
       onPress: onResendWelcomeEmail,
     },
   ];
@@ -132,9 +289,9 @@ const MoreSrc = memo(() => {
     <Container style={styles.container}>
       <Content padder contentContainerStyle={styles.content}>
         <HeaderMoreOption
-          name={'Edith Johnson'}
-          avatar={Images.avatar2}
-          email={'lehieuds@gmail.com'}
+          name={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}
+          avatarUrl={profile?.avatarUrl}
+          email={profile?.email ?? ''}
         />
         <View style={styles.details}>
           <Text category="h6" bold>
@@ -146,6 +303,7 @@ const MoreSrc = memo(() => {
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
+                iconBackgroundColor={item.iconBackgroundColor}
                 key={i}
                 onPress={item.onPress}
                 navigateSrc={item.navigateSrc}
@@ -163,6 +321,7 @@ const MoreSrc = memo(() => {
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
+                iconBackgroundColor={item.iconBackgroundColor}
                 onPress={item.onPress}
                 key={i}
                 navigateSrc={item.navigateSrc}
@@ -178,12 +337,52 @@ const MoreSrc = memo(() => {
             onPress={toggleTheme}
             navigateSrc={undefined}
           />
+          {/* Master push-notification opt-out. Was nowhere in the app —
+              once a push arrived, there was no in-app way to stop future
+              ones short of disabling notifications at the OS level.
+              Persisted server-side (User.notifications_enabled,
+              PATCH /api/users/me) and enforced in
+              app/services/push_service.py, not just a decorative local
+              switch. */}
           <ButtonOptional
-            title={t('more:refer-friend-&-family')}
-            icon={'share'}
-            status={'twitter'}
-            navigateSrc={'ReferFriend'}
+            withToggle
+            icon="notification"
+            title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
+            status={'facebook'}
+            checked={notificationsEnabled}
+            onPress={onToggleNotifications}
+            navigateSrc={undefined}
           />
+          {/* "Refer Friend & Family" used to be a separate row here, pointing
+              at the old ReferFriend.tsx stub (hardcoded fake link, never
+              wired to the real backend). It duplicated the actual referral
+              feature, which already has its own entry above in
+              DATA_DETAILS ("Refer & Earn" -> ReferralProgram.tsx) — removed
+              rather than kept as a second, non-functional entry point. */}
+          {/* Uses a plain eva Icon rather than ButtonOptional/ButtonFill —
+              those are hardcoded to the "assets" icon pack (see
+              ButtonFill.tsx), which has no logout/exit glyph bundled and
+              adding one means shipping new @2x/@3x image assets. eva's
+              built-in icon set already has "log-out-outline", so this row
+              is styled to match the others without that dependency. */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={onLogout}
+            disabled={isSigningOut}
+            style={[styles.logoutRow, {opacity: isSigningOut ? 0.6 : 1}]}>
+            <View style={[styles.logoutIconWrap, {backgroundColor: theme['color-danger-100']}]}>
+              <Icon
+                pack="eva"
+                name="log-out-outline"
+                style={{width: 20, height: 20, tintColor: theme['text-primary-color']}}
+              />
+            </View>
+            <Text ml={24} category="para-m">
+              {isSigningOut
+                ? t('more:logging_out', {defaultValue: 'Logging out…'})
+                : t('more:logout', {defaultValue: 'Log out'})}
+            </Text>
+          </TouchableOpacity>
         </View>
       </Content>
     </Container>
@@ -205,4 +404,16 @@ const themedStyles = StyleService.create({
     marginBottom: 48,
   },
   application: {},
+  logoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+  },
+  logoutIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

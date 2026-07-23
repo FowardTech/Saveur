@@ -21,15 +21,18 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as jdService from 'services/jdService';
 import { JDAnalysisResult } from 'services/jdService';
+import { AuthContext } from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
 
 // Job-description analyzer: paste a JD, get a match score + gap analysis via
 // jdService, which calls POST /jd/analyze and POST /jd/match in parallel and
 // merges them (see services/jdService.ts).
 const JDAnalyzer = memo(() => {
-  const { goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
+  const { isPro } = React.useContext(AuthContext);
 
   const [jd, setJd] = React.useState('');
   const [result, setResult] = React.useState<JDAnalysisResult | null>(null);
@@ -51,13 +54,22 @@ const JDAnalyzer = memo(() => {
     }
   };
 
+  if (!isPro) {
+    return (
+      <ProLockGate
+        title="JD Analyzer"
+        description="Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Pro feature."
+      />
+    );
+  }
+
   return (
     <Container style={styles.container}>
       <TopNavigation
         title={t('more:jd_analyzer', { defaultValue: 'JD Analyzer' })}
         accessoryLeft={<NavigationAction onPress={goBack} />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h8" bold status="placeholder" mb={12}>
           {t('more:paste_job_description', { defaultValue: 'Paste a job description' })}
         </Text>
@@ -126,6 +138,27 @@ const JDAnalyzer = memo(() => {
                 </View>
               ))}
             </View>
+
+            <Flex level="2" style={styles.buildResumeCard} vertical justify="flex-start" mt={32}>
+              <Text category="h7" bold mb={4}>
+                {t('more:build_matching_resume_title', { defaultValue: 'Want a resume tailored to this job?' })}
+              </Text>
+              <Text category="h9-s" status="placeholder" mb={16}>
+                {t('more:build_matching_resume_description', {
+                  defaultValue: "We'll draft a resume around this job's keywords and skills, ready to download.",
+                })}
+              </Text>
+              <Button
+                children={t('more:build_matching_resume_cta', { defaultValue: 'Build Resume' })}
+                onPress={() =>
+                  navigate('GenerateResume', {
+                    keywordSuggestions: result.keywordSuggestions,
+                    missingSkills: result.missingSkills,
+                    jdText: jd,
+                  })
+                }
+              />
+            </Flex>
           </>
         ) : null}
       </Content>
@@ -161,5 +194,9 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+  },
+  buildResumeCard: {
+    borderRadius: 20,
+    padding: 20,
   },
 });

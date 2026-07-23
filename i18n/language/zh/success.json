@@ -1,0 +1,12 @@
+{
+  "title": "恭喜！",
+  "description": "您已成功更改密码。登录时请使用新密码。",
+  "title_2": "欢迎！",
+  "description_2": "您的 AI 面试教练已准备就绪。让我们帮您获得录用通知。",
+  "see_your_dashboard": "查看您的仪表板",
+  "create_new_job": "创建新工作",
+  "start_practicing": "开始练习",
+  "payment-successful": "支付成功！",
+  "payment-successful-title": "感谢您的及时付款！付款信息已发送到您的电子邮箱。",
+  "success_change_password": "您已成功更改密码。登录时请使用新密码。"
+}

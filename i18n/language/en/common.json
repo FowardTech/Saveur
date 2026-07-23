@@ -62,6 +62,9 @@
   "seeAll": "See All",
   "booking": "Booking",
   "accept-again": "Accept Again",
-  "profiles":"Profiles",
-  "done": "Done"
+  "profiles": "Profiles",
+  "done": "Done",
+  "try_again": "Try again",
+  "try_again_later": "Please try again in a moment.",
+  "load_more": "Load more"
 }

@@ -18,6 +18,7 @@ import {useTranslation} from 'react-i18next';
 import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import {AuthStackParamList, RootStackParamList} from 'navigation/types';
+import {COUNTRIES} from 'constants/countries';
 
 // Step 2 of signup: which countries is the user open to working in? This
 // used to be a react-native-maps address picker (leftover from the
@@ -25,28 +26,9 @@ import {AuthStackParamList, RootStackParamList} from 'navigation/types';
 // configured — it was crashing on Android with "API key not found"). A
 // literal map pin doesn't fit "preferred countries" as a job-search
 // preference anyway, so this is now a simple searchable multi-select list —
-// no native map dependency needed.
-const COUNTRIES = [
-  'Remote - Anywhere',
-  'United States',
-  'United Kingdom',
-  'Canada',
-  'Ireland',
-  'Germany',
-  'France',
-  'Netherlands',
-  'Australia',
-  'New Zealand',
-  'Singapore',
-  'India',
-  'United Arab Emirates',
-  'Nigeria',
-  'South Africa',
-  'Brazil',
-  'Mexico',
-  'Japan',
-  'South Korea',
-];
+// no native map dependency needed. The list itself now lives in
+// constants/countries.ts so src/more/JobPreferences.tsx (the "change it
+// later" settings screen) shares the exact same list instead of drifting.
 
 const SignupSecondStep = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
@@ -56,8 +38,27 @@ const SignupSecondStep = memo(() => {
   const {t} = useTranslation(['auth', 'common', 'success']);
 
   const goal = route.params?.goal;
+  const locale = route.params?.locale;
   const [query, setQuery] = React.useState('');
   const [preferredCountries, setPreferredCountries] = React.useState<string[]>([]);
+
+  // Job titles/roles/positions the user is searching for or preparing to
+  // interview for — free text, not a fixed list like countries, since job
+  // titles are far too varied to enumerate. Drives job-alert matching (see
+  // constants/Types.tsx's JobAlertProps + services/jobAlertsService.ts) — a
+  // job alert can't match anything without this.
+  const [roleDraft, setRoleDraft] = React.useState('');
+  const [desiredRoles, setDesiredRoles] = React.useState<string[]>([]);
+
+  const addRole = () => {
+    const trimmed = roleDraft.trim();
+    if (!trimmed) return;
+    setDesiredRoles(prev => (prev.some(r => r.toLowerCase() === trimmed.toLowerCase()) ? prev : [...prev, trimmed]));
+    setRoleDraft('');
+  };
+  const removeRole = (role: string) => {
+    setDesiredRoles(prev => prev.filter(r => r !== role));
+  };
 
   const filtered = React.useMemo(
     () => COUNTRIES.filter(c => c.toLowerCase().includes(query.toLowerCase())),
@@ -76,6 +77,8 @@ const SignupSecondStep = memo(() => {
       params: {
         goals: goal ? [goal] : [],
         preferredCountries,
+        desiredRoles,
+        locale,
       },
     });
   };
@@ -83,20 +86,80 @@ const SignupSecondStep = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text mt={16}>{t('auth:heading_signup_2')}</Text>
-        <Text mt={8} mb={24} category="h2">
+        <Text mt={8} mb={24} category="h2" bold style={{fontWeight: '800'}}>
           {t('auth:title_signup_2')}
         </Text>
-        <Input
-          placeholder={t('auth:enter_address_zip_code_')}
-          value={query}
-          onChangeText={setQuery}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
-          style={styles.search}
-          status="basic"
-          size="large"
-        />
+
+        <Text category="h7" bold mb={4}>
+          {t('auth:desired_roles_title', {defaultValue: 'Roles you\'re targeting'})}
+        </Text>
+        <Text category="h9-s" status="placeholder" mb={12}>
+          {t('auth:desired_roles_subtitle', {
+            defaultValue: "We'll alert you when a matching job is posted online — e.g. \"Product Manager\", \"Senior Software Engineer\".",
+          })}
+        </Text>
+        <View style={styles.searchWrap}>
+          <Input
+            placeholder={t('auth:desired_roles_placeholder', {defaultValue: 'Type a job title and add it'})}
+            value={roleDraft}
+            onChangeText={setRoleDraft}
+            onSubmitEditing={addRole}
+            returnKeyType="done"
+            accessoryRight={props => (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={addRole}
+                disabled={!roleDraft.trim()}
+                style={styles.accessoryRightSpacing}>
+                <Icon {...props} pack="eva" name="plus-outline" />
+              </TouchableOpacity>
+            )}
+            style={styles.search}
+            textStyle={styles.searchText}
+            status="basic"
+            size="large"
+          />
+        </View>
+        {desiredRoles.length > 0 ? (
+          <View style={[styles.chipsWrap, {marginBottom: 24}]}>
+            {desiredRoles.map(role => (
+              <TouchableOpacity
+                key={role}
+                activeOpacity={0.7}
+                onPress={() => removeRole(role)}
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
+                <Text category="h9" bold>
+                  {role}
+                </Text>
+                <Icon
+                  pack="eva"
+                  name="close-outline"
+                  style={[globalStyle.icon16, {tintColor: theme['text-basic-color'], marginLeft: 6}]}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+
+        <Text category="h7" bold mb={12}>
+          {t('auth:preferred_countries_title', {defaultValue: 'Countries you\'d work in'})}
+        </Text>
+        <View style={styles.searchWrap}>
+          <Input
+            placeholder={t('auth:enter_address_zip_code_')}
+            value={query}
+            onChangeText={setQuery}
+            accessoryLeft={props => (
+              <Icon {...props} style={[props.style, styles.accessoryLeftSpacing]} pack="assets" name="search" />
+            )}
+            style={styles.search}
+            textStyle={styles.searchText}
+            status="basic"
+            size="large"
+          />
+        </View>
         {preferredCountries.length > 0 ? (
           <View style={styles.chipsWrap}>
             {preferredCountries.map(country => (
@@ -168,10 +231,45 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 120,
   },
+  // UI Kitten's <Input> splits its `style` prop itself: anything in RN's
+  // "flex style" list (width, alignSelf, margin*, padding* included — see
+  // node_modules/@ui-kitten/components/devsupport/services/props/props.service.js's
+  // FlexStyleProps) is routed to the *outer*, invisible touchable wrapper;
+  // only paint-only props (backgroundColor, borderRadius, shadow*) reach the
+  // visual pill (its `inputContainer`, which the library hardcodes to
+  // width: '100%' of that outer wrapper regardless of what we pass). That's
+  // why paddingHorizontal in `search` below never widened the *visible* pill
+  // and why width/alignSelf here had no effect either — both were landing on
+  // a wrapper whose own width is being fought over elsewhere. Wrapping the
+  // Input in our own `searchWrap` View pins the width ourselves, outside of
+  // Eva's style-splitting entirely, and `searchText` (passed via the
+  // separate `textStyle` prop, which is NOT split — see the component's
+  // `style={[evaStyle.text, styles.text, platformStyles.text, textStyle]}`)
+  // adds the actual breathing room around the text/icon.
+  searchWrap: {
+    width: '100%',
+  },
   search: {
     ...globalStyle.shadow,
     marginBottom: 16,
     backgroundColor: 'background-basic-color-2',
+  },
+  searchText: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  // Accessory icons (the "+" on the role field, the search glyph on the
+  // country field) sit inside the same full-bleed row as the text — since
+  // that row can't take padding either (same style-splitting issue above),
+  // they were rendering flush against the pill's rounded edge. Margin isn't
+  // split the same way when applied directly to the icon/its wrapper
+  // (rather than via the Input's own `style`), so this pushes them in from
+  // the edge to match the breathing room `searchText` gives the text.
+  accessoryLeftSpacing: {
+    marginLeft: 14,
+  },
+  accessoryRightSpacing: {
+    marginRight: 14,
   },
   chipsWrap: {
     flexDirection: 'row',

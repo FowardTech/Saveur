@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -9,6 +9,7 @@ import {
   Button,
   Layout,
   Input,
+  Spinner,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -22,9 +23,13 @@ import NavigationAction from 'components/NavigationAction';
 import ProgressCard from 'src/find/Component/ProgressCard';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
+import { renderCenteredLabel } from 'utils/buttonLabel';
 import * as resumeService from 'services/resumeService';
 import { ImportedFileInfo, ResumeImportSourceKey, RewriteBulletResult } from 'services/resumeService';
+import * as documentsService from 'services/documentsService';
+import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
 
 const IMPORT_OPTIONS: Array<{ key: ResumeImportSourceKey; title: string; icon: string }> = [
   { key: 'resume', title: 'Resume', icon: 'myPost' },
@@ -63,11 +68,11 @@ async function pickDocument(): Promise<ImportedFileInfo | null> {
 // ats-score, rewrite-bullet) with an AsyncStorage offline-read cache for the
 // imported-sources badges.
 const ResumeBuilder = memo(() => {
-  const { goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
-  const { profile } = React.useContext(AuthContext);
+  const { profile, isPro } = React.useContext(AuthContext);
 
   const [imported, setImported] = React.useState<Record<string, ImportedFileInfo>>({});
   const [importingKey, setImportingKey] = React.useState<ResumeImportSourceKey | null>(null);
@@ -80,6 +85,16 @@ const ResumeBuilder = memo(() => {
   const [isRewriting, setIsRewriting] = React.useState(false);
   const [rewriteResult, setRewriteResult] = React.useState<RewriteBulletResult | null>(null);
 
+  // Which import slot (Resume/LinkedIn/Portfolio/Certificates/Transcript)
+  // the "choose from My Documents" modal is currently open for — null means
+  // closed. Set by onImport below instead of jumping straight to the device
+  // picker, per user request: give a choice between the device and
+  // documents already uploaded elsewhere in the app.
+  const [documentPickerFor, setDocumentPickerFor] = React.useState<ResumeImportSourceKey | null>(null);
+  const [myDocuments, setMyDocuments] = React.useState<DocumentRecord[]>([]);
+  const [isLoadingMyDocuments, setIsLoadingMyDocuments] = React.useState(false);
+  const [myDocumentsError, setMyDocumentsError] = React.useState<string | null>(null);
+
   React.useEffect(() => {
     resumeService.getImportedSources().then(setImported).catch(() => {
       // getImportedSources already falls back to its offline cache on
@@ -89,21 +104,72 @@ const ResumeBuilder = memo(() => {
     });
   }, []);
 
-  const onImport = async (key: ResumeImportSourceKey) => {
-    const file = await pickDocument();
-    if (!file) return; // user canceled the native picker
-    setImportingKey(key);
-    try {
-      await resumeService.importSource(key, file);
-      setImported(prev => ({ ...prev, [key]: file }));
-    } catch (e: any) {
-      Alert.alert(
-        t('more:upload_failed', { defaultValue: 'Upload failed' }),
-        e?.message ?? 'Something went wrong. Please try again.',
-      );
-    } finally {
-      setImportingKey(null);
-    }
+  const runImport = React.useCallback(
+    async (key: ResumeImportSourceKey, file: ImportedFileInfo) => {
+      setImportingKey(key);
+      try {
+        await resumeService.importSource(key, file);
+        setImported(prev => ({ ...prev, [key]: file }));
+      } catch (e: any) {
+        Alert.alert(
+          t('more:upload_failed', { defaultValue: 'Upload failed' }),
+          e?.message ?? 'Something went wrong. Please try again.',
+        );
+      } finally {
+        setImportingKey(null);
+      }
+    },
+    [t],
+  );
+
+  // Was: straight to the device file picker, every time. Now offers a
+  // choice — device file, or something already sitting in My Documents
+  // (resume/portfolio/certificate files uploaded via Chat attachments or the
+  // My Documents screen itself) — per explicit user request.
+  const onImport = (key: ResumeImportSourceKey) => {
+    Alert.alert(
+      t('more:import_from', { defaultValue: 'Import from' }),
+      undefined,
+      [
+        { text: t('common:cancel', { defaultValue: 'Cancel' }).toString(), style: 'cancel' },
+        {
+          text: 'Choose from My Documents',
+          onPress: () => setDocumentPickerFor(key),
+        },
+        {
+          text: 'Choose from Device',
+          onPress: async () => {
+            const file = await pickDocument();
+            if (!file) return; // user canceled the native picker
+            runImport(key, file);
+          },
+        },
+      ],
+    );
+  };
+
+  React.useEffect(() => {
+    if (!documentPickerFor) return;
+    setIsLoadingMyDocuments(true);
+    setMyDocumentsError(null);
+    documentsService
+      .listDocuments()
+      .then(setMyDocuments)
+      .catch((e: any) => setMyDocumentsError(e?.message ?? 'Could not load My Documents.'))
+      .finally(() => setIsLoadingMyDocuments(false));
+  }, [documentPickerFor]);
+
+  const onPickFromMyDocuments = (doc: DocumentRecord) => {
+    const key = documentPickerFor;
+    setDocumentPickerFor(null);
+    if (!key) return;
+    // Re-runs the file through the same POST /resume/upload multipart flow
+    // as a device pick, using the document's already-hosted URL as the
+    // source — React Native's FormData/networking layer fetches http(s)
+    // uris (not just local file:// paths) when building a multipart body,
+    // the same mechanism that lets a remote image URI be re-posted without
+    // downloading it to disk first.
+    runImport(key, { uri: doc.url, name: doc.name ?? 'Document', sizeBytes: doc.sizeBytes, mimeType: doc.mimeType });
   };
   const onAnalyze = async () => {
     setIsAnalyzing(true);
@@ -142,13 +208,22 @@ const ResumeBuilder = memo(() => {
     }
   };
 
+  if (!isPro) {
+    return (
+      <ProLockGate
+        title="Resume Builder"
+        description="Import your resume, get AI bullet rewrites, and build an ATS-ready document — Resume Builder is a Pro feature."
+      />
+    );
+  }
+
   return (
     <Container style={styles.container}>
       <TopNavigation
         title={t('more:resume_builder', { defaultValue: 'Resume Builder' })}
         accessoryLeft={<NavigationAction onPress={goBack} />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('more:import_from', { defaultValue: 'Import from' })}
         </Text>
@@ -189,9 +264,25 @@ const ResumeBuilder = memo(() => {
           style={[globalStyle.shadowBtn, { marginTop: 32 }]}
         />
 
+        {/* AI-generated CV — same standard section set as the JD Analyzer's
+            "Build Resume" flow (src/more/GenerateResume.tsx), just titled and
+            exported as a CV instead of a resume. See services/
+            resumeGenerationService.ts for the shared generation/export logic. */}
+        <Button
+          appearance="outline"
+          children={t('more:create_cv', { defaultValue: 'Create My CV' })}
+          onPress={() =>
+            navigate('GenerateResume', {
+              role: profile?.desiredRoles?.[0],
+              docType: 'cv',
+            })
+          }
+          style={{ marginTop: 12 }}
+        />
+
         {analyzed ? (
           <>
-            <Flex center vertical mt={40} mb={24}>
+            <Flex vertical itemsCenter justify="center" mt={40} mb={24}>
               <ProgressCard
                 title={t('more:ats_score', { defaultValue: 'ATS Score' })}
                 progress={atsScore}
@@ -234,11 +325,12 @@ const ResumeBuilder = memo(() => {
           onChangeText={setBulletText}
         />
         <Button
-          children={
+          children={renderCenteredLabel(
             isRewriting
               ? t('more:rewriting', { defaultValue: 'Rewriting…' })
-              : t('more:rewrite_with_ai', { defaultValue: 'Rewrite with AI' })
-          }
+              : t('more:rewrite_with_ai', { defaultValue: 'Rewrite with AI' }),
+            {stretch: false},
+          )}
           disabled={isRewriting || !bulletText.trim()}
           onPress={onRewriteBullet}
           accessoryLeft={props => <Icon {...props} pack="assets" name="quote" />}
@@ -264,6 +356,56 @@ const ResumeBuilder = memo(() => {
           </View>
         ) : null}
       </Content>
+
+      <Modal
+        visible={!!documentPickerFor}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setDocumentPickerFor(null)}>
+        <View style={styles.pickerBackdrop}>
+          <View style={styles.pickerSheet}>
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>
+                Choose a document
+              </Text>
+              <TouchableOpacity onPress={() => setDocumentPickerFor(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={globalStyle.icon24} />
+              </TouchableOpacity>
+            </Flex>
+            {isLoadingMyDocuments ? (
+              <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
+                <Spinner size="large" />
+              </Flex>
+            ) : myDocumentsError ? (
+              <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
+                <Text category="h9-s" status="danger" center>
+                  {myDocumentsError}
+                </Text>
+              </Flex>
+            ) : myDocuments.length === 0 ? (
+              <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
+                <Text category="h9-s" status="placeholder" center>
+                  Nothing in My Documents yet — upload a file there first, or choose from your
+                  device instead.
+                </Text>
+              </Flex>
+            ) : (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {myDocuments.map(doc => (
+                  <TouchableOpacity key={doc.id} activeOpacity={0.7} onPress={() => onPickFromMyDocuments(doc)}>
+                    <Layout level="2" style={styles.pickerRow}>
+                      <Icon pack="assets" name="myPost" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                      <Text category="h9" ml={10} style={globalStyle.flexOne} numberOfLines={1}>
+                        {doc.name ?? 'Untitled file'}
+                      </Text>
+                    </Layout>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
     </Container>
   );
 });
@@ -310,5 +452,24 @@ const themedStyles = StyleService.create({
   bulletCard: {
     borderRadius: 12,
     padding: 16,
+  },
+  pickerBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  pickerSheet: {
+    maxHeight: '70%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    backgroundColor: 'background-basic-color-1',
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
   },
 });

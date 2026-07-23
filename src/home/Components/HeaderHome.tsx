@@ -1,24 +1,25 @@
 import React, {memo} from 'react';
-import {View, ImageRequireSource} from 'react-native';
-import {StyleService, useStyleSheet, Avatar} from '@ui-kitten/components';
+import {View} from 'react-native';
+import {StyleService, useStyleSheet} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import UserAvatar from 'components/UserAvatar';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
 import {useTranslation} from 'react-i18next';
 
 interface HeaderHomeProps {
   name: string;
-  avatar: ImageRequireSource;
+  avatarUrl?: string;
   email: string;
   notification?: number;
 }
 
 const HeaderHome = memo(
-  ({email, avatar, name, notification}: HeaderHomeProps) => {
+  ({email, avatarUrl, name, notification}: HeaderHomeProps) => {
     const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
     const styles = useStyleSheet(themedStyles);
     const _onProfile = () => {};
@@ -28,12 +29,7 @@ const HeaderHome = memo(
       <Flex itemsCenter mh={24} mt={24} mb={8}>
         <Flex itemsCenter justify="flex-start">
           <Flex onPress={_onProfile}>
-            <Avatar
-              source={avatar}
-              /* @ts-ignore */
-              style={styles.avatar}
-              shape="rounded"
-            />
+            <UserAvatar uri={avatarUrl} name={name} style={styles.avatar} />
           </Flex>
           <View>
             <Text category="h8-s" mt={4}>
@@ -51,11 +47,13 @@ const HeaderHome = memo(
             onPress={() => null}
             disabled
           />
-          <Flex style={styles.notification} itemsCenter border={24}>
-            <Text category="h9" status={'primary'} mt={1}>
-              {notification}
-            </Text>
-          </Flex>
+          {notification ? (
+            <Flex style={styles.notification} itemsCenter border={24}>
+              <Text category="h9" status={'primary'} mt={1}>
+                {notification > 9 ? '9+' : notification}
+              </Text>
+            </Flex>
+          ) : null}
         </Flex>
       </Flex>
     );

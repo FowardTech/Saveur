@@ -9,6 +9,7 @@ import {
   Icon,
 } from '@ui-kitten/components';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
@@ -49,6 +50,7 @@ const SystemDesignWhiteboard = memo(() => {
   const { goBack } = useNavigation();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
+  const { t } = useTranslation(['find']);
 
   const [elements, setElements] = React.useState<CanvasElement[]>([]);
   const [activePathD, setActivePathD] = React.useState<string | null>(null);
@@ -129,34 +131,34 @@ const SystemDesignWhiteboard = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title="System Design Whiteboard"
+        title={t('find:system_design_whiteboard', {defaultValue: 'System Design Whiteboard'})}
         accessoryLeft={<NavigationAction onPress={goBack} />}
       />
       <View style={styles.toolbar}>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={() => onStampShape('rectangle')}>
           <View style={styles.rectSwatch} />
-          <Text category="h10" mt={4}>Rectangle</Text>
+          <Text category="h10" mt={4}>{t('find:whiteboard_rectangle', {defaultValue: 'Rectangle'})}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={() => onStampShape('circle')}>
           <View style={styles.circleSwatch} />
-          <Text category="h10" mt={4}>Circle</Text>
+          <Text category="h10" mt={4}>{t('find:whiteboard_circle', {defaultValue: 'Circle'})}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={() => onStampShape('arrow')}>
           <Icon pack="assets" name="arrowRight" style={[globalStyle.icon20, { tintColor: STROKE_COLOR }]} />
-          <Text category="h10" mt={4}>Arrow</Text>
+          <Text category="h10" mt={4}>{t('find:whiteboard_arrow', {defaultValue: 'Arrow'})}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={onUndo} disabled={elements.length === 0}>
           <Icon pack="eva" name="corner-up-left-outline" style={[globalStyle.icon20, { tintColor: elements.length ? STROKE_COLOR : theme['text-hint-color'] }]} />
-          <Text category="h10" mt={4}>Undo</Text>
+          <Text category="h10" mt={4}>{t('find:whiteboard_undo', {defaultValue: 'Undo'})}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={onClear} disabled={elements.length === 0}>
           <Icon pack="eva" name="trash-2-outline" style={[globalStyle.icon20, { tintColor: elements.length ? theme['color-danger-500'] : theme['text-hint-color'] }]} />
-          <Text category="h10" mt={4} status={elements.length ? 'danger' : 'placeholder'}>Clear</Text>
+          <Text category="h10" mt={4} status={elements.length ? 'danger' : 'placeholder'}>{t('find:whiteboard_clear', {defaultValue: 'Clear'})}</Text>
         </TouchableOpacity>
       </View>
 
       <Text category="h9-s" status="placeholder" center mt={4} mb={12}>
-        Draw freehand with your finger, or tap a shape above to drop it onto the canvas.
+        {t('find:whiteboard_hint', {defaultValue: 'Draw freehand with your finger, or tap a shape above to drop it onto the canvas.'})}
       </Text>
 
       <View
@@ -180,7 +182,7 @@ const SystemDesignWhiteboard = memo(() => {
         </Svg>
         {elements.length === 0 && !activePathD ? (
           <Flex vertical center style={globalStyle.absoluteBg}>
-            <Text category="h9-s" status="placeholder">Your sketch will appear here</Text>
+            <Text category="h9-s" status="placeholder">{t('find:whiteboard_empty', {defaultValue: 'Your sketch will appear here'})}</Text>
           </Flex>
         ) : null}
       </View>

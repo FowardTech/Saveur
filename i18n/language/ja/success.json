@@ -1,0 +1,12 @@
+{
+  "title": "おめでとうございます！",
+  "description": "パスワードが正常に変更されました。ログイン時は新しいパスワードをご使用ください。",
+  "title_2": "ようこそ！",
+  "description_2": "AI面接コーチの準備が整いました。内定を目指して頑張りましょう。",
+  "see_your_dashboard": "ダッシュボードを見る",
+  "create_new_job": "新しい仕事を作成",
+  "start_practicing": "練習を始める",
+  "payment-successful": "お支払いが完了しました！",
+  "payment-successful-title": "迅速なお支払いありがとうございます！お支払い情報をメールで送信しました。",
+  "success_change_password": "パスワードが正常に変更されました。ログイン時は新しいパスワードをご使用ください。"
+}

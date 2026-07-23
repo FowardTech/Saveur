@@ -1,5 +1,7 @@
 import React, { memo } from "react";
 import { Alert, View } from "react-native";
+import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
+import * as ImagePicker from "react-native-image-picker";
 import {
   Bubble,
   GiftedChat,
@@ -27,14 +29,18 @@ import { Platform } from "react-native";
 import Flex from "components/Flex";
 import Composer from "./Components/Composer";
 import useKeyboard from "hooks/useKeyboard";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
-import { NavigationProp, useNavigation } from "@react-navigation/native";
-import { RootStackParamList } from "navigation/types";
+import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import { RootStackParamList, MessagesStackParamList } from "navigation/types";
 import AttachItem from "./Components/AttachItem";
 import BrandWordmark from "components/BrandWordmark";
-import { CoachChatMessageProps } from "constants/Types";
+import { CoachChatMessageProps, Practice_Mode_Enum } from "constants/Types";
 import * as coachService from "services/coachService";
+import * as resumeService from "services/resumeService";
+import { ImportedFileInfo } from "services/resumeService";
+import { AuthContext } from "../../AuthContext";
+import VoiceCoachView from "./VoiceCoachView";
+import * as configService from "services/configService";
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
 // orb (see renderAvatar below), same mark used on the Login screen and
@@ -64,8 +70,26 @@ const Chat = memo(() => {
   const [isSending, setIsSending] = React.useState(false);
   const theme = useTheme();
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<MessagesStackParamList, 'Chat'>>();
+  const { initialPrompt } = route.params ?? {};
+  const { profile } = React.useContext(AuthContext);
 
   const [showAction, setShowAction] = React.useState(false);
+  // Voice is the default mode per product direction ("instead of it being
+  // a text chat it should be a AI voice responding to the user") — Text
+  // stays available as a toggle rather than being removed outright, since
+  // both modes share the exact same persisted conversation thread (see
+  // coachService.sendVoiceMessage's doc comment). Arriving here with a
+  // pre-composed `initialPrompt` (a "Suggested Topic" tap on the Coach
+  // tab) starts in Text mode instead — that flow auto-sends a specific
+  // typed question via the text pipeline below, which wouldn't feed into
+  // the voice conversation loop.
+  // Admin-configurable — see the Feature Flags page / services/configService.ts.
+  // Turning "voice_coach" off falls back to text-only, no release needed.
+  const voiceCoachEnabled = configService.isFeatureEnabled('voice_coach');
+  const [mode, setMode] = React.useState<'voice' | 'text'>(
+    initialPrompt || !voiceCoachEnabled ? 'text' : 'voice',
+  );
 
   React.useEffect(() => {
     coachService.getChatHistory().then(history => {
@@ -73,6 +97,10 @@ const Chat = memo(() => {
       setMessages([...history].reverse().map(toGiftedMessage));
     });
   }, []);
+
+  // Arrived here from a "Suggested Topic" tap on the Coach tab — see below,
+  // after onSend is defined, for the effect that actually fires this.
+  const hasSentInitialPromptRef = React.useRef(false);
 
   React.useEffect(() => {
     if (keyboardShow) {
@@ -87,7 +115,12 @@ const Chat = memo(() => {
     setMessages(previous => GiftedChat.append(previous, [draft]));
     setIsSending(true);
     try {
-      const { coachMessage } = await coachService.sendMessage(draft.text);
+      const { coachMessage } = await coachService.sendMessage(draft.text, {
+        goals: profile?.goals,
+        industries: profile?.industries,
+        desiredRoles: profile?.desiredRoles,
+        preferredCountries: profile?.preferredCountries,
+      });
       setMessages(previous => GiftedChat.append(previous, [toGiftedMessage(coachMessage)]));
     } catch (e: any) {
       // Real network call now — the coach can actually fail (offline, 5xx,
@@ -101,7 +134,19 @@ const Chat = memo(() => {
     } finally {
       setIsSending(false);
     }
-  }, [isSending]);
+  }, [isSending, profile]);
+
+  // Arrived here from a "Suggested Topic" tap on the Coach tab
+  // (src/messages/MessagesScreen.tsx) — auto-send that topic's text as the
+  // opening question instead of dropping the user on a blank thread. Guarded
+  // by a ref (not state) so this only ever fires once per screen visit, even
+  // though `messages` above updates asynchronously right after mount.
+  React.useEffect(() => {
+    if (!initialPrompt || hasSentInitialPromptRef.current) return;
+    hasSentInitialPromptRef.current = true;
+    onSend([{ _id: `topic_${Date.now()}`, text: initialPrompt, createdAt: Date.now(), user: ME_USER }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPrompt]);
 
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
     return (
@@ -140,6 +185,96 @@ const Chat = memo(() => {
     </Send>
   );
 
+  // Appends a small local confirmation bubble (not sent to the backend —
+  // just visual feedback that the upload actually happened) after a
+  // successful attach/camera/photo-library action below.
+  const appendAttachmentNotice = React.useCallback((file: ImportedFileInfo) => {
+    setMessages(previous =>
+      GiftedChat.append(previous, [
+        {
+          _id: `attach_${Date.now()}`,
+          text: `📎 Attached: ${file.name}`,
+          createdAt: Date.now(),
+          user: ME_USER,
+        },
+      ]),
+    );
+  }, []);
+
+  const [isAttaching, setIsAttaching] = React.useState(false);
+  const uploadAttachment = React.useCallback(
+    async (file: ImportedFileInfo | null, key: 'resume' | 'portfolio') => {
+      if (!file || isAttaching) return;
+      setIsAttaching(true);
+      try {
+        // Reused from the same real upload path as ResumeBuilder's import
+        // cards (POST /resume/upload — see services/resumeService.ts) —
+        // there's no separate "chat attachment" endpoint, so a file shared
+        // here becomes part of the user's resume/portfolio sources the AI
+        // coach and resume tools can already reference.
+        await resumeService.importSource(key, file);
+        appendAttachmentNotice(file);
+      } catch (e: any) {
+        Alert.alert(
+          "Upload failed",
+          e?.message ?? "Something went wrong. Please try again.",
+        );
+      } finally {
+        setIsAttaching(false);
+      }
+    },
+    [isAttaching, appendAttachmentNotice],
+  );
+
+  const onAttach = React.useCallback(async () => {
+    try {
+      const [result] = await pick({
+        type: [documentTypes.pdf, documentTypes.doc, documentTypes.docx, documentTypes.plainText, documentTypes.images],
+      });
+      await uploadAttachment(
+        { uri: result.uri, name: result.name ?? 'Selected file', sizeBytes: result.size, mimeType: result.type },
+        'resume',
+      );
+    } catch (err) {
+      if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED) return;
+      Alert.alert("Upload failed", "Something went wrong. Please try again.");
+    }
+  }, [uploadAttachment]);
+
+  const onCamera = React.useCallback(() => {
+    ImagePicker.launchCamera({ mediaType: 'photo', saveToPhotos: false }, response => {
+      const asset = response.assets?.[0];
+      if (response.didCancel || !asset?.uri) return;
+      uploadAttachment(
+        { uri: asset.uri, name: asset.fileName ?? 'Photo.jpg', sizeBytes: asset.fileSize, mimeType: asset.type },
+        'portfolio',
+      );
+    });
+  }, [uploadAttachment]);
+
+  const onPhotoLibrary = React.useCallback(() => {
+    ImagePicker.launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, response => {
+      const asset = response.assets?.[0];
+      if (response.didCancel || !asset?.uri) return;
+      uploadAttachment(
+        { uri: asset.uri, name: asset.fileName ?? 'Photo.jpg', sizeBytes: asset.fileSize, mimeType: asset.type },
+        'portfolio',
+      );
+    });
+  }, [uploadAttachment]);
+
+  // Routes to the real, already-working video interview flow
+  // (LiveInterviewSession, Video mode) via MockInterviewSetup so the user can
+  // still pick a role/company/duration first — rather than the old
+  // VideoCall.tsx, a leftover static-image placeholder from the pre-Saveur
+  // template with no real camera, session, or AI question flow at all.
+  const onMakeCall = React.useCallback(() => {
+    navigate("MockInterviewSetup", { mode: Practice_Mode_Enum.Video });
+  }, [navigate]);
+  const onViewProgress = React.useCallback(() => {
+    navigate("MyProgress");
+  }, [navigate]);
+
   const renderInputToolbar = React.useCallback(
     (props: InputToolbarProps) => (
       <InputToolbar
@@ -163,6 +298,8 @@ const Chat = memo(() => {
         renderAccessory={() => (
           <Composer
             onShowAction={() => setShowAction(!showAction)}
+            onCamera={onCamera}
+            onPhotoLibrary={onPhotoLibrary}
             style={[
               styles.composer,
               {
@@ -173,18 +310,8 @@ const Chat = memo(() => {
         )}
       />
     ),
-    [showAction, Platform.OS, keyboardShow]
+    [showAction, Platform.OS, keyboardShow, onCamera, onPhotoLibrary]
   );
-
-  // Attach isn't wired to anything real yet (no file-upload endpoint) —
-  // separate from the chat itself, which is now backed by coachService.
-  const onAttach = React.useCallback(() => {}, []);
-  const onMakeCall = React.useCallback(() => {
-    navigate("MessagesStack", { screen: "VideoCall" });
-  }, []);
-  const onViewProgress = React.useCallback(() => {
-    navigate("MainBottomTab");
-  }, []);
 
   // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
   // (no logo.png asset needed). Returns null for the current user's own
@@ -205,14 +332,44 @@ const Chat = memo(() => {
       <TopNavigation
         title={"AI Career Coach"}
         accessoryLeft={<NavigationAction />}
-        accessoryRight={<NavigationAction icon="option" />}
+        accessoryRight={
+          voiceCoachEnabled ? (
+            <NavigationAction
+              title={mode === 'voice' ? 'Text' : 'Voice'}
+              titleStatus="link"
+              onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
+            />
+          ) : undefined
+        }
       />
-      <KeyboardAwareScrollView
-        contentContainerStyle={styles.container}
-        showsVerticalScrollIndicator={false}
-        scrollEnabled={false}
-        extraScrollHeight={28}
-      >
+      {mode === 'voice' ? (
+        <VoiceCoachView
+          userContext={{
+            goals: profile?.goals,
+            industries: profile?.industries,
+            desiredRoles: profile?.desiredRoles,
+            preferredCountries: profile?.preferredCountries,
+          }}
+        />
+      ) : (
+      <>
+      {/* Was a KeyboardAwareScrollView (scrollEnabled={false}, used only for
+          its automatic keyboard-follow behavior, never for actual
+          scrolling) — that's still a ScrollView, and GiftedChat renders its
+          message list as a FlatList internally, so nesting them triggered
+          RN's "VirtualizedLists should never be nested inside plain
+          ScrollViews with the same orientation" warning (and the windowing
+          bugs that warning exists to prevent). That was fixed by swapping in
+          a manual KeyboardAvoidingView here — but GiftedChat already wraps
+          itself in its own keyboard-avoiding container by default
+          (isKeyboardInternallyHandled defaults to true), so this outer one
+          was stacking a second "padding" offset on top of GiftedChat's own,
+          pushing the whole screen (message list AND input toolbar) up by
+          roughly double the keyboard height — reported as "the keyboard is
+          pushing the UI upward... input field and other things not
+          visible." A plain View has no scroll-container conflict and lets
+          GiftedChat's internal handling do its job unopposed. */}
+      <View style={styles.container}>
         <GiftedChat
           user={{ _id: 1 }}
           messages={messages}
@@ -257,7 +414,9 @@ const Chat = memo(() => {
             </Flex>
           </Layout>
         ) : null}
-      </KeyboardAwareScrollView>
+      </View>
+      </>
+      )}
     </Container>
   );
 });

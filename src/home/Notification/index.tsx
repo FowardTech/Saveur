@@ -8,6 +8,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
+import {NavigationProp, useNavigation} from '@react-navigation/native';
 
 import Container from 'components/Container';
 import Content from 'components/Content';
@@ -15,6 +16,7 @@ import NavigationAction from 'components/NavigationAction';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import {NotificationProps} from 'constants/Types';
+import {RootStackParamList} from 'navigation/types';
 import * as notificationService from 'services/notificationService';
 import Applications from './Applications';
 
@@ -29,6 +31,7 @@ import Applications from './Applications';
 const Notification = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['notification', 'common']);
+  const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [notifications, setNotifications] = React.useState<NotificationProps[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -56,6 +59,16 @@ const Notification = memo(() => {
 
   const onPressItem = React.useCallback(
     async (item: NotificationProps) => {
+      // Job alerts route straight to the in-app job details screen — see
+      // src/more/JobAlertDetails.tsx, reached the same way whether tapped
+      // here, from the Job Alerts list, or (once push notifications are
+      // wired) an OS push notification tap. That screen marks the alert
+      // read itself, so it's handled before the generic
+      // mark-this-notification-read path below.
+      if (item.type === 'job_alert' && item.jobAlert) {
+        navigate('JobAlertDetails', {job: item.jobAlert});
+      }
+
       if (item.read) return;
       // Optimistic — flip it locally right away, roll back if the server
       // call fails so the unread dot doesn't lie about server state.
@@ -70,7 +83,7 @@ const Notification = memo(() => {
         );
       }
     },
-    [t],
+    [t, navigate],
   );
 
   const unreadIds = React.useMemo(() => notifications.filter(n => !n.read).map(n => n.id), [notifications]);

@@ -1,20 +1,21 @@
 import React, {memo} from 'react';
-import {View, ImageRequireSource} from 'react-native';
-import {StyleService, useStyleSheet, Avatar} from '@ui-kitten/components';
+import {View} from 'react-native';
+import {StyleService, useStyleSheet} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import UserAvatar from 'components/UserAvatar';
 import {MainBottomTabStackParamList} from 'navigation/types';
 
 interface HeaderOptionProps {
   name: string;
-  avatar: ImageRequireSource;
+  avatarUrl?: string;
   email: string;
 }
 
-const HeaderMoreOption = memo(({email, avatar, name}: HeaderOptionProps) => {
+const HeaderMoreOption = memo(({email, avatarUrl, name}: HeaderOptionProps) => {
   const {navigate} =
     useNavigation<NavigationProp<MainBottomTabStackParamList>>();
   const styles = useStyleSheet(themedStyles);
@@ -24,11 +25,7 @@ const HeaderMoreOption = memo(({email, avatar, name}: HeaderOptionProps) => {
     <Flex itemsCenter mb={48}>
       <Flex itemsCenter justify="flex-start">
         <Flex onPress={_onProfile}>
-          <Avatar
-            source={avatar}
-            style={styles.avatar}
-            shape="rounded"
-          />
+          <UserAvatar uri={avatarUrl} name={name} style={styles.avatar} />
         </Flex>
         <View>
           <Text category="h6" bold>

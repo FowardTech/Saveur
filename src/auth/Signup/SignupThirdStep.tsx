@@ -20,6 +20,7 @@ import {RuleEmail, RuleName, RulePassword} from 'utils/rules';
 import useToggle from 'hooks/useToggle';
 import AnimatedAppearance from 'components/AnimatedAppearance';
 import {AuthStackParamList, RootStackParamList} from 'navigation/types';
+import {mapFirebaseAuthError} from 'utils/authErrors';
 import {AuthContext} from '../../../AuthContext';
 
 const SignupThirdStep = memo(() => {
@@ -27,9 +28,9 @@ const SignupThirdStep = memo(() => {
   const route = useRoute<RouteProp<AuthStackParamList, 'SignupThirdStep'>>();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['auth', 'success', 'common']);
-  const {signUp, signInWithGoogle, signInWithApple, updateProfile} = React.useContext(AuthContext);
+  const {signUp, signInWithGoogle, signInWithLinkedIn, updateProfile} = React.useContext(AuthContext);
 
-  const {goals, industries, preferredCountries} = route.params ?? {};
+  const {goals, industries, preferredCountries, desiredRoles, locale} = route.params ?? {};
 
   const [invisible, setInvisible] = useToggle(true);
   const [canContinue, setContinue] = React.useState(false);
@@ -42,8 +43,8 @@ const SignupThirdStep = memo(() => {
   } = useForm({
     defaultValues: {
       full_name: '',
-      email: 'lehieuds@gmail.com',
-      password: '123456Aa',
+      email: '',
+      password: '',
     },
   });
   React.useEffect(() => {
@@ -58,15 +59,14 @@ const SignupThirdStep = memo(() => {
     }
   }, [errors.email, errors.password, errors.full_name]);
 
-  // Shared by email/password signup and both social sign-ins below — once an
-  // account exists, everyone sees the same "pick a plan" onboarding step
-  // before the celebratory success screen. The success payload is threaded
-  // through as a param so Subscription can hand off to it once the user
-  // subscribes or taps "Skip for now".
-  const goToSubscription = React.useCallback(() => {
-    navigate('Subscription', {
-      fromOnboarding: true,
-      onboardingSuccessPayload: {
+  // Shared by email/password signup and both social sign-ins below. Used to
+  // route through the Subscription/paywall screen before the celebratory
+  // success screen — now goes straight to SuccessScr instead, so signup no
+  // longer forces a plan choice; Subscription is still reachable any time
+  // afterward from Profile/More, unchanged.
+  const goToSuccess = React.useCallback(() => {
+    navigate('SuccessScr', {
+      successScr: {
         title: t('success:title_2'),
         logo: true,
         description: t('success:description_2'),
@@ -87,6 +87,26 @@ const SignupThirdStep = memo(() => {
     });
   }, [navigate, t]);
 
+  // Shared by the email/password path and both social sign-in paths below —
+  // all three can now land on "an account with this email already exists"
+  // (auth/email-already-in-use), and all three should offer the exact same
+  // "Log In instead" way out rather than each showing its own ad hoc wording.
+  const showAlreadyRegisteredAlert = React.useCallback(() => {
+    Alert.alert(
+      t('auth:email_already_registered_title', {defaultValue: 'That email is already registered'}),
+      t('auth:email_already_registered_body', {
+        defaultValue: 'An account with this email already exists. Log in instead, or use a different email.',
+      }),
+      [
+        {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
+        {
+          text: t('auth:login', {defaultValue: 'Log In'}),
+          onPress: () => navigate('AuthStack', {screen: 'Login'}),
+        },
+      ],
+    );
+  }, [t, navigate]);
+
   const handleSignup = handleSubmit(async data => {
     setIsSubmitting(true);
     try {
@@ -97,73 +117,100 @@ const SignupThirdStep = memo(() => {
         goals,
         industries,
         preferredCountries,
+        desiredRoles,
+        locale,
       });
-      goToSubscription();
+      goToSuccess();
     } catch (e: any) {
       // Real Firebase Auth can now actually fail (email already in use, weak
       // password, network error) — surface it instead of swallowing it.
-      Alert.alert(
-        t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
-        e?.message ?? 'Something went wrong. Please try again.',
-      );
+      // auth/email-already-in-use gets its own title + a direct "Log In"
+      // action (rather than just Firebase's generic default alert) since
+      // that's the one failure here with an obvious next step for the user.
+      if (e?.code === 'auth/email-already-in-use') {
+        showAlreadyRegisteredAlert();
+      } else {
+        Alert.alert(
+          t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
+          mapFirebaseAuthError(e),
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
   });
 
-  const onSocialComingSoon = React.useCallback((provider: string) => {
-    Alert.alert(
-      t('common:coming_soon', {defaultValue: 'Coming soon'}),
-      `${provider} sign-up isn't connected yet — use email for now.`,
-    );
-  }, [t]);
   const [isSocialSubmitting, setIsSocialSubmitting] = React.useState(false);
   const onGoogle = React.useCallback(async () => {
     if (isSocialSubmitting) return;
     setIsSocialSubmitting(true);
     try {
-      await signInWithGoogle();
+      // `{isSignup: true}` makes AuthContext check Firebase's
+      // additionalUserInfo.isNewUser and throw a tagged
+      // auth/email-already-in-use error (instead of just silently signing
+      // the person into their existing account) when this Google account
+      // turns out to already be registered — was previously indistinguishable
+      // from a genuine cancellation/failure, always showing the same generic
+      // "Google sign-up was cancelled or failed" regardless of the real
+      // reason.
+      await signInWithGoogle({isSignup: true});
       // signInWithGoogle only provisions the bare profile (POST /api/users/me)
       // — the onboarding data collected in the earlier steps
-      // (goals/industries/preferredCountries) still needs an explicit PATCH,
-      // same as the email/password path does via signUp().
-      await updateProfile({goals, industries, preferredCountries});
-      goToSubscription();
+      // (goals/industries/preferredCountries/locale) still needs an explicit
+      // PATCH, same as the email/password path does via signUp().
+      await updateProfile({goals, industries, preferredCountries, desiredRoles, locale});
+      goToSuccess();
     } catch (e: any) {
-      Alert.alert(
-        t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
-        e?.message ?? 'Google sign-up was cancelled or failed.',
-      );
+      if (e?.code === 'auth/email-already-in-use' || e?.code === 'auth/account-exists-with-different-credential') {
+        showAlreadyRegisteredAlert();
+      } else {
+        // See same-purpose log in Login.tsx's onGoogle catch — nothing was
+        // surfacing the raw GoogleSignin native error code (e.g. 12500)
+        // anywhere reachable without remote JS debugging attached.
+        console.warn('[Google Sign-Up failed]', {
+          code: e?.code,
+          message: e?.message,
+          nativeErrorMessage: e?.nativeErrorMessage,
+        });
+        Alert.alert(
+          t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
+          mapFirebaseAuthError(e, 'Google sign-up was cancelled or failed.'),
+        );
+      }
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, goToSubscription, isSocialSubmitting, t]);
-  const onApple = React.useCallback(async () => {
+  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToSuccess, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
+  // LinkedIn has no first-party Firebase/RN SDK — AuthContext's
+  // signInWithLinkedIn drives a custom OAuth2 flow instead. Same
+  // isSignup/already-registered handling as onGoogle above.
+  const onLinkedIn = React.useCallback(async () => {
     if (isSocialSubmitting) return;
     setIsSocialSubmitting(true);
     try {
-      await signInWithApple();
-      await updateProfile({goals, industries, preferredCountries});
-      goToSubscription();
+      await signInWithLinkedIn({isSignup: true});
+      await updateProfile({goals, industries, preferredCountries, desiredRoles, locale});
+      goToSuccess();
     } catch (e: any) {
-      Alert.alert(
-        t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
-        e?.message ?? 'Apple sign-up was cancelled or failed.',
-      );
+      if (e?.code === 'auth/email-already-in-use' || e?.code === 'auth/account-exists-with-different-credential') {
+        showAlreadyRegisteredAlert();
+      } else {
+        Alert.alert(
+          t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
+          mapFirebaseAuthError(e, 'LinkedIn sign-up was cancelled or failed.'),
+        );
+      }
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithApple, updateProfile, goals, industries, preferredCountries, goToSubscription, isSocialSubmitting, t]);
-  // LinkedIn has no first-party Firebase/RN SDK — stays "coming soon" until
-  // a custom OAuth2 flow is built (see docs/BACKEND_API_SPEC.md §2).
-  const onLinkedInComingSoon = React.useCallback(() => onSocialComingSoon('LinkedIn'), [onSocialComingSoon]);
+  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToSuccess, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
   return (
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />
       <AnimatedAppearance>
-        <Content padder contentContainerStyle={styles.content}>
+        <Content padder avoidKeyboard contentContainerStyle={styles.content}>
           <Text mt={16}>{t('auth:heading_signup_3')}</Text>
-          <Text mt={8} mb={16} category="h2">
+          <Text mt={8} mb={16} category="h2" bold style={{fontWeight: '800'}}>
             {t('auth:title_signup_3')}
           </Text>
           <Text mt={8} mb={48}>
@@ -254,20 +301,12 @@ const SignupThirdStep = memo(() => {
               children={<Text>{`${t('auth:google_login')}`}</Text>}
             />
           </View>
-          <View style={styles.social}>
-            <Icon pack="eva" name={'smartphone-outline'} style={styles.logoSocial} />
-            <Button
-              status="outline"
-              disabled={isSocialSubmitting}
-              onPress={onApple}
-              children={<Text>{`${t('auth:apple_login')}`}</Text>}
-            />
-          </View>
           <View>
             <Icon pack="eva" name={'briefcase-outline'} style={styles.logoSocial} />
             <Button
               status="outline"
-              onPress={onLinkedInComingSoon}
+              disabled={isSocialSubmitting}
+              onPress={onLinkedIn}
               children={<Text>{`${t('auth:linkedin_login')}`}</Text>}
             />
           </View>

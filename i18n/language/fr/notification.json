@@ -1,0 +1,9 @@
+{
+  "title": "Notifications",
+  "mark_all_read": "Tout marquer comme lu",
+  "load_failed": "Impossible de charger vos notifications.",
+  "mark_read_failed_title": "Impossible de mettre à jour la notification",
+  "mark_read_failed_body": "Veuillez réessayer dans un instant.",
+  "empty_title": "Vous êtes à jour !",
+  "empty_description": "Les nouvelles notifications concernant votre entraînement aux entretiens apparaîtront ici."
+}

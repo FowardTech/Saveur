@@ -14,6 +14,8 @@ import useLayout from "hooks/useLayout";
 import ModalRequest from "components/ModalRequest";
 import useModal from "hooks/useModal";
 import { Images } from "assets/images";
+import * as notificationService from "services/notificationService";
+import { NotificationProps } from "constants/Types";
 import HomeStackNavigator from "./HomeStackNavigator";
 // "Find" is repurposed as the Practice hub (pick interview type / mode / difficulty).
 import FindScreen from "src/find/FindScreen";
@@ -21,6 +23,20 @@ import FindScreen from "src/find/FindScreen";
 import MessagesScreen from "src/messages/MessagesScreen";
 import RequestsBottomNavigator from "./RequestsBottomNavigator";
 import MoreNavigator from "./MoreNavigator";
+import VerifyEmailGate from "src/auth/VerifyEmailGate";
+import ProLockGate from "components/ProLockGate";
+import {AuthContext} from "../AuthContext";
+
+// Module scope (not defined inline in the BottomTab.Screen component prop)
+// so it's a stable component reference across renders — same reasoning as
+// the other component-swap patterns in this file/session (e.g.
+// renderCheckoutSpinner in Subscription.tsx).
+const CoachProLockGate = () => (
+  <ProLockGate
+    title="AI Career Coach"
+    description="Chat with your AI coach, get personalized suggested topics, and practice salary negotiations — all on the Pro plan."
+  />
+);
 
 interface ButtonTabProps {
   focused: boolean;
@@ -36,15 +52,66 @@ const MainBottomTab = memo(() => {
   const { height, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { visible, show, hide } = useModal();
+  // Product decision: an unverified user can't use practice/coach/interview
+  // tools, but the Profile tab itself stays untouched (Resend/Logout/account
+  // settings must always be reachable) — see src/auth/VerifyEmailGate.tsx.
+  // Was previously not enforced at all beyond a dismissible Home banner.
+  const { isSignedIn, emailVerified, isPro } = React.useContext(AuthContext);
+  const isGated = isSignedIn && !emailVerified;
+
+  // Was an unconditional 1200ms timer that popped this modal up with a
+  // hardcoded "has feedback ready" message every single time the Interviews
+  // tab opened — even if the user had never completed a single interview.
+  // Now backed by a real GET /api/v1/notifications check for an unread
+  // "feedback_ready" notification (created server-side in
+  // app/api/interviews.py's end_session, only once scoring actually
+  // succeeds) — the popup simply doesn't appear when there's nothing real
+  // to show. feedbackNotifRef exists because ButtonTab below is memoized
+  // with an empty deps array (so its effect closure is frozen at first
+  // render) — a ref is what lets that frozen closure still read whatever
+  // was most recently fetched.
+  const [feedbackNotif, setFeedbackNotif] = React.useState<NotificationProps | null>(null);
+  const feedbackNotifRef = React.useRef<NotificationProps | null>(null);
+  const checkFeedbackNotification = React.useCallback(async () => {
+    try {
+      const notifications = await notificationService.listNotifications();
+      const unread = notifications.find(n => n.type === "feedback_ready" && !n.read) ?? null;
+      feedbackNotifRef.current = unread;
+      setFeedbackNotif(unread);
+    } catch {
+      // Offline or the request failed — err on the side of not showing a
+      // popup for feedback we can't actually confirm exists.
+      feedbackNotifRef.current = null;
+      setFeedbackNotif(null);
+    }
+  }, []);
+  const onDismissFeedbackNotif = React.useCallback(() => {
+    hide();
+    const notif = feedbackNotifRef.current;
+    if (notif) {
+      notificationService.markNotificationsRead([notif.id]).catch(() => {});
+      feedbackNotifRef.current = null;
+      setFeedbackNotif(null);
+    }
+  }, [hide]);
 
   const ButtonTab = React.useCallback(
     ({ focused, icon, numberNotification }: ButtonTabProps) => {
       React.useEffect(() => {
         if (focused && icon == "bookmark") {
-          setTimeout(() => {
-            show();
-          }, 1200);
-          clearTimeout;
+          let cancelled = false;
+          (async () => {
+            await checkFeedbackNotification();
+            if (cancelled) return;
+            if (feedbackNotifRef.current) {
+              setTimeout(() => {
+                if (!cancelled) show();
+              }, 1200);
+            }
+          })();
+          return () => {
+            cancelled = true;
+          };
         } else {
           hide();
         }
@@ -99,7 +166,7 @@ const MainBottomTab = memo(() => {
       >
         <BottomTab.Screen
           name="Home"
-          component={HomeStackNavigator}
+          component={isGated ? VerifyEmailGate : HomeStackNavigator}
           options={{
             tabBarIcon: ({ focused }) => (
               <ButtonTab
@@ -112,7 +179,7 @@ const MainBottomTab = memo(() => {
         />
         <BottomTab.Screen
           name="Practice"
-          component={FindScreen}
+          component={isGated ? VerifyEmailGate : FindScreen}
           options={{
             tabBarIcon: ({ focused }) => (
               <ButtonTab
@@ -125,7 +192,7 @@ const MainBottomTab = memo(() => {
         />
         <BottomTab.Screen
           name="Coach"
-          component={MessagesScreen}
+          component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesScreen}
           options={{
             tabBarIcon: ({ focused }) => (
               <ButtonTab
@@ -138,7 +205,7 @@ const MainBottomTab = memo(() => {
         />
         <BottomTab.Screen
           name="Interviews"
-          component={RequestsBottomNavigator}
+          component={isGated ? VerifyEmailGate : RequestsBottomNavigator}
           options={{
             tabBarIcon: ({ focused }) => (
               <ButtonTab
@@ -159,17 +226,21 @@ const MainBottomTab = memo(() => {
           }}
         />
       </BottomTab.Navigator>
-      {/* Notification modal — surfaces when the Interviews tab is opened.
-          TODO: wire up to real push/in-app notifications once backend exists. */}
+      {/* Notification modal — only rendered visible when a real, unread
+          "feedback_ready" notification exists (see checkFeedbackNotification
+          above); its title/message come straight from that notification
+          rather than a hardcoded string. Dismissing it (either button) marks
+          the notification read server-side so it doesn't reappear next time
+          this tab opens. */}
       <ModalRequest
         visible={visible}
         show={show}
-        name={"Your AI Coach"}
-        avatar={Images.logo}
+        name={feedbackNotif?.title ?? "Your AI Coach"}
+        avatar={Images.logoBadge}
         isOnl={true}
-        onDetails={hide}
-        hide={hide}
-        message={" has feedback ready on your last mock interview."}
+        onDetails={onDismissFeedbackNotif}
+        hide={onDismissFeedbackNotif}
+        message={feedbackNotif?.message}
       />
     </View>
   );

@@ -1,0 +1,483 @@
+import React, { memo } from 'react';
+import { Image, TouchableOpacity, View } from 'react-native';
+import {
+  TopNavigation,
+  StyleService,
+  useStyleSheet,
+  useTheme,
+  Icon,
+  Button,
+  Input,
+  Spinner,
+} from '@ui-kitten/components';
+import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+
+import Text from 'components/Text';
+import Content from 'components/Content';
+import Container from 'components/Container';
+import Flex from 'components/Flex';
+import NavigationAction from 'components/NavigationAction';
+import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
+import * as learningService from 'services/learningService';
+import { CourseModule, CourseLevel, Certificate, LEVEL_LABELS, COURSE_LEVELS } from 'services/learningService';
+import * as speechService from 'services/speechService';
+import { AuthContext } from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
+import { notifyFirstCourseCompleted } from 'utils/appRating';
+
+type LessonMode = 'voice' | 'text';
+
+// AI-taught course session — replaces the old LearningCourses.tsx "Start"
+// button, which just showed Alert("Course content coming soon.") with no
+// real content behind it. The AI genuinely teaches here: module content is
+// generated live per module (services/learningService.ts, built on the same
+// real POST /api/v1/coach/advice endpoint the Coach tab uses — works for
+// ANY topic, not a fixed catalog, including technical/coding topics), read
+// aloud via the existing interview TTS pipeline (services/speechService.ts)
+// when Voice mode is picked, and the check-for-understanding question at
+// the end of each module is real — typed answers get real AI feedback
+// (learningService.getAnswerFeedback), not just decoration.
+//
+// Visuals: per the product decision, these should be real AI-generated
+// images, which needs a backend image-generation integration that doesn't
+// exist yet (see learningService.generateVisual + backend spec addendum
+// §15) — this screen calls that endpoint per module and simply doesn't
+// render an image if it comes back null, so the lesson is never blocked on
+// it.
+const CourseSession = memo(() => {
+  const theme = useTheme();
+  const { t } = useTranslation(['more', 'common']);
+  const styles = useStyleSheet(themedStyles);
+  const { goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'CourseSession'>>();
+  const { profile, isPro } = React.useContext(AuthContext);
+  const { topic, totalModules, level = 'basic' as CourseLevel, coreSubtopics } = route.params;
+  const courseId = React.useMemo(() => learningService.courseIdFor(topic, level), [topic, level]);
+
+  const [mode, setMode] = React.useState<LessonMode>('text');
+  const [syllabus, setSyllabus] = React.useState<string[] | null>(null);
+  const [moduleIndex, setModuleIndex] = React.useState(0);
+  const [hasResumed, setHasResumed] = React.useState(false);
+  const [moduleCache, setModuleCache] = React.useState<Record<number, CourseModule>>({});
+  const [imageCache, setImageCache] = React.useState<Record<number, string | null>>({});
+  const [isLoadingModule, setIsLoadingModule] = React.useState(true);
+  const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [isComplete, setIsComplete] = React.useState(false);
+  const [earnedCertificate, setEarnedCertificate] = React.useState<Certificate | null>(null);
+
+  const [answer, setAnswer] = React.useState('');
+  const [feedback, setFeedback] = React.useState<string | null>(null);
+  const [isCheckingAnswer, setIsCheckingAnswer] = React.useState(false);
+
+  const context = {
+    goals: profile?.goals,
+    industries: profile?.industries,
+    desiredRoles: profile?.desiredRoles,
+  };
+
+  // Resume where the learner left off — previously this screen always
+  // restarted at module 0 with no memory of prior progress at all. Runs
+  // once, before the syllabus/module load effects below, so moduleIndex is
+  // already correct by the time the first module is fetched.
+  React.useEffect(() => {
+    let cancelled = false;
+    learningService.getCourseProgress(courseId).then(progress => {
+      if (cancelled) return;
+      const resumeIndex = Math.min(progress.lastModuleIndex, Math.max(totalModules - 1, 0));
+      if (progress.completedModules > 0 && resumeIndex > 0) {
+        setModuleIndex(resumeIndex);
+      }
+      setHasResumed(true);
+    }).catch(() => setHasResumed(true));
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
+
+  // Syllabus — generated once resume state is known, so it's built against
+  // the right starting module_index context (level + real professional
+  // subtopics from the topic check keep the AI teaching the topic's actual
+  // subject matter rather than free-associating under its name).
+  React.useEffect(() => {
+    if (!hasResumed) return;
+    let cancelled = false;
+    learningService.generateSyllabus(topic, totalModules, level, coreSubtopics ?? []).then(titles => {
+      if (!cancelled) setSyllabus(titles);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasResumed]);
+
+  const loadModule = React.useCallback(
+    async (index: number, titles: string[]) => {
+      if (moduleCache[index]) {
+        setIsLoadingModule(false);
+        return;
+      }
+      setIsLoadingModule(true);
+      setLoadError(null);
+      try {
+        const mod = await learningService.generateModule(topic, index, totalModules, titles[index], context, level);
+        setModuleCache(prev => ({ ...prev, [index]: mod }));
+        // Best-effort, non-blocking — don't wait on the image to show text.
+        learningService.generateVisual(`${topic}: ${titles[index]}`).then(url => {
+          setImageCache(prev => ({ ...prev, [index]: url }));
+        });
+      } catch (e: any) {
+        setLoadError(e?.message ?? t('more:course_load_error', { defaultValue: 'Could not load this module.' }));
+      } finally {
+        setIsLoadingModule(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [topic, totalModules, moduleCache],
+  );
+
+  React.useEffect(() => {
+    if (syllabus) loadModule(moduleIndex, syllabus);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [syllabus, moduleIndex]);
+
+  const currentModule = moduleCache[moduleIndex];
+  const currentImage = imageCache[moduleIndex];
+
+  // Voice mode — auto-narrate as soon as a module's content is ready.
+  React.useEffect(() => {
+    if (mode !== 'voice' || !currentModule) return;
+    let cancelled = false;
+    (async () => {
+      setIsSpeaking(true);
+      try {
+        await speechService.speak(currentModule.body);
+        if (!cancelled && currentModule.checkQuestion) {
+          await speechService.speak(currentModule.checkQuestion);
+        }
+      } catch {
+        // Best-effort — speechService already falls back to on-device TTS
+        // internally, so a failure here means both paths failed; just leave
+        // the text visible.
+      } finally {
+        if (!cancelled) setIsSpeaking(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+      speechService.stopSpeaking();
+    };
+  }, [mode, currentModule]);
+
+  React.useEffect(() => {
+    return () => speechService.stopSpeaking();
+  }, []);
+
+  const onToggleMode = (next: LessonMode) => {
+    if (next === mode) return;
+    speechService.stopSpeaking();
+    setIsSpeaking(false);
+    setMode(next);
+  };
+
+  const onCheckAnswer = async () => {
+    if (!answer.trim() || !currentModule?.checkQuestion || isCheckingAnswer) return;
+    setIsCheckingAnswer(true);
+    try {
+      const result = await learningService.getAnswerFeedback(topic, currentModule.checkQuestion, answer);
+      setFeedback(result);
+    } finally {
+      setIsCheckingAnswer(false);
+    }
+  };
+
+  const onNext = () => {
+    speechService.stopSpeaking();
+    setAnswer('');
+    setFeedback(null);
+    // Persist completion for this module — the source of truth "resume"
+    // (above) and certificate issuance (below) both rely on, rather than
+    // this screen ever recording anything before now.
+    learningService.markModuleProgress(courseId, moduleIndex, true).catch(() => {});
+    if (moduleIndex + 1 >= totalModules) {
+      setIsComplete(true);
+      notifyFirstCourseCompleted().catch(() => {});
+      if (level === 'advanced') {
+        learningService.issueCertificateIfEligible(topic).then(cert => {
+          if (cert) setEarnedCertificate(cert);
+        }).catch(() => {});
+      }
+    } else {
+      setModuleIndex(i => i + 1);
+    }
+  };
+
+  const onPrevious = () => {
+    if (moduleIndex === 0) return;
+    speechService.stopSpeaking();
+    setAnswer('');
+    setFeedback(null);
+    setModuleIndex(i => i - 1);
+  };
+
+  // Defense-in-depth — LearningCourses.tsx (the only normal entry point to
+  // this screen) is already Pro-gated, but gate here too in case anything
+  // else ever navigates straight to CourseSession.
+  if (!isPro) {
+    return (
+      <ProLockGate
+        title={t('more:learning_courses', { defaultValue: 'Learning Courses' })}
+        description={t('more:learning_courses_pro_description', {
+          defaultValue:
+            'AI-taught, module-by-module courses on any career topic, with certificates on completion — Learning Courses is a Pro feature.',
+        })}
+      />
+    );
+  }
+
+  if (isComplete) {
+    const nextLevelIdx = COURSE_LEVELS.indexOf(level) + 1;
+    const nextLevel = COURSE_LEVELS[nextLevelIdx];
+    return (
+      <Container style={styles.container}>
+        <TopNavigation title={topic} accessoryLeft={<NavigationAction onPress={goBack} />} />
+        <Content padder contentContainerStyle={styles.content}>
+          <Flex vertical itemsCenter justify="center" style={{ flex: 1, paddingTop: 60 }}>
+            <Icon pack="eva" name="award-outline" style={[globalStyle.icon40, { tintColor: theme['color-success-500'] }]} />
+            <Text category="h5" bold center mt={20}>
+              {t('more:course_tier_complete', {
+                defaultValue: '{{level}} Tier Complete!',
+                level: LEVEL_LABELS[level],
+              })}
+            </Text>
+            <Text category="h9-s" status="placeholder" center mt={12} maxWidth={280}>
+              {t('more:course_tier_complete_description', {
+                defaultValue: "You've finished all {{count}} {{level}} modules of {{topic}}.",
+                count: totalModules,
+                level: LEVEL_LABELS[level].toLowerCase(),
+                topic,
+              })}
+            </Text>
+            {earnedCertificate ? (
+              <View style={styles.certCard}>
+                <Text category="h8" bold status="success" center>
+                  {t('more:course_certificate_earned', { defaultValue: 'Certificate Earned' })}
+                </Text>
+                <Text category="h9-s" status="placeholder" center mt={4}>
+                  {t('more:course_certificate_subtitle', {
+                    defaultValue: '{{topic}} — Basic, Intermediate & Advanced',
+                    topic,
+                  })}
+                </Text>
+                <Text category="h10" status="placeholder" center mt={6}>
+                  {earnedCertificate.code}
+                </Text>
+              </View>
+            ) : nextLevel ? (
+              <Text category="h9-s" status="link" center mt={16}>
+                {t('more:course_next_level_unlocked', {
+                  defaultValue: '{{level}} unlocked — head back to Learning Courses to continue.',
+                  level: LEVEL_LABELS[nextLevel],
+                })}
+              </Text>
+            ) : null}
+            <Button style={{ marginTop: 32, width: '100%' }} onPress={goBack}>
+              {t('more:course_back_to_courses', { defaultValue: 'Back to Courses' })}
+            </Button>
+          </Flex>
+        </Content>
+      </Container>
+    );
+  }
+
+  return (
+    <Container style={styles.container}>
+      <TopNavigation title={topic} accessoryLeft={<NavigationAction onPress={goBack} />} />
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        <Flex justify="space-between" itemsCenter mb={16}>
+          <Text category="h9" bold status="placeholder">
+            {t('more:course_module_progress', {
+              defaultValue: '{{level}} · Module {{current}} of {{total}}',
+              level: LEVEL_LABELS[level],
+              current: moduleIndex + 1,
+              total: totalModules,
+            })}
+          </Text>
+          <Flex justify="flex-start">
+            <TouchableOpacity
+              onPress={() => onToggleMode('text')}
+              style={[styles.modePill, { backgroundColor: mode === 'text' ? theme['color-primary-500'] : theme['background-basic-color-2'] }]}>
+              <Text category="h10" bold status={mode === 'text' ? 'control' : 'basic'}>
+                {t('more:course_mode_text', { defaultValue: 'Text' })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => onToggleMode('voice')}
+              style={[styles.modePill, { backgroundColor: mode === 'voice' ? theme['color-primary-500'] : theme['background-basic-color-2'], marginLeft: 8 }]}>
+              <Text category="h10" bold status={mode === 'voice' ? 'control' : 'basic'}>
+                {t('more:course_mode_voice', { defaultValue: 'Voice' })}
+              </Text>
+            </TouchableOpacity>
+          </Flex>
+        </Flex>
+
+        <View style={styles.progressTrack}>
+          <View
+            style={[
+              styles.progressFill,
+              { width: `${Math.round(((moduleIndex + 1) / totalModules) * 100)}%`, backgroundColor: theme['color-primary-500'] },
+            ]}
+          />
+        </View>
+
+        {isLoadingModule ? (
+          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
+            <Spinner size="large" />
+            <Text category="h9-s" status="placeholder" mt={12} center>
+              {mode === 'voice'
+                ? t('more:course_preparing_lesson', { defaultValue: 'Preparing your lesson…' })
+                : t('more:course_writing_module', { defaultValue: 'Writing this module…' })}
+            </Text>
+          </Flex>
+        ) : loadError ? (
+          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
+            <Text category="h9-s" status="danger" center mb={16}>
+              {loadError}
+            </Text>
+            <Text category="h9" status="link" bold onPress={() => syllabus && loadModule(moduleIndex, syllabus)}>
+              {t('common:try_again', { defaultValue: 'Try again' })}
+            </Text>
+          </Flex>
+        ) : currentModule ? (
+          <>
+            <Text category="h6" bold mt={20} mb={12}>
+              {currentModule.title}
+            </Text>
+
+            {currentImage ? (
+              <Image source={{ uri: currentImage }} style={styles.visual} resizeMode="cover" />
+            ) : null}
+
+            {mode === 'voice' && isSpeaking ? (
+              <Flex justify="flex-start" itemsCenter mb={12}>
+                <Icon pack="eva" name="volume-up-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                <Text category="h9" status="link" ml={8}>
+                  {t('more:course_speaking', { defaultValue: 'Speaking…' })}
+                </Text>
+                <Text
+                  category="h9"
+                  status="danger"
+                  bold
+                  ml={16}
+                  onPress={() => {
+                    speechService.stopSpeaking();
+                    setIsSpeaking(false);
+                  }}>
+                  {t('more:course_stop', { defaultValue: 'Stop' })}
+                </Text>
+              </Flex>
+            ) : null}
+
+            <Text category="h9-s" mb={20}>
+              {currentModule.body}
+            </Text>
+
+            {currentModule.checkQuestion ? (
+              <View style={styles.checkCard}>
+                <Text category="h8" bold mb={8}>
+                  {t('more:course_check_understanding', { defaultValue: 'Check your understanding' })}
+                </Text>
+                <Text category="h9-s" status="placeholder" mb={12}>
+                  {currentModule.checkQuestion}
+                </Text>
+                <Input
+                  placeholder={t('more:course_answer_placeholder', { defaultValue: 'Type your answer…' }).toString()}
+                  value={answer}
+                  onChangeText={setAnswer}
+                  multiline
+                  style={styles.answerInput}
+                />
+                <Button
+                  size="small"
+                  appearance="outline"
+                  disabled={!answer.trim() || isCheckingAnswer}
+                  onPress={onCheckAnswer}
+                  style={{ marginTop: 10 }}>
+                  {isCheckingAnswer
+                    ? t('more:course_checking', { defaultValue: 'Checking…' })
+                    : t('more:course_check_my_answer', { defaultValue: 'Check my answer' })}
+                </Button>
+                {feedback ? (
+                  <Text category="h9-s" status="success" mt={12}>
+                    {feedback}
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
+
+            <Flex justify="space-between" itemsCenter mt={32}>
+              <Button appearance="ghost" disabled={moduleIndex === 0} onPress={onPrevious}>
+                {t('more:course_previous', { defaultValue: 'Previous' })}
+              </Button>
+              <Button onPress={onNext}>
+                {moduleIndex + 1 >= totalModules
+                  ? t('more:course_finish', { defaultValue: 'Finish' })
+                  : t('more:course_next_module', { defaultValue: 'Next Module' })}
+              </Button>
+            </Flex>
+          </>
+        ) : null}
+      </Content>
+    </Container>
+  );
+});
+
+export default CourseSession;
+
+const themedStyles = StyleService.create({
+  container: {
+    flex: 1,
+  },
+  content: {
+    paddingBottom: 80,
+  },
+  modePill: {
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 99,
+  },
+  progressTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: 'background-basic-color-3',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 6,
+    borderRadius: 3,
+  },
+  visual: {
+    width: '100%',
+    height: 180,
+    borderRadius: 16,
+    marginBottom: 16,
+  },
+  checkCard: {
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: 'background-basic-color-2',
+    marginTop: 8,
+  },
+  answerInput: {
+    borderRadius: 12,
+    minHeight: 60,
+  },
+  certCard: {
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 16,
+    backgroundColor: 'color-success-transparent-200',
+    width: '100%',
+  },
+});

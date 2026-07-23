@@ -22,6 +22,8 @@ import { RootStackParamList, MockInterviewSetupScreenNavigationProp } from 'navi
 import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
+import { getSessionEntitlement } from 'services/entitlementsService';
+import { AuthContext } from '../../AuthContext';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 
@@ -42,22 +44,41 @@ const MockInterviewSetup = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
+  const { subscription, isPro } = React.useContext(AuthContext);
 
-  const [mode, setMode] = React.useState<Practice_Mode_Enum>(Practice_Mode_Enum.Voice);
+  const [mode, setMode] = React.useState<Practice_Mode_Enum>(
+    route.params?.mode ?? Practice_Mode_Enum.Voice,
+  );
   const [interviewType, setInterviewType] = React.useState<Interview_Type_Enum>(
     route.params?.interviewType ?? Interview_Type_Enum.Behavioral,
   );
-  const [role, setRole] = React.useState('');
+  const [role, setRole] = React.useState(route.params?.role ?? '');
   const [difficulty, setDifficulty] = React.useState<Difficulty_Enum>(
-    Difficulty_Enum.Intermediate,
+    route.params?.difficulty ?? Difficulty_Enum.Intermediate,
   );
-  const [durationMin, setDurationMin] = React.useState(30);
+  const [durationMin, setDurationMin] = React.useState(route.params?.durationMin ?? 30);
   const [isStarting, setIsStarting] = React.useState(false);
   // undefined/COMPANY_ANY both mean "no specific company" — kept as
   // undefined when threading through to the session config/navigation so
   // downstream screens only see a real company name or nothing.
-  const [company, setCompany] = React.useState<string | undefined>(undefined);
+  const [company, setCompany] = React.useState<string | undefined>(route.params?.company);
   const [companySearch, setCompanySearch] = React.useState('');
+  // Free-tier session gating (see services/entitlementsService.ts) —
+  // "Sessions capped on Free, Pro unlocks all". Loaded on mount/whenever
+  // `subscription` changes purely to drive the remaining-sessions notice
+  // below; onStart always re-checks fresh right before creating a session,
+  // since this cached copy could be a session or two stale.
+  const [remainingFreeSessions, setRemainingFreeSessions] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    getSessionEntitlement(subscription).then(entitlement => {
+      if (!cancelled) setRemainingFreeSessions(entitlement.isPro ? null : entitlement.remaining);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [subscription]);
 
   const filteredCompanies = React.useMemo(() => {
     const query = companySearch.trim().toLowerCase();
@@ -80,6 +101,23 @@ const MockInterviewSetup = memo(() => {
     }
     setIsStarting(true);
     try {
+      const entitlement = await getSessionEntitlement(subscription);
+      if (!entitlement.canStart) {
+        Alert.alert(
+          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
+          t('find:free_limit_reached_body', {
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              onPress: () => navigate('Subscription'),
+            },
+          ],
+        );
+        return;
+      }
       const { sessionId } = await interviewService.startSession({
         interviewType,
         mode,
@@ -91,7 +129,7 @@ const MockInterviewSetup = memo(() => {
       if (interviewType === Interview_Type_Enum.Coding) {
         navigate('CodingInterview', { sessionId, interviewType });
       } else {
-        navigate('LiveInterviewSession', { sessionId, interviewType, mode, company });
+        navigate('LiveInterviewSession', { sessionId, interviewType, mode, company, durationMin });
       }
     } catch (e: any) {
       Alert.alert(
@@ -109,7 +147,27 @@ const MockInterviewSetup = memo(() => {
         title={t('find:mock_interview_setup')}
         accessoryLeft={<NavigationAction />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        {!isPro && remainingFreeSessions !== null ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigate('Subscription')}
+            style={[styles.freeLimitBanner, { backgroundColor: theme['background-basic-color-2'] }]}>
+            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            <Text category="h9-s" status={remainingFreeSessions > 0 ? 'basic' : 'danger'} style={globalStyle.flexOne} ml={8}>
+              {remainingFreeSessions > 0
+                ? t('find:free_sessions_remaining', {
+                    defaultValue: `${remainingFreeSessions} free session${remainingFreeSessions === 1 ? '' : 's'} left this month`,
+                    count: remainingFreeSessions,
+                  })
+                : t('find:free_sessions_used_up', { defaultValue: "You've used all your free sessions this month" })}
+            </Text>
+            <Text category="h10" status="link" bold>
+              {t('find:upgrade_to_pro', { defaultValue: 'Upgrade' })}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('find:choose_mode')}
         </Text>
@@ -294,6 +352,13 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  freeLimitBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 24,
   },
   modeCard: {
     width: '31%',

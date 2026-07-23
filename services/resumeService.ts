@@ -1,6 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {EKeyAsyncStorage} from 'constants/Types';
 import apiClient from './apiClient';
+
+// `language` per the backend's contract — constants/languages.ts,
+// docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16.
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // resumeService — real backend implementation.
@@ -40,6 +47,125 @@ export interface ResumeAnalysisResult {
 export interface RewriteBulletResult {
   rewritten: string;
   explanation: string;
+}
+
+// ---- Structured resume/CV sections ----
+// Canonical shape returned by POST /api/v1/resume/generate and stored/
+// rendered as-is by PATCH /api/v1/resume + POST /api/v1/resume/export (see
+// the backend's app/services/resume_render_service.py module docstring).
+// Deliberately no "highlights" field — resumes use the standard section
+// set below instead of a generic highlights bucket.
+export interface ResumeContact {
+  name?: string;
+  email?: string;
+  phone?: string;
+  location?: string;
+  links?: string[];
+}
+export interface ResumeExperienceEntry {
+  title?: string;
+  company?: string;
+  location?: string;
+  start?: string;
+  end?: string;
+  bullets: string[];
+}
+export interface ResumeEducationEntry {
+  school?: string;
+  degree?: string;
+  field?: string;
+  start?: string;
+  end?: string;
+}
+export interface ResumeProjectEntry {
+  name?: string;
+  description?: string;
+  link?: string;
+}
+export interface ResumeVolunteerEntry {
+  org?: string;
+  role?: string;
+  description?: string;
+}
+export interface ResumeReferenceEntry {
+  name?: string;
+  relationship?: string;
+  contact?: string;
+}
+export interface ResumeSections {
+  contact: ResumeContact;
+  summary: string;
+  coreSkills: string[];
+  certifications: string[];
+  experience: ResumeExperienceEntry[];
+  education: ResumeEducationEntry[];
+  projects: ResumeProjectEntry[];
+  volunteer: ResumeVolunteerEntry[];
+  awards: string[];
+  languages: string[];
+  references: ResumeReferenceEntry[];
+  suggestedKeywords: string[];
+}
+
+interface ResumeSectionsWire {
+  contact?: {name?: string; email?: string; phone?: string; location?: string; links?: string[]};
+  summary?: string;
+  core_skills?: string[];
+  certifications?: string[];
+  experience?: {title?: string; company?: string; location?: string; start?: string; end?: string; bullets?: string[]}[];
+  education?: {school?: string; degree?: string; field?: string; start?: string; end?: string}[];
+  projects?: {name?: string; description?: string; link?: string}[];
+  volunteer?: {org?: string; role?: string; description?: string}[];
+  awards?: string[];
+  languages?: string[];
+  references?: {name?: string; relationship?: string; contact?: string}[];
+  suggested_keywords?: string[];
+}
+
+function fromSectionsWire(wire: ResumeSectionsWire): ResumeSections {
+  return {
+    contact: {
+      name: wire.contact?.name,
+      email: wire.contact?.email,
+      phone: wire.contact?.phone,
+      location: wire.contact?.location,
+      links: wire.contact?.links ?? [],
+    },
+    summary: wire.summary ?? '',
+    coreSkills: wire.core_skills ?? [],
+    certifications: wire.certifications ?? [],
+    experience: (wire.experience ?? []).map(e => ({
+      title: e.title, company: e.company, location: e.location,
+      start: e.start, end: e.end, bullets: e.bullets ?? [],
+    })),
+    education: wire.education ?? [],
+    projects: wire.projects ?? [],
+    volunteer: wire.volunteer ?? [],
+    awards: wire.awards ?? [],
+    languages: wire.languages ?? [],
+    references: wire.references ?? [],
+    suggestedKeywords: wire.suggested_keywords ?? [],
+  };
+}
+
+function toSectionsWire(sections: ResumeSections): Record<string, unknown> {
+  return {
+    contact: sections.contact,
+    summary: sections.summary,
+    core_skills: sections.coreSkills,
+    certifications: sections.certifications,
+    experience: sections.experience.map(e => ({
+      title: e.title, company: e.company, location: e.location,
+      start: e.start, end: e.end, bullets: e.bullets,
+    })),
+    education: sections.education,
+    projects: sections.projects,
+    volunteer: sections.volunteer,
+    awards: sections.awards,
+    languages: sections.languages,
+    references: sections.references,
+    suggested_keywords: sections.suggestedKeywords,
+  };
 }
 
 // ---- GET/PATCH /api/v1/resume wire shapes ----
@@ -147,12 +273,36 @@ export async function getImportedSources(): Promise<Record<string, ImportedFileI
 
 /**
  * PATCH /api/v1/resume — update resume sections (summary, experience,
- * education, skills, …). No section-editing UI exists in ResumeBuilder.tsx
- * yet, so this isn't called anywhere today — exposed for whichever screen
- * ends up owning that editor next.
+ * education, skills, …). Used by src/more/GenerateResume.tsx after AI
+ * generation, and available for any future manual section editor.
  */
 export async function updateResumeSections(sections: Record<string, unknown>): Promise<void> {
   await apiClient.patch('/api/v1/resume', {sections});
+}
+
+/**
+ * POST /api/v1/resume/generate (Pro feature — gated server-side via
+ * @require_pro) — a real LLM pass that returns a full resume in the
+ * standard section shape (contact, summary, core skills, certifications,
+ * professional experience, education, projects, volunteer, awards,
+ * languages, references) tailored to a target role and, optionally, a job
+ * description. Replaces the old client-side template + per-bullet-rewrite
+ * approach in resumeGenerationService.ts now that this endpoint exists.
+ */
+export async function generateResume(input: {
+  targetRole?: string;
+  jdText?: string;
+  jdAnalysisId?: string;
+  existingResume?: ResumeSections | null;
+}): Promise<ResumeSections> {
+  const {data} = await apiClient.post<ResumeSectionsWire>('/api/v1/resume/generate', {
+    target_role: input.targetRole,
+    jd_text: input.jdText,
+    jd_analysis_id: input.jdAnalysisId,
+    existing_resume: input.existingResume ? toSectionsWire(input.existingResume) : undefined,
+    language: currentLanguage(),
+  });
+  return fromSectionsWire(data);
 }
 
 /**
@@ -163,7 +313,7 @@ export async function updateResumeSections(sections: Record<string, unknown>): P
 export async function analyzeResume(): Promise<ResumeAnalysisResult> {
   const {data} = await apiClient.post<{score?: number; suggestions?: string[]}>(
     '/api/v1/resume/ats-score',
-    {},
+    {language: currentLanguage()},
   );
   return {
     atsScore: data.score ?? 0,
@@ -197,18 +347,34 @@ export async function rewriteBullet(
       bullet: trimmed,
       role: opts?.role,
       tone: opts?.tone ?? 'professional',
+      language: currentLanguage(),
     },
   );
   return {rewritten: data.rewritten, explanation: data.explanation};
 }
 
 /**
- * POST /api/v1/resume/export — render the stored resume as a PDF/DOCX and
- * return a download link. No "Export" action exists in ResumeBuilder.tsx's
- * UI yet, so this isn't wired to a button anywhere today — exposed for
- * whenever that action gets a home.
+ * POST /api/v1/resume/export — renders the user's stored structured resume
+ * sections (see ResumeSections above) into a real .docx/.pdf file
+ * server-side (app/services/resume_render_service.py) and returns an
+ * https download link. Used by src/more/GenerateResume.tsx after first
+ * saving generated/edited content via updateResumeSections above.
+ *
+ * `style` is optional and purely cosmetic (accent color emphasis). `docType`
+ * picks between a standard "resume" and a "cv" — both render the exact same
+ * section schema, "cv" only changes the document title to "Curriculum
+ * Vitae"; there's one shared section model rather than two parallel ones.
  */
-export async function exportResume(format: 'pdf' | 'docx'): Promise<{url?: string}> {
-  const {data} = await apiClient.post<{url?: string}>('/api/v1/resume/export', {format});
+export async function exportResume(
+  format: 'pdf' | 'docx',
+  style?: string,
+  docType: 'resume' | 'cv' = 'resume',
+): Promise<{url?: string}> {
+  const {data} = await apiClient.post<{url?: string}>('/api/v1/resume/export', {
+    format,
+    style,
+    doc_type: docType,
+    language: currentLanguage(),
+  });
   return {url: data.url};
 }

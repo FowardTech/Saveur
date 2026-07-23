@@ -15,9 +15,11 @@ import Flex from "components/Flex";
 interface ComposerProps {
   style?: StyleProp<ViewStyle>;
   onShowAction(): void;
+  onCamera?(): void;
+  onPhotoLibrary?(): void;
 }
 
-const Composer = ({ style, onShowAction }: ComposerProps) => {
+const Composer = ({ style, onShowAction, onCamera, onPhotoLibrary }: ComposerProps) => {
   const styles = useStyleSheet(themedStyles);
   const { keyboardShow } = useKeyboard();
   const animatedAction = useDerivedValue(() => {
@@ -47,10 +49,10 @@ const Composer = ({ style, onShowAction }: ComposerProps) => {
         </TouchableOpacity>
         <Animated.View style={styleAni}>
           <Flex>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={onCamera}>
               <Icon pack="assets" name="camera" style={styles.icon} />
             </TouchableOpacity>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={onPhotoLibrary}>
               <Icon pack="assets" name="photoLibrary" style={styles.icon} />
             </TouchableOpacity>
           </Flex>

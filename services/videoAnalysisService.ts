@@ -13,8 +13,10 @@ import type {
   SpeechResultsEvent,
   SpeechStartEvent,
 } from '@dev-amirzubair/react-native-voice';
+import i18n from 'i18next';
 
 import {VideoAnalysisMetrics} from 'constants/Types';
+import {getSttLocale} from 'constants/languages';
 
 // ---------------------------------------------------------------------------
 // videoAnalysisService — REAL on-device camera + speech analysis for
@@ -73,7 +75,14 @@ const AWKWARD_PAUSE_MS = 4000;
 // LiveInterviewSession would re-render far more than the UI needs.
 const LIVE_METRICS_THROTTLE_MS = 250;
 
-const SPEECH_LOCALE = 'en-US';
+// Was hardcoded to 'en-US' regardless of the user's preferred language (see
+// constants/languages.ts) — same bug fixed in services/speechService.ts's
+// currentSttLocale(), duplicated here since Video mode's STT is wired up
+// independently of Voice mode's. Read at call time (not once at module
+// load) so it always reflects whatever i18next's current language is.
+function currentSttLocale(): string {
+  return getSttLocale(i18n.language);
+}
 
 // How often (ms) a face-detection sample is pushed into the frame buffer
 // that gets streamed to the backend (POST /camera-frame — see
@@ -364,7 +373,7 @@ export function useVideoInterviewAnalysis() {
       // precise approach would need native VAD (voice activity detection)
       // timestamps, which this community package does not expose.
       if (isAnalyzingRef.current && !isMutedRef.current) {
-        Voice.start(SPEECH_LOCALE).catch(() => {});
+        Voice.start(currentSttLocale()).catch(() => {});
       }
     };
     Voice.onSpeechResults = (e: SpeechResultsEvent) => {
@@ -380,7 +389,7 @@ export function useVideoInterviewAnalysis() {
       // listening rather than surfacing this as a hard failure.
       lastSpeechEndAtRef.current = Date.now();
       if (isAnalyzingRef.current && !isMutedRef.current) {
-        Voice.start(SPEECH_LOCALE).catch(() => {});
+        Voice.start(currentSttLocale()).catch(() => {});
       }
     };
     return () => {
@@ -412,7 +421,7 @@ export function useVideoInterviewAnalysis() {
     isAnalyzingRef.current = true;
     setLiveMetrics(INITIAL_LIVE_METRICS);
     try {
-      await Voice.start(SPEECH_LOCALE);
+      await Voice.start(currentSttLocale());
     } catch (err) {
       // Speech recognition failing to start (e.g. permission race, engine
       // unavailable) shouldn't block the camera/face-detection half of the
@@ -426,7 +435,7 @@ export function useVideoInterviewAnalysis() {
     if (muted) {
       Voice.stop().catch(() => {});
     } else if (isAnalyzingRef.current) {
-      Voice.start(SPEECH_LOCALE).catch(() => {});
+      Voice.start(currentSttLocale()).catch(() => {});
     }
   }, []);
 
