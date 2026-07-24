@@ -185,9 +185,20 @@ const PaymentHistory = memo(() => {
                   </Button>
                   <Button
                     size="small"
-                    status="primary"
+                    // Was status="primary" — constants/theme/mapping.json's
+                    // ghost+primary variant maps textColor to the
+                    // "text-primary-color" token, which light.json defines
+                    // as `$color-basic-100` — the exact same value as this
+                    // card's own background (background-basic-color-2 is
+                    // also `$color-basic-100`). That made this button's
+                    // text render as white-on-white: present and tappable,
+                    // just literally invisible. "info" isn't overridden in
+                    // light.json/dark.json, so it keeps Eva's normal
+                    // distinct blue and stays visible against the card in
+                    // both themes.
+                    status="info"
                     appearance="ghost"
-                    style={{marginBottom: 10}}
+                    style={{marginBottom: 10,}}
                     disabled={downloadingId === payment.id}
                     accessoryLeft={downloadingId === payment.id ? () => <Spinner size="small" status="primary" /> : undefined}
                     onPress={() => onDownloadReceipt(payment)}>
