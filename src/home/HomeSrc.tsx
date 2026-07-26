@@ -362,6 +362,7 @@ const HomeSrc = memo(() => {
     <Container style={styles.container}>
       <HeaderHome
         name={profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
+        username={profile?.username}
         avatarUrl={profile?.avatarUrl}
         email={profile?.email ?? ''}
         notification={unreadCount}

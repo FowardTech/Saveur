@@ -94,6 +94,12 @@ const ProfileSrc = memo(() => {
           label={t('auth:full_name')}
           title={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}
         />
+        {profile?.username ? (
+          <ProfileTag
+            label={t('more:leaderboard_username', {defaultValue: 'Leaderboard username'})}
+            title={`@${profile.username}`}
+          />
+        ) : null}
         <ProfileTag label={t('auth:email')} title={profile?.email ?? ''} />
         {/* Was hardcoded literal placeholder text ("965-954-9111" / "128
             Lincoln St #105, Boston, NY") shown to every user regardless of

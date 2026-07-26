@@ -13,13 +13,17 @@ import {useTranslation} from 'react-i18next';
 
 interface HeaderHomeProps {
   name: string;
+  // Random, non-identifying handle (see Saveur-Backend's
+  // app/services/username_service.py) — shown under the real name here,
+  // one of only two places besides the leaderboard where it's surfaced.
+  username?: string;
   avatarUrl?: string;
   email: string;
   notification?: number;
 }
 
 const HeaderHome = memo(
-  ({email, avatarUrl, name, notification}: HeaderHomeProps) => {
+  ({email, avatarUrl, name, username, notification}: HeaderHomeProps) => {
     const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
     const styles = useStyleSheet(themedStyles);
     const _onProfile = () => {};
@@ -38,6 +42,11 @@ const HeaderHome = memo(
             <Text category="h6" bold>
               {name}
             </Text>
+            {username ? (
+              <Text category="h10" status="placeholder">
+                @{username}
+              </Text>
+            ) : null}
           </View>
         </Flex>
         <Flex onPress={_onNotification} style={styles.button}>
