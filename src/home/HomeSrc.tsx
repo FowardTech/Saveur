@@ -651,10 +651,10 @@ const HomeSrc = memo(() => {
                   />
                 </View>
                 <Text category="h10" bold center mt={8} numberOfLines={2} status={unlocked ? 'basic' : 'placeholder'}>
-                  {badge.title}
+                  {t(`home:badge_${badge.id}_title`, { defaultValue: badge.title })}
                 </Text>
                 <Text category="h10" center mt={2} status="placeholder" numberOfLines={2}>
-                  {badge.description}
+                  {t(`home:badge_${badge.id}_desc`, { defaultValue: badge.description })}
                 </Text>
               </View>
             );
