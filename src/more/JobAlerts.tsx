@@ -415,7 +415,16 @@ const JobAlerts = memo(() => {
               <Text category="h8" bold>
                 {t('more:job_alerts_daily_limit_label', {defaultValue: 'Max new alerts per day'})}
               </Text>
-              <Text category="h8" bold status="primary">
+              {/* Was status="primary", which resolves to `text-primary-color`
+                  -- a near-white/white token meant for text sitting ON a
+                  colored surface (e.g. a filled button), not plain text
+                  directly on the card background. That's exactly right in
+                  dark mode (white reads fine there) but made this digit
+                  invisible in light mode. Using the actual brand blue
+                  directly instead -- readable against the card background
+                  in both themes, and matches the slider's own accent color
+                  right below it. */}
+              <Text category="h8" bold style={{color: theme['color-primary-500']}}>
                 {Math.round(dailyLimit)}
               </Text>
             </Flex>
