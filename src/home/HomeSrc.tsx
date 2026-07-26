@@ -736,9 +736,8 @@ const HomeSrc = memo(() => {
         isOnl={false}
         message={pendingAd?.body}
         onDetails={onOpenAd}
-        detailsLabel="View Details"
+        detailsLabel={t('common:view_details', { defaultValue: 'View Details' })}
         showCancel
-        cancelLabel="Cancel"
       />
       <AppTour visible={showTour} onClose={onCloseTour} />
     </Container>
