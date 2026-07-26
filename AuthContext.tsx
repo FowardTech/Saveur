@@ -12,7 +12,7 @@ import * as authService from 'services/authService';
 import * as billingService from 'services/billingService';
 import * as emailService from 'services/emailService';
 import * as gamificationService from 'services/gamificationService';
-import {isProTier} from 'services/entitlementsService';
+import {isProTier, isPremiumTier} from 'services/entitlementsService';
 import {registerForPushNotifications} from 'services/pushNotificationService';
 import * as linkedinAuthService from 'services/linkedinAuthService';
 import * as twoFactorService from 'services/twoFactorService';
@@ -30,6 +30,49 @@ function syncLanguageFromProfile(profile: UserProfileProps | null): void {
   if (profile?.locale && isSupportedLanguageCode(profile.locale) && profile.locale !== i18n.language) {
     i18n.changeLanguage(profile.locale).catch(() => {});
   }
+}
+
+// Reported bug: pick a language on the onboarding carousel's dropdown (see
+// src/onboarding/index.tsx), then tap "Log In" into an EXISTING account —
+// everything reverted to English. Root cause: syncLanguageFromProfile above
+// was written for a different scenario (a returning user opening the app on
+// a second device should see their already-saved language, not that new
+// device's default) and unconditionally pulls the account's stored `locale`
+// down over whatever's active locally. That's exactly backwards for the
+// onboarding picker's case — the user just told this device what language
+// they want, and logging into an old account (whose locale was set who
+// knows when, often still the 'en' default) silently overwrote it.
+//
+// Fix: the onboarding screen now writes its selection to
+// EKeyAsyncStorage.preferredLocale (see i18n/config.ts's bootstrap restore,
+// which is the other consumer of that key). Every sign-in path below calls
+// this instead of syncLanguageFromProfile directly — if a pending onboarding
+// selection exists and differs from the account's saved locale, it wins:
+// pushed up to the account (so it also becomes the new saved preference,
+// consistent with how Settings → Language behaves) rather than pulled down
+// from it. The one-time flag is cleared right after so it doesn't keep
+// re-asserting itself on later sign-ins once the user has had a chance to
+// change their language again from Settings on any device.
+async function reconcileLocale(profile: UserProfileProps | null): Promise<UserProfileProps | null> {
+  if (!profile) return profile;
+  try {
+    const pending = await AsyncStorage.getItem(EKeyAsyncStorage.preferredLocale);
+    if (pending && isSupportedLanguageCode(pending)) {
+      if (pending !== profile.locale) {
+        const updated = await authService.updateProfile({locale: pending});
+        await AsyncStorage.removeItem(EKeyAsyncStorage.preferredLocale);
+        syncLanguageFromProfile(updated);
+        return updated;
+      }
+      await AsyncStorage.removeItem(EKeyAsyncStorage.preferredLocale);
+      return profile;
+    }
+  } catch {
+    // Best-effort — fall through to the normal pull-from-profile sync below
+    // rather than leaving the language in a half-applied state.
+  }
+  syncLanguageFromProfile(profile);
+  return profile;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,6 +157,11 @@ type Context = {
   // successful purchase/portal-return so this shared copy doesn't go stale.
   subscription: SubscriptionStatusProps | null;
   isPro: boolean;
+  // True only for Pro Premium (was "Team") or Pro (Yearly) — the stricter
+  // check gating Job Alerts and Learning Courses specifically. See
+  // services/entitlementsService.ts's isPremiumTier for the full breakdown.
+  // A user can be isPro true and isPremium false (plain monthly Pro).
+  isPremium: boolean;
   refreshSubscription: () => Promise<SubscriptionStatusProps | null>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (payload: SignUpPayload) => Promise<void>;
@@ -146,6 +194,7 @@ export const AuthContext = React.createContext<Context>({
   emailVerified: false,
   subscription: null,
   isPro: false,
+  isPremium: false,
   refreshSubscription: async () => null,
   signIn: async () => {},
   signUp: async () => {},
@@ -186,9 +235,9 @@ export const AuthProvider: React.FC = ({children}) => {
   React.useEffect(() => {
     const unsubscribe = auth().onAuthStateChanged(async firebaseUser => {
       if (firebaseUser) {
-        const nextProfile = await authService.getCurrentProfile();
+        const rawProfile = await authService.getCurrentProfile();
+        const nextProfile = await reconcileLocale(rawProfile);
         setProfile(nextProfile);
-        syncLanguageFromProfile(nextProfile);
         setSignedIn(true);
         setEmailVerified(firebaseUser.emailVerified);
 
@@ -285,9 +334,9 @@ export const AuthProvider: React.FC = ({children}) => {
       }
       try {
         await auth().signInWithCustomToken(result.token);
-        const nextProfile = await authService.provisionProfile();
+        const rawProfile = await authService.provisionProfile();
+        const nextProfile = await reconcileLocale(rawProfile);
         setProfile(nextProfile);
-        syncLanguageFromProfile(nextProfile);
         resetToMainAfterExternalSignIn();
       } catch (e: any) {
         Alert.alert(
@@ -317,9 +366,9 @@ export const AuthProvider: React.FC = ({children}) => {
     await auth().signInWithEmailAndPassword(email, password);
     // POST /api/users/me is an upsert (spec §0.3) — safe to call on every
     // sign-in, not just first sign-up.
-    const nextProfile = await authService.provisionProfile();
+    const rawProfile = await authService.provisionProfile();
+    const nextProfile = await reconcileLocale(rawProfile);
     setProfile(nextProfile);
-    syncLanguageFromProfile(nextProfile);
   }, []);
 
   const signUp = React.useCallback(async (payload: SignUpPayload) => {
@@ -342,6 +391,11 @@ export const AuthProvider: React.FC = ({children}) => {
       locale: payload.locale ?? i18n.language,
     });
     setProfile(nextProfile);
+    // Already applied via `locale` above — clear the onboarding-screen's
+    // one-time pending flag (see reconcileLocale) so it doesn't linger and
+    // get re-applied on some later sign-in after the user has since changed
+    // their language again from Settings.
+    AsyncStorage.removeItem(EKeyAsyncStorage.preferredLocale).catch(() => {});
     setEmailVerified(!!auth().currentUser?.emailVerified);
     // The welcome email fires automatically server-side (POST /api/users/me
     // above triggers it) — this is the one email that needs an explicit
@@ -422,8 +476,7 @@ export const AuthProvider: React.FC = ({children}) => {
         // Best-effort — the initials fallback covers this case either way.
       }
     }
-    setProfile(nextProfile);
-    syncLanguageFromProfile(nextProfile);
+    setProfile(await reconcileLocale(nextProfile));
   }, []);
 
   const signInWithApple = React.useCallback(async (opts?: {isSignup?: boolean}) => {
@@ -448,8 +501,7 @@ export const AuthProvider: React.FC = ({children}) => {
       throw err;
     }
     const nextProfile = await authService.provisionProfile();
-    setProfile(nextProfile);
-    syncLanguageFromProfile(nextProfile);
+    setProfile(await reconcileLocale(nextProfile));
   }, []);
 
   // LinkedIn has no first-party Firebase provider — services/linkedinAuthService.ts
@@ -496,8 +548,7 @@ export const AuthProvider: React.FC = ({children}) => {
         // Best-effort — the initials fallback covers this case either way.
       }
     }
-    setProfile(nextProfile);
-    syncLanguageFromProfile(nextProfile);
+    setProfile(await reconcileLocale(nextProfile));
   }, []);
 
   const signOut = React.useCallback(async () => {
@@ -592,6 +643,7 @@ export const AuthProvider: React.FC = ({children}) => {
   }, []);
 
   const isPro = React.useMemo(() => isProTier(subscription), [subscription]);
+  const isPremium = React.useMemo(() => isPremiumTier(subscription), [subscription]);
 
   return (
     <AuthContext.Provider
@@ -603,6 +655,7 @@ export const AuthProvider: React.FC = ({children}) => {
         emailVerified,
         subscription,
         isPro,
+        isPremium,
         refreshSubscription,
         signIn,
         signUp,
