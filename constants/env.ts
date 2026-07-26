@@ -2,17 +2,19 @@
 // API_BASE_URL — points the app at the real backend (see
 // docs/BACKEND_API_SPEC.md for the full endpoint list).
 //
-// Using the machine's LAN IP directly (rather than "localhost" or the
-// Android-emulator-only 10.2.0.2 alias) since it works uniformly across the
-// Android emulator, iOS simulator, AND a physical device on the same Wi-Fi —
-// all three can reach the host machine at this address as long as they're on
-// the same network.
+// Backend runs on a DigitalOcean Droplet (docker-compose: Postgres + Redis +
+// Flask + worker), fronted by Caddy on the Droplet for automatic HTTPS
+// (Let's Encrypt) against the real domain — replaced the old
+// trycloudflare.com quick-tunnel stopgap, which was ephemeral and changed
+// URL on every tunnel restart. This one is a real, stable domain and won't
+// change on its own; if it ever needs to move to a different
+// server/IP, just update DNS (api.saveurnow.com's A record) — this constant
+// stays the same.
 //
 // TODO: swap this for a real build-time env solution (e.g. react-native-config)
-// if you need per-environment (dev/staging/prod) values later, or if this IP
-// changes (e.g. different Wi-Fi network) — kept as a plain constant for now
-// rather than adding another native dependency, given this project's history
-// with native-linking pain.
+// if you need per-environment (dev/staging/prod) values later — kept as a
+// plain constant for now rather than adding another native dependency,
+// given this project's history with native-linking pain.
 // ---------------------------------------------------------------------------
 
-export const API_BASE_URL = 'http://192.168.2.55:5050';
+export const API_BASE_URL = 'https://api.saveurnow.com';

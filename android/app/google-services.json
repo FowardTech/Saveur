@@ -14,11 +14,11 @@
       },
       "oauth_client": [
         {
-          "client_id": "679326954548-r7s5a8os8a547pccqkfcnscr9o0b2hrm.apps.googleusercontent.com",
+          "client_id": "679326954548-sfv1avhh56g49q11c93arcctu5cnvk8p.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.saveur.app",
-            "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
+            "certificate_hash": "45025fcf4df5fe8b5921635e1cc690ec18547899"
           }
         },
         {
