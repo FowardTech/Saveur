@@ -96,21 +96,30 @@ const CourseSession = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
 
-  // Syllabus — generated once resume state is known, so it's built against
-  // the right starting module_index context (level + real professional
-  // subtopics from the topic check keep the AI teaching the topic's actual
-  // subject matter rather than free-associating under its name).
+  // Syllabus — first check for one already saved for this (user, course)
+  // pair (see learningService.getSavedSyllabus) so re-opening or reviewing a
+  // course always shows the same module list it started with, instead of
+  // regenerating fresh titles via AI on every mount. Only generates (and
+  // then saves) a new one the first time this course is ever opened.
   React.useEffect(() => {
     if (!hasResumed) return;
     let cancelled = false;
-    learningService.generateSyllabus(topic, totalModules, level, coreSubtopics ?? []).then(titles => {
-      if (!cancelled) setSyllabus(titles);
-    });
+    (async () => {
+      const saved = await learningService.getSavedSyllabus(courseId);
+      if (saved) {
+        if (!cancelled) setSyllabus(saved);
+        return;
+      }
+      const titles = await learningService.generateSyllabus(topic, totalModules, level, coreSubtopics ?? []);
+      if (cancelled) return;
+      setSyllabus(titles);
+      learningService.saveSyllabus(courseId, titles);
+    })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasResumed]);
+  }, [hasResumed, courseId]);
 
   const loadModule = React.useCallback(
     async (index: number, titles: string[]) => {
@@ -121,11 +130,23 @@ const CourseSession = memo(() => {
       setIsLoadingModule(true);
       setLoadError(null);
       try {
+        // Same reuse-before-regenerate pattern as the syllabus above: a
+        // module already taught to this learner must always show the exact
+        // content (and check-question) they originally saw and answered
+        // against — never a freshly regenerated variant, even via Previous
+        // or re-opening a completed course.
+        const saved = await learningService.getSavedModuleContent(courseId, index);
+        if (saved) {
+          setModuleCache(prev => ({ ...prev, [index]: saved.module }));
+          if (saved.imageUrl) setImageCache(prev => ({ ...prev, [index]: saved.imageUrl }));
+          return;
+        }
         const mod = await learningService.generateModule(topic, index, totalModules, titles[index], context, level);
         setModuleCache(prev => ({ ...prev, [index]: mod }));
         // Best-effort, non-blocking — don't wait on the image to show text.
         learningService.generateVisual(`${topic}: ${titles[index]}`).then(url => {
           setImageCache(prev => ({ ...prev, [index]: url }));
+          learningService.saveModuleContent(courseId, index, mod, url);
         });
       } catch (e: any) {
         setLoadError(e?.message ?? t('more:course_load_error', { defaultValue: 'Could not load this module.' }));
@@ -134,7 +155,7 @@ const CourseSession = memo(() => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [topic, totalModules, moduleCache],
+    [topic, totalModules, moduleCache, courseId],
   );
 
   React.useEffect(() => {

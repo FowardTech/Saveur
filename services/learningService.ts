@@ -304,6 +304,98 @@ export async function generateSyllabus(
 }
 
 /**
+ * GET /api/v1/learning/syllabus?course_id=... — the syllabus already saved
+ * for this course, if any. See saveSyllabus below: once a syllabus has been
+ * generated and saved for a (user, course) pair, it must always come back
+ * from here afterward instead of being regenerated fresh via AI, so module
+ * titles stay the same course every time the learner opens or reviews it.
+ */
+export async function getSavedSyllabus(courseId: string): Promise<string[] | null> {
+  try {
+    const {data} = await apiClient.get<{titles?: string[] | null}>('/api/v1/learning/syllabus', {
+      params: {course_id: courseId},
+    });
+    return data.titles && data.titles.length ? data.titles : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * POST /api/v1/learning/syllabus — saves a freshly AI-generated syllabus the
+ * first time one is built for a (user, course) pair. The backend is
+ * first-write-wins (see app/api/learning.py's save_syllabus), so calling
+ * this redundantly is always safe — it just hands back whatever was already
+ * saved instead of overwriting it.
+ */
+export async function saveSyllabus(courseId: string, titles: string[]): Promise<void> {
+  try {
+    await apiClient.post('/api/v1/learning/syllabus', {course_id: courseId, titles});
+  } catch {
+    // best-effort — worst case the syllabus regenerates next visit
+  }
+}
+
+/**
+ * GET /api/v1/learning/module-content?course_id=...&module_index=... — the
+ * already-generated content for this module, if any. This is the fix for
+ * "when a user finishes a course and wants to review, the AI generates
+ * different new content": CourseSession.tsx now checks here before calling
+ * generateModule below, so a module already taught once is never
+ * regenerated — including via the Previous button or re-opening a
+ * completed course from LearningCourses.tsx.
+ */
+export async function getSavedModuleContent(
+  courseId: string,
+  moduleIndex: number,
+): Promise<{module: CourseModule; imageUrl: string | null} | null> {
+  try {
+    const {data} = await apiClient.get<{content?: {
+      title: string; body: string; check_question?: string | null; image_url?: string | null;
+    } | null}>('/api/v1/learning/module-content', {
+      params: {course_id: courseId, module_index: moduleIndex},
+    });
+    if (!data.content) return null;
+    return {
+      module: {
+        index: moduleIndex,
+        title: data.content.title,
+        body: data.content.body,
+        checkQuestion: data.content.check_question ?? undefined,
+      },
+      imageUrl: data.content.image_url ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * POST /api/v1/learning/module-content — saves a freshly generated module
+ * the first time it's taught. First-write-wins server-side, same as
+ * saveSyllabus above.
+ */
+export async function saveModuleContent(
+  courseId: string,
+  moduleIndex: number,
+  mod: CourseModule,
+  imageUrl?: string | null,
+): Promise<void> {
+  try {
+    await apiClient.post('/api/v1/learning/module-content', {
+      course_id: courseId,
+      module_index: moduleIndex,
+      title: mod.title,
+      body: mod.body,
+      check_question: mod.checkQuestion ?? null,
+      image_url: imageUrl ?? null,
+    });
+  } catch {
+    // best-effort — worst case this module regenerates next visit
+  }
+}
+
+/**
  * Generates one module's actual teaching content — the AI acting as
  * instructor, not just answering a question. `context` (profile
  * goals/industries/desiredRoles) lets the same personalization the Coach
