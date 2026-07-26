@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppState, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@ui-kitten/components';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -173,6 +173,41 @@ const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
+
+  // Fixes "the phone locks and the AI coach is in session, stops and the
+  // voice just changes to the default phone TTS voice": iOS reclaims/
+  // interrupts the audio session the moment the screen locks, mid-listen or
+  // mid-speech. Left alone, the app kept blindly trying to restart
+  // listening against that broken session in the background (see
+  // speechService.ts's canAutoRestart guard, which now stops that), and by
+  // the time the phone was unlocked, the session was in a state where the
+  // next speak() call's real ElevenLabs voice (speakRemote) failed and
+  // silently fell back to the on-device "default" voice. The fix: proactively
+  // stop everything cleanly the moment the app leaves the foreground, and do
+  // a fresh, clean restart of listening when it returns — rather than
+  // letting the OS interruption corrupt an in-flight session.
+  const wasBackgroundedRef = React.useRef(false);
+  React.useEffect(() => {
+    const sub = AppState.addEventListener('change', nextState => {
+      if (!isActiveRef.current) return;
+      if (nextState === 'active') {
+        if (wasBackgroundedRef.current) {
+          wasBackgroundedRef.current = false;
+          startListening();
+        }
+        return;
+      }
+      // 'background' or 'inactive' — the screen just locked (or the app was
+      // otherwise backgrounded) while a voice turn was in progress.
+      wasBackgroundedRef.current = true;
+      clearSilenceTimer();
+      stt.stop();
+      speechService.stopSpeaking();
+      setPhase('idle');
+    });
+    return () => sub.remove();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startListening]);
 
   // Same breathing-pulse approach as LiveInterviewSession's Voice-mode orb
   // — a touch more pronounced while the coach is actually speaking, like

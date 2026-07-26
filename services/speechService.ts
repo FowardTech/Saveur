@@ -1,5 +1,5 @@
 import React from 'react';
-import {PermissionsAndroid, Platform} from 'react-native';
+import {AppState, PermissionsAndroid, Platform} from 'react-native';
 import Tts from 'react-native-tts';
 import Sound from 'react-native-nitro-sound';
 import auth from '@react-native-firebase/auth';
@@ -299,19 +299,37 @@ export function useSpeechToText() {
         setTranscript(transcriptRef.current);
       }
     };
+    // Auto-restart used to fire unconditionally on any "no speech
+    // detected"/session-end event as long as wantsListeningRef was true —
+    // including while the app is backgrounded (e.g. the phone just got
+    // locked mid-conversation). iOS interrupts/reclaims the audio session
+    // on lock, so every one of those blind Voice.start() retries while
+    // backgrounded either fails outright or leaves the native session in a
+    // half-reconfigured state; by the time the app is foregrounded again,
+    // the next speak() call's ElevenLabs playback (speakRemote) fails
+    // against that broken session and silently falls back to the on-device
+    // voice — this is the root cause of "the phone locks and the voice
+    // just changes to the default phone TTS voice". Only auto-restart while
+    // the app is actually in the foreground; VoiceCoachView.tsx's own
+    // AppState handling does a clean stop/restart around the lock instead.
+    const canAutoRestart = () => wantsListeningRef.current && AppState.currentState === 'active';
     Voice.onSpeechError = (e: SpeechErrorEvent) => {
       // "No speech detected" style errors fire constantly during normal
       // pauses between sentences — not a real failure, just the recognizer's
       // session ending. Restart it silently if we're still supposed to be
-      // listening rather than surfacing every pause as an error.
-      if (wantsListeningRef.current) {
+      // listening (and the app is actually in the foreground) rather than
+      // surfacing every pause as an error.
+      if (canAutoRestart()) {
         Voice.start(currentSttLocale()).catch(() => {});
-      } else {
+      } else if (!wantsListeningRef.current) {
         setError(e.error?.message ?? 'Speech recognition error');
       }
+      // else: still "wants listening" but the app is backgrounded — do
+      // nothing (no restart storm against a reclaimed audio session, no
+      // error the user can't see anyway while the phone is locked).
     };
     Voice.onSpeechEnd = () => {
-      if (wantsListeningRef.current) {
+      if (canAutoRestart()) {
         Voice.start(currentSttLocale()).catch(() => {});
       }
     };
