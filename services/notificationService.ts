@@ -42,6 +42,8 @@ interface NotificationJobAlertWire {
   matched_role?: string;
   apply_url: string;
   posted_at?: string | number;
+  company_logo_url?: string | null;
+  applied?: boolean;
 }
 
 interface NotificationWire {
@@ -54,13 +56,29 @@ interface NotificationWire {
   job_alert?: NotificationJobAlertWire;
 }
 
+// Was the root cause of every notification showing the same wrong relative
+// time ("in 4 hours", regardless of when it actually happened): a
+// timezone-less ISO string like "2026-07-26T18:32:10" IS a UTC instant
+// (every backend timestamp is generated via datetime.utcnow()), but
+// Date.parse() treats a date-TIME string with no "Z"/offset suffix as LOCAL
+// time per the JS spec (only bare date strings like "2026-07-26" default to
+// UTC) — silently shifting every parsed timestamp by the device's own UTC
+// offset, a fixed amount, which is exactly why the error was identical on
+// every notification. The backend now appends "Z" itself (see
+// Saveur-Backend's app/api/notifications.py), but this normalizes it
+// defensively here too, in case any other endpoint/field ever has the same
+// gap — appending "Z" to a bare "YYYY-MM-DDTHH:mm:ss[.ffffff]" string with
+// no existing timezone marker before parsing.
+const NAIVE_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/;
+
 function toMillis(value: string | number | undefined): number | undefined {
   if (value === undefined) return undefined;
   if (typeof value === 'number') {
     // Heuristic: treat values below 10^12 as unix seconds, otherwise already ms.
     return value < 1e12 ? value * 1000 : value;
   }
-  const parsed = Date.parse(value);
+  const normalized = NAIVE_DATETIME_RE.test(value) ? `${value}Z` : value;
+  const parsed = Date.parse(normalized);
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
@@ -85,6 +103,8 @@ function fromWire(wire: NotificationWire): NotificationProps {
           postedAt: toMillis(wire.job_alert.posted_at),
           createdAt,
           read: wire.read ?? false,
+          companyLogoUrl: wire.job_alert.company_logo_url ?? undefined,
+          applied: wire.job_alert.applied ?? false,
         }
       : undefined,
   };

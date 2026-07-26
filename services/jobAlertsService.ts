@@ -49,6 +49,8 @@ interface JobAlertWire {
   created_at: string | number;
   read: boolean;
   pinned?: boolean;
+  company_logo_url?: string | null;
+  applied?: boolean;
 }
 
 export interface JobAlertsPage {
@@ -56,12 +58,19 @@ export interface JobAlertsPage {
   nextCursor: string | null;
 }
 
+// See notificationService.ts's identical helper for the full explanation —
+// same bug, same fix: a bare "YYYY-MM-DDTHH:mm:ss" string (this backend's
+// naive-UTC datetime.utcnow() serialization) gets misread by Date.parse()
+// as local time unless explicitly marked UTC first.
+const NAIVE_DATETIME_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?$/;
+
 function toMillis(value: string | number | undefined): number | undefined {
   if (value === undefined) return undefined;
   if (typeof value === 'number') {
     return value < 1e12 ? value * 1000 : value;
   }
-  const parsed = Date.parse(value);
+  const normalized = NAIVE_DATETIME_RE.test(value) ? `${value}Z` : value;
+  const parsed = Date.parse(normalized);
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
@@ -78,6 +87,8 @@ function fromWire(wire: JobAlertWire): JobAlertProps {
     createdAt: toMillis(wire.created_at) ?? Date.now(),
     read: wire.read ?? false,
     pinned: wire.pinned ?? false,
+    companyLogoUrl: wire.company_logo_url ?? undefined,
+    applied: wire.applied ?? false,
   };
 }
 
