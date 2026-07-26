@@ -264,6 +264,20 @@ export interface JobApplicationProps {
   appliedDate: number | Date;
   stage: Application_Stage_Enum;
   nextStep?: string;
+  // The employer ATS URL this was applied on. Set when this entry was
+  // created from the in-app apply WebView (see WebViewScreen.tsx) rather
+  // than typed in manually — also what the backend dedupes on, so reopening
+  // the same job's apply page twice doesn't create two tracker rows. See
+  // services/applicationsService.ts.
+  applyUrl?: string;
+  // "auto_detected" | "manual_confirm" | undefined (pre-existing manual
+  // "Add application" entries). Informational only.
+  source?: string;
+  // Best-effort company logo, carried over from the JobAlert this was
+  // tracked from — see JobAlertProps.companyLogoUrl and
+  // components/CompanyLogoAvatar.tsx (which is what should render this
+  // instead of `logo` above when present).
+  companyLogoUrl?: string;
 }
 
 export enum Practice_Mode_Enum {
@@ -350,6 +364,10 @@ export interface UserProfileProps {
   uid?: string; // Firebase UID, set once real auth is wired in — see AuthContext.tsx
   email: string;
   name: string;
+  // Random, non-identifying handle generated server-side at signup — the
+  // only identity the leaderboard shows to other users. Shown under the
+  // real name in the avatar header (HeaderHome.tsx) / profile screen.
+  username?: string;
   goals: string[];
   industries: string[];
   preferredCountries: string[];
@@ -374,17 +392,25 @@ export interface UserProfileProps {
   // hardcoded placeholder text regardless of what was actually saved.
   phoneNumber?: string;
   homeAddress?: string;
-  subscriptionTier: 'free' | 'premium' | 'premium_plus';
+  // 'pro' = Saveur Pro (Monthly) — unlimited practice, AI coach, resume/JD
+  // analysis, camera & voice analytics, application tracker.
+  // 'premium' = Saveur Pro Premium (was "Team") or Pro (Yearly) —
+  // everything 'pro' has, PLUS Job Alerts and Learning Courses. See
+  // saveur-backend/app/services/entitlements_service.py's module docstring
+  // for the full tier breakdown this mirrors.
+  subscriptionTier: 'free' | 'pro' | 'premium' | 'premium_plus';
   // Master push-notification opt-out, editable from More/Settings. Backend
   // defaults this to true for every account (fail open) — see
   // saveur-backend/app/models/user.py's notifications_enabled column and
   // app/services/push_service.py, which now skips a user entirely here.
   notificationsEnabled?: boolean;
-  // How often (in minutes) the backend's scheduled job-alert refresh should
-  // re-check this user's saved search — editable from the Job Alerts
-  // screen. Backend default/floor/ceiling: 30 / 5 / 1440
-  // (saveur-backend/app/api/users.py's update_me).
-  jobAlertRefreshMinutes?: number;
+  // How often the backend's scheduled job-alert refresh re-checks every
+  // user is now a single admin-controlled dial
+  // (saveur-backend/app/services/app_config_service.py's "job_alerts"
+  // section), not a per-user field — used to be jobAlertRefreshMinutes
+  // here, editable from the Job Alerts screen down to 5 minutes, until one
+  // account set that low was enough on its own to exhaust Firecrawl's rate
+  // limit/credits for every user.
   // Max number of NEW job alerts created per calendar day — editable from
   // the Job Alerts screen. Backend default/floor/ceiling: 10 / 1 / 50
   // (saveur-backend/app/api/users.py's update_me,
@@ -441,6 +467,14 @@ export interface JobAlertProps {
   // days — see the pin icon on each card in src/more/JobAlerts.tsx and the
   // backend's job_search_service.cleanup_old_alerts.
   pinned: boolean;
+  // Best-effort — see job_search_service._company_logo_url on the backend
+  // and components/CompanyLogoAvatar.tsx here, which handles a missing/
+  // broken logo gracefully.
+  companyLogoUrl?: string;
+  // True when this exact job already has a tracked Application row (see
+  // src/more/WebViewScreen.tsx's auto-detection) — drives the "Applied"
+  // badge on JobAlerts.tsx's list and JobAlertDetails.tsx.
+  applied?: boolean;
 }
 
 // Admin-configured in-app advert popup — see services/adsService.ts (GET
@@ -526,10 +560,11 @@ export interface SubscriptionStatusProps {
   cancelAtPeriodEnd?: boolean;
   // The specific Stripe Price the user is actually subscribed to — lets
   // Subscription.tsx disambiguate two plans that share the same `tier`
-  // (e.g. "Pro Monthly" vs "Pro Yearly" both being tier: "premium") by
-  // matching on this instead of just tier. `null`/undefined for the free
-  // plan (no Stripe price backs it) or when the backend doesn't send this
-  // field yet — falls back to tier-only matching in that case.
+  // (e.g. "Pro Premium" (was "Team") vs "Pro Yearly" both being
+  // tier: "premium") by matching on this instead of just tier.
+  // `null`/undefined for the free plan (no Stripe price backs it) or when
+  // the backend doesn't send this field yet — falls back to tier-only
+  // matching in that case.
   priceId?: string | null;
   // Free-tier session gating (see services/entitlementsService.ts). Ideally
   // backend-reported (it owns the billing-period boundary), but both are

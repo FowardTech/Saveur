@@ -23,6 +23,11 @@ interface UserProfileWire {
   uid?: string;
   email: string;
   name: string;
+  // Random, non-identifying display handle generated server-side at signup
+  // (see Saveur-Backend's app/services/username_service.py) — this, never
+  // `name`, is what the leaderboard shows other users. Surfaced here too so
+  // it can be shown under the real name in the profile/avatar header.
+  username?: string;
   goals?: string[];
   industries?: string[];
   preferred_countries?: string[];
@@ -34,7 +39,6 @@ interface UserProfileWire {
   home_address?: string;
   subscription_tier?: 'free' | 'premium' | 'premium_plus';
   notifications_enabled?: boolean;
-  job_alert_refresh_minutes?: number;
   job_alert_daily_limit?: number;
   two_factor_enabled?: boolean;
 }
@@ -44,6 +48,7 @@ function fromWire(wire: UserProfileWire): UserProfileProps {
     uid: wire.uid,
     email: wire.email,
     name: wire.name,
+    username: wire.username,
     goals: wire.goals ?? [],
     industries: wire.industries ?? [],
     preferredCountries: wire.preferred_countries ?? [],
@@ -54,7 +59,6 @@ function fromWire(wire: UserProfileWire): UserProfileProps {
     homeAddress: wire.home_address ?? '',
     subscriptionTier: wire.subscription_tier ?? 'free',
     notificationsEnabled: wire.notifications_enabled ?? true,
-    jobAlertRefreshMinutes: wire.job_alert_refresh_minutes ?? 30,
     jobAlertDailyLimit: wire.job_alert_daily_limit ?? 10,
     twoFactorEnabled: wire.two_factor_enabled ?? false,
   };
@@ -78,7 +82,6 @@ function toWirePatch(partial: Partial<UserProfileProps>): Record<string, unknown
   if (partial.phoneNumber !== undefined) wire.phone_number = partial.phoneNumber;
   if (partial.homeAddress !== undefined) wire.home_address = partial.homeAddress;
   if (partial.notificationsEnabled !== undefined) wire.notifications_enabled = partial.notificationsEnabled;
-  if (partial.jobAlertRefreshMinutes !== undefined) wire.job_alert_refresh_minutes = partial.jobAlertRefreshMinutes;
   if (partial.jobAlertDailyLimit !== undefined) wire.job_alert_daily_limit = partial.jobAlertDailyLimit;
   return wire;
 }

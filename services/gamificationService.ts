@@ -32,6 +32,12 @@ interface StreakWire {
 
 interface LeaderboardEntryWire {
   user_id: string;
+  // Despite the generic field name, the backend now always puts each
+  // user's generated, non-identifying username here (see
+  // Saveur-Backend's app/services/username_service.py + GET
+  // /gamification/leaderboard) — never their real name. No client-side
+  // change needed here beyond this note; this screen was always just
+  // displaying whatever the backend sent as `name`.
   name: string;
   avatar_url?: string;
   xp: number;
