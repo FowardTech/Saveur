@@ -127,8 +127,8 @@ const MainBottomTab = memo(() => {
           {numberNotification ? (
             focused ? null : (
               <View style={styles.notification}>
-                <Text center category="h9" status="primary" mt={1.5}>
-                  {numberNotification}
+                <Text center category="h9" status="primary" fontSize={11} lineHeight={13}>
+                  {numberNotification > 9 ? '9+' : numberNotification}
                 </Text>
               </View>
             )
@@ -272,13 +272,18 @@ const themedStyles = StyleService.create({
     width: 40,
   },
   notification: {
+    // Was 16x16 with a 14px-font label -- larger counts had no room to
+    // breathe. 20x20 + capped "9+" text (see render above) is the standard
+    // moderate size for a two-character count badge.
     position: "absolute",
     borderRadius: 99,
     backgroundColor: "button-basic-color",
-    width: 16,
-    height: 16,
+    width: 20,
+    height: 20,
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 10,
-    top: 2,
-    right: 1,
+    top: 0,
+    right: -2,
   },
 });

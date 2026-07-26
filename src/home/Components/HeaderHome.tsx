@@ -49,7 +49,7 @@ const HeaderHome = memo(
           />
           {notification ? (
             <Flex style={styles.notification} itemsCenter border={24}>
-              <Text category="h9" status={'primary'} mt={1}>
+              <Text category="h9" status={'primary'} fontSize={11} lineHeight={13}>
                 {notification > 9 ? '9+' : notification}
               </Text>
             </Flex>
@@ -67,13 +67,16 @@ const themedStyles = StyleService.create({
     marginRight: 16,
   },
   notification: {
+    // Was 14x14 with a 14px-font label -- the digit(s) were larger than
+    // their own badge, so counts (especially "9+") clipped. 20x20 is the
+    // standard moderate size for a two-character count badge.
     position: 'absolute',
-    width: 14,
-    height: 14,
+    width: 20,
+    height: 20,
     backgroundColor: 'color-danger-100',
     justifyContent: 'center',
-    right: -4,
-    top: -4,
+    right: -6,
+    top: -6,
   },
   button: {
     ...globalStyle.shadowFade,
