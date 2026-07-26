@@ -1,7 +1,12 @@
 {
+  "ai_coach_name": "Coach de Carrera con IA",
+  "ai_coach_subtitle": "Pregúntame lo que quieras sobre tu búsqueda de empleo — estoy aquí para ayudarte.",
   "empty_description": "Inicia una entrevista simulada o hazle una pregunta a tu coach de IA para recibir comentarios personalizados y consejos de carrera.",
   "empty_title": "Aún no hay conversaciones.",
   "placeholder_input": "Buscar temas de coaching...",
+  "salary_negotiation_description": "Practica contraofertas frente a una oferta simulada en varias rondas.",
+  "salary_negotiation_title": "Simulador de Negociación Salarial",
+  "suggested_topics": "Temas sugeridos",
   "title": "Coach",
   "voice_initial_line": "Te escucho — habla conmigo cuando estés listo.",
   "voice_mic_error": "No se pudo iniciar el micrófono.",

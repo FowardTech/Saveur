@@ -66,6 +66,7 @@ const MyChildren = memo(() => {
     Alert.alert(
       t('more:delete_document', {defaultValue: 'Delete document'}),
       t('more:delete_document_confirm', {
+        name: doc.name ?? t('more:this_document', {defaultValue: 'this document'}),
         defaultValue: `Remove "${doc.name ?? 'this document'}"? This can't be undone.`,
       }),
       [

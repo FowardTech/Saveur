@@ -1,5 +1,13 @@
 {
     "add-new-credit-card": "Agregar nueva tarjeta de crédito",
+    "add_card_failed_title": "No se pudo agregar la tarjeta",
+    "add_payment_method": "Agregar método de pago",
+    "default": "PREDETERMINADA",
+    "expires": "Vence",
+    "no_saved_cards": "Aún no tienes tarjetas guardadas — agrega una para agilizar el pago.",
+    "remove_card_failed_title": "No se pudo eliminar la tarjeta",
+    "set_default": "Predeterminada",
+    "set_default_failed_title": "No se pudo actualizar la tarjeta predeterminada",
     "card-number": "Número de tarjeta",
     "select-card": "Seleccionar tarjeta",
     "pay-now": "Pagar ahora",

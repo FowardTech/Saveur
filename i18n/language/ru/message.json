@@ -11,5 +11,10 @@
   "voice_status_speaking": "Говорю…",
   "voice_status_starting": "Запуск…",
   "voice_status_thinking": "Думаю…",
-  "voice_tap_to_interrupt": "Нажмите, чтобы прервать"
+  "voice_tap_to_interrupt": "Нажмите, чтобы прервать",
+  "ai_coach_name": "ИИ-карьерный коуч",
+  "ai_coach_subtitle": "Спрашивайте меня о чём угодно, что касается поиска работы, — я здесь, чтобы помочь.",
+  "salary_negotiation_description": "Потренируйтесь отвечать на условное предложение о работе в несколько раундов.",
+  "salary_negotiation_title": "Симулятор переговоров о зарплате",
+  "suggested_topics": "Предлагаемые темы"
 }

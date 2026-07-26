@@ -11,5 +11,10 @@
   "voice_status_speaking": "話しています…",
   "voice_status_starting": "開始しています…",
   "voice_status_thinking": "考え中…",
-  "voice_tap_to_interrupt": "タップして中断"
+  "voice_tap_to_interrupt": "タップして中断",
+  "ai_coach_name": "AIキャリアコーチ",
+  "ai_coach_subtitle": "就職活動について何でも聞いてください — サポートします。",
+  "salary_negotiation_description": "模擬オファーに対する交渉を数ラウンドにわたって練習しましょう。",
+  "salary_negotiation_title": "給与交渉シミュレーター",
+  "suggested_topics": "おすすめのトピック"
 }

@@ -5,5 +5,13 @@
   "pay-now": "지금 결제",
   "payment-method": "결제 방법",
   "no-card-yet": "아직 등록된 카드가 없습니다!",
-  "please-attach-card": "작업 비용을 결제하려면 카드를 등록해 주세요. 감사합니다!"
+  "please-attach-card": "작업 비용을 결제하려면 카드를 등록해 주세요. 감사합니다!",
+  "add_card_failed_title": "카드를 추가할 수 없습니다",
+  "add_payment_method": "결제 수단 추가",
+  "default": "기본",
+  "expires": "만료일",
+  "no_saved_cards": "아직 저장된 카드가 없습니다 — 카드를 추가하면 결제가 더 빨라져요.",
+  "remove_card_failed_title": "카드를 삭제할 수 없습니다",
+  "set_default": "기본으로 설정",
+  "set_default_failed_title": "기본 카드를 변경할 수 없습니다"
 }

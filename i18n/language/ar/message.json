@@ -11,5 +11,10 @@
   "voice_status_speaking": "أتحدث…",
   "voice_status_starting": "جارٍ البدء…",
   "voice_status_thinking": "أفكر…",
-  "voice_tap_to_interrupt": "اضغط للمقاطعة"
+  "voice_tap_to_interrupt": "اضغط للمقاطعة",
+  "ai_coach_name": "مدرب المسيرة المهنية بالذكاء الاصطناعي",
+  "ai_coach_subtitle": "اسألني أي شيء عن بحثك عن وظيفة — أنا هنا لمساعدتك.",
+  "salary_negotiation_description": "تدرّب على التفاوض حول عرض وظيفي تجريبي عبر عدة جولات.",
+  "salary_negotiation_title": "محاكي التفاوض على الراتب",
+  "suggested_topics": "مواضيع مقترحة"
 }

@@ -11,5 +11,10 @@
   "voice_status_speaking": "Spricht…",
   "voice_status_starting": "Startet…",
   "voice_status_thinking": "Denke nach…",
-  "voice_tap_to_interrupt": "Zum Unterbrechen tippen"
+  "voice_tap_to_interrupt": "Zum Unterbrechen tippen",
+  "ai_coach_name": "KI-Karriere-Coach",
+  "ai_coach_subtitle": "Frag mich alles rund um deine Jobsuche — ich bin hier, um zu helfen.",
+  "salary_negotiation_description": "Übe in mehreren Runden, ein simuliertes Angebot zu kontern.",
+  "salary_negotiation_title": "Gehaltsverhandlungs-Simulator",
+  "suggested_topics": "Vorgeschlagene Themen"
 }

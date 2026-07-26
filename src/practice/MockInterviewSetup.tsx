@@ -44,7 +44,7 @@ const MockInterviewSetup = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
-  const { subscription, isPro } = React.useContext(AuthContext);
+  const { subscription, isPro, isPremium } = React.useContext(AuthContext);
 
   const [mode, setMode] = React.useState<Practice_Mode_Enum>(
     route.params?.mode ?? Practice_Mode_Enum.Voice,
@@ -88,8 +88,48 @@ const MockInterviewSetup = memo(() => {
     return [...list, COMPANY_ANY];
   }, [companySearch]);
 
+  // Video mode is gated to Pro Premium/Pro Yearly specifically (see
+  // saveur-backend/app/api/interviews.py's create_session, which enforces
+  // this same rule server-side) — a plain monthly Pro subscriber can use
+  // Voice/Text/Coding but not Video.
+  const onSelectMode = (selected: Practice_Mode_Enum) => {
+    if (selected === Practice_Mode_Enum.Video && !isPremium) {
+      Alert.alert(
+        t('find:video_premium_gate_title', { defaultValue: 'Video is a Pro Premium feature' }),
+        t('find:video_premium_gate_body', {
+          defaultValue: 'Practicing on camera with video analysis needs Saveur Pro Premium or Pro (Yearly).',
+        }),
+        [
+          { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+          {
+            text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade' }),
+            onPress: () => navigate('Subscription'),
+          },
+        ],
+      );
+      return;
+    }
+    setMode(selected);
+  };
+
   const onStart = async () => {
     if (isStarting) return;
+    if (mode === Practice_Mode_Enum.Video && !isPremium) {
+      Alert.alert(
+        t('find:video_premium_gate_title', { defaultValue: 'Video is a Pro Premium feature' }),
+        t('find:video_premium_gate_body', {
+          defaultValue: 'Practicing on camera with video analysis needs Saveur Pro Premium or Pro (Yearly).',
+        }),
+        [
+          { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+          {
+            text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade' }),
+            onPress: () => navigate('Subscription'),
+          },
+        ],
+      );
+      return;
+    }
     if (!role.trim()) {
       Alert.alert(
         t('find:target_role_required', { defaultValue: 'Target role required' }),
@@ -106,6 +146,7 @@ const MockInterviewSetup = memo(() => {
         Alert.alert(
           t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
           t('find:free_limit_reached_body', {
+            limit: entitlement.sessionsLimit ?? 5,
             defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
           }),
           [
@@ -174,15 +215,21 @@ const MockInterviewSetup = memo(() => {
         <Flex justify="flex-start" wrap mb={32}>
           {DATA_PRACTICE_MODES.map((item, i) => {
             const active = item.mode === mode;
+            const locked = item.mode === Practice_Mode_Enum.Video && !isPremium;
             return (
               <TouchableOpacity
                 key={i}
                 activeOpacity={0.7}
-                onPress={() => setMode(item.mode)}
+                onPress={() => onSelectMode(item.mode)}
                 style={[
                   styles.modeCard,
                   { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
                 ]}>
+                {locked ? (
+                  <View style={[styles.lockBadge, { backgroundColor: theme['background-basic-color-3'] }]}>
+                    <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]} />
+                  </View>
+                ) : null}
                 <Icon
                   pack="assets"
                   name={item.icon}
@@ -369,6 +416,17 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 8,
     marginRight: '2%',
     marginBottom: 12,
+    position: 'relative',
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipsWrap: {
     flexDirection: 'row',

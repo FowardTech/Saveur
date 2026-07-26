@@ -181,7 +181,7 @@ const AddChild = memo(() => {
         </Button>
         {pickedFile ? (
           <Text category="h9-s" status="success" mb={16}>
-            {t('more:file_selected', {defaultValue: `Selected: ${pickedFile.name}`})}
+            {t('more:file_selected', {name: pickedFile.name, defaultValue: `Selected: ${pickedFile.name}`})}
           </Text>
         ) : null}
         <Controller

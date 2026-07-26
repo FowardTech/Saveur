@@ -79,6 +79,7 @@ const ForgetPassword = memo(() => {
         {sent ? (
           <Text category="h8-s" status="success" mb={24}>
             {t('auth:reset_email_sent', {
+              email: getValues('email'),
               defaultValue: `If an account exists for ${getValues('email')}, a reset link is on its way. Check your inbox.`,
             })}
           </Text>

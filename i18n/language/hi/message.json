@@ -11,5 +11,10 @@
   "voice_status_speaking": "बोल रहा हूँ…",
   "voice_status_starting": "शुरू हो रहा है…",
   "voice_status_thinking": "सोच रहा हूँ…",
-  "voice_tap_to_interrupt": "बीच में रोकने के लिए टैप करें"
+  "voice_tap_to_interrupt": "बीच में रोकने के लिए टैप करें",
+  "ai_coach_name": "AI करियर कोच",
+  "ai_coach_subtitle": "अपनी नौकरी खोज से जुड़ा कुछ भी पूछें — मैं मदद के लिए यहाँ हूँ।",
+  "salary_negotiation_description": "कुछ राउंड में एक मॉक ऑफर पर बातचीत का अभ्यास करें।",
+  "salary_negotiation_title": "वेतन बातचीत सिम्युलेटर",
+  "suggested_topics": "सुझाए गए विषय"
 }

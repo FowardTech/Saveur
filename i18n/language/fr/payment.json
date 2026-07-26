@@ -5,5 +5,13 @@
   "pay-now": "Payer maintenant",
   "payment-method": "Mode de paiement",
   "no-card-yet": "Aucune carte enregistrée pour le moment !",
-  "please-attach-card": "Veuillez ajouter votre carte pour payer votre emploi. Merci !"
+  "please-attach-card": "Veuillez ajouter votre carte pour payer votre emploi. Merci !",
+  "add_card_failed_title": "Impossible d'ajouter la carte",
+  "add_payment_method": "Ajouter un moyen de paiement",
+  "default": "PAR DÉFAUT",
+  "expires": "Expire",
+  "no_saved_cards": "Aucune carte enregistrée pour le moment — ajoutez-en une pour accélérer le paiement.",
+  "remove_card_failed_title": "Impossible de supprimer la carte",
+  "set_default": "Par défaut",
+  "set_default_failed_title": "Impossible de définir la carte par défaut"
 }

@@ -1,4 +1,12 @@
 {
+  "add_card_failed_title": "Não foi possível adicionar o cartão",
+  "add_payment_method": "Adicionar método de pagamento",
+  "default": "PADRÃO",
+  "expires": "Expira em",
+  "no_saved_cards": "Nenhum cartão salvo ainda — adicione um para agilizar o checkout.",
+  "remove_card_failed_title": "Não foi possível remover o cartão",
+  "set_default": "Padrão",
+  "set_default_failed_title": "Não foi possível atualizar o cartão padrão",
   "add-new-credit-card": "Adicionar novo cartão de crédito",
   "card-number": "Número do cartão",
   "select-card": "Selecionar cartão",

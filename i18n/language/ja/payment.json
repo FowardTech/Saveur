@@ -5,5 +5,13 @@
   "pay-now": "今すぐ支払う",
   "payment-method": "支払い方法",
   "no-card-yet": "まだカードが登録されていません！",
-  "please-attach-card": "お仕事の支払いのため、カードを登録してください。ありがとうございます！"
+  "please-attach-card": "お仕事の支払いのため、カードを登録してください。ありがとうございます！",
+  "add_card_failed_title": "カードを追加できませんでした",
+  "add_payment_method": "支払い方法を追加",
+  "default": "デフォルト",
+  "expires": "有効期限",
+  "no_saved_cards": "保存されたカードはまだありません — カードを追加すると、チェックアウトがスムーズになります。",
+  "remove_card_failed_title": "カードを削除できませんでした",
+  "set_default": "デフォルトに設定",
+  "set_default_failed_title": "デフォルトカードを更新できませんでした"
 }

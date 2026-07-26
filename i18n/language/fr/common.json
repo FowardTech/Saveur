@@ -66,5 +66,6 @@
   "done": "Terminé",
   "try_again": "Réessayer",
   "try_again_later": "Veuillez réessayer dans un instant.",
-  "load_more": "Charger plus"
+  "load_more": "Charger plus",
+  "retry": "Réessayer"
 }

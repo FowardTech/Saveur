@@ -5,5 +5,13 @@
     "pay-now": "Pay now",
     "payment-method": "Payment Method",
     "no-card-yet": "No card attached yet!",
-    "please-attach-card": "Please, attach your card to pay for your job. Thanks!"
+    "please-attach-card": "Please, attach your card to pay for your job. Thanks!",
+    "add_card_failed_title": "Couldn't add card",
+    "add_payment_method": "Add payment method",
+    "default": "DEFAULT",
+    "expires": "Expires",
+    "no_saved_cards": "No saved cards yet — add one to speed up checkout.",
+    "remove_card_failed_title": "Couldn't remove card",
+    "set_default": "Default",
+    "set_default_failed_title": "Couldn't update default card"
 }

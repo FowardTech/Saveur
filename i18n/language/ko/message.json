@@ -1,7 +1,12 @@
 {
+  "ai_coach_name": "AI 커리어 코치",
+  "ai_coach_subtitle": "구직에 대해 무엇이든 물어보세요 — 제가 도와드릴게요.",
   "empty_description": "모의 면접을 시작하거나 AI 코치에게 질문하여 맞춤형 피드백과 커리어 조언을 받아보세요.",
   "empty_title": "아직 대화가 없습니다.",
   "placeholder_input": "코칭 주제 검색...",
+  "salary_negotiation_description": "몇 차례에 걸쳐 모의 제안에 대응하는 연습을 해보세요.",
+  "salary_negotiation_title": "연봉 협상 시뮬레이터",
+  "suggested_topics": "추천 주제",
   "title": "코치",
   "voice_initial_line": "듣고 있어요 — 준비되면 말씀해 주세요.",
   "voice_mic_error": "마이크를 시작할 수 없습니다.",

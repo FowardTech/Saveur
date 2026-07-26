@@ -5,5 +5,13 @@
   "pay-now": "ادفع الآن",
   "payment-method": "طريقة الدفع",
   "no-card-yet": "لا توجد بطاقة مضافة بعد!",
-  "please-attach-card": "الرجاء إضافة بطاقتك لدفع تكلفة عملك. شكرًا لك!"
+  "please-attach-card": "الرجاء إضافة بطاقتك لدفع تكلفة عملك. شكرًا لك!",
+  "add_card_failed_title": "تعذّر إضافة البطاقة",
+  "add_payment_method": "إضافة طريقة دفع",
+  "default": "افتراضي",
+  "expires": "تنتهي في",
+  "no_saved_cards": "لا توجد بطاقات محفوظة بعد — أضف واحدة لتسريع عملية الدفع.",
+  "remove_card_failed_title": "تعذّر حذف البطاقة",
+  "set_default": "تعيين كافتراضي",
+  "set_default_failed_title": "تعذّر تحديث البطاقة الافتراضية"
 }

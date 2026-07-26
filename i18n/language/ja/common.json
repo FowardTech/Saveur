@@ -66,5 +66,6 @@
   "done": "完了",
   "try_again": "再試行",
   "try_again_later": "しばらくしてからもう一度お試しください。",
-  "load_more": "もっと読み込む"
+  "load_more": "もっと読み込む",
+  "retry": "再試行"
 }

@@ -66,5 +66,6 @@
   "done": "완료",
   "try_again": "다시 시도",
   "try_again_later": "잠시 후 다시 시도해 주세요.",
-  "load_more": "더 보기"
+  "load_more": "더 보기",
+  "retry": "다시 시도"
 }

@@ -11,5 +11,10 @@
   "voice_status_speaking": "En train de parler…",
   "voice_status_starting": "Démarrage…",
   "voice_status_thinking": "Réflexion en cours…",
-  "voice_tap_to_interrupt": "Touchez pour interrompre"
+  "voice_tap_to_interrupt": "Touchez pour interrompre",
+  "ai_coach_name": "Coach de carrière IA",
+  "ai_coach_subtitle": "Posez-moi n'importe quelle question sur votre recherche d'emploi — je suis là pour vous aider.",
+  "salary_negotiation_description": "Entraînez-vous à contrer une offre fictive sur plusieurs tours.",
+  "salary_negotiation_title": "Simulateur de négociation salariale",
+  "suggested_topics": "Sujets suggérés"
 }

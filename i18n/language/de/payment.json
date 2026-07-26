@@ -5,5 +5,13 @@
   "pay-now": "Jetzt bezahlen",
   "payment-method": "Zahlungsmethode",
   "no-card-yet": "Noch keine Karte hinterlegt!",
-  "please-attach-card": "Bitte hinterlege deine Karte, um für deinen Job zu bezahlen. Danke!"
+  "please-attach-card": "Bitte hinterlege deine Karte, um für deinen Job zu bezahlen. Danke!",
+  "add_card_failed_title": "Karte konnte nicht hinzugefügt werden",
+  "add_payment_method": "Zahlungsmethode hinzufügen",
+  "default": "STANDARD",
+  "expires": "Läuft ab",
+  "no_saved_cards": "Noch keine gespeicherten Karten — füge eine hinzu, um den Bezahlvorgang zu beschleunigen.",
+  "remove_card_failed_title": "Karte konnte nicht entfernt werden",
+  "set_default": "Als Standard festlegen",
+  "set_default_failed_title": "Standardkarte konnte nicht aktualisiert werden"
 }

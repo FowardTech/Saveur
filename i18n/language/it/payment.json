@@ -1,9 +1,17 @@
 {
   "add-new-credit-card": "Aggiungi nuova carta di credito",
+  "add_card_failed_title": "Impossibile aggiungere la carta",
+  "add_payment_method": "Aggiungi metodo di pagamento",
   "card-number": "Numero della carta",
-  "select-card": "Seleziona carta",
+  "default": "PREDEFINITA",
+  "expires": "Scadenza",
+  "no-card-yet": "Nessuna carta ancora registrata!",
+  "no_saved_cards": "Nessuna carta salvata — aggiungine una per velocizzare il pagamento.",
   "pay-now": "Paga ora",
   "payment-method": "Metodo di pagamento",
-  "no-card-yet": "Nessuna carta ancora registrata!",
-  "please-attach-card": "Aggiungi la tua carta per pagare il tuo lavoro. Grazie!"
+  "please-attach-card": "Aggiungi la tua carta per pagare il tuo lavoro. Grazie!",
+  "remove_card_failed_title": "Impossibile rimuovere la carta",
+  "select-card": "Seleziona carta",
+  "set_default": "Predefinita",
+  "set_default_failed_title": "Impossibile aggiornare la carta predefinita"
 }

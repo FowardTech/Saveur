@@ -66,5 +66,6 @@
   "done": "Fertig",
   "try_again": "Erneut versuchen",
   "try_again_later": "Bitte versuche es in Kürze noch einmal.",
-  "load_more": "Mehr laden"
+  "load_more": "Mehr laden",
+  "retry": "Wiederholen"
 }
