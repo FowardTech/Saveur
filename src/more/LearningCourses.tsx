@@ -49,7 +49,7 @@ const LearningCourses = memo(() => {
   const { t } = useTranslation(['more', 'common']);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { navigate } = navigation;
-  const { isPro } = React.useContext(AuthContext);
+  const { isPremium } = React.useContext(AuthContext);
 
   const [customTopic, setCustomTopic] = React.useState('');
   const [isCheckingTopic, setIsCheckingTopic] = React.useState(false);
@@ -174,13 +174,16 @@ const LearningCourses = memo(() => {
   };
 
   // Was fully free with no gate at all — per explicit request, Learning
-  // Courses (catalog + "teach me anything") is now a Pro feature, same
-  // pattern as ResumeBuilder.tsx/JobAlerts.tsx.
-  if (!isPro) {
+  // Courses (catalog + "teach me anything") is now a Pro Premium feature
+  // specifically (Pro Premium or Pro Yearly, not plain monthly Pro), same
+  // pattern as JobAlerts.tsx. See entitlements_service.py's module
+  // docstring on the backend for the full tier breakdown this mirrors.
+  if (!isPremium) {
     return (
       <ProLockGate
+        variant="premium"
         title="Learning Courses"
-        description="AI-taught, module-by-module courses on any career topic, with certificates on completion — Learning Courses is a Pro feature."
+        description="AI-taught, module-by-module courses on any career topic, with a badge on completion — Learning Courses is a Pro Premium feature."
       />
     );
   }
@@ -221,7 +224,7 @@ const LearningCourses = memo(() => {
         {certificates.length ? (
           <Layout level="2" style={[styles.customCard, { marginBottom: 20 }]}>
             <Text category="h7" bold mb={12}>
-              Your Certificates
+              Your Badges
             </Text>
             {certificates.map(c => (
               <Flex key={c.code} justify="flex-start" itemsCenter mb={8}>
@@ -241,7 +244,7 @@ const LearningCourses = memo(() => {
           </Text>
           <Text category="h9-s" status="placeholder" mb={12}>
             {t('more:teach_me_anything_description', {
-              defaultValue: 'Type any professional or career skill — the AI checks it, then builds a real Basic → Intermediate → Advanced course, with a certificate when you finish all three.',
+              defaultValue: 'Type any professional or career skill — the AI checks it, then builds a real Basic → Intermediate → Advanced course, with a badge when you finish all three.',
             })}
           </Text>
           <Flex justify="flex-start">

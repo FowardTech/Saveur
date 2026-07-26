@@ -52,7 +52,7 @@ const CourseSession = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { goBack } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'CourseSession'>>();
-  const { profile, isPro } = React.useContext(AuthContext);
+  const { profile, isPremium } = React.useContext(AuthContext);
   const { topic, totalModules, level = 'basic' as CourseLevel, coreSubtopics } = route.params;
   const courseId = React.useMemo(() => learningService.courseIdFor(topic, level), [topic, level]);
 
@@ -222,15 +222,16 @@ const CourseSession = memo(() => {
   };
 
   // Defense-in-depth — LearningCourses.tsx (the only normal entry point to
-  // this screen) is already Pro-gated, but gate here too in case anything
-  // else ever navigates straight to CourseSession.
-  if (!isPro) {
+  // this screen) is already Pro-Premium-gated, but gate here too in case
+  // anything else ever navigates straight to CourseSession.
+  if (!isPremium) {
     return (
       <ProLockGate
+        variant="premium"
         title={t('more:learning_courses', { defaultValue: 'Learning Courses' })}
-        description={t('more:learning_courses_pro_description', {
+        description={t('more:learning_courses_premium_gate_description', {
           defaultValue:
-            'AI-taught, module-by-module courses on any career topic, with certificates on completion — Learning Courses is a Pro feature.',
+            'Structured courses with badges to sharpen your interview skills — Learning Courses is a Pro Premium feature.',
         })}
       />
     );
@@ -262,7 +263,7 @@ const CourseSession = memo(() => {
             {earnedCertificate ? (
               <View style={styles.certCard}>
                 <Text category="h8" bold status="success" center>
-                  {t('more:course_certificate_earned', { defaultValue: 'Certificate Earned' })}
+                  {t('more:course_certificate_earned', { defaultValue: 'Badge Earned' })}
                 </Text>
                 <Text category="h9-s" status="placeholder" center mt={4}>
                   {t('more:course_certificate_subtitle', {
