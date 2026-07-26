@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { Alert, AppState, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { BarChart } from 'react-native-chart-kit';
@@ -18,7 +19,7 @@ import useLayout from 'hooks/useLayout';
 import {
   DATA_BADGES,
 } from 'constants/Data';
-import { AdvertisementProps, GamificationStreakProps, GoalTipProps, Interview_Type_Enum, LeaderboardEntryProps, MockInterviewSessionProps, ScheduledInterviewProps } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, GoalTipProps, Interview_Type_Enum, LeaderboardEntryProps, MockInterviewSessionProps, ScheduledInterviewProps } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as resumeService from 'services/resumeService';
 import * as networkingService from 'services/networkingService';
@@ -28,6 +29,7 @@ import * as goalTipsService from 'services/goalTipsService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import ModalRequest from 'components/ModalRequest';
+import AppTour from 'components/AppTour';
 import useModal from 'hooks/useModal';
 import { Images } from 'assets/images';
 import { AuthContext } from '../../AuthContext';
@@ -66,6 +68,24 @@ const HomeSrc = memo(() => {
   React.useEffect(() => {
     loadUnreadCount();
   }, [loadUnreadCount]);
+
+  // One-time "how this app works" walkthrough (components/AppTour.tsx) —
+  // checked on every Home focus (not just mount) rather than once, so
+  // MoreSrc.tsx's "Show app tour" replay entry (which clears this same
+  // flag and navigates back to Home) actually reopens it without needing
+  // Home to remount.
+  const [showTour, setShowTour] = React.useState(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      AsyncStorage.getItem(EKeyAsyncStorage.appTourSeen).then(seen => {
+        if (!seen) setShowTour(true);
+      });
+    }, []),
+  );
+  const onCloseTour = React.useCallback(() => {
+    setShowTour(false);
+    AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => {});
+  }, []);
   // Refresh whenever the app returns to the foreground (e.g. after visiting
   // the Notification screen and marking things read) — same AppState pattern
   // used elsewhere in this file/Subscription.tsx.
@@ -720,6 +740,7 @@ const HomeSrc = memo(() => {
         showCancel
         cancelLabel="Cancel"
       />
+      <AppTour visible={showTour} onClose={onCloseTour} />
     </Container>
   );
 });

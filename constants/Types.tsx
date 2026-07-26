@@ -21,6 +21,10 @@ export enum EKeyAsyncStorage {
   goalTipsCache = 'goalTipsCache',
   jobAlertsCache = 'jobAlertsCache',
   scheduledInterviews = 'scheduledInterviews',
+  // Whether the new-user "how this app works" tour (components/AppTour.tsx,
+  // shown once from HomeSrc.tsx) has already been dismissed. Cleared by
+  // MoreSrc.tsx's "Show app tour" row so a user can replay it any time.
+  appTourSeen = 'appTourSeen',
   // Referenced by services/codingService.ts's language-list offline cache
   // but never added here — a real pre-existing compile error
   // ("Property 'codingLanguages' does not exist"), just never surfaced

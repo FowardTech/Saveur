@@ -2,12 +2,14 @@ import React, {memo} from 'react';
 import {Alert, TouchableOpacity, View} from 'react-native';
 import {Icon, StyleService, useStyleSheet, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
+import {EKeyAsyncStorage} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
 import ThemeContext from '../../ThemeContext';
@@ -113,6 +115,16 @@ const MoreSrc = memo(() => {
       isResendingWelcomeRef.current = false;
     }
   }, [t]);
+
+  // Replays the one-time "how this app works" walkthrough (components/
+  // AppTour.tsx) — clears the flag it's gated on, then jumps back to Home,
+  // whose useFocusEffect check re-reads that flag on every focus (not just
+  // mount) specifically so this replay works without needing Home to
+  // remount.
+  const onReplayTour = React.useCallback(async () => {
+    await AsyncStorage.removeItem(EKeyAsyncStorage.appTourSeen).catch(() => {});
+    navigate('MainBottomTab');
+  }, [navigate]);
 
   // Account & career-prep tools. `featureKey` (when present) gates the row
   // behind the admin dashboard's Feature Flags page (see
@@ -269,6 +281,13 @@ const MoreSrc = memo(() => {
       status: 'placeholder',
       iconBackgroundColor: ICON_BG,
       onPress: () => navigate("FaqScreen"),
+    },
+    {
+      title: t('more:show_app_tour', {defaultValue: 'Show app tour'}),
+      icon: 'stats',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      onPress: onReplayTour,
     },
     {
       title: t('more:privacy-of-policy'),
