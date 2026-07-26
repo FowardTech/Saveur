@@ -16,6 +16,7 @@ import find from 'i18n/language/en/find.json';
 import creat_job from 'i18n/language/en/create_job.json';
 import payment from 'i18n/language/en/payment.json';
 import more from 'i18n/language/en/more.json';
+import countries from 'i18n/language/en/countries.json';
 
 // Spanish — every namespace is now fully translated (see i18n/language/es/),
 // so switching to Spanish (signup or Settings → Language, see
@@ -35,6 +36,7 @@ import findEs from 'i18n/language/es/find.json';
 import creatJobEs from 'i18n/language/es/create_job.json';
 import paymentEs from 'i18n/language/es/payment.json';
 import moreEs from 'i18n/language/es/more.json';
+import countriesEs from 'i18n/language/es/countries.json';
 
 // French, German, Portuguese, Italian, Chinese (Simplified), Japanese, Korean,
 // Arabic, Hindi, Russian — added to round out coverage of the world's largest
@@ -61,6 +63,7 @@ import findFr from 'i18n/language/fr/find.json';
 import creatJobFr from 'i18n/language/fr/create_job.json';
 import paymentFr from 'i18n/language/fr/payment.json';
 import moreFr from 'i18n/language/fr/more.json';
+import countriesFr from 'i18n/language/fr/countries.json';
 
 import authDe from 'i18n/language/de/auth.json';
 import introDe from 'i18n/language/de/intro.json';
@@ -75,6 +78,7 @@ import findDe from 'i18n/language/de/find.json';
 import creatJobDe from 'i18n/language/de/create_job.json';
 import paymentDe from 'i18n/language/de/payment.json';
 import moreDe from 'i18n/language/de/more.json';
+import countriesDe from 'i18n/language/de/countries.json';
 
 import authPt from 'i18n/language/pt/auth.json';
 import introPt from 'i18n/language/pt/intro.json';
@@ -89,6 +93,7 @@ import findPt from 'i18n/language/pt/find.json';
 import creatJobPt from 'i18n/language/pt/create_job.json';
 import paymentPt from 'i18n/language/pt/payment.json';
 import morePt from 'i18n/language/pt/more.json';
+import countriesPt from 'i18n/language/pt/countries.json';
 
 import authIt from 'i18n/language/it/auth.json';
 import introIt from 'i18n/language/it/intro.json';
@@ -103,6 +108,7 @@ import findIt from 'i18n/language/it/find.json';
 import creatJobIt from 'i18n/language/it/create_job.json';
 import paymentIt from 'i18n/language/it/payment.json';
 import moreIt from 'i18n/language/it/more.json';
+import countriesIt from 'i18n/language/it/countries.json';
 
 import authZh from 'i18n/language/zh/auth.json';
 import introZh from 'i18n/language/zh/intro.json';
@@ -117,6 +123,7 @@ import findZh from 'i18n/language/zh/find.json';
 import creatJobZh from 'i18n/language/zh/create_job.json';
 import paymentZh from 'i18n/language/zh/payment.json';
 import moreZh from 'i18n/language/zh/more.json';
+import countriesZh from 'i18n/language/zh/countries.json';
 
 import authJa from 'i18n/language/ja/auth.json';
 import introJa from 'i18n/language/ja/intro.json';
@@ -131,6 +138,7 @@ import findJa from 'i18n/language/ja/find.json';
 import creatJobJa from 'i18n/language/ja/create_job.json';
 import paymentJa from 'i18n/language/ja/payment.json';
 import moreJa from 'i18n/language/ja/more.json';
+import countriesJa from 'i18n/language/ja/countries.json';
 
 import authKo from 'i18n/language/ko/auth.json';
 import introKo from 'i18n/language/ko/intro.json';
@@ -145,6 +153,7 @@ import findKo from 'i18n/language/ko/find.json';
 import creatJobKo from 'i18n/language/ko/create_job.json';
 import paymentKo from 'i18n/language/ko/payment.json';
 import moreKo from 'i18n/language/ko/more.json';
+import countriesKo from 'i18n/language/ko/countries.json';
 
 import authAr from 'i18n/language/ar/auth.json';
 import introAr from 'i18n/language/ar/intro.json';
@@ -159,6 +168,7 @@ import findAr from 'i18n/language/ar/find.json';
 import creatJobAr from 'i18n/language/ar/create_job.json';
 import paymentAr from 'i18n/language/ar/payment.json';
 import moreAr from 'i18n/language/ar/more.json';
+import countriesAr from 'i18n/language/ar/countries.json';
 
 import authHi from 'i18n/language/hi/auth.json';
 import introHi from 'i18n/language/hi/intro.json';
@@ -173,6 +183,7 @@ import findHi from 'i18n/language/hi/find.json';
 import creatJobHi from 'i18n/language/hi/create_job.json';
 import paymentHi from 'i18n/language/hi/payment.json';
 import moreHi from 'i18n/language/hi/more.json';
+import countriesHi from 'i18n/language/hi/countries.json';
 
 import authRu from 'i18n/language/ru/auth.json';
 import introRu from 'i18n/language/ru/intro.json';
@@ -187,6 +198,7 @@ import findRu from 'i18n/language/ru/find.json';
 import creatJobRu from 'i18n/language/ru/create_job.json';
 import paymentRu from 'i18n/language/ru/payment.json';
 import moreRu from 'i18n/language/ru/more.json';
+import countriesRu from 'i18n/language/ru/countries.json';
 
 export const defaultNS = 'common';
 
@@ -207,6 +219,7 @@ declare module 'react-i18next' {
       creat_job: typeof creat_job;
       payment: typeof payment;
       more: typeof more;
+      countries: typeof countries;
     };
   }
 }
@@ -226,6 +239,7 @@ export const resources = {
     creat_job,
     payment,
     more,
+    countries,
   },
   es: {
     auth: authEs,
@@ -241,6 +255,7 @@ export const resources = {
     creat_job: creatJobEs,
     payment: paymentEs,
     more: moreEs,
+    countries: countriesEs,
   },
   fr: {
     auth: authFr,
@@ -256,6 +271,7 @@ export const resources = {
     creat_job: creatJobFr,
     payment: paymentFr,
     more: moreFr,
+    countries: countriesFr,
   },
   de: {
     auth: authDe,
@@ -271,6 +287,7 @@ export const resources = {
     creat_job: creatJobDe,
     payment: paymentDe,
     more: moreDe,
+    countries: countriesDe,
   },
   pt: {
     auth: authPt,
@@ -286,6 +303,7 @@ export const resources = {
     creat_job: creatJobPt,
     payment: paymentPt,
     more: morePt,
+    countries: countriesPt,
   },
   it: {
     auth: authIt,
@@ -301,6 +319,7 @@ export const resources = {
     creat_job: creatJobIt,
     payment: paymentIt,
     more: moreIt,
+    countries: countriesIt,
   },
   zh: {
     auth: authZh,
@@ -316,6 +335,7 @@ export const resources = {
     creat_job: creatJobZh,
     payment: paymentZh,
     more: moreZh,
+    countries: countriesZh,
   },
   ja: {
     auth: authJa,
@@ -331,6 +351,7 @@ export const resources = {
     creat_job: creatJobJa,
     payment: paymentJa,
     more: moreJa,
+    countries: countriesJa,
   },
   ko: {
     auth: authKo,
@@ -346,6 +367,7 @@ export const resources = {
     creat_job: creatJobKo,
     payment: paymentKo,
     more: moreKo,
+    countries: countriesKo,
   },
   ar: {
     auth: authAr,
@@ -361,6 +383,7 @@ export const resources = {
     creat_job: creatJobAr,
     payment: paymentAr,
     more: moreAr,
+    countries: countriesAr,
   },
   hi: {
     auth: authHi,
@@ -376,6 +399,7 @@ export const resources = {
     creat_job: creatJobHi,
     payment: paymentHi,
     more: moreHi,
+    countries: countriesHi,
   },
   ru: {
     auth: authRu,
@@ -391,6 +415,7 @@ export const resources = {
     creat_job: creatJobRu,
     payment: paymentRu,
     more: moreRu,
+    countries: countriesRu,
   },
 } as const;
 

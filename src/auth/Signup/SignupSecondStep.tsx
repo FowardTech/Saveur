@@ -35,7 +35,19 @@ const SignupSecondStep = memo(() => {
   const route = useRoute<RouteProp<AuthStackParamList, 'SignupSecondStep'>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
-  const {t} = useTranslation(['auth', 'common', 'success']);
+  const {t} = useTranslation(['auth', 'common', 'success', 'countries']);
+
+  // COUNTRIES (constants/countries.ts) stays a fixed list of stable English
+  // canonical values -- that's what's actually stored (preferredCountries)
+  // and matched against elsewhere (job alert filtering, etc.), so it can't
+  // change per-language. This just looks up a display label for whichever
+  // language is active; i18n/language/*/countries.json's keys are the exact
+  // canonical English strings, falling back to the English name itself for
+  // any language that hasn't got (or doesn't need) its own translation.
+  const countryLabel = React.useCallback(
+    (country: string) => t(country, {ns: 'countries', defaultValue: country}),
+    [t],
+  );
 
   const goal = route.params?.goal;
   const locale = route.params?.locale;
@@ -61,8 +73,11 @@ const SignupSecondStep = memo(() => {
   };
 
   const filtered = React.useMemo(
-    () => COUNTRIES.filter(c => c.toLowerCase().includes(query.toLowerCase())),
-    [query],
+    () => COUNTRIES.filter(c => {
+      const q = query.toLowerCase();
+      return c.toLowerCase().includes(q) || countryLabel(c).toLowerCase().includes(q);
+    }),
+    [query, countryLabel],
   );
 
   const toggleCountry = (country: string) => {
@@ -169,7 +184,7 @@ const SignupSecondStep = memo(() => {
                 onPress={() => toggleCountry(country)}
                 style={[styles.chip, {backgroundColor: theme['color-primary-500']}]}>
                 <Text category="h9" status="control" bold>
-                  {country}
+                  {countryLabel(country)}
                 </Text>
                 <Icon
                   pack="eva"
@@ -191,7 +206,7 @@ const SignupSecondStep = memo(() => {
                 onPress={() => toggleCountry(country)}
                 style={styles.row}>
                 <Text category="h8" status={selected ? 'link' : 'basic'}>
-                  {country}
+                  {countryLabel(country)}
                 </Text>
                 {selected ? (
                   <Icon

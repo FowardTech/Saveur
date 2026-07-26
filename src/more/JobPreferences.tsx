@@ -36,8 +36,17 @@ const JobPreferences = memo(() => {
   const {goBack} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
-  const {t} = useTranslation(['auth', 'more', 'common']);
+  const {t} = useTranslation(['auth', 'more', 'common', 'countries']);
   const {profile, updateProfile} = React.useContext(AuthContext);
+
+  // See SignupSecondStep.tsx's identical helper — COUNTRIES stays a fixed
+  // list of stable English canonical values (what's actually stored/synced
+  // via updateProfile), this just looks up a display label for the active
+  // language, falling back to the English name itself when untranslated.
+  const countryLabel = React.useCallback(
+    (country: string) => t(country, {ns: 'countries', defaultValue: country}),
+    [t],
+  );
 
   const [query, setQuery] = React.useState('');
   const [preferredCountries, setPreferredCountries] = React.useState<string[]>(
@@ -61,8 +70,11 @@ const JobPreferences = memo(() => {
   };
 
   const filtered = React.useMemo(
-    () => COUNTRIES.filter(c => c.toLowerCase().includes(query.toLowerCase())),
-    [query],
+    () => COUNTRIES.filter(c => {
+      const q = query.toLowerCase();
+      return c.toLowerCase().includes(q) || countryLabel(c).toLowerCase().includes(q);
+    }),
+    [query, countryLabel],
   );
 
   const toggleCountry = (country: string) => {
@@ -175,7 +187,7 @@ const JobPreferences = memo(() => {
                 onPress={() => toggleCountry(country)}
                 style={[styles.chip, {backgroundColor: theme['color-primary-500']}]}>
                 <Text category="h9" status="control" bold>
-                  {country}
+                  {countryLabel(country)}
                 </Text>
                 <Icon
                   pack="eva"
@@ -197,7 +209,7 @@ const JobPreferences = memo(() => {
                 onPress={() => toggleCountry(country)}
                 style={styles.row}>
                 <Text category="h8" status={selected ? 'link' : 'basic'}>
-                  {country}
+                  {countryLabel(country)}
                 </Text>
                 {selected ? (
                   <Icon
