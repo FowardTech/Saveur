@@ -66,6 +66,36 @@ export const LEVEL_LABELS: Record<CourseLevel, string> = {
   advanced: 'Advanced',
 };
 
+// Curated career-path list for the "start a course" flow (LearningCourses.tsx).
+// This is a new concept — nothing like it existed anywhere in the app before
+// (every similar field: profile.desiredRoles/industries/goals, interview
+// practice's "Target Role", is free text with no fixed value set). A fixed
+// list is deliberate here since the picker needs to show a finite dropdown,
+// not a type-anything box — the optional topic input right below it is
+// still free text, same as every other field in the app.
+export const CAREER_PATHS: string[] = [
+  'Software Engineering',
+  'Product Management',
+  'Data Science & Analytics',
+  'UX/UI Design',
+  'Digital Marketing',
+  'Sales & Business Development',
+  'Finance & Accounting',
+  'Human Resources',
+  'Project Management',
+  'Customer Success & Support',
+  'Operations & Supply Chain',
+  'Business Analysis',
+  'Cybersecurity',
+  'Cloud & DevOps',
+  'Legal & Compliance',
+  'Healthcare & Life Sciences',
+  'Education & Training',
+  'Consulting & Strategy',
+  'Entrepreneurship & Startups',
+  'Other / General Career Skills',
+];
+
 export function slugifyTopic(topic: string): string {
   return topic.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-+|-+$)/g, '') || 'topic';
 }

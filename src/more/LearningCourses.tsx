@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View } from 'react-native';
+import { ScrollView, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -26,7 +26,7 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import * as learningService from 'services/learningService';
 import {
-  CourseLevel, COURSE_LEVELS, LEVEL_LABELS, MODULES_PER_LEVEL,
+  CourseLevel, COURSE_LEVELS, LEVEL_LABELS, MODULES_PER_LEVEL, CAREER_PATHS,
   TopicCheckResult, CourseProgressSummary, Certificate, AllProgress,
 } from 'services/learningService';
 
@@ -51,6 +51,14 @@ const LearningCourses = memo(() => {
   const { navigate } = navigation;
   const { isPremium } = React.useContext(AuthContext);
 
+  // "Start a course" now asks for a career path first (required — a fixed
+  // list, see learningService.CAREER_PATHS) and a specific topic under it
+  // second (optional free text, e.g. "Roadmapping" under Product
+  // Management). If no specific topic is given, the career path itself
+  // becomes the course topic, so a learner can just pick a path and go
+  // without having to think of something narrower to type.
+  const [careerPath, setCareerPath] = React.useState<string | null>(null);
+  const [showCareerPathPicker, setShowCareerPathPicker] = React.useState(false);
   const [customTopic, setCustomTopic] = React.useState('');
   const [isCheckingTopic, setIsCheckingTopic] = React.useState(false);
   const [topicCheck, setTopicCheck] = React.useState<TopicCheckResult | null>(null);
@@ -127,9 +135,20 @@ const LearningCourses = memo(() => {
     });
   };
 
+  // The topic actually sent to checkTopic/generateSyllabus/generateModule —
+  // combines the required career path with the optional specific topic so
+  // the AI grounds the course in the chosen path even when a specific topic
+  // is given (e.g. "Roadmapping (Product Management)" rather than just
+  // "Roadmapping" on its own, which the topic-check AI has no way to know
+  // is meant in a product-management context). Falls back to the bare
+  // career path when no specific topic is entered.
+  const effectiveTopic = careerPath
+    ? (customTopic.trim() ? `${customTopic.trim()} (${careerPath})` : careerPath)
+    : '';
+
   const onCheckTopic = async () => {
-    const topic = customTopic.trim();
-    if (!topic || isCheckingTopic) return;
+    const topic = effectiveTopic.trim();
+    if (!topic || !careerPath || isCheckingTopic) return;
     setIsCheckingTopic(true);
     setTopicCheck(null);
     setTierProgress(null);
@@ -244,19 +263,68 @@ const LearningCourses = memo(() => {
           </Text>
           <Text category="h9-s" status="placeholder" mb={12}>
             {t('more:teach_me_anything_description', {
-              defaultValue: 'Type any professional or career skill — the AI checks it, then builds a real Basic → Intermediate → Advanced course, with a badge when you finish all three.',
+              defaultValue: 'Pick a career path, and optionally a specific topic under it — the AI checks it, then builds a real Basic → Intermediate → Advanced course, with a badge when you finish all three.',
             })}
+          </Text>
+
+          <Text category="h10" status="placeholder" mb={6}>
+            {t('more:career_path_label', { defaultValue: 'Career path' })}
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setShowCareerPathPicker(v => !v)}
+            style={[styles.careerPathField, { borderColor: theme['color-basic-400'] }]}
+          >
+            <Text category="h9" status={careerPath ? 'basic' : 'placeholder'} style={globalStyle.flexOne}>
+              {careerPath || t('more:career_path_placeholder', { defaultValue: 'Select a career path' })}
+            </Text>
+            <Icon
+              pack="eva"
+              name={showCareerPathPicker ? 'chevron-up-outline' : 'chevron-down-outline'}
+              style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]}
+            />
+          </TouchableOpacity>
+
+          {showCareerPathPicker ? (
+            <ScrollView
+              style={[styles.careerPathList, { borderColor: theme['color-basic-400'] }]}
+              nestedScrollEnabled
+            >
+              {CAREER_PATHS.map(path => (
+                <TouchableOpacity
+                  key={path}
+                  activeOpacity={0.7}
+                  style={styles.careerPathRow}
+                  onPress={() => {
+                    setCareerPath(path);
+                    setShowCareerPathPicker(false);
+                    setTopicCheck(null);
+                  }}
+                >
+                  <Text category="h9" status={careerPath === path ? 'link' : 'basic'}>
+                    {path}
+                  </Text>
+                  {careerPath === path ? (
+                    <Icon pack="eva" name="checkmark-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                  ) : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          ) : null}
+
+          <Text category="h10" status="placeholder" mt={16} mb={6}>
+            {t('more:specific_topic_label', { defaultValue: 'Specific topic (optional)' })}
           </Text>
           <Flex justify="flex-start">
             <Input
-              placeholder={t('more:custom_topic_placeholder', { defaultValue: 'e.g. Microservices, Public Speaking' })}
+              placeholder={t('more:custom_topic_placeholder', { defaultValue: 'e.g. Roadmapping, Salary Negotiation' })}
               value={customTopic}
               onChangeText={text => { setCustomTopic(text); setTopicCheck(null); }}
               style={[styles.customInput, globalStyle.flexOne]}
             />
             <Button
               size="small"
-              disabled={!customTopic.trim() || isCheckingTopic}
+              disabled={!careerPath || isCheckingTopic}
               style={styles.customStartBtn}
               onPress={onCheckTopic}>
               {isCheckingTopic ? '…' : t('more:check_topic', { defaultValue: 'Check' })}
@@ -401,6 +469,31 @@ const themedStyles = StyleService.create({
   },
   customStartBtn: {
     borderRadius: 12,
+  },
+  careerPathField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  careerPathList: {
+    marginTop: 8,
+    borderWidth: 1,
+    borderRadius: 12,
+    maxHeight: 260,
+    overflow: 'hidden',
+  },
+  careerPathRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'background-basic-color-3',
   },
   rejectedBox: {
     marginTop: 16,
