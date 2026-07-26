@@ -716,6 +716,8 @@ const HomeSrc = memo(() => {
         message={pendingAd?.body}
         onDetails={onOpenAd}
         detailsLabel="View Details"
+        showCancel
+        cancelLabel="Cancel"
       />
     </Container>
   );
@@ -749,9 +751,9 @@ const themedStyles = StyleService.create({
     // Subtle purple to make the AI-generated tip visually distinct from the
     // neutral cards around it — was a plain themed Layout level="2" (same
     // gray as every other card on the screen).
-    backgroundColor: 'rgba(124, 58, 237, 0.08)',
+    backgroundColor: 'rgba(195, 165, 248, 0.08)',
     borderWidth: 1,
-    borderColor: '#6D28D9',
+    borderColor: '#7e4fcbff',
   },
   verifyBannerText: {
     marginHorizontal: 10,

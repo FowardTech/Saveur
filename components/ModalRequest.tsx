@@ -26,6 +26,15 @@ interface ModalConfirmProps {
   // "go look at this" prompt rather than a plain acknowledgement, since
   // tapping it there navigates to AdDetails.tsx instead of just dismissing.
   detailsLabel?: string;
+  // When onDetails is a real navigation/action (e.g. the ad popup's "View
+  // Details" opening AdDetails.tsx), the whole card no longer doubles as a
+  // dismiss control the way it did when its only action was a plain
+  // acknowledgement — tapping outside still closes it, but that's not
+  // discoverable as an explicit "no thanks" choice. Set this to show a
+  // second, explicit Cancel action next to onDetails so the two intents
+  // (view vs. dismiss) aren't collapsed into one button.
+  showCancel?: boolean;
+  cancelLabel?: string;
   isOnl: boolean;
   visible: boolean;
   show(): void;
@@ -37,6 +46,8 @@ function ModalRequest({
   name,
   onDetails,
   detailsLabel,
+  showCancel,
+  cancelLabel,
   avatar,
   visible,
   hide,
@@ -106,11 +117,28 @@ function ModalRequest({
               styles.buttonView,
               styles.btnOk,
               { borderColor: themes["color-basic-300"] },
+              showCancel ? styles.btnRow : undefined,
             ]}
           >
+            {showCancel ? (
+              <TouchableOpacity
+                activeOpacity={0.54}
+                onPress={hide}
+                style={styles.btnHalf}
+              >
+                <Text category="h7" status="basic" center mt={16} mb={20}>
+                  {cancelLabel ?? t('cancel', {defaultValue: 'Cancel'})}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
             <TouchableOpacity
               activeOpacity={0.54}
               onPress={onDetails !== undefined ? onDetails : hide}
+              style={
+                showCancel
+                  ? [styles.btnHalf, styles.btnDivider, { borderColor: themes["color-basic-300"] }]
+                  : undefined
+              }
             >
               <Text category="h7" status={"link"} center mt={16} mb={20}>
                 {detailsLabel ?? 'OK, Thanks!'}
@@ -155,6 +183,15 @@ const styles = StyleSheet.create({
     // row that sat above "OK, Thanks!" — now that row is gone, just a top
     // divider separating the single remaining action from the text above.
     borderTopWidth: 1,
+  },
+  btnRow: {
+    flexDirection: "row",
+  },
+  btnHalf: {
+    flex: 1,
+  },
+  btnDivider: {
+    borderLeftWidth: 1,
   },
   onlineIcon: {
     width: 16,
