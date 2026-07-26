@@ -2,6 +2,9 @@ import i18n from 'i18next';
 import {initReactI18next} from 'react-i18next';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ms';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {EKeyAsyncStorage} from 'constants/Types';
+import {isSupportedLanguageCode} from 'constants/languages';
 
 import auth from 'i18n/language/en/auth.json';
 import intro from 'i18n/language/en/intro.json';
@@ -438,3 +441,24 @@ i18n.use(initReactI18next).init({
 i18n.on('languageChanged', lng => {
   dayjs.locale(lng);
 });
+
+// Restore a language picked on the onboarding carousel's top-right dropdown
+// (see src/onboarding/index.tsx) before this device has ever finished
+// signup. `lng: 'en'` above is just the synchronous cold-start default —
+// i18next itself has no persistence of its own — so without this, a user
+// who set e.g. French on the onboarding slides and then closed the app
+// before finishing signup would land back on English next launch. Runs
+// async right after init (any UI mounting in that gap briefly renders
+// English, same one-frame tradeoff other cold-start caches in this app
+// accept — see appConfigCache's comment in constants/Types.tsx). A
+// signed-in profile's own `locale` (AuthContext.tsx's syncLanguageFromProfile)
+// always wins once it loads, since that runs later, after auth state
+// resolves, and writes back to this same AsyncStorage key is unnecessary —
+// SignupFirstStep/SelectLanguage only ever need i18n.language itself.
+AsyncStorage.getItem(EKeyAsyncStorage.preferredLocale)
+  .then(code => {
+    if (code && isSupportedLanguageCode(code) && code !== i18n.language) {
+      i18n.changeLanguage(code);
+    }
+  })
+  .catch(() => {});

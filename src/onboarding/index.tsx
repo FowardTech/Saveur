@@ -1,8 +1,13 @@
 import React, { memo } from 'react';
-import { ScrollView, TouchableOpacity, View } from 'react-native';
+import { Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {
   Button,
+  Icon,
+  Layout,
   StyleService,
+  useTheme,
   useStyleSheet,
 } from '@ui-kitten/components';
 import useLayout from 'hooks/useLayout';
@@ -25,12 +30,34 @@ import { RootStackParamList } from 'navigation/types';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { globalStyle } from 'styles/globalStyle';
 import { useTranslation } from 'react-i18next';
+import { SUPPORTED_LANGUAGES, getLanguageLabel } from 'constants/languages';
+import { EKeyAsyncStorage } from 'constants/Types';
 
 const Onboarding = memo(() => {
-  const { width } = useLayout();
+  const { width, top } = useLayout();
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const { t } = useTranslation(['intro', 'auth']);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+
+  // Language must be set here, first — before signup even starts — per
+  // explicit request: a top-right dropdown on the onboarding slides rather
+  // than the picker that used to live on SignupFirstStep.tsx (removed).
+  // i18n.changeLanguage() below updates the slide text on this screen
+  // immediately; the AsyncStorage write is what makes that choice survive a
+  // cold restart before the user has an account for it to live on (see
+  // i18n/config.ts's bootstrap restore + the comment on
+  // EKeyAsyncStorage.preferredLocale). Settings → Language
+  // (src/home/MyFavorites/SelectLanguage.tsx) is untouched and stays the way
+  // a signed-in user changes their language later.
+  const [locale, setLocaleState] = React.useState(i18n.language);
+  const [showLanguageMenu, setShowLanguageMenu] = React.useState(false);
+  const onSelectLocale = React.useCallback((code: string) => {
+    setLocaleState(code);
+    i18n.changeLanguage(code);
+    AsyncStorage.setItem(EKeyAsyncStorage.preferredLocale, code).catch(() => {});
+    setShowLanguageMenu(false);
+  }, []);
 
   const translationX = useSharedValue(0);
   const scrollRef = useAnimatedRef<ScrollView>();
@@ -56,6 +83,55 @@ const Onboarding = memo(() => {
   const onGetHere = React.useCallback(() => {}, []);
   return (
     <Container style={styles.container}>
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setShowLanguageMenu(true)}
+        style={[styles.languageButton, { top: top + 8 }]}
+      >
+        <Icon
+          pack="eva"
+          name="globe-2-outline"
+          style={{ width: 18, height: 18, tintColor: theme['text-basic-color'] }}
+        />
+        <Text category="h9" bold ml={6}>
+          {getLanguageLabel(locale)}
+        </Text>
+        <Icon
+          pack="eva"
+          name="chevron-down-outline"
+          style={{ width: 16, height: 16, marginLeft: 2, tintColor: theme['text-basic-color'] }}
+        />
+      </TouchableOpacity>
+      <Modal visible={showLanguageMenu} transparent animationType="fade">
+        <Pressable style={styles.menuBackdrop} onPress={() => setShowLanguageMenu(false)}>
+          <Layout level="1" style={[styles.menuCard, { top: top + 52 }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {SUPPORTED_LANGUAGES.map(lang => {
+                const selected = lang.code === locale;
+                return (
+                  <TouchableOpacity
+                    key={lang.code}
+                    activeOpacity={0.7}
+                    onPress={() => onSelectLocale(lang.code)}
+                    style={styles.menuRow}
+                  >
+                    <Text category="h8" bold={selected} status={selected ? 'link' : 'basic'}>
+                      {lang.nativeLabel}
+                    </Text>
+                    {selected ? (
+                      <Icon
+                        pack="eva"
+                        name="checkmark-outline"
+                        style={{ width: 18, height: 18, tintColor: theme['color-primary-500'] }}
+                      />
+                    ) : null}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </Layout>
+        </Pressable>
+      </Modal>
       <Content contentContainerStyle={styles.content}>
         <View style={{ flex: 1 }}>
           <Animated.ScrollView
@@ -181,5 +257,35 @@ const themedStyles = StyleService.create({
   },
   signup: {
     flex: 1,
+  },
+  languageButton: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 99,
+    backgroundColor: 'background-basic-color-2',
+  },
+  menuBackdrop: {
+    flex: 1,
+  },
+  menuCard: {
+    position: 'absolute',
+    right: 20,
+    width: 200,
+    maxHeight: 320,
+    borderRadius: 16,
+    paddingVertical: 8,
+    ...globalStyle.shadowBtn,
+  },
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
 });

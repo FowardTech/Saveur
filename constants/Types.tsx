@@ -43,6 +43,15 @@ export enum EKeyAsyncStorage {
   // App.tsx has something to render immediately on a cold start before the
   // network call in services/configService.ts resolves. See that file.
   appConfigCache = 'appConfigCache',
+  // Language picked on the onboarding carousel's top-right dropdown (see
+  // src/onboarding/index.tsx) before the user has signed up/in — i18next's
+  // own `lng: 'en'` init option (i18n/config.ts) has no persistence of its
+  // own, and AuthContext's syncLanguageFromProfile only kicks in once a
+  // profile exists. Without this, a user who picks a language on the
+  // onboarding slides and reopens the app before finishing signup would see
+  // English again. Read back at i18n/config.ts's bootstrap; superseded by
+  // the account's own `locale` field the moment a profile is fetched.
+  preferredLocale = 'preferredLocale',
 }
 export enum Animation_Types_Enum {
   SlideTop,

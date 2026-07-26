@@ -17,7 +17,6 @@ import useLayout from 'hooks/useLayout';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {AuthStackParamList} from 'navigation/types';
-import {SUPPORTED_LANGUAGES} from 'constants/languages';
 
 const SignupFirstStep = memo(() => {
   const {navigate} = useNavigation<NavigationProp<AuthStackParamList>>();
@@ -26,17 +25,15 @@ const SignupFirstStep = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
 
-  // Preferred language, picked first — before any of the goal/country/role
-  // copy below is even read — so the rest of signup (SecondStep, ThirdStep,
-  // the SuccessScr) renders in it too. Carried forward via route params
-  // (see SignupSecondStep → SignupThirdStep) into signUp()/updateProfile()
-  // as UserProfileProps.locale (constants/languages.ts, services/authService.ts),
-  // the same field Settings → Language writes to later.
-  const [locale, setLocale] = React.useState(i18n.language?.startsWith('es') ? 'es' : 'en');
-  const onSelectLocale = React.useCallback((code: string) => {
-    setLocale(code);
-    i18n.changeLanguage(code);
-  }, []);
+  // Preferred language is now set earlier, on the onboarding carousel's
+  // top-right dropdown (src/onboarding/index.tsx), before the user ever
+  // reaches signup — i18n.language already reflects that choice (and
+  // persists across a cold restart via AsyncStorage, see
+  // EKeyAsyncStorage.preferredLocale / i18n/config.ts's bootstrap restore).
+  // Just read it directly rather than re-picking it here; still forwarded
+  // via the same route-param chain (SignupSecondStep → SignupThirdStep) into
+  // signUp()/updateProfile() as UserProfileProps.locale, unchanged.
+  const locale = i18n.language;
 
   const DATA = React.useMemo(
     () => [
@@ -69,33 +66,6 @@ const SignupFirstStep = memo(() => {
           {t('auth:title_signup_1')}
         </Text>
 
-        <Text category="h7" bold mb={12}>
-          {t('auth:preferred_language_title', {defaultValue: 'Preferred language'})}
-        </Text>
-        <View style={styles.languageRow}>
-          {SUPPORTED_LANGUAGES.map(lang => {
-            const selected = lang.code === locale;
-            return (
-              <TouchableOpacity
-                key={lang.code}
-                activeOpacity={0.7}
-                onPress={() => onSelectLocale(lang.code)}
-                style={[
-                  styles.languageChip,
-                  {
-                    backgroundColor: selected
-                      ? theme['color-primary-500']
-                      : theme['background-basic-color-2'],
-                  },
-                ]}>
-                <Text category="h8" status={selected ? 'control' : 'basic'} bold={selected}>
-                  {lang.nativeLabel}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
         <Text mt={24} mb={16} category="h7" bold>
           {t('auth:title_signup_1')}
         </Text>
@@ -119,9 +89,8 @@ const SignupFirstStep = memo(() => {
                       one baked in as light gray, which never adapted to
                       dark mode (a hardcoded light-mode card behind the icon
                       regardless of theme). A plain themed View reproduces
-                      the same rounded-square "chip" using the same theme
-                      tokens the language chips above already use, so it
-                      actually flips with the theme. */}
+                      the same rounded-square "chip" using the app's theme
+                      tokens directly, so it actually flips with the theme. */}
                   <View
                     style={{
                       width: sizeBG,
@@ -174,16 +143,5 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-  },
-  languageRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  languageChip: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 99,
-    marginRight: 10,
-    marginBottom: 10,
   },
 });
