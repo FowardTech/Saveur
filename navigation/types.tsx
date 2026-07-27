@@ -156,6 +156,16 @@ export type RootStackParamList = {
   // continuing on into the normal SuccessScr celebration, and adds a
   // "Skip for now" way out for the (majority of) non-student signups.
   StudentVerification: {fromSignup?: boolean} | undefined;
+  // Full-page "Today's Briefing" — HomeSrc.tsx's dashboard card only shows a
+  // 3-line preview of the narrative with a "Read more" arrow; this shows the
+  // whole thing plus all priorities. Takes the already-fetched briefing
+  // straight via route params (see services/careerOsService.ts) rather than
+  // re-fetching — it's a same-day, same-language, cached-on-the-server value
+  // anyway, so there's nothing new to gain from a second network round trip.
+  CareerBriefingDetail: {
+    narrative: string;
+    priorities: {label: string; action: string}[];
+  };
   SalaryNegotiation: undefined;
   SystemDesignWhiteboard: undefined;
   LearningCourses: undefined;

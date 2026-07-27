@@ -439,7 +439,23 @@ const HomeSrc = memo(() => {
                 {t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
               </Text>
             </Flex>
-            <Text category="h9-s" style={{ lineHeight: 21 }}>{briefing.narrative}</Text>
+            {/* Was the full narrative inline — often several sentences long,
+               which made this card dominate the dashboard. Truncated to a
+               3-line preview with a "Read more" arrow into
+               CareerBriefingDetail.tsx, which shows the complete narrative
+               plus all priorities. */}
+            <Text category="h9-s" numberOfLines={3} style={{ lineHeight: 21 }}>{briefing.narrative}</Text>
+            <Flex
+              justify="flex-start"
+              itemsCenter
+              mt={8}
+              onPress={() => navigate('CareerBriefingDetail', { narrative: briefing.narrative!, priorities: briefing.priorities })}
+            >
+              <Text category="h10" status="primary" bold>
+                {t('home:read_more', { defaultValue: 'Read more' })}
+              </Text>
+              <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { marginLeft: 4, tintColor: theme['color-primary-500'] }]} />
+            </Flex>
             {briefing.priorities.length ? (
               <View style={{ marginTop: 14 }}>
                 {briefing.priorities.map((p, i) => (

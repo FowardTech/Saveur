@@ -64,35 +64,38 @@ const getLineHeight = (
     | 'para-s'
     | 'para-m',
 ): number => {
+  // Bumped alongside the font-size increases in constants/theme/mapping.json
+  // (roughly +2px each) so line spacing keeps the same proportion to the
+  // now-larger text instead of feeling cramped.
   switch (category) {
     case 'h1':
-      return 48;
+      return 50;
     case 'h2':
-      return 36;
+      return 38;
     case 'h3':
-      return 30;
+      return 32;
     case 'h5':
-      return 24;
+      return 26;
     case 'h6':
-      return 24;
+      return 26;
     case 'h7':
-      return 22;
+      return 24;
     case 'h7-s':
-      return 24;
+      return 26;
     case 'h8':
-      return 18;
+      return 20;
     case 'h8-s':
-      return 16;
+      return 18;
     case 'h9':
-      return 14;
+      return 15;
     case 'h9-s':
-      return 14;
+      return 15;
     case 'para-s':
-      return 22;
+      return 24;
     case 'para-m':
-      return 24;
+      return 26;
     default:
-      return 24;
+      return 26;
   }
 };
 export default memo(
