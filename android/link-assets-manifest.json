@@ -1,5 +1,5 @@
 {
-  "migIndex": 2,
+  "migIndex": 1,
   "data": [
     {
       "path": "assets/fonts/DCondensed-Bold.ttf",
@@ -12,6 +12,30 @@
     {
       "path": "assets/fonts/GothamPro-Regular.ttf",
       "sha1": "4747880718b9b417a627a6c76cbd20084877961e"
+    },
+    {
+      "path": "assets/fonts/MontserratAlternates-Black.ttf",
+      "sha1": "ddfe711ee7b948f4105986d363e00f98b192d52c"
+    },
+    {
+      "path": "assets/fonts/MontserratAlternates-Bold.ttf",
+      "sha1": "ee2c78fd0af8aa895f15a93f9a61e13a960c17f3"
+    },
+    {
+      "path": "assets/fonts/Roboto-Bold.ttf",
+      "sha1": "3e455f517354a45807648fbd3d71adbab2f4e905"
+    },
+    {
+      "path": "assets/fonts/Roboto-LICENSE.txt",
+      "sha1": "8bb4fe6d98df62b3a8d082c438b393d961ca94a6"
+    },
+    {
+      "path": "assets/fonts/Roboto-Medium.ttf",
+      "sha1": "f81633398187756a347bc6d43aad7a8fc356171b"
+    },
+    {
+      "path": "assets/fonts/Roboto-Regular.ttf",
+      "sha1": "cb6cc5710764b9f06b8d8c923f961e3c1ceb7a59"
     }
   ]
 }

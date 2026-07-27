@@ -21,6 +21,7 @@ import useToggle from 'hooks/useToggle';
 import AnimatedAppearance from 'components/AnimatedAppearance';
 import {AuthStackParamList, RootStackParamList} from 'navigation/types';
 import {mapFirebaseAuthError} from 'utils/authErrors';
+import {isFeatureEnabled} from 'services/configService';
 import {AuthContext} from '../../../AuthContext';
 
 const SignupThirdStep = memo(() => {
@@ -87,6 +88,22 @@ const SignupThirdStep = memo(() => {
     });
   }, [navigate, t]);
 
+  // Also shared by all three signup paths below. Student verification's
+  // endpoints all require an authenticated user (@require_auth), so it can
+  // only run once the Firebase account genuinely exists — i.e. right here,
+  // immediately after signup succeeds, rather than as an earlier step in
+  // this wizard. StudentVerification.tsx's `fromSignup` mode handles the
+  // "skip" path and continues on into the same goToSuccess screen above.
+  // Respects the admin feature flag — if it's off, behave exactly as before
+  // and go straight to the success screen.
+  const goToStudentPrompt = React.useCallback(() => {
+    if (isFeatureEnabled('student_verification')) {
+      navigate('StudentVerification', {fromSignup: true});
+    } else {
+      goToSuccess();
+    }
+  }, [navigate, goToSuccess]);
+
   // Shared by the email/password path and both social sign-in paths below —
   // all three can now land on "an account with this email already exists"
   // (auth/email-already-in-use), and all three should offer the exact same
@@ -120,7 +137,7 @@ const SignupThirdStep = memo(() => {
         desiredRoles,
         locale,
       });
-      goToSuccess();
+      goToStudentPrompt();
     } catch (e: any) {
       // Real Firebase Auth can now actually fail (email already in use, weak
       // password, network error) — surface it instead of swallowing it.
@@ -159,7 +176,7 @@ const SignupThirdStep = memo(() => {
       // (goals/industries/preferredCountries/locale) still needs an explicit
       // PATCH, same as the email/password path does via signUp().
       await updateProfile({goals, industries, preferredCountries, desiredRoles, locale});
-      goToSuccess();
+      goToStudentPrompt();
     } catch (e: any) {
       if (e?.code === 'auth/email-already-in-use' || e?.code === 'auth/account-exists-with-different-credential') {
         showAlreadyRegisteredAlert();
@@ -180,7 +197,7 @@ const SignupThirdStep = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToSuccess, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
+  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToStudentPrompt, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
   // LinkedIn has no first-party Firebase/RN SDK — AuthContext's
   // signInWithLinkedIn drives a custom OAuth2 flow instead. Same
   // isSignup/already-registered handling as onGoogle above.
@@ -190,7 +207,7 @@ const SignupThirdStep = memo(() => {
     try {
       await signInWithLinkedIn({isSignup: true});
       await updateProfile({goals, industries, preferredCountries, desiredRoles, locale});
-      goToSuccess();
+      goToStudentPrompt();
     } catch (e: any) {
       if (e?.code === 'auth/email-already-in-use' || e?.code === 'auth/account-exists-with-different-credential') {
         showAlreadyRegisteredAlert();
@@ -203,7 +220,7 @@ const SignupThirdStep = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToSuccess, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
+  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToStudentPrompt, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
   return (
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />

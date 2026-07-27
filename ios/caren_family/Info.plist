@@ -73,6 +73,9 @@
 		<string>GothamPro-Regular.ttf</string>
 		<string>MontserratAlternates-Black.ttf</string>
 		<string>MontserratAlternates-Bold.ttf</string>
+		<string>Roboto-Medium.ttf</string>
+		<string>Roboto-Regular.ttf</string>
+		<string>Roboto-Bold.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

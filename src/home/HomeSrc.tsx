@@ -27,6 +27,7 @@ import * as networkingService from 'services/networkingService';
 import * as gamificationService from 'services/gamificationService';
 import * as notificationService from 'services/notificationService';
 import * as goalTipsService from 'services/goalTipsService';
+import * as careerOsService from 'services/careerOsService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import ModalRequest from 'components/ModalRequest';
@@ -96,6 +97,18 @@ const HomeSrc = memo(() => {
     });
     return () => listener.remove();
   }, [loadUnreadCount]);
+
+  // AI Career Operating System briefing — product request item, the user's
+  // stated "dream feature": one cohesive AI-written summary of what matters
+  // today, synthesizing streak/applications/scheduled interviews/goal tip
+  // into a single narrative instead of the user piecing it together from
+  // five different screens. See services/careerOsService.ts. Fetched for
+  // every signed-in user (not gated to a paid tier) — it's a synthesis of
+  // data the user already has access to elsewhere, not new AI content.
+  const [briefing, setBriefing] = React.useState<{ narrative: string | null; priorities: { label: string; action: string }[] } | null>(null);
+  React.useEffect(() => {
+    careerOsService.getTodayBriefing().then(setBriefing).catch(() => {});
+  }, []);
 
   // "Today's Goal Tips" card — GET /api/v1/goals/tips/today (see
   // services/goalTipsService.ts), one AI-generated tip per goal the user set
@@ -418,6 +431,29 @@ const HomeSrc = memo(() => {
             </Button>
           </Flex>
         ) : null}
+        {briefing?.narrative ? (
+          <Layout level="2" style={styles.briefingCard}>
+            <Flex justify="flex-start" itemsCenter mb={10}>
+              <Icon pack="assets" name="rateFull" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+              <Text category="h8" bold ml={8}>
+                {t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
+              </Text>
+            </Flex>
+            <Text category="h9-s" style={{ lineHeight: 21 }}>{briefing.narrative}</Text>
+            {briefing.priorities.length ? (
+              <View style={{ marginTop: 14 }}>
+                {briefing.priorities.map((p, i) => (
+                  <Flex key={i} justify="flex-start" itemsCenter mb={6}>
+                    <View style={[styles.priorityDot, { backgroundColor: theme['color-primary-500'] }]} />
+                    <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>
+                      <Text category="h10" bold>{p.label}</Text>{p.action ? ` — ${p.action}` : ''}
+                    </Text>
+                  </Flex>
+                ))}
+              </View>
+            ) : null}
+          </Layout>
+        ) : null}
         {goalTipsLoading && !goalTips ? (
           <Flex vertical center style={[styles.goalTipsCard, {paddingVertical: 24}]}>
             <Spinner size="small" />
@@ -459,6 +495,31 @@ const HomeSrc = memo(() => {
                 defaultValue: '{{sessions}} sessions this week · {{score}}% avg score',
                 sessions: sessionsThisWeek,
                 score: avgScore,
+              })}
+            </Text>
+          </View>
+          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+        </Flex>
+        {/* AI Weekly Career Report — product request item, Pro feature.
+            Destination screen (src/more/WeeklyCareerReport.tsx) shows a
+            ProLockGate for non-Pro users, same convention as the cover
+            letter entry point in ResumeBuilder.tsx. */}
+        <Flex
+          level="2"
+          style={styles.progressCard}
+          justify="flex-start"
+          itemsCenter
+          onPress={() => navigate('WeeklyCareerReport')}>
+          <View style={[styles.progressIconWrap, { backgroundColor: theme['color-success-transparent-200'] ?? theme['background-basic-color-2'] }]}>
+            <Icon pack="assets" name="stats" style={[globalStyle.icon24, { tintColor: theme['color-success-500'] }]} />
+          </View>
+          <View style={globalStyle.flexOne}>
+            <Text category="h7" bold>
+              {t('home:weekly_career_report', { defaultValue: 'Weekly Career Report' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={2}>
+              {t('home:weekly_career_report_subtitle', {
+                defaultValue: 'Your AI-written recap of this week, with tips for next week.',
               })}
             </Text>
           </View>
@@ -765,6 +826,16 @@ const themedStyles = StyleService.create({
   goalTipsCard: {
     borderRadius: 16,
     marginTop: 16,
+  },
+  briefingCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+  },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   goalTipRow: {
     borderRadius: 12,

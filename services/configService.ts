@@ -28,6 +28,17 @@ export interface FeatureFlags {
   salary_negotiation: boolean;
   job_alerts: boolean;
   networking: boolean;
+  ai_curriculum_builder: boolean;
+  cover_letter_generator: boolean;
+  weekly_career_report: boolean;
+  daily_industry_news: boolean;
+  video_interview_replay: boolean;
+  resume_evolution: boolean;
+  linkedin_optimizer: boolean;
+  emotional_coach: boolean;
+  company_intelligence: boolean;
+  career_os_briefing: boolean;
+  student_verification: boolean;
 }
 
 export interface ReleaseConfig {
@@ -62,6 +73,17 @@ const DEFAULT_CONFIG: AppConfig = {
     salary_negotiation: true,
     job_alerts: true,
     networking: true,
+    ai_curriculum_builder: true,
+    cover_letter_generator: true,
+    weekly_career_report: true,
+    daily_industry_news: true,
+    video_interview_replay: true,
+    resume_evolution: true,
+    linkedin_optimizer: true,
+    emotional_coach: true,
+    company_intelligence: true,
+    career_os_briefing: true,
+    student_verification: true,
   },
   release: {
     ios_min_version: '',

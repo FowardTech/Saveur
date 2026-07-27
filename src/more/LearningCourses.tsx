@@ -28,6 +28,7 @@ import * as learningService from 'services/learningService';
 import {
   CourseLevel, COURSE_LEVELS, MODULES_PER_LEVEL, CAREER_PATHS,
   TopicCheckResult, CourseProgressSummary, Certificate, AllProgress,
+  CurriculumPlan,
 } from 'services/learningService';
 import {
   getCourseLevelLabel, getCareerPathLabel, getCourseCategoryLabel,
@@ -76,14 +77,51 @@ const LearningCourses = memo(() => {
   // at all. This also powers the "Continue where you left off" banner.
   const [allProgress, setAllProgress] = React.useState<AllProgress>({byCourse: {}, mostRecentCourseId: null});
 
+  // AI Curriculum Builder — "Week 1 Python, Week 2 SQL, Week 3 React,
+  // Week 4 System Design" per product request. See
+  // services/learningService.ts's generateCurriculum/getSavedCurriculum.
+  const [curriculum, setCurriculum] = React.useState<CurriculumPlan | null>(null);
+  const [curriculumGoal, setCurriculumGoal] = React.useState('');
+  const [isGeneratingCurriculum, setIsGeneratingCurriculum] = React.useState(false);
+  const [curriculumLoaded, setCurriculumLoaded] = React.useState(false);
+
   const loadProgress = React.useCallback(() => {
     learningService.getAllProgress().then(setAllProgress).catch(() => {});
   }, []);
 
   React.useEffect(() => {
     learningService.listCertificates().then(setCertificates).catch(() => {});
+    learningService.getSavedCurriculum()
+      .then(setCurriculum)
+      .finally(() => setCurriculumLoaded(true));
     loadProgress();
   }, [loadProgress]);
+
+  const onGenerateCurriculum = async () => {
+    const goal = curriculumGoal.trim();
+    if (!goal || isGeneratingCurriculum) return;
+    setIsGeneratingCurriculum(true);
+    try {
+      const plan = await learningService.generateCurriculum(goal);
+      setCurriculum(plan);
+    } finally {
+      setIsGeneratingCurriculum(false);
+    }
+  };
+
+  const onResetCurriculum = async () => {
+    await learningService.resetCurriculum();
+    setCurriculum(null);
+    setCurriculumGoal('');
+  };
+
+  const onStartCurriculumWeek = (week: CurriculumPlan['weeks'][number]) => {
+    navigate('CourseSession', {
+      topic: week.topic,
+      totalModules: MODULES_PER_LEVEL.basic,
+      level: 'basic',
+    });
+  };
 
   // Refresh every time this screen regains focus (e.g. backing out of a
   // CourseSession after completing a module) so progress made in the last
@@ -270,6 +308,82 @@ const LearningCourses = memo(() => {
                 </View>
               </Flex>
             ))}
+          </Layout>
+        ) : null}
+
+        {curriculumLoaded ? (
+          <Layout level="2" style={styles.customCard}>
+            <Flex justify="space-between" itemsCenter mb={4}>
+              <Text category="h7" bold>
+                {t('more:curriculum_builder_title', { defaultValue: 'AI Curriculum Builder' })}
+              </Text>
+              {curriculum ? (
+                <TouchableOpacity onPress={onResetCurriculum}>
+                  <Text category="h10" status="danger">
+                    {t('more:curriculum_start_over', { defaultValue: 'Start over' })}
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
+            </Flex>
+            <Text category="h9-s" status="placeholder" mb={12}>
+              {t('more:curriculum_builder_description', {
+                defaultValue: 'Tell the AI your goal and it plans a week-by-week course path to get you there — e.g. "Week 1 Python, Week 2 SQL, Week 3 React, Week 4 System Design".',
+              })}
+            </Text>
+
+            {curriculum ? (
+              <View>
+                <Text category="h9" bold mb={12}>{curriculum.goal}</Text>
+                {curriculum.weeks.map(week => {
+                  const entry = allProgress.byCourse[week.courseId];
+                  const completed = entry?.completedModules ?? 0;
+                  const total = MODULES_PER_LEVEL.basic;
+                  const isWeekComplete = completed >= total;
+                  return (
+                    <Flex key={week.week} justify="space-between" itemsCenter style={styles.tierRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text category="h9" bold>
+                          {t('more:curriculum_week_label', { defaultValue: 'Week {{n}}', n: week.week })} · {week.topic}
+                        </Text>
+                        <Text category="h10" status="placeholder" mt={2}>
+                          {week.description}
+                        </Text>
+                      </View>
+                      <Button
+                        size="tiny"
+                        appearance={isWeekComplete ? 'outline' : 'filled'}
+                        status={isWeekComplete ? 'success' : 'primary'}
+                        style={{ marginLeft: 12 }}
+                        onPress={() => onStartCurriculumWeek(week)}>
+                        {isWeekComplete
+                          ? t('more:review', { defaultValue: 'Review' })
+                          : completed > 0
+                          ? t('more:continue', { defaultValue: 'Continue' })
+                          : t('more:start', { defaultValue: 'Start' })}
+                      </Button>
+                    </Flex>
+                  );
+                })}
+              </View>
+            ) : (
+              <Flex justify="flex-start">
+                <Input
+                  placeholder={t('more:curriculum_goal_placeholder', { defaultValue: 'e.g. Become a backend engineer' })}
+                  value={curriculumGoal}
+                  onChangeText={setCurriculumGoal}
+                  style={[styles.customInput, globalStyle.flexOne]}
+                />
+                <Button
+                  size="small"
+                  disabled={!curriculumGoal.trim() || isGeneratingCurriculum}
+                  style={styles.customStartBtn}
+                  onPress={onGenerateCurriculum}>
+                  {isGeneratingCurriculum
+                    ? <Spinner size="tiny" status="control" />
+                    : t('more:curriculum_build_cta', { defaultValue: 'Build' })}
+                </Button>
+              </Flex>
+            )}
           </Layout>
         ) : null}
 

@@ -175,6 +175,18 @@ export default memo(
             textTransform: textTransform,
             textDecorationLine: textDecorationLine,
             fontStyle: fontStyle,
+            // Was `fontWeight: bold ? 'bold' : '400'` alone — relying on the
+            // OS to synthesize a bold variant of whatever the current
+            // fontFamily is. That works fine for a *system* font, but once
+            // this app has its own bundled fontFamily (see below), asking
+            // for `fontWeight: 'bold'` on a custom font is unreliable,
+            // especially on Android, which generally won't fake-bold a
+            // custom typeface the way it does the system font. Referencing
+            // the actual bold TTF by name is the standard, reliable
+            // cross-platform fix — see assets/fonts/Roboto-*.ttf
+            // (Google's own Roboto, Apache-2.0 licensed) and
+            // react-native.config.js's asset link.
+            fontFamily: bold ? 'Roboto-Bold' : 'Roboto-Regular',
             fontWeight: bold ? 'bold' : '400',
           },
           style,

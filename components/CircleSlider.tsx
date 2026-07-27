@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: 'GothamPro-Medium',
+    fontFamily: 'Roboto-Medium',
     color: '#272755',
   },
 });

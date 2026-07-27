@@ -1,0 +1,13 @@
+{
+  "filler_words": "Filler words",
+  "flagged_moments": "Flagged Moments",
+  "interview_replay": "Interview Replay",
+  "interviewer": "Interviewer",
+  "long_pauses": "Long pauses",
+  "replay_load_failed": "Couldn't load this session's replay.",
+  "replay_scope_note": "A timeline of your transcript and in-session metrics — not a video recording.",
+  "replay_unavailable": "Replay data is unavailable for this session.",
+  "transcript": "Transcript",
+  "wpm": "WPM",
+  "you": "You"
+}

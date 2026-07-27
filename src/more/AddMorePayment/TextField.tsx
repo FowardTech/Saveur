@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontFamily:'GothamPro-Medium'
+    fontFamily:'Roboto-Medium'
   },
   enhancerContainer: {
     position: "absolute",
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     fontSize: 12,
     color: "#FA4169",
-    fontFamily:'GothamPro-Medium'
+    fontFamily:'Roboto-Medium'
   },
 });
 

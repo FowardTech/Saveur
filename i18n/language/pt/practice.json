@@ -1,0 +1,13 @@
+{
+  "filler_words": "Palavras de preenchimento",
+  "flagged_moments": "Momentos marcados",
+  "interview_replay": "Repetição da entrevista",
+  "interviewer": "Entrevistador",
+  "long_pauses": "Pausas longas",
+  "replay_load_failed": "Não foi possível carregar a repetição desta sessão.",
+  "replay_scope_note": "Uma linha do tempo da sua transcrição e métricas da sessão — não uma gravação em vídeo.",
+  "replay_unavailable": "Dados de repetição indisponíveis para esta sessão.",
+  "transcript": "Transcrição",
+  "wpm": "PPM",
+  "you": "Você"
+}

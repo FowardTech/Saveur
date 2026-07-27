@@ -500,6 +500,84 @@ export async function getAnswerFeedback(
   }
 }
 
+// ---------------------------------------------------------------------------
+// AI Curriculum Builder — "the AI can build a curriculum (e.g. Week 1
+// Python, Week 2 SQL, Week 3 React, Week 4 System Design)" per product
+// request. A curriculum is just an AI-planned ORDER of topics; each week
+// reuses the exact same single-topic course flow (courseIdFor(topic,
+// 'basic')) that "Learn anything" already teaches through — see
+// app/api/learning.py's /curriculum endpoints.
+// ---------------------------------------------------------------------------
+
+export interface CurriculumWeek {
+  week: number;
+  topic: string;
+  level: CourseLevel;
+  courseId: string;
+  description: string;
+}
+
+export interface CurriculumPlan {
+  goal: string;
+  weeks: CurriculumWeek[];
+}
+
+function mapCurriculum(raw: {
+  goal?: string;
+  weeks?: Array<{ week?: number; topic?: string; level?: string; course_id?: string; description?: string }>;
+}): CurriculumPlan {
+  return {
+    goal: raw.goal ?? '',
+    weeks: (raw.weeks ?? []).map((w, i) => ({
+      week: w.week ?? i + 1,
+      topic: w.topic ?? '',
+      level: (w.level as CourseLevel) || 'basic',
+      courseId: w.course_id ?? courseIdFor(w.topic ?? '', 'basic'),
+      description: w.description ?? '',
+    })),
+  };
+}
+
+/** GET /api/v1/learning/curriculum — the learner's already-saved plan, if any. */
+export async function getSavedCurriculum(): Promise<CurriculumPlan | null> {
+  try {
+    const { data } = await apiClient.get<{ curriculum: { goal?: string; weeks?: any[] } | null }>(
+      '/api/v1/learning/curriculum',
+    );
+    return data.curriculum ? mapCurriculum(data.curriculum) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * POST /api/v1/learning/curriculum — generates (or, if one already exists,
+ * simply returns) a week-by-week plan toward `goal`. First-write-wins
+ * server-side, matching generateSyllabus's stability guarantee — a
+ * curriculum doesn't reshuffle on repeat visits.
+ */
+export async function generateCurriculum(goal: string, weeksCount = 4): Promise<CurriculumPlan | null> {
+  try {
+    const { data } = await apiClient.post<{ goal?: string; weeks?: any[] }>('/api/v1/learning/curriculum', {
+      goal,
+      weeks_count: weeksCount,
+      language: currentLanguage(),
+    });
+    return mapCurriculum(data);
+  } catch {
+    return null;
+  }
+}
+
+/** DELETE /api/v1/learning/curriculum — clears the saved plan so a learner can build a new one. */
+export async function resetCurriculum(): Promise<void> {
+  try {
+    await apiClient.delete('/api/v1/learning/curriculum');
+  } catch {
+    // best-effort
+  }
+}
+
 /**
  * POST /api/v1/learning/visual — proposed endpoint, not yet implemented
  * server-side (see backend spec addendum §15). Returns null on any failure

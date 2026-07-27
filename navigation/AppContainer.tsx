@@ -39,6 +39,15 @@ import ResumeBuilder from 'src/more/ResumeBuilder';
 import MyDocuments from 'src/more/MyDocuments';
 import JDAnalyzer from 'src/more/JDAnalyzer';
 import GenerateResume from 'src/more/GenerateResume';
+import CoverLetterGenerator from 'src/more/CoverLetterGenerator';
+import WeeklyCareerReport from 'src/more/WeeklyCareerReport';
+import DailyIndustryNews from 'src/more/DailyIndustryNews';
+import ResumeVariants from 'src/more/ResumeVariants';
+import LinkedInOptimizer from 'src/more/LinkedInOptimizer';
+import EmotionalCoach from 'src/more/EmotionalCoach';
+import CompanyIntelligence from 'src/more/CompanyIntelligence';
+import InterviewReplay from 'src/practice/InterviewReplay';
+import StudentVerification from 'src/more/StudentVerification';
 import SalaryNegotiation from 'src/practice/SalaryNegotiation';
 import SystemDesignWhiteboard from 'src/practice/SystemDesignWhiteboard';
 import LearningCourses from 'src/more/LearningCourses';
@@ -194,6 +203,15 @@ const AppContainer = () => {
         <Stack.Screen name="MyDocuments" component={MyDocuments} />
         <Stack.Screen name="JDAnalyzer" component={JDAnalyzer} />
         <Stack.Screen name="GenerateResume" component={GenerateResume} />
+        <Stack.Screen name="CoverLetterGenerator" component={CoverLetterGenerator} />
+        <Stack.Screen name="WeeklyCareerReport" component={WeeklyCareerReport} />
+        <Stack.Screen name="DailyIndustryNews" component={DailyIndustryNews} />
+        <Stack.Screen name="ResumeVariants" component={ResumeVariants} />
+        <Stack.Screen name="LinkedInOptimizer" component={LinkedInOptimizer} />
+        <Stack.Screen name="EmotionalCoach" component={EmotionalCoach} />
+        <Stack.Screen name="CompanyIntelligence" component={CompanyIntelligence} />
+        <Stack.Screen name="InterviewReplay" component={InterviewReplay} />
+        <Stack.Screen name="StudentVerification" component={StudentVerification} />
         <Stack.Screen name="CourseSession" component={CourseSession} />
         <Stack.Screen name="SalaryNegotiation" component={SalaryNegotiation} />
         <Stack.Screen name="SystemDesignWhiteboard" component={SystemDesignWhiteboard} />

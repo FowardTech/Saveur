@@ -280,6 +280,18 @@ const ResumeBuilder = memo(() => {
           style={{ marginTop: 12 }}
         />
 
+        {/* AI Cover Letter Generator — pulls the same stored resume this
+            screen manages, tailored to a company/role the user types on the
+            next screen. See services/coverLetterService.ts and
+            src/more/CoverLetterGenerator.tsx. */}
+        <Button
+          appearance="outline"
+          status="basic"
+          children={t('more:generate_cover_letter', { defaultValue: 'Generate Cover Letter' })}
+          onPress={() => navigate('CoverLetterGenerator', { role: profile?.desiredRoles?.[0] })}
+          style={{ marginTop: 12 }}
+        />
+
         {analyzed ? (
           <>
             <Flex vertical itemsCenter justify="center" mt={40} mb={24}>
@@ -446,7 +458,7 @@ const themedStyles = StyleService.create({
     minHeight: 80,
   },
   bulletInputText: {
-    fontFamily: 'GothamPro',
+    fontFamily: 'Roboto-Regular',
     fontSize: 13,
     minHeight: 64,
     textAlignVertical: 'top',

@@ -220,7 +220,11 @@ const MyProgress = memo(() => {
                   key={String(session.id)}
                   justify="space-between"
                   itemsCenter
-                  style={styles.sessionRow}>
+                  style={styles.sessionRow}
+                  // Tapping a past session opens Interview Replay — see
+                  // src/practice/InterviewReplay.tsx. This row previously
+                  // wasn't tappable at all.
+                  onPress={() => navigate('InterviewReplay', { sessionId: String(session.id) })}>
                   <Flex vertical style={{ flex: 1 }}>
                     <Text category="h9" bold numberOfLines={1}>
                       {getInterviewTypeLabel(session.interviewType, t)}

@@ -23,12 +23,17 @@ import * as salaryNegotiationService from 'services/salaryNegotiationService';
 import {
   NegotiationApproach,
   NegotiationApproachId,
+  NegotiationCritique,
   SalaryOffer,
 } from 'services/salaryNegotiationService';
+import { getApproachTitle, getApproachDescription } from 'utils/negotiationLabels';
+import { AuthContext } from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
 
 interface LogEntry {
   round: number;
   approachTitle: string;
+  ask: string;
   recruiterResponse: string;
 }
 
@@ -44,6 +49,7 @@ const SalaryNegotiation = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
+  const { isPro } = React.useContext(AuthContext);
 
   const [isLoading, setIsLoading] = React.useState(true);
   const [initialOffer, setInitialOffer] = React.useState<SalaryOffer | null>(null);
@@ -54,12 +60,12 @@ const SalaryNegotiation = memo(() => {
   const [log, setLog] = React.useState<LogEntry[]>([]);
   const [isSubmitting, setIsSubmitting] = React.useState<NegotiationApproachId | null>(null);
   const [isFinished, setIsFinished] = React.useState(false);
-  const [summary, setSummary] = React.useState<string | null>(null);
+  const [critique, setCritique] = React.useState<NegotiationCritique | null>(null);
 
   const loadScenario = React.useCallback(async () => {
     setIsLoading(true);
     setIsFinished(false);
-    setSummary(null);
+    setCritique(null);
     setLog([]);
     setRound(1);
     try {
@@ -75,19 +81,25 @@ const SalaryNegotiation = memo(() => {
   }, []);
 
   React.useEffect(() => {
-    loadScenario();
-  }, [loadScenario]);
+    if (isPro) loadScenario();
+    else setIsLoading(false);
+  }, [isPro, loadScenario]);
 
   const onChooseApproach = async (approach: NegotiationApproach) => {
     if (!currentOffer || isSubmitting) return;
     setIsSubmitting(approach.id);
     try {
       const result = await salaryNegotiationService.submitRound(round, approach, currentOffer, totalRounds);
-      setLog(prev => [...prev, { round, approachTitle: approach.title, recruiterResponse: result.recruiterResponse }]);
+      const approachTitle = getApproachTitle(approach.id, approach.title, t);
+      const nextLog = [...log, { round, approachTitle, ask: approach.description, recruiterResponse: result.recruiterResponse }];
+      setLog(nextLog);
       setCurrentOffer(result.updatedOffer);
       if (result.isFinalRound) {
-        const finalize = await salaryNegotiationService.finalizeNegotiation(initialOffer!, result.updatedOffer);
-        setSummary(finalize.summary);
+        const finalize = await salaryNegotiationService.finalizeNegotiation(
+          initialOffer!, result.updatedOffer,
+          nextLog.map(l => ({ round: l.round, approachTitle: l.approachTitle, ask: l.ask, recruiterResponse: l.recruiterResponse })),
+        );
+        setCritique(finalize);
         setIsFinished(true);
       } else {
         setRound(prev => prev + 1);
@@ -104,6 +116,23 @@ const SalaryNegotiation = memo(() => {
       setIsSubmitting(null);
     }
   };
+
+  // Was reachable by any signed-in user with no client-side gate at all,
+  // even though the backend endpoints it calls (POST /coach/negotiation,
+  // GET /negotiation/scenario, POST /negotiation/complete) already reject
+  // non-Pro accounts with 402 — so a free user could get here, pick an
+  // approach, and just see a silent request failure with no explanation.
+  // Same ProLockGate pattern as every other Pro-gated screen.
+  if (!isPro) {
+    return (
+      <ProLockGate
+        title={t('find:salary_negotiation', { defaultValue: 'Salary Negotiation' })}
+        description={t('find:salary_negotiation_pro_gate_description', {
+          defaultValue: 'Practice real salary negotiations against an AI recruiter, with a coaching critique at the end — a Pro feature.',
+        })}
+      />
+    );
+  }
 
   if (isLoading || !currentOffer) {
     return (
@@ -148,17 +177,30 @@ const SalaryNegotiation = memo(() => {
         {log.length > 0 ? (
           <View style={{ marginTop: 24 }}>
             <Text category="h7" bold mb={12}>{t('find:negotiation_so_far', {defaultValue: 'Negotiation So Far'})}</Text>
+            {/* Chat-bubble layout — the user's chosen approach right-aligned
+                (their "message" to the recruiter), the recruiter's response
+                left-aligned, so a multi-round negotiation actually reads
+                like the back-and-forth conversation it represents instead
+                of a flat, undifferentiated log list. */}
             {log.map((entry, i) => (
-              <Layout key={i} level="2" style={styles.logRow}>
-                <Text category="h10" status="placeholder" mb={4}>
-                  {t('find:negotiation_round_log', {
-                    defaultValue: 'Round {{round}} · You chose: {{approach}}',
-                    round: entry.round,
-                    approach: entry.approachTitle,
-                  })}
+              <View key={i} style={{ marginBottom: 16 }}>
+                <Text category="h10" status="placeholder" mb={6} right>
+                  {t('find:negotiation_round_label', { defaultValue: 'Round {{round}}', round: entry.round })}
                 </Text>
-                <Text category="h9-s">“{entry.recruiterResponse}”</Text>
-              </Layout>
+                <View style={styles.bubbleRowUser}>
+                  <View style={[styles.bubble, styles.bubbleUser, { backgroundColor: theme['color-primary-500'] }]}>
+                    <Text category="h9-s" status="control">{entry.approachTitle}</Text>
+                  </View>
+                </View>
+                <View style={styles.bubbleRowRecruiter}>
+                  <View style={[styles.recruiterIconWrap, { backgroundColor: theme['background-basic-color-3'] }]}>
+                    <Icon pack="eva" name="person-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+                  </View>
+                  <View style={[styles.bubble, styles.bubbleRecruiter, { backgroundColor: theme['background-basic-color-2'] }]}>
+                    <Text category="h9-s">{entry.recruiterResponse}</Text>
+                  </View>
+                </View>
+              </View>
             ))}
           </View>
         ) : null}
@@ -170,7 +212,31 @@ const SalaryNegotiation = memo(() => {
                 <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
                 <Text category="h7" bold ml={8}>{t('find:negotiation_summary', {defaultValue: 'Negotiation Summary'})}</Text>
               </Flex>
-              <Text category="h9-s">{summary}</Text>
+              <Text category="h9-s">{critique?.summary}</Text>
+
+              {critique?.strengths.length ? (
+                <View style={{ marginTop: 16 }}>
+                  <Text category="h9" bold mb={6}>{t('find:negotiation_strengths', {defaultValue: 'What worked'})}</Text>
+                  {critique.strengths.map((s, i) => (
+                    <Flex key={i} justify="flex-start" itemsCenter mb={4}>
+                      <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+                      <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{s}</Text>
+                    </Flex>
+                  ))}
+                </View>
+              ) : null}
+
+              {critique?.improvements.length ? (
+                <View style={{ marginTop: 12 }}>
+                  <Text category="h9" bold mb={6}>{t('find:negotiation_improvements', {defaultValue: 'Try next time'})}</Text>
+                  {critique.improvements.map((s, i) => (
+                    <Flex key={i} justify="flex-start" itemsCenter mb={4}>
+                      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['color-warning-500'] }]} />
+                      <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{s}</Text>
+                    </Flex>
+                  ))}
+                </View>
+              ) : null}
             </Layout>
             <Button
               children={t('find:try_another_scenario', {defaultValue: 'Try Another Scenario'})}
@@ -195,8 +261,8 @@ const SalaryNegotiation = memo(() => {
             {approaches.map(approach => (
               <Layout key={approach.id} level="2" style={styles.approachCard}>
                 <View style={globalStyle.flexOne}>
-                  <Text category="h8" bold>{approach.title}</Text>
-                  <Text category="h9-s" status="placeholder" mt={4}>{approach.description}</Text>
+                  <Text category="h8" bold>{getApproachTitle(approach.id, approach.title, t)}</Text>
+                  <Text category="h9-s" status="placeholder" mt={4}>{getApproachDescription(approach.id, approach.description, t)}</Text>
                 </View>
                 <Button
                   size="small"
@@ -241,6 +307,35 @@ const themedStyles = StyleService.create({
     borderRadius: 12,
     padding: 14,
     marginBottom: 12,
+  },
+  bubbleRowUser: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 8,
+  },
+  bubbleRowRecruiter: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  recruiterIconWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 6,
+  },
+  bubble: {
+    maxWidth: '80%',
+    borderRadius: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  bubbleUser: {
+    borderBottomRightRadius: 4,
+  },
+  bubbleRecruiter: {
+    borderBottomLeftRadius: 4,
   },
   approachCard: {
     borderRadius: 16,

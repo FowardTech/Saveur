@@ -112,6 +112,50 @@ export type RootStackParamList = {
     jdText?: string;
     docType?: 'resume' | 'cv';
   };
+  // AI Cover Letter Generator — see services/coverLetterService.ts and
+  // src/more/CoverLetterGenerator.tsx. Reachable from ResumeBuilder ("Generate
+  // Cover Letter") and JDAnalyzer (tailored to the pasted JD, once analyzed).
+  CoverLetterGenerator: {
+    role?: string;
+    company?: string;
+    jdText?: string;
+  };
+  // AI Weekly Career Report — see services/careerReportService.ts and
+  // src/more/WeeklyCareerReport.tsx. Reachable from the Home dashboard.
+  WeeklyCareerReport: undefined;
+  // Daily Industry News — see services/newsService.ts and
+  // src/more/DailyIndustryNews.tsx.
+  DailyIndustryNews: undefined;
+  // AI Resume Evolution — see services/resumeVariantsService.ts and
+  // src/more/ResumeVariants.tsx.
+  ResumeVariants: undefined;
+  // AI LinkedIn Optimizer — see services/linkedinOptimizerService.ts and
+  // src/more/LinkedInOptimizer.tsx.
+  LinkedInOptimizer: undefined;
+  // AI Emotional Coach — see services/emotionalCoachService.ts and
+  // src/more/EmotionalCoach.tsx.
+  EmotionalCoach: undefined;
+  // Company Intelligence — see services/companyIntelService.ts and
+  // src/more/CompanyIntelligence.tsx.
+  CompanyIntelligence: {
+    company?: string;
+    role?: string;
+  };
+  // Video Interview Replay (transcript + metrics timeline, not literal
+  // video — see services/interviewReplayService.ts) — reachable from
+  // MyProgress.tsx's recent-sessions list.
+  InterviewReplay: {
+    sessionId?: string;
+  };
+  // Student verification + discounted billing — see
+  // services/studentVerificationService.ts and
+  // src/more/StudentVerification.tsx. `fromSignup` is set when reached as
+  // the optional post-signup step from SignupThirdStep.tsx (right after
+  // account creation, since the verify endpoints require an authenticated
+  // user) — it swaps the "stay on this screen" completion behavior for
+  // continuing on into the normal SuccessScr celebration, and adds a
+  // "Skip for now" way out for the (majority of) non-student signups.
+  StudentVerification: {fromSignup?: boolean} | undefined;
   SalaryNegotiation: undefined;
   SystemDesignWhiteboard: undefined;
   LearningCourses: undefined;

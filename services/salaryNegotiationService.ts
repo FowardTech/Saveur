@@ -289,26 +289,82 @@ const readHistory = async (): Promise<NegotiationHistoryEntry[]> => {
   }
 };
 
+export interface NegotiationCritique {
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  totalIncreasePct: number;
+}
+
+interface NegotiationCompleteWire {
+  summary?: string;
+  strengths?: string[];
+  improvements?: string[];
+  total_increase_pct?: number;
+}
+
+export interface NegotiationLogEntryForApi {
+  round: number;
+  approachTitle: string;
+  ask: string;
+  recruiterResponse: string;
+}
+
 /**
- * Wrap up a negotiation session: persist a summary entry and return
- * human-readable copy for the results screen.
- *
- * BACKEND TODO: POST /negotiation/sessions/complete
- *   request:  { initialOffer, finalOffer }
- *   response: { summary, totalIncreasePct }
+ * Wrap up a negotiation session: gets a real AI-written critique of *how*
+ * the session was played (not just the salary delta, which the client
+ * already knows) from POST /api/v1/coach/negotiation/complete, persists a
+ * local history entry, and returns copy for the results screen. Previously
+ * this was purely client-computed — a percentage change plus one of two
+ * canned template sentences, regardless of what approaches were actually
+ * chosen or how the recruiter responded — which fell well short of "AI
+ * critiques" the negotiation coach was meant to give. Falls back to that
+ * same local template if the AI call fails, so a transient hiccup never
+ * blocks seeing a result.
  */
 export async function finalizeNegotiation(
   initialOffer: SalaryOffer,
   finalOffer: SalaryOffer,
-): Promise<{summary: string; totalIncreasePct: number}> {
-  await delay(400);
+  log: NegotiationLogEntryForApi[] = [],
+): Promise<NegotiationCritique> {
   const totalIncreasePct = Math.round(
     ((finalOffer.baseSalary - initialOffer.baseSalary) / initialOffer.baseSalary) * 100,
   );
-  const summary =
-    totalIncreasePct > 0
-      ? `You negotiated your base salary up by ${totalIncreasePct}% — from $${initialOffer.baseSalary.toLocaleString()} to $${finalOffer.baseSalary.toLocaleString()}.`
-      : `Your base salary stayed at $${finalOffer.baseSalary.toLocaleString()}, but you may have picked up extra bonus/signing value along the way.`;
+
+  let critique: NegotiationCritique;
+  try {
+    const {data} = await apiClient.post<NegotiationCompleteWire>('/api/v1/coach/negotiation/complete', {
+      initial_offer: toOfferWire(initialOffer),
+      final_offer: toOfferWire(finalOffer),
+      log: log.map(entry => ({
+        round: entry.round,
+        approach_title: entry.approachTitle,
+        ask: entry.ask,
+        recruiter_response: entry.recruiterResponse,
+      })),
+      language: currentLanguage(),
+    });
+    if (data.summary) {
+      critique = {
+        summary: data.summary,
+        strengths: data.strengths ?? [],
+        improvements: data.improvements ?? [],
+        totalIncreasePct: data.total_increase_pct ?? totalIncreasePct,
+      };
+    } else {
+      throw new Error('empty_critique');
+    }
+  } catch {
+    critique = {
+      summary:
+        totalIncreasePct > 0
+          ? `You negotiated your base salary up by ${totalIncreasePct}% — from $${initialOffer.baseSalary.toLocaleString()} to $${finalOffer.baseSalary.toLocaleString()}.`
+          : `Your base salary stayed at $${finalOffer.baseSalary.toLocaleString()}, but you may have picked up extra bonus/signing value along the way.`,
+      strengths: [],
+      improvements: [],
+      totalIncreasePct,
+    };
+  }
 
   const history = await readHistory();
   const entry: NegotiationHistoryEntry = {
@@ -318,11 +374,11 @@ export async function finalizeNegotiation(
     title: finalOffer.title,
     initialBase: initialOffer.baseSalary,
     finalBase: finalOffer.baseSalary,
-    increasePct: totalIncreasePct,
+    increasePct: critique.totalIncreasePct,
   };
   await AsyncStorage.setItem(EKeyAsyncStorage.negotiationHistory, JSON.stringify([entry, ...history]));
 
-  return {summary, totalIncreasePct};
+  return critique;
 }
 
 /**

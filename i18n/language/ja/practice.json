@@ -1,0 +1,13 @@
+{
+  "filler_words": "フィラーワード",
+  "flagged_moments": "注目ポイント",
+  "interview_replay": "面接リプレイ",
+  "interviewer": "面接官",
+  "long_pauses": "長い間",
+  "replay_load_failed": "このセッションのリプレイを読み込めませんでした。",
+  "replay_scope_note": "文字起こしとセッション中の指標のタイムラインです——動画の録画ではありません。",
+  "replay_unavailable": "このセッションのリプレイデータは利用できません。",
+  "transcript": "文字起こし",
+  "wpm": "WPM",
+  "you": "あなた"
+}
