@@ -67,11 +67,22 @@ export interface ApiError {
 // directly instead of each one re-deriving a user-facing string.
 apiClient.interceptors.response.use(
   response => response,
-  (error: AxiosError<{message?: string; code?: string}>) => {
+  (error: AxiosError<{message?: string; detail?: string; code?: string}>) => {
     const apiError: ApiError = {
       status: error.response?.status,
+      // Backend error bodies are NOT consistent about the field name —
+      // roughly 60% of endpoints use {"detail": "..."} (e.g. billing.py's
+      // payment_sheet, which wraps the *actual* Stripe error message here:
+      // "Invalid API Key provided", "This API call cannot be made with a
+      // publishable API key", etc.), the rest use {"message": "..."}. This
+      // interceptor only ever checked `message`, so every `detail`-shaped
+      // error silently fell through to axios's generic "Request failed
+      // with status code 5xx" — the real, actionable error text was in the
+      // response the whole time, just never surfaced to the user (or to
+      // whoever's debugging over their shoulder from an error alert).
       message:
         error.response?.data?.message ??
+        error.response?.data?.detail ??
         (error.code === 'ECONNABORTED'
           ? 'That took too long — check your connection and try again.'
           : error.message) ??
