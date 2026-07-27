@@ -7,7 +7,6 @@ import {
   useTheme,
   Layout,
   Button,
-  Avatar,
 } from '@ui-kitten/components';
 import {NavigationProp, useNavigation, useRoute} from '@react-navigation/native';
 import useLayout from 'hooks/useLayout';
@@ -15,6 +14,7 @@ import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 
 import {globalStyle} from 'styles/globalStyle';
 import Flex from 'components/Flex';
@@ -24,6 +24,7 @@ import * as applicationsService from 'services/applicationsService';
 import NavigationAction from 'components/NavigationAction';
 import Content from 'components/Content';
 import dayjs from 'dayjs';
+import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
 
 const STAGE_ORDER = [
   Application_Stage_Enum.Applied,
@@ -76,9 +77,9 @@ const ApplicationDetails = memo(() => {
       const all = await applicationsService.listApplications();
       const found = all.find(item => String(item.id) === String(id)) ?? null;
       setApplication(found);
-      if (!found) setError("This application couldn't be found — it may have been removed.");
+      if (!found) setError(t('request:application_not_found', {defaultValue: "This application couldn't be found — it may have been removed."}));
     } catch (e: any) {
-      setError(e?.message ?? "Couldn't load this application.");
+      setError(e?.message ?? t('request:application_load_failed', {defaultValue: "Couldn't load this application."}));
     } finally {
       setIsLoading(false);
     }
@@ -96,8 +97,8 @@ const ApplicationDetails = memo(() => {
       goBack();
     } catch (e: any) {
       Alert.alert(
-        'Could not withdraw application',
-        e?.message ?? 'Something went wrong. Please try again.',
+        t('request:withdraw_application_failed', {defaultValue: 'Could not withdraw application'}),
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsWithdrawing(false);
@@ -118,8 +119,8 @@ const ApplicationDetails = memo(() => {
       if (updated) setApplication(updated);
     } catch (e: any) {
       Alert.alert(
-        'Could not update stage',
-        e?.message ?? 'Something went wrong. Please try again.',
+        t('request:update_stage_failed', {defaultValue: 'Could not update stage'}),
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsMovingStage(false);
@@ -136,7 +137,7 @@ const ApplicationDetails = memo(() => {
           title={<Text status={'primary'} center category="h6">{t('request:requestDetails')}</Text>}
         />
         <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
-          <Text category="h9-s" status="placeholder" center>Loading…</Text>
+          <Text category="h9-s" status="placeholder" center>{t('common:loading', {defaultValue: 'Loading…'})}</Text>
         </Flex>
       </Container>
     );
@@ -151,7 +152,7 @@ const ApplicationDetails = memo(() => {
         />
         <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
           <Text category="h9-s" status="danger" center mh={24}>
-            {error ?? 'Application not found.'}
+            {error ?? t('request:application_not_found_short', {defaultValue: 'Application not found.'})}
           </Text>
         </Flex>
       </Container>
@@ -177,11 +178,16 @@ const ApplicationDetails = memo(() => {
         bold
         status={getStageStatus(stage) as any}
         mb={8}>
-        {stage}
+        {getApplicationStageLabel(stage, t)}
       </Text>
       <Content padder contentContainerStyle={styles.content}>
         <Flex justify="flex-start" itemsCenter mb={32}>
-          <Avatar source={application.logo} size="giant" shape="rounded" />
+          <CompanyLogoAvatar
+            logoUrl={application.companyLogoUrl}
+            companyName={application.company}
+            size="giant"
+            shape="rounded"
+          />
           <View style={{marginLeft: 16, flexShrink: 1}}>
             <Text category="h5" bold numberOfLines={2}>
               {application.role}
@@ -247,7 +253,7 @@ const ApplicationDetails = memo(() => {
         <Flex justify="space-between" mb={32}>
           {STAGE_ORDER.map(s => (
             <Text key={s} category="h9" status="placeholder">
-              {s}
+              {getApplicationStageLabel(s, t)}
             </Text>
           ))}
         </Flex>
@@ -270,14 +276,14 @@ const ApplicationDetails = memo(() => {
       </Content>
       <Layout style={[styles.bottom, {paddingBottom: bottom + 8}]} level="2">
         <Button
-          children={isWithdrawing ? 'Withdrawing…' : t('request:cancelApplication')}
+          children={isWithdrawing ? t('request:withdrawing', {defaultValue: 'Withdrawing…'}) : t('request:cancelApplication')}
           status="outline"
           disabled={isWithdrawing}
           style={[globalStyle.flexOne, {marginRight: 16}]}
           onPress={onWithdraw}
         />
         <Button
-          children={isMovingStage ? 'Updating…' : t('common:update')}
+          children={isMovingStage ? t('common:updating', {defaultValue: 'Updating…'}) : t('common:update')}
           style={globalStyle.flexOne}
           status={stage === Application_Stage_Enum.Rejected ? 'danger' : 'basic'}
           disabled={isMovingStage || !canAdvance}

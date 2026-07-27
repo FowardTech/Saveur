@@ -13,5 +13,8 @@
   "no_saved_cards": "Aucune carte enregistrée pour le moment — ajoutez-en une pour accélérer le paiement.",
   "remove_card_failed_title": "Impossible de supprimer la carte",
   "set_default": "Par défaut",
-  "set_default_failed_title": "Impossible de définir la carte par défaut"
+  "set_default_failed_title": "Impossible de définir la carte par défaut",
+  "card_holder": "Titulaire de la carte",
+  "name_surname": "Nom Prénom",
+  "exp_date": "DATE D'EXP."
 }

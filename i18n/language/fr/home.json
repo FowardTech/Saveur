@@ -1,5 +1,7 @@
 {
   "good_morning": "Bonjour !",
+  "good_afternoon": "Bon après-midi !",
+  "good_evening": "Bonsoir !",
   "view_all": "Tout voir",
   "day_streak": "Jours consécutifs",
   "sessions_this_week": "Sessions cette semaine",
@@ -28,7 +30,7 @@
   "leaderboard_empty": "Pas encore de données de classement.",
   "leaderboard_load_failed": "Impossible de charger le classement.",
   "you": "Vous",
-  "badges": "Badges",
+  "badges": "Insignes",
   "default_user_name": "là",
   "goal_tips_title": "Conseils d'objectifs du jour",
   "no_upcoming_session": "Rien de prévu pour le moment — définissez un rappel pour votre prochain entretien simulé.",

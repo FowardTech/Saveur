@@ -8,6 +8,7 @@ import {
   Icon,
 } from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
@@ -15,6 +16,7 @@ import {globalStyle} from 'styles/globalStyle';
 import dayjs from 'utils/dayjs';
 import {RootStackParamList} from 'navigation/types';
 import {MockInterviewSessionProps} from 'constants/Types';
+import {getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel, getSessionStatusLabel} from 'utils/interviewTypeLabels';
 
 export interface PracticeSessionItemProps {
   item: MockInterviewSessionProps;
@@ -24,6 +26,7 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
+  const {t} = useTranslation(['find', 'common']);
 
   // Completed sessions open their real feedback. A "Scheduled" (upcoming)
   // session hasn't happened yet, so it must NOT go to InterviewFeedback —
@@ -47,7 +50,7 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
       <Layout style={styles.container} level="2">
         <Flex justify="flex-start" itemsCenter mb={8}>
           <Text category="h7" bold style={globalStyle.flexOne} numberOfLines={1}>
-            {item.interviewType}
+            {getInterviewTypeLabel(item.interviewType, t)}
           </Text>
           <Text
             category="h9"
@@ -64,11 +67,12 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
             ]}>
             {item.status === 'Completed'
               ? `${item.overallScore ?? '--'}%`
-              : item.status}
+              : getSessionStatusLabel(item.status, t)}
           </Text>
         </Flex>
         <Text category="h8-s" status="placeholder" mb={4}>
-          {item.mode} · {item.difficulty} · {item.durationMin} min
+          {getPracticeModeLabel(item.mode, t)} · {getDifficultyLabel(item.difficulty, t)} · {item.durationMin}{' '}
+          {t('find:minutes_unit', {defaultValue: 'min'})}
         </Text>
         <Flex justify="flex-start" itemsCenter mt={4}>
           <Icon pack="assets" name="calendar" style={styles.icon} />

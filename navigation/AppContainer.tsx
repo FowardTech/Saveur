@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {NavigationContainer} from '@react-navigation/native';
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import {RootStackParamList} from './types';
 import {ActivityIndicator, LogBox, View} from 'react-native';
 import Onboarding from 'src/onboarding';
@@ -151,6 +151,7 @@ const AppContainer = () => {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          ...TransitionPresets.SlideFromRightIOS,
         }}
         initialRouteName={isSignedIn ? 'MainBottomTab' : 'Intro'}>
         <Stack.Screen name="Intro" component={Onboarding} />

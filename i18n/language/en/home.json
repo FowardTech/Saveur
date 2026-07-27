@@ -1,5 +1,7 @@
 {
   "good_morning": "Good morning!",
+  "good_afternoon": "Good afternoon!",
+  "good_evening": "Good evening!",
   "day_streak": "Day Streak",
   "sessions_this_week": "Sessions This Week",
   "average_score": "Average Score",

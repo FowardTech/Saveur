@@ -13,7 +13,7 @@ const Stack = createStackNavigator<AuthStackParamList>();
 const AuthNavigator = memo(() => {
   return (
     <Stack.Navigator
-      screenOptions={{headerShown: false}}
+      screenOptions={{headerShown: false, animation: 'slide_from_right'}}
       initialRouteName="Login">
       <Stack.Screen name="Login" component={Login} />
       <Stack.Screen name="SignupFirstStep" component={SignupFirstStep} />

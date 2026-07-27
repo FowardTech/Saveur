@@ -1,5 +1,7 @@
 {
   "good_morning": "早上好！",
+  "good_afternoon": "下午好！",
+  "good_evening": "晚上好！",
   "view_all": "查看全部",
   "day_streak": "连续天数",
   "sessions_this_week": "本周练习次数",

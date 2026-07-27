@@ -72,7 +72,7 @@ const CodingInterview = memo(() => {
     } catch (e: any) {
       // getLanguages() already falls back to a cached/default list internally
       // and shouldn't normally throw — this is a last-resort guard.
-      setLanguagesError(e?.message ?? 'Could not load supported languages.');
+      setLanguagesError(e?.message ?? t('find:load_languages_generic_failed', {defaultValue: 'Could not load supported languages.'}));
     } finally {
       setLanguagesLoading(false);
     }
@@ -101,7 +101,7 @@ const CodingInterview = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('find:run_failed', { defaultValue: 'Run failed' }),
-        e?.message ?? 'Could not run your code. Please try again.',
+        e?.message ?? t('find:run_code_failed_body', { defaultValue: 'Could not run your code. Please try again.' }),
       );
     } finally {
       setRunning(false);
@@ -118,7 +118,7 @@ const CodingInterview = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('find:run_tests_failed', { defaultValue: 'Run tests failed' }),
-        e?.message ?? 'Could not run your test cases. Please try again.',
+        e?.message ?? t('find:run_tests_failed_body', { defaultValue: 'Could not run your test cases. Please try again.' }),
       );
     } finally {
       setRunningTests(false);
@@ -134,7 +134,7 @@ const CodingInterview = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('find:review_failed', { defaultValue: 'Review failed' }),
-        e?.message ?? 'Could not get an AI code review. Please try again.',
+        e?.message ?? t('find:review_failed_body', { defaultValue: 'Could not get an AI code review. Please try again.' }),
       );
     } finally {
       setIsReviewing(false);
@@ -155,7 +155,7 @@ const CodingInterview = memo(() => {
           // InterviewFeedback, which may just show partial/stale feedback.
           Alert.alert(
             t('find:finish_interview_sync_failed', { defaultValue: 'Could not sync interview' }),
-            e?.message ?? 'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.',
+            e?.message ?? t('find:finish_interview_sync_failed_body', { defaultValue: 'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.' }),
           );
         }
       }
@@ -261,7 +261,7 @@ const CodingInterview = memo(() => {
         {runResult ? (
           <Layout level="2" style={styles.resultBox}>
             <Text category="h9" bold status={runResult.stderr ? 'danger' : 'success'} mb={8}>
-              {runResult.status ?? (runResult.stderr ? 'Error' : 'Success')}
+              {runResult.status ?? (runResult.stderr ? t('find:error_status', { defaultValue: 'Error' }) : t('find:success_status', { defaultValue: 'Success' }))}
             </Text>
             {runResult.stdout ? (
               <>
@@ -289,13 +289,13 @@ const CodingInterview = memo(() => {
           return (
             <Layout key={i} level="2" style={styles.testCaseRow}>
               <View style={globalStyle.flexOne}>
-                <Text category="h10" status="placeholder">Input</Text>
+                <Text category="h10" status="placeholder">{t('find:coding_input_label', { defaultValue: 'Input' })}</Text>
                 <Text category="h9-s" mb={6}>{tc.input}</Text>
-                <Text category="h10" status="placeholder">Expected Output</Text>
+                <Text category="h10" status="placeholder">{t('find:expected_output', { defaultValue: 'Expected Output' })}</Text>
                 <Text category="h9-s">{tc.expectedOutput}</Text>
                 {outcome?.actualOutput ? (
                   <>
-                    <Text category="h10" status="placeholder" mt={6}>Actual Output</Text>
+                    <Text category="h10" status="placeholder" mt={6}>{t('find:actual_output', { defaultValue: 'Actual Output' })}</Text>
                     <Text category="h9-s">{outcome.actualOutput}</Text>
                   </>
                 ) : null}
@@ -303,7 +303,7 @@ const CodingInterview = memo(() => {
               {outcome ? (
                 <View style={[styles.testBadge, { backgroundColor: outcome.passed ? theme['color-success-500'] : theme['color-danger-500'] }]}>
                   <Text category="h10" bold status="control">
-                    {outcome.passed ? 'PASS' : 'FAIL'}
+                    {outcome.passed ? t('find:pass_badge', { defaultValue: 'PASS' }) : t('find:fail_badge', { defaultValue: 'FAIL' })}
                   </Text>
                 </View>
               ) : null}
@@ -323,7 +323,11 @@ const CodingInterview = memo(() => {
         {testResults ? (
           <Layout level="2" style={styles.resultBox}>
             <Text category="h8" bold status={testResults.every(r => r.passed) ? 'success' : 'warning'}>
-              {testResults.filter(r => r.passed).length} / {testResults.length} test cases passed
+              {t('find:test_cases_passed', {
+                defaultValue: `${testResults.filter(r => r.passed).length} / ${testResults.length} test cases passed`,
+                passed: testResults.filter(r => r.passed).length,
+                total: testResults.length,
+              })}
             </Text>
           </Layout>
         ) : null}

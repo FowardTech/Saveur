@@ -13,5 +13,8 @@
   "no_saved_cards": "暂无已保存的卡片 — 添加一张以加快结账速度。",
   "remove_card_failed_title": "无法移除卡片",
   "set_default": "设为默认",
-  "set_default_failed_title": "无法更新默认卡片"
+  "set_default_failed_title": "无法更新默认卡片",
+  "card_holder": "持卡人",
+  "name_surname": "姓名",
+  "exp_date": "有效期"
 }

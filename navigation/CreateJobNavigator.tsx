@@ -1,4 +1,4 @@
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import React, {memo} from 'react';
 import AboutYourChild from 'src/new-job/AboutYourChild';
 import AboutYourFamily from 'src/new-job/AboutYourFamily';
@@ -14,7 +14,7 @@ const Stack = createStackNavigator<CreateJobStackParamList>();
 const HomeStackNavigator = memo(() => {
   return (
     <Stack.Navigator
-      screenOptions={{headerShown: false}}
+      screenOptions={{headerShown: false, ...TransitionPresets.SlideFromRightIOS}}
       initialRouteName="CreatePostDetails">
       <Stack.Screen name="TypeOfCare" component={TypeOfCare} />
       <Stack.Screen name="FrequencyDate" component={FrequencyDate} />

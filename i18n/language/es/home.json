@@ -1,5 +1,7 @@
 {
   "good_morning": "¡Buenos días!",
+  "good_afternoon": "¡Buenas tardes!",
+  "good_evening": "¡Buenas noches!",
   "view_all": "Ver todo",
   "check_in": "Registrar asistencia",
   "check_in_failed_body": "Inténtalo de nuevo en un momento.",

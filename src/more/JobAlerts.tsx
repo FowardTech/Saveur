@@ -33,6 +33,7 @@ import {RootStackParamList} from 'navigation/types';
 import * as jobAlertsService from 'services/jobAlertsService';
 import {AuthContext} from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 
 // "Like a Google Alert, but for jobs" — matches new postings found online
@@ -48,7 +49,7 @@ const JobAlerts = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['more', 'common']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
-  const {profile, updateProfile, isPro} = React.useContext(AuthContext);
+  const {profile, updateProfile, isPremium} = React.useContext(AuthContext);
 
   const [alerts, setAlerts] = React.useState<JobAlertProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -65,13 +66,6 @@ const JobAlerts = memo(() => {
   const [countryDraft, setCountryDraft] = React.useState('');
   const [desiredRoles, setDesiredRoles] = React.useState<string[]>(profile?.desiredRoles ?? []);
   const [preferredCountries, setPreferredCountries] = React.useState<string[]>(profile?.preferredCountries ?? []);
-  // How often the backend scheduler (app/scheduler.py) re-checks this user
-  // for new alerts. Kept as a string while editing so the field can be
-  // briefly empty/partial; clamped to the same 5-1440 range the backend
-  // enforces (app/api/users.py) right before saving, not on every keystroke.
-  const [refreshMinutesDraft, setRefreshMinutesDraft] = React.useState(
-    String(profile?.jobAlertRefreshMinutes ?? 30),
-  );
   // Max NEW alerts created per calendar day — enforced server-side in
   // job_search_service.refresh_alerts_for_user (User.job_alert_daily_limit).
   // A free-text field here let someone type "1" or "2" and end up thinking
@@ -89,9 +83,8 @@ const JobAlerts = memo(() => {
   React.useEffect(() => {
     setDesiredRoles(profile?.desiredRoles ?? []);
     setPreferredCountries(profile?.preferredCountries ?? []);
-    setRefreshMinutesDraft(String(profile?.jobAlertRefreshMinutes ?? 30));
     setDailyLimit(Math.min(Math.max(profile?.jobAlertDailyLimit ?? 15, 15), 50));
-  }, [profile?.desiredRoles, profile?.preferredCountries, profile?.jobAlertRefreshMinutes, profile?.jobAlertDailyLimit]);
+  }, [profile?.desiredRoles, profile?.preferredCountries, profile?.jobAlertDailyLimit]);
 
   // Loads (or reloads) page 1 — used on mount, pull-to-refresh, and after
   // saving preferences. Always replaces the list and resets pagination
@@ -223,20 +216,19 @@ const JobAlerts = memo(() => {
     if (isSavingPrefs) return;
     setIsSavingPrefs(true);
     try {
-      const parsedMinutes = parseInt(refreshMinutesDraft, 10);
-      // Same 5-1440 clamp as app/api/users.py's update_me — kept in sync so
-      // a user never sees "30" saved locally then silently reverted by the
-      // server on next load because they typed something out of range.
-      const jobAlertRefreshMinutes = Number.isFinite(parsedMinutes)
-        ? Math.min(Math.max(parsedMinutes, 5), 1440)
-        : 30;
       // dailyLimit comes from the slider below, which is already bounded to
       // 15-50 by its own minimumValue/maximumValue — this just guards
       // against a non-integer step value some Android slider builds can
       // report. Same 15-50 clamp as app/api/users.py's update_me.
+      // How often alerts get checked for (refresh interval) is no longer a
+      // per-user setting — see app/api/users.py's update_me, which now
+      // silently ignores jobAlertRefreshMinutes if an old client still
+      // sends it; it's a single admin-controlled dial now
+      // (app_config_service's "job_alerts" section) to prevent a single
+      // account polling too aggressively from exhausting Firecrawl's rate
+      // limit/credits for everyone.
       const jobAlertDailyLimit = Math.min(Math.max(Math.round(dailyLimit), 15), 50);
-      await updateProfile({desiredRoles, preferredCountries, jobAlertRefreshMinutes, jobAlertDailyLimit});
-      setRefreshMinutesDraft(String(jobAlertRefreshMinutes));
+      await updateProfile({desiredRoles, preferredCountries, jobAlertDailyLimit});
       setDailyLimit(jobAlertDailyLimit);
       setIsPrefsOpen(false);
       loadAlerts();
@@ -262,12 +254,13 @@ const JobAlerts = memo(() => {
     navigate('JobAlertDetails', {job: alert});
   };
 
-  if (!isPro) {
+  if (!isPremium) {
     return (
       <ProLockGate
+        variant="premium"
         title={t('more:job_alerts', {defaultValue: 'Job Alerts'})}
-        description={t('more:job_alerts_pro_gate_description', {
-          defaultValue: 'Get notified the moment a real job posting matches your profile — Job Alerts is a Pro feature.',
+        description={t('more:job_alerts_premium_gate_description', {
+          defaultValue: 'Get notified the moment a real job posting matches your profile — Job Alerts is a Pro Premium feature.',
         })}
       />
     );
@@ -389,28 +382,6 @@ const JobAlerts = memo(() => {
               ))}
             </View>
 
-            <Text category="h8" bold mb={4} mt={16}>
-              {t('more:job_alerts_refresh_interval_label', {defaultValue: 'Check for new alerts every'})}
-            </Text>
-            <Input
-              placeholder="30"
-              value={refreshMinutesDraft}
-              onChangeText={setRefreshMinutesDraft}
-              keyboardType="number-pad"
-              returnKeyType="done"
-              accessoryRight={() => (
-                <Text category="h9-s" status="placeholder">
-                  {t('more:job_alerts_minutes_unit', {defaultValue: 'minutes'})}
-                </Text>
-              )}
-              style={styles.prefsInput}
-            />
-            <Text category="h10" status="placeholder" mb={4}>
-              {t('more:job_alerts_refresh_interval_hint', {
-                defaultValue: 'Default is 30 minutes. Choose anywhere from 5 to 1440 (24 hours).',
-              })}
-            </Text>
-
             <Flex justify="space-between" itemsCenter mb={4} mt={16}>
               <Text category="h8" bold>
                 {t('more:job_alerts_daily_limit_label', {defaultValue: 'Max new alerts per day'})}
@@ -488,40 +459,59 @@ const JobAlerts = memo(() => {
                   styles.alertCard,
                   !alert.read && {borderColor: theme['color-primary-500'], borderWidth: 1},
                 ]}>
-                <Flex justify="space-between" itemsCenter mb={4}>
-                  <Text category="h7" bold style={{flex: 1}} numberOfLines={1}>
-                    {alert.title}
-                  </Text>
-                  {!alert.read ? <View style={[styles.unreadDot, {marginRight: 8, backgroundColor: theme['color-primary-500']}]} /> : null}
-                  <TouchableOpacity
-                    hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                    disabled={isTogglingPinId === alert.id}
-                    onPress={() => onTogglePin(alert)}>
-                    <Icon
-                      pack="assets"
-                      name={alert.pinned ? 'bookmarkActive' : 'bookmark'}
-                      style={[
-                        globalStyle.icon20,
-                        {tintColor: alert.pinned ? theme['color-primary-500'] : theme['text-placeholder-color']},
-                      ]}
-                    />
-                  </TouchableOpacity>
-                </Flex>
-                <Text category="h9-s" status="placeholder" mb={4}>
-                  {alert.company}
-                  {alert.location ? ` · ${alert.location}` : ''}
-                </Text>
-                <Flex justify="space-between" itemsCenter mt={8}>
-                  {alert.matchedRole ? (
-                    <Text category="h10" status="link" bold>
-                      {t('more:job_alerts_matches', {defaultValue: 'Matches: {{role}}', role: alert.matchedRole})}
-                    </Text>
-                  ) : <View />}
-                  {alert.source ? (
-                    <Text category="h10" status="placeholder">
-                      {t('more:job_alerts_via_source', {defaultValue: 'via {{source}}', source: alert.source})}
-                    </Text>
-                  ) : null}
+                <Flex justify="flex-start">
+                  <CompanyLogoAvatar
+                    logoUrl={alert.companyLogoUrl}
+                    companyName={alert.company}
+                    size="small"
+                    style={{marginRight: 10, marginTop: 2}}
+                  />
+                  <View style={globalStyle.flexOne}>
+                    <Flex justify="space-between" itemsCenter mb={4}>
+                      <Text category="h7" bold style={{flex: 1}} numberOfLines={1}>
+                        {alert.title}
+                      </Text>
+                      {!alert.read ? <View style={[styles.unreadDot, {marginRight: 8, backgroundColor: theme['color-primary-500']}]} /> : null}
+                      <TouchableOpacity
+                        hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
+                        disabled={isTogglingPinId === alert.id}
+                        onPress={() => onTogglePin(alert)}>
+                        <Icon
+                          pack="assets"
+                          name={alert.pinned ? 'bookmarkActive' : 'bookmark'}
+                          style={[
+                            globalStyle.icon20,
+                            {tintColor: alert.pinned ? theme['color-primary-500'] : theme['text-placeholder-color']},
+                          ]}
+                        />
+                      </TouchableOpacity>
+                    </Flex>
+                    <Flex justify="space-between" itemsCenter mb={4}>
+                      <Text category="h9-s" status="placeholder" style={globalStyle.flexOne} numberOfLines={1}>
+                        {alert.company}
+                        {alert.location ? ` · ${alert.location}` : ''}
+                      </Text>
+                      {alert.applied ? (
+                        <View style={[styles.appliedBadge, {backgroundColor: theme['color-info-100']}]}>
+                          <Text category="h10" bold status="info">
+                            {t('more:applied_badge', {defaultValue: 'Applied'})}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </Flex>
+                    <Flex justify="space-between" itemsCenter mt={8}>
+                      {alert.matchedRole ? (
+                        <Text category="h10" status="link" bold>
+                          {t('more:job_alerts_matches', {defaultValue: 'Matches: {{role}}', role: alert.matchedRole})}
+                        </Text>
+                      ) : <View />}
+                      {alert.source ? (
+                        <Text category="h10" status="placeholder">
+                          {t('more:job_alerts_via_source', {defaultValue: 'via {{source}}', source: alert.source})}
+                        </Text>
+                      ) : null}
+                    </Flex>
+                  </View>
                 </Flex>
               </Layout>
             </TouchableOpacity>
@@ -612,5 +602,11 @@ const themedStyles = StyleService.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  appliedBadge: {
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    marginLeft: 8,
   },
 });

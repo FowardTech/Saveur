@@ -148,7 +148,18 @@ export type RootStackParamList = {
   // reached from JobAlerts (tapping a matched job opens its real apply page
   // here instead of the system browser), but kept generic so anything else
   // needing an in-app browser later can reuse it too.
-  WebViewScreen: {url: string; title?: string};
+  // `job` is optional — when present, the screen watches the loaded page for
+  // signs the user actually submitted an application (confirmation text,
+  // a "thank you"-style URL) and auto-adds it to the Application Tracker,
+  // falling back to a "did you apply?" prompt if nothing was detected but
+  // the user spent real time on the page. Omit it for any other in-app-browser
+  // use that isn't a job application (that's the whole reason this stayed a
+  // generic url/title screen instead of a job-alert-specific one).
+  WebViewScreen: {
+    url: string;
+    title?: string;
+    job?: {company: string; role: string; applyUrl: string; companyLogoUrl?: string};
+  };
   Subscription:
     | {
         fromOnboarding?: boolean;

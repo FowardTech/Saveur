@@ -20,6 +20,7 @@ import { DATA_INTERVIEW_TYPES } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as configService from 'services/configService';
+import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 
 // "Practice" tab — the entry point for AI mock interviews. Lets a candidate
 // jump straight into a category, or open the full setup wizard (mode /
@@ -29,7 +30,7 @@ const FindScreen = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
-  const { t } = useTranslation(['find', 'common']);
+  const { t } = useTranslation(['find', 'common', 'more']);
 
   const onStartSetup = (interviewType?: Interview_Type_Enum) => {
     navigate('MockInterviewSetup', { interviewType });
@@ -52,11 +53,11 @@ const FindScreen = memo(() => {
   // for why — same reasoning applies here, this row used to mix the custom
   // "assets" pack's filled 'myPost' badge icon with thinner line-art ones).
   const TOOLS = [
-    { title: 'Resume Builder', icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder') },
-    { title: 'JD Analyzer', icon: 'search-outline', onPress: () => navigate('JDAnalyzer') },
+    { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder') },
+    { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer') },
     // Admin-configurable — see the Feature Flags page / services/configService.ts.
     ...(configService.isFeatureEnabled('coding_practice')
-      ? [{ title: 'Coding Practice', icon: 'code-outline', onPress: onStartCodingPractice }]
+      ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice }]
       : []),
   ];
 
@@ -102,7 +103,7 @@ const FindScreen = memo(() => {
                 name={tool.icon}
                 style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
               />
-              <Text category="h9" center mt={8} bold>
+              <Text category="h9" center mt={8} bold numberOfLines={2}>
                 {tool.title}
               </Text>
             </TouchableOpacity>
@@ -125,7 +126,7 @@ const FindScreen = memo(() => {
                 style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
               />
               <Text category="h9" mt={12} bold numberOfLines={2}>
-                {item.type}
+                {getInterviewTypeLabel(item.type, t)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -163,6 +164,10 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
+    // Was 0 — with no horizontal breathing room, longer labels like
+    // "Resume Builder" wrapped right up against the card's rounded edges.
+    paddingHorizontal: 8,
+    paddingVertical: 10,
   },
   typesGrid: {
     flexDirection: 'row',

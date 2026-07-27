@@ -68,5 +68,13 @@
   "try_again": "Riprova",
   "try_again_later": "Riprova tra un momento.",
   "update": "Aggiorna",
-  "yes": "Sì"
+  "yes": "Sì",
+  "something_went_wrong": "Qualcosa è andato storto. Riprova.",
+  "loading": "Caricamento…",
+  "updating": "Aggiornamento…",
+  "tab_home": "Home",
+  "tab_practice": "Pratica",
+  "tab_coach": "Coach",
+  "tab_interviews": "Colloqui",
+  "tab_profile": "Profilo"
 }

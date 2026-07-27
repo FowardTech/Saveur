@@ -15,6 +15,7 @@ import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
 import { chartConfig } from 'utils/chartConfig';
+import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import useLayout from 'hooks/useLayout';
 import {
   DATA_BADGES,
@@ -576,7 +577,7 @@ const HomeSrc = memo(() => {
             }>
             <View style={globalStyle.flexOne}>
               <Text category="h7" bold>
-                {nextSession.interviewType}
+                {getInterviewTypeLabel(nextSession.interviewType, t)}
               </Text>
               <Text category="h9-s" status="placeholder" mt={4}>
                 {new Date(nextSession.scheduledAt).toLocaleString(undefined, {

@@ -11,6 +11,17 @@ import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
 import {useTranslation} from 'react-i18next';
 
+// Was hardcoded to "Good morning!" regardless of actual time of day.
+// Standard 3-way split: before noon / before 6pm / after — uses the
+// device's local clock (Date, not UTC), same as every other on-device
+// timestamp already displayed in this app.
+function greetingKey(): 'home:good_morning' | 'home:good_afternoon' | 'home:good_evening' {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'home:good_morning';
+  if (hour < 18) return 'home:good_afternoon';
+  return 'home:good_evening';
+}
+
 interface HeaderHomeProps {
   name: string;
   // Random, non-identifying handle (see Saveur-Backend's
@@ -37,7 +48,7 @@ const HeaderHome = memo(
           </Flex>
           <View>
             <Text category="h8-s" mt={4}>
-              {t('home:good_morning')}
+              {t(greetingKey())}
             </Text>
             <Text category="h6" bold>
               {name}

@@ -26,9 +26,13 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import * as learningService from 'services/learningService';
 import {
-  CourseLevel, COURSE_LEVELS, LEVEL_LABELS, MODULES_PER_LEVEL, CAREER_PATHS,
+  CourseLevel, COURSE_LEVELS, MODULES_PER_LEVEL, CAREER_PATHS,
   TopicCheckResult, CourseProgressSummary, Certificate, AllProgress,
 } from 'services/learningService';
+import {
+  getCourseLevelLabel, getCareerPathLabel, getCourseCategoryLabel,
+  getCourseTitleLabel, getCourseDescriptionLabel,
+} from 'utils/learningLabels';
 
 const CUSTOM_TOPIC_MODULES = 5;
 
@@ -201,8 +205,10 @@ const LearningCourses = memo(() => {
     return (
       <ProLockGate
         variant="premium"
-        title="Learning Courses"
-        description="AI-taught, module-by-module courses on any career topic, with a badge on completion — Learning Courses is a Pro Premium feature."
+        title={t('more:learning_courses', { defaultValue: 'Learning Courses' })}
+        description={t('more:learning_courses_pro_gate_description', {
+          defaultValue: 'AI-taught, module-by-module courses on any career topic, with a badge on completion — Learning Courses is a Pro Premium feature.',
+        })}
       />
     );
   }
@@ -227,10 +233,15 @@ const LearningCourses = memo(() => {
                 <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
               </View>
               <View style={{ marginLeft: 12, flex: 1 }}>
-                <Text category="h10" status="placeholder">Continue where you left off</Text>
+                <Text category="h10" status="placeholder">{t('more:continue_where_left_off', { defaultValue: 'Continue where you left off' })}</Text>
                 <Text category="h8" bold mt={2}>{continueTitle}</Text>
                 <Text category="h10" status="placeholder" mt={2}>
-                  {LEVEL_LABELS[continueLevel]} · {continueEntry?.completedModules ?? 0}/{continueTotal} modules
+                  {t('more:course_progress_line', {
+                    defaultValue: '{{level}} · {{completed}}/{{total}} modules',
+                    level: getCourseLevelLabel(continueLevel, t),
+                    completed: continueEntry?.completedModules ?? 0,
+                    total: continueTotal,
+                  })}
                 </Text>
               </View>
               <Button size="small" onPress={onContinueMostRecent}>
@@ -243,14 +254,19 @@ const LearningCourses = memo(() => {
         {certificates.length ? (
           <Layout level="2" style={[styles.customCard, { marginBottom: 20 }]}>
             <Text category="h7" bold mb={12}>
-              Your Badges
+              {t('more:your_badges', { defaultValue: 'Your Badges' })}
             </Text>
             {certificates.map(c => (
               <Flex key={c.code} justify="flex-start" itemsCenter mb={8}>
                 <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
                 <View style={{ marginLeft: 10, flex: 1 }}>
                   <Text category="h9" bold>{c.topic}</Text>
-                  <Text category="h10" status="placeholder">Basic · Intermediate · Advanced — {c.code}</Text>
+                  <Text category="h10" status="placeholder">
+                    {t('more:badge_tiers_code', {
+                      defaultValue: 'Basic · Intermediate · Advanced — {{code}}',
+                      code: c.code,
+                    })}
+                  </Text>
                 </View>
               </Flex>
             ))}
@@ -276,7 +292,7 @@ const LearningCourses = memo(() => {
             style={[styles.careerPathField, { borderColor: theme['color-basic-400'] }]}
           >
             <Text category="h9" status={careerPath ? 'basic' : 'placeholder'} style={globalStyle.flexOne}>
-              {careerPath || t('more:career_path_placeholder', { defaultValue: 'Select a career path' })}
+              {careerPath ? getCareerPathLabel(careerPath, t) : t('more:career_path_placeholder', { defaultValue: 'Select a career path' })}
             </Text>
             <Icon
               pack="eva"
@@ -302,7 +318,7 @@ const LearningCourses = memo(() => {
                   }}
                 >
                   <Text category="h9" status={careerPath === path ? 'link' : 'basic'}>
-                    {path}
+                    {getCareerPathLabel(path, t)}
                   </Text>
                   {careerPath === path ? (
                     <Icon pack="eva" name="checkmark-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
@@ -327,7 +343,7 @@ const LearningCourses = memo(() => {
               disabled={!careerPath || isCheckingTopic}
               style={styles.customStartBtn}
               onPress={onCheckTopic}>
-              {isCheckingTopic ? '…' : t('more:check_topic', { defaultValue: 'Check' })}
+              {isCheckingTopic ? t('more:ellipsis', { defaultValue: '…' }) : t('more:check_topic', { defaultValue: 'Check' })}
             </Button>
           </Flex>
 
@@ -338,7 +354,9 @@ const LearningCourses = memo(() => {
           ) : topicCheck && !topicCheck.valid ? (
             <View style={styles.rejectedBox}>
               <Text category="h9-s" status="warning">
-                {topicCheck.reason || "That doesn't look like a specific professional or career skill yet — try something more concrete."}
+                {topicCheck.reason || t('more:topic_rejected_generic', {
+                  defaultValue: "That doesn't look like a specific professional or career skill yet — try something more concrete.",
+                })}
               </Text>
             </View>
           ) : topicCheck?.valid ? (
@@ -346,8 +364,11 @@ const LearningCourses = memo(() => {
               <Text category="h8" bold mb={4}>{topicCheck.canonicalTopic}</Text>
               {topicCheck.coreSubtopics.length ? (
                 <Text category="h10" status="placeholder" mb={12}>
-                  Covers: {topicCheck.coreSubtopics.slice(0, 4).join(', ')}
-                  {topicCheck.coreSubtopics.length > 4 ? '…' : ''}
+                  {t('more:covers_subtopics', {
+                    defaultValue: 'Covers: {{subtopics}}',
+                    subtopics: topicCheck.coreSubtopics.slice(0, 4).join(', '),
+                  })}
+                  {topicCheck.coreSubtopics.length > 4 ? t('more:ellipsis', { defaultValue: '…' }) : ''}
                 </Text>
               ) : null}
               {COURSE_LEVELS.map(level => {
@@ -359,10 +380,12 @@ const LearningCourses = memo(() => {
                   <Flex key={level} justify="space-between" itemsCenter style={styles.tierRow}>
                     <View style={{ flex: 1 }}>
                       <Text category="h9" bold status={unlocked ? 'basic' : 'placeholder'}>
-                        {LEVEL_LABELS[level]}
+                        {getCourseLevelLabel(level, t)}
                       </Text>
                       <Text category="h10" status="placeholder">
-                        {isTierComplete ? 'Completed' : `${completed}/${total} modules`}
+                        {isTierComplete
+                          ? t('more:completed', { defaultValue: 'Completed' })
+                          : t('more:modules_progress', { defaultValue: `${completed}/${total} modules`, completed, total })}
                       </Text>
                     </View>
                     <Button
@@ -371,7 +394,13 @@ const LearningCourses = memo(() => {
                       status={isTierComplete ? 'success' : 'primary'}
                       disabled={!unlocked}
                       onPress={() => onStartTier(level)}>
-                      {!unlocked ? 'Locked' : isTierComplete ? 'Review' : completed > 0 ? 'Continue' : 'Start'}
+                      {!unlocked
+                        ? t('more:locked', { defaultValue: 'Locked' })
+                        : isTierComplete
+                        ? t('more:review', { defaultValue: 'Review' })
+                        : completed > 0
+                        ? t('more:continue', { defaultValue: 'Continue' })
+                        : t('more:start', { defaultValue: 'Start' })}
                     </Button>
                   </Flex>
                 );
@@ -393,12 +422,14 @@ const LearningCourses = memo(() => {
             <Layout key={course.id} level="2" style={styles.courseCard}>
               <Flex justify="space-between" itemsCenter mb={6}>
                 <View style={styles.categoryPill}>
-                  <Text category="h10" bold status="link">{course.category}</Text>
+                  <Text category="h10" bold status="link">{getCourseCategoryLabel(course.category, t)}</Text>
                 </View>
-                <Text category="h10" status="placeholder">{course.durationMin} min</Text>
+                <Text category="h10" status="placeholder">
+                  {t('more:duration_min', { defaultValue: `${course.durationMin} min`, min: course.durationMin })}
+                </Text>
               </Flex>
-              <Text category="h7" bold mb={4}>{course.title}</Text>
-              <Text category="h9-s" status="placeholder" mb={12}>{course.description}</Text>
+              <Text category="h7" bold mb={4}>{getCourseTitleLabel(course.id, course.title, t)}</Text>
+              <Text category="h9-s" status="placeholder" mb={12}>{getCourseDescriptionLabel(course.id, course.description, t)}</Text>
 
               <View style={styles.progressTrack}>
                 <View

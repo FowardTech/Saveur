@@ -68,5 +68,13 @@
   "done": "Concluído",
   "try_again": "Tentar novamente",
   "try_again_later": "Tente novamente em instantes.",
-  "load_more": "Carregar mais"
+  "load_more": "Carregar mais",
+  "something_went_wrong": "Algo deu errado. Por favor, tente novamente.",
+  "loading": "Carregando…",
+  "updating": "Atualizando…",
+  "tab_home": "Início",
+  "tab_practice": "Prática",
+  "tab_coach": "Coach",
+  "tab_interviews": "Entrevistas",
+  "tab_profile": "Perfil"
 }

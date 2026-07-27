@@ -127,7 +127,7 @@ const AddChild = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('more:upload_failed', {defaultValue: 'Upload failed'}),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     }
   };
@@ -151,7 +151,7 @@ const AddChild = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('more:upload_failed', {defaultValue: 'Upload failed'}),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsUploading(false);

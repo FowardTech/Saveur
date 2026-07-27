@@ -81,7 +81,7 @@ const MyChildren = memo(() => {
             } catch (e: any) {
               Alert.alert(
                 t('more:delete_failed', {defaultValue: 'Delete failed'}),
-                e?.message ?? 'Something went wrong. Please try again.',
+                e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
               );
             }
           },

@@ -113,7 +113,7 @@ const ResumeBuilder = memo(() => {
       } catch (e: any) {
         Alert.alert(
           t('more:upload_failed', { defaultValue: 'Upload failed' }),
-          e?.message ?? 'Something went wrong. Please try again.',
+          e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
         );
       } finally {
         setImportingKey(null);
@@ -181,7 +181,7 @@ const ResumeBuilder = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('more:analysis_failed', { defaultValue: 'Analysis failed' }),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsAnalyzing(false);
@@ -201,7 +201,7 @@ const ResumeBuilder = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('more:rewrite_failed', { defaultValue: 'Rewrite failed' }),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsRewriting(false);
@@ -366,7 +366,7 @@ const ResumeBuilder = memo(() => {
           <View style={styles.pickerSheet}>
             <Flex justify="space-between" itemsCenter mb={16}>
               <Text category="h7" bold>
-                Choose a document
+                {t('more:choose_a_document', { defaultValue: 'Choose a document' })}
               </Text>
               <TouchableOpacity onPress={() => setDocumentPickerFor(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
                 <Icon pack="eva" name="close-outline" style={globalStyle.icon24} />
@@ -385,8 +385,10 @@ const ResumeBuilder = memo(() => {
             ) : myDocuments.length === 0 ? (
               <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
                 <Text category="h9-s" status="placeholder" center>
-                  Nothing in My Documents yet — upload a file there first, or choose from your
-                  device instead.
+                  {t('more:no_documents_choose_device', {
+                    defaultValue:
+                      'Nothing in My Documents yet — upload a file there first, or choose from your device instead.',
+                  })}
                 </Text>
               </Flex>
             ) : (

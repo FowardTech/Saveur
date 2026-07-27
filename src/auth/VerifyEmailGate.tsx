@@ -1,6 +1,7 @@
 import React, {memo} from 'react';
 import {Alert} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon, Button} from '@ui-kitten/components';
+import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -27,6 +28,7 @@ const VerifyEmailGate = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {bottom} = useLayout();
+  const {t} = useTranslation(['auth', 'more', 'common']);
   const {profile, resendVerificationEmail, refreshEmailVerified, signOut} = React.useContext(AuthContext);
 
   const [isResending, setIsResending] = React.useState(false);
@@ -38,13 +40,19 @@ const VerifyEmailGate = memo(() => {
     setIsResending(true);
     try {
       await resendVerificationEmail();
-      Alert.alert('Email sent', 'Check your inbox for the verification link.');
+      Alert.alert(
+        t('auth:email_sent_title', {defaultValue: 'Email sent'}),
+        t('auth:email_sent_body', {defaultValue: 'Check your inbox for the verification link.'}),
+      );
     } catch (e: any) {
-      Alert.alert("Couldn't send that", e?.message ?? 'Please try again in a moment.');
+      Alert.alert(
+        t('auth:send_failed_title', {defaultValue: "Couldn't send that"}),
+        e?.message ?? t('auth:send_failed_body', {defaultValue: 'Please try again in a moment.'}),
+      );
     } finally {
       setIsResending(false);
     }
-  }, [isResending, resendVerificationEmail]);
+  }, [isResending, resendVerificationEmail, t]);
 
   const onIveVerified = React.useCallback(async () => {
     if (isRefreshing) return;
@@ -53,33 +61,40 @@ const VerifyEmailGate = memo(() => {
       const verified = await refreshEmailVerified();
       if (!verified) {
         Alert.alert(
-          'Not verified yet',
-          "We don't see that link tapped yet. Check your inbox (and spam folder), or resend the email.",
+          t('auth:not_verified_yet_title', {defaultValue: 'Not verified yet'}),
+          t('auth:not_verified_yet_body', {
+            defaultValue:
+              "We don't see that link tapped yet. Check your inbox (and spam folder), or resend the email.",
+          }),
         );
       }
     } finally {
       setIsRefreshing(false);
     }
-  }, [isRefreshing, refreshEmailVerified]);
+  }, [isRefreshing, refreshEmailVerified, t]);
 
   const onLogout = React.useCallback(() => {
-    Alert.alert('Log out?', "You'll need to sign back in to use the app.", [
-      {text: 'Cancel', style: 'cancel'},
-      {
-        text: 'Log out',
-        style: 'destructive',
-        onPress: async () => {
-          if (isSigningOut) return;
-          setIsSigningOut(true);
-          try {
-            await signOut();
-          } finally {
-            setIsSigningOut(false);
-          }
+    Alert.alert(
+      t('more:logout_confirm_title', {defaultValue: 'Log out?'}),
+      t('more:logout_confirm_body', {defaultValue: "You'll need to sign back in to use the app."}),
+      [
+        {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
+        {
+          text: t('more:logout', {defaultValue: 'Log out'}),
+          style: 'destructive',
+          onPress: async () => {
+            if (isSigningOut) return;
+            setIsSigningOut(true);
+            try {
+              await signOut();
+            } finally {
+              setIsSigningOut(false);
+            }
+          },
         },
-      },
-    ]);
-  }, [isSigningOut, signOut]);
+      ],
+    );
+  }, [isSigningOut, signOut, t]);
 
   return (
     <Container style={styles.container}>
@@ -103,25 +118,36 @@ const VerifyEmailGate = memo(() => {
             style={[globalStyle.icon40, {tintColor: theme['color-primary-500'], marginTop: 24}]}
           />
           <Text category="h5" bold center mt={20}>
-            Verify your email
+            {t('auth:verify_email_gate_title', {defaultValue: 'Verify your email'})}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={12} maxWidth={320}>
-            We sent a verification link to {profile?.email ?? 'your email'}. Tap it, then come back
-            here — practice sessions, the AI coach, and other tools unlock once you're verified.
+            {t('auth:verify_email_gate_body', {
+              email: profile?.email || t('auth:your_email_fallback', {defaultValue: 'your email'}),
+              defaultValue:
+                "We sent a verification link to {{email}}. Tap it, then come back here — practice sessions, the AI coach, and other tools unlock once you're verified.",
+            })}
           </Text>
 
           <Button
             style={{marginTop: 32, width: '100%'}}
             disabled={isResending}
             onPress={onResend}>
-            {renderCenteredLabel(isResending ? 'Sending…' : 'Resend verification email')}
+            {renderCenteredLabel(
+              isResending
+                ? t('auth:sending', {defaultValue: 'Sending…'})
+                : t('auth:resend_verification_email', {defaultValue: 'Resend verification email'}),
+            )}
           </Button>
           <Button
             style={{marginTop: 12, width: '100%'}}
             appearance="outline"
             disabled={isRefreshing}
             onPress={onIveVerified}>
-            {renderCenteredLabel(isRefreshing ? 'Checking…' : "I've verified — refresh")}
+            {renderCenteredLabel(
+              isRefreshing
+                ? t('auth:checking', {defaultValue: 'Checking…'})
+                : t('auth:ive_verified_refresh', {defaultValue: "I've verified — refresh"}),
+            )}
           </Button>
           <Button
             style={{marginTop: 12, width: '100%'}}
@@ -129,7 +155,7 @@ const VerifyEmailGate = memo(() => {
             status="danger"
             disabled={isSigningOut}
             onPress={onLogout}>
-            {renderCenteredLabel('Log out')}
+            {renderCenteredLabel(t('more:logout', {defaultValue: 'Log out'}))}
           </Button>
         </Flex>
       </Content>

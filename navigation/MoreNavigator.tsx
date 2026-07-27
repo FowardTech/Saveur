@@ -1,4 +1,4 @@
-import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator, TransitionPresets } from "@react-navigation/stack";
 import React, { memo } from "react";
 import EditProfile from "src/more/EditProfile";
 import MoreSrc from "src/more/MoreSrc";
@@ -14,7 +14,7 @@ const Stack = createStackNavigator<MoreStackParamList>();
 const MoreNavigator = memo(() => {
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}
       initialRouteName="MoreSrc"
     >
       <Stack.Screen name="MoreSrc" component={MoreSrc} />

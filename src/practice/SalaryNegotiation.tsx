@@ -118,7 +118,7 @@ const SalaryNegotiation = memo(() => {
 
   return (
     <Container style={styles.container}>
-      <TopNavigation title="Salary Negotiation" accessoryLeft={<NavigationAction onPress={goBack} />} />
+      <TopNavigation title={t('find:salary_negotiation', {defaultValue: 'Salary Negotiation'})} accessoryLeft={<NavigationAction onPress={goBack} />} />
       <Content padder contentContainerStyle={styles.content}>
         <Layout level="2" style={styles.offerCard}>
           <Flex justify="space-between" itemsCenter mb={4}>
@@ -127,7 +127,7 @@ const SalaryNegotiation = memo(() => {
           </Flex>
           <Text category="h3" bold mt={8}>
             ${currentOffer.baseSalary.toLocaleString()}
-            <Text category="h9-s" status="placeholder"> / year base</Text>
+            <Text category="h9-s" status="placeholder"> {t('find:per_year_base', {defaultValue: '/ year base'})}</Text>
           </Text>
           <View style={styles.offerDetailsRow}>
             <View style={styles.offerDetail}>

@@ -33,6 +33,20 @@ export function isProTier(status: SubscriptionStatusProps | null | undefined): b
   return status.tier !== 'free' && (status.status === 'active' || status.status === 'trialing');
 }
 
+/**
+ * A stricter check than isProTier — true only for "Pro Premium" (was
+ * "Team") or "Pro (Yearly)", the two plans whose backend plan_tier is
+ * "premium" (see saveur-backend/app/services/entitlements_service.py's
+ * module docstring). Plain monthly Pro (tier "pro") is active/paid but
+ * does NOT pass this check. Use this — not isProTier — to gate Job Alerts
+ * and Learning Courses specifically; use isProTier for everything else
+ * that only needs SOME paid plan.
+ */
+export function isPremiumTier(status: SubscriptionStatusProps | null | undefined): boolean {
+  if (!status) return false;
+  return status.tier === 'premium' && (status.status === 'active' || status.status === 'trialing');
+}
+
 export interface SessionEntitlement {
   isPro: boolean;
   sessionsUsed: number;

@@ -13,5 +13,8 @@
   "no_saved_cards": "अभी तक कोई सहेजा हुआ कार्ड नहीं — चेकआउट तेज़ करने के लिए एक कार्ड जोड़ें।",
   "remove_card_failed_title": "कार्ड हटाया नहीं जा सका",
   "set_default": "डिफ़ॉल्ट बनाएं",
-  "set_default_failed_title": "डिफ़ॉल्ट कार्ड अपडेट नहीं हो सका"
+  "set_default_failed_title": "डिफ़ॉल्ट कार्ड अपडेट नहीं हो सका",
+  "card_holder": "कार्डधारक",
+  "name_surname": "नाम उपनाम",
+  "exp_date": "समाप्ति तिथि"
 }

@@ -12,6 +12,7 @@ import {
 } from '@ui-kitten/components';
 import { BarChart } from 'react-native-chart-kit';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -28,6 +29,7 @@ import * as interviewService from 'services/interviewService';
 import * as gamificationService from 'services/gamificationService';
 import { GamificationStreakProps } from 'constants/Types';
 import { AuthContext } from '../../AuthContext';
+import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 
 // "My Progress" — real per-user progress toward the career goal(s) picked at
 // signup (profile.goals, editable any time from here via ChangeCareType).
@@ -44,6 +46,7 @@ const MyProgress = memo(() => {
   const { width } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { t } = useTranslation(['find', 'common']);
   const { profile } = React.useContext(AuthContext);
 
   const [history, setHistory] = React.useState<MockInterviewSessionProps[]>([]);
@@ -62,11 +65,11 @@ const MyProgress = memo(() => {
       setHistory(historyResult);
       setStreak(streakResult);
     } catch (error: any) {
-      setLoadError(error?.message ?? 'Could not load your progress.');
+      setLoadError(error?.message ?? t('find:could_not_load_progress', { defaultValue: 'Could not load your progress.' }));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   // Was a plain useEffect — only ran once on mount, so returning here after
   // another completed interview (this screen stays mounted in the stack,
@@ -98,7 +101,7 @@ const MyProgress = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title="My Progress"
+        title={t('find:my_progress_title', { defaultValue: 'My Progress' })}
         accessoryLeft={<NavigationAction />}
         accessoryRight={
           <TouchableOpacity onPress={() => navigate('ChangeCareType')}>
@@ -121,14 +124,14 @@ const MyProgress = memo(() => {
               {loadError}
             </Text>
             <Button size="small" onPress={load}>
-              Try again
+              {t('common:try_again', { defaultValue: 'Try again' })}
             </Button>
           </Flex>
         ) : (
           <>
             <Layout level="2" style={styles.goalCard}>
               <Text category="h8" bold mb={8}>
-                Your career goal
+                {t('find:your_career_goal', { defaultValue: 'Your career goal' })}
               </Text>
               {goals.length > 0 ? (
                 <Flex wrap>
@@ -142,7 +145,7 @@ const MyProgress = memo(() => {
                 </Flex>
               ) : (
                 <Text category="h9-s" status="placeholder" mb={12}>
-                  You haven't set a career goal yet.
+                  {t('find:no_career_goal_set', { defaultValue: "You haven't set a career goal yet." })}
                 </Text>
               )}
               <Button
@@ -150,7 +153,9 @@ const MyProgress = memo(() => {
                 appearance="ghost"
                 style={{ marginTop: 12, alignSelf: 'flex-start' }}
                 onPress={() => navigate('ChangeCareType')}>
-                {goals.length > 0 ? 'Change goal' : 'Set a goal'}
+                {goals.length > 0
+                  ? t('find:change_goal', { defaultValue: 'Change goal' })
+                  : t('find:set_a_goal', { defaultValue: 'Set a goal' })}
               </Button>
             </Layout>
 
@@ -160,7 +165,7 @@ const MyProgress = memo(() => {
                   {completed.length}
                 </Text>
                 <Text category="h10" status="placeholder">
-                  Sessions completed
+                  {t('find:sessions_completed', { defaultValue: 'Sessions completed' })}
                 </Text>
               </Layout>
               <Layout level="2" style={styles.statCard}>
@@ -168,7 +173,7 @@ const MyProgress = memo(() => {
                   {streak?.streakDays ?? 0}
                 </Text>
                 <Text category="h10" status="placeholder">
-                  Day streak
+                  {t('find:day_streak', { defaultValue: 'Day streak' })}
                 </Text>
               </Layout>
               <Layout level="2" style={[styles.statCard, { marginRight: 0 }]}>
@@ -176,13 +181,13 @@ const MyProgress = memo(() => {
                   {avgScore ?? '—'}
                 </Text>
                 <Text category="h10" status="placeholder">
-                  Average score
+                  {t('find:average_score', { defaultValue: 'Average score' })}
                 </Text>
               </Layout>
             </Flex>
 
             <Text category="h6" bold mt={32} mb={16}>
-              This week
+              {t('find:this_week', { defaultValue: 'This week' })}
             </Text>
             <BarChart
               data={{
@@ -201,11 +206,13 @@ const MyProgress = memo(() => {
             />
 
             <Text category="h6" bold mt={16} mb={16}>
-              Recent sessions
+              {t('find:recent_sessions', { defaultValue: 'Recent sessions' })}
             </Text>
             {recent.length === 0 ? (
               <Text category="h9-s" status="placeholder">
-                Complete your first mock interview to start tracking progress here.
+                {t('find:complete_first_interview', {
+                  defaultValue: 'Complete your first mock interview to start tracking progress here.',
+                })}
               </Text>
             ) : (
               recent.map(session => (
@@ -216,7 +223,7 @@ const MyProgress = memo(() => {
                   style={styles.sessionRow}>
                   <Flex vertical style={{ flex: 1 }}>
                     <Text category="h9" bold numberOfLines={1}>
-                      {session.interviewType}
+                      {getInterviewTypeLabel(session.interviewType, t)}
                       {session.company ? ` · ${session.company}` : ''}
                     </Text>
                     <Text category="h10" status="placeholder">

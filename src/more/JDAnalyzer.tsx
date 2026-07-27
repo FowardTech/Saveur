@@ -47,7 +47,7 @@ const JDAnalyzer = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('more:analysis_failed', { defaultValue: 'Analysis failed' }),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsAnalyzing(false);
@@ -57,8 +57,10 @@ const JDAnalyzer = memo(() => {
   if (!isPro) {
     return (
       <ProLockGate
-        title="JD Analyzer"
-        description="Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Pro feature."
+        title={t('more:jd_analyzer', { defaultValue: 'JD Analyzer' })}
+        description={t('more:jd_analyzer_pro_gate_description', {
+          defaultValue: "Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Pro feature.",
+        })}
       />
     );
   }
@@ -77,9 +79,6 @@ const JDAnalyzer = memo(() => {
           multiline
           textStyle={styles.jdText}
           style={styles.jdInput}
-          placeholder={t('more:jd_placeholder', {
-            defaultValue: 'Paste the full job posting here…',
-          })}
           value={jd}
           onChangeText={setJd}
         />
@@ -178,10 +177,13 @@ const themedStyles = StyleService.create({
   jdInput: {
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
-    minHeight: 160,
+    // Fixed height (not minHeight) so pasting a long job description makes
+    // the text scroll inside the box instead of pushing the box itself
+    // (and everything below it) further down the screen every keystroke.
+    height: 200,
   },
   jdText: {
-    minHeight: 140,
+    height: '100%',
     textAlignVertical: 'top',
   },
   chipsWrap: {

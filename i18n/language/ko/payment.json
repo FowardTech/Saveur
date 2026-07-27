@@ -13,5 +13,8 @@
   "no_saved_cards": "아직 저장된 카드가 없습니다 — 카드를 추가하면 결제가 더 빨라져요.",
   "remove_card_failed_title": "카드를 삭제할 수 없습니다",
   "set_default": "기본으로 설정",
-  "set_default_failed_title": "기본 카드를 변경할 수 없습니다"
+  "set_default_failed_title": "기본 카드를 변경할 수 없습니다",
+  "card_holder": "카드 소유자",
+  "name_surname": "성명",
+  "exp_date": "유효기간"
 }

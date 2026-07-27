@@ -1,4 +1,4 @@
-import {createStackNavigator} from '@react-navigation/stack';
+import {createStackNavigator, TransitionPresets} from '@react-navigation/stack';
 import React, {memo} from 'react';
 import BookingRequest from 'src/requests/BookingRequest';
 import ConfirmHour from 'src/requests/BookingRequest/ConfirmHour';
@@ -16,7 +16,7 @@ const Stack = createStackNavigator<RequestsStackParamList>();
 const RequestsStackNavigator = memo(() => {
   return (
     <Stack.Navigator
-      screenOptions={{headerShown: false}}
+      screenOptions={{headerShown: false, ...TransitionPresets.SlideFromRightIOS}}
       initialRouteName="RequestInterview">
       {/* RequestInterview */}
       <Stack.Screen name="RequestInterview" component={RequestInterview} />

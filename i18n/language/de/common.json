@@ -68,5 +68,13 @@
   "try_again": "Erneut versuchen",
   "try_again_later": "Bitte versuche es in Kürze noch einmal.",
   "load_more": "Mehr laden",
-  "retry": "Wiederholen"
+  "retry": "Wiederholen",
+  "something_went_wrong": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+  "loading": "Wird geladen…",
+  "updating": "Wird aktualisiert…",
+  "tab_home": "Start",
+  "tab_practice": "Übung",
+  "tab_coach": "Coach",
+  "tab_interviews": "Interviews",
+  "tab_profile": "Profil"
 }

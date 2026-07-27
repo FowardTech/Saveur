@@ -23,6 +23,7 @@ import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPAN
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import { getSessionEntitlement } from 'services/entitlementsService';
+import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
@@ -175,7 +176,7 @@ const MockInterviewSetup = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('find:start_interview_failed', { defaultValue: 'Could not start interview' }),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsStarting(false);
@@ -236,10 +237,10 @@ const MockInterviewSetup = memo(() => {
                   style={[globalStyle.icon24, { tintColor: active ? theme['color-primary-500'] : theme['text-placeholder-color'] }]}
                 />
                 <Text category="h8" bold mt={8} status={active ? 'link' : 'basic'}>
-                  {item.mode}
+                  {getPracticeModeLabel(item.mode, t)}
                 </Text>
                 <Text category="h9-s" status="placeholder" mt={4} center>
-                  {item.description}
+                  {getPracticeModeDescription(item.mode, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -264,7 +265,7 @@ const MockInterviewSetup = memo(() => {
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {item.type}
+                  {getInterviewTypeLabel(item.type, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -305,7 +306,7 @@ const MockInterviewSetup = memo(() => {
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {item}
+                  {getDifficultyLabel(item, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -373,7 +374,7 @@ const MockInterviewSetup = memo(() => {
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {min} min
+                  {min} {t('find:minutes_unit', { defaultValue: 'min' })}
                 </Text>
               </TouchableOpacity>
             );
@@ -381,7 +382,7 @@ const MockInterviewSetup = memo(() => {
         </Flex>
 
         <Button
-          children={isStarting ? 'Starting…' : t('find:start_interview')}
+          children={isStarting ? t('find:starting', { defaultValue: 'Starting…' }) : t('find:start_interview')}
           onPress={onStart}
           disabled={isStarting}
           style={globalStyle.shadowBtn}

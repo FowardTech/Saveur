@@ -1,5 +1,7 @@
 {
   "good_morning": "좋은 아침입니다!",
+  "good_afternoon": "좋은 오후입니다!",
+  "good_evening": "좋은 저녁입니다!",
   "day_streak": "연속 일수",
   "sessions_this_week": "이번 주 세션 수",
   "average_score": "평균 점수",

@@ -1,4 +1,4 @@
-import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator, TransitionPresets } from "@react-navigation/stack";
 import React, { memo } from "react";
 import Chat from "src/messages/Chat";
 import VideoCall from "src/messages/VideoCall";
@@ -9,7 +9,7 @@ const Stack = createStackNavigator<MessagesStackParamList>();
 const MessagesNavigator = memo(() => {
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}
       initialRouteName="Chat"
     >
       <Stack.Screen name="Chat" component={Chat} />

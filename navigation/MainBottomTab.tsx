@@ -6,6 +6,7 @@ import {
   Icon,
   StyleService,
 } from "@ui-kitten/components";
+import { useTranslation } from "react-i18next";
 import { MainBottomTabStackParamList } from "./types";
 import Text from "components/Text";
 import { globalStyle } from "styles/globalStyle";
@@ -49,6 +50,7 @@ const BottomTab = createBottomTabNavigator<MainBottomTabStackParamList>();
 
 const MainBottomTab = memo(() => {
   const theme = useTheme();
+  const { t } = useTranslation(["common"]);
   const { height, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { visible, show, hide } = useModal();
@@ -168,6 +170,7 @@ const MainBottomTab = memo(() => {
           name="Home"
           component={isGated ? VerifyEmailGate : HomeStackNavigator}
           options={{
+            tabBarLabel: t("common:tab_home", { defaultValue: "Home" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab
                 focused={focused}
@@ -181,6 +184,7 @@ const MainBottomTab = memo(() => {
           name="Practice"
           component={isGated ? VerifyEmailGate : FindScreen}
           options={{
+            tabBarLabel: t("common:tab_practice", { defaultValue: "Practice" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab
                 focused={focused}
@@ -194,6 +198,7 @@ const MainBottomTab = memo(() => {
           name="Coach"
           component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesScreen}
           options={{
+            tabBarLabel: t("common:tab_coach", { defaultValue: "Coach" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab
                 focused={focused}
@@ -207,6 +212,7 @@ const MainBottomTab = memo(() => {
           name="Interviews"
           component={isGated ? VerifyEmailGate : RequestsBottomNavigator}
           options={{
+            tabBarLabel: t("common:tab_interviews", { defaultValue: "Interviews" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab
                 focused={focused}
@@ -220,6 +226,7 @@ const MainBottomTab = memo(() => {
           name="Profile"
           component={MoreNavigator}
           options={{
+            tabBarLabel: t("common:tab_profile", { defaultValue: "Profile" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab focused={focused} icon="more" numberNotification={3} />
             ),

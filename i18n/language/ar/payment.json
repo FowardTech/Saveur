@@ -13,5 +13,8 @@
   "no_saved_cards": "لا توجد بطاقات محفوظة بعد — أضف واحدة لتسريع عملية الدفع.",
   "remove_card_failed_title": "تعذّر حذف البطاقة",
   "set_default": "تعيين كافتراضي",
-  "set_default_failed_title": "تعذّر تحديث البطاقة الافتراضية"
+  "set_default_failed_title": "تعذّر تحديث البطاقة الافتراضية",
+  "card_holder": "حامل البطاقة",
+  "name_surname": "الاسم واللقب",
+  "exp_date": "تاريخ الانتهاء"
 }

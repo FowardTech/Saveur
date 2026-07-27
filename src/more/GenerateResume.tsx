@@ -84,6 +84,23 @@ const GenerateResume = memo(() => {
   const [downloadingFormat, setDownloadingFormat] = React.useState<'pdf' | 'docx' | null>(null);
   const [showPreview, setShowPreview] = React.useState(false);
 
+  // Tapping a "Consider Adding" chip moves that keyword straight into Core
+  // Skills (deduped) and off the suggestions list — this is what the user
+  // means by the AI's suggestions being "automatically added to the built
+  // resume" on tap, rather than just a static list they'd have to retype
+  // themselves.
+  const addSuggestedSkill = React.useCallback((skill: string) => {
+    setContent(prev => {
+      if (!prev) return prev;
+      const alreadyHave = prev.coreSkills.some(s => s.toLowerCase() === skill.toLowerCase());
+      return {
+        ...prev,
+        coreSkills: alreadyHave ? prev.coreSkills : [...prev.coreSkills, skill],
+        suggestedKeywords: prev.suggestedKeywords.filter(k => k !== skill),
+      };
+    });
+  }, []);
+
   const buildContent = React.useCallback(
     async (targetRole: string) => {
       setIsGenerating(true);
@@ -383,19 +400,31 @@ const GenerateResume = memo(() => {
                 <Text category="h6" bold mt={24} mb={8}>
                   {t('more:resume_consider_adding', { defaultValue: 'Consider Adding' })}
                 </Text>
-                <Text category="h9-s" status="placeholder" mb={8}>
+                <Text category="h9-s" status="placeholder" mb={4}>
                   {t('more:resume_consider_adding_description', {
                     defaultValue:
                       'This job description also looks for these — worth adding if you have real experience with them.',
                   })}
                 </Text>
+                <Text category="h10" status="warning" mb={8}>
+                  {t('more:resume_consider_adding_hint', { defaultValue: 'Tap a skill to add it to Core Skills' })}
+                </Text>
                 <View style={styles.chipsWrap}>
                   {content.suggestedKeywords.map((skill, i) => (
-                    <View key={i} style={[styles.chip, { backgroundColor: theme['color-warning-transparent-200'] }]}>
+                    <TouchableOpacity
+                      key={i}
+                      activeOpacity={0.6}
+                      onPress={() => addSuggestedSkill(skill)}
+                      style={[styles.chip, styles.suggestedChip, { backgroundColor: theme['color-warning-transparent-200'] }]}>
+                      <Icon
+                        pack="eva"
+                        name="plus-outline"
+                        style={[globalStyle.icon16, { tintColor: theme['color-warning-600'], marginRight: 4 }]}
+                      />
                       <Text category="h9" status="warning" bold>
                         {skill}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   ))}
                 </View>
               </>
@@ -596,6 +625,10 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+  },
+  suggestedChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   styleCard: {
     flex: 1,

@@ -6,6 +6,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import {useTranslation} from 'react-i18next';
 import CardIcon from '../CardIcon';
 import PlaceholderText from './PlaceholderText';
 import Text from '../Text';
@@ -19,6 +20,7 @@ type Props = {
 };
 
 const FrontSide: React.FC<Props> = ({model, cardType, focusedField}) => {
+  const {t} = useTranslation(['payment']);
   const {overrides, requiresName} = useContext(CreditCardContext);
   const [numberLayout, setNumberLayout] = useState<LayoutRectangle | null>(
     null,
@@ -71,14 +73,14 @@ const FrontSide: React.FC<Props> = ({model, cardType, focusedField}) => {
       <View style={styles.header}>
         <View style={{flex: 1}}>
           <Text style={[styles.cardHolder, styles.textPlaceholder]}>
-            {'Card holder'.toUpperCase()}
+            {t('payment:card_holder', {defaultValue: 'Card holder'}).toUpperCase()}
           </Text>
           {requiresName && (
             <Text
               style={[styles.nameText, overrides.cardHolderPreview]}
               numberOfLines={1}
               onLayout={({nativeEvent}) => setNameLayout(nativeEvent.layout)}>
-              {model.holderName.toUpperCase() || 'Name surname'}
+              {model.holderName.toUpperCase() || t('payment:name_surname', {defaultValue: 'Name surname'})}
             </Text>
           )}
         </View>
@@ -104,7 +106,7 @@ const FrontSide: React.FC<Props> = ({model, cardType, focusedField}) => {
       />
       <View style={styles.labelContainer}>
         <Text style={[styles.textPlaceholder, overrides.labelText]}>
-          EXP DATE
+          {t('payment:exp_date', {defaultValue: 'EXP DATE'}).toUpperCase()}
         </Text>
       </View>
       <PlaceholderText

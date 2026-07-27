@@ -35,6 +35,9 @@ interface JobApplicationWire {
   stage: Application_Stage_Enum;
   next_step?: string;
   nextStep?: string;
+  apply_url?: string | null;
+  source?: string | null;
+  company_logo_url?: string | null;
 }
 
 function fromWire(wire: JobApplicationWire): JobApplicationProps {
@@ -48,6 +51,8 @@ function fromWire(wire: JobApplicationWire): JobApplicationProps {
     appliedDate: typeof appliedRaw === 'string' ? new Date(appliedRaw).getTime() : appliedRaw,
     stage: wire.stage,
     nextStep: wire.next_step ?? wire.nextStep,
+    applyUrl: wire.apply_url ?? undefined,
+    companyLogoUrl: wire.company_logo_url ?? undefined,
   };
 }
 
@@ -59,6 +64,9 @@ function toWireCreate(app: Omit<JobApplicationProps, 'id'>): Record<string, unkn
     applied_date: Number(app.appliedDate),
     stage: app.stage,
     next_step: app.nextStep,
+    apply_url: app.applyUrl,
+    source: app.source,
+    company_logo_url: app.companyLogoUrl,
   };
 }
 

@@ -1,5 +1,7 @@
 {
   "good_morning": "おはようございます！",
+  "good_afternoon": "こんにちは！",
+  "good_evening": "こんばんは！",
   "view_all": "すべて見る",
   "day_streak": "連続日数",
   "sessions_this_week": "今週のセッション数",

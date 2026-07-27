@@ -13,5 +13,8 @@
   "no_saved_cards": "Noch keine gespeicherten Karten — füge eine hinzu, um den Bezahlvorgang zu beschleunigen.",
   "remove_card_failed_title": "Karte konnte nicht entfernt werden",
   "set_default": "Als Standard festlegen",
-  "set_default_failed_title": "Standardkarte konnte nicht aktualisiert werden"
+  "set_default_failed_title": "Standardkarte konnte nicht aktualisiert werden",
+  "card_holder": "Karteninhaber",
+  "name_surname": "Vor- und Nachname",
+  "exp_date": "GÜLTIG BIS"
 }

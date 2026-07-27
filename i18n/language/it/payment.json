@@ -13,5 +13,8 @@
   "remove_card_failed_title": "Impossibile rimuovere la carta",
   "select-card": "Seleziona carta",
   "set_default": "Predefinita",
-  "set_default_failed_title": "Impossibile aggiornare la carta predefinita"
+  "set_default_failed_title": "Impossibile aggiornare la carta predefinita",
+  "card_holder": "Titolare della carta",
+  "name_surname": "Nome cognome",
+  "exp_date": "SCADENZA"
 }

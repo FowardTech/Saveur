@@ -21,11 +21,12 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as learningService from 'services/learningService';
-import { CourseModule, CourseLevel, Certificate, LEVEL_LABELS, COURSE_LEVELS } from 'services/learningService';
+import { CourseModule, CourseLevel, Certificate, COURSE_LEVELS } from 'services/learningService';
 import * as speechService from 'services/speechService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import { notifyFirstCourseCompleted } from 'utils/appRating';
+import { getCourseLevelLabel } from 'utils/learningLabels';
 
 type LessonMode = 'voice' | 'text';
 
@@ -270,14 +271,14 @@ const CourseSession = memo(() => {
             <Text category="h5" bold center mt={20}>
               {t('more:course_tier_complete', {
                 defaultValue: '{{level}} Tier Complete!',
-                level: LEVEL_LABELS[level],
+                level: getCourseLevelLabel(level, t),
               })}
             </Text>
             <Text category="h9-s" status="placeholder" center mt={12} maxWidth={280}>
               {t('more:course_tier_complete_description', {
                 defaultValue: "You've finished all {{count}} {{level}} modules of {{topic}}.",
                 count: totalModules,
-                level: LEVEL_LABELS[level].toLowerCase(),
+                level: getCourseLevelLabel(level, t).toLowerCase(),
                 topic,
               })}
             </Text>
@@ -300,7 +301,7 @@ const CourseSession = memo(() => {
               <Text category="h9-s" status="link" center mt={16}>
                 {t('more:course_next_level_unlocked', {
                   defaultValue: '{{level}} unlocked — head back to Learning Courses to continue.',
-                  level: LEVEL_LABELS[nextLevel],
+                  level: getCourseLevelLabel(nextLevel, t),
                 })}
               </Text>
             ) : null}
@@ -321,7 +322,7 @@ const CourseSession = memo(() => {
           <Text category="h9" bold status="placeholder">
             {t('more:course_module_progress', {
               defaultValue: '{{level}} · Module {{current}} of {{total}}',
-              level: LEVEL_LABELS[level],
+              level: getCourseLevelLabel(level, t),
               current: moduleIndex + 1,
               total: totalModules,
             })}

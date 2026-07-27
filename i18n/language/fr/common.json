@@ -68,5 +68,13 @@
   "try_again": "Réessayer",
   "try_again_later": "Veuillez réessayer dans un instant.",
   "load_more": "Charger plus",
-  "retry": "Réessayer"
+  "retry": "Réessayer",
+  "something_went_wrong": "Une erreur s'est produite. Veuillez réessayer.",
+  "loading": "Chargement…",
+  "updating": "Mise à jour…",
+  "tab_home": "Accueil",
+  "tab_practice": "Pratique",
+  "tab_coach": "Coach",
+  "tab_interviews": "Entretiens",
+  "tab_profile": "Profil"
 }

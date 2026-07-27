@@ -13,5 +13,8 @@
     "no_saved_cards": "No saved cards yet — add one to speed up checkout.",
     "remove_card_failed_title": "Couldn't remove card",
     "set_default": "Default",
-    "set_default_failed_title": "Couldn't update default card"
+    "set_default_failed_title": "Couldn't update default card",
+    "card_holder": "Card holder",
+    "name_surname": "Name surname",
+    "exp_date": "EXP DATE"
 }

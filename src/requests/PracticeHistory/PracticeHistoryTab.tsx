@@ -54,7 +54,7 @@ const PracticeHistoryTab = memo(() => {
     return (
       <View style={styles.container}>
         <Text category="h8-s" status="placeholder" center>
-          Loading practice history…
+          {t('request:loading_practice_history', {defaultValue: 'Loading practice history…'})}
         </Text>
       </View>
     );

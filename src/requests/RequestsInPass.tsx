@@ -62,7 +62,7 @@ const RequestsInPast = memo(() => {
           );
         })
         .catch((e: any) => {
-          if (!cancelled) setError(e?.message ?? "Couldn't load past applications.");
+          if (!cancelled) setError(e?.message ?? t('request:load_past_applications_failed', {defaultValue: "Couldn't load past applications."}));
         })
         .finally(() => {
           if (!cancelled) setIsLoading(false);
@@ -75,7 +75,7 @@ const RequestsInPast = memo(() => {
           setPastSessions(result.filter(item => item.status === 'Completed'));
         })
         .catch((e: any) => {
-          if (!cancelled) setError(e?.message ?? "Couldn't load past practice sessions.");
+          if (!cancelled) setError(e?.message ?? t('request:load_past_practice_failed', {defaultValue: "Couldn't load past practice sessions."}));
         })
         .finally(() => {
           if (!cancelled) setIsLoading(false);
@@ -95,7 +95,7 @@ const RequestsInPast = memo(() => {
       <Content contentContainerStyle={styles.content}>
         {isLoading ? (
           <Text category="h8-s" status="placeholder" center mt={24}>
-            Loading…
+            {t('common:loading', {defaultValue: 'Loading…'})}
           </Text>
         ) : error ? (
           <Text category="h8-s" status="danger" center mt={24}>

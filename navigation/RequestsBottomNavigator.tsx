@@ -1,4 +1,4 @@
-import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator, TransitionPresets } from "@react-navigation/stack";
 import React, { memo } from "react";
 import RequestsInPast from "src/requests/RequestsInPass";
 import RequestsSrc from "src/requests/RequestsSrc";
@@ -9,7 +9,7 @@ const Stack = createStackNavigator<RequestsBottomStackParamList>();
 const RequestsBottomNavigator = memo(() => {
   return (
     <Stack.Navigator
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ headerShown: false, ...TransitionPresets.SlideFromRightIOS }}
       initialRouteName="RequestsSrc"
     >
       <Stack.Screen name="RequestsSrc" component={RequestsSrc} />

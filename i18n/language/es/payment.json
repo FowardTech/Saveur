@@ -13,5 +13,8 @@
     "pay-now": "Pagar ahora",
     "payment-method": "Método de pago",
     "no-card-yet": "¡Aún no tienes una tarjeta agregada!",
-    "please-attach-card": "Por favor, agrega tu tarjeta para pagar tu trabajo. ¡Gracias!"
+    "please-attach-card": "Por favor, agrega tu tarjeta para pagar tu trabajo. ¡Gracias!",
+    "card_holder": "Titular de la tarjeta",
+    "name_surname": "Nombre y apellido",
+    "exp_date": "VENCE"
 }

@@ -7,9 +7,9 @@ import {
   StyleService,
   Layout,
   Icon,
-  Avatar,
 } from '@ui-kitten/components';
 import Flex from 'components/Flex';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import {globalStyle} from 'styles/globalStyle';
 import dayjs from 'utils/dayjs';
 import {useTranslation} from 'react-i18next';
@@ -52,7 +52,13 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
       activeOpacity={0.54}>
       <Layout style={styles.container} level="1">
         <Flex justify="flex-start" itemsCenter mv={16} mh={16}>
-          <Avatar source={item.logo} size="medium" shape="square" style={styles.avatar} />
+          <CompanyLogoAvatar
+            logoUrl={item.companyLogoUrl}
+            companyName={item.company}
+            size="medium"
+            shape="rounded"
+            style={styles.avatar}
+          />
           <View style={globalStyle.flexOne}>
             <Text category="h7" ml={16} maxWidth={220} bold numberOfLines={1}>
               {item.role}

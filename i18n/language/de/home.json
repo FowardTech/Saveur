@@ -1,5 +1,7 @@
 {
   "good_morning": "Guten Morgen!",
+  "good_afternoon": "Guten Tag!",
+  "good_evening": "Guten Abend!",
   "day_streak": "Tage in Folge",
   "sessions_this_week": "Sitzungen diese Woche",
   "average_score": "Durchschnittliche Punktzahl",

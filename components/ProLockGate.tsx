@@ -15,6 +15,12 @@ import {renderCenteredLabel} from 'utils/buttonLabel';
 interface ProLockGateProps {
   title?: string;
   description: string;
+  // 'premium' is for features gated behind Pro Premium/Pro Yearly
+  // specifically (Job Alerts, Learning Courses) — a plain monthly Pro
+  // subscriber will land on this gate too, so the heading/CTA copy needs to
+  // say "Pro Premium", not "Pro" (which they may already have). Defaults to
+  // 'pro' for every other Pro-gated screen, unchanged from before.
+  variant?: 'pro' | 'premium';
 }
 
 // Full-screen replacement for a Pro-only feature (Job Alerts, Networking
@@ -28,11 +34,12 @@ interface ProLockGateProps {
 // are pushed screens, not tab roots. Unlike the email-verification gate,
 // this one keeps a working back button — browsing away to a still-free
 // part of the app is a normal way out, not something to block.
-const ProLockGate = memo(({title, description}: ProLockGateProps) => {
+const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProps) => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const {bottom} = useLayout();
+  const isPremiumVariant = variant === 'premium';
 
   return (
     <Container style={styles.container}>
@@ -69,7 +76,7 @@ const ProLockGate = memo(({title, description}: ProLockGateProps) => {
             style={[globalStyle.icon40, {tintColor: theme['color-primary-500']}]}
           />
           <Text category="h5" bold center mt={20}>
-            This is a Pro feature
+            {isPremiumVariant ? 'This is a Pro Premium feature' : 'This is a Pro feature'}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={12} maxWidth={320}>
             {description}
@@ -79,7 +86,7 @@ const ProLockGate = memo(({title, description}: ProLockGateProps) => {
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
-            {renderCenteredLabel('See Pro plans', {stretch: false})}
+            {renderCenteredLabel(isPremiumVariant ? 'See Pro Premium plans' : 'See Pro plans', {stretch: false})}
           </Button>
         </Flex>
       </Content>

@@ -22,6 +22,7 @@ import { RootStackParamList, InterviewFeedbackScreenNavigationProp } from 'navig
 import { SkillScoreProps, StarBreakdownItemProps } from 'constants/Types';
 import * as feedbackService from 'services/feedbackService';
 import {isFeedbackPending} from 'services/feedbackService';
+import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 
 // Post-interview feedback. The session has already been finalized by the
 // time this screen mounts (LiveInterviewSession/CodingInterview both call
@@ -178,7 +179,7 @@ const InterviewFeedback = memo(() => {
         <Content padder contentContainerStyle={styles.content}>
           <Flex center vertical mt={60}>
             <Text category="h7" bold center>
-              No interview session to show feedback for.
+              {t('find:no_interview_session', { defaultValue: 'No interview session to show feedback for.' })}
             </Text>
           </Flex>
           <Button children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 32 }]} />
@@ -200,7 +201,7 @@ const InterviewFeedback = memo(() => {
         <Content padder contentContainerStyle={styles.content}>
           <Flex center vertical mt={60}>
             <Text category="h7" bold status="danger" center>
-              Could not load your feedback
+              {t('find:could_not_load_feedback', { defaultValue: 'Could not load your feedback' })}
             </Text>
             <Text category="h9-s" status="placeholder" center mt={8} maxWidth={280}>
               {error}
@@ -234,18 +235,24 @@ const InterviewFeedback = memo(() => {
           />
           {interviewType ? (
             <Text category="h8" status="placeholder" mt={12} center>
-              {interviewType}
+              {getInterviewTypeLabel(interviewType, t)}
             </Text>
           ) : null}
           {isLoading || (isScoringPending && !hasAnyRealScore) ? (
             <Text category="h9-s" status="placeholder" mt={8} center maxWidth={240}>
               {isScoringPending
-                ? "Your AI coach is still scoring this interview — this can take a moment."
-                : 'Scoring your interview…'}
+                ? t('find:still_scoring', {
+                    defaultValue: 'Your AI coach is still scoring this interview — this can take a moment.',
+                  })
+                : t('find:scoring_interview', { defaultValue: 'Scoring your interview…' })}
             </Text>
           ) : (
             <Button
-              children={isRegenerating ? 'Regenerating…' : 'Regenerate Feedback'}
+              children={
+                isRegenerating
+                  ? t('find:regenerating', { defaultValue: 'Regenerating…' })
+                  : t('find:regenerate_feedback', { defaultValue: 'Regenerate Feedback' })
+              }
               disabled={isRegenerating}
               status="basic"
               size="small"
@@ -306,11 +313,11 @@ const InterviewFeedback = memo(() => {
         {videoAnalysis ? (
           <>
             <Text category="h6" bold mt={16} mb={16}>
-              Video Analysis
+              {t('find:video_analysis', { defaultValue: 'Video Analysis' })}
             </Text>
             <View style={styles.skillsGrid}>
               <ProgressCard
-                title="Eye Contact"
+                title={t('find:eye_contact', { defaultValue: 'Eye Contact' })}
                 progress={videoAnalysis.eyeContactPct}
                 d={84}
                 strokeWidth={6}
@@ -325,7 +332,7 @@ const InterviewFeedback = memo(() => {
                 style={styles.skillCard}
               />
               <ProgressCard
-                title="Smiling"
+                title={t('find:smiling', { defaultValue: 'Smiling' })}
                 progress={videoAnalysis.smilePct}
                 d={84}
                 strokeWidth={6}
@@ -334,7 +341,7 @@ const InterviewFeedback = memo(() => {
                 style={styles.skillCard}
               />
               <ProgressCard
-                title="Confidence"
+                title={t('find:confidence', { defaultValue: 'Confidence' })}
                 progress={videoAnalysis.confidenceScore}
                 d={84}
                 strokeWidth={6}
@@ -353,15 +360,18 @@ const InterviewFeedback = memo(() => {
             <Layout level="2" style={styles.starRow}>
               <Flex justify="space-between" itemsCenter mb={12}>
                 <Text category="h7" bold>
-                  Speaking Pace
+                  {t('find:speaking_pace', { defaultValue: 'Speaking Pace' })}
                 </Text>
                 <Text category="h7" status="link" bold>
-                  {videoAnalysis.speakingRateWpm} wpm
+                  {t('find:wpm_value', {
+                    count: videoAnalysis.speakingRateWpm,
+                    defaultValue: '{{count}} wpm',
+                  })}
                 </Text>
               </Flex>
               <Flex justify="space-between" itemsCenter mb={videoAnalysis.fillerWordCount > 0 ? 8 : 12}>
                 <Text category="h7" bold>
-                  Filler Words
+                  {t('find:filler_words', { defaultValue: 'Filler Words' })}
                 </Text>
                 <Text category="h7" status="link" bold>
                   {videoAnalysis.fillerWordCount}
@@ -380,7 +390,7 @@ const InterviewFeedback = memo(() => {
               ) : null}
               <Flex justify="space-between" itemsCenter>
                 <Text category="h7" bold>
-                  Awkward Pauses
+                  {t('find:awkward_pauses', { defaultValue: 'Awkward Pauses' })}
                 </Text>
                 <Text category="h7" status="link" bold>
                   {videoAnalysis.silenceGapCount}

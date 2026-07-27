@@ -12,14 +12,16 @@
      @mipmap/ic_launcher_foreground is used as the source (not a separate
      splash_logo asset) because it already has generous transparent padding
      baked in (~46% content occupancy, from the adaptive-icon safe-zone fix)
-     — sized into a 480dp box here so the actual visible glyph renders at
-     roughly 220dp, matching the original splash design's intended size
-     (verified by compositing this exact box size over a mock phone canvas
-     before committing — the glyph sits well clear of the screen edges,
-     nothing cropped). -->
+     — sized into a 336dp box here so the actual visible glyph renders at
+     roughly 154dp, a more moderate size than the original 480dp box/~220dp
+     glyph (~70% scale-down, matching the equivalent reduction made to the
+     iOS LaunchScreen.storyboard logo) — the full-size mark read as too
+     dominant on the splash screen (verified by compositing this exact box
+     size over a mock phone canvas before committing — the glyph still sits
+     well clear of the screen edges, nothing cropped). -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <item android:gravity="center" android:width="480dp" android:height="480dp">
+    <item android:gravity="center" android:width="336dp" android:height="336dp">
         <bitmap android:src="@mipmap/ic_launcher_foreground" android:gravity="center" />
     </item>
 </layer-list>

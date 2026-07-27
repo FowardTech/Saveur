@@ -68,5 +68,13 @@
   "done": "Done",
   "try_again": "Try again",
   "try_again_later": "Please try again in a moment.",
-  "load_more": "Load more"
+  "load_more": "Load more",
+  "something_went_wrong": "Something went wrong. Please try again.",
+  "loading": "Loading…",
+  "updating": "Updating…",
+  "tab_home": "Home",
+  "tab_practice": "Practice",
+  "tab_coach": "Coach",
+  "tab_interviews": "Interviews",
+  "tab_profile": "Profile"
 }

@@ -13,5 +13,8 @@
   "no_saved_cards": "保存されたカードはまだありません — カードを追加すると、チェックアウトがスムーズになります。",
   "remove_card_failed_title": "カードを削除できませんでした",
   "set_default": "デフォルトに設定",
-  "set_default_failed_title": "デフォルトカードを更新できませんでした"
+  "set_default_failed_title": "デフォルトカードを更新できませんでした",
+  "card_holder": "カード名義人",
+  "name_surname": "姓名",
+  "exp_date": "有効期限"
 }

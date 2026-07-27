@@ -23,6 +23,8 @@ import { RootStackParamList } from 'navigation/types';
 import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
+import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
+import { AuthContext } from '../../AuthContext';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 
@@ -35,10 +37,11 @@ const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 // hands every one of those fields straight to MockInterviewSetup as initial
 // route params — the user lands there pre-filled and just taps Start.
 const ScheduleInterview = memo(() => {
-  const { goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
+  const { isPremium } = React.useContext(AuthContext);
 
   const [mode, setMode] = React.useState<Practice_Mode_Enum>(Practice_Mode_Enum.Voice);
   const [interviewType, setInterviewType] = React.useState<Interview_Type_Enum>(Interview_Type_Enum.Behavioral);
@@ -86,6 +89,30 @@ const ScheduleInterview = memo(() => {
     });
   };
 
+  // Video mode is a Pro Premium feature (see MockInterviewSetup.tsx's
+  // onSelectMode and saveur-backend/app/api/interviews.py's create_session,
+  // which is the actual enforcement point — this just avoids scheduling a
+  // reminder for a mode the user will get bounced from later).
+  const onSelectMode = (selected: Practice_Mode_Enum) => {
+    if (selected === Practice_Mode_Enum.Video && !isPremium) {
+      Alert.alert(
+        t('find:video_premium_gate_title', { defaultValue: 'Video is a Pro Premium feature' }),
+        t('find:video_premium_gate_body', {
+          defaultValue: 'Practicing on camera with video analysis needs Saveur Pro Premium or Pro (Yearly).',
+        }),
+        [
+          { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+          {
+            text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade' }),
+            onPress: () => navigate('Subscription'),
+          },
+        ],
+      );
+      return;
+    }
+    setMode(selected);
+  };
+
   const onSchedule = async () => {
     if (isSaving) return;
     if (!role.trim()) {
@@ -119,7 +146,7 @@ const ScheduleInterview = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('find:schedule_failed', { defaultValue: 'Could not schedule interview' }),
-        e?.message ?? 'Something went wrong. Please try again.',
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       );
     } finally {
       setIsSaving(false);
@@ -169,22 +196,28 @@ const ScheduleInterview = memo(() => {
         <Flex justify="flex-start" wrap mb={32}>
           {DATA_PRACTICE_MODES.map((item, i) => {
             const active = item.mode === mode;
+            const locked = item.mode === Practice_Mode_Enum.Video && !isPremium;
             return (
               <TouchableOpacity
                 key={i}
                 activeOpacity={0.7}
-                onPress={() => setMode(item.mode)}
+                onPress={() => onSelectMode(item.mode)}
                 style={[
                   styles.modeCard,
                   { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
                 ]}>
+                {locked ? (
+                  <View style={[styles.lockBadge, { backgroundColor: theme['background-basic-color-3'] }]}>
+                    <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]} />
+                  </View>
+                ) : null}
                 <Icon
                   pack="assets"
                   name={item.icon}
                   style={[globalStyle.icon24, { tintColor: active ? theme['color-primary-500'] : theme['text-placeholder-color'] }]}
                 />
                 <Text category="h8" bold mt={8} status={active ? 'link' : 'basic'}>
-                  {item.mode}
+                  {getPracticeModeLabel(item.mode, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -207,7 +240,7 @@ const ScheduleInterview = memo(() => {
                   { backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'] },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {item.type}
+                  {getInterviewTypeLabel(item.type, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -243,7 +276,7 @@ const ScheduleInterview = memo(() => {
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {item}
+                  {getDifficultyLabel(item, t)}
                 </Text>
               </TouchableOpacity>
             );
@@ -299,7 +332,7 @@ const ScheduleInterview = memo(() => {
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {min} min
+                  {min} {t('find:minutes_unit', { defaultValue: 'min' })}
                 </Text>
               </TouchableOpacity>
             );
@@ -343,6 +376,17 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 8,
     marginRight: '2%',
     marginBottom: 12,
+    position: 'relative',
+  },
+  lockBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipsWrap: {
     flexDirection: 'row',
