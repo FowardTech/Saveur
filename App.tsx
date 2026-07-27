@@ -179,8 +179,14 @@ export default function App() {
                 before checkout, with the real key from that request) does
                 the exact same SDK-configuration job on its own. */}
             {maintenance.enabled ? (
+              // `tools-outline` isn't a real Eva Icons name (there's no
+              // tools/wrench/hammer icon in that set at all) -- Icon can't
+              // resolve it to a component and crashes the whole app with
+              // "Element type is invalid ... but got: undefined" the moment
+              // maintenance mode is switched on, for every user. `settings-
+              // 2-outline` (a gear) is the closest real icon for this.
               <AppGateScreen
-                iconName="tools-outline"
+                iconName="settings-2-outline"
                 title={maintenance.title || 'Down for maintenance'}
                 message={maintenance.message || "We're making some improvements. Please check back shortly."}
               />
