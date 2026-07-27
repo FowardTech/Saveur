@@ -445,13 +445,22 @@ const HomeSrc = memo(() => {
                CareerBriefingDetail.tsx, which shows the complete narrative
                plus all priorities. */}
             <Text category="h9-s" numberOfLines={3} style={{ lineHeight: 21 }}>{briefing.narrative}</Text>
+            {/* status="primary" resolves to near-white in this theme (meant
+               for text sitting on a solid color-primary button, not a light
+               card) -- that's why "Read more" was invisible and only the
+               arrow showed. status="link" is what the rest of the app
+               already uses for this exact kind of inline text link (see
+               DailyIndustryNews.tsx's "Try again"). Right-aligned
+               (justify="flex-end") so it reads as a compact link tucked
+               under the truncated paragraph instead of a wide, oddly
+               spaced row. */}
             <Flex
-              justify="flex-start"
+              justify="flex-end"
               itemsCenter
-              mt={8}
+              mt={4}
               onPress={() => navigate('CareerBriefingDetail', { narrative: briefing.narrative!, priorities: briefing.priorities })}
             >
-              <Text category="h10" status="primary" bold>
+              <Text category="h10" status="link" bold>
                 {t('home:read_more', { defaultValue: 'Read more' })}
               </Text>
               <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { marginLeft: 4, tintColor: theme['color-primary-500'] }]} />
