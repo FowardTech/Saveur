@@ -61,7 +61,9 @@ const IRecommended = memo(({ item, onPress, ...rest }: RecommendedProps) => {
             />
           </TouchableOpacity>
           <Flex itemsCenter justify="flex-start">
-            <Icon pack="assets" name={item.gender} style={styles.icon} />
+            {/* See Personal.tsx for why the fallback is needed — `gender` is
+               optional, and Icon crashes app-wide on an undefined name. */}
+            <Icon pack="assets" name={item.gender ?? 'male'} style={styles.icon} />
             <Text category="h8-s">{item.age}</Text>
             <Layout style={styles.dot} level="5" />
             <Text category="h8-s">{item.experience} yrs paid experience</Text>

@@ -33,7 +33,13 @@ const Personal = memo(
         </Text>
         {moreInformation ? (
           <Flex itemsCenter mh={34} mb={16}>
-            <Icon pack="assets" name={user.gender} style={styles.icon} />
+            {/* `gender` is optional on UserProps — an undefined name here
+               renders <Icon name={undefined}>, which UI Kitten's icon
+               provider can't resolve to a component and crashes with
+               "Element type is invalid ... but got: undefined". Falls back
+               to 'male' rather than skip rendering, matching this icon's
+               prior always-rendered layout. */}
+            <Icon pack="assets" name={user.gender ?? 'male'} style={styles.icon} />
             <Text>{user.age}</Text>
             <Layout style={globalStyle.dot} level="5" />
             <Text>{user.experience} exp</Text>
