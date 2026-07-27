@@ -465,18 +465,10 @@ const HomeSrc = memo(() => {
               </Text>
               <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { marginLeft: 4, tintColor: theme['color-primary-500'] }]} />
             </Flex>
-            {briefing.priorities.length ? (
-              <View style={{ marginTop: 14 }}>
-                {briefing.priorities.map((p, i) => (
-                  <Flex key={i} justify="flex-start" itemsCenter mb={6}>
-                    <View style={[styles.priorityDot, { backgroundColor: theme['color-primary-500'] }]} />
-                    <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>
-                      <Text category="h10" bold>{p.label}</Text>{p.action ? ` — ${p.action}` : ''}
-                    </Text>
-                  </Flex>
-                ))}
-              </View>
-            ) : null}
+            {/* Priorities used to render here too — moved entirely into
+               CareerBriefingDetail.tsx (behind "Read more") so this card
+               stays a short, scannable preview rather than duplicating the
+               full breakdown on the dashboard itself. */}
           </Layout>
         ) : null}
         {goalTipsLoading && !goalTips ? (
