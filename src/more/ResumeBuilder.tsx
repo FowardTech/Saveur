@@ -234,10 +234,14 @@ const ResumeBuilder = memo(() => {
               activeOpacity={0.7}
               onPress={() => onImport(opt.key)}
               style={styles.importCard}>
+              {/* Was a hardcoded tintColor: '#181b22' (near-black) --
+                 invisible against a dark card background in dark mode.
+                 theme['text-basic-color'] tracks the theme correctly (dark
+                 text in light mode, light text in dark mode). */}
               <Icon
                 pack="assets"
                 name={opt.icon}
-                style={[globalStyle.icon24, { tintColor: '#181b22' }]}
+                style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
               />
               <Text category="h9" mt={8} bold center>
                 {opt.title}
@@ -433,13 +437,21 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Was justifyContent: 'space-between' with 5 cards in a 3-per-row grid --
+  // fine for a full row of 3, but the trailing row of 2 (Certificates,
+  // Transcript) got stretched to opposite edges of the screen with a huge
+  // gap between them, since space-between always spreads its children
+  // across the full row width regardless of how many there are. `gap`
+  // (RN 0.71+) keeps a fixed, consistent spacing between cards whether a
+  // row is full or not, closing that gap on the last row.
   importGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 10,
   },
   importCard: {
-    width: '31%',
+    width: '30%',
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
     alignItems: 'center',

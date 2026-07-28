@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ReText } from 'react-native-redash';
 import Svg, { Circle } from 'react-native-svg';
+import { useTheme } from '@ui-kitten/components';
 import Flex from './Flex';
 import Text from './Text';
 
@@ -27,6 +28,7 @@ export default function CircleProgressBar({
   d,
   strokeWidth = 4,
 }: CircleProps) {
+  const theme = useTheme();
   const progress = useSharedValue(0);
   // Keep the stroke fully inside the d x d SVG canvas: R must leave room for
   // half the strokeWidth on every side, otherwise the ring's outer edge
@@ -84,7 +86,10 @@ export default function CircleProgressBar({
         />
       </Svg>
       <Flex itemsCenter>
-        <ReText style={styles.progressText} text={progressText} />
+        <ReText
+          style={[styles.progressText, { color: theme['text-basic-color'] }]}
+          text={progressText}
+        />
         <Text category="h8" mt={2} ml={1}>
           %
         </Text>
@@ -105,6 +110,5 @@ const styles = StyleSheet.create({
     fontSize: 20,
     lineHeight: 24,
     fontFamily: 'PlusJakartaSans-Medium',
-    color: '#272755',
   },
 });

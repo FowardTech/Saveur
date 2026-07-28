@@ -381,6 +381,13 @@ const Chat = memo(() => {
           renderSend={renderSend}
           messagesContainerStyle={{ paddingBottom: 32 }}
           renderInputToolbar={renderInputToolbar}
+          // gifted-chat's Composer has its own hardcoded default text color
+          // (dark gray/black) with no idea this app has a dark theme --
+          // without these it renders unreadable dark-on-dark text in the
+          // input pill. textInputStyle covers what's actually typed;
+          // placeholderTextColor covers the empty-state hint text.
+          textInputStyle={{ color: theme['text-basic-color'] }}
+          placeholderTextColor={theme['text-hint-color']}
           showUserAvatar
           alwaysShowSend
           renderMessageImage={(props) => {
