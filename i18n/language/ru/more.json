@@ -432,6 +432,7 @@
   "skip_for_now": "Пропустить пока — остаться на бесплатном",
   "specific_topic_label": "Конкретная тема (необязательно)",
   "start": "Начать",
+  "student_badge": "Студент",
   "student_code_invalid": "Код не совпадает. Попробуйте снова.",
   "student_discount_active_body": "{{university}} · скидка 3% до {{date}}",
   "student_discount_active_title": "Студенческая скидка активна",

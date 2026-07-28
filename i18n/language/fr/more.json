@@ -432,6 +432,7 @@
   "skip_for_now": "Ignorer pour l'instant — rester en Gratuit",
   "specific_topic_label": "Sujet précis (facultatif)",
   "start": "Démarrer",
+  "student_badge": "Étudiant",
   "student_code_invalid": "Ce code ne correspond pas. Veuillez réessayer.",
   "student_discount_active_body": "{{university}} · 3 % de réduction jusqu'au {{date}}",
   "student_discount_active_title": "Réduction étudiant active",

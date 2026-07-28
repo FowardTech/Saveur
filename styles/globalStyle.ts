@@ -61,16 +61,21 @@ export const globalStyle = StyleSheet.create({
 
     elevation: 12,
   },
+  // Was shadowOpacity 0.58 / shadowRadius 12 / elevation 24 — a genuinely
+  // huge blue glow around every primary button, especially visible on
+  // Android where `elevation` alone (no opacity control) rendered it as a
+  // heavy dark halo. Toned down to a subtle lift instead of a floating-glow
+  // effect.
   shadowBtn: {
     shadowColor: '#2574FF',
     shadowOffset: {
       width: 0,
-      height: 5,
+      height: 2,
     },
-    shadowOpacity: 0.58,
-    shadowRadius: 12.0,
+    shadowOpacity: 0.2,
+    shadowRadius: 6.0,
 
-    elevation: 24,
+    elevation: 4,
   },
   shadowFilter: {
     shadowColor: '#FE9870',

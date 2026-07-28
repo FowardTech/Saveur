@@ -18,6 +18,7 @@ import UserAvatar from 'components/UserAvatar';
 import { MainBottomTabStackParamList } from 'navigation/types';
 import ProfileTag from './components/ProfileTag';
 import { AuthContext } from '../../AuthContext';
+import * as studentVerificationService from 'services/studentVerificationService';
 
 const ProfileSrc = memo(() => {
   const navigation =
@@ -27,6 +28,15 @@ const ProfileSrc = memo(() => {
   const theme = useTheme();
   const { t } = useTranslation(['more', 'auth', 'common']);
   const { profile, deleteAccount, isPro } = React.useContext(AuthContext);
+
+  // Student badge -- shown until graduation (i.e. exactly as long as
+  // student_discount_active is true server-side; process_graduations()
+  // flips it off automatically at graduation, so this needs no separate
+  // "has it been long enough" check of its own).
+  const [studentStatus, setStudentStatus] = React.useState<studentVerificationService.StudentProfile | null>(null);
+  React.useEffect(() => {
+    studentVerificationService.getStatus().then(setStudentStatus).catch(() => {});
+  }, []);
 
   const _onEdit = () => navigate('Profile', { screen: 'EditProfile' });
 
@@ -89,7 +99,18 @@ const ProfileSrc = memo(() => {
         )}
       />
       <Content contentContainerStyle={styles.content} padder>
-        <UserAvatar uri={profile?.avatarUrl} name={profile?.name} size="giant" style={styles.avatar} />
+        <UserAvatar uri={profile?.avatarUrl} name={profile?.name} size="giant" style={studentStatus?.studentDiscountActive ? styles.avatarWithBadge : styles.avatar} />
+        {studentStatus?.studentDiscountActive ? (
+          <View style={[styles.studentBadge, { backgroundColor: theme['color-primary-transparent-200'], alignSelf: 'center' }]}>
+            <Icon pack="eva" name="award-outline" style={{ width: 14, height: 14, tintColor: theme['color-primary-500'] }} />
+            {/* status="link" (not "primary" -- see the delete-icon fix
+               above and ProfileSrc's siblings for why: "primary" resolves
+               to near-white, invisible on a light tinted background). */}
+            <Text category="h10" bold status="link" ml={4}>
+              {t('more:student_badge', { defaultValue: 'Student' })}
+            </Text>
+          </View>
+        ) : null}
         <ProfileTag
           label={t('auth:full_name')}
           title={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}
@@ -120,7 +141,15 @@ const ProfileSrc = memo(() => {
           onPress={onDeleteAccount}
           disabled={isDeletingAccount}
           style={[styles.deleteRow, {opacity: isDeletingAccount ? 0.6 : 1}]}>
-          <View style={[styles.deleteIconWrap, {backgroundColor: theme['color-danger-100']}]}>
+          {/* Was backgroundColor: theme['color-danger-100'] -- that token is
+             hardcoded to the same bright pink-red in both themes (see
+             appTheme.json), which in dark mode sits too close in hue/
+             lightness to color-danger-500 (the icon's own tint) for the
+             icon to read against it. color-danger-transparent-200 is the
+             same semi-transparent danger tint already used successfully
+             elsewhere in the app (e.g. JDAnalyzer's missing-skills chips)
+             and keeps real contrast against the icon in both themes. */}
+          <View style={[styles.deleteIconWrap, {backgroundColor: theme['color-danger-transparent-200']}]}>
             <Icon
               pack="eva"
               name="trash-2-outline"
@@ -150,6 +179,19 @@ const themedStyles = StyleService.create({
   avatar: {
     alignSelf: 'center',
     marginBottom: 48,
+  },
+  avatarWithBadge: {
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  studentBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 99,
+    marginBottom: 36,
   },
   deleteRow: {
     flexDirection: 'row',

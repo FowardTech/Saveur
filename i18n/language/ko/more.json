@@ -432,6 +432,7 @@
   "skip_for_now": "지금은 건너뛰기 — 무료로 유지",
   "specific_topic_label": "세부 주제 (선택 사항)",
   "start": "시작",
+  "student_badge": "학생",
   "student_code_invalid": "코드가 일치하지 않습니다. 다시 시도해 주세요.",
   "student_discount_active_body": "{{university}} · {{date}}까지 3% 할인",
   "student_discount_active_title": "학생 할인 적용 중",

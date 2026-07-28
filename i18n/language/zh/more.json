@@ -432,6 +432,7 @@
   "skip_for_now": "暂时跳过 — 继续使用免费版",
   "specific_topic_label": "具体主题（可选）",
   "start": "开始",
+  "student_badge": "学生",
   "student_code_invalid": "验证码不匹配,请重试。",
   "student_discount_active_body": "{{university}} · 9折优惠至{{date}}",
   "student_discount_active_title": "学生优惠已生效",

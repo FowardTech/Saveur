@@ -432,6 +432,7 @@
   "skip_for_now": "今はスキップ — 無料プランのまま",
   "specific_topic_label": "特定のトピック（任意）",
   "start": "開始",
+  "student_badge": "学生",
   "student_code_invalid": "コードが一致しません。もう一度お試しください。",
   "student_discount_active_body": "{{university}} ・ {{date}}まで3%オフ",
   "student_discount_active_title": "学生割引が有効です",

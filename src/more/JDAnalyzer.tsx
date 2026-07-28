@@ -77,6 +77,7 @@ const JDAnalyzer = memo(() => {
         </Text>
         <Input
           multiline
+          scrollEnabled
           textStyle={styles.jdText}
           style={styles.jdInput}
           value={jd}
@@ -179,8 +180,14 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     // Fixed height (not minHeight) so pasting a long job description makes
     // the text scroll inside the box instead of pushing the box itself
-    // (and everything below it) further down the screen every keystroke.
-    height: 200,
+    // (and everything below it, including the Analyze button) further down
+    // the screen every keystroke. A fixed height alone doesn't actually
+    // clip a multiline TextInput's content though -- without
+    // `scrollEnabled` on the Input (above) and `overflow: 'hidden'` here,
+    // the text just kept rendering past the box's bottom edge instead of
+    // scrolling inside it, which is what was actually happening before.
+    height: 160,
+    overflow: 'hidden',
   },
   jdText: {
     height: '100%',

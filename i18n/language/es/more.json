@@ -432,6 +432,7 @@
   "skip_for_now": "Omitir por ahora — quedarme en Gratis",
   "specific_topic_label": "Tema específico (opcional)",
   "start": "Comenzar",
+  "student_badge": "Estudiante",
   "student_code_invalid": "Ese código no coincide. Inténtalo de nuevo.",
   "student_discount_active_body": "{{university}} · 3% de descuento hasta {{date}}",
   "student_discount_active_title": "Descuento de estudiante activo",
