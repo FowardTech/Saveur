@@ -37,12 +37,15 @@ export interface NotificationItemProps {
 // Per-kind icon + color — kinds come from the backend's Notification.kind
 // column (see saveur-backend/app/services/job_search_service.py's
 // "job_alert", app/api/goals.py's "goal_tip", app/api/interviews.py's
-// "feedback_ready"). Anything else (a plain/system notification with no
-// recognized kind) falls back to a generic bell.
-const KIND_STYLE: Record<string, {icon: string; status: 'primary' | 'warning' | 'success' | 'basic'}> = {
+// "feedback_ready", app/api/admin.py's send_campaign "admin_broadcast" —
+// the admin dashboard's Notifications page composer). Anything else (a
+// plain/system notification with no recognized kind) falls back to a
+// generic bell.
+const KIND_STYLE: Record<string, {icon: string; status: 'primary' | 'warning' | 'success' | 'basic' | 'info'}> = {
   job_alert: {icon: 'briefcase-outline', status: 'primary'},
   goal_tip: {icon: 'bulb-outline', status: 'warning'},
   feedback_ready: {icon: 'checkmark-circle-2-outline', status: 'success'},
+  admin_broadcast: {icon: 'radio-outline', status: 'info'},
 };
 
 const ApplicationItem = ({ item, onPress }: NotificationItemProps) => {
@@ -55,6 +58,7 @@ const ApplicationItem = ({ item, onPress }: NotificationItemProps) => {
       case 'primary': return {bg: theme['color-primary-transparent-200'], fg: theme['color-primary-500']};
       case 'warning': return {bg: theme['color-warning-transparent-200'] ?? theme['color-warning-100'], fg: theme['color-warning-500']};
       case 'success': return {bg: theme['color-success-transparent-200'] ?? theme['color-success-100'], fg: theme['color-success-500']};
+      case 'info': return {bg: theme['color-info-transparent-200'] ?? theme['color-info-100'], fg: theme['color-info-500']};
       default: return {bg: theme['background-basic-color-2'], fg: theme['text-placeholder-color']};
     }
   };
