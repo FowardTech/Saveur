@@ -185,20 +185,17 @@ const Chat = memo(() => {
     </Send>
   );
 
-  // Appends a small local confirmation bubble (not sent to the backend —
-  // just visual feedback that the upload actually happened) after a
-  // successful attach/camera/photo-library action below.
+  // Appends a small confirmation bubble after a successful attach/camera/
+  // photo-library action below. Was setMessages-only (React state, nothing
+  // persisted) — the bubble looked fine until the user navigated away and
+  // back, at which point getChatHistory() re-read the AsyncStorage thread
+  // and this notice simply wasn't in it, so it silently disappeared. Now
+  // persists via coachService.appendLocalNote (same store sendMessage
+  // writes to) so it's part of the real thread, same as everything else.
   const appendAttachmentNotice = React.useCallback((file: ImportedFileInfo) => {
-    setMessages(previous =>
-      GiftedChat.append(previous, [
-        {
-          _id: `attach_${Date.now()}`,
-          text: `📎 Attached: ${file.name}`,
-          createdAt: Date.now(),
-          user: ME_USER,
-        },
-      ]),
-    );
+    coachService.appendLocalNote(`📎 Attached: ${file.name}`).then(note => {
+      setMessages(previous => GiftedChat.append(previous, [toGiftedMessage(note)]));
+    });
   }, []);
 
   const [isAttaching, setIsAttaching] = React.useState(false);

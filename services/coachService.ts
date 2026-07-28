@@ -257,6 +257,30 @@ export async function clearChatHistory(): Promise<void> {
   await AsyncStorage.setItem(EKeyAsyncStorage.coachChatHistory, JSON.stringify([GREETING_MESSAGE]));
 }
 
+/**
+ * Persists a local-only bubble (no backend round-trip — used for the
+ * "📎 Attached: filename" confirmation Chat.tsx shows after a successful
+ * file/photo attach) into the same AsyncStorage thread sendMessage/
+ * sendVoiceMessage write to. Was previously added straight to the screen's
+ * React state via setMessages and nowhere else — harmless while the screen
+ * stayed mounted, but the notice silently vanished the moment the user
+ * navigated away and back, since getChatHistory() on remount only ever
+ * reads from this same AsyncStorage store, which never had it. Returns the
+ * persisted message so the caller can still append it to local state
+ * immediately without waiting on a re-read.
+ */
+export async function appendLocalNote(text: string): Promise<CoachChatMessageProps> {
+  const history = await readHistory();
+  const note: CoachChatMessageProps = {
+    id: `note_${Date.now()}`,
+    role: 'user',
+    text,
+    createdAt: Date.now(),
+  };
+  await writeHistory([...history, note]);
+  return note;
+}
+
 // ---- Suggested topics (GET /api/v1/coach/suggested-topics) ----------------
 // Used to be constants/Data.ts's DATA_MESSAGES — a hardcoded array of 4
 // fixed strings with no service call anywhere, so literally every user saw
