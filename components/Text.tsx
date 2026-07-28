@@ -186,10 +186,13 @@ export default memo(
             // especially on Android, which generally won't fake-bold a
             // custom typeface the way it does the system font. Referencing
             // the actual bold TTF by name is the standard, reliable
-            // cross-platform fix — see assets/fonts/Roboto-*.ttf
-            // (Google's own Roboto, Apache-2.0 licensed) and
-            // react-native.config.js's asset link.
-            fontFamily: bold ? 'Roboto-Bold' : 'Roboto-Regular',
+            // cross-platform fix — see assets/fonts/PlusJakartaSans-*.ttf
+            // (SIL Open Font License, via Google Fonts) and
+            // react-native.config.js's asset link. Was Roboto before this;
+            // switched at the user's request to more closely match a
+            // reference (Google Sans-style) look, since Google Sans itself
+            // is proprietary and not available for bundling.
+            fontFamily: bold ? 'PlusJakartaSans-Bold' : 'PlusJakartaSans-Regular',
             fontWeight: bold ? 'bold' : '400',
           },
           style,

@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   textPlaceholder: {
-    fontFamily: 'GothamPro-Medium',
+    fontFamily: 'PlusJakartaSans-Medium',
     fontSize: 10,
     lineHeight: 9.57,
     color: '#FFFFFF',

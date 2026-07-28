@@ -1,8 +1,8 @@
 {
   "version": 1.0,
   "strict": {
-    "text-font-family": "GothamPro",
-    "text-font-family-medium": "GothamPro-Medium",
+    "text-font-family": "PlusJakartaSans-Regular",
+    "text-font-family-medium": "PlusJakartaSans-Medium",
     "text-font-primary-bold": "DCondensed-Bold",
     "text-heading-1-font-size": 34,
     "text-heading-1-font-weight": "700",

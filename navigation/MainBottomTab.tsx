@@ -269,7 +269,7 @@ const themedStyles = StyleService.create({
     borderTopWidth: -1
   },
   styleLabel: {
-    fontFamily: "Roboto-Medium",
+    fontFamily: "PlusJakartaSans-Medium",
     fontSize: 11,
     lineHeight: 24,
   },

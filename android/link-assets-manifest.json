@@ -22,6 +22,18 @@
       "sha1": "ee2c78fd0af8aa895f15a93f9a61e13a960c17f3"
     },
     {
+      "path": "assets/fonts/PlusJakartaSans-Bold.ttf",
+      "sha1": "606f1b32433c9b6902d97c657f9b3a2f89bab582"
+    },
+    {
+      "path": "assets/fonts/PlusJakartaSans-Medium.ttf",
+      "sha1": "c328c76cab7078b89d925d73809f03c12a00143a"
+    },
+    {
+      "path": "assets/fonts/PlusJakartaSans-Regular.ttf",
+      "sha1": "ea07d33f23fb6c4856a642d035c463dc99a7f88a"
+    },
+    {
       "path": "assets/fonts/Roboto-Bold.ttf",
       "sha1": "3e455f517354a45807648fbd3d71adbab2f4e905"
     },

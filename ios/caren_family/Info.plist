@@ -76,6 +76,9 @@
 		<string>Roboto-Medium.ttf</string>
 		<string>Roboto-Regular.ttf</string>
 		<string>Roboto-Bold.ttf</string>
+		<string>PlusJakartaSans-Regular.ttf</string>
+		<string>PlusJakartaSans-Medium.ttf</string>
+		<string>PlusJakartaSans-Bold.ttf</string>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

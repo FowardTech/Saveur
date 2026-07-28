@@ -392,7 +392,7 @@ const themedStyles = StyleService.create({
     borderWidth: 0,
   },
   editorText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'PlusJakartaSans-Regular',
     fontSize: 13,
     minHeight: 200,
     textAlignVertical: 'top',
@@ -403,13 +403,13 @@ const themedStyles = StyleService.create({
     minHeight: 60,
   },
   stdinText: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'PlusJakartaSans-Regular',
     fontSize: 13,
     minHeight: 52,
     textAlignVertical: 'top',
   },
   mono: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'PlusJakartaSans-Regular',
   },
   resultBox: {
     marginTop: 16,

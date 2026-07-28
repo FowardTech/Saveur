@@ -440,14 +440,14 @@ const themedStyles = StyleService.create({
     fontSize: 15,
     fontWeight: "400",
     lineHeight: 24,
-    fontFamily: "Roboto-Regular",
+    fontFamily: "PlusJakartaSans-Regular",
   },
   rightTextStyle: {
     color: "text-primary-color",
     fontSize: 15,
     fontWeight: "400",
     lineHeight: 24,
-    fontFamily: "Roboto-Regular",
+    fontFamily: "PlusJakartaSans-Regular",
   },
   wrapperLeftStyle: {
     borderBottomLeftRadius: 4,

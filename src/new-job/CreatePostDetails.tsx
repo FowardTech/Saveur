@@ -307,7 +307,7 @@ const themedStyles = StyleService.create({
     marginTop: 8,
   },
   textStyle: {
-    fontFamily: 'Roboto-Regular',
+    fontFamily: 'PlusJakartaSans-Regular',
     fontSize: 15,
     fontWeight: '400',
     lineHeight: 24,
