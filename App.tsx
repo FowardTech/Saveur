@@ -1,7 +1,7 @@
 import React from 'react';
 import 'i18n/config';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { Appearance, Linking, LogBox, StatusBar } from 'react-native';
+import { Appearance, AppState, Linking, LogBox, StatusBar } from 'react-native';
 import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
 import { default as darkTheme } from 'constants/theme/dark.json';
 import { default as lightTheme } from 'constants/theme/light.json';
@@ -62,12 +62,30 @@ export default function App() {
   // auto-switch to dark at sunset will flip this app over too, without the
   // user needing to relaunch it.
   React.useEffect(() => {
-    const subscription = Appearance.addChangeListener(({colorScheme}) => {
+    const syncFromSystem = () => {
       if (!hasExplicitPreference.current) {
-        setTheme(colorScheme === 'dark' ? 'dark' : 'light');
+        setTheme(Appearance.getColorScheme() === 'dark' ? 'dark' : 'light');
       }
+    };
+    const subscription = Appearance.addChangeListener(syncFromSystem);
+    // Android reliability fallback (this is the actual fix for "auto
+    // dark/light doesn't work correctly on Android"): on several Android/RN
+    // combinations, Appearance.addChangeListener silently misses or delays
+    // the event when the system theme flips while this app is backgrounded
+    // -- e.g. a phone set to auto-switch to dark at sunset while the app
+    // sits in the background never gets the callback, so the app comes back
+    // to the foreground still in the old theme until something else happens
+    // to trigger a re-render. Re-reading Appearance.getColorScheme() (a
+    // cheap synchronous call, not the event's possibly-stale colorScheme
+    // param) every time the app returns to the foreground catches anything
+    // the listener above missed, independent of whether the listener fired.
+    const appStateSub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') syncFromSystem();
     });
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+      appStateSub.remove();
+    };
   }, []);
 
   // Admin-configurable maintenance mode / forced update gate — see
