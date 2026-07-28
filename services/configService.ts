@@ -94,6 +94,16 @@ export interface AboutConfig {
   website_url: string;
 }
 
+// App Store / Play Store listing identifiers (product request item) — used
+// by utils/appRating.ts's post-first-interview/first-course review prompt.
+// ios_app_store_id starts blank until an admin sets it (app not published
+// yet); the prompt safely no-ops on iOS until then, same as the old
+// hardcoded-constant behavior it replaced.
+export interface StoreConfig {
+  ios_app_store_id: string;
+  android_package_name: string;
+}
+
 export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
@@ -101,6 +111,7 @@ export interface AppConfig {
   appsflyer: AppsFlyerConfig;
   faq: FaqConfig;
   about: AboutConfig;
+  store: StoreConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -138,6 +149,7 @@ const DEFAULT_CONFIG: AppConfig = {
   appsflyer: {enabled: false, dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
   faq: {items: []},
   about: {tagline: '', description: '', contact_email: '', website_url: ''},
+  store: {ios_app_store_id: '', android_package_name: 'com.saveur.app'},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -213,6 +225,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
       appsflyer: {...DEFAULT_CONFIG.appsflyer, ...data.appsflyer},
       faq: {...DEFAULT_CONFIG.faq, ...data.faq},
       about: {...DEFAULT_CONFIG.about, ...data.about},
+      store: {...DEFAULT_CONFIG.store, ...data.store},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {

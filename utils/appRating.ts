@@ -1,6 +1,7 @@
 import {Linking, Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {EKeyAsyncStorage} from 'constants/Types';
+import * as configService from 'services/configService';
 
 // ---------------------------------------------------------------------------
 // App Store / Play Store review prompt — per explicit request, shown after
@@ -9,10 +10,15 @@ import {EKeyAsyncStorage} from 'constants/Types';
 // nagging for a rating is against both platforms' review guidelines and is
 // just bad UX).
 //
-// Fill in IOS_APP_STORE_ID once the app has a real App Store Connect listing
-// (App Information -> Apple ID — the numeric id in the app's App Store URL,
-// e.g. apps.apple.com/us/app/name/id1234567890 -> "1234567890"). Until then,
-// the iOS path is a safe no-op rather than opening a broken/placeholder URL.
+// ios_app_store_id / android_package_name are admin-configurable (product
+// request item) — see services/configService.ts's StoreConfig and
+// saveur-backend's app_config_service.py's "store" section. Used to be
+// hardcoded constants here, which meant the iOS review prompt could only
+// ever start working after someone edited this file and shipped a new app
+// release, once the App Store Connect listing existed. Now an admin pastes
+// the numeric Apple ID into the dashboard the moment the app goes live — no
+// release needed. Still a safe no-op on iOS until that id is set, same
+// fail-open behavior as before.
 //
 // Deliberately uses Linking to the store listing rather than the native
 // in-app review popup (SKStoreReviewController on iOS / Play In-App Review
@@ -27,15 +33,13 @@ import {EKeyAsyncStorage} from 'constants/Types';
 // cleanly against this project's New Architecture setup.
 // ---------------------------------------------------------------------------
 
-const IOS_APP_STORE_ID = ''; // e.g. '1234567890' — set once published
-const ANDROID_PACKAGE_NAME = 'com.saveur.app';
-
 function storeReviewUrl(): string | null {
+  const store = configService.getCachedConfig().store;
   if (Platform.OS === 'ios') {
-    if (!IOS_APP_STORE_ID) return null;
-    return `itms-apps://itunes.apple.com/app/id${IOS_APP_STORE_ID}?action=write-review`;
+    if (!store.ios_app_store_id) return null;
+    return `itms-apps://itunes.apple.com/app/id${store.ios_app_store_id}?action=write-review`;
   }
-  return `market://details?id=${ANDROID_PACKAGE_NAME}`;
+  return `market://details?id=${store.android_package_name || 'com.saveur.app'}`;
 }
 
 async function hasPromptedAlready(): Promise<boolean> {
