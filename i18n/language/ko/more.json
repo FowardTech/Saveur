@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "업로드 실패",
   "documents_uploading": "업로드 중…",
   "downgrade": "이 플랜으로 전환",
+  "download_docx": "DOCX 다운로드",
+  "download_pdf": "PDF 다운로드",
   "download_receipt": "영수증 다운로드",
   "downloading_receipt": "다운로드 중…",
   "duration_min": "{{min}}분",

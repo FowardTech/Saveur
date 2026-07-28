@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "Upload failed",
   "documents_uploading": "Uploading…",
   "downgrade": "Switch to this plan",
+  "download_docx": "Download DOCX",
+  "download_pdf": "Download PDF",
   "download_receipt": "Download receipt",
   "downloading_receipt": "Downloading…",
   "duration_min": "{{min}} min",

@@ -38,3 +38,25 @@ export async function generateCoverLetter(input: CoverLetterInput): Promise<stri
   }
   return data.cover_letter;
 }
+
+/**
+ * Renders the letter text the caller already has in memory into a real
+ * PDF/DOCX (POST /api/v1/resume/cover-letter/export) and returns a
+ * fetchable https download url. Cover letters aren't persisted server-side
+ * (generate-on-demand, no DB row/id — see generateCoverLetter above), so
+ * the text is sent back up rather than referenced by id. Was previously
+ * missing entirely: CoverLetterGenerator.tsx's only action on a finished
+ * letter was Share.share({message: letter}), a plain-text share since
+ * there was no real file to hand the share sheet.
+ */
+export async function exportCoverLetter(
+  text: string,
+  format: 'pdf' | 'docx' = 'pdf',
+): Promise<{url?: string}> {
+  const {data} = await apiClient.post<{url?: string}>('/api/v1/resume/cover-letter/export', {
+    text,
+    format,
+  });
+  const isFetchableUrl = typeof data.url === 'string' && /^https?:\/\//i.test(data.url);
+  return {url: isFetchableUrl ? data.url : undefined};
+}

@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "上传失败",
   "documents_uploading": "上传中…",
   "downgrade": "切换到此计划",
+  "download_docx": "下载 DOCX",
+  "download_pdf": "下载 PDF",
   "download_receipt": "下载收据",
   "downloading_receipt": "下载中…",
   "duration_min": "{{min}} 分钟",

@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "فشل الرفع",
   "documents_uploading": "جارٍ الرفع…",
   "downgrade": "التبديل إلى هذه الخطة",
+  "download_docx": "تنزيل DOCX",
+  "download_pdf": "تنزيل PDF",
   "download_receipt": "تنزيل الإيصال",
   "downloading_receipt": "جارٍ التنزيل…",
   "duration_min": "{{min}} دقيقة",

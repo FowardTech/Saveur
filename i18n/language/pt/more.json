@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "Falha no envio",
   "documents_uploading": "Enviando…",
   "downgrade": "Mudar para este plano",
+  "download_docx": "Baixar DOCX",
+  "download_pdf": "Baixar PDF",
   "download_receipt": "Baixar recibo",
   "downloading_receipt": "Baixando…",
   "duration_min": "{{min}} min",

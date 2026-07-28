@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "Hochladen fehlgeschlagen",
   "documents_uploading": "Wird hochgeladen…",
   "downgrade": "Zu diesem Plan wechseln",
+  "download_docx": "DOCX herunterladen",
+  "download_pdf": "PDF herunterladen",
   "download_receipt": "Quittung herunterladen",
   "downloading_receipt": "Wird heruntergeladen…",
   "duration_min": "{{min}} Min.",

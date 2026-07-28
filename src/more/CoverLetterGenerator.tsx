@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Alert, Share, View } from 'react-native';
+import { Alert, Platform, Share, View } from 'react-native';
+import RNBlobUtil from 'react-native-blob-util';
 import {
   TopNavigation,
   StyleService,
@@ -40,6 +41,7 @@ const CoverLetterGenerator = memo(() => {
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [letter, setLetter] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [downloadingFormat, setDownloadingFormat] = React.useState<'pdf' | 'docx' | null>(null);
 
   const onGenerate = async () => {
     if (!company.trim() || !role.trim() || isGenerating) return;
@@ -64,9 +66,57 @@ const CoverLetterGenerator = memo(() => {
     }
   };
 
-  const onShare = () => {
-    if (!letter) return;
-    Share.share({ message: letter }).catch(() => {});
+  // Was a single "Share" button that did Share.share({message: letter}) —
+  // a plain-text share, since there was no real file. Replaced with two
+  // explicit "Download as ___" buttons (same pattern as GenerateResume.tsx's
+  // onDownload) that render a real PDF/DOCX server-side and hand the OS a
+  // real local file — a remote url shared/downloaded directly only ever
+  // produces a web-link share on either platform, never an actual file.
+  const onDownload = async (format: 'pdf' | 'docx') => {
+    if (!letter || downloadingFormat) return;
+    setDownloadingFormat(format);
+    const filename = `Cover Letter.${format}`;
+    try {
+      const { url } = await coverLetterService.exportCoverLetter(letter, format);
+      if (!url) {
+        await Share.share({ message: letter, title: filename });
+        return;
+      }
+      if (Platform.OS === 'android') {
+        await RNBlobUtil.config({
+          addAndroidDownloads: {
+            useDownloadManager: true,
+            notification: true,
+            title: filename,
+            description: t('more:resume_downloading', { defaultValue: 'Downloading {{label}}…', label: filename }),
+            mime:
+              format === 'pdf'
+                ? 'application/pdf'
+                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            mediaScannable: true,
+            path: `${RNBlobUtil.fs.dirs.DownloadDir}/${filename}`,
+          },
+        }).fetch('GET', url);
+        Alert.alert(
+          t('more:resume_download_started_title', { defaultValue: 'Download started' }),
+          t('more:resume_download_started_message', {
+            defaultValue: '{{filename}} is downloading to your Downloads folder.',
+            filename,
+          }),
+        );
+      } else {
+        const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
+        const res = await RNBlobUtil.config({ path: dest, overwrite: true }).fetch('GET', url);
+        await Share.share({ url: `file://${res.path()}`, title: filename });
+      }
+    } catch (e: any) {
+      Alert.alert(
+        t('more:resume_download_failed_title', { defaultValue: "Couldn't download the file" }),
+        e?.message ?? t('more:resume_download_failed_message', { defaultValue: 'Please try again in a moment.' }),
+      );
+    } finally {
+      setDownloadingFormat(null);
+    }
   };
 
   if (!isPro) {
@@ -142,13 +192,39 @@ const CoverLetterGenerator = memo(() => {
         {letter ? (
           <View style={styles.letterBox}>
             <Text category="para-m" style={styles.letterText}>{letter}</Text>
-            <Flex justify="space-between" mt={16}>
-              <Button size="small" appearance="outline" style={globalStyle.flexOne} onPress={onGenerate}>
-                {t('more:regenerate', { defaultValue: 'Regenerate' })}
+            <Button
+              size="small"
+              appearance="outline"
+              style={{ marginTop: 16 }}
+              disabled={!!downloadingFormat}
+              onPress={onGenerate}
+            >
+              {t('more:regenerate', { defaultValue: 'Regenerate' })}
+            </Button>
+            <Flex justify="space-between" mt={12}>
+              <Button
+                size="small"
+                style={globalStyle.flexOne}
+                disabled={!!downloadingFormat}
+                accessoryLeft={downloadingFormat === 'pdf' ? () => <Spinner size="small" status="control" /> : undefined}
+                onPress={() => onDownload('pdf')}
+              >
+                {downloadingFormat === 'pdf'
+                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
+                  : t('more:download_pdf', { defaultValue: 'Download PDF' })}
               </Button>
               <View style={{ width: 12 }} />
-              <Button size="small" style={globalStyle.flexOne} onPress={onShare}>
-                {t('more:share', { defaultValue: 'Share' })}
+              <Button
+                size="small"
+                appearance="outline"
+                style={globalStyle.flexOne}
+                disabled={!!downloadingFormat}
+                accessoryLeft={downloadingFormat === 'docx' ? () => <Spinner size="small" status="basic" /> : undefined}
+                onPress={() => onDownload('docx')}
+              >
+                {downloadingFormat === 'docx'
+                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
+                  : t('more:download_docx', { defaultValue: 'Download DOCX' })}
               </Button>
             </Flex>
           </View>

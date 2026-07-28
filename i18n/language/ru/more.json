@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "Ошибка загрузки",
   "documents_uploading": "Загрузка…",
   "downgrade": "Перейти на этот план",
+  "download_docx": "Скачать DOCX",
+  "download_pdf": "Скачать PDF",
   "download_receipt": "Скачать квитанцию",
   "downloading_receipt": "Загрузка…",
   "duration_min": "{{min}} мин",

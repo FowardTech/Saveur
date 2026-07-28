@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "Caricamento non riuscito",
   "documents_uploading": "Caricamento…",
   "downgrade": "Passa a questo piano",
+  "download_docx": "Scarica DOCX",
+  "download_pdf": "Scarica PDF",
   "download_receipt": "Scarica ricevuta",
   "downloading_receipt": "Download in corso…",
   "duration_min": "{{min}} min",

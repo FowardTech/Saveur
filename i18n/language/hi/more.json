@@ -195,6 +195,8 @@
   "documents_upload_failed_title": "अपलोड विफल",
   "documents_uploading": "अपलोड हो रहा है…",
   "downgrade": "इस योजना पर स्विच करें",
+  "download_docx": "डीओसीएक्स डाउनलोड करें",
+  "download_pdf": "पीडीएफ डाउनलोड करें",
   "download_receipt": "रसीद डाउनलोड करें",
   "downloading_receipt": "डाउनलोड हो रहा है…",
   "duration_min": "{{min}} मिनट",
