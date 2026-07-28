@@ -242,6 +242,17 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('ResumeVariants'),
     },
     {
+      // Redownload previously generated resumes/CVs, cover letters, and
+      // resume variants — see services/generatedDocumentsService.ts. No
+      // featureKey: this is a plain personal document library, not an AI
+      // feature with its own admin on/off toggle.
+      title: t('more:generated_documents', {defaultValue: 'Generated Documents'}),
+      icon: 'myPost',
+      status: 'green',
+      iconBackgroundColor: ICON_BG,
+      onPress: () => navigate('GeneratedDocuments'),
+    },
+    {
       title: t('more:linkedin_optimizer', {defaultValue: 'LinkedIn Optimizer'}),
       icon: 'share',
       status: 'facebook',

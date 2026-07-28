@@ -129,6 +129,12 @@ export type RootStackParamList = {
   // AI Resume Evolution — see services/resumeVariantsService.ts and
   // src/more/ResumeVariants.tsx.
   ResumeVariants: undefined;
+  // "Generated Documents" (product request item): redownload any resume/
+  // CV, cover letter, or tailored resume variant ever exported to PDF/DOCX
+  // — see services/generatedDocumentsService.ts and
+  // src/more/GeneratedDocuments.tsx. Distinct from MyDocuments (the user's
+  // own uploaded source files) below.
+  GeneratedDocuments: undefined;
   // AI LinkedIn Optimizer — see services/linkedinOptimizerService.ts and
   // src/more/LinkedInOptimizer.tsx.
   LinkedInOptimizer: undefined;

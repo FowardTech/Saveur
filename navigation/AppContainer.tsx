@@ -43,6 +43,7 @@ import CoverLetterGenerator from 'src/more/CoverLetterGenerator';
 import WeeklyCareerReport from 'src/more/WeeklyCareerReport';
 import DailyIndustryNews from 'src/more/DailyIndustryNews';
 import ResumeVariants from 'src/more/ResumeVariants';
+import GeneratedDocuments from 'src/more/GeneratedDocuments';
 import LinkedInOptimizer from 'src/more/LinkedInOptimizer';
 import EmotionalCoach from 'src/more/EmotionalCoach';
 import CompanyIntelligence from 'src/more/CompanyIntelligence';
@@ -208,6 +209,7 @@ const AppContainer = () => {
         <Stack.Screen name="WeeklyCareerReport" component={WeeklyCareerReport} />
         <Stack.Screen name="DailyIndustryNews" component={DailyIndustryNews} />
         <Stack.Screen name="ResumeVariants" component={ResumeVariants} />
+        <Stack.Screen name="GeneratedDocuments" component={GeneratedDocuments} />
         <Stack.Screen name="LinkedInOptimizer" component={LinkedInOptimizer} />
         <Stack.Screen name="EmotionalCoach" component={EmotionalCoach} />
         <Stack.Screen name="CompanyIntelligence" component={CompanyIntelligence} />
