@@ -27,6 +27,39 @@ import { RootStackParamList } from 'navigation/types';
 import * as studentVerificationService from 'services/studentVerificationService';
 import { University, StudentProfile, YEAR_OPTIONS } from 'services/studentVerificationService';
 
+// The perks shown below are all real, already-shipped behavior — not
+// aspirational copy. "3% off" alone undersold what verifying actually
+// unlocks and made the screen (and the "Student Verification" name itself)
+// feel thinner than it is, hence the rename to "Student Package and
+// Verification" plus this list surfacing the other two pieces that were
+// otherwise invisible anywhere in the UI:
+//  - The discount (StudentProfile.studentDiscountActive, billing.py).
+//  - Student-tailored AI framing across Coach, Career OS, Resume/Cover
+//    Letter, Company Intel, and Salary Coach — see
+//    student_service.get_active_student_profile, wired into each of those
+//    endpoints so responses assume coursework/internships instead of
+//    professional work history until graduation.
+//  - The verified-student badge on the Profile screen (ProfileSrc.tsx).
+function studentPerks(t: TFunction): {icon: string; title: string; body: string}[] {
+  return [
+    {
+      icon: 'percent-outline',
+      title: t('more:student_perk_discount_title', {defaultValue: '3% off Saveur Pro'}),
+      body: t('more:student_perk_discount_body', {defaultValue: 'Discounted pricing for as long as you’re a final-year student — until your graduation date.'}),
+    },
+    {
+      icon: 'bulb-outline',
+      title: t('more:student_perk_ai_title', {defaultValue: 'AI tailored to student life'}),
+      body: t('more:student_perk_ai_body', {defaultValue: 'Your AI Coach, resumes, cover letters, interview prep, and salary guidance all shift to focus on coursework, internships, and landing your first role.'}),
+    },
+    {
+      icon: 'award-outline',
+      title: t('more:student_perk_badge_title', {defaultValue: 'A verified student badge'}),
+      body: t('more:student_perk_badge_body', {defaultValue: 'Shows on your profile until you graduate.'}),
+    },
+  ];
+}
+
 function yearLabel(value: string, t: TFunction): string {
   const map: Record<string, string> = {
     '1st_year': t('more:year_1', { defaultValue: '1st Year' }),
@@ -165,7 +198,7 @@ const StudentVerification = memo(() => {
   if (isLoadingStatus) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Verification' })} accessoryLeft={<NavigationAction />} />
+        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })} accessoryLeft={<NavigationAction />} />
         <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
       </Container>
     );
@@ -174,7 +207,7 @@ const StudentVerification = memo(() => {
   if (status?.studentDiscountActive) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Verification' })} accessoryLeft={<NavigationAction />} />
+        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })} accessoryLeft={<NavigationAction />} />
         <Content padder contentContainerStyle={styles.content}>
           <Layout level="2" style={styles.card}>
             <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon24, { tintColor: theme['color-success-500'] }]} />
@@ -202,7 +235,7 @@ const StudentVerification = memo(() => {
   if (status?.graduated) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Verification' })} accessoryLeft={<NavigationAction />} />
+        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })} accessoryLeft={<NavigationAction />} />
         <Content padder contentContainerStyle={styles.content}>
           <Layout level="2" style={styles.card}>
             <Text category="h7" bold mb={6}>{t('more:student_graduated_title', { defaultValue: 'Congratulations on graduating!' })}</Text>
@@ -218,7 +251,7 @@ const StudentVerification = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('more:student_verification', { defaultValue: 'Student Verification' })}
+        title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })}
         accessoryLeft={<NavigationAction />}
         accessoryRight={fromSignup ? () => (
           <Button appearance="ghost" status="basic" size="small" onPress={goToSuccess}>
@@ -238,6 +271,21 @@ const StudentVerification = memo(() => {
                     defaultValue: 'Final-year students get 3% off Saveur Pro until graduation. Verify your school email to unlock it.',
                   })}
             </Text>
+
+            <Layout level="2" style={styles.perksCard}>
+              {studentPerks(t).map((perk, i) => (
+                <Flex key={i} mb={i < 2 ? 14 : 0}>
+                  <Icon
+                    pack="eva" name={perk.icon}
+                    style={[globalStyle.icon20, { tintColor: theme['color-primary-500'], marginTop: 2 }]}
+                  />
+                  <View style={{ flex: 1, marginLeft: 10 }}>
+                    <Text category="h9" bold>{perk.title}</Text>
+                    <Text category="h10" status="placeholder" mt={2}>{perk.body}</Text>
+                  </View>
+                </Flex>
+              ))}
+            </Layout>
 
             <Text category="h10" status="placeholder" mb={6}>{t('more:university_label', { defaultValue: 'University' })}</Text>
             <Input
@@ -377,6 +425,11 @@ const themedStyles = StyleService.create({
   card: {
     borderRadius: 16,
     padding: 20,
+  },
+  perksCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
   },
   resultsList: {
     marginTop: 8,

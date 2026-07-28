@@ -266,7 +266,7 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('CompanyIntelligence'),
     },
     {
-      title: t('more:student_verification', {defaultValue: 'Student Verification'}),
+      title: t('more:student_verification', {defaultValue: 'Student Package and Verification'}),
       icon: 'bgCheck',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
