@@ -108,3 +108,25 @@ export async function deleteVariant(id: number): Promise<void> {
     // best-effort
   }
 }
+
+/**
+ * Renders this variant's own tailored sections to a real PDF/DOCX and
+ * returns a fetchable https download URL (POST /api/v1/resume/variants/
+ * <id>/export — see app/api/resume_variants.py's export_variant). Was
+ * missing entirely: the Resume Evolution share button used to fall back to
+ * Share.share({message: text}), a plain-text dump with no real file, since
+ * there was nothing else to share. Same isFetchableUrl guard as
+ * resumeGenerationService.generateResumeDocument — never hand the caller a
+ * raw backend filesystem path.
+ */
+export async function exportVariant(
+  id: number,
+  format: 'pdf' | 'docx' = 'pdf',
+): Promise<{url?: string}> {
+  const {data} = await apiClient.post<{url?: string}>(
+    `/api/v1/resume/variants/${id}/export`,
+    {format},
+  );
+  const isFetchableUrl = typeof data.url === 'string' && /^https?:\/\//i.test(data.url);
+  return {url: isFetchableUrl ? data.url : undefined};
+}

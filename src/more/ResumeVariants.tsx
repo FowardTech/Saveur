@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Alert, Modal, Share, View } from 'react-native';
+import { Alert, Modal, Platform, Share, View } from 'react-native';
+import RNBlobUtil from 'react-native-blob-util';
 import {
   TopNavigation,
   StyleService,
@@ -42,6 +43,7 @@ const ResumeVariants = memo(() => {
   const [targetRole, setTargetRole] = React.useState('');
   const [targetCompany, setTargetCompany] = React.useState('');
   const [isCreating, setIsCreating] = React.useState(false);
+  const [sharingId, setSharingId] = React.useState<number | null>(null);
 
   const load = React.useCallback(() => {
     setIsLoading(true);
@@ -90,9 +92,39 @@ const ResumeVariants = memo(() => {
     );
   };
 
-  const onShare = (variant: ResumeVariant) => {
-    const text = toPlainTextResume(variant.sections, { role: variant.targetRole });
-    Share.share({ message: text }).catch(() => {});
+  // Was Share.share({message: toPlainTextResume(...)}) — a plain-text dump,
+  // because there was no real file to hand the share sheet. Now renders
+  // this variant's own tailored sections to a real PDF (POST /api/v1/
+  // resume/variants/<id>/export) and shares THAT, same download-then-share
+  // pattern as GenerateResume.tsx's onDownload (a remote https url shared
+  // directly only ever produces a web-link share on both platforms, never
+  // an actual file — see that file's comment for the full explanation).
+  // Falls back to the old plain-text share only if rendering/downloading
+  // genuinely fails, so this is strictly an upgrade, never a new dead end.
+  const onShare = async (variant: ResumeVariant) => {
+    if (sharingId) return;
+    setSharingId(variant.id);
+    try {
+      const { url } = await resumeVariantsService.exportVariant(variant.id, 'pdf');
+      if (!url) throw new Error('no_url');
+      const filename = `${variant.label || 'Resume'}.pdf`;
+      if (Platform.OS === 'android') {
+        const res = await RNBlobUtil.config({
+          path: `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`,
+          overwrite: true,
+        }).fetch('GET', url);
+        await Share.share({ url: `file://${res.path()}`, title: filename });
+      } else {
+        const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
+        const res = await RNBlobUtil.config({ path: dest, overwrite: true }).fetch('GET', url);
+        await Share.share({ url: `file://${res.path()}`, title: filename });
+      }
+    } catch {
+      const text = toPlainTextResume(variant.sections, { role: variant.targetRole });
+      Share.share({ message: text }).catch(() => {});
+    } finally {
+      setSharingId(null);
+    }
   };
 
   if (!isPremium) {
@@ -147,8 +179,15 @@ const ResumeVariants = memo(() => {
               <Text category="h9-s" status="placeholder" mb={12}>
                 {[variant.targetRole, variant.targetCompany].filter(Boolean).join(' · ')}
               </Text>
-              <Button size="small" appearance="outline" onPress={() => onShare(variant)}>
-                {t('more:share', { defaultValue: 'Share' })}
+              <Button
+                size="small"
+                appearance="outline"
+                disabled={sharingId === variant.id}
+                accessoryLeft={sharingId === variant.id ? () => <Spinner size="small" status="basic" /> : undefined}
+                onPress={() => onShare(variant)}>
+                {sharingId === variant.id
+                  ? t('more:sharing', { defaultValue: 'Sharing…' })
+                  : t('more:share', { defaultValue: 'Share' })}
               </Button>
             </Layout>
           ))
