@@ -12,6 +12,7 @@ import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import * as jobAlertsService from 'services/jobAlertsService';
+import * as jobShareService from 'services/jobShareService';
 import {useTranslation} from 'react-i18next';
 
 // The in-app landing spot for a matched job — reached from three places that
@@ -43,6 +44,20 @@ const JobAlertDetails = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job.id]);
 
+  // "Share a job" (product request item) — see services/jobShareService.ts
+  // for the full deferred-deep-link flow. isSharing guards against a
+  // double-tap kicking off two concurrent OneLink generation calls.
+  const [isSharing, setIsSharing] = React.useState(false);
+  const onShare = React.useCallback(async () => {
+    if (isSharing) return;
+    setIsSharing(true);
+    try {
+      await jobShareService.shareJob(job);
+    } finally {
+      setIsSharing(false);
+    }
+  }, [job, isSharing]);
+
   const onApply = () => {
     navigate('WebViewScreen', {
       url: job.applyUrl,
@@ -64,7 +79,18 @@ const JobAlertDetails = memo(() => {
 
   return (
     <Container style={styles.container}>
-      <TopNavigation title={t('more:job_details_title', {defaultValue: 'Job Details'})} accessoryLeft={<NavigationAction />} />
+      <TopNavigation
+        title={t('more:job_details_title', {defaultValue: 'Job Details'})}
+        accessoryLeft={<NavigationAction />}
+        accessoryRight={() => (
+          <Icon
+            pack="eva"
+            name="share-outline"
+            style={[globalStyle.icon24, {tintColor: isSharing ? theme['text-hint-color'] : theme['text-basic-color']}]}
+            onPress={onShare}
+          />
+        )}
+      />
       <Content padder contentContainerStyle={styles.content}>
         <Layout level="2" style={styles.card}>
           <Flex justify="flex-start" mb={12}>

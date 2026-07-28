@@ -30,6 +30,8 @@ import * as goalTipsService from 'services/goalTipsService';
 import * as careerOsService from 'services/careerOsService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
+import * as jobShareService from 'services/jobShareService';
+import {navigateToJobAlertDetails} from 'navigation/navigationRef';
 import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
 import useModal from 'hooks/useModal';
@@ -87,6 +89,24 @@ const HomeSrc = memo(() => {
   const onCloseTour = React.useCallback(() => {
     setShowTour(false);
     AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => {});
+  }, []);
+
+  // "Share a job" deep-link landing (product request item) — a pending job
+  // id captured by App.tsx's AppsFlyer listeners / saveur://job fallback
+  // link (see services/jobShareService.ts) sits in AsyncStorage until the
+  // user actually reaches Home, which by definition only happens once
+  // they're authenticated (Home is behind AuthContext's signed-in gate) —
+  // so this is naturally the right moment to resolve it, no separate
+  // "is the user ready yet" check needed. consumePendingJob() clears the
+  // stored id itself (success or failure) so this only ever fires once per
+  // shared link, not on every future Home visit. Runs once on mount, not
+  // useFocusEffect like the AppTour check above — a shared-job landing
+  // should happen once, not re-trigger every time the user tabs back to
+  // Home.
+  React.useEffect(() => {
+    jobShareService.consumePendingJob().then(job => {
+      if (job) navigateToJobAlertDetails(job);
+    });
   }, []);
   // Refresh whenever the app returns to the foreground (e.g. after visiting
   // the Notification screen and marking things read) — same AppState pattern

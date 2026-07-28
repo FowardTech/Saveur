@@ -18,6 +18,8 @@ import { setupNotificationTapListeners, setupForegroundPushHandler } from 'servi
 import { maybeDetectLanguageFromLocation } from 'utils/locationLanguage';
 import * as referralService from 'services/referralService';
 import * as linkedinAuthService from 'services/linkedinAuthService';
+import * as jobShareService from 'services/jobShareService';
+import * as appsFlyerService from 'services/appsFlyerService';
 import * as configService from 'services/configService';
 import { AppConfig } from 'services/configService';
 import AppGateScreen from 'components/AppGateScreen';
@@ -77,10 +79,34 @@ export default function App() {
   // itself never throws, so a network hiccup here never locks anyone out.
   const [appConfig, setAppConfig] = React.useState<AppConfig>(configService.getCachedConfig());
   React.useEffect(() => {
-    configService.loadAppConfig().then(setAppConfig);
+    // appsFlyerService.init() reads configService's cached appsflyer
+    // section, so it has to run AFTER the fetch resolves (or on whatever
+    // cached/default config was already there before this call), not in
+    // parallel with it — chained here rather than as its own independent
+    // effect for that reason.
+    configService.loadAppConfig().then(config => {
+      setAppConfig(config);
+      appsFlyerService.init();
+    });
   }, []);
   const maintenance = appConfig.maintenance;
   const blockedByUpdate = configService.needsForceUpdate(appConfig);
+
+  // Deferred deep link resolution for a shared job (product request item)
+  // — see services/appsFlyerService.ts + jobShareService.ts's file header
+  // for the full flow. Independent of sign-in state (same reasoning as the
+  // push-notification/referral listeners elsewhere in this file): a fresh
+  // install from a shared link resolves this before the user has even
+  // reached signup. The resulting job id just sits in AsyncStorage
+  // (jobShareService.setPendingJobId) until HomeSrc.tsx picks it up once
+  // the user actually reaches Home — this effect only ever captures it,
+  // never navigates directly, since the navigator may not exist yet on a
+  // cold start and the user may not be authenticated/entitled at all.
+  React.useEffect(() => {
+    return appsFlyerService.registerDeepLinkListeners(jobId => {
+      jobShareService.setPendingJobId(jobId).catch(() => {});
+    });
+  }, []);
 
   // Independent of sign-in state — a killed-app push tap can resolve via
   // getInitialNotification() before AuthContext's onAuthStateChanged fires,
@@ -124,17 +150,24 @@ export default function App() {
   // callback from the LinkedIn OAuth flow (see services/linkedinAuthService.ts)
   // — handleIncomingUrl there is a no-op for any URL that isn't that specific
   // redirect, so it's safe to always call alongside the referral handler.
-  React.useEffect(() => {
-    Linking.getInitialURL().then(url => {
-      referralService.handleIncomingUrl(url);
-      linkedinAuthService.handleIncomingUrl(url);
-    });
-    const subscription = Linking.addEventListener('url', ({url}) => {
-      referralService.handleIncomingUrl(url);
-      linkedinAuthService.handleIncomingUrl(url);
-    });
-    return () => subscription.remove();
+  // Also carries the saveur://job?id=X fallback link jobShareService.ts
+  // hands the share sheet when OneLink isn't configured yet — only useful
+  // for an already-installed app (no deferred resolution, unlike the
+  // AppsFlyer listeners above), but still a real working link in the
+  // meantime. extractJobIdFromUrl is a no-op (returns null) for any URL
+  // that isn't a job link, so it's safe to always call here too.
+  const handleIncomingUrl = React.useCallback((url: string | null | undefined) => {
+    referralService.handleIncomingUrl(url);
+    linkedinAuthService.handleIncomingUrl(url);
+    const jobId = jobShareService.extractJobIdFromUrl(url);
+    if (jobId) jobShareService.setPendingJobId(jobId).catch(() => {});
   }, []);
+
+  React.useEffect(() => {
+    Linking.getInitialURL().then(handleIncomingUrl);
+    const subscription = Linking.addEventListener('url', ({url}) => handleIncomingUrl(url));
+    return () => subscription.remove();
+  }, [handleIncomingUrl]);
 
   const toggleTheme = () => {
     hasExplicitPreference.current = true;

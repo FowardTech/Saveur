@@ -92,6 +92,23 @@ function fromWire(wire: JobAlertWire): JobAlertProps {
   };
 }
 
+/**
+ * GET /api/v1/job-alerts/<id> — a single job alert by id, regardless of
+ * whether it's in the current user's own feed. Added for the "share a job"
+ * deep-link landing flow (services/jobShareService.ts) — a shared link only
+ * ever carries an id, and JobAlertDetails' route takes the full JobAlertProps
+ * as a param rather than re-fetching by id itself, so this is the fetch that
+ * turns "id from a deep link" into something that screen can actually show.
+ * Throws on failure (including a 403 from @require_premium on the backend —
+ * see that route's docstring) so the caller can distinguish "not found" /
+ * "not entitled" from a successful fetch, unlike most read paths in this
+ * service which fail soft to a cache.
+ */
+export async function getJobAlertById(id: string): Promise<JobAlertProps> {
+  const {data} = await apiClient.get<JobAlertWire>(`/api/v1/job-alerts/${id}`);
+  return fromWire(data);
+}
+
 const readCache = async (): Promise<JobAlertProps[] | null> => {
   const raw = await AsyncStorage.getItem(EKeyAsyncStorage.jobAlertsCache);
   if (!raw) return null;

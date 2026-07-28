@@ -39,6 +39,12 @@ export enum EKeyAsyncStorage {
   // the next POST /users/me (sync) sends it as referred_by_code — see
   // services/referralService.ts.
   pendingReferralCode = 'pendingReferralCode',
+  // A job id captured from a shared-job deep link (AppsFlyer OneLink
+  // deferred resolution, or a plain saveur://job?id=X link for an
+  // already-installed app) before the user was ready to land on it (not
+  // yet authenticated, or the navigator wasn't mounted yet) — consumed by
+  // HomeSrc.tsx once the user reaches Home. See services/jobShareService.ts.
+  pendingJobId = 'pendingJobId',
   // Last-known feature flags / release / maintenance config, cached so
   // App.tsx has something to render immediately on a cold start before the
   // network call in services/configService.ts resolves. See that file.

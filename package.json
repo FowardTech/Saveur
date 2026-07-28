@@ -45,6 +45,7 @@
     "react-hook-form": "^7.43.0",
     "react-i18next": "^12.1.5",
     "react-native": "0.82.1",
+    "react-native-appsflyer": "^6.18.0",
     "react-native-biometrics": "^3.0.1",
     "react-native-blob-util": "^0.24.10",
     "react-native-calendars": "^1.1282.0",

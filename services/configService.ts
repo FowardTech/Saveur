@@ -57,10 +57,26 @@ export interface MaintenanceConfig {
   message: string;
 }
 
+// AppsFlyer deferred deep linking — "share a job" (see services/
+// jobShareService.ts and App.tsx's onInstallConversionData/
+// onAppOpenAttribution listeners). dev_key alone is enough to init the SDK
+// for install attribution; onelink_id + onelink_subdomain (set by an admin
+// from the AppsFlyer dashboard's OneLink template, Admin > System) are what
+// make generateInviteLink actually produce a deferred link — until both are
+// present, jobShareService falls back to a plain saveur:// share link.
+export interface AppsFlyerConfig {
+  enabled: boolean;
+  dev_key: string;
+  onelink_id: string;
+  onelink_subdomain: string;
+  ios_app_id: string;
+}
+
 export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
   maintenance: MaintenanceConfig;
+  appsflyer: AppsFlyerConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -95,6 +111,7 @@ const DEFAULT_CONFIG: AppConfig = {
     update_url_android: '',
   },
   maintenance: {enabled: false, title: 'Down for maintenance', message: ''},
+  appsflyer: {enabled: false, dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -167,6 +184,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
       feature_flags: {...DEFAULT_CONFIG.feature_flags, ...data.feature_flags},
       release: {...DEFAULT_CONFIG.release, ...data.release},
       maintenance: {...DEFAULT_CONFIG.maintenance, ...data.maintenance},
+      appsflyer: {...DEFAULT_CONFIG.appsflyer, ...data.appsflyer},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {
