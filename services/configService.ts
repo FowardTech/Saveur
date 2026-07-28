@@ -72,11 +72,35 @@ export interface AppsFlyerConfig {
   ios_app_id: string;
 }
 
+// FAQ + About content (product request item) — both screens used to show
+// unmodified leftover content from the original RN template ("We are team
+// UI/UX and Developer...", a stranger's WhatsApp number/Messenger link, a
+// link to the template author's own portfolio). Now real, admin-editable
+// content — see saveur-backend's app_config_service.py's "faq"/"about"
+// sections and the admin dashboard's Content page.
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface FaqConfig {
+  items: FaqItem[];
+}
+
+export interface AboutConfig {
+  tagline: string;
+  description: string;
+  contact_email: string;
+  website_url: string;
+}
+
 export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
   maintenance: MaintenanceConfig;
   appsflyer: AppsFlyerConfig;
+  faq: FaqConfig;
+  about: AboutConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -112,6 +136,8 @@ const DEFAULT_CONFIG: AppConfig = {
   },
   maintenance: {enabled: false, title: 'Down for maintenance', message: ''},
   appsflyer: {enabled: false, dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
+  faq: {items: []},
+  about: {tagline: '', description: '', contact_email: '', website_url: ''},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -185,6 +211,8 @@ export async function loadAppConfig(): Promise<AppConfig> {
       release: {...DEFAULT_CONFIG.release, ...data.release},
       maintenance: {...DEFAULT_CONFIG.maintenance, ...data.maintenance},
       appsflyer: {...DEFAULT_CONFIG.appsflyer, ...data.appsflyer},
+      faq: {...DEFAULT_CONFIG.faq, ...data.faq},
+      about: {...DEFAULT_CONFIG.about, ...data.about},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {
