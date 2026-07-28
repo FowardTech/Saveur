@@ -33,7 +33,7 @@ export type RootStackParamList = {
   FindStack: NavigatorScreenParams<FindStackParamList>;
   MessagesStack: NavigatorScreenParams<MessagesStackParamList>;
   RequestStack: NavigatorScreenParams<RequestsStackParamList>;
-  MainBottomTab: undefined;
+  MainBottomTab: NavigatorScreenParams<MainBottomTabStackParamList> | undefined;
   ChangeCareType: undefined;
   // "Change it later" settings screen for profile.desiredRoles /
   // profile.preferredCountries — see src/more/JobPreferences.tsx.

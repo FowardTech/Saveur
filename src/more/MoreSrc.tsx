@@ -13,7 +13,6 @@ import {EKeyAsyncStorage} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
 import ThemeContext from '../../ThemeContext';
-import * as emailService from 'services/emailService';
 import {AuthContext} from '../../AuthContext';
 import * as configService from 'services/configService';
 import {FeatureFlags} from 'services/configService';
@@ -92,38 +91,27 @@ const MoreSrc = memo(() => {
   // lives on the My Profile sub-screen, reached deliberately via the row
   // below or the avatar tap in HeaderMoreOption.
 
-  // POST /api/v1/email/resend-welcome — see services/emailService.ts. A
-  // `useRef` busy-guard (not state) is enough here since this row doesn't
-  // need to visually reflect "sending" — the Alert on completion is the
-  // only feedback needed for an occasional-use action like this.
-  const isResendingWelcomeRef = React.useRef(false);
-  const onResendWelcomeEmail = React.useCallback(async () => {
-    if (isResendingWelcomeRef.current) return;
-    isResendingWelcomeRef.current = true;
-    try {
-      await emailService.resendWelcomeEmail();
-      Alert.alert(
-        t('more:welcome_email_resent_title', {defaultValue: 'Email sent'}),
-        t('more:welcome_email_resent_body', {defaultValue: 'Check your inbox for the welcome email.'}),
-      );
-    } catch (error: any) {
-      Alert.alert(
-        t('more:welcome_email_resend_failed_title', {defaultValue: "Couldn't send that"}),
-        error?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
-      );
-    } finally {
-      isResendingWelcomeRef.current = false;
-    }
-  }, [t]);
+  // Removed: the "Resend welcome email" row. A user-facing resend button
+  // for a one-time onboarding email didn't have a real use case once past
+  // signup, and was a support/debug affordance that didn't belong in the
+  // main app surface.
 
   // Replays the one-time "how this app works" walkthrough (components/
   // AppTour.tsx) — clears the flag it's gated on, then jumps back to Home,
   // whose useFocusEffect check re-reads that flag on every focus (not just
   // mount) specifically so this replay works without needing Home to
   // remount.
+  //
+  // Was `navigate('MainBottomTab')` with no target screen — that's a no-op
+  // when called from here, because this row lives inside the Profile tab,
+  // which IS the currently-focused screen inside MainBottomTab already.
+  // React Navigation doesn't fire any focus change (and Home's
+  // useFocusEffect never re-runs) when you "navigate" to a screen that's
+  // already active. Explicitly targeting the Home tab forces the actual
+  // tab switch, which is what made "Show app tour" look like a dead button.
   const onReplayTour = React.useCallback(async () => {
     await AsyncStorage.removeItem(EKeyAsyncStorage.appTourSeen).catch(() => {});
-    navigate('MainBottomTab');
+    navigate('MainBottomTab', {screen: 'Home'});
   }, [navigate]);
 
   // Account & career-prep tools. `featureKey` (when present) gates the row
@@ -351,13 +339,6 @@ const MoreSrc = memo(() => {
       status: 'green',
       iconBackgroundColor: ICON_BG,
       onPress: () => navigate("PolicyScreen"),
-    },
-    {
-      title: t('more:resend_welcome_email', {defaultValue: 'Resend welcome email'}),
-      icon: 'send',
-      status: 'facebook',
-      iconBackgroundColor: ICON_BG,
-      onPress: onResendWelcomeEmail,
     },
   ];
   return (
