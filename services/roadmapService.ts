@@ -1,0 +1,125 @@
+import i18n from 'i18next';
+import apiClient from './apiClient';
+
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
+
+// ---------------------------------------------------------------------------
+// roadmapService — AI Career Roadmap (product request item #15,
+// Pro Premium). "I want to become a Senior Backend Engineer" -> the AI
+// plans an ordered, real-world sequence of milestones from today to
+// landing that role (Learn Docker -> Learn Kubernetes -> Learn AWS ->
+// System Design -> Senior Interview -> Promotion). See
+// app/api/career_roadmap.py's module docstring for how this differs from
+// the AI Curriculum Builder (learningService.ts's generateCurriculum): a
+// curriculum's weeks map to real in-app courses; a roadmap's milestones
+// are real-world career steps the learner marks done themselves, in
+// order -- "everything is tracked" via the completeStep call below.
+// ---------------------------------------------------------------------------
+
+export type RoadmapStepType = 'skill' | 'project' | 'interview' | 'milestone';
+export type RoadmapStepStatus = 'completed' | 'current' | 'locked';
+
+export interface RoadmapStep {
+  order: number;
+  title: string;
+  type: RoadmapStepType;
+  description: string;
+  status: RoadmapStepStatus;
+}
+
+export interface CareerRoadmap {
+  targetRole: string;
+  currentRole: string | null;
+  steps: RoadmapStep[];
+  completedCount: number;
+  totalCount: number;
+  isComplete: boolean;
+  createdAt: string | null;
+}
+
+interface WireStep {
+  order?: number;
+  title?: string;
+  type?: string;
+  description?: string;
+  status?: string;
+}
+
+interface WireRoadmap {
+  target_role?: string;
+  current_role?: string | null;
+  steps?: WireStep[];
+  completed_count?: number;
+  total_count?: number;
+  is_complete?: boolean;
+  created_at?: string | null;
+}
+
+function mapRoadmap(raw: WireRoadmap): CareerRoadmap {
+  return {
+    targetRole: raw.target_role ?? '',
+    currentRole: raw.current_role ?? null,
+    steps: (raw.steps ?? []).map((s, i) => ({
+      order: s.order ?? i + 1,
+      title: s.title ?? '',
+      type: (s.type as RoadmapStepType) || 'milestone',
+      description: s.description ?? '',
+      status: (s.status as RoadmapStepStatus) || (i === 0 ? 'current' : 'locked'),
+    })),
+    completedCount: raw.completed_count ?? 0,
+    totalCount: raw.total_count ?? (raw.steps?.length ?? 0),
+    isComplete: raw.is_complete ?? false,
+    createdAt: raw.created_at ?? null,
+  };
+}
+
+/** GET /api/v1/roadmap — the learner's already-saved roadmap, if any. */
+export async function getSavedRoadmap(): Promise<CareerRoadmap | null> {
+  try {
+    const { data } = await apiClient.get<{ roadmap: WireRoadmap | null }>('/api/v1/roadmap');
+    return data.roadmap ? mapRoadmap(data.roadmap) : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * POST /api/v1/roadmap/generate — generates (or, if one already exists,
+ * simply returns) a milestone-by-milestone roadmap toward `targetRole`.
+ * First-write-wins server-side, matching generateCurriculum's stability
+ * guarantee. Throws on failure so the screen can show a real error (unlike
+ * getSavedRoadmap above, which fails silently to null since a load failure
+ * there just means "show the empty state").
+ */
+export async function generateRoadmap(targetRole: string, currentRole?: string): Promise<CareerRoadmap> {
+  const { data } = await apiClient.post<WireRoadmap>('/api/v1/roadmap/generate', {
+    target_role: targetRole,
+    current_role: currentRole || '',
+    language: currentLanguage(),
+  });
+  return mapRoadmap(data);
+}
+
+/**
+ * POST /api/v1/roadmap/steps/:order/complete — marks the given milestone
+ * done. The backend rejects this unless `order` is exactly the learner's
+ * current step (see career_roadmap.py's complete_step), so this always
+ * throws if called on a locked or already-completed step -- the UI should
+ * only ever call this from the current step's own action button, which
+ * makes an out-of-order call impossible through normal use.
+ */
+export async function completeStep(order: number): Promise<CareerRoadmap> {
+  const { data } = await apiClient.post<WireRoadmap>(`/api/v1/roadmap/steps/${order}/complete`);
+  return mapRoadmap(data);
+}
+
+/** DELETE /api/v1/roadmap — clears the saved roadmap so a learner can build a new one toward a different goal. */
+export async function resetRoadmap(): Promise<void> {
+  try {
+    await apiClient.delete('/api/v1/roadmap');
+  } catch {
+    // best-effort
+  }
+}

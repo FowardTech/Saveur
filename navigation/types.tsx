@@ -182,6 +182,11 @@ export type RootStackParamList = {
   // regarding a role, career, or job. See services/careerDiaryService.ts
   // and src/more/CareerDiary.tsx.
   CareerDiary: undefined;
+  // AI Career Roadmap (product request item #15) — "I want to become a
+  // Senior Backend Engineer" -> the AI plans a linear sequence of
+  // real-world milestones toward it, tracked step by step. See
+  // services/roadmapService.ts and src/more/CareerRoadmap.tsx.
+  CareerRoadmap: undefined;
   // Referral program — see services/referralService.ts and
   // src/more/ReferralProgram.tsx.
   ReferralProgram: undefined;

@@ -202,6 +202,14 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('CareerDiary'),
     },
     {
+      title: t('more:career_roadmap', {defaultValue: 'AI Career Roadmap'}),
+      icon: 'increase',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      featureKey: 'career_roadmap',
+      onPress: () => navigate('CareerRoadmap'),
+    },
+    {
       title: t('more:refer_and_earn', {defaultValue: 'Refer & Earn'}),
       icon: 'share',
       status: 'success',

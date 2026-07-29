@@ -47,6 +47,7 @@ import LearningCourses from 'src/more/LearningCourses';
 import CourseSession from 'src/more/CourseSession';
 import NetworkingAssistant from 'src/more/NetworkingAssistant';
 import CareerDiary from 'src/more/CareerDiary';
+import CareerRoadmap from 'src/more/CareerRoadmap';
 import ReferralProgram from 'src/more/ReferralProgram';
 import JobAlerts from 'src/more/JobAlerts';
 import JobAlertDetails from 'src/more/JobAlertDetails';
@@ -203,6 +204,7 @@ const AppContainer = () => {
         <Stack.Screen name="LearningCourses" component={LearningCourses} />
         <Stack.Screen name="NetworkingAssistant" component={NetworkingAssistant} />
         <Stack.Screen name="CareerDiary" component={CareerDiary} />
+        <Stack.Screen name="CareerRoadmap" component={CareerRoadmap} />
         <Stack.Screen name="ReferralProgram" component={ReferralProgram} />
         <Stack.Screen name="JobAlerts" component={JobAlerts} />
         <Stack.Screen name="JobAlertDetails" component={JobAlertDetails} />
