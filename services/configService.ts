@@ -40,6 +40,7 @@ export interface FeatureFlags {
   career_os_briefing: boolean;
   student_verification: boolean;
   career_roadmap: boolean;
+  practical_scenarios: boolean;
 }
 
 export interface ReleaseConfig {
@@ -148,6 +149,7 @@ const DEFAULT_CONFIG: AppConfig = {
     career_os_briefing: true,
     student_verification: true,
     career_roadmap: true,
+    practical_scenarios: true,
   },
   release: {
     ios_min_version: '',

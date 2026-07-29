@@ -258,7 +258,7 @@ export function setupForegroundPushHandler(): () => void {
 
     // Daily leaderboard + tip push (see app/services/daily_broadcast_service.py) —
     // the only push type today that ships an image (the leaderboard leader's
-    // generated, "game-like" avatar, never a real photo). Android renders
+    // generated, friendly avatar, never a real photo). Android renders
     // remoteMessage.notification.android.imageUrl automatically for a
     // background/killed-state push with zero client code, but a
     // notifee-displayed FOREGROUND notification needs to be told explicitly

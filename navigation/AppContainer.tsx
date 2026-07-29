@@ -48,6 +48,9 @@ import CourseSession from 'src/more/CourseSession';
 import NetworkingAssistant from 'src/more/NetworkingAssistant';
 import CareerDiary from 'src/more/CareerDiary';
 import CareerRoadmap from 'src/more/CareerRoadmap';
+import PracticalScenarioSetup from 'src/practice/PracticalScenarioSetup';
+import PracticalScenarioSession from 'src/practice/PracticalScenarioSession';
+import PracticalScenarioFeedback from 'src/practice/PracticalScenarioFeedback';
 import ReferralProgram from 'src/more/ReferralProgram';
 import JobAlerts from 'src/more/JobAlerts';
 import JobAlertDetails from 'src/more/JobAlertDetails';
@@ -205,6 +208,9 @@ const AppContainer = () => {
         <Stack.Screen name="NetworkingAssistant" component={NetworkingAssistant} />
         <Stack.Screen name="CareerDiary" component={CareerDiary} />
         <Stack.Screen name="CareerRoadmap" component={CareerRoadmap} />
+        <Stack.Screen name="PracticalScenarioSetup" component={PracticalScenarioSetup} />
+        <Stack.Screen name="PracticalScenarioSession" component={PracticalScenarioSession} />
+        <Stack.Screen name="PracticalScenarioFeedback" component={PracticalScenarioFeedback} />
         <Stack.Screen name="ReferralProgram" component={ReferralProgram} />
         <Stack.Screen name="JobAlerts" component={JobAlerts} />
         <Stack.Screen name="JobAlertDetails" component={JobAlertDetails} />

@@ -100,6 +100,13 @@ const FindScreen = memo(() => {
     ...(configService.isFeatureEnabled('coding_practice')
       ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice, loading: isStartingCoding }]
       : []),
+    // Practical Scenarios (product request) — the hands-on equivalent of
+    // Coding Practice for non-engineering tracks. Routes to a setup screen
+    // (pick a field + role) rather than starting immediately like Coding
+    // Practice does, since it needs that choice first.
+    ...(configService.isFeatureEnabled('practical_scenarios')
+      ? [{ title: t('find:practical_scenarios', { defaultValue: 'Practical Scenarios' }), icon: 'compass-outline', onPress: () => navigate('PracticalScenarioSetup'), loading: false }]
+      : []),
   ];
 
   return (

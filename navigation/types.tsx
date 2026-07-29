@@ -10,6 +10,7 @@ import {
   SuccessScreenType,
   VideoAnalysisMetrics,
 } from 'constants/Types';
+import { PracticalType, PracticalStep } from 'services/practicalService';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -187,6 +188,20 @@ export type RootStackParamList = {
   // real-world milestones toward it, tracked step by step. See
   // services/roadmapService.ts and src/more/CareerRoadmap.tsx.
   CareerRoadmap: undefined;
+  // Practical Scenarios — hands-on, multi-step decision practice for
+  // non-engineering career tracks (healthcare/sales/marketing/finance/
+  // consulting/science). See services/practicalService.ts and
+  // src/practice/PracticalScenario{Setup,Session,Feedback}.tsx.
+  PracticalScenarioSetup: undefined;
+  PracticalScenarioSession: {
+    sessionId: number;
+    type: PracticalType;
+    role?: string;
+    initialStep: PracticalStep;
+  };
+  PracticalScenarioFeedback: {
+    sessionId: number;
+  };
   // Referral program — see services/referralService.ts and
   // src/more/ReferralProgram.tsx.
   ReferralProgram: undefined;
