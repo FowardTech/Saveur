@@ -11,8 +11,6 @@ import MainBottomTab from './MainBottomTab';
 import SelectLanguage from 'src/home/MyFavorites/SelectLanguage';
 import Notification from 'src/home/Notification';
 import MessagesNavigator from './MessagesNavigator';
-import WriteReview from 'src/find/WriteReview';
-import CreateJobNavigator from './CreateJobNavigator';
 import RequestsStackNavigator from './RequestStackNavigator';
 import MoreNavigator from './MoreNavigator';
 import AddMorePayment from 'src/more/AddMorePayment/AddMorePayment';
@@ -163,9 +161,7 @@ const AppContainer = () => {
 
         <Stack.Screen name="SelectLanguage" component={SelectLanguage} />
         <Stack.Screen name="Notification" component={Notification} />
-        <Stack.Screen name="WriteReview" component={WriteReview} />
 
-        <Stack.Screen name="CreateJobStack" component={CreateJobNavigator} />
         <Stack.Screen name="MessagesStack" component={MessagesNavigator} />
         <Stack.Screen name="MainBottomTab" component={MainBottomTab} />
         <Stack.Screen name="RequestStack" component={RequestsStackNavigator} />

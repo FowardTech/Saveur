@@ -1,7 +1,6 @@
 import {NavigatorScreenParams, RouteProp} from '@react-navigation/native';
 import {
   AdvertisementProps,
-  CreatPostChildren,
   Difficulty_Enum,
   Interview_Type_Enum,
   JobAlertProps,
@@ -15,14 +14,10 @@ import {
 export type RootStackParamList = {
   Intro: undefined;
   AuthStack: NavigatorScreenParams<AuthStackParamList>;
-  NewJob: NavigatorScreenParams<NewJobStackParamList>;
   SelectLanguage: undefined;
   Notification: undefined;
-  WriteReview: undefined;
   AddMorePayment: undefined;
   MoreNavigator: NavigatorScreenParams<MoreStackParamList>;
-  CreateJobStack: NavigatorScreenParams<CreateJobStackParamList>;
-  FindStack: NavigatorScreenParams<FindStackParamList>;
   MessagesStack: NavigatorScreenParams<MessagesStackParamList>;
   RequestStack: NavigatorScreenParams<RequestsStackParamList>;
   MainBottomTab: NavigatorScreenParams<MainBottomTabStackParamList> | undefined;
@@ -222,17 +217,6 @@ export type RootStackParamList = {
   // MoreSrc.tsx, right next to Subscription/Payment Methods.
   PaymentHistory: undefined;
 };
-export type CreateJobStackParamList = {
-  TypeOfCare: undefined;
-  FrequencyDate: undefined;
-  AboutYourFamily: {children: CreatPostChildren[]};
-  AboutYourChild: undefined;
-  HourlyRate: undefined;
-  Qualifications: undefined;
-  SelectResponsibilities: undefined;
-  CreateJob: undefined;
-  CreatePostDetails: undefined;
-};
 export type MainBottomTabStackParamList = {
   Home: undefined;
   Practice: undefined;
@@ -255,16 +239,6 @@ export type AuthStackParamList = {
     | undefined;
   ForgetPassword: undefined;
   NewPassword: undefined;
-};
-export type NewJobStackParamList = {
-  TypeOfCare: undefined;
-  FrequencyDate: undefined;
-  AboutYourFamily: undefined;
-};
-export type FindStackParamList = {
-  FindSrc: undefined;
-  ViewOnMap: undefined;
-  JobDetails: {name: string};
 };
 export type MessagesStackParamList = {
   // initialPrompt: when set (e.g. tapping a "Suggested Topic" on the Coach
@@ -300,14 +274,6 @@ export type RequestsInPassScreenNavigationProp = RouteProp<
   'RequestsInPast'
 >;
 
-export type JobDetailsScreenNavigationProp = RouteProp<
-  FindStackParamList,
-  'JobDetails'
->;
-export type AboutYourFamilyScreenNavigationProp = RouteProp<
-  CreateJobStackParamList,
-  'AboutYourFamily'
->;
 export type ApplicationDetailsScreenNavigationProp = RouteProp<
   RequestsStackParamList,
   "ApplicationDetails"
