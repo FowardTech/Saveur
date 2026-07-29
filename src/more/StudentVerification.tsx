@@ -11,6 +11,7 @@ import {
   Icon,
   Spinner,
   Datepicker,
+  Text as EvaText,
 } from '@ui-kitten/components';
 import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -96,6 +97,24 @@ const StudentVerification = memo(() => {
   const route = useRoute<RouteProp<RootStackParamList, 'StudentVerification'>>();
   const fromSignup = !!route.params?.fromSignup;
   const discountPercent = configService.getCachedConfig().student_eligibility.discount_percent;
+
+  // "Student Package and Verification" is long enough that, combined with
+  // the Skip button on the fromSignup variant of this screen (see
+  // accessoryRight below), the title text was overflowing straight past
+  // its own header box and rendering on top of/behind Skip instead of
+  // stopping short of it — TopNavigation's default title Text has no
+  // numberOfLines, so it doesn't truncate on its own. Passing a render
+  // function (per TopNavigation's own title prop contract) instead of a
+  // plain string lets us force numberOfLines={1} + ellipsizeMode so the
+  // title truncates with "…" instead of colliding with Skip.
+  const renderTitle = React.useCallback(
+    (props: any) => (
+      <EvaText {...props} numberOfLines={1} ellipsizeMode="tail">
+        {t('more:student_verification', { defaultValue: 'Student Package and Verification' })}
+      </EvaText>
+    ),
+    [t],
+  );
 
   // Mirrors SignupThirdStep.tsx's goToSuccess — when this screen is reached
   // as part of signup, finishing (or skipping) it should continue on into
@@ -208,7 +227,7 @@ const StudentVerification = memo(() => {
   if (isLoadingStatus) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })} accessoryLeft={<NavigationAction />} />
+        <TopNavigation title={renderTitle} accessoryLeft={<NavigationAction />} />
         <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
       </Container>
     );
@@ -217,7 +236,7 @@ const StudentVerification = memo(() => {
   if (status?.studentDiscountActive) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })} accessoryLeft={<NavigationAction />} />
+        <TopNavigation title={renderTitle} accessoryLeft={<NavigationAction />} />
         <Content padder contentContainerStyle={styles.content}>
           <Layout level="2" style={styles.card}>
             <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon24, { tintColor: theme['color-success-500'] }]} />
@@ -246,7 +265,7 @@ const StudentVerification = memo(() => {
   if (status?.graduated) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })} accessoryLeft={<NavigationAction />} />
+        <TopNavigation title={renderTitle} accessoryLeft={<NavigationAction />} />
         <Content padder contentContainerStyle={styles.content}>
           <Layout level="2" style={styles.card}>
             <Text category="h7" bold mb={6}>{t('more:student_graduated_title', { defaultValue: 'Congratulations on graduating!' })}</Text>
@@ -262,7 +281,7 @@ const StudentVerification = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('more:student_verification', { defaultValue: 'Student Package and Verification' })}
+        title={renderTitle}
         accessoryLeft={<NavigationAction />}
         accessoryRight={fromSignup ? () => (
           <Button appearance="ghost" status="basic" size="small" onPress={goToSuccess}>
