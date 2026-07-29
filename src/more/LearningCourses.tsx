@@ -89,13 +89,23 @@ const LearningCourses = memo(() => {
     learningService.getAllProgress().then(setAllProgress).catch(() => {});
   }, []);
 
-  React.useEffect(() => {
-    learningService.listCertificates().then(setCertificates).catch(() => {});
+  // Separated from the mount-only effect below so the focus listener further
+  // down can also re-fetch it — task #67: finishing a week's last module
+  // unlocks the next week server-side (app/api/learning.py's
+  // _advance_curriculum_if_complete), so backing out of CourseSession into
+  // this screen needs a fresh curriculum, not just fresh per-course progress,
+  // for the newly-unlocked week's card to stop showing "Locked" immediately.
+  const loadCurriculum = React.useCallback(() => {
     learningService.getSavedCurriculum()
       .then(setCurriculum)
       .finally(() => setCurriculumLoaded(true));
+  }, []);
+
+  React.useEffect(() => {
+    learningService.listCertificates().then(setCertificates).catch(() => {});
+    loadCurriculum();
     loadProgress();
-  }, [loadProgress]);
+  }, [loadProgress, loadCurriculum]);
 
   const onGenerateCurriculum = async () => {
     const goal = curriculumGoal.trim();
@@ -116,6 +126,7 @@ const LearningCourses = memo(() => {
   };
 
   const onStartCurriculumWeek = (week: CurriculumPlan['weeks'][number]) => {
+    if (!week.unlocked) return;
     navigate('CourseSession', {
       topic: week.topic,
       totalModules: MODULES_PER_LEVEL.basic,
@@ -127,9 +138,12 @@ const LearningCourses = memo(() => {
   // CourseSession after completing a module) so progress made in the last
   // session is reflected immediately, not just on the next full app launch.
   React.useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', loadProgress);
+    const unsubscribe = navigation.addListener('focus', () => {
+      loadProgress();
+      loadCurriculum();
+    });
     return unsubscribe;
-  }, [navigation, loadProgress]);
+  }, [navigation, loadProgress, loadCurriculum]);
 
   const catalogProgress = (courseTitle: string, fallbackTotal: number) => {
     const courseId = learningService.courseIdFor(courseTitle, 'basic');
@@ -334,28 +348,52 @@ const LearningCourses = memo(() => {
             {curriculum ? (
               <View>
                 <Text category="h9" bold mb={12}>{curriculum.goal}</Text>
+                {curriculum.weeks.every(w => w.completed) ? (
+                  <View style={styles.curriculumDoneBox}>
+                    <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+                    <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
+                      {t('more:curriculum_all_weeks_done', { defaultValue: "You've completed every week of this curriculum!" })}
+                    </Text>
+                  </View>
+                ) : null}
                 {curriculum.weeks.map(week => {
                   const entry = allProgress.byCourse[week.courseId];
                   const completed = entry?.completedModules ?? 0;
                   const total = MODULES_PER_LEVEL.basic;
-                  const isWeekComplete = completed >= total;
+                  // Server-recorded `week.completed` (set the instant every
+                  // module's counted server-side — see
+                  // _advance_curriculum_if_complete) is the source of truth;
+                  // the live per-course completedModules count is just a
+                  // same-session fallback for the instant a learner finishes
+                  // the very last module, before this screen's next
+                  // getSavedCurriculum() refetch has landed.
+                  const isWeekComplete = week.completed || completed >= total;
+                  const locked = !week.unlocked;
                   return (
                     <Flex key={week.week} justify="space-between" itemsCenter style={styles.tierRow}>
                       <View style={{ flex: 1 }}>
-                        <Text category="h9" bold>
+                        <Text category="h9" bold status={locked ? 'placeholder' : 'basic'}>
                           {t('more:curriculum_week_label', { defaultValue: 'Week {{n}}', n: week.week })} · {week.topic}
                         </Text>
                         <Text category="h10" status="placeholder" mt={2}>
-                          {week.description}
+                          {locked
+                            ? t('more:curriculum_week_locked_hint', { defaultValue: 'Finish the previous week to unlock' })
+                            : week.description}
                         </Text>
                       </View>
                       <Button
                         size="tiny"
-                        appearance={isWeekComplete ? 'outline' : 'filled'}
-                        status={isWeekComplete ? 'success' : 'primary'}
+                        appearance={isWeekComplete ? 'outline' : locked ? 'outline' : 'filled'}
+                        status={isWeekComplete ? 'success' : locked ? 'basic' : 'primary'}
+                        disabled={locked}
+                        accessoryLeft={locked
+                          ? p => <Icon {...p} pack="eva" name="lock-outline" />
+                          : undefined}
                         style={{ marginLeft: 12 }}
                         onPress={() => onStartCurriculumWeek(week)}>
-                        {isWeekComplete
+                        {locked
+                          ? t('more:locked', { defaultValue: 'Locked' })
+                          : isWeekComplete
                           ? t('more:review', { defaultValue: 'Review' })
                           : completed > 0
                           ? t('more:continue', { defaultValue: 'Continue' })
@@ -650,6 +688,14 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: 'background-basic-color-3',
+  },
+  curriculumDoneBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 8,
+    backgroundColor: 'color-success-transparent-200',
   },
   courseCard: {
     borderRadius: 16,

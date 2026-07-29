@@ -515,6 +515,16 @@ export interface CurriculumWeek {
   level: CourseLevel;
   courseId: string;
   description: string;
+  // Task #67 auto-continuation: week 1 always starts unlocked; week N+1
+  // flips to unlocked server-side the instant week N's course is fully
+  // completed (see app/api/learning.py's _advance_curriculum_if_complete),
+  // alongside a push + in-app notification. Older curricula generated
+  // before this shipped won't have these fields on their saved rows — see
+  // the `?? i === 0` / `?? false` fallbacks below, which treat that as
+  // "only week 1 unlocked, nothing completed yet" rather than crashing or
+  // locking every week.
+  unlocked: boolean;
+  completed: boolean;
 }
 
 export interface CurriculumPlan {
@@ -524,7 +534,10 @@ export interface CurriculumPlan {
 
 function mapCurriculum(raw: {
   goal?: string;
-  weeks?: Array<{ week?: number; topic?: string; level?: string; course_id?: string; description?: string }>;
+  weeks?: Array<{
+    week?: number; topic?: string; level?: string; course_id?: string;
+    description?: string; unlocked?: boolean; completed?: boolean;
+  }>;
 }): CurriculumPlan {
   return {
     goal: raw.goal ?? '',
@@ -534,6 +547,8 @@ function mapCurriculum(raw: {
       level: (w.level as CourseLevel) || 'basic',
       courseId: w.course_id ?? courseIdFor(w.topic ?? '', 'basic'),
       description: w.description ?? '',
+      unlocked: w.unlocked ?? i === 0,
+      completed: w.completed ?? false,
     })),
   };
 }
