@@ -1,11 +1,12 @@
 import React, { memo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
   useTheme,
   Icon,
+  Spinner,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +21,9 @@ import { DATA_INTERVIEW_TYPES } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as configService from 'services/configService';
-import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
+import { getSessionEntitlement } from 'services/entitlementsService';
+import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { AuthContext } from '../../AuthContext';
 
 // "Practice" tab — the entry point for AI mock interviews. Lets a candidate
 // jump straight into a category, or open the full setup wizard (mode /
@@ -31,6 +34,7 @@ const FindScreen = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common', 'more']);
+  const { subscription } = React.useContext(AuthContext);
 
   const onStartSetup = (interviewType?: Interview_Type_Enum) => {
     navigate('MockInterviewSetup', { interviewType });
@@ -38,26 +42,63 @@ const FindScreen = memo(() => {
 
   // Starts a real session (same as MockInterviewSetup does for a Coding
   // pick) so this shortcut actually shows up in Practice History instead of
-  // silently skipping session tracking.
+  // silently skipping session tracking. Was previously a bare, unguarded
+  // await with no try/catch and no busy-state — a free user past their
+  // session cap (or anyone hitting a network blip) tapped this and saw
+  // nothing happen at all: no error, no upgrade prompt, no spinner, and
+  // rapid re-taps could fire duplicate session-creation calls. Now mirrors
+  // MockInterviewSetup.tsx's onStart exactly: pre-checks entitlement so a
+  // capped free user gets the real upgrade prompt instead of a raw backend
+  // error, guards against double-taps, and surfaces any failure.
+  const [isStartingCoding, setIsStartingCoding] = React.useState(false);
   const onStartCodingPractice = async () => {
-    const { sessionId } = await interviewService.startSession({
-      interviewType: Interview_Type_Enum.Coding,
-      mode: Practice_Mode_Enum.Text,
-      difficulty: Difficulty_Enum.Intermediate,
-      timed: true,
-    });
-    navigate('CodingInterview', { sessionId, interviewType: Interview_Type_Enum.Coding });
+    if (isStartingCoding) return;
+    setIsStartingCoding(true);
+    try {
+      const entitlement = await getSessionEntitlement(subscription);
+      if (!entitlement.canStart) {
+        Alert.alert(
+          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
+          t('find:free_limit_reached_body', {
+            limit: entitlement.sessionsLimit ?? 5,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              onPress: () => navigate('Subscription'),
+            },
+          ],
+        );
+        return;
+      }
+      const { sessionId } = await interviewService.startSession({
+        interviewType: Interview_Type_Enum.Coding,
+        mode: Practice_Mode_Enum.Text,
+        difficulty: Difficulty_Enum.Intermediate,
+        timed: true,
+      });
+      navigate('CodingInterview', { sessionId, interviewType: Interview_Type_Enum.Coding });
+    } catch (e: any) {
+      Alert.alert(
+        t('find:start_interview_failed', { defaultValue: 'Could not start interview' }),
+        e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+      );
+    } finally {
+      setIsStartingCoding(false);
+    }
   };
 
   // eva outline icons (see constants/Data.ts's DATA_INTERVIEW_TYPES comment
   // for why — same reasoning applies here, this row used to mix the custom
   // "assets" pack's filled 'myPost' badge icon with thinner line-art ones).
   const TOOLS = [
-    { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder') },
-    { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer') },
+    { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder'), loading: false },
+    { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer'), loading: false },
     // Admin-configurable — see the Feature Flags page / services/configService.ts.
     ...(configService.isFeatureEnabled('coding_practice')
-      ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice }]
+      ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice, loading: isStartingCoding }]
       : []),
   ];
 
@@ -97,12 +138,17 @@ const FindScreen = memo(() => {
               key={i}
               activeOpacity={0.7}
               onPress={tool.onPress}
+              disabled={tool.loading}
               style={styles.toolCard}>
-              <Icon
-                pack="eva"
-                name={tool.icon}
-                style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
-              />
+              {tool.loading ? (
+                <Spinner size="small" />
+              ) : (
+                <Icon
+                  pack="eva"
+                  name={tool.icon}
+                  style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
+                />
+              )}
               <Text category="h9" center mt={8} bold numberOfLines={2}>
                 {tool.title}
               </Text>
