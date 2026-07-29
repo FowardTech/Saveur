@@ -47,6 +47,7 @@
     "react-native": "0.82.1",
     "react-native-appsflyer": "^6.18.0",
     "react-native-biometrics": "^3.0.1",
+    "react-native-bootsplash": "^7.3.2",
     "react-native-blob-util": "^0.24.10",
     "react-native-calendars": "^1.1282.0",
     "react-native-card-flip": "^1.0.7",

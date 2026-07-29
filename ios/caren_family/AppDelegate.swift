@@ -3,6 +3,7 @@ import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import FirebaseCore
+import RNBootSplash
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -76,6 +77,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
   override func sourceURL(for bridge: RCTBridge) -> URL? {
     self.bundleURL()
+  }
+
+  // Runs right after the RN root view is created (still before any JS has
+  // rendered a single pixel) — inserting the BootSplash native view here
+  // means there is zero gap between the OS-driven BootSplash.storyboard
+  // launch screen dismissing and this view taking over: same background
+  // color, same mark, same footer line, so the two phases read as one
+  // continuous screen instead of a launch-screen flash followed by blank
+  // white while Metro/JS loads. JS calls BootSplash.hide() (see App.tsx)
+  // once the app has something real to show.
+  override func customize(_ rootView: RCTRootView) {
+    super.customize(rootView)
+    RNBootSplash.initWithStoryboard("BootSplash", rootView: rootView)
   }
 
   override func bundleURL() -> URL? {

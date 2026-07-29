@@ -23,6 +23,7 @@ import * as appsFlyerService from 'services/appsFlyerService';
 import * as configService from 'services/configService';
 import { AppConfig } from 'services/configService';
 import AppGateScreen from 'components/AppGateScreen';
+import BootSplash from 'react-native-bootsplash';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -105,6 +106,20 @@ export default function App() {
     configService.loadAppConfig().then(config => {
       setAppConfig(config);
       appsFlyerService.init();
+    }).finally(() => {
+      // This is the actual handoff point from the native BootSplash view
+      // (ios/caren_family/AppDelegate.swift's customize(_:) — same mark/
+      // background/footer as LaunchScreen.storyboard, kept on screen by
+      // RNBootSplash instead of the OS dismissing straight to a blank RN
+      // root view) to the real app. Waiting for this config fetch to
+      // settle (success OR failure — .finally, not .then) before hiding
+      // means the maintenance/force-update gate above never has a chance
+      // to flash in behind the splash; a fade avoids a hard cut against
+      // whatever screen ends up underneath. No-ops harmlessly on Android
+      // (native module not initialized there — installSplashScreen/
+      // Theme.App.SplashScreen already handles Android's own launch, and
+      // isn't part of this fix).
+      BootSplash.hide({ fade: true }).catch(() => {});
     });
   }, []);
   const maintenance = appConfig.maintenance;

@@ -22,6 +22,8 @@
 		AAB5A0220B1840A7A2ECF48F /* PlusJakartaSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7CB034258CDF49E3B44655B5 /* PlusJakartaSans-Regular.ttf */; };
 		CEED5595B65A4F53A5D834D8 /* Roboto-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 899DAD1250B54C0BB327B225 /* Roboto-Regular.ttf */; };
 		E8540FC98CD74DCAA87D96AC /* MontserratAlternates-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D949DF03B9474B429A42AE43 /* MontserratAlternates-Black.ttf */; };
+		1C082649EAB44D1EA342B981 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 93A013C022B14564B1E2B79C /* BootSplash.storyboard */; };
+		6E1D259B53074190ACBCA7BA /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E6A369C8D40249A190D7EA7E /* Colors.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -46,6 +48,8 @@
 		D949DF03B9474B429A42AE43 /* MontserratAlternates-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "MontserratAlternates-Black.ttf"; path = "../assets/fonts/MontserratAlternates-Black.ttf"; sourceTree = "<group>"; };
 		E72380C3992048289B572E57 /* Roboto-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Roboto-Medium.ttf"; path = "../assets/fonts/Roboto-Medium.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		93A013C022B14564B1E2B79C /* BootSplash.storyboard */ = {isa = PBXFileReference; name = "BootSplash.storyboard"; path = "caren_family/BootSplash.storyboard"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		E6A369C8D40249A190D7EA7E /* Colors.xcassets */ = {isa = PBXFileReference; name = "Colors.xcassets"; path = "caren_family/Colors.xcassets"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = folder.assetcatalog; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +74,8 @@
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				9A1B2C3D4E5F60718293A4B5 /* GoogleService-Info.plist */,
 				03819430530854B2BCBAE610 /* caren_family.entitlements */,
+				93A013C022B14564B1E2B79C /* BootSplash.storyboard */,
+				E6A369C8D40249A190D7EA7E /* Colors.xcassets */,
 			);
 			name = caren_family;
 			sourceTree = "<group>";
@@ -213,6 +219,8 @@
 				AAB5A0220B1840A7A2ECF48F /* PlusJakartaSans-Regular.ttf in Resources */,
 				75C9BDFB95D2437B8C95ACC2 /* PlusJakartaSans-Medium.ttf in Resources */,
 				4E95E4F84E004D929362B9BB /* PlusJakartaSans-Bold.ttf in Resources */,
+				1C082649EAB44D1EA342B981 /* BootSplash.storyboard in Resources */,
+				6E1D259B53074190ACBCA7BA /* Colors.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
