@@ -151,7 +151,6 @@ const Login = memo(() => {
         <Text mt={24} category="h7" mb={72}>
           {t('auth:welcome_back')}
         </Text>
-        {/* TODO: no real authentication wired up — Login always succeeds. */}
         <Controller
           control={control}
           name="email"
