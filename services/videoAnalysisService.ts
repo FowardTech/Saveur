@@ -339,7 +339,20 @@ export function useVideoInterviewAnalysis() {
       if (now - lastBufferPushRef.current >= FRAME_BUFFER_SAMPLE_INTERVAL_MS) {
         lastBufferPushRef.current = now;
         frameBufferRef.current.push({
-          ts: now,
+          // Session-relative milliseconds, NOT an absolute Date.now() epoch
+          // (was `ts: now` -- a ~13-digit epoch value like 1785297387579,
+          // which overflows the backend's t_ms Postgres INTEGER column
+          // (max ~2.1 billion) and made every single POST /camera-frame
+          // batch during a Video-mode session fail with a 500
+          // "integer out of range" -- silently, since the caller only
+          // console.warns on failure. This also matches the exact
+          // semantics app/api/feedback.py's replay() already assumes for
+          // camera_points (relative to session start, same as transcript
+          // t_ms), which is what InterviewReplay.tsx's video-seek relies
+          // on -- an absolute epoch value here would have made
+          // jumpToAnnotation try to seek the video to a nonsensical
+          // multi-billion-second offset.
+          ts: sessionStartRef.current != null ? now - sessionStartRef.current : now,
           lookingAtCamera: looking,
           smiling,
           yaw: face.yawAngle,

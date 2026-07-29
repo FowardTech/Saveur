@@ -7,6 +7,7 @@ import {
   useTheme,
   Layout,
   Button,
+  Icon,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -400,7 +401,28 @@ const InterviewFeedback = memo(() => {
           </>
         ) : null}
 
-        <Button children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 32 }]} />
+        {sessionId ? (
+          // Deliberately NOT gated on `videoAnalysis` (only present when
+          // arriving fresh from LiveInterviewSession right after ending a
+          // session) — reopening a past Video-mode session from Practice
+          // History/My Progress lands here with just {sessionId,
+          // interviewType}, and that path needs this button too (this was
+          // the actual "I finished a video interview and couldn't find the
+          // replay" gap: there was previously no link to InterviewReplay
+          // anywhere on this screen at all, in either navigation path).
+          // Works for every completed session, not just Video mode —
+          // InterviewReplay itself already renders a real player when a
+          // video exists and falls back to the transcript+metrics timeline
+          // when it doesn't, so this is never a dead end either way.
+          <Button
+            children={t('find:view_replay', { defaultValue: 'View Replay' })}
+            status="basic"
+            accessoryLeft={props => <Icon {...props} pack="eva" name="play-circle-outline" />}
+            onPress={() => navigate('InterviewReplay', { sessionId: String(sessionId) })}
+            style={{ marginTop: 32 }}
+          />
+        ) : null}
+        <Button children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: sessionId ? 16 : 32 }]} />
         <Button children={t('common:done')} status="outline" onPress={onDone} style={{ marginTop: 16 }} />
       </Content>
     </Container>
