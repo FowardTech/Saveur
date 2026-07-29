@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />
@@ -13,12 +14,23 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+    <!-- The AppsFlyer SDK's own manifest (com.appsflyer:af-android-sdk)
+         declares android:allowBackup="true", which conflicts with our
+         explicit "false" below and fails the release build's manifest
+         merge otherwise ("Attribute application@allowBackup value=(false)
+         ... is also present at [com.appsflyer:af-android-sdk] ...
+         value=(true)"). tools:replace tells the merger our app's value
+         wins — deliberately "false", since allowBackup="true" lets Android
+         back up (and restore, on a new device) app data/prefs via
+         adb backup / cloud backup, which we don't want for a security-
+         sensitive app. -->
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
       android:icon="@mipmap/ic_launcher"
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
+      tools:replace="android:allowBackup"
       android:theme="@style/AppTheme"
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
@@ -47,8 +59,9 @@
              edge-to-edge/cropped (a second, OS-level "extra splash" on top
              of everything above). That icon mechanism proved unreliable
              even with explicit, well-padded assets, so Theme.App.SplashScreen
-             (styles.xml) now shows no icon at all — just plain blue — and
-             hands off immediately to AppTheme.Main, which shows the actual
+             (styles.xml) now shows no icon at all — just the plain
+             @color/splash_background — and hands off immediately to
+             AppTheme.Main, which shows the actual
              logo via a plain windowBackground drawable instead (full manual
              control over its size, not subject to the system splash icon
              pipeline) — see MainActivity.kt's installSplashScreen() call. -->
