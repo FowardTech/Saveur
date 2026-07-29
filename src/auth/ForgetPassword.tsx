@@ -42,7 +42,13 @@ const ForgetPassword = memo(() => {
     formState: {errors},
   } = useForm({
     defaultValues: {
-      email: 'lehieuds@gmail.com',
+      // Was a stranger's real, hardcoded email address (leftover from the
+      // original RN template) — a genuine data-exposure/UX bug: this field
+      // pre-filled with someone else's inbox on every fresh install, and a
+      // user who tapped "Send reset link" without noticing would fire a
+      // password-reset email at a random third party's account instead of
+      // their own.
+      email: '',
     },
   });
 

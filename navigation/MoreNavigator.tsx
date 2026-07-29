@@ -6,7 +6,6 @@ import MyChildren from "src/more/MyChildren";
 import MyPost from "src/more/MyPost";
 import PaymentMethod from "src/more/PaymentMethod";
 import ProfileSrc from "src/more/ProfileSrc";
-import ReferFriend from "src/more/ReferFriend";
 
 import { MoreStackParamList } from "./types";
 
@@ -19,7 +18,6 @@ const MoreNavigator = memo(() => {
     >
       <Stack.Screen name="MoreSrc" component={MoreSrc} />
       <Stack.Screen name="MyPost" component={MyPost} />
-      <Stack.Screen name="ReferFriend" component={ReferFriend} />
       <Stack.Screen name="MyChildren" component={MyChildren} />
       <Stack.Screen name="ProfileSrc" component={ProfileSrc} />
       <Stack.Screen name="EditProfile" component={EditProfile} />

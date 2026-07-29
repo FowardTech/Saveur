@@ -309,7 +309,6 @@ export type MoreStackParamList = {
   PaymentMethod: undefined;
   MyChildren: undefined;
   ProfileSrc: undefined;
-  ReferFriend: undefined;
 };
 export type ModalScreenNavigationProp = RouteProp<
   RootStackParamList,

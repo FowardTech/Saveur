@@ -424,8 +424,9 @@ const MoreSrc = memo(() => {
               at the old ReferFriend.tsx stub (hardcoded fake link, never
               wired to the real backend). It duplicated the actual referral
               feature, which already has its own entry above in
-              DATA_DETAILS ("Refer & Earn" -> ReferralProgram.tsx) — removed
-              rather than kept as a second, non-functional entry point. */}
+              DATA_DETAILS ("Refer & Earn" -> ReferralProgram.tsx) — the
+              stub file, its route, and its type entries have since been
+              deleted entirely rather than left registered-but-unreachable. */}
           {/* Uses a plain eva Icon rather than ButtonOptional/ButtonFill —
               those are hardcoded to the "assets" icon pack (see
               ButtonFill.tsx), which has no logout/exit glyph bundled and

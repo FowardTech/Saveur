@@ -26,8 +26,7 @@ export interface ButtonOptionalProps {
     | 'PaymentMethod'
     | 'MyPost'
     | 'ChangeCareType'
-    | 'MoreSrc'
-    | 'ReferFriend';
+    | 'MoreSrc';
   withToggle?: boolean;
   checked?: boolean;
   // Passed straight through to ButtonFill's own `backgroundColor` override —
