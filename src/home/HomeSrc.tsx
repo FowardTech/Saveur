@@ -53,7 +53,7 @@ const HomeSrc = memo(() => {
   const { width } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
-  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
+  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPro } =
     React.useContext(AuthContext);
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
@@ -125,7 +125,7 @@ const HomeSrc = memo(() => {
   // five different screens. See services/careerOsService.ts. Fetched for
   // every signed-in user (not gated to a paid tier) — it's a synthesis of
   // data the user already has access to elsewhere, not new AI content.
-  const [briefing, setBriefing] = React.useState<{ narrative: string | null; priorities: { label: string; action: string }[] } | null>(null);
+  const [briefing, setBriefing] = React.useState<{ narrative: string | null; priorities: { label: string; action: string }[]; isTeaser: boolean } | null>(null);
   React.useEffect(() => {
     careerOsService.getTodayBriefing().then(setBriefing).catch(() => {});
   }, []);
@@ -452,11 +452,41 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
         {briefing?.narrative ? (
-          <Layout level="2" style={styles.briefingCard}>
+          // Visual redesign (task #42): was a plain, unbordered card
+          // indistinguishable from every other card on the dashboard, for
+          // what the user described as their "dream feature" — now has a
+          // colored icon badge (matching the icon-in-circle treatment used
+          // elsewhere in the app) and a subtle primary-tinted border so it
+          // reads as the standout card it's meant to be. The teaser variant
+          // (briefing.isTeaser — a user with nothing real to synthesize yet,
+          // see careerOsService.ts) swaps the icon/title to a "Get Started"
+          // framing and, for free users specifically, adds an upgrade CTA —
+          // previously this state didn't render at all.
+          <Layout
+            level="2"
+            style={[
+              styles.briefingCard,
+              { borderColor: theme['color-primary-transparent-300'] },
+            ]}
+          >
             <Flex justify="flex-start" itemsCenter mb={10}>
-              <Icon pack="assets" name="rateFull" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
-              <Text category="h8" bold ml={8}>
-                {t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
+              <View style={[styles.briefingIconBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+                {briefing.isTeaser ? (
+                  // No "rocket"/launch icon exists in the custom "assets"
+                  // pack (see assets/icons/index.ts — it's a fixed template
+                  // icon list). bulb-outline is a real eva-pack icon already
+                  // used elsewhere in this app for the same "here's a tip to
+                  // get going" meaning (see StudentVerification.tsx's perks
+                  // list) rather than risking a silently-missing custom icon.
+                  <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                ) : (
+                  <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                )}
+              </View>
+              <Text category="h8" bold ml={10}>
+                {briefing.isTeaser
+                  ? t('home:career_os_get_started_title', { defaultValue: 'Get Started' })
+                  : t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
               </Text>
             </Flex>
             {/* Was the full narrative inline — often several sentences long,
@@ -478,7 +508,7 @@ const HomeSrc = memo(() => {
               justify="flex-end"
               itemsCenter
               mt={4}
-              onPress={() => navigate('CareerBriefingDetail', { narrative: briefing.narrative!, priorities: briefing.priorities })}
+              onPress={() => navigate('CareerBriefingDetail', { narrative: briefing.narrative!, priorities: briefing.priorities, isTeaser: briefing.isTeaser })}
             >
               <Text category="h10" status="link" bold>
                 {t('home:read_more', { defaultValue: 'Read more' })}
@@ -489,6 +519,15 @@ const HomeSrc = memo(() => {
                CareerBriefingDetail.tsx (behind "Read more") so this card
                stays a short, scannable preview rather than duplicating the
                full breakdown on the dashboard itself. */}
+            {briefing.isTeaser && !isPro ? (
+              <Button
+                size="small"
+                style={[globalStyle.shadowBtn, { marginTop: 12 }]}
+                onPress={() => navigate('Subscription')}
+              >
+                {t('home:career_os_upgrade_cta', { defaultValue: 'See Pro plans' })}
+              </Button>
+            ) : null}
           </Layout>
         ) : null}
         {goalTipsLoading && !goalTips ? (
@@ -868,6 +907,15 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginTop: 16,
+    borderWidth: 1,
+    ...globalStyle.shadowFade,
+  },
+  briefingIconBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   priorityDot: {
     width: 6,

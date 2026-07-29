@@ -158,6 +158,11 @@ export type RootStackParamList = {
   CareerBriefingDetail: {
     narrative: string;
     priorities: {label: string; action: string}[];
+    // See careerOsService.ts's HomeBriefing.isTeaser — lets this screen
+    // show a "Get Started" title instead of "Today's Briefing" for the
+    // admin-editable teaser shown to a user with nothing real to
+    // synthesize yet.
+    isTeaser?: boolean;
   };
   SalaryNegotiation: undefined;
   SystemDesignWhiteboard: undefined;

@@ -27,12 +27,14 @@ const CareerBriefingDetail = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home']);
   const route = useRoute<RouteProp<RootStackParamList, 'CareerBriefingDetail'>>();
-  const { narrative, priorities } = route.params;
+  const { narrative, priorities, isTeaser } = route.params;
 
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
+        title={isTeaser
+          ? t('home:career_os_get_started_title', { defaultValue: 'Get Started' })
+          : t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
         accessoryLeft={<NavigationAction />}
       />
       <Content padder contentContainerStyle={styles.content}>
