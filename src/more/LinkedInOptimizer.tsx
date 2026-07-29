@@ -19,9 +19,10 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import * as linkedinOptimizerService from 'services/linkedinOptimizerService';
-import { OptimizationResult } from 'services/linkedinOptimizerService';
+import { OptimizationResult, OptimizationHistoryEntry } from 'services/linkedinOptimizerService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import dayjs from 'utils/dayjs';
 
 // AI LinkedIn Optimizer — product request item, Pro Premium feature. Paste
 // your current headline/about/bullets, get AI-rewritten versions + feedback.
@@ -40,6 +41,21 @@ const LinkedInOptimizer = memo(() => {
   const [result, setResult] = React.useState<OptimizationResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  // Score history (product request item: "expand LinkedIn Optimizer" —
+  // every past run used to be lost the moment you navigated away, so there
+  // was no way to see whether your profile was actually improving). Loaded
+  // once on mount, then refreshed after each successful optimize() so a new
+  // run's score shows up immediately without needing to leave and re-enter
+  // the screen. Best-effort/silent on failure — a history-list hiccup
+  // shouldn't block the actual optimize flow this screen exists for.
+  const [history, setHistory] = React.useState<OptimizationHistoryEntry[]>([]);
+  const loadHistory = React.useCallback(() => {
+    linkedinOptimizerService.getHistory().then(setHistory).catch(() => {});
+  }, []);
+  React.useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
   const onOptimize = async () => {
     const bullets = bulletsText.split('\n').map(b => b.trim()).filter(Boolean);
     if (!headline.trim() && !about.trim() && bullets.length === 0) return;
@@ -54,12 +70,19 @@ const LinkedInOptimizer = memo(() => {
         targetRole: profile?.desiredRoles?.[0],
       });
       setResult(res);
+      loadHistory();
     } catch {
       setError(t('more:linkedin_optimize_failed', { defaultValue: "Couldn't analyze your profile right now. Please try again." }));
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Previous run's score (the one right before whatever's currently
+  // showing in `result`, i.e. history[1] once a fresh run has been
+  // prepended by loadHistory) — lets the strength card show a real "+N
+  // since last time" delta instead of just a bare number.
+  const previousScore = history.length > 1 ? history[1].profileStrengthScore : null;
 
   if (!isPremium) {
     return (
@@ -85,6 +108,25 @@ const LinkedInOptimizer = memo(() => {
             defaultValue: "Paste any part of your current LinkedIn profile below — the AI will rewrite what you give it and explain why.",
           })}
         </Text>
+
+        {history.length > 0 ? (
+          <Layout level="2" style={[styles.card, { marginBottom: 20 }]}>
+            <Text category="h9" bold mb={10}>
+              {t('more:linkedin_score_history', { defaultValue: 'Score history' })}
+            </Text>
+            {history.slice(0, 5).map((h, i) => (
+              <Flex key={h.id} justify="space-between" itemsCenter mb={i < 4 ? 8 : 0}>
+                <Text category="h10" status="placeholder">
+                  {h.createdAt ? dayjs(h.createdAt).format('MMM D, YYYY') : ''}
+                  {h.targetRole ? ` · ${h.targetRole}` : ''}
+                </Text>
+                <Text category="h9" bold>
+                  {h.profileStrengthScore != null ? `${h.profileStrengthScore}%` : '—'}
+                </Text>
+              </Flex>
+            ))}
+          </Layout>
+        ) : null}
 
         <Text category="h10" status="placeholder" mb={6}>{t('more:linkedin_headline_label', { defaultValue: 'Headline' })}</Text>
         <Input value={headline} onChangeText={setHeadline} multiline style={[styles.input, { marginBottom: 16 }]} />
@@ -113,6 +155,17 @@ const LinkedInOptimizer = memo(() => {
               <Layout level="2" style={[styles.card, { alignItems: 'center' }]}>
                 <Text category="h3" bold>{result.profileStrengthScore}%</Text>
                 <Text category="h10" status="placeholder">{t('more:current_profile_strength', { defaultValue: 'Current profile strength' })}</Text>
+                {previousScore != null ? (
+                  <Text
+                    category="h10"
+                    status={result.profileStrengthScore >= previousScore ? 'success' : 'warning'}
+                    mt={4}
+                  >
+                    {result.profileStrengthScore >= previousScore
+                      ? t('more:linkedin_score_up', { defaultValue: '+{{delta}} since last time', delta: result.profileStrengthScore - previousScore })
+                      : t('more:linkedin_score_down', { defaultValue: '{{delta}} since last time', delta: result.profileStrengthScore - previousScore })}
+                  </Text>
+                ) : null}
               </Layout>
             ) : null}
 

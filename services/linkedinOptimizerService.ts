@@ -39,6 +39,39 @@ interface WireResult {
   profile_strength_score?: number | null;
 }
 
+// A single past optimize() run — GET /api/v1/linkedin/history (product
+// request item: score history, so a user can see their profile-strength
+// score improve over time instead of every past run being lost the moment
+// they navigate away). `response` is the same shape optimizeProfile()
+// returns, wire-cased, so a past run can be re-opened and read in full.
+export interface OptimizationHistoryEntry {
+  id: number;
+  targetRole: string | null;
+  profileStrengthScore: number | null;
+  response: WireResult | null;
+  createdAt: string | null;
+}
+
+interface WireHistoryEntry {
+  id: number;
+  target_role: string | null;
+  profile_strength_score: number | null;
+  response: WireResult | null;
+  created_at: string | null;
+}
+
+/** Throws on failure so the screen can show a real error. */
+export async function getHistory(): Promise<OptimizationHistoryEntry[]> {
+  const { data } = await apiClient.get<{history: WireHistoryEntry[]}>('/api/v1/linkedin/history');
+  return (data.history ?? []).map(h => ({
+    id: h.id,
+    targetRole: h.target_role,
+    profileStrengthScore: h.profile_strength_score,
+    response: h.response,
+    createdAt: h.created_at,
+  }));
+}
+
 /** Throws on failure so the screen can show a real error. */
 export async function optimizeProfile(input: {
   headline?: string;
