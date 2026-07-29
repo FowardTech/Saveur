@@ -313,6 +313,19 @@ export async function registerForPushNotifications(): Promise<void> {
       return;
     }
 
+    // Required as of the newer @react-native-firebase/messaging "modular"
+    // API this app is on (v25) — iOS's getToken() now throws
+    // "[messaging/unregistered] You must be registered for remote messages
+    // before calling getToken" if this isn't called first. Used to be
+    // implicit/automatic on older RNFirebase versions, which is exactly why
+    // this was missing here — every single call to getToken() below was
+    // failing on iOS with that exact error, which is what made push
+    // registration silently never produce an iOS device token at all
+    // (Android hits this too, but it's a documented no-op there — safe to
+    // call unconditionally on both platforms rather than gating on
+    // Platform.OS).
+    await messaging().registerDeviceForRemoteMessages();
+
     const token = await messaging().getToken();
     if (!token) {
       console.warn('[push] messaging().getToken() returned empty — device token was not registered');
