@@ -3,6 +3,13 @@
          android:windowBackground. Previously unset, so the very first frame
          before RN loads fell back to Theme.AppCompat.DayNight's own default
          (near-black in dark mode, which is what showed up as a black splash
-         on-device) instead of a deliberate brand color. -->
-    <color name="splash_background">#2574FF</color>
+         on-device) instead of a deliberate brand color.
+
+         Changed from solid brand blue (#2574FF) to this very light gray
+         (product request: new logo is a blue mark meant to sit on a light
+         background — the exact #F4F4F4 baked into assets/images/applogo.png
+         itself, so the splash/icon background matches the source art
+         pixel-for-pixel with no visible seam) — a blue mark would have been
+         invisible against the old blue splash. -->
+    <color name="splash_background">#F4F4F4</color>
 </resources>

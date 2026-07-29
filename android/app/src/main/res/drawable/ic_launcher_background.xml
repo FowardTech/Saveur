@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Adaptive-icon background layer — flat brand blue (#2574FF), matching
+<!-- Adaptive-icon background layer — very light gray (#F4F4F4), matching
      the app's splash screen background (see values/colors.xml's
      splash_background) so the launcher icon and splash feel like one
-     continuous brand mark rather than two unrelated blues. -->
+     continuous brand mark. Changed from flat brand blue: the current logo
+     mark (ic_launcher_foreground) is itself blue, so it needs a light
+     background to read against instead of disappearing into a blue-on-blue
+     icon. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#2574FF" />
+    <solid android:color="#F4F4F4" />
 </shape>

@@ -1,13 +1,14 @@
 export const Images = {
   logo: require('./logo.png'),
   // Real Saveur mark (see assets/images/applogo.png, the source the user
-  // supplied) — square with its brand-blue background baked in, so it drops
-  // cleanly onto a white/light surface as a self-contained badge (Avatar
-  // circles, the success screen) without needing a colored backdrop of its
-  // own. logoMark is the same artwork with the background chroma-keyed to
-  // transparent, for the rarer case of placing it directly on a matching
-  // blue background (see the native splash screens, which use the same
-  // extracted asset outside this bundle).
+  // supplied — a blue "S" on a very light gray, #F4F4F4) — square with that
+  // same light-gray background baked in, so it drops cleanly onto pretty
+  // much any surface as a self-contained badge (avatar circles, the
+  // success screen) without needing a colored backdrop of its own.
+  // logoMark is the same artwork with the background chroma-keyed to
+  // transparent, for placing the mark directly on a matching light-gray
+  // surface (see the native splash screens/app icons, which use the same
+  // extracted mark — regenerated from applogo.png outside this bundle).
   logoBadge: require('./logo_square.png'),
   logoMark: require('./logo_mark.png'),
   art1: require('./img_art_1.png'),
