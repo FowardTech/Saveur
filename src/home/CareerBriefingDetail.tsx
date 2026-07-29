@@ -5,27 +5,47 @@ import {
   StyleService,
   useStyleSheet,
   useTheme,
+  Layout,
+  Icon,
 } from '@ui-kitten/components';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import dayjs from 'utils/dayjs';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 
-// Full-page "Today's Briefing" — HomeSrc.tsx's dashboard card now only shows
-// a 3-line preview with a "Read more" arrow (the full narrative was making
-// the home dashboard feel long/cluttered), this is where the rest of it
-// lives. Takes the briefing straight via route params rather than
-// re-fetching it — see navigation/types.tsx's CareerBriefingDetail entry for
-// why that's safe to do here.
+// Full-page "Today's Briefing" — HomeSrc.tsx's dashboard card only shows a
+// 3-line preview with a "Read more" arrow into here. Visual redesign (product
+// feedback: the plain text-on-white layout "doesn't look professional") —
+// now mirrors the rest of the app's card language (icon-badge header,
+// bordered/shadowed cards, the same borderRadius 16 / padding 16 convention
+// as HomeSrc's own briefingCard) instead of unstyled paragraphs. Priorities
+// that clearly map to a real destination (Career Roadmap, Resume Builder,
+// Mock Interview) are now tappable — see PRIORITY_DESTINATIONS below —
+// rather than inert bullet text.
+const PRIORITY_DESTINATIONS: { match: string; screen: keyof RootStackParamList }[] = [
+  { match: 'career roadmap', screen: 'CareerRoadmap' },
+  { match: 'resume', screen: 'ResumeBuilder' },
+  { match: 'mock interview', screen: 'MockInterviewSetup' },
+];
+
+function destinationFor(label: string): keyof RootStackParamList | null {
+  const lower = label.toLowerCase();
+  const hit = PRIORITY_DESTINATIONS.find(d => lower.includes(d.match));
+  return hit ? hit.screen : null;
+}
+
 const CareerBriefingDetail = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home']);
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'CareerBriefingDetail'>>();
   const { narrative, priorities, isTeaser } = route.params;
 
@@ -38,20 +58,65 @@ const CareerBriefingDetail = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder contentContainerStyle={styles.content}>
-        <Text category="para-m" style={{ lineHeight: 26 }}>{narrative}</Text>
+        <Layout
+          level="2"
+          style={[styles.heroCard, { borderColor: theme['color-primary-transparent-300'] }]}
+        >
+          <Flex justify="flex-start" itemsCenter mb={14}>
+            <View style={[styles.iconBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+              <Icon
+                pack="eva"
+                name={isTeaser ? 'bulb-outline' : 'sun-outline'}
+                style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
+              />
+            </View>
+            <View style={{ marginLeft: 12, flex: 1 }}>
+              <Text category="h7" bold>
+                {isTeaser
+                  ? t('home:career_os_get_started_title', { defaultValue: 'Get Started' })
+                  : t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
+              </Text>
+              <Text category="h10" status="placeholder" mt={2}>
+                {dayjs().format('dddd, MMMM D')}
+              </Text>
+            </View>
+          </Flex>
+          <Text category="para-m" style={{ lineHeight: 24 }}>{narrative}</Text>
+        </Layout>
+
         {priorities.length ? (
           <View style={{ marginTop: 24 }}>
             <Text category="h7" bold mb={12}>
               {t('home:briefing_priorities_title', { defaultValue: "Today's priorities" })}
             </Text>
-            {priorities.map((p, i) => (
-              <Flex key={i} justify="flex-start" mb={14}>
-                <View style={[styles.priorityDot, { backgroundColor: theme['color-primary-500'] }]} />
-                <Text category="h9" style={{ marginLeft: 10, flex: 1, lineHeight: 20 }}>
-                  <Text category="h9" bold>{p.label}</Text>{p.action ? ` — ${p.action}` : ''}
-                </Text>
-              </Flex>
-            ))}
+            {priorities.map((p, i) => {
+              const destination = destinationFor(p.label);
+              return (
+                <Flex
+                  key={i}
+                  level="2"
+                  style={styles.priorityCard}
+                  justify="flex-start"
+                  itemsCenter
+                  onPress={destination ? () => navigate(destination as any) : undefined}
+                >
+                  <View style={[styles.priorityBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+                    <Text category="h9" bold status="primary">{i + 1}</Text>
+                  </View>
+                  <View style={{ marginLeft: 12, flex: 1 }}>
+                    <Text category="h9-s" bold>{p.label}</Text>
+                    {p.action ? (
+                      <Text category="h10" status="placeholder" mt={2} style={{ lineHeight: 18 }}>
+                        {p.action}
+                      </Text>
+                    ) : null}
+                  </View>
+                  {destination ? (
+                    <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+                  ) : null}
+                </Flex>
+              );
+            })}
           </View>
         ) : null}
       </Content>
@@ -64,10 +129,30 @@ export default CareerBriefingDetail;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
-  priorityDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    marginTop: 7,
+  heroCard: {
+    borderRadius: 16,
+    padding: 18,
+    borderWidth: 1,
+    ...globalStyle.shadowFade,
+  },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  priorityCard: {
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+    ...globalStyle.shadowFade,
+  },
+  priorityBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
