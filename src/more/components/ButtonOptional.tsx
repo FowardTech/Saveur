@@ -30,6 +30,10 @@ export interface ButtonOptionalProps {
   // Passed straight through to ButtonFill's own `backgroundColor` override —
   // see that component for why this exists (MoreSrc.tsx's icon rows).
   iconBackgroundColor?: string;
+  // Passed straight through to ButtonFill's `iconColor` / `borderColor` —
+  // MoreSrc.tsx's "subtle blue background, dark blue border" icon rows.
+  iconColor?: string;
+  iconBorderColor?: string;
   status:
     | 'basic'
     | 'danger'
@@ -54,6 +58,8 @@ const ButtonOptional = ({
   checked,
   navigateSrc,
   iconBackgroundColor,
+  iconColor,
+  iconBorderColor,
 }: ButtonOptionalProps) => {
   const theme = useTheme();
   const {navigate, goBack} =
@@ -74,7 +80,14 @@ const ButtonOptional = ({
       mt={24}
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
-        <ButtonFill icon={icon} status={status} size="medium" backgroundColor={iconBackgroundColor} />
+        <ButtonFill
+          icon={icon}
+          status={status}
+          size="medium"
+          backgroundColor={iconBackgroundColor}
+          iconColor={iconColor}
+          borderColor={iconBorderColor}
+        />
         <Text ml={24} category="para-m">
           {title}
         </Text>

@@ -4,6 +4,7 @@ import {
   ImageBackground,
   StyleProp,
   TouchableOpacity,
+  View,
   ViewStyle,
 } from 'react-native';
 
@@ -26,6 +27,15 @@ interface ButtonFillProps {
   // board instead of the varied per-row status colors — see MoreSrc.tsx).
   // `status` is still accepted/used for the icon glyph's own tint fallback.
   backgroundColor?: string | ColorValue;
+  // Draws a thin ring of this color around the icon shape (Settings/More
+  // list rows, per explicit "subtle blue background, dark blue border"
+  // request). `Images.fillActive` is a soft rounded-square (squircle) PNG,
+  // not a plain rect, so a normal View borderWidth/borderRadius wouldn't
+  // hug its curve — it'd draw a rectangle around the squircle's transparent
+  // corners instead. Rendering a second, slightly larger copy of the same
+  // tinted swatch BEHIND the real one (see the render below) produces a
+  // clean border that follows the actual shape.
+  borderColor?: string | ColorValue;
   status?:
     | 'basic'
     | 'danger'
@@ -49,6 +59,7 @@ const ButtonFill = ({
   onPress,
   iconColor,
   backgroundColor,
+  borderColor,
   style,
 }: ButtonFillProps) => {
   const styles = useStyleSheet(themedStyles);
@@ -175,19 +186,22 @@ const ButtonFill = ({
         return theme['text-primary-color'];
     }
   };
-  return (
+  const sizePx = getSize(size);
+  const BORDER_RING = 2;
+
+  const fill = (
     <ImageBackground
       source={Images.fillActive}
       imageStyle={{
-        width: getSize(size),
-        height: getSize(size),
+        width: sizePx,
+        height: sizePx,
         tintColor: backgroundColor ? backgroundColor : getColor(status),
       }}
       style={[
         styles.container,
         {
-          width: getSize(size),
-          height: getSize(size),
+          width: sizePx,
+          height: sizePx,
         },
         style,
       ]}>
@@ -209,6 +223,35 @@ const ButtonFill = ({
         />
       </TouchableOpacity>
     </ImageBackground>
+  );
+
+  if (!borderColor) {
+    return fill;
+  }
+
+  return (
+    <View
+      style={{
+        width: sizePx + BORDER_RING * 2,
+        height: sizePx + BORDER_RING * 2,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      <ImageBackground
+        source={Images.fillActive}
+        imageStyle={{
+          width: sizePx + BORDER_RING * 2,
+          height: sizePx + BORDER_RING * 2,
+          tintColor: borderColor,
+        }}
+        style={{
+          position: 'absolute',
+          width: sizePx + BORDER_RING * 2,
+          height: sizePx + BORDER_RING * 2,
+        }}
+      />
+      {fill}
+    </View>
   );
 };
 

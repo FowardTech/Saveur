@@ -119,14 +119,16 @@ const MoreSrc = memo(() => {
   // services/configService.ts) — flip it off there and the row disappears
   // on next app launch, no release needed. Rows with no featureKey are
   // considered core and always shown.
-  // iconBackgroundColor: flat brand blue on every row's icon circle, per
-  // explicit request — was a different `status` color per row (facebook
-  // blue, twitter blue, warning orange, success green, etc.), left in place
-  // below only because it still drives the icon glyph's own tint fallback.
+  // iconBackgroundColor/iconBorderColor/iconColor: subtle blue fill + dark
+  // blue border + dark blue glyph on every row's icon square, per explicit
+  // request — was a flat, fully-saturated brand blue fill with a white
+  // glyph before. `status` is left in place only because it still drives
+  // ButtonFill's tint fallback when these overrides aren't passed.
   // Deliberately NOT applied to the dark-mode toggle, push-notifications
   // toggle, or logout row further down — those three keep their existing
-  // colors, per the same request.
-  const ICON_BG = '#2574FF';
+  // colors, per the same original request.
+  const ICON_BG = theme['color-primary-400']; // subtle/pastel blue (#CFDFFB)
+  const ICON_BORDER = '#134B9E'; // dark blue
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
     {
       // Also where account deletion now lives (see ProfileSrc.tsx) — moved
@@ -135,6 +137,8 @@ const MoreSrc = memo(() => {
       icon: 'edit_profile',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       navigateSrc: 'ProfileSrc',
     },
     {
@@ -142,6 +146,8 @@ const MoreSrc = memo(() => {
       icon: 'myPost',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('ResumeBuilder'),
     },
     {
@@ -149,6 +155,8 @@ const MoreSrc = memo(() => {
       icon: 'edit_full',
       status: 'twitter-3',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('JDAnalyzer'),
     },
     {
@@ -158,6 +166,8 @@ const MoreSrc = memo(() => {
       icon: 'stats',
       status: 'warning',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('MyDocuments'),
     },
     {
@@ -165,6 +175,8 @@ const MoreSrc = memo(() => {
       icon: 'changeJob',
       status: 'neutral',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('ChangeCareType'),
     },
     {
@@ -175,6 +187,8 @@ const MoreSrc = memo(() => {
       icon: 'search',
       status: 'twitter-3',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('JobPreferences'),
     },
     {
@@ -182,6 +196,8 @@ const MoreSrc = memo(() => {
       icon: 'tutoring',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'learning_courses',
       onPress: () => navigate('LearningCourses'),
     },
@@ -190,6 +206,8 @@ const MoreSrc = memo(() => {
       icon: 'share',
       status: 'green',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'networking',
       onPress: () => navigate('NetworkingAssistant'),
     },
@@ -198,6 +216,8 @@ const MoreSrc = memo(() => {
       icon: 'calendar',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'career_diary',
       onPress: () => navigate('CareerDiary'),
     },
@@ -206,6 +226,8 @@ const MoreSrc = memo(() => {
       icon: 'increase',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'career_roadmap',
       onPress: () => navigate('CareerRoadmap'),
     },
@@ -214,6 +236,8 @@ const MoreSrc = memo(() => {
       icon: 'share',
       status: 'success',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'referral_program',
       onPress: () => navigate('ReferralProgram'),
     },
@@ -222,6 +246,8 @@ const MoreSrc = memo(() => {
       icon: 'notification',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'job_alerts',
       onPress: () => navigate('JobAlerts'),
     },
@@ -230,6 +256,8 @@ const MoreSrc = memo(() => {
       icon: 'stats',
       status: 'success',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'weekly_career_report',
       onPress: () => navigate('WeeklyCareerReport'),
     },
@@ -238,6 +266,8 @@ const MoreSrc = memo(() => {
       icon: 'notification',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'daily_industry_news',
       onPress: () => navigate('DailyIndustryNews'),
     },
@@ -246,6 +276,8 @@ const MoreSrc = memo(() => {
       icon: 'increase',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'resume_evolution',
       onPress: () => navigate('ResumeVariants'),
     },
@@ -258,6 +290,8 @@ const MoreSrc = memo(() => {
       icon: 'myPost',
       status: 'green',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('GeneratedDocuments'),
     },
     {
@@ -265,6 +299,8 @@ const MoreSrc = memo(() => {
       icon: 'share',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'linkedin_optimizer',
       onPress: () => navigate('LinkedInOptimizer'),
     },
@@ -273,6 +309,8 @@ const MoreSrc = memo(() => {
       icon: 'like_comment',
       status: 'success',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'emotional_coach',
       onPress: () => navigate('EmotionalCoach'),
     },
@@ -281,6 +319,8 @@ const MoreSrc = memo(() => {
       icon: 'searchHistory',
       status: 'warning',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'company_intelligence',
       onPress: () => navigate('CompanyIntelligence'),
     },
@@ -289,6 +329,8 @@ const MoreSrc = memo(() => {
       icon: 'bgCheck',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       featureKey: 'student_verification',
       onPress: () => navigate('StudentVerification'),
     },
@@ -297,6 +339,8 @@ const MoreSrc = memo(() => {
       icon: 'premiumAcc',
       status: 'success',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('Subscription'),
     },
     {
@@ -304,6 +348,8 @@ const MoreSrc = memo(() => {
       icon: 'payment',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       navigateSrc: 'PaymentMethod',
     },
     {
@@ -311,6 +357,8 @@ const MoreSrc = memo(() => {
       icon: 'searchHistory',
       status: 'warning',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('PaymentHistory'),
     },
     {
@@ -319,6 +367,8 @@ const MoreSrc = memo(() => {
       icon: 'security',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('SecuritySettings'),
     },
   ].filter(item => !item.featureKey || configService.isFeatureEnabled(item.featureKey));
@@ -329,6 +379,8 @@ const MoreSrc = memo(() => {
       icon: 'changeJob',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate('SelectLanguage'),
     },
     {
@@ -336,6 +388,8 @@ const MoreSrc = memo(() => {
       icon: 'stats',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate("AboutScreen"),
     },
     {
@@ -343,6 +397,8 @@ const MoreSrc = memo(() => {
       icon: 'helpWhite',
       status: 'placeholder',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate("FaqScreen"),
     },
     {
@@ -350,6 +406,8 @@ const MoreSrc = memo(() => {
       icon: 'stats',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: onReplayTour,
     },
     {
@@ -357,6 +415,8 @@ const MoreSrc = memo(() => {
       icon: 'term',
       status: 'green',
       iconBackgroundColor: ICON_BG,
+      iconBorderColor: ICON_BORDER,
+      iconColor: ICON_BORDER,
       onPress: () => navigate("PolicyScreen"),
     },
   ];
@@ -379,6 +439,8 @@ const MoreSrc = memo(() => {
                 title={item.title}
                 status={item.status}
                 iconBackgroundColor={item.iconBackgroundColor}
+                iconBorderColor={item.iconBorderColor}
+                iconColor={item.iconColor}
                 key={i}
                 onPress={item.onPress}
                 navigateSrc={item.navigateSrc}
@@ -397,6 +459,8 @@ const MoreSrc = memo(() => {
                 title={item.title}
                 status={item.status}
                 iconBackgroundColor={item.iconBackgroundColor}
+                iconBorderColor={item.iconBorderColor}
+                iconColor={item.iconColor}
                 onPress={item.onPress}
                 key={i}
                 navigateSrc={item.navigateSrc}

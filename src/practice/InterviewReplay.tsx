@@ -47,6 +47,16 @@ const InterviewReplay = memo(() => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [videoError, setVideoError] = React.useState(false);
+  // `paused` has to be real React state kept in sync with the native
+  // player via onPlaybackStateChanged below. It was previously a hardcoded
+  // `paused` prop (always true) on <Video>, which is why tapping the
+  // native play button did nothing: react-native-video is a controlled
+  // component, so any re-render of this screen (e.g. scrolling the
+  // transcript, tapping a flagged moment) re-sent paused=true to the
+  // native player and immediately paused it back. Video now starts
+  // paused (poster/first-frame shown) and only plays once the user
+  // presses play, with JS state tracking what the native controls did.
+  const [paused, setPaused] = React.useState(true);
   const scrollRef = React.useRef<ScrollView>(null);
   const rowOffsets = React.useRef<Record<number, number>>({});
   const videoRef = React.useRef<VideoRef>(null);
@@ -68,6 +78,11 @@ const InterviewReplay = memo(() => {
     // the recording instead of just scrolling text.
     if (hasVideo) {
       videoRef.current?.seek(tMs / 1000);
+      // Jumping to a flagged moment should also start playback from
+      // there — otherwise the seek visibly moves the scrubber but the
+      // frame just sits there paused, which looks just as "broken" as
+      // play not working at all.
+      setPaused(false);
     }
     // Also scroll the transcript to the matching row either way — useful on
     // its own for Voice/Text-mode sessions (no video at all), and a nice
@@ -107,8 +122,9 @@ const InterviewReplay = memo(() => {
                 style={globalStyle.flexOne}
                 resizeMode="cover"
                 controls
-                paused
+                paused={paused}
                 playInBackground={false}
+                onPlaybackStateChanged={(e) => setPaused(!e.isPlaying)}
                 onError={() => setVideoError(true)}
               />
             </View>
