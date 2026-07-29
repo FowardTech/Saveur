@@ -28,6 +28,7 @@ import * as gamificationService from 'services/gamificationService';
 import * as notificationService from 'services/notificationService';
 import * as goalTipsService from 'services/goalTipsService';
 import * as careerOsService from 'services/careerOsService';
+import * as roadmapService from 'services/roadmapService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
@@ -157,6 +158,22 @@ const HomeSrc = memo(() => {
       cancelled = true;
     };
   }, [hasGoals]);
+
+  // Orientation card into the AI Career Roadmap -- "someone walking into a
+  // school for the first time needs a roadmap to orientation" -- everyone
+  // should see an entry point here regardless of Pro status, since a
+  // roadmap is now auto-built from the goal/role given at signup (see
+  // backend's career_roadmap_service.ensure_auto_roadmap, wired into
+  // users.py's update_me). getSavedRoadmap() resolves to null both while
+  // signed out and for the rare account with no signup goal on file (e.g. a
+  // social-login signup that skipped it) -- CareerRoadmap.tsx itself handles
+  // that empty state (Pro manual-build form, or the Pro lock gate for free
+  // users), so this card can unconditionally deep-link there.
+  const [dashboardRoadmap, setDashboardRoadmap] = React.useState<roadmapService.CareerRoadmap | null>(null);
+  React.useEffect(() => {
+    if (!isSignedIn) return;
+    roadmapService.getSavedRoadmap().then(setDashboardRoadmap).catch(() => {});
+  }, [isSignedIn]);
 
   // Non-blocking "verify your email" banner — see AuthContext.emailVerified's
   // doc comment. Deliberately NOT a hard gate on the rest of the app: an
@@ -549,6 +566,38 @@ const HomeSrc = memo(() => {
             ))}
           </View>
         ) : null}
+        {/* Orientation card into the AI Career Roadmap — the first thing a
+            new user should be pointed at, same idea as a new student being
+            handed a campus map on day one. Always visible (not hidden for
+            free users): most people land here with a roadmap already built
+            from their signup goal; anyone without one yet still gets a
+            useful destination (build one manually, or the Pro upsell). */}
+        <Flex
+          level="2"
+          style={styles.progressCard}
+          justify="flex-start"
+          itemsCenter
+          onPress={() => navigate('CareerRoadmap')}>
+          <View style={[styles.progressIconWrap, { backgroundColor: theme['color-warning-transparent-200'] ?? theme['background-basic-color-2'] }]}>
+            <Icon pack="assets" name="map" style={[globalStyle.icon24, { tintColor: theme['color-warning-500'] }]} />
+          </View>
+          <View style={globalStyle.flexOne}>
+            <Text category="h7" bold>
+              {t('home:career_roadmap_card_title', { defaultValue: 'Your Career Roadmap' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={2}>
+              {dashboardRoadmap
+                ? t('home:career_roadmap_card_subtitle_ready', {
+                    defaultValue: 'Your path to {{role}} — see what\'s next.',
+                    role: dashboardRoadmap.targetRole,
+                  })
+                : t('home:career_roadmap_card_subtitle_empty', {
+                    defaultValue: 'Your orientation guide to landing your next role.',
+                  })}
+            </Text>
+          </View>
+          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+        </Flex>
         {/* Quick link into MyProgress — was previously only reachable via the
             AI Coach chat's "View My Progress" attachment action, with no
             entry point from the Home dashboard itself. Placed right under

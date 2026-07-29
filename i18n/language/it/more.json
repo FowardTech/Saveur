@@ -431,6 +431,7 @@
   "resume_your_name": "Il tuo nome",
   "resuming": "Riattivazione…",
   "roadmap_all_complete": "Hai raggiunto ogni tappa verso {{role}}!",
+  "roadmap_auto_generated_note": "Creata in base a quanto ci hai detto in fase di registrazione.",
   "roadmap_build_cta": "Pianifica la mia roadmap",
   "roadmap_complete_step_failed": "Impossibile aggiornare la tua roadmap in questo momento. Riprova.",
   "roadmap_current_role_label": "Il tuo ruolo attuale (facoltativo)",

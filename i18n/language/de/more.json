@@ -431,6 +431,7 @@
   "resume_your_name": "Dein Name",
   "resuming": "Wird wieder aktiviert…",
   "roadmap_all_complete": "Du hast jeden Meilenstein auf dem Weg zu {{role}} erreicht!",
+  "roadmap_auto_generated_note": "Erstellt aus den Angaben, die du bei der Anmeldung gemacht hast.",
   "roadmap_build_cta": "Meinen Plan erstellen",
   "roadmap_complete_step_failed": "Dein Plan konnte gerade nicht aktualisiert werden. Bitte versuche es erneut.",
   "roadmap_current_role_label": "Deine aktuelle Rolle (optional)",

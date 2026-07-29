@@ -431,6 +431,7 @@
   "resume_your_name": "Your Name",
   "resuming": "Turning back on…",
   "roadmap_all_complete": "You've reached every milestone toward {{role}}!",
+  "roadmap_auto_generated_note": "Built from what you told us when you signed up.",
   "roadmap_build_cta": "Plan my roadmap",
   "roadmap_complete_step_failed": "Couldn't update your roadmap right now. Please try again.",
   "roadmap_current_role_label": "Your current role (optional)",

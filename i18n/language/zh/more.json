@@ -431,6 +431,7 @@
   "resume_your_name": "您的姓名",
   "resuming": "重新开启中…",
   "roadmap_all_complete": "你已达成通往「{{role}}」的所有里程碑！",
+  "roadmap_auto_generated_note": "根据你注册时提供的信息生成。",
   "roadmap_build_cta": "规划我的路线图",
   "roadmap_complete_step_failed": "暂时无法更新你的路线图，请重试。",
   "roadmap_current_role_label": "你当前的职位（可选）",

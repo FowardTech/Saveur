@@ -431,6 +431,7 @@
   "resume_your_name": "Seu nome",
   "resuming": "Reativando…",
   "roadmap_all_complete": "Você alcançou todos os marcos rumo a {{role}}!",
+  "roadmap_auto_generated_note": "Criado com base no que você nos disse ao se cadastrar.",
   "roadmap_build_cta": "Planejar meu roteiro",
   "roadmap_complete_step_failed": "Não foi possível atualizar seu roteiro agora. Tente novamente.",
   "roadmap_current_role_label": "Seu cargo atual (opcional)",

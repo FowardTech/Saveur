@@ -186,7 +186,7 @@ const themedStyles = StyleService.create({
     // `scrollEnabled` on the Input (above) and `overflow: 'hidden'` here,
     // the text just kept rendering past the box's bottom edge instead of
     // scrolling inside it, which is what was actually happening before.
-    height: 160,
+    height: 260,
     overflow: 'hidden',
   },
   jdText: {

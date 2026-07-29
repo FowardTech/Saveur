@@ -431,6 +431,7 @@
   "resume_your_name": "Votre nom",
   "resuming": "Réactivation…",
   "roadmap_all_complete": "Vous avez atteint toutes les étapes vers {{role}} !",
+  "roadmap_auto_generated_note": "Créée à partir des informations fournies lors de votre inscription.",
   "roadmap_build_cta": "Planifier ma feuille de route",
   "roadmap_complete_step_failed": "Impossible de mettre à jour votre feuille de route pour le moment. Veuillez réessayer.",
   "roadmap_current_role_label": "Votre poste actuel (facultatif)",

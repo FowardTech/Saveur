@@ -1,6 +1,6 @@
 import {Platform, PermissionsAndroid} from 'react-native';
 import messaging, {FirebaseMessagingTypes} from '@react-native-firebase/messaging';
-import notifee, {AndroidImportance, EventType} from '@notifee/react-native';
+import notifee, {AndroidImportance, AndroidStyle, EventType} from '@notifee/react-native';
 
 import {JobAlertProps} from 'constants/Types';
 import {navigateToJobAlertDetails, navigateToNotifications} from 'navigation/navigationRef';
@@ -256,6 +256,18 @@ export function setupForegroundPushHandler(): () => void {
       return;
     }
 
+    // Daily leaderboard + tip push (see app/services/daily_broadcast_service.py) —
+    // the only push type today that ships an image (the leaderboard leader's
+    // generated, "game-like" avatar, never a real photo). Android renders
+    // remoteMessage.notification.android.imageUrl automatically for a
+    // background/killed-state push with zero client code, but a
+    // notifee-displayed FOREGROUND notification needs to be told explicitly
+    // to render as a big-picture style, hence this branch. iOS has no
+    // equivalent here (or in the background/killed case) without a native
+    // Notification Service Extension, which this project doesn't have yet —
+    // the notification still displays fine on iOS, just without the image.
+    const leaderAvatarUrl = data.type === 'daily_leaderboard_tip' ? data.leader_avatar_url : undefined;
+
     try {
       await notifee.displayNotification({
         title,
@@ -265,6 +277,12 @@ export function setupForegroundPushHandler(): () => void {
           channelId: 'default',
           pressAction: {id: 'default'},
           smallIcon: 'ic_launcher',
+          ...(leaderAvatarUrl
+            ? {
+                largeIcon: leaderAvatarUrl,
+                style: {type: AndroidStyle.BIGPICTURE, picture: leaderAvatarUrl},
+              }
+            : null),
         },
         ios: {
           sound: 'default',

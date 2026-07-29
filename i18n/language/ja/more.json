@@ -431,6 +431,7 @@
   "resume_your_name": "お名前",
   "resuming": "再開しています…",
   "roadmap_all_complete": "「{{role}}」へのすべてのマイルストーンを達成しました！",
+  "roadmap_auto_generated_note": "サインアップ時にご入力いただいた内容をもとに作成されました。",
   "roadmap_build_cta": "ロードマップを作成",
   "roadmap_complete_step_failed": "現在ロードマップを更新できませんでした。もう一度お試しください。",
   "roadmap_current_role_label": "現在の職種（任意）",

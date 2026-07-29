@@ -431,6 +431,7 @@
   "resume_your_name": "Ваше имя",
   "resuming": "Возобновление…",
   "roadmap_all_complete": "Вы достигли всех этапов на пути к {{role}}!",
+  "roadmap_auto_generated_note": "Создано на основе данных, указанных при регистрации.",
   "roadmap_build_cta": "Спланировать мой путь",
   "roadmap_complete_step_failed": "Не удалось обновить ваш план сейчас. Попробуйте ещё раз.",
   "roadmap_current_role_label": "Ваша текущая должность (необязательно)",

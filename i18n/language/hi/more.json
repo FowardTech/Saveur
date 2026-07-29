@@ -431,6 +431,7 @@
   "resume_your_name": "आपका नाम",
   "resuming": "फिर से चालू किया जा रहा है…",
   "roadmap_all_complete": "आपने {{role}} की ओर हर मील का पत्थर हासिल कर लिया है!",
+  "roadmap_auto_generated_note": "साइन अप के दौरान आपकी दी गई जानकारी के आधार पर बनाया गया।",
   "roadmap_build_cta": "मेरा रोडमैप बनाएं",
   "roadmap_complete_step_failed": "अभी आपका रोडमैप अपडेट नहीं किया जा सका। कृपया फिर से प्रयास करें।",
   "roadmap_current_role_label": "आपकी वर्तमान भूमिका (वैकल्पिक)",
