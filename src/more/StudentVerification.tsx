@@ -26,6 +26,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as studentVerificationService from 'services/studentVerificationService';
 import { University, StudentProfile, YEAR_OPTIONS } from 'services/studentVerificationService';
+import * as configService from 'services/configService';
 
 // The perks shown below are all real, already-shipped behavior — not
 // aspirational copy. "3% off" alone undersold what verifying actually
@@ -40,11 +41,19 @@ import { University, StudentProfile, YEAR_OPTIONS } from 'services/studentVerifi
 //    endpoints so responses assume coursework/internships instead of
 //    professional work history until graduation.
 //  - The verified-student badge on the Profile screen (ProfileSrc.tsx).
-function studentPerks(t: TFunction): {icon: string; title: string; body: string}[] {
+//
+// The discount percentage itself is admin-configurable (Admin > Config >
+// Student Eligibility) — see configService.ts's StudentEligibilityConfig
+// and saveur-backend's app_config_service.py's "student_eligibility"
+// section. Every "3%" below used to be a hardcoded literal in this file
+// (and in stripe_service.py's coupon creation); now all four read the same
+// live value via i18n interpolation, so an admin can change it without a
+// mobile release.
+function studentPerks(t: TFunction, discountPercent: number): {icon: string; title: string; body: string}[] {
   return [
     {
       icon: 'percent-outline',
-      title: t('more:student_perk_discount_title', {defaultValue: '3% off Saveur Pro'}),
+      title: t('more:student_perk_discount_title', {defaultValue: '{{percent}}% off Saveur Pro', percent: discountPercent}),
       body: t('more:student_perk_discount_body', {defaultValue: 'Discounted pricing for as long as you’re a final-year student — until your graduation date.'}),
     },
     {
@@ -86,6 +95,7 @@ const StudentVerification = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'StudentVerification'>>();
   const fromSignup = !!route.params?.fromSignup;
+  const discountPercent = configService.getCachedConfig().student_eligibility.discount_percent;
 
   // Mirrors SignupThirdStep.tsx's goToSuccess — when this screen is reached
   // as part of signup, finishing (or skipping) it should continue on into
@@ -216,8 +226,9 @@ const StudentVerification = memo(() => {
             </Text>
             <Text category="h9-s" status="placeholder">
               {t('more:student_discount_active_body', {
-                defaultValue: '{{university}} · 3% off until {{date}}',
+                defaultValue: '{{university}} · {{percent}}% off until {{date}}',
                 university: status.universityName,
+                percent: discountPercent,
                 date: status.graduationDate ? dayjs(status.graduationDate).format('MMM D, YYYY') : '',
               })}
             </Text>
@@ -265,15 +276,17 @@ const StudentVerification = memo(() => {
             <Text category="h9-s" status="placeholder" mb={20}>
               {fromSignup
                 ? t('more:student_verification_signup_description', {
-                    defaultValue: "Are you a final-year student? Get 3% off Saveur Pro until graduation — verify your school email to unlock it. You can always do this later from Settings.",
+                    defaultValue: "Are you a final-year student? Get {{percent}}% off Saveur Pro until graduation — verify your school email to unlock it. You can always do this later from Settings.",
+                    percent: discountPercent,
                   })
                 : t('more:student_verification_description', {
-                    defaultValue: 'Final-year students get 3% off Saveur Pro until graduation. Verify your school email to unlock it.',
+                    defaultValue: 'Final-year students get {{percent}}% off Saveur Pro until graduation. Verify your school email to unlock it.',
+                    percent: discountPercent,
                   })}
             </Text>
 
             <Layout level="2" style={styles.perksCard}>
-              {studentPerks(t).map((perk, i) => (
+              {studentPerks(t, discountPercent).map((perk, i) => (
                 <Flex key={i} mb={i < 2 ? 14 : 0}>
                   <Icon
                     pack="eva" name={perk.icon}

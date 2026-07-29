@@ -104,6 +104,16 @@ export interface StoreConfig {
   android_package_name: string;
 }
 
+// Student verification eligibility + discount (see src/more/StudentVerification.tsx
+// and saveur-backend's app_config_service.py "student_eligibility" section).
+// discount_percent used to be a hardcoded "3%" baked into 4 separate strings
+// in StudentVerification.tsx and a STUDENT_DISCOUNT_PERCENT constant in
+// stripe_service.py — both now read this single admin-editable value.
+export interface StudentEligibilityConfig {
+  eligible_countries: string[];
+  discount_percent: number;
+}
+
 export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
@@ -112,6 +122,7 @@ export interface AppConfig {
   faq: FaqConfig;
   about: AboutConfig;
   store: StoreConfig;
+  student_eligibility: StudentEligibilityConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -150,6 +161,7 @@ const DEFAULT_CONFIG: AppConfig = {
   faq: {items: []},
   about: {tagline: '', description: '', contact_email: '', website_url: ''},
   store: {ios_app_store_id: '', android_package_name: 'com.saveur.app'},
+  student_eligibility: {eligible_countries: [], discount_percent: 3},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -226,6 +238,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
       faq: {...DEFAULT_CONFIG.faq, ...data.faq},
       about: {...DEFAULT_CONFIG.about, ...data.about},
       store: {...DEFAULT_CONFIG.store, ...data.store},
+      student_eligibility: {...DEFAULT_CONFIG.student_eligibility, ...data.student_eligibility},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {
