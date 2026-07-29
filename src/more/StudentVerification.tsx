@@ -98,18 +98,32 @@ const StudentVerification = memo(() => {
   const fromSignup = !!route.params?.fromSignup;
   const discountPercent = configService.getCachedConfig().student_eligibility.discount_percent;
 
-  // "Student Package and Verification" is long enough that, combined with
-  // the Skip button on the fromSignup variant of this screen (see
-  // accessoryRight below), the title text was overflowing straight past
-  // its own header box and rendering on top of/behind Skip instead of
-  // stopping short of it — TopNavigation's default title Text has no
-  // numberOfLines, so it doesn't truncate on its own. Passing a render
-  // function (per TopNavigation's own title prop contract) instead of a
-  // plain string lets us force numberOfLines={1} + ellipsizeMode so the
-  // title truncates with "…" instead of colliding with Skip.
+  // "Student Package and Verification" is long enough that it was
+  // overlapping the Skip button (fromSignup variant, see accessoryRight
+  // below). The real cause: eva's TopNavigation defaults `alignment` to
+  // "center" (see constants/theme/mapping.json's TopNavigation
+  // variantGroups), which renders the title in a container that's
+  // POSITION-ABSOLUTE and spans the entire header bar edge-to-edge,
+  // centered — not just the leftover space between the back button and
+  // Skip. A long centered title then visually sits on top of/behind both
+  // side accessories, and numberOfLines alone doesn't fix that, because
+  // that absolute-fill container never constrains the Text's width in the
+  // first place (there's nothing to truncate against). `alignment="start"`
+  // switches to eva's other layout, where the title renders in a normal
+  // flex:1 box actually sandwiched between the left/right accessories, so
+  // it can no longer overlap them — see src/more/WebViewScreen.tsx for the
+  // same fix applied earlier for the same underlying bug. numberOfLines +
+  // ellipsizeMode + flexShrink still matter on top of that, so the title
+  // truncates with "…" instead of overflowing past its now-bounded box
+  // when there isn't enough room (e.g. next to Skip).
   const renderTitle = React.useCallback(
     (props: any) => (
-      <EvaText {...props} numberOfLines={1} ellipsizeMode="tail">
+      <EvaText
+        {...props}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+        style={[props?.style, { flexShrink: 1 }]}
+      >
         {t('more:student_verification', { defaultValue: 'Student Package and Verification' })}
       </EvaText>
     ),
@@ -182,8 +196,14 @@ const StudentVerification = memo(() => {
   }, [universityQuery]);
 
   const selectedYearOption = YEAR_OPTIONS.find(o => o.value === yearOfStudy);
+  // Live, client-side-only hint (see studentVerificationService.ts's
+  // schoolEmailWarning) — the actual enforcement happens server-side in
+  // start_verification, this just surfaces the same reasoning before the
+  // round trip so the user isn't surprised by the rejection.
+  const emailWarning = studentVerificationService.schoolEmailWarning(schoolEmail, selectedUniversity);
   const canSendCode =
-    !!selectedUniversity && !!schoolEmail.trim() && !!selectedYearOption?.isEligible && !isSubmitting;
+    !!selectedUniversity && !!schoolEmail.trim() && emailWarning?.severity !== 'block'
+    && !!selectedYearOption?.isEligible && !isSubmitting;
 
   const onSendCode = async () => {
     if (!canSendCode || !selectedUniversity) return;
@@ -196,6 +216,7 @@ const StudentVerification = memo(() => {
         schoolEmail: schoolEmail.trim(),
         yearOfStudy: 'final_year',
         graduationDate: dayjs(graduationDate).format('YYYY-MM-DD'),
+        universityDomains: selectedUniversity.domains,
       });
       setStep('code');
     } catch (e: any) {
@@ -227,7 +248,7 @@ const StudentVerification = memo(() => {
   if (isLoadingStatus) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={renderTitle} accessoryLeft={<NavigationAction />} />
+        <TopNavigation alignment="start" title={renderTitle} accessoryLeft={<NavigationAction />} />
         <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
       </Container>
     );
@@ -236,7 +257,7 @@ const StudentVerification = memo(() => {
   if (status?.studentDiscountActive) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={renderTitle} accessoryLeft={<NavigationAction />} />
+        <TopNavigation alignment="start" title={renderTitle} accessoryLeft={<NavigationAction />} />
         <Content padder contentContainerStyle={styles.content}>
           <Layout level="2" style={styles.card}>
             <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon24, { tintColor: theme['color-success-500'] }]} />
@@ -265,7 +286,7 @@ const StudentVerification = memo(() => {
   if (status?.graduated) {
     return (
       <Container style={styles.container}>
-        <TopNavigation title={renderTitle} accessoryLeft={<NavigationAction />} />
+        <TopNavigation alignment="start" title={renderTitle} accessoryLeft={<NavigationAction />} />
         <Content padder contentContainerStyle={styles.content}>
           <Layout level="2" style={styles.card}>
             <Text category="h7" bold mb={6}>{t('more:student_graduated_title', { defaultValue: 'Congratulations on graduating!' })}</Text>
@@ -281,6 +302,7 @@ const StudentVerification = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
+        alignment="start"
         title={renderTitle}
         accessoryLeft={<NavigationAction />}
         accessoryRight={fromSignup ? () => (
@@ -349,8 +371,18 @@ const StudentVerification = memo(() => {
               onChangeText={setSchoolEmail}
               keyboardType="email-address"
               autoCapitalize="none"
+              status={emailWarning ? (emailWarning.severity === 'block' ? 'danger' : 'warning') : 'basic'}
               style={styles.input}
             />
+            {emailWarning ? (
+              <Text category="h10" status={emailWarning.severity === 'block' ? 'danger' : 'warning'} mt={6}>
+                {emailWarning.message}
+              </Text>
+            ) : (
+              <Text category="h10" status="placeholder" mt={6}>
+                {t('more:school_email_hint', { defaultValue: "Must be your official school-issued email — personal providers like Gmail don't qualify." })}
+              </Text>
+            )}
 
             <Text category="h10" status="placeholder" mt={20} mb={6}>{t('more:year_of_study_label', { defaultValue: 'Year of study' })}</Text>
             <View style={styles.yearRow}>

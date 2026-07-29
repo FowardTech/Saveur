@@ -103,6 +103,12 @@ export async function sendVerificationCode(input: {
   schoolEmail: string;
   yearOfStudy: string;
   graduationDate: string; // YYYY-MM-DD
+  // The selected university's own domain(s), straight from
+  // searchUniversities() — lets the backend reject an email that isn't
+  // actually this school's (or any personal Gmail/Yahoo/Outlook-style
+  // address) instead of accepting anything with an "@" in it. See
+  // app/services/student_service.py's start_verification.
+  universityDomains?: string[];
 }): Promise<void> {
   await apiClient.post('/api/v1/student/verify/send-code', {
     university_name: input.universityName,
@@ -110,7 +116,64 @@ export async function sendVerificationCode(input: {
     school_email: input.schoolEmail,
     year_of_study: input.yearOfStudy,
     graduation_date: input.graduationDate,
+    university_domains: input.universityDomains ?? [],
   });
+}
+
+// Client-side mirror of student_service.py's FREE_EMAIL_DOMAINS check —
+// purely for an immediate inline hint before the round trip; the backend
+// remains the actual source of truth (this list can't be the only guard,
+// since a direct API call could skip the app entirely).
+const FREE_EMAIL_DOMAINS = new Set([
+  'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com',
+  'hotmail.com', 'live.com', 'msn.com', 'icloud.com', 'me.com', 'mac.com',
+  'aol.com', 'protonmail.com', 'proton.me', 'mail.com', 'gmx.com',
+  'yandex.com', 'zoho.com', 'qq.com', '163.com',
+]);
+
+function emailDomain(email: string): string {
+  return email.trim().split('@').pop()?.toLowerCase() ?? '';
+}
+
+export interface SchoolEmailWarning {
+  message: string;
+  // 'block': unambiguously never valid (a personal provider) — the caller
+  // should disable Send, not just show the message.
+  // 'warn': the selected university's own domain list doesn't match, but
+  // that list can be incomplete/stale in the public directory backing the
+  // picker — the server has the final say, so the caller should just show
+  // this rather than block submission on it.
+  severity: 'block' | 'warn';
+}
+
+/** Best-effort, client-side-only check for the school-email field's inline
+ * hint. Returns null if there's nothing to flag yet (empty input, no "@",
+ * or it looks fine). The server-side check in
+ * app/services/student_service.py's start_verification is the actual
+ * enforcement — this only exists to surface the same reasoning before the
+ * round trip. */
+export function schoolEmailWarning(
+  email: string,
+  university: {name: string; domains: string[]} | null,
+): SchoolEmailWarning | null {
+  const trimmed = email.trim();
+  if (!trimmed.includes('@')) return null;
+  const domain = emailDomain(trimmed);
+  if (!domain) return null;
+  if (FREE_EMAIL_DOMAINS.has(domain)) {
+    return {
+      severity: 'block',
+      message: "That's a personal email provider — please use your official school email instead.",
+    };
+  }
+  const schoolDomains = (university?.domains ?? []).map(d => d.toLowerCase().trim()).filter(Boolean);
+  if (university && schoolDomains.length && !schoolDomains.some(d => domain === d || domain.endsWith(`.${d}`))) {
+    return {
+      severity: 'warn',
+      message: `This doesn't look like a ${university.name} email — expected it to end in @${schoolDomains[0]}.`,
+    };
+  }
+  return null;
 }
 
 /** Throws on a wrong/expired code. */
