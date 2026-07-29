@@ -11,6 +11,9 @@ PODS:
     - PromisesObjC (~> 2.4)
     - PromisesSwift (~> 2.4)
     - RecaptchaInterop (~> 101.0)
+  - AppsFlyerFramework (6.18.0):
+    - AppsFlyerFramework/Main (= 6.18.0)
+  - AppsFlyerFramework/Main (6.18.0)
   - boost (1.84.0)
   - BVLinearGradient (2.8.3):
     - React-Core
@@ -1997,6 +2000,9 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
+  - react-native-appsflyer (6.18.0):
+    - AppsFlyerFramework (= 6.18.0)
+    - React
   - react-native-biometrics (3.0.1):
     - React-Core
   - react-native-blob-util (0.24.10):
@@ -3701,6 +3707,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-appsflyer (from `../node_modules/react-native-appsflyer`)
   - react-native-biometrics (from `../node_modules/react-native-biometrics`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - "react-native-document-picker (from `../node_modules/@react-native-documents/picker`)"
@@ -3773,6 +3780,7 @@ SPEC REPOS:
   trunk:
     - AppAuth
     - AppCheckCore
+    - AppsFlyerFramework
     - Firebase
     - FirebaseAppCheckInterop
     - FirebaseAuth
@@ -3900,6 +3908,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-appsflyer:
+    :path: "../node_modules/react-native-appsflyer"
   react-native-biometrics:
     :path: "../node_modules/react-native-biometrics"
   react-native-blob-util:
@@ -4036,6 +4046,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppAuth: ef4da5a3fc2e10b90c09a0a94a9baeaedc0341d5
   AppCheckCore: e215d35177a9cf469927863e69c13e220df32a8b
+  AppsFlyerFramework: c1e1e4cd3b98ffdca2fe32b17ae93909e409b6ab
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   BVLinearGradient: cb006ba232a1f3e4f341bb62c42d1098c284da70
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
@@ -4104,6 +4115,7 @@ SPEC CHECKSUMS:
   React-logger: 500f2fa5697d224e63c33d913c8a4765319e19bf
   React-Mapbuffer: 4c50cf6af44286015a20a5995d5321f625c93459
   React-microtasksnativemodule: a84b9331106616ab1fa36de9ae555718d4bbdcf5
+  react-native-appsflyer: 4e82e778b32d759713a2028412e75b80113cfb64
   react-native-biometrics: 43ed5b828646a7862dbc7945556446be00798e7d
   react-native-blob-util: b28c476975a9cdbf2afde81784739d791c892750
   react-native-document-picker: 49c296acec7ed2374ac696f50fb2a1536c9aa100

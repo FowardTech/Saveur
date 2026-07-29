@@ -6766,6 +6766,11 @@ react-lifecycles-compat@^3.0.4:
   resolved "https://registry.npmjs.org/react-lifecycles-compat/-/react-lifecycles-compat-3.0.4.tgz"
   integrity sha512-fBASbA6LnOU9dOU2eW7aQ8xmYBSXUIWr+UmF9b1efZBazGNO+rcXT/icdKnYm2pTwcRylVUYwW7H1PHfLekVzA==
 
+react-native-appsflyer@^6.18.0:
+  version "6.18.0"
+  resolved "https://registry.npmjs.org/react-native-appsflyer/-/react-native-appsflyer-6.18.0.tgz"
+  integrity sha512-rsRWbsfr+7pCsDdnTRjgKdO8Ed0ICQPUM6zlHU3RSiTrAgNf04h4k8Ci6tLfbJax3gAN8bo7QqfWhnpA2jBqBQ==
+
 react-native-biometrics@^3.0.1:
   version "3.0.1"
   resolved "https://registry.npmjs.org/react-native-biometrics/-/react-native-biometrics-3.0.1.tgz"
