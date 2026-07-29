@@ -112,12 +112,14 @@ export async function sendMessage(
   const recentTurns = history.slice(-8).map(m => ({role: m.role, text: m.text}));
 
   let replyText: string;
+  let suggestedCourseTopic: string | undefined;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
       message?: string;
       text?: string;
       response?: string;
+      suggested_course?: string | null;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
@@ -133,6 +135,7 @@ export async function sendMessage(
     });
     replyText =
       data.reply ?? data.message ?? data.response ?? data.text ?? "I'm not sure how to answer that yet.";
+    suggestedCourseTopic = data.suggested_course || undefined;
   } catch (e) {
     // Persist at least the user's own message before propagating the error
     // — Chat.tsx already shows it optimistically, so the cache shouldn't
@@ -146,6 +149,11 @@ export async function sendMessage(
     role: 'coach',
     text: replyText,
     createdAt: Date.now() + 1,
+    // When present, the reply identified a specific topic worth a real
+    // Learning Course (see app/api/coach.py's SUGGESTED_COURSE marker) —
+    // Chat.tsx renders this as its own tappable "Learn more about X" chip
+    // rather than raw text in the message bubble.
+    suggestedCourseTopic,
   };
 
   await writeHistory([...history, userMessage, coachMessage]);
@@ -180,12 +188,14 @@ export async function sendVoiceMessage(
   const recentTurns = history.slice(-8).map(m => ({role: m.role, text: m.text}));
 
   let replyText: string;
+  let suggestedCourseTopic: string | undefined;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
       message?: string;
       text?: string;
       response?: string;
+      suggested_course?: string | null;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
@@ -202,6 +212,7 @@ export async function sendVoiceMessage(
     });
     replyText =
       data.reply ?? data.message ?? data.response ?? data.text ?? "I'm not sure how to answer that yet.";
+    suggestedCourseTopic = data.suggested_course || undefined;
   } catch (e) {
     await writeHistory([...history, userMessage]);
     throw e;
@@ -212,6 +223,7 @@ export async function sendVoiceMessage(
     role: 'coach',
     text: replyText,
     createdAt: Date.now() + 1,
+    suggestedCourseTopic,
   };
 
   await writeHistory([...history, userMessage, coachMessage]);

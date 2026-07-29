@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Alert, View } from "react-native";
+import { Alert, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
 import {
@@ -34,6 +34,7 @@ import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navig
 import { RootStackParamList, MessagesStackParamList } from "navigation/types";
 import AttachItem from "./Components/AttachItem";
 import BrandWordmark from "components/BrandWordmark";
+import Text from "components/Text";
 import { CoachChatMessageProps, Practice_Mode_Enum } from "constants/Types";
 import * as coachService from "services/coachService";
 import * as resumeService from "services/resumeService";
@@ -48,13 +49,28 @@ import * as configService from "services/configService";
 const COACH_USER = { _id: 2, name: "AI Career Coach" };
 const ME_USER = { _id: 1 };
 
+// gifted-chat's IMessage is a loose interface — carrying this extra field
+// straight through lets renderCustomView below (per-message) know whether
+// to show the "Learn more about X" chip, without a parallel lookup
+// structure keyed by message id.
+interface CoachIMessage extends IMessage {
+  suggestedCourseTopic?: string;
+}
+
+// Same module/tier length "Learn Anything" custom topics use — see
+// src/more/LearningCourses.tsx's CUSTOM_TOPIC_MODULES. Not imported
+// directly to avoid exporting a screen-local constant just for this;
+// keep the two in sync if that value ever changes.
+const COACH_SUGGESTED_COURSE_MODULES = 5;
+
 // Maps a persisted CoachChatMessageProps (see services/coachService.ts) to
 // the IMessage shape react-native-gifted-chat expects.
-const toGiftedMessage = (msg: CoachChatMessageProps): IMessage => ({
+const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
   _id: msg.id,
   text: msg.text,
   createdAt: msg.createdAt,
   user: msg.role === "user" ? ME_USER : COACH_USER,
+  suggestedCourseTopic: msg.suggestedCourseTopic,
 });
 
 // Real AI coach chat — see services/coachService.ts, backed by
@@ -66,7 +82,7 @@ const Chat = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { width, bottom } = useLayout();
   const { keyboardShow } = useKeyboard();
-  const [messages, setMessages] = React.useState<IMessage[]>([]);
+  const [messages, setMessages] = React.useState<CoachIMessage[]>([]);
   const [isSending, setIsSending] = React.useState(false);
   const theme = useTheme();
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
@@ -310,6 +326,39 @@ const Chat = memo(() => {
     [showAction, Platform.OS, keyboardShow, onCamera, onPhotoLibrary]
   );
 
+  // Tapping a coach reply's "Learn more about X" chip (see renderCustomView
+  // below) jumps straight into that topic as a real course — same
+  // shape/level as LearningCourses.tsx's catalog "Start" button
+  // (CourseSession accepts any free-text topic, not just a fixed catalog),
+  // skipping the manual career-path picker/topic-check step entirely since
+  // the coach already vetted this as a real, specific professional topic
+  // worth a course.
+  const onStartSuggestedCourse = React.useCallback((topic: string) => {
+    navigate('CourseSession', { topic, totalModules: COACH_SUGGESTED_COURSE_MODULES, level: 'basic' });
+  }, [navigate]);
+
+  const renderCustomView = React.useCallback((props: any) => {
+    const topic: string | undefined = props?.currentMessage?.suggestedCourseTopic;
+    if (!topic) return null;
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        style={[styles.suggestedCourseChip, { backgroundColor: theme['color-primary-transparent-200'] }]}
+        onPress={() => onStartSuggestedCourse(topic)}
+      >
+        <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+        <Text
+          category="h10"
+          bold
+          style={{ color: theme['color-primary-500'], marginLeft: 6 }}
+          numberOfLines={1}
+        >
+          {`Learn more about ${topic}`}
+        </Text>
+      </TouchableOpacity>
+    );
+  }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse]);
+
   // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
   // (no logo.png asset needed). Returns null for the current user's own
   // messages so GiftedChat falls back to its default (blank) treatment.
@@ -376,6 +425,7 @@ const Chat = memo(() => {
           imageStyle={{}}
           renderTime={() => null}
           renderSend={renderSend}
+          renderCustomView={renderCustomView}
           messagesContainerStyle={{ paddingBottom: 32 }}
           renderInputToolbar={renderInputToolbar}
           // gifted-chat's Composer has its own hardcoded default text color
@@ -473,5 +523,14 @@ const themedStyles = StyleService.create({
   },
   coachAvatar: {
     marginRight: 4,
+  },
+  suggestedCourseChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: 99,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 6,
   },
 });

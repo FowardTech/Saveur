@@ -625,6 +625,12 @@ export interface CoachChatMessageProps {
   role: 'user' | 'coach';
   text: string;
   createdAt: number;
+  // Set only on a 'coach' message when the backend's reply recommends a
+  // specific Learning Courses topic worth digging into further (see
+  // coachService.ts's sendMessage/SUGGESTED_COURSE parsing) — lets
+  // Chat.tsx render a tappable "Learn more about X" chip straight into
+  // LearningCourses instead of the user having to go find it themselves.
+  suggestedCourseTopic?: string;
 }
 
 // ---- AI Interview Coach additions (networking assistant) ----
