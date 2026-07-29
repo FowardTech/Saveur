@@ -346,6 +346,48 @@ export async function completeSession(
 }
 
 /**
+ * POST /api/v1/interviews/sessions/{sessionId}/video — uploads the real
+ * video file react-native-vision-camera recorded on-device throughout a
+ * Video-mode session (see services/videoAnalysisService.ts's
+ * startVideoRecording/stopVideoRecording, called from
+ * LiveInterviewSession.tsx's onEnd). This is what makes "Video Interview
+ * Replay" an actual video you can scrub/watch back, not just a
+ * transcript+metrics reconstruction — see services/interviewReplayService.ts.
+ *
+ * Same multipart-upload shape as documentsService.uploadDocument (RN's
+ * FormData understands `{uri, type, name}` directly, streaming from disk
+ * rather than reading the whole file into memory first). Uses a much longer
+ * per-request timeout than apiClient's 20s default — even a 'low'-bitrate
+ * multi-minute recording can take well over 20s to upload on a typical
+ * mobile connection, and this call already only fires once the interview
+ * itself is over, so there's no live-session responsiveness to protect.
+ *
+ * Best-effort by design: throws are caught by the caller (LiveInterviewSession),
+ * which logs and moves on — a failed video upload should never block
+ * finishing/navigating away from a completed interview, since every other
+ * part of the session (transcript, scores, camera/voice metrics) was
+ * already saved independently of this call.
+ */
+export async function uploadSessionVideo(
+  sessionId: string,
+  localFileUri: string,
+  durationSec?: number,
+): Promise<void> {
+  const formData = new FormData();
+  formData.append('file', {
+    uri: localFileUri,
+    name: 'interview.mp4',
+    type: 'video/mp4',
+  });
+  if (durationSec != null) {
+    formData.append('duration_sec', String(durationSec));
+  }
+  await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/video`, formData, {
+    timeout: 180000,
+  });
+}
+
+/**
  * GET /api/v1/interviews/sessions — the user's session history (most recent
  * first), backing Practice History + the Home dashboard's recent-sessions
  * summary. Falls back to whatever was cached from the last successful fetch

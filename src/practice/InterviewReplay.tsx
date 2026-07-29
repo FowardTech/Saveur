@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { ScrollView, View } from 'react-native';
+import Video, { VideoRef } from 'react-native-video';
 import {
   TopNavigation,
   StyleService,
@@ -23,10 +24,18 @@ import * as interviewReplayService from 'services/interviewReplayService';
 import { SessionReplay } from 'services/interviewReplayService';
 import { formatMs } from 'services/interviewReplayService';
 
-// Video Interview Replay — product request item. Real transcript + camera/
-// voice metrics timeline with flagged moments (confidence dips, strong
-// moments) — see services/interviewReplayService.ts for why this isn't
-// literal video playback.
+// Video Interview Replay — product request item ("the real catch of the
+// app... users can replay and see the part where they need to improve
+// themselves"). Now a REAL, seekable recorded video (react-native-video)
+// when one exists — see services/interviewReplayService.ts's SessionReplay.
+// videoUrl for how that gets here, and services/videoAnalysisService.ts's
+// startVideoRecording/stopVideoRecording for how it's actually captured
+// on-device during the live session. Still assembles the same transcript +
+// camera/voice metrics timeline with flagged moments as before — those
+// flagged moments are now real seek targets INTO the video (see
+// jumpToAnnotation below), not just a transcript-scroll fallback. Falls
+// back to the transcript-only view (no player) for Voice/Text-mode
+// sessions, or a Video-mode session whose upload hasn't landed yet.
 const InterviewReplay = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
@@ -37,8 +46,10 @@ const InterviewReplay = memo(() => {
   const [replay, setReplay] = React.useState<SessionReplay | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [videoError, setVideoError] = React.useState(false);
   const scrollRef = React.useRef<ScrollView>(null);
   const rowOffsets = React.useRef<Record<number, number>>({});
+  const videoRef = React.useRef<VideoRef>(null);
 
   React.useEffect(() => {
     if (!sessionId) { setIsLoading(false); return; }
@@ -48,11 +59,20 @@ const InterviewReplay = memo(() => {
       .finally(() => setIsLoading(false));
   }, [sessionId, t]);
 
+  const hasVideo = !!replay?.videoUrl && !videoError;
+
   const jumpToAnnotation = (tMs: number) => {
     if (!replay) return;
-    // Find the closest transcript entry at or before this timestamp and
-    // scroll to it — the closest thing to "seeking" available without an
-    // actual video to scrub (see module header).
+    // Real seek into the actual recorded video, when there is one — this is
+    // the feature: tapping a flagged moment jumps straight to that part of
+    // the recording instead of just scrolling text.
+    if (hasVideo) {
+      videoRef.current?.seek(tMs / 1000);
+    }
+    // Also scroll the transcript to the matching row either way — useful on
+    // its own for Voice/Text-mode sessions (no video at all), and a nice
+    // companion to the video seek otherwise (reading along with the
+    // moment you just jumped to).
     let closestIndex = 0;
     let closestDiff = Infinity;
     replay.transcript.forEach((entry, i) => {
@@ -79,11 +99,26 @@ const InterviewReplay = memo(() => {
         </Flex>
       ) : (
         <Content padder contentContainerStyle={styles.content}>
-          <Text category="h9-s" status="placeholder" mb={16}>
-            {t('practice:replay_scope_note', {
-              defaultValue: 'A timeline of your transcript and in-session metrics — not a video recording.',
-            })}
-          </Text>
+          {hasVideo ? (
+            <View style={styles.videoWrap}>
+              <Video
+                ref={videoRef}
+                source={{ uri: replay.videoUrl! }}
+                style={globalStyle.flexOne}
+                resizeMode="cover"
+                controls
+                paused
+                playInBackground={false}
+                onError={() => setVideoError(true)}
+              />
+            </View>
+          ) : (
+            <Text category="h9-s" status="placeholder" mb={16}>
+              {t('practice:replay_scope_note', {
+                defaultValue: 'A timeline of your transcript and in-session metrics — no video was recorded for this session.',
+              })}
+            </Text>
+          )}
 
           {replay.voiceMetrics ? (
             <View style={styles.statsRow}>
@@ -157,6 +192,17 @@ export default InterviewReplay;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
+  videoWrap: {
+    width: '100%',
+    // Matches LiveInterviewSession.tsx's own cameraWrap aspect ratio — the
+    // video was recorded through that exact same front-camera view, so
+    // played back at the same aspect ratio it was shot in.
+    aspectRatio: 3 / 4,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#000',
+    marginBottom: 20,
+  },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

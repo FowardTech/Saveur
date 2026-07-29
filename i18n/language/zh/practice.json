@@ -5,7 +5,7 @@
   "interviewer": "面试官",
   "long_pauses": "长时间停顿",
   "replay_load_failed": "无法加载此场次的回放。",
-  "replay_scope_note": "这是你的对话记录和场次数据的时间线——并非视频录像。",
+  "replay_scope_note": "这是你的对话记录和场次数据的时间线——本场次没有录制视频。",
   "replay_unavailable": "此场次暂无回放数据。",
   "transcript": "对话记录",
   "wpm": "语速(词/分)",

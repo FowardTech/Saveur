@@ -5,7 +5,7 @@
   "interviewer": "Interviewer",
   "long_pauses": "Lange Pausen",
   "replay_load_failed": "Die Wiedergabe dieser Sitzung konnte nicht geladen werden.",
-  "replay_scope_note": "Eine Zeitleiste Ihres Transkripts und Ihrer Sitzungsmetriken — keine Videoaufnahme.",
+  "replay_scope_note": "Eine Zeitleiste deines Transkripts und deiner Sitzungsmetriken — für diese Sitzung wurde kein Video aufgenommen.",
   "replay_unavailable": "Für diese Sitzung sind keine Wiedergabedaten verfügbar.",
   "transcript": "Transkript",
   "wpm": "WPM",

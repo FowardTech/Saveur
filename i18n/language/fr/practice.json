@@ -5,7 +5,7 @@
   "interviewer": "Intervieweur",
   "long_pauses": "Longues pauses",
   "replay_load_failed": "Impossible de charger la relecture de cette session.",
-  "replay_scope_note": "Une chronologie de votre transcription et des métriques de session — pas un enregistrement vidéo.",
+  "replay_scope_note": "Une chronologie de votre transcription et des métriques de session — aucune vidéo n'a été enregistrée pour cette session.",
   "replay_unavailable": "Les données de relecture ne sont pas disponibles pour cette session.",
   "transcript": "Transcription",
   "wpm": "MPM",

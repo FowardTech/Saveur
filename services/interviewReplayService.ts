@@ -2,12 +2,16 @@ import apiClient from './apiClient';
 
 // ---------------------------------------------------------------------------
 // interviewReplayService — Video Interview Replay (product request item).
-// Scoped as a transcript + annotated-metrics timeline, not actual video
-// playback — see app/api/feedback.py's replay() docstring for why: the
-// app's camera pipeline never actually stores video, only live-derived
-// per-frame metrics, so "replay" surfaces the real data that DOES exist
-// (transcript + camera/voice metrics + flagged moments) rather than faking
-// a video player with nothing behind it.
+// Now backed by a REAL recorded video when one exists: Video-mode sessions
+// record locally via react-native-vision-camera throughout the live
+// interview (see services/videoAnalysisService.ts's startVideoRecording/
+// stopVideoRecording) and upload the finished file right after the session
+// ends (interviewService.uploadSessionVideo) — see
+// app/api/feedback.py's replay() docstring for the full backend side.
+// `videoUrl` is null for Voice/Text-mode sessions (nothing was ever
+// recorded) and for a Video-mode session whose upload hasn't landed yet —
+// InterviewReplay.tsx falls back to the transcript+metrics timeline alone
+// in that case, same as before this existed.
 // ---------------------------------------------------------------------------
 
 export interface ReplayTranscriptEntry {
@@ -30,6 +34,10 @@ export interface ReplayVoiceMetrics {
 
 export interface SessionReplay {
   durationMs: number;
+  /** Playable URL for the real recorded video, or null if this session has
+   * none (Voice/Text mode, or a Video-mode upload that hasn't landed yet). */
+  videoUrl: string | null;
+  videoDurationSec: number | null;
   transcript: ReplayTranscriptEntry[];
   voiceMetrics: ReplayVoiceMetrics | null;
   annotations: ReplayAnnotation[];
@@ -37,6 +45,8 @@ export interface SessionReplay {
 
 interface WireReplay {
   duration_ms?: number;
+  video_url?: string | null;
+  video_duration_sec?: number | null;
   transcript?: Array<{ role?: string; text?: string; t_ms?: number }>;
   voice_metrics?: { words_per_minute?: number; filler_count?: number; long_pauses?: number } | null;
   annotations?: Array<{ t_ms?: number; type?: string; label?: string }>;
@@ -46,6 +56,8 @@ export async function getSessionReplay(sessionId: string | number): Promise<Sess
   const { data } = await apiClient.get<WireReplay>(`/api/v1/feedback/session/${sessionId}/replay`);
   return {
     durationMs: data.duration_ms ?? 0,
+    videoUrl: data.video_url ?? null,
+    videoDurationSec: data.video_duration_sec ?? null,
     transcript: (data.transcript ?? []).map(m => ({
       role: m.role ?? '', text: m.text ?? '', tMs: m.t_ms ?? 0,
     })),

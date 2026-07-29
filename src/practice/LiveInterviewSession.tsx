@@ -132,6 +132,19 @@ const LiveInterviewSession = memo(() => {
   const [isMuted, setIsMuted] = React.useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = React.useState(true);
   const [isEnding, setIsEnding] = React.useState(false);
+  // Deliberately separate from `isEnding` (which flips true immediately on
+  // "End Interview", before the real video file has finished being
+  // finalized) — the <Camera>'s `isActive` prop must stay true until
+  // stopVideoRecording() has actually resolved inside onEnd() below, or
+  // deactivating the camera mid-stop risks a corrupt/truncated recording.
+  // See onEnd()'s ordering: stopVideoRecording() -> stopAnalysis() ->
+  // THEN this flips false.
+  const [isCameraActive, setIsCameraActive] = React.useState(true);
+  // True only while the real recorded video is uploading, right after the
+  // interview ends (Video mode only) — surfaced as a brief status line so
+  // "Ending…" doesn't look stuck while a multi-minute recording finishes
+  // uploading in the background.
+  const [isUploadingVideo, setIsUploadingVideo] = React.useState(false);
   const [questionIndex, setQuestionIndex] = React.useState(0);
   const [askedQuestions, setAskedQuestions] = React.useState<string[]>([]);
   // Set once a real POST /next-question call succeeds — takes priority over
@@ -348,11 +361,33 @@ const LiveInterviewSession = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideoMode]);
 
+  // Starts the REAL on-device video recording (react-native-vision-camera's
+  // startRecording()) once the <Camera> below has actually mounted — not in
+  // the permission effect above, which fires startAnalysis() the moment
+  // permission is granted but BEFORE React has committed the render that
+  // mounts <FaceDetectorCamera ref={videoAnalysis.cameraRef} .../>. Gated on
+  // the exact same condition that JSX render branch below uses
+  // (cameraPermissionState === 'granted' && cameraDevice), so by the time
+  // this effect runs, the ref from that same commit is guaranteed attached.
+  // This is the fix for "Interview Replay isn't real video" — everything
+  // else in this screen already worked without it.
+  React.useEffect(() => {
+    if (!isVideoMode || cameraPermissionState !== 'granted' || !videoAnalysis.device) return;
+    videoAnalysis.startVideoRecording();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isVideoMode, cameraPermissionState, videoAnalysis.device]);
+
   // Make sure the mic/analysis pipeline is torn down even if the user
   // navigates away without tapping "End Interview" (e.g. the close button).
   React.useEffect(() => {
     return () => {
       if (isVideoMode) {
+        // Best-effort, no upload attempted here (unlike onEnd() below) —
+        // this only fires on an abrupt navigate-away (e.g. the close
+        // button) rather than a real "End Interview" tap, so there's no
+        // sessionId-scoped completion to attach a video to anyway. This
+        // just releases the native recorder so it doesn't keep running.
+        videoAnalysis.stopVideoRecording().catch(() => {});
         videoAnalysis.stopAnalysis().catch(() => {});
       } else if (isVoiceMode) {
         speechService.stopSpeaking();
@@ -459,7 +494,14 @@ const LiveInterviewSession = memo(() => {
     if (isVoiceMode) {
       await speechToText.stop();
     }
+    // Stop the real video recording BEFORE deactivating the camera view
+    // below (isCameraActive) — stopVideoRecording() awaits the file
+    // actually being finalized on disk, and flipping the <Camera>'s
+    // `isActive` prop false while that's still in flight risks a
+    // corrupt/truncated recording.
+    const recordedVideo = isVideoMode ? await videoAnalysis.stopVideoRecording() : null;
     let videoMetrics = isVideoMode ? await videoAnalysis.stopAnalysis() : undefined;
+    if (isVideoMode) setIsCameraActive(false);
     try {
       if (isVideoMode && sessionId) {
         // Flush any samples buffered since the last periodic upload, then
@@ -502,6 +544,26 @@ const LiveInterviewSession = memo(() => {
                   'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.',
               }),
           );
+        }
+      }
+      // Real video upload — the actual "watch the moment back" feature.
+      // Best-effort: a failed/slow upload should never block finishing the
+      // interview or navigating to Feedback (every other part of the
+      // session — transcript, scores, camera/voice metrics — was already
+      // saved independently of this). InterviewReplay just shows "no video"
+      // if this never lands.
+      if (isVideoMode && sessionId && recordedVideo) {
+        setIsUploadingVideo(true);
+        try {
+          await interviewService.uploadSessionVideo(
+            sessionId,
+            recordedVideo.path,
+            recordedVideo.durationSec,
+          );
+        } catch (err) {
+          console.warn('[LiveInterviewSession] video upload failed', err);
+        } finally {
+          setIsUploadingVideo(false);
         }
       }
     } finally {
@@ -580,7 +642,19 @@ const LiveInterviewSession = memo(() => {
                     ref={videoAnalysis.cameraRef}
                     style={StyleSheet.absoluteFill}
                     device={cameraDevice}
-                    isActive={!isEnding}
+                    isActive={isCameraActive}
+                    // Enables the real video+audio recording pipeline this
+                    // screen now drives via videoAnalysis.startVideoRecording/
+                    // stopVideoRecording (services/videoAnalysisService.ts) —
+                    // without these two, startRecording() has nothing to
+                    // record. videoBitRate="low" keeps a multi-minute
+                    // talking-head recording upload-able; both props pass
+                    // straight through to the underlying VisionCamera (see
+                    // react-native-vision-camera-face-detector's Camera.tsx:
+                    // `<VisionCamera {...props} ref={ref} .../>`).
+                    video
+                    audio
+                    videoBitRate="low"
                     faceDetectionOptions={videoAnalysis.faceDetectionOptions}
                     faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}
                   />
@@ -762,9 +836,14 @@ const LiveInterviewSession = memo(() => {
       </View>
 
       <View style={styles.footer}>
-        <Text category="h9" center status="placeholder" mb={20}>
+        <Text category="h9" center status="placeholder" mb={isUploadingVideo ? 4 : 20}>
           {mm}:{ss}
         </Text>
+        {isUploadingVideo ? (
+          <Text category="h10" center status="placeholder" mb={16}>
+            {t('find:live_saving_recording', { defaultValue: 'Saving your recording…' })}
+          </Text>
+        ) : null}
         <Flex justify="center" itemsCenter>
           {isTextMode ? null : (
             <TouchableOpacity

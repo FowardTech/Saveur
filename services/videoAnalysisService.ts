@@ -5,6 +5,7 @@ import {
   useCameraPermission,
   useMicrophonePermission,
 } from 'react-native-vision-camera';
+import type {VideoFile} from 'react-native-vision-camera';
 import type {Face, FrameFaceDetectionOptions} from 'react-native-vision-camera-face-detector';
 import Voice from '@dev-amirzubair/react-native-voice';
 import type {
@@ -240,6 +241,24 @@ export function useVideoInterviewAnalysis() {
 
   const cameraRef = React.useRef<VisionCamera>(null);
 
+  // --- Real video recording state (task: "real video replay, not just the
+  // transcript/metrics reconstruction"). The <Camera> this hook doesn't
+  // render itself (see LiveInterviewSession.tsx) is the SAME react-native-
+  // vision-camera-face-detector-wrapped instance `cameraRef` already points
+  // at for face detection — that wrapper forwards its `ref` straight through
+  // to the real underlying VisionCamera instance (see that package's
+  // Camera.tsx: `return <VisionCamera {...props} ref={ref} .../>`), so
+  // `cameraRef.current` already has the full imperative
+  // startRecording()/stopRecording() API without needing a second camera
+  // instance. The consuming screen must additionally pass `video`/`audio`
+  // props on the rendered <Camera> (see LiveInterviewSession.tsx) — those
+  // aren't set here since this hook doesn't own the JSX. ---
+  const recordingResultRef = React.useRef<{
+    resolve: (video: VideoFile) => void;
+    reject: (error: unknown) => void;
+  } | null>(null);
+  const recordingPromiseRef = React.useRef<Promise<VideoFile> | null>(null);
+
   // --- Face-detection aggregation state (refs, not state — this callback
   // can fire many times per second and we don't want a re-render per frame;
   // see refreshLiveMetrics's throttle below for what *does* re-render). ---
@@ -430,6 +449,80 @@ export function useVideoInterviewAnalysis() {
     }
   }, []);
 
+  /**
+   * Starts a real on-device video recording via VisionCamera's imperative
+   * startRecording() API — separate from (but running alongside) the
+   * face-detection frame processor, which keeps working on the live preview
+   * the whole time. Fire-and-forget by design (VisionCamera's own API is
+   * callback-based, not promise-based, for the finished file): call
+   * stopVideoRecording() later to actually get the resulting file back.
+   * No-ops silently if the camera isn't mounted yet or a recording is
+   * already in progress — the caller (LiveInterviewSession) only calls this
+   * once, right after the camera view becomes available.
+   */
+  const startVideoRecording = React.useCallback(() => {
+    if (!cameraRef.current || recordingPromiseRef.current) return;
+    recordingPromiseRef.current = new Promise<VideoFile>((resolve, reject) => {
+      recordingResultRef.current = {resolve, reject};
+    });
+    try {
+      // videoBitRate is a <Camera> component prop (not a startRecording()
+      // option) — see LiveInterviewSession.tsx's videoBitRate="low" on the
+      // rendered <FaceDetectorCamera>, which is what actually keeps a
+      // multi-minute mock interview's file size upload-able over a typical
+      // mobile connection (talking-head footage, not action, so 'low' still
+      // holds up fine for reviewing your own delivery/body language later).
+      cameraRef.current.startRecording({
+        fileType: 'mp4',
+        videoCodec: 'h264',
+        onRecordingFinished: video => {
+          recordingResultRef.current?.resolve(video);
+          recordingResultRef.current = null;
+        },
+        onRecordingError: error => {
+          console.warn('[videoAnalysisService] recording error', error);
+          recordingResultRef.current?.reject(error);
+          recordingResultRef.current = null;
+        },
+      });
+    } catch (err) {
+      // startRecording() can throw synchronously (e.g. camera not ready,
+      // already recording) in addition to the async onRecordingError path.
+      console.warn('[videoAnalysisService] startRecording threw', err);
+      recordingResultRef.current?.reject(err);
+      recordingResultRef.current = null;
+      recordingPromiseRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Stops the in-progress recording (if any) and resolves once the file has
+   * actually finished being written to disk — VisionCamera's stopRecording()
+   * only signals that the stop command was issued, not that
+   * onRecordingFinished has fired yet, so this awaits the promise created in
+   * startVideoRecording above to get the real, complete file. Returns null
+   * (rather than throwing) on any failure — a failed/missing recording
+   * should never block the rest of onEnd()'s teardown in
+   * LiveInterviewSession, since the interview itself is still valid without
+   * it (same "video is a bonus, not a requirement" posture the rest of this
+   * feature already takes with e.g. the camera-summary cross-check).
+   */
+  const stopVideoRecording = React.useCallback(async (): Promise<
+    {path: string; durationSec: number} | null
+  > => {
+    if (!cameraRef.current || !recordingPromiseRef.current) return null;
+    const pending = recordingPromiseRef.current;
+    recordingPromiseRef.current = null;
+    try {
+      await cameraRef.current.stopRecording();
+      const video = await pending;
+      return {path: video.path, durationSec: video.duration};
+    } catch (err) {
+      console.warn('[videoAnalysisService] stopVideoRecording failed', err);
+      return null;
+    }
+  }, []);
+
   const setMuted = React.useCallback((muted: boolean) => {
     isMutedRef.current = muted;
     if (muted) {
@@ -490,6 +583,8 @@ export function useVideoInterviewAnalysis() {
     onFacesDetected,
     startAnalysis,
     stopAnalysis,
+    startVideoRecording,
+    stopVideoRecording,
     setMuted,
     liveMetrics,
     drainFrameBuffer,

@@ -5,7 +5,7 @@
   "interviewer": "Entrevistador",
   "long_pauses": "Pausas longas",
   "replay_load_failed": "Não foi possível carregar a repetição desta sessão.",
-  "replay_scope_note": "Uma linha do tempo da sua transcrição e métricas da sessão — não uma gravação em vídeo.",
+  "replay_scope_note": "Uma linha do tempo da sua transcrição e métricas da sessão — nenhum vídeo foi gravado para esta sessão.",
   "replay_unavailable": "Dados de repetição indisponíveis para esta sessão.",
   "transcript": "Transcrição",
   "wpm": "PPM",
