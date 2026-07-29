@@ -529,7 +529,21 @@ export function useVideoInterviewAnalysis() {
     try {
       await cameraRef.current.stopRecording();
       const video = await pending;
-      return {path: video.path, durationSec: video.duration};
+      // VideoFile.path is a bare filesystem path, NOT a file:// URI --
+      // VisionCamera's own TemporaryFile type docs say as much ("you might
+      // have to add the file:// prefix" to consume it). This was never
+      // added anywhere downstream: interviewService.uploadSessionVideo()
+      // hands this straight to FormData as the file's `uri`, and RN's
+      // native multipart implementation needs a real file:// URI to read
+      // local file bytes on both platforms -- without it, the upload
+      // either throws or silently posts an empty/invalid part, which is
+      // exactly why "the video interview is not saving" while every other
+      // part of the session (transcript, scores, metrics) saved fine: this
+      // was the one piece of the pipeline still passing a raw path through
+      // instead of a real URI. Guarded so this stays a no-op if a future
+      // VisionCamera version starts returning file:// already.
+      const path = video.path.startsWith('file://') ? video.path : `file://${video.path}`;
+      return {path, durationSec: video.duration};
     } catch (err) {
       console.warn('[videoAnalysisService] stopVideoRecording failed', err);
       return null;
