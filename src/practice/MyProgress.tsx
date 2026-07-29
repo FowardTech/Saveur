@@ -7,7 +7,6 @@ import {
   useTheme,
   Icon,
   Layout,
-  Spinner,
   Button,
 } from '@ui-kitten/components';
 import { BarChart } from 'react-native-chart-kit';
@@ -19,6 +18,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import EmptyState from 'components/EmptyState';
 import { globalStyle } from 'styles/globalStyle';
 import { chartConfig } from 'utils/chartConfig';
 import useLayout from 'hooks/useLayout';
@@ -115,18 +115,15 @@ const MyProgress = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <EmptyState variant="loading" />
         ) : loadError ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
-            <Text category="h9-s" status="danger" center mb={12}>
-              {loadError}
-            </Text>
-            <Button size="small" onPress={load}>
-              {t('common:try_again', { defaultValue: 'Try again' })}
-            </Button>
-          </Flex>
+          <EmptyState
+            variant="error"
+            title={t('common:something_went_wrong', { defaultValue: 'Something went wrong' })}
+            body={loadError}
+            actionLabel={t('common:try_again', { defaultValue: 'Try again' })}
+            onAction={load}
+          />
         ) : (
           <>
             <Layout level="2" style={styles.goalCard}>
@@ -209,11 +206,13 @@ const MyProgress = memo(() => {
               {t('find:recent_sessions', { defaultValue: 'Recent sessions' })}
             </Text>
             {recent.length === 0 ? (
-              <Text category="h9-s" status="placeholder">
-                {t('find:complete_first_interview', {
+              <EmptyState
+                icon="bar-chart-2-outline"
+                body={t('find:complete_first_interview', {
                   defaultValue: 'Complete your first mock interview to start tracking progress here.',
                 })}
-              </Text>
+                style={{ paddingVertical: 24 }}
+              />
             ) : (
               recent.map(session => (
                 <Flex

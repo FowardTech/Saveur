@@ -313,7 +313,7 @@ const StudentVerification = memo(() => {
                 {universityResults.map((u, i) => (
                   <TouchableOpacity
                     key={i}
-                    style={styles.resultRow}
+                    style={[styles.resultRow, globalStyle.divider]}
                     onPress={() => { setSelectedUniversity(u); setUniversityQuery(u.name); setUniversityResults([]); }}
                   >
                     <Text category="h9">{u.name}</Text>
@@ -449,11 +449,11 @@ const themedStyles = StyleService.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
+  // borderBottom comes from the shared globalStyle.divider at the usage
+  // site instead of a duplicated inline rgba value.
   resultRow: {
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.15)',
   },
   yearRow: {
     flexDirection: 'row',

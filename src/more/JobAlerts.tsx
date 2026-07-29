@@ -27,6 +27,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import EmptyState from 'components/EmptyState';
 import {globalStyle} from 'styles/globalStyle';
 import {JobAlertProps} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
@@ -430,26 +431,23 @@ const JobAlerts = memo(() => {
         ) : null}
 
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
-            <Spinner size="large" />
-          </Flex>
+          <EmptyState variant="loading" />
         ) : loadError ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
-            <Text category="h9-s" status="danger" center mb={12}>
-              {loadError}
-            </Text>
-            <Button size="small" onPress={loadAlerts}>
-              {t('common:try_again', {defaultValue: 'Try again'})}
-            </Button>
-          </Flex>
+          <EmptyState
+            variant="error"
+            title={t('common:something_went_wrong', {defaultValue: 'Something went wrong'})}
+            body={loadError}
+            actionLabel={t('common:try_again', {defaultValue: 'Try again'})}
+            onAction={loadAlerts}
+          />
         ) : alerts.length === 0 ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
-            <Text category="h9-s" status="placeholder" center>
-              {t('more:job_alerts_empty', {
-                defaultValue: "No job matches yet — we'll show new postings here as they're found.",
-              })}
-            </Text>
-          </Flex>
+          <EmptyState
+            icon="bell-outline"
+            title={t('more:job_alerts_empty_title', {defaultValue: 'No job matches yet'})}
+            body={t('more:job_alerts_empty', {
+              defaultValue: "We'll show new postings here as they're found.",
+            })}
+          />
         ) : (
           alerts.map(alert => (
             <TouchableOpacity key={alert.id} activeOpacity={0.8} onPress={() => onOpenAlert(alert)}>

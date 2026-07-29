@@ -185,7 +185,7 @@ const InterviewReplay = memo(() => {
                 <View
                   key={i}
                   onLayout={e => { rowOffsets.current[i] = e.nativeEvent.layout.y; }}
-                  style={styles.transcriptRow}
+                  style={[styles.transcriptRow, globalStyle.divider]}
                 >
                   <Text category="h10" status="placeholder" mb={2}>
                     {formatMs(entry.tMs)} · {entry.role === 'interviewer'
@@ -234,9 +234,9 @@ const themedStyles = StyleService.create({
     padding: 12,
     marginBottom: 8,
   },
+  // borderBottom comes from the shared globalStyle.divider at the usage
+  // site instead of a duplicated inline rgba value.
   transcriptRow: {
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.15)',
   },
 });

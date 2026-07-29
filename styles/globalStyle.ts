@@ -1,5 +1,23 @@
 import {StyleSheet} from 'react-native';
 
+// Shared shadow preset used by both `shadowFade` (kept for existing call
+// sites) and the new `card` composite below — a design-consistency pass
+// found 60+ files hand-rolling their own card borderRadius (12/14/16/18/20/
+// 24/28 all used interchangeably for what's visually "the same kind of
+// card") with no shadow at all, sitting flat next to shadowed cards
+// elsewhere on the same screen. `card` is the new default: reach for it on
+// any new content card instead of a one-off borderRadius/shadow pair.
+const cardShadow = {
+  shadowColor: 'rgba(29, 30, 44, 0.28)',
+  shadowOffset: {
+    width: 1,
+    height: 1,
+  },
+  shadowOpacity: 0.38,
+  shadowRadius: 12.0,
+  elevation: 12,
+};
+
 export const globalStyle = StyleSheet.create({
   flexOne: {
     flex: 1,
@@ -50,16 +68,16 @@ export const globalStyle = StyleSheet.create({
     shadowRadius: 12,
     elevation: 10,
   },
-  shadowFade: {
-    shadowColor: 'rgba(29, 30, 44, 0.28)',
-    shadowOffset: {
-      width: 1,
-      height: 1,
-    },
-    shadowOpacity: 0.38,
-    shadowRadius: 12.0,
-
-    elevation: 12,
+  shadowFade: cardShadow,
+  // The canonical "content card": 16px radius (the size already used most
+  // often across the app) + the shadowFade lift, in one style instead of
+  // every screen re-picking its own radius and deciding whether to bother
+  // with a shadow at all. Doesn't set backgroundColor/padding since those
+  // vary (Layout level="1"/"2" usually supplies the background) — just the
+  // shape + lift.
+  card: {
+    borderRadius: 16,
+    ...cardShadow,
   },
   // Was shadowOpacity 0.58 / shadowRadius 12 / elevation 24 — a genuinely
   // huge blue glow around every primary button, especially visible on
@@ -193,5 +211,14 @@ export const globalStyle = StyleSheet.create({
   icon40: {
     width: 40,
     height: 40,
+  },
+  // The exact same `rgba(128,128,128,0.15)` bottom-border was independently
+  // hand-rolled in several unrelated screens (InterviewReplay, Student
+  // Verification, transcript/list rows) as a one-off row divider — pulled
+  // out here so it's one shared value instead of N copies that could each
+  // drift differently.
+  divider: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128,128,128,0.15)',
   },
 });

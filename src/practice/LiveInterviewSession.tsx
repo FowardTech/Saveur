@@ -857,7 +857,7 @@ const LiveInterviewSession = memo(() => {
               <Icon
                 pack="assets"
                 name={isMuted ? 'mute' : 'call'}
-                style={[globalStyle.icon24, { tintColor: isMuted ? '#fff' : theme['text-basic-color'] }]}
+                style={[globalStyle.icon24, { tintColor: isMuted ? theme['text-primary-color'] : theme['text-basic-color'] }]}
               />
             </TouchableOpacity>
           )}
@@ -875,7 +875,7 @@ const LiveInterviewSession = memo(() => {
           </TouchableOpacity>
         </Flex>
         {!isRecording ? null : (
-          <View style={styles.recDot} />
+          <View style={[styles.recDot, { backgroundColor: theme['color-danger-100'] }]} />
         )}
       </View>
     </Container>
@@ -1013,6 +1013,8 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#FF4D4D',
+    // Color applied inline at the usage site (theme['color-danger-100']) —
+    // this is a plain StyleSheet.create block, not ui-kitten's themed
+    // StyleService, so it can't resolve a theme token string on its own.
   },
 });

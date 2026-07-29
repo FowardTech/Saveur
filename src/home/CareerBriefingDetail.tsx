@@ -130,10 +130,9 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   heroCard: {
-    borderRadius: 16,
+    ...globalStyle.card,
     padding: 18,
     borderWidth: 1,
-    ...globalStyle.shadowFade,
   },
   iconBadge: {
     width: 36,
@@ -143,10 +142,9 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
   },
   priorityCard: {
-    borderRadius: 16,
+    ...globalStyle.card,
     padding: 14,
     marginBottom: 10,
-    ...globalStyle.shadowFade,
   },
   priorityBadge: {
     width: 28,

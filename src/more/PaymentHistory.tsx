@@ -17,6 +17,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import EmptyState from 'components/EmptyState';
 import {globalStyle} from 'styles/globalStyle';
 import {PaymentHistoryItemProps} from 'constants/Types';
 import * as billingService from 'services/billingService';
@@ -120,28 +121,21 @@ const PaymentHistory = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60}}>
-            <Spinner size="large" />
-          </Flex>
+          <EmptyState variant="loading" />
         ) : loadError ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
-            <Text category="h9-s" status="danger" center mb={16}>
-              {loadError}
-            </Text>
-            <Text category="h9" status="link" bold onPress={loadPayments}>
-              {t('common:try_again', {defaultValue: 'Try again'})}
-            </Text>
-          </Flex>
+          <EmptyState
+            variant="error"
+            title={t('common:something_went_wrong', {defaultValue: 'Something went wrong'})}
+            body={loadError}
+            actionLabel={t('common:try_again', {defaultValue: 'Try again'})}
+            onAction={loadPayments}
+          />
         ) : !payments || payments.length === 0 ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60}}>
-            <Icon pack="eva" name="credit-card-outline" style={{width: 32, height: 32, tintColor: theme['text-hint-color'], marginBottom: 12}} />
-            <Text category="h7" bold center mb={8}>
-              {t('more:payment_history_empty_title', {defaultValue: 'No payments yet'})}
-            </Text>
-            <Text category="h9-s" status="placeholder" center>
-              {t('more:payment_history_empty_body', {defaultValue: 'Your completed payments will show up here.'})}
-            </Text>
-          </Flex>
+          <EmptyState
+            icon="credit-card-outline"
+            title={t('more:payment_history_empty_title', {defaultValue: 'No payments yet'})}
+            body={t('more:payment_history_empty_body', {defaultValue: 'Your completed payments will show up here.'})}
+          />
         ) : (
           <>
             <Text category="h9-s" status="placeholder" mb={16}>

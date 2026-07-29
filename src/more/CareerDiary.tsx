@@ -10,7 +10,6 @@ import {
   Button,
   Input,
   Icon,
-  Spinner,
 } from '@ui-kitten/components';
 
 import Text from 'components/Text';
@@ -18,6 +17,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import EmptyState from 'components/EmptyState';
 import { globalStyle } from 'styles/globalStyle';
 import * as careerDiaryService from 'services/careerDiaryService';
 import { CareerDiaryEntry, DiaryCategory } from 'services/careerDiaryService';
@@ -192,25 +192,21 @@ const CareerDiary = memo(() => {
         </Layout>
 
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
-            <Spinner size="large" />
-          </Flex>
+          <EmptyState variant="loading" />
         ) : loadError ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
-            <Text category="h9-s" status="danger" center mb={12}>
-              {loadError}
-            </Text>
-            <Text category="h9" status="link" bold onPress={load}>
-              {t('common:try_again', {defaultValue: 'Try again'})}
-            </Text>
-          </Flex>
+          <EmptyState
+            variant="error"
+            title={t('common:something_went_wrong', {defaultValue: 'Something went wrong'})}
+            body={loadError}
+            actionLabel={t('common:try_again', {defaultValue: 'Try again'})}
+            onAction={load}
+          />
         ) : entries.length === 0 ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
-            <Icon pack="eva" name="edit-2-outline" style={[globalStyle.icon40, { tintColor: theme['text-hint-color'] }]} />
-            <Text category="h9-s" status="placeholder" center mt={16}>
-              {t('more:career_diary_empty', {defaultValue: 'No entries yet — add your first one above.'})}
-            </Text>
-          </Flex>
+          <EmptyState
+            icon="edit-2-outline"
+            title={t('more:career_diary_empty_title', {defaultValue: 'No entries yet'})}
+            body={t('more:career_diary_empty', {defaultValue: 'Add your first one above.'})}
+          />
         ) : (
           groups.map(group => (
             <View key={group.date} style={{ marginTop: 24 }}>

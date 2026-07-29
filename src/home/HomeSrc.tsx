@@ -834,7 +834,7 @@ const HomeSrc = memo(() => {
                   <Icon
                     pack={badge.iconPack ?? 'assets'}
                     name={badge.icon}
-                    style={[globalStyle.icon20, { tintColor: unlocked ? '#fff' : theme['text-hint-color'] }]}
+                    style={[globalStyle.icon20, { tintColor: unlocked ? theme['text-primary-color'] : theme['text-hint-color'] }]}
                   />
                 </View>
                 <Text category="h10" bold center mt={8} numberOfLines={2} status={unlocked ? 'basic' : 'placeholder'}>
@@ -956,11 +956,10 @@ const themedStyles = StyleService.create({
     marginTop: 16,
   },
   briefingCard: {
-    borderRadius: 16,
+    ...globalStyle.card,
     padding: 16,
     marginTop: 16,
     borderWidth: 1,
-    ...globalStyle.shadowFade,
   },
   briefingIconBadge: {
     width: 28,
