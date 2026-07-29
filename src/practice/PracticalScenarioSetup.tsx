@@ -129,10 +129,16 @@ const PracticalScenarioSetup = memo(() => {
                   name={TYPE_ICONS[ptype]}
                   style={[globalStyle.icon16, { tintColor: selected ? theme['color-primary-500'] : theme['text-hint-color'] }]}
                 />
+                {/* Was status={selected ? 'primary' : 'basic'} -- 'primary'
+                    resolves to text-primary-color, a near-white token meant
+                    for text on a solid color-primary button, not this pale
+                    transparent chip. Made the selected label invisible in
+                    light mode. Using the brand blue directly instead, same
+                    fix as the chip's own icon tintColor two lines up. */}
                 <Text
                   category="h9-s"
                   bold={selected}
-                  status={selected ? 'primary' : 'basic'}
+                  style={selected ? { color: theme['color-primary-500'] } : undefined}
                   ml={6}
                 >
                   {t(`find:${TYPE_LABEL_KEYS[ptype]}`)}

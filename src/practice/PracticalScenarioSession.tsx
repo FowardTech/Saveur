@@ -100,7 +100,10 @@ const PracticalScenarioSession = memo(() => {
               onPress={() => onChoose(choice.id)}
             >
               <View style={[styles.choiceBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                <Text category="h9" bold status="primary">{choice.id.toUpperCase()}</Text>
+                {/* Was status="primary" -- near-white text-primary-color on
+                    a pale transparent badge, invisible in light mode. See
+                    the same fix in JobAlerts.tsx/HomeSrc.tsx. */}
+                <Text category="h9" bold style={{color: theme['color-primary-500']}}>{choice.id.toUpperCase()}</Text>
               </View>
               <Text category="h9-s" style={globalStyle.flexOne}>{choice.text}</Text>
             </Flex>

@@ -101,7 +101,12 @@ const CareerBriefingDetail = memo(() => {
                   onPress={destination ? () => navigate(destination as any) : undefined}
                 >
                   <View style={[styles.priorityBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                    <Text category="h9" bold status="primary">{i + 1}</Text>
+                    {/* Was status="primary" -- text-primary-color is a
+                        near-white token meant for text on a solid
+                        color-primary surface, not this pale transparent
+                        badge -- made the number invisible. Same fix as
+                        JobAlerts.tsx/HomeSrc.tsx: the actual brand blue. */}
+                    <Text category="h9" bold style={{color: theme['color-primary-500']}}>{i + 1}</Text>
                   </View>
                   <View style={{ marginLeft: 12, flex: 1 }}>
                     <Text category="h9-s" bold>{p.label}</Text>

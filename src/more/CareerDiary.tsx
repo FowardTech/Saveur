@@ -219,7 +219,11 @@ const CareerDiary = memo(() => {
                     <Flex justify="flex-start" itemsCenter>
                       {entry.category ? (
                         <View style={[styles.entryTag, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                          <Text category="h10" bold status="primary">
+                          {/* Was status="primary" -- near-white
+                              text-primary-color, invisible on this pale
+                              transparent tag in light mode. Same fix as
+                              elsewhere: the actual brand blue. */}
+                          <Text category="h10" bold style={{color: theme['color-primary-500']}}>
                             {CATEGORY_KEYS.includes(entry.category as DiaryCategory)
                               ? categoryLabel(entry.category as DiaryCategory, t)
                               : entry.category}

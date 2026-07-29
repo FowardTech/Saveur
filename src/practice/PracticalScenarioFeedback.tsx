@@ -100,7 +100,13 @@ const PracticalScenarioFeedback = memo(() => {
         <Content padder contentContainerStyle={styles.content}>
           {feedback?.overall != null ? (
             <Layout level="2" style={styles.overallCard}>
-              <Text category="h2" bold status="primary" center>{feedback.overall}</Text>
+              {/* Was status="primary" -- resolves to text-primary-color,
+                  a near-white token meant for text on a solid primary-color
+                  button, not this plain Layout card. Made the score
+                  invisible in light mode. Using the actual brand blue
+                  directly instead, same fix as JobAlerts.tsx's daily-limit
+                  digit. */}
+              <Text category="h2" bold center style={{color: theme['color-primary-500']}}>{feedback.overall}</Text>
               <Text category="h9-s" status="placeholder" center mt={4}>
                 {t('find:practical_overall_score', { defaultValue: 'Overall judgment score' })}
               </Text>
