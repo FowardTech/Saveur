@@ -21,10 +21,8 @@ export interface ButtonOptionalProps {
   onPress?(): void;
   navigateSrc?:
     | 'ProfileSrc'
-    | 'MyChildren'
     | 'EditProfile'
     | 'PaymentMethod'
-    | 'MyPost'
     | 'ChangeCareType'
     | 'MoreSrc';
   withToggle?: boolean;

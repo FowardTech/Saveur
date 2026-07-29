@@ -7,7 +7,6 @@ import {
   JobAlertProps,
   JobApplicationProps,
   Practice_Mode_Enum,
-  Request_Status_Type_Enum,
   Request_Type_Enum,
   SuccessScreenType,
   VideoAnalysisMetrics,
@@ -17,18 +16,11 @@ export type RootStackParamList = {
   Intro: undefined;
   AuthStack: NavigatorScreenParams<AuthStackParamList>;
   NewJob: NavigatorScreenParams<NewJobStackParamList>;
-  FavoritesFilter: undefined;
   SelectLanguage: undefined;
-  FavoritesMap: undefined;
   Notification: undefined;
-  ViewOnMap: undefined;
-  CaregiverProfile: undefined;
-  ProfileGallery: undefined;
   WriteReview: undefined;
   AddMorePayment: undefined;
-  CaregiverPostDetails: undefined;
   MoreNavigator: NavigatorScreenParams<MoreStackParamList>;
-  AddChild: undefined;
   CreateJobStack: NavigatorScreenParams<CreateJobStackParamList>;
   FindStack: NavigatorScreenParams<FindStackParamList>;
   MessagesStack: NavigatorScreenParams<MessagesStackParamList>;
@@ -287,27 +279,16 @@ export type RequestsBottomStackParamList = {
   RequestsInPast: {requestType: Request_Type_Enum};
 };
 export type RequestsStackParamList = {
-  RequestInterview: undefined;
-  BookingRequest: undefined;
-  ReviewRequestInterview: undefined;
-  ReviewRequestBooking: undefined;
-  ConfirmHour: undefined;
-  SelectCard: undefined;
-  InterviewDetails: {type: Request_Status_Type_Enum};
-  BookingDetails: {type: Request_Status_Type_Enum};
   ApplicationDetails: {id: JobApplicationProps['id']};
 };
 
 export type HomeStackParamList = {
   HomeSrc: undefined;
-  MyFavorites: undefined;
 };
 export type MoreStackParamList = {
   MoreSrc: undefined;
-  MyPost: undefined;
   EditProfile: undefined;
   PaymentMethod: undefined;
-  MyChildren: undefined;
   ProfileSrc: undefined;
 };
 export type ModalScreenNavigationProp = RouteProp<
@@ -326,14 +307,6 @@ export type JobDetailsScreenNavigationProp = RouteProp<
 export type AboutYourFamilyScreenNavigationProp = RouteProp<
   CreateJobStackParamList,
   'AboutYourFamily'
->;
-export type InterviewDetailsScreenNavigationProp = RouteProp<
-  RequestsStackParamList,
-  'InterviewDetails'
->;
-export type BookingDetailsScreenNavigationProp = RouteProp<
-  RequestsStackParamList,
-  'BookingDetails'
 >;
 export type ApplicationDetailsScreenNavigationProp = RouteProp<
   RequestsStackParamList,
