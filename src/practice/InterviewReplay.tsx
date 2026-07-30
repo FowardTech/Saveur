@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
-import { ScrollView, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
 import {
   TopNavigation,
+  TopNavigationAction,
   StyleService,
   useStyleSheet,
   useTheme,
@@ -23,6 +24,7 @@ import { RootStackParamList } from 'navigation/types';
 import * as interviewReplayService from 'services/interviewReplayService';
 import { SessionReplay } from 'services/interviewReplayService';
 import { formatMs } from 'services/interviewReplayService';
+import * as interviewService from 'services/interviewService';
 
 // Video Interview Replay — product request item ("the real catch of the
 // app... users can replay and see the part where they need to improve
@@ -57,6 +59,7 @@ const InterviewReplay = memo(() => {
   // paused (poster/first-frame shown) and only plays once the user
   // presses play, with JS state tracking what the native controls did.
   const [paused, setPaused] = React.useState(true);
+  const [isDeletingVideo, setIsDeletingVideo] = React.useState(false);
   const scrollRef = React.useRef<ScrollView>(null);
   const rowOffsets = React.useRef<Record<number, number>>({});
   const videoRef = React.useRef<VideoRef>(null);
@@ -126,11 +129,59 @@ const InterviewReplay = memo(() => {
     if (y != null) scrollRef.current?.scrollTo({ y: Math.max(y - 40, 0), animated: true });
   };
 
+  // Product request: "There should be a delete button in the video
+  // interview so that users can delete it anytime they want" -- privacy/
+  // control over their own recording, on demand, not just something an
+  // admin can do. Confirms first (destructive, irreversible), then clears
+  // local state immediately on success so the screen falls back to the
+  // transcript-only view without waiting on a refetch.
+  const onDeleteVideo = () => {
+    if (!sessionId || !replay?.videoUrl || isDeletingVideo) return;
+    Alert.alert(
+      t('practice:delete_video_title', { defaultValue: 'Delete this video?' }),
+      t('practice:delete_video_message', {
+        defaultValue: "This removes the recorded video permanently. Your transcript and scores stay untouched.",
+      }),
+      [
+        { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+        {
+          text: t('common:delete', { defaultValue: 'Delete' }),
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeletingVideo(true);
+            try {
+              await interviewService.deleteSessionVideo(String(sessionId));
+              setReplay(prev => (prev ? { ...prev, videoUrl: null, videoError: null } : prev));
+            } catch (err) {
+              Alert.alert(
+                t('practice:delete_video_failed', { defaultValue: 'Could not delete video' }),
+                t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+              );
+            } finally {
+              setIsDeletingVideo(false);
+            }
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <Container style={styles.container}>
       <TopNavigation
         title={t('practice:interview_replay', { defaultValue: 'Interview Replay' })}
         accessoryLeft={<NavigationAction />}
+        accessoryRight={
+          hasVideo
+            ? () => (
+                <TopNavigationAction
+                  icon={props => <Icon {...props} pack="eva" name="trash-2-outline" />}
+                  onPress={onDeleteVideo}
+                  disabled={isDeletingVideo}
+                />
+              )
+            : undefined
+        }
       />
       {isLoading ? (
         <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
@@ -152,6 +203,27 @@ const InterviewReplay = memo(() => {
                 controls
                 paused={paused}
                 playInBackground={false}
+                // Fixes "video plays but no audio" on iOS. Two separate,
+                // stackable causes, both silent by default:
+                // (1) ignoreSilentSwitch defaults to 'inherit', which on
+                // iOS means playback still respects the hardware mute
+                // switch -- perfectly plausible for a tester to have
+                // flipped that during/after recording an interview and
+                // never noticed, since nothing else in the app makes sound
+                // depend on it. 'ignore' makes this player's audio play
+                // regardless, same as every other video-playback app.
+                // (2) the interview was just recorded moments earlier with
+                // the device's audio session in a recording-capable mode
+                // (needed to capture mic input alongside video) -- iOS can
+                // leave the shared audio route favoring the earpiece
+                // rather than the speaker afterward, which sounds
+                // identical to "no audio" unless you hold the phone right
+                // up to your ear. audioOutput="speaker" forces this
+                // player's output through the speaker explicitly rather
+                // than inheriting whatever route the prior recording
+                // session left active.
+                ignoreSilentSwitch="ignore"
+                audioOutput="speaker"
                 onPlaybackStateChanged={(e) => setPaused(!e.isPlaying)}
                 onError={() => setVideoError(true)}
               />

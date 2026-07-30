@@ -170,7 +170,7 @@ async function speakRemote(text: string, language: string): Promise<void> {
  * correct-language) instead of an English voice reading Spanish text
  * phonetically.
  */
-async function speakOnDevice(text: string, sttLocale: string): Promise<void> {
+async function speakOnDevice(text: string, sttLocale: string, preserveRecordingSession = false): Promise<void> {
   await ensureTtsConfigured();
   try {
     await Tts.setDefaultLanguage(sttLocale);
@@ -191,7 +191,27 @@ async function speakOnDevice(text: string, sttLocale: string): Promise<void> {
   // speaking. setDucking(true) re-sets the category to .playback (which
   // routes to the main speaker), so this runs before every question, not
   // just the first.
-  await Tts.setDucking?.(true)?.catch(() => {});
+  //
+  // EXCEPT during Video mode: react-native-vision-camera is, at this exact
+  // moment, holding its OWN active .playAndRecord audio session for the
+  // in-progress video+audio recording. Forcing the category to .playback
+  // right out from under it (which this call does, every single question)
+  // is the confirmed cause of recorded video-mode interviews coming back
+  // with no audio track -- device logs from a real repro show VisionCamera's
+  // own capture pipeline failing right in this window ("SessionCore.mm:602
+  // Error: category option 'defaultToSpeaker' is only applicable with
+  // category 'playAndRecord'", followed by a FigCaptureSourceRemote/
+  // AVFoundation capture assertion failure) -- video frames keep recording
+  // fine since that's a separate capture output, but the audio input tap
+  // gets knocked out by this category switch and the resulting file ends up
+  // silent. `preserveRecordingSession` skips this specific call in that
+  // case -- the AI's question may route through the earpiece instead of the
+  // speaker on some devices as a result (the original problem this ducking
+  // call fixed), which is a real but much smaller regression than the
+  // recorded interview having no audio at all.
+  if (!preserveRecordingSession) {
+    await Tts.setDucking?.(true)?.catch(() => {});
+  }
   return new Promise<void>(resolve => {
     let settled = false;
     const finish = () => {
@@ -228,7 +248,37 @@ async function speakOnDevice(text: string, sttLocale: string): Promise<void> {
  * no call-site changes needed. Pass it explicitly only if a caller ever
  * needs to override that (none do today).
  */
-export async function speak(text: string, language: string = i18n.language): Promise<void> {
+export async function speak(
+  text: string,
+  language: string = i18n.language,
+  options?: {
+    // Set by LiveInterviewSession.tsx during Video mode. react-native-
+    // nitro-sound's startPlayer() (speakRemote, the primary ElevenLabs
+    // path) takes no options to control its own internal iOS audio-session
+    // handling, and device logs from a real repro show it actively
+    // fighting react-native-vision-camera's concurrent .playAndRecord
+    // recording session for control of the shared AVAudioSession right as
+    // it starts ("Setting up the audio session for playback...", followed
+    // by a '!pri' property-set failure and, moments later, VisionCamera's
+    // own capture pipeline throwing a FigCaptureSourceRemote assertion) --
+    // this is the confirmed cause of recorded video-mode interviews coming
+    // back with no audio track. Since there's no JS-level override
+    // available for nitro-sound's side of this, the only reliable fix is
+    // to not invoke it at all while a recording is active: this skips
+    // straight to the on-device fallback (which speakOnDevice's own
+    // preserveRecordingSession handling keeps session-safe) rather than
+    // trying speakRemote first and hoping its failure mode happens to be
+    // survivable. Trades the nicer ElevenLabs voice for a robotic
+    // on-device one during Video mode specifically -- a real downgrade,
+    // but a much smaller one than the recorded interview having no audio
+    // at all.
+    preserveRecordingSession?: boolean;
+  },
+): Promise<void> {
+  if (options?.preserveRecordingSession) {
+    await speakOnDevice(text, getSttLocale(language), true);
+    return;
+  }
   try {
     await speakRemote(text, language);
   } catch {

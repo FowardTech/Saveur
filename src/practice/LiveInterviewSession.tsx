@@ -264,7 +264,7 @@ const LiveInterviewSession = memo(() => {
         // firing-and-forgetting) is what keeps it from being cut off.
         setIsAiSpeaking(true);
         try {
-          await speechService.speak(pickAcknowledgment());
+          await speechService.speak(pickAcknowledgment(), i18n.language, {preserveRecordingSession: isVideoMode});
         } catch {
           // best-effort — a TTS hiccup shouldn't block the interview
         }
@@ -342,7 +342,7 @@ const LiveInterviewSession = memo(() => {
     if (isVoiceMode) speechToText.reset();
     (async () => {
       try {
-        await speechService.speak(question);
+        await speechService.speak(question, i18n.language, {preserveRecordingSession: isVideoMode});
       } catch {
         // best-effort — a TTS failure shouldn't strand the session with
         // isAiSpeaking stuck true forever
@@ -451,7 +451,7 @@ const LiveInterviewSession = memo(() => {
       if (isVoiceMode || isVideoMode) {
         setIsAiSpeaking(true);
         try {
-          await speechService.speak(CLOSING_STATEMENT());
+          await speechService.speak(CLOSING_STATEMENT(), i18n.language, {preserveRecordingSession: isVideoMode});
         } catch {
           // best-effort — still end the session even if the closing line
           // fails to play

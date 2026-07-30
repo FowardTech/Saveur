@@ -1,4 +1,7 @@
 {
+  "delete_video_failed": "Could not delete video",
+  "delete_video_message": "This removes the recorded video permanently. Your transcript and scores stay untouched.",
+  "delete_video_title": "Delete this video?",
   "filler_words": "Filler words",
   "flagged_moments": "Flagged Moments",
   "interview_replay": "Interview Replay",

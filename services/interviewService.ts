@@ -407,6 +407,18 @@ export async function reportVideoError(sessionId: string, reason: string, code?:
   }
 }
 
+/** Deletes the recorded video for a session, on the user's own request --
+ * product ask: "There should be a delete button in the video interview so
+ * that users can delete it anytime they want." Only removes the video
+ * itself (storage file + video_key/video_duration_sec/video_content_type/
+ * video_error on the session); transcript, scores, and feedback are
+ * untouched. Lets this throw -- unlike the best-effort diagnostic calls
+ * above, a delete the user explicitly tapped for should surface a real
+ * error if it fails, not silently pretend to succeed. */
+export async function deleteSessionVideo(sessionId: string): Promise<void> {
+  await apiClient.delete(`/api/v1/interviews/sessions/${sessionId}/video`);
+}
+
 // ---------------------------------------------------------------------------
 // Resilient video upload (product bug fix): a user could complete a video
 // interview normally -- transcript/metrics/score all saved fine via
