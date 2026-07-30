@@ -59,6 +59,11 @@ export interface ApiError {
   status?: number;
   message: string;
   code?: string;
+  // Machine-readable error slug from the backend body's `error` field (e.g.
+  // "llm_unavailable", "session_limit_reached", "premium_required") --
+  // lets a screen show its own tailored copy/actions for a specific known
+  // failure instead of just dumping `message` into a generic alert.
+  error?: string;
 }
 
 // Normalizes any axios failure (network error, timeout, 4xx, 5xx) into a
@@ -67,9 +72,10 @@ export interface ApiError {
 // directly instead of each one re-deriving a user-facing string.
 apiClient.interceptors.response.use(
   response => response,
-  (error: AxiosError<{message?: string; detail?: string; code?: string}>) => {
+  (error: AxiosError<{message?: string; detail?: string; code?: string; error?: string}>) => {
     const apiError: ApiError = {
       status: error.response?.status,
+      error: error.response?.data?.error,
       // Backend error bodies are NOT consistent about the field name —
       // roughly 60% of endpoints use {"detail": "..."} (e.g. billing.py's
       // payment_sheet, which wraps the *actual* Stripe error message here:

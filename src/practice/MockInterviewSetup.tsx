@@ -174,9 +174,19 @@ const MockInterviewSetup = memo(() => {
         navigate('LiveInterviewSession', { sessionId, interviewType, mode, company, durationMin });
       }
     } catch (e: any) {
+      // llm_unavailable means the AI provider behind the interview (question
+      // generation, avatar, etc.) is down/out of quota -- server no longer
+      // sends the raw provider error text for this (see backend's
+      // app/__init__.py _llm_unavailable handler), but this screen-specific
+      // copy reads better here than the generic fallback message.
+      const body = e?.error === 'llm_unavailable'
+        ? t('find:interview_unavailable_body', {
+            defaultValue: 'Video, voice, and text interviews are temporarily unavailable. Please try again later.',
+          })
+        : e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'});
       Alert.alert(
         t('find:start_interview_failed', { defaultValue: 'Could not start interview' }),
-        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+        body,
       );
     } finally {
       setIsStarting(false);

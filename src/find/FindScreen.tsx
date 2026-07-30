@@ -81,9 +81,16 @@ const FindScreen = memo(() => {
       });
       navigate('CodingInterview', { sessionId, interviewType: Interview_Type_Enum.Coding });
     } catch (e: any) {
+      // See MockInterviewSetup.tsx's identical branch for why llm_unavailable
+      // gets its own copy instead of just showing e.message.
+      const body = e?.error === 'llm_unavailable'
+        ? t('find:interview_unavailable_body', {
+            defaultValue: 'Video, voice, and text interviews are temporarily unavailable. Please try again later.',
+          })
+        : e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' });
       Alert.alert(
         t('find:start_interview_failed', { defaultValue: 'Could not start interview' }),
-        e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+        body,
       );
     } finally {
       setIsStartingCoding(false);

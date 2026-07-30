@@ -223,6 +223,7 @@
   "star_breakdown": "STAR Breakdown",
   "start_interview": "Start Interview",
   "start_interview_failed": "Could not start interview",
+  "interview_unavailable_body": "Video, voice, and text interviews are temporarily unavailable. Please try again later.",
   "start_mock_interview": "Start a Mock Interview",
   "start_mock_interview_description": "Practice with an AI interviewer and get instant feedback.",
   "starting": "Starting…",
