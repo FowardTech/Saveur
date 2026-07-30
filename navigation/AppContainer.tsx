@@ -47,6 +47,7 @@ import LearningCourses from 'src/more/LearningCourses';
 import CourseSession from 'src/more/CourseSession';
 import NetworkingAssistant from 'src/more/NetworkingAssistant';
 import CareerDiary from 'src/more/CareerDiary';
+import MyRatings from 'src/more/MyRatings';
 import CareerRoadmap from 'src/more/CareerRoadmap';
 import PracticalScenarioSetup from 'src/practice/PracticalScenarioSetup';
 import PracticalScenarioSession from 'src/practice/PracticalScenarioSession';
@@ -207,6 +208,7 @@ const AppContainer = () => {
         <Stack.Screen name="LearningCourses" component={LearningCourses} />
         <Stack.Screen name="NetworkingAssistant" component={NetworkingAssistant} />
         <Stack.Screen name="CareerDiary" component={CareerDiary} />
+        <Stack.Screen name="MyRatings" component={MyRatings} />
         <Stack.Screen name="CareerRoadmap" component={CareerRoadmap} />
         <Stack.Screen name="PracticalScenarioSetup" component={PracticalScenarioSetup} />
         <Stack.Screen name="PracticalScenarioSession" component={PracticalScenarioSession} />

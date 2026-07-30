@@ -35,6 +35,8 @@ import * as jobShareService from 'services/jobShareService';
 import {navigateToJobAlertDetails} from 'navigation/navigationRef';
 import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
+import AppRatingModal from 'components/AppRatingModal';
+import * as appRatingService from 'services/appRatingService';
 import useModal from 'hooks/useModal';
 import { Images } from 'assets/images';
 import { AuthContext } from '../../AuthContext';
@@ -90,6 +92,43 @@ const HomeSrc = memo(() => {
   const onCloseTour = React.useCallback(() => {
     setShowTour(false);
     AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => {});
+  }, []);
+
+  // Regular QA rating prompt (product request item: "a regular if not
+  // weekly or monthly app rating that will pop up as modal... for quality
+  // assurance purposes") — due-ness is decided server-side (see
+  // services/appRatingService.ts's isRatingPromptDue, backed by
+  // Saveur-Backend's admin-configurable interval, default 30 days), so
+  // this only needs to ask once. Checked once on mount, not
+  // useFocusEffect like the AppTour check above — re-checking on every tab
+  // switch back to Home within the same session would be wasted calls (the
+  // due-check itself won't flip from true to false without a submit/
+  // dismiss in between) and risks the modal popping back up mid-session if
+  // some other flow re-focuses Home.
+  const [showRatingPrompt, setShowRatingPrompt] = React.useState(false);
+  React.useEffect(() => {
+    appRatingService.isRatingPromptDue().then(due => {
+      if (due) setShowRatingPrompt(true);
+    });
+  }, []);
+  const onSubmitRating = React.useCallback(async (score: number, comment?: string) => {
+    try {
+      await appRatingService.submitRating(score, comment);
+      // Only close on success -- a failed submit keeps the modal open
+      // (with whatever the user already picked still showing) so they can
+      // just retry, rather than silently losing the rating they were
+      // trying to send.
+      setShowRatingPrompt(false);
+    } catch (e: any) {
+      Alert.alert(
+        t('common:rating_submit_failed_title', { defaultValue: "Couldn't send your rating" }),
+        e?.message ?? t('common:try_again_later', { defaultValue: 'Please try again in a moment.' }),
+      );
+    }
+  }, [t]);
+  const onDismissRating = React.useCallback(() => {
+    setShowRatingPrompt(false);
+    appRatingService.dismissRatingPrompt().catch(() => {});
   }, []);
 
   // "Share a job" deep-link landing (product request item) — a pending job
@@ -929,6 +968,7 @@ const HomeSrc = memo(() => {
         showCancel
       />
       <AppTour visible={showTour} onClose={onCloseTour} />
+      <AppRatingModal visible={showRatingPrompt} onSubmit={onSubmitRating} onDismiss={onDismissRating} />
     </Container>
   );
 });

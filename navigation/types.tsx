@@ -183,6 +183,10 @@ export type RootStackParamList = {
   // regarding a role, career, or job. See services/careerDiaryService.ts
   // and src/more/CareerDiary.tsx.
   CareerDiary: undefined;
+  // My Ratings — the user's own history of QA rating-prompt submissions
+  // (components/AppRatingModal.tsx). See services/appRatingService.ts and
+  // src/more/MyRatings.tsx.
+  MyRatings: undefined;
   // AI Career Roadmap (product request item #15) — "I want to become a
   // Senior Backend Engineer" -> the AI plans a linear sequence of
   // real-world milestones toward it, tracked step by step. See

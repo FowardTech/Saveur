@@ -437,6 +437,23 @@ const MoreSrc = memo(() => {
       onPress: onReplayTour,
     },
     {
+      // Product direction: the periodic QA rating prompt
+      // (components/AppRatingModal.tsx) should be visible to "the user
+      // that sent the ratings too", not just the admin dashboard.
+      title: t('more:my_ratings', {defaultValue: 'My Ratings'}),
+      // 'rateFull' (ic_rate_full.png) — the same star-rating icon already
+      // used elsewhere in this app (HomeSrc.tsx, SalaryNegotiation.tsx).
+      // 'star'/'star-outline' were tempting names but don't actually exist
+      // in assets/icons/index.ts's registry (ChangeCareType/index.tsx uses
+      // 'star-outline' too, which renders blank for the same reason — a
+      // pre-existing bug elsewhere, not one to repeat here).
+      icon: 'rateFull',
+      status: 'warning',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('MyRatings'),
+    },
+    {
       title: t('more:privacy-of-policy'),
       icon: 'term',
       status: 'green',
