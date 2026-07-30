@@ -571,6 +571,46 @@ const LiveInterviewSession = memo(() => {
     }
   };
 
+  // The top-left "X" used to call goBack() directly -- zero teardown, no
+  // upload, nothing. The useEffect cleanup above still fires on unmount and
+  // stops the recorder so it doesn't keep running, but explicitly does NOT
+  // call uploadSessionVideo() or completeSession() (see its own comment) --
+  // a completely natural tap (X is the universal "leave this screen"
+  // affordance) silently threw away the entire recording and skipped
+  // feedback generation, with no warning at all. This was the actual
+  // "video replay was never saved" bug: the fix that shipped earlier
+  // (adding the file:// prefix in stopVideoRecording()) only touches the
+  // onEnd() path below, which the X button never reached. Now confirms
+  // first, and offers the correct "finish properly" path instead of
+  // silently discarding.
+  const onCloseAttempt = () => {
+    if (isEnding) return;
+    Alert.alert(
+      t('find:live_leave_title', { defaultValue: 'Leave this interview?' }),
+      isVideoMode
+        ? t('find:live_leave_video_message', {
+            defaultValue:
+              'Leaving now discards your recording and you won’t get feedback. Tap "End Interview" instead to save your video and see your results.',
+          })
+        : t('find:live_leave_message', {
+            defaultValue:
+              'Leaving now discards this session and you won’t get feedback. Tap "End Interview" instead to save your progress and see your results.',
+          }),
+      [
+        { text: t('common:cancel', { defaultValue: 'Keep going' }), style: 'cancel' },
+        {
+          text: t('find:live_leave_discard', { defaultValue: 'Discard' }),
+          style: 'destructive',
+          onPress: goBack,
+        },
+        {
+          text: t('find:live_leave_end_and_save', { defaultValue: 'End & save' }),
+          onPress: onEnd,
+        },
+      ],
+    );
+  };
+
   // Local alias so TS narrows CameraDevice | undefined -> CameraDevice
   // cleanly inside the ternary below.
   const cameraDevice = videoAnalysis.device;
@@ -582,7 +622,7 @@ const LiveInterviewSession = memo(() => {
         accessoryLeft={() => (
           <TopNavigationAction
             icon={props => <Icon {...props} name="close-outline" />}
-            onPress={goBack}
+            onPress={onCloseAttempt}
           />
         )}
         accessoryRight={
