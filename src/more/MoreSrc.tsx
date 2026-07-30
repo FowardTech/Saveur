@@ -139,47 +139,25 @@ const MoreSrc = memo(() => {
   // services/configService.ts) — flip it off there and the row disappears
   // on next app launch, no release needed. Rows with no featureKey are
   // considered core and always shown.
-  // iconBackgroundColor/iconColor: subtle blue fill + brand-blue glyph on
-  // every row's icon square, per explicit request — was a flat,
-  // fully-saturated brand blue fill with a white glyph before that, and a
-  // dark-navy border + dark-navy glyph before that (border has since been
-  // removed per follow-up request). `status` is left in place only
-  // because it still drives ButtonFill's tint fallback when these
-  // overrides aren't passed. Deliberately NOT applied to the dark-mode
-  // toggle, push-notifications toggle, or logout row further down — those
-  // three keep their existing colors, per the same original request.
-  //
-  // Was theme['color-primary-400'] (a literal #CFDFFB pastel, only ever
-  // defined once in constants/theme/appTheme.json with no light.json/
-  // dark.json override) + a hardcoded '#2574FF' glyph hex — neither one
-  // actually changed between light and dark mode, so in dark mode this
-  // chalky light-blue pastel sat on top of the screen's near-black
-  // background looking washed-out/low-contrast instead of adapting.
-  //
-  // The follow-up fix that switched this to theme['color-primary-transparent-200']
-  // (the comment above used to claim Eva's `-transparent-` tokens are
-  // computed per-theme) turned out to still look washed-out in dark mode,
-  // and checking Eva's actual theme source (@eva-design/eva/themes/{light,dark}.json)
-  // shows why: color-primary-transparent-200 is the literal fixed string
-  // "rgba(51, 102, 255, 0.16)" in BOTH themes -- it never adapts, it's the
-  // same 16%-opacity blue regardless of light/dark. 16% blue over a
-  // near-white light background reads as a nice soft pastel chip; the
-  // exact same 16% blue over this app's near-black dark background reads
-  // as barely-there and muddy, because opacity blends toward whatever's
-  // underneath, not toward "a lighter/richer version of itself." That's
-  // the real root cause of the washed-out look in dark mode.
-  // Fix: keep transparent-200 for light mode (unchanged, no complaint
-  // there), and use a notably higher-opacity step (transparent-400, 32%)
-  // for dark mode specifically, so the fill actually reads as a proper
-  // tinted chip against a near-black surface instead of nearly
-  // disappearing into it. color-primary-500 for the glyph is unchanged
-  // (already the app's standard icon-tint token elsewhere -- HomeSrc.tsx,
-  // JobAlerts.tsx, LearningCourses.tsx, etc.) and reads fine on both
-  // variants since it's a flat, non-transparent brand blue either way.
-  const ICON_BG = darkMode
-    ? theme['color-primary-transparent-400']
-    : theme['color-primary-transparent-200'];
-  const ICON_GLYPH = theme['color-primary-500'];
+  // iconBackgroundColor/iconColor: per explicit follow-up request, the
+  // subtle blue fill + blue glyph treatment above (history of that in the
+  // superseded comment this replaced) is gone — every row's icon is now a
+  // plain black (theme-adaptive) glyph with NO colored circle behind it.
+  // `background-basic-color-2` is the same neutral gray already used for
+  // every other card/icon-wrap surface in this app (HomeSrc.tsx's
+  // statCard/badgesPreviewRow, etc.) rather than a fully transparent fill —
+  // ButtonFill's container carries a real drop shadow (globalStyle.shadow)
+  // that would otherwise render as a shape-less floating shadow blob on
+  // Android (elevation draws from the view's bounds, not the PNG's actual
+  // opaque pixels) if the circle itself were invisible. `status` is left in
+  // place only because it still drives ButtonFill's tint fallback when
+  // these overrides aren't passed (nothing does, currently). NOW applied to
+  // the dark-mode toggle, push-notifications toggle, and logout row too
+  // (previously deliberately excluded from the blue treatment; the new
+  // "every icon black, no exceptions but stats" direction applies to them
+  // as well — see those three below).
+  const ICON_BG = theme['background-basic-color-2'];
+  const ICON_GLYPH = theme['text-basic-color'];
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
     {
       // Also where account deletion now lives (see ProfileSrc.tsx) — moved
@@ -514,6 +492,8 @@ const MoreSrc = memo(() => {
             icon="darkMode"
             title={t('more:switch-dark-mode')}
             status={'danger'}
+            iconBackgroundColor={ICON_BG}
+            iconColor={ICON_GLYPH}
             checked={darkMode}
             onPress={toggleTheme}
             navigateSrc={undefined}
@@ -530,6 +510,8 @@ const MoreSrc = memo(() => {
             icon="notification"
             title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
             status={'facebook'}
+            iconBackgroundColor={ICON_BG}
+            iconColor={ICON_GLYPH}
             checked={notificationsEnabled}
             onPress={onToggleNotifications}
             navigateSrc={undefined}
@@ -552,11 +534,14 @@ const MoreSrc = memo(() => {
             onPress={onLogout}
             disabled={isSigningOut}
             style={[styles.logoutRow, {opacity: isSigningOut ? 0.6 : 1}]}>
-            <View style={[styles.logoutIconWrap, {backgroundColor: theme['color-danger-100']}]}>
+            {/* Was color-danger-100 (a reddish circle) + text-primary-color
+                glyph -- brought in line with every other row above: neutral
+                gray circle, black glyph. */}
+            <View style={[styles.logoutIconWrap, {backgroundColor: theme['background-basic-color-2']}]}>
               <Icon
                 pack="eva"
                 name="log-out-outline"
-                style={{width: 20, height: 20, tintColor: theme['text-primary-color']}}
+                style={{width: 20, height: 20, tintColor: theme['text-basic-color']}}
               />
             </View>
             <Text ml={24} category="para-m">

@@ -493,7 +493,7 @@ const HomeSrc = memo(() => {
             <Icon
               pack="eva"
               name="email-outline"
-              style={[globalStyle.icon20, { tintColor: theme['color-warning-500'] }]}
+              style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]}
             />
             <View style={[globalStyle.flexOne, styles.verifyBannerText]}>
               <Text category="h9-s" bold>
@@ -532,7 +532,7 @@ const HomeSrc = memo(() => {
             ]}
           >
             <Flex justify="flex-start" itemsCenter mb={10}>
-              <View style={[styles.briefingIconBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+              <View style={[styles.briefingIconBadge, { backgroundColor: theme['background-basic-color-2'] }]}>
                 {briefing.isTeaser ? (
                   // No "rocket"/launch icon exists in the custom "assets"
                   // pack (see assets/icons/index.ts — it's a fixed template
@@ -540,9 +540,9 @@ const HomeSrc = memo(() => {
                   // used elsewhere in this app for the same "here's a tip to
                   // get going" meaning (see StudentVerification.tsx's perks
                   // list) rather than risking a silently-missing custom icon.
-                  <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                  <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                 ) : (
-                  <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                  <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                 )}
               </View>
               <Text category="h8" bold ml={10}>
@@ -624,8 +624,8 @@ const HomeSrc = memo(() => {
             activeOpacity={0.8}
             style={styles.navTile}
             onPress={() => navigate('CareerRoadmap')}>
-            <View style={[styles.navTileIconWrap, { backgroundColor: theme['color-warning-transparent-200'] ?? theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="map" style={[globalStyle.icon20, { tintColor: theme['color-warning-500'] }]} />
+            <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
+              <Icon pack="assets" name="map" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
             </View>
             <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:career_roadmap_card_title_short', { defaultValue: 'Career Roadmap' })}
@@ -635,8 +635,8 @@ const HomeSrc = memo(() => {
             activeOpacity={0.8}
             style={styles.navTile}
             onPress={() => navigate('MyProgress')}>
-            <View style={[styles.navTileIconWrap, { backgroundColor: theme['color-primary-transparent-200'] ?? theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="rateFull" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
+              <Icon pack="assets" name="rateFull" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
             </View>
             <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:your_progress', { defaultValue: 'Your Progress' })}
@@ -646,8 +646,8 @@ const HomeSrc = memo(() => {
             activeOpacity={0.8}
             style={styles.navTile}
             onPress={() => navigate('WeeklyCareerReport')}>
-            <View style={[styles.navTileIconWrap, { backgroundColor: theme['color-success-transparent-200'] ?? theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="stats" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+            <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
+              <Icon pack="assets" name="stats" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
             </View>
             <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
@@ -798,7 +798,7 @@ const HomeSrc = memo(() => {
                 })}
               </Text>
             </View>
-            <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
           </Flex>
         )}
 
@@ -844,12 +844,17 @@ const HomeSrc = memo(() => {
                   key={badge.id}
                   style={[
                     styles.badgePreviewIconWrap,
-                    { backgroundColor: unlocked ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                    // Unlocked/locked stays visually distinct without color
+                    // (per "all icons black except stats") -- a solid
+                    // neutral fill + full-black glyph for unlocked, a
+                    // fainter fill + muted-gray glyph for locked, same
+                    // "achieved vs. not yet" read as before, just monochrome.
+                    { backgroundColor: unlocked ? theme['background-basic-color-2'] : theme['background-basic-color-3'] },
                   ]}>
                   <Icon
                     pack={badge.iconPack ?? 'assets'}
                     name={badge.icon}
-                    style={[globalStyle.icon16, { tintColor: unlocked ? theme['text-primary-color'] : theme['text-hint-color'] }]}
+                    style={[globalStyle.icon16, { tintColor: unlocked ? theme['text-basic-color'] : theme['text-hint-color'] }]}
                   />
                 </View>
               );

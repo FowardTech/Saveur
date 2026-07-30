@@ -46,15 +46,19 @@ const BadgesModal = memo(({visible, unlockedBadgeIds, onClose}: Props) => {
                 const unlocked = unlockedBadgeIds.has(badge.id);
                 return (
                   <View key={badge.id} style={[styles.badgeCard, !unlocked && styles.badgeCardLocked]}>
+                    {/* Monochrome per "all icons black, no color except
+                        Home's 3 stat cards" -- unlocked/locked stays
+                        distinguishable via fill/glyph shade + badgeCardLocked's
+                        opacity below, not color. */}
                     <View
                       style={[
                         styles.badgeIconWrap,
-                        {backgroundColor: unlocked ? theme['color-primary-500'] : theme['background-basic-color-3']},
+                        {backgroundColor: unlocked ? theme['background-basic-color-2'] : theme['background-basic-color-3']},
                       ]}>
                       <Icon
                         pack={badge.iconPack ?? 'assets'}
                         name={badge.icon}
-                        style={[globalStyle.icon20, {tintColor: unlocked ? theme['text-primary-color'] : theme['text-hint-color']}]}
+                        style={[globalStyle.icon20, {tintColor: unlocked ? theme['text-basic-color'] : theme['text-hint-color']}]}
                       />
                     </View>
                     <Text category="h10" bold center mt={8} numberOfLines={2} status={unlocked ? 'basic' : 'placeholder'}>
