@@ -55,6 +55,22 @@ const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const { width } = useLayout();
+  // Explicit pixel size for the Home banner card (see the JSX below) rather
+  // than relying on style-only `width: '100%'` + `aspectRatio` on the
+  // <Image> — that combination rendered at the SOURCE image's raw pixel
+  // dimensions (1920x1080 points, several times taller than the screen)
+  // instead of being scaled down to the card's actual width, because a
+  // percentage width on an Image can't resolve until its parent's own
+  // width is known, and an aspectRatio-only height has nothing to scale
+  // against until the width resolves first — a known RN/Yoga gotcha for
+  // Image specifically (View doesn't have this problem, since it has no
+  // intrinsic size of its own to fall back to). Computing real numbers
+  // here up front sidesteps that resolution order entirely. `- 48` matches
+  // <Content padder>'s own `paddingHorizontal: 24` (see components/
+  // Content.tsx), so this is the actual rendered card width, not the full
+  // screen width.
+  const bannerWidth = width - 48;
+  const bannerHeight = Math.round(bannerWidth * (9 / 16));
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPro } =
@@ -627,7 +643,7 @@ const HomeSrc = memo(() => {
         {homeBanner ? (
           <TouchableOpacity
             activeOpacity={0.9}
-            style={styles.homeBannerCard}
+            style={[styles.homeBannerCard, {width: bannerWidth, height: bannerHeight}]}
             onPress={onOpenHomeBanner}>
             <Image
               source={
@@ -635,8 +651,17 @@ const HomeSrc = memo(() => {
                   ? {uri: homeBanner.imageUrl}
                   : Images.homeBannerAiCoach
               }
-              style={styles.homeBannerImage}
-              resizeMode="cover"
+              style={{width: bannerWidth, height: bannerHeight}}
+              // "contain" (not "cover") per explicit product direction: the
+              // full banner image should always be visible, never cropped
+              // — cover would zoom/crop whenever an admin-uploaded
+              // image_url's aspect ratio doesn't exactly match 16:9. Since
+              // bannerHeight above is computed to exactly match the
+              // bundled default image's own 16:9 ratio, this produces
+              // identical (letterbox-free) results for that image, and
+              // degrades gracefully (letterboxed, not cropped) for a
+              // future admin image with a different ratio.
+              resizeMode="contain"
             />
           </TouchableOpacity>
         ) : null}
@@ -1015,15 +1040,15 @@ const themedStyles = StyleService.create({
     borderColor: 'color-warning-500',
   },
   homeBannerCard: {
+    // width/height are computed per-render from actual screen width (see
+    // bannerWidth/bannerHeight above the component's return statement) and
+    // applied inline, not here — a plain aspectRatio here previously
+    // rendered at the source image's raw pixel size instead of scaling to
+    // the card, see bannerWidth's own comment for the full explanation.
     borderRadius: 16,
     marginTop: 16,
     overflow: 'hidden',
-  },
-  homeBannerImage: {
-    width: '100%',
-    // Matches the source graphic's own 16:9 aspect ratio (1920x1080) so it
-    // never letterboxes or crops awkwardly regardless of device width.
-    aspectRatio: 16 / 9,
+    backgroundColor: 'background-basic-color-2',
   },
   goalTipsCard: {
     borderRadius: 16,
