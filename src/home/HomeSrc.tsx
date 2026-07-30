@@ -840,21 +840,17 @@ const HomeSrc = memo(() => {
             .map(badge => {
               const unlocked = unlockedBadgeIds.has(badge.id);
               return (
-                <View
-                  key={badge.id}
-                  style={[
-                    styles.badgePreviewIconWrap,
-                    // Unlocked/locked stays visually distinct without color
-                    // (per "all icons black except stats") -- a solid
-                    // neutral fill + full-black glyph for unlocked, a
-                    // fainter fill + muted-gray glyph for locked, same
-                    // "achieved vs. not yet" read as before, just monochrome.
-                    { backgroundColor: unlocked ? theme['background-basic-color-2'] : theme['background-basic-color-3'] },
-                  ]}>
+                // Was a 36x36 circle with a faint gray fill behind a tiny
+                // 16x16 icon -- reported as "too small" and asked to have
+                // "no background". Now a bare icon at icon24 (50% bigger),
+                // no wrapping fill at all; unlocked/locked still stays
+                // distinguishable via glyph shade alone (basic-color vs
+                // hint-color).
+                <View key={badge.id} style={styles.badgePreviewIconWrap}>
                   <Icon
                     pack={badge.iconPack ?? 'assets'}
                     name={badge.icon}
-                    style={[globalStyle.icon16, { tintColor: unlocked ? theme['text-basic-color'] : theme['text-hint-color'] }]}
+                    style={[globalStyle.icon24, { tintColor: unlocked ? theme['text-basic-color'] : theme['text-hint-color'] }]}
                   />
                 </View>
               );
@@ -1055,10 +1051,11 @@ const themedStyles = StyleService.create({
     padding: 16,
     gap: 10,
   },
+  // No more fixed circle/fill -- just enough of a box to keep the bigger
+  // (24x24) icons evenly spaced via badgesPreviewRow's `gap`.
   badgePreviewIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
