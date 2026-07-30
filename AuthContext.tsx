@@ -389,6 +389,7 @@ export const AuthProvider: React.FC = ({children}) => {
       preferredCountries: payload.preferredCountries,
       desiredRoles: payload.desiredRoles,
       locale: payload.locale ?? i18n.language,
+      leaderboardAvatarUrl: payload.leaderboardAvatarUrl,
     });
     setProfile(nextProfile);
     // Already applied via `locale` above — clear the onboarding-screen's

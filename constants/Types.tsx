@@ -415,6 +415,19 @@ export interface UserProfileProps {
   // docs/BACKEND_SPEC_ADDENDUM_2026-07.md — flag to backend if
   // GET/PATCH /api/users/me doesn't already round-trip this field.
   avatarUrl?: string;
+  // Separate, optional override for the leaderboard ONLY — never touches
+  // avatarUrl/picture_url above. Product correction: picking a preset from
+  // the curated grid (constants/avatarPresets.ts / AvatarPickerModal.tsx)
+  // used to overwrite avatarUrl, silently replacing the user's real profile
+  // photo everywhere it's shown (menu, header, My Profile) and defeating the
+  // leaderboard's whole point of never revealing a user's real photo there.
+  // Null/undefined means "no preset chosen" — the leaderboard falls back to
+  // a deterministic generated avatar seeded off the user's anonymized
+  // username (see saveur-backend's app/services/avatar_service.py).
+  // Settable both from src/more/EditProfile.tsx (its own dedicated control,
+  // separate from "Edit photo") and once during signup
+  // (src/auth/Signup/SignupThirdStep.tsx).
+  leaderboardAvatarUrl?: string;
   // Edit Profile screen fields (src/more/EditProfile.tsx / ProfileSrc.tsx).
   // Previously collected in the form but never sent to the backend — there
   // was no PATCH /api/users/me field for either, and My Profile displayed
@@ -462,6 +475,11 @@ export interface SignUpPayload {
   // the same value driving both UI text (i18next) and AI voice (ElevenLabs
   // TTS, see services/speechService.ts).
   locale?: string;
+  // Optional preset picked on SignupThirdStep's new avatar step — see
+  // UserProfileProps.leaderboardAvatarUrl for what this is/isn't. Omitted
+  // entirely if the user skips that step; leaderboard just uses the
+  // generated default, same as any pre-existing account.
+  leaderboardAvatarUrl?: string;
 }
 
 // ---- AI Interview Coach additions (goal tips + job alerts) ----

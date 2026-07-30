@@ -7,6 +7,7 @@ import {
   Input,
   Icon,
   Spinner,
+  Avatar,
 } from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -43,25 +44,50 @@ const EditProfile = memo(() => {
   const [avatarUri, setAvatarUri] = React.useState<string | undefined>(profile?.avatarUrl);
   const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
-  const [isAvatarPickerVisible, setIsAvatarPickerVisible] = React.useState(false);
+
+  // Leaderboard-only avatar preset — deliberately separate state from
+  // avatarUri/profile.avatarUrl above. Picking one of these must NEVER touch
+  // the real profile photo (see UserProfileProps.leaderboardAvatarUrl's
+  // comment in constants/Types.tsx for the full story: this used to
+  // overwrite the same field as the real photo, which both clobbered a real
+  // uploaded picture and defeated the leaderboard's anonymity design).
+  const [leaderboardAvatarUri, setLeaderboardAvatarUri] = React.useState<string | undefined>(
+    profile?.leaderboardAvatarUrl,
+  );
+  const [isLeaderboardPickerVisible, setIsLeaderboardPickerVisible] = React.useState(false);
+  const [isSavingLeaderboardAvatar, setIsSavingLeaderboardAvatar] = React.useState(false);
 
   React.useEffect(() => {
     setAvatarUri(profile?.avatarUrl);
   }, [profile?.avatarUrl]);
 
-  const onSelectAvatar = React.useCallback(
+  React.useEffect(() => {
+    setLeaderboardAvatarUri(profile?.leaderboardAvatarUrl);
+  }, [profile?.leaderboardAvatarUrl]);
+
+  // Sets User.leaderboard_avatar_url ONLY — see app/api/users.py's update_me
+  // and app/api/gamification.py's leaderboard() on the backend, which now
+  // prefers this over the deterministic generated avatar when set. Does not
+  // touch avatarUrl/picture_url in any way.
+  const onSelectLeaderboardAvatar = React.useCallback(
     async (url: string) => {
-      setIsAvatarPickerVisible(false);
-      const previous = profile?.avatarUrl;
-      setAvatarUri(url);
+      setIsLeaderboardPickerVisible(false);
+      const previous = leaderboardAvatarUri;
+      setLeaderboardAvatarUri(url);
+      setIsSavingLeaderboardAvatar(true);
       try {
-        await updateProfile({avatarUrl: url});
+        await updateProfile({leaderboardAvatarUrl: url});
       } catch (e: any) {
-        setAvatarUri(previous);
-        Alert.alert("Couldn't update photo", e?.message ?? 'Please try again in a moment.');
+        setLeaderboardAvatarUri(previous);
+        Alert.alert(
+          t('more:leaderboard_avatar_update_failed', {defaultValue: "Couldn't update leaderboard avatar"}),
+          e?.message ?? 'Please try again in a moment.',
+        );
+      } finally {
+        setIsSavingLeaderboardAvatar(false);
       }
     },
-    [profile?.avatarUrl, updateProfile],
+    [leaderboardAvatarUri, updateProfile, t],
   );
 
   const onPickFromLibrary = React.useCallback(() => {
@@ -99,26 +125,15 @@ const EditProfile = memo(() => {
     );
   }, [profile?.avatarUrl, updateProfile]);
 
-  // Tapping "Edit photo" now offers a choice (product request item: users
-  // want to pick a professional stand-in avatar instead of only ever being
-  // able to upload their own photo) -- picking a device photo keeps the
-  // existing upload flow above untouched; picking an avatar opens the new
-  // curated grid (constants/avatarPresets.ts / AvatarPickerModal.tsx).
+  // "Edit photo" only ever uploads the user's real device photo now — the
+  // curated preset grid (constants/avatarPresets.ts / AvatarPickerModal.tsx)
+  // has its own separate control further down ("Leaderboard avatar"), since
+  // it sets a completely different field (leaderboardAvatarUrl) and must
+  // never be offered as an alternative way to set THIS photo (see
+  // onSelectLeaderboardAvatar's comment above for why).
   const onPressEditPhoto = React.useCallback(() => {
-    Alert.alert(
-      t('more:edit-photo'),
-      undefined,
-      [
-        {text: t('more:upload_a_photo', {defaultValue: 'Upload a photo'}), onPress: onPickFromLibrary},
-        {
-          text: t('more:choose_an_avatar', {defaultValue: 'Choose an avatar'}),
-          onPress: () => setIsAvatarPickerVisible(true),
-        },
-        {text: t('common:cancel'), style: 'cancel'},
-      ],
-      {cancelable: true},
-    );
-  }, [t, onPickFromLibrary]);
+    onPickFromLibrary();
+  }, [onPickFromLibrary]);
 
   const {
     control,
@@ -259,12 +274,48 @@ const EditProfile = memo(() => {
             />
           )}
         />
+        {/* Leaderboard avatar -- own dedicated control, deliberately not part
+            of the "Edit photo" flow above. Product correction: this preset
+            grid used to double as a replacement for the real profile photo,
+            which is wrong (see onSelectLeaderboardAvatar's comment). This is
+            purely cosmetic for how the user appears on the Leaderboard --
+            their real name and photo are never shown there either way. */}
+        <Flex justify="space-between" itemsCenter mt={32}>
+          <Flex vertical style={{flex: 1, paddingRight: 16}}>
+            <Text category="h8-s" bold>
+              {t('more:leaderboard_avatar', {defaultValue: 'Leaderboard avatar'})}
+            </Text>
+            <Text category="c1" status="placeholder" mt={4}>
+              {t('more:leaderboard_avatar_description', {
+                defaultValue: "Shown next to your username on the Leaderboard only — separate from your profile photo.",
+              })}
+            </Text>
+          </Flex>
+          <TouchableOpacity
+            activeOpacity={0.75}
+            disabled={isSavingLeaderboardAvatar}
+            onPress={() => setIsLeaderboardPickerVisible(true)}
+            style={{position: 'relative'}}>
+            {leaderboardAvatarUri ? (
+              <Avatar source={{uri: leaderboardAvatarUri}} size="large" shape="rounded" />
+            ) : (
+              <Flex center style={styles.leaderboardAvatarPlaceholder}>
+                <Icon pack="eva" name="plus-outline" style={styles.leaderboardAvatarPlaceholderIcon} />
+              </Flex>
+            )}
+            {isSavingLeaderboardAvatar ? (
+              <Flex center style={styles.avatarSpinnerOverlay}>
+                <Spinner size="small" status="control" />
+              </Flex>
+            ) : null}
+          </TouchableOpacity>
+        </Flex>
       </KeyboardAwareScrollView>
       <AvatarPickerModal
-        visible={isAvatarPickerVisible}
-        currentUrl={avatarUri}
-        onClose={() => setIsAvatarPickerVisible(false)}
-        onSelect={onSelectAvatar}
+        visible={isLeaderboardPickerVisible}
+        currentUrl={leaderboardAvatarUri}
+        onClose={() => setIsLeaderboardPickerVisible(false)}
+        onSelect={onSelectLeaderboardAvatar}
       />
     </Container>
   );
@@ -309,5 +360,18 @@ const themedStyles = StyleService.create({
   },
   map: {
     tintColor: 'button-basic-color',
+  },
+  leaderboardAvatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'border-basic-color-3',
+    borderStyle: 'dashed',
+  },
+  leaderboardAvatarPlaceholderIcon: {
+    width: 20,
+    height: 20,
+    tintColor: 'text-hint-color',
   },
 });

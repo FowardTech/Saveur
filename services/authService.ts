@@ -35,6 +35,10 @@ interface UserProfileWire {
   locale?: string;
   avatar_url?: string;
   avatarUrl?: string;
+  // Separate leaderboard-only avatar override — see
+  // UserProfileProps.leaderboardAvatarUrl (constants/Types.tsx) for why this
+  // must never be conflated with avatar_url above.
+  leaderboard_avatar_url?: string | null;
   phone_number?: string;
   home_address?: string;
   subscription_tier?: 'free' | 'premium' | 'premium_plus';
@@ -55,6 +59,7 @@ function fromWire(wire: UserProfileWire): UserProfileProps {
     desiredRoles: wire.desired_roles ?? [],
     locale: wire.locale,
     avatarUrl: wire.avatar_url ?? wire.avatarUrl,
+    leaderboardAvatarUrl: wire.leaderboard_avatar_url ?? undefined,
     phoneNumber: wire.phone_number ?? '',
     homeAddress: wire.home_address ?? '',
     subscriptionTier: wire.subscription_tier ?? 'free',
@@ -79,6 +84,10 @@ function toWirePatch(partial: Partial<UserProfileProps>): Record<string, unknown
   if (partial.desiredRoles !== undefined) wire.desired_roles = partial.desiredRoles;
   if (partial.locale !== undefined) wire.locale = partial.locale;
   if (partial.avatarUrl !== undefined) wire.avatar_url = partial.avatarUrl;
+  // Empty string is a deliberate, valid value here (clears back to the
+  // generated default) — only actual `undefined` (field not touched by this
+  // partial) should be omitted, so this can't reuse the `!partial.x` pattern.
+  if (partial.leaderboardAvatarUrl !== undefined) wire.leaderboard_avatar_url = partial.leaderboardAvatarUrl;
   if (partial.phoneNumber !== undefined) wire.phone_number = partial.phoneNumber;
   if (partial.homeAddress !== undefined) wire.home_address = partial.homeAddress;
   if (partial.notificationsEnabled !== undefined) wire.notifications_enabled = partial.notificationsEnabled;
