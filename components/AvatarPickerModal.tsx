@@ -67,7 +67,12 @@ const AvatarPickerModal = memo(({visible, currentUrl, onClose, onSelect}: Props)
                     <Avatar source={{uri: preset.url}} style={styles.thumbImage} shape="rounded" />
                     {isSelected ? (
                       <View style={[styles.checkBadge, {backgroundColor: theme['color-primary-500']}]}>
-                        <Icon pack="eva" name="checkmark-outline" style={styles.checkIcon} fill="#fff" />
+                        {/* Was fill="#fff" -- not a prop UI Kitten's Icon actually
+                            forwards to the icon renderer (Image before, Lucide
+                            now), so this never really turned the glyph white; the
+                            color needs to be part of `style` like every other
+                            icon in this app (see tintColor below). */}
+                        <Icon pack="eva" name="checkmark-outline" style={[styles.checkIcon, {tintColor: '#fff'}]} />
                       </View>
                     ) : null}
                   </TouchableOpacity>

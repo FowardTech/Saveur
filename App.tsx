@@ -7,7 +7,12 @@ import { default as darkTheme } from 'constants/theme/dark.json';
 import { default as lightTheme } from 'constants/theme/light.json';
 import { default as customTheme } from 'constants/theme/appTheme.json';
 import { default as customMapping } from 'constants/theme/mapping.json';
-import { EvaIconsPack } from '@ui-kitten/eva-icons';
+// Was @ui-kitten/eva-icons' EvaIconsPack (Eva's own outline icon set) --
+// replaced with a lucide-react-native-backed pack registered under the same
+// 'eva' name (see assets/LucideEvaIconsPack.tsx's own comment) per explicit
+// product direction to use the admin dashboard's icon style everywhere in
+// the mobile app, not just Settings/tabs.
+import LucideEvaIconsPack from 'assets/LucideEvaIconsPack';
 import AssetIconsPack from 'assets/AssetIconsPack';
 import * as eva from '@eva-design/eva';
 import ThemeContext from './ThemeContext';
@@ -229,7 +234,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <ThemeContext.Provider value={{ theme, toggleTheme }}>
-        <IconRegistry icons={[EvaIconsPack, AssetIconsPack]} />
+        <IconRegistry icons={[LucideEvaIconsPack, AssetIconsPack]} />
         <ApplicationProvider
           {...eva}
           theme={
