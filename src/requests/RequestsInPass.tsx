@@ -1,8 +1,11 @@
 import React, {memo} from 'react';
+import {Modal, TouchableOpacity, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
+  useTheme,
+  Icon,
 } from '@ui-kitten/components';
 import {useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -11,14 +14,18 @@ import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import ButtonFill from 'components/ButtonFill';
+import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import {RequestsInPassScreenNavigationProp} from 'navigation/types';
 import {
   Application_Stage_Enum,
   JobApplicationProps,
   MockInterviewSessionProps,
+  Practice_Mode_Enum,
   Request_Type_Enum,
 } from 'constants/Types';
+import {getPracticeModeLabel, getApplicationStageLabel} from 'utils/interviewTypeLabels';
+import {globalStyle} from 'styles/globalStyle';
 import ApplicationItem from './Applications/ApplicationItem';
 import PracticeSessionItem from './PracticeHistory/PracticeSessionItem';
 import * as applicationsService from 'services/applicationsService';
@@ -26,6 +33,7 @@ import * as interviewService from 'services/interviewService';
 
 const RequestsInPast = memo(() => {
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const {t} = useTranslation(['request', 'common']);
 
   const route = useRoute<RequestsInPassScreenNavigationProp>();
@@ -35,6 +43,19 @@ const RequestsInPast = memo(() => {
   const [pastSessions, setPastSessions] = React.useState<MockInterviewSessionProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+
+  // The filter button (below) previously rendered with its onPress
+  // commented out (`// onPress={show}`, calling a `show` function that
+  // didn't even exist anywhere in this file) -- it looked like a real,
+  // tappable filter control but did absolutely nothing. Now backed by
+  // real state: a mode filter (Voice/Text/Video) for practice history,
+  // a stage filter (Offer/Rejected -- the only two stages this screen
+  // ever shows, per the Application_Stage_Enum filter above) for past
+  // applications.
+  const [isFilterVisible, setIsFilterVisible] = React.useState(false);
+  const [modeFilter, setModeFilter] = React.useState<Practice_Mode_Enum | null>(null);
+  const [stageFilter, setStageFilter] = React.useState<Application_Stage_Enum | null>(null);
+  const isFilterActive = request_type === Request_Type_Enum.Application ? stageFilter != null : modeFilter != null;
 
   React.useEffect(() => {
     if (request_type === Request_Type_Enum.Application) {
@@ -86,6 +107,23 @@ const RequestsInPast = memo(() => {
     };
   }, [request_type]);
 
+  const filteredApplications = stageFilter
+    ? applications.filter(item => item.stage === stageFilter)
+    : applications;
+  const filteredPastSessions = modeFilter
+    ? pastSessions.filter(item => item.mode === modeFilter)
+    : pastSessions;
+
+  const modeOptions = [
+    Practice_Mode_Enum.Voice,
+    Practice_Mode_Enum.Text,
+    Practice_Mode_Enum.Video,
+  ];
+  const stageOptions = [
+    Application_Stage_Enum.Offer,
+    Application_Stage_Enum.Rejected,
+  ];
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -102,14 +140,24 @@ const RequestsInPast = memo(() => {
             {error}
           </Text>
         ) : request_type === Request_Type_Enum.Application ? (
-          <>
-            {applications.map((item, i) => {
-              return <ApplicationItem item={item} key={i} />;
-            })}
-          </>
+          filteredApplications.length === 0 ? (
+            <Text category="h8-s" status="placeholder" center mt={24}>
+              {t('request:no_applications_match_filter', {defaultValue: 'No applications match this filter.'})}
+            </Text>
+          ) : (
+            <>
+              {filteredApplications.map((item, i) => {
+                return <ApplicationItem item={item} key={i} />;
+              })}
+            </>
+          )
+        ) : filteredPastSessions.length === 0 ? (
+          <Text category="h8-s" status="placeholder" center mt={24}>
+            {t('request:no_sessions_match_filter', {defaultValue: 'No sessions match this filter.'})}
+          </Text>
         ) : (
           <>
-            {pastSessions.map((item, i) => {
+            {filteredPastSessions.map((item, i) => {
               return <PracticeSessionItem item={item} key={i} />;
             })}
           </>
@@ -117,11 +165,79 @@ const RequestsInPast = memo(() => {
       </Content>
       <ButtonFill
         icon="filter"
-        status="warning"
+        status={isFilterActive ? 'primary' : 'warning'}
         size="large"
-        // onPress={show}
+        onPress={() => setIsFilterVisible(true)}
         style={styles.filter}
       />
+
+      <Modal
+        visible={isFilterVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsFilterVisible(false)}>
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setIsFilterVisible(false)}>
+          <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
+            <Text category="h7" bold mb={16}>
+              {t('request:filter_by', {defaultValue: 'Filter by'})}
+            </Text>
+            {(request_type === Request_Type_Enum.Application
+              ? stageOptions
+              : modeOptions
+            ).map(option => {
+              const isSelected =
+                request_type === Request_Type_Enum.Application
+                  ? stageFilter === option
+                  : modeFilter === option;
+              const label =
+                request_type === Request_Type_Enum.Application
+                  ? getApplicationStageLabel(option, t)
+                  : getPracticeModeLabel(option, t);
+              return (
+                <TouchableOpacity
+                  key={option}
+                  activeOpacity={0.7}
+                  style={styles.optionRow}
+                  onPress={() => {
+                    if (request_type === Request_Type_Enum.Application) {
+                      setStageFilter(prev => (prev === option ? null : (option as Application_Stage_Enum)));
+                    } else {
+                      setModeFilter(prev => (prev === option ? null : (option as Practice_Mode_Enum)));
+                    }
+                  }}>
+                  <Text category="h8-s">{label}</Text>
+                  {isSelected ? (
+                    <Icon
+                      pack="eva"
+                      name="checkmark-circle-2"
+                      style={[globalStyle.icon20, {tintColor: theme['color-primary-500']}]}
+                    />
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })}
+            <Flex justify="space-between" itemsCenter mt={20}>
+              <TouchableOpacity
+                onPress={() => {
+                  setModeFilter(null);
+                  setStageFilter(null);
+                }}>
+                <Text category="h8-s" status="danger">
+                  {t('request:clear_filter', {defaultValue: 'Clear filter'})}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setIsFilterVisible(false)}>
+                <Text category="h8-s" status="primary" bold>
+                  {t('common:done', {defaultValue: 'Done'})}
+                </Text>
+              </TouchableOpacity>
+            </Flex>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </Container>
   );
 });
@@ -141,5 +257,25 @@ const themedStyles = StyleService.create({
     position: 'absolute',
     right: 12,
     bottom: 60,
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    backgroundColor: 'background-basic-color-1',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 32,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'border-basic-color-3',
   },
 });

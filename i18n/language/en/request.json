@@ -103,5 +103,9 @@
     "application_tracker_pro_gate_body": "Track every job you've applied for, all the way to offer — Application Tracker is a Pro Premium feature.",
     "see_pro_premium_plans": "See Pro Premium plans",
     "loading_applications": "Loading applications…",
-    "loading_practice_history": "Loading practice history…"
+    "loading_practice_history": "Loading practice history…",
+    "filter_by": "Filter by",
+    "clear_filter": "Clear filter",
+    "no_applications_match_filter": "No applications match this filter.",
+    "no_sessions_match_filter": "No sessions match this filter."
 }
