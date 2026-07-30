@@ -524,14 +524,59 @@ const LiveInterviewSession = memo(() => {
     }
     // Stop the real video recording BEFORE deactivating the camera view
     // below (isCameraActive) — stopVideoRecording() awaits the file
-    // actually being finalized on disk, and flipping the <Camera>'s
-    // `isActive` prop false while that's still in flight risks a
-    // corrupt/truncated recording. Also has no timeout of its own (awaits a
-    // VisionCamera onRecordingFinished callback that could in principle
-    // never fire) — same withTimeout treatment, same reasoning as above.
-    const recordedVideo = isVideoMode
-      ? await withTimeout(videoAnalysis.stopVideoRecording(), 15000, null)
-      : null;
+    // actually being finalized on disk (VisionCamera's onRecordingFinished)
+    // AND, since the persistent-storage fix, a move of that file into the
+    // app's Document directory — both can legitimately take well past a
+    // few seconds for a longer recording on a slower device.
+    //
+    // THIS is why "no video was recorded for this session" kept happening
+    // even after the persistent-storage-path + upload-retry-queue fix:
+    // videoAnalysis.stopVideoRecording()'s promise was being raced against
+    // a 15s withTimeout, and on timeout the function returned `null` and
+    // the caller (below) just... never uploaded anything. The recording
+    // itself was fine and finishing correctly, on disk, in the app's own
+    // persistent folder — it was this UI-wait ceiling silently throwing
+    // the reference away the moment it ran a beat past 15s, which a 30-60
+    // minute video-mode interview on a mid-range phone does routinely.
+    //
+    // Fixed by decoupling "how long this screen waits" from "whether the
+    // video ever gets uploaded": the upload is now attached directly to
+    // stopVideoRecording()'s own promise (see recordedVideoPromise.then
+    // below), which is NEVER abandoned — it keeps running and will upload
+    // the video whenever VisionCamera actually finishes, even if that's
+    // well after this screen has already navigated to Feedback. The
+    // withTimeout below only bounds how long the on-screen "Saving your
+    // recording…" wait lasts, purely a UX nicety now, not a correctness
+    // gate.
+    const recordedVideoPromise = isVideoMode
+      ? videoAnalysis.stopVideoRecording()
+      : Promise.resolve(null);
+    if (isVideoMode && sessionId) {
+      recordedVideoPromise
+        .then(async video => {
+          if (!video) return;
+          setIsUploadingVideo(true);
+          try {
+            // uploadSessionVideoResilient enqueues to its AsyncStorage
+            // retry queue as its very first step (before attempting any
+            // network call) — safe to call from here even long after this
+            // component has unmounted/navigated away.
+            await interviewService.uploadSessionVideoResilient(
+              sessionId, video.path, video.durationSec,
+            );
+          } catch (err) {
+            console.warn('[LiveInterviewSession] deferred video upload failed, queued for retry', err);
+          } finally {
+            setIsUploadingVideo(false);
+          }
+        })
+        .catch(err => console.warn('[LiveInterviewSession] video finalize failed', err));
+    }
+    // Value intentionally discarded — this await exists only to bound how
+    // long onEnd() (and the "Saving your recording…" wait it drives) lasts
+    // before navigating on; the upload itself was already wired up above
+    // and does not depend on this resolving in time.
+    await withTimeout(recordedVideoPromise, 15000, null);
     let videoMetrics = isVideoMode
       ? await withTimeout(videoAnalysis.stopAnalysis(), 8000, EMPTY_VIDEO_METRICS)
       : undefined;
@@ -584,39 +629,10 @@ const LiveInterviewSession = memo(() => {
       // Best-effort: a failed/slow upload should never block finishing the
       // interview or navigating to Feedback (every other part of the
       // session — transcript, scores, camera/voice metrics — was already
-      // saved independently of this).
-      //
-      // uploadSessionVideoResilient (services/interviewService.ts) retries a
-      // couple of times with backoff before falling back to a background
-      // queue — genuinely useful for reliability, but its own worst case is
-      // ~9 minutes (3 attempts × a 180s upload timeout, plus backoff delays)
-      // and this screen was `await`ing the whole thing before ever calling
-      // navigate(), with isEnding disabling both End Interview and the X
-      // button for the entire wait. That IS "stuck on Saving your
-      // Recording" for anyone on a bad connection, not a bug in the retry
-      // logic itself — just that it should never have been on the
-      // blocking path in the first place. withTimeout caps how long THIS
-      // screen waits; the upload (and its retries/queueing) keeps running
-      // in the background regardless of whether we've already moved on, so
-      // reliability is unchanged — only the user-visible wait is bounded now.
-      if (isVideoMode && sessionId && recordedVideo) {
-        setIsUploadingVideo(true);
-        try {
-          await withTimeout(
-            interviewService.uploadSessionVideoResilient(
-              sessionId,
-              recordedVideo.path,
-              recordedVideo.durationSec,
-            ),
-            20000,
-            undefined,
-          );
-        } catch (err) {
-          console.warn('[LiveInterviewSession] video upload failed, continuing in background', err);
-        } finally {
-          setIsUploadingVideo(false);
-        }
-      }
+      // saved independently of this). The actual upload call now lives on
+      // recordedVideoPromise.then() above, not here — see that block's
+      // comment for why: it must fire no matter how long the recording
+      // takes to finalize, not just when it beats a fixed UI-wait ceiling.
     } finally {
       navigate('InterviewFeedback', { sessionId, interviewType, videoAnalysis: videoMetrics });
     }
