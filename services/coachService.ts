@@ -1,6 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
-import {CoachChatMessageProps, EKeyAsyncStorage, StarBreakdownItemProps} from 'constants/Types';
+import {CoachChatMessageProps, StarBreakdownItemProps} from 'constants/Types';
 import apiClient from './apiClient';
 
 // `language` (ISO 639-1, e.g. "en"/"es" — constants/languages.ts) is sent on
@@ -27,10 +26,17 @@ function currentLanguage(): string {
 // (message/reply/text, snake_case/camelCase) and degrade to an empty/zero
 // value rather than throwing if the real response shape differs slightly.
 //
-// Chat history itself (GET/DELETE) has no corresponding endpoint in this
-// pass's spec, so it stays AsyncStorage-only, same as before — NOT a
-// network-backed source of truth. Only the reply-generation call
-// (sendMessage) hits the real backend now.
+// Chat history (product request item: "true cross-device chat continuity")
+// is now backed by real endpoints — GET/DELETE/POST /api/v1/coach/messages
+// (Saveur-Backend's app/models/coach.py's CoachMessage, app/api/coach.py) —
+// instead of the old AsyncStorage-only thread, which never survived a
+// reinstall or a second device. `cachedThread` below is an IN-MEMORY-only
+// cache (never written to disk), populated by getChatHistory()'s network
+// read and kept updated by every write below — its only job is letting
+// sendMessage/sendVoiceMessage build the "last few turns" context payload
+// without a network round trip before every single send. The backend is
+// the actual source of truth; this cache just avoids paying for a GET on
+// every message when the in-session state is already known.
 // ---------------------------------------------------------------------------
 
 const GREETING_MESSAGE: CoachChatMessageProps = {
@@ -41,31 +47,47 @@ const GREETING_MESSAGE: CoachChatMessageProps = {
   createdAt: 0,
 };
 
-const readHistory = async (): Promise<CoachChatMessageProps[]> => {
-  const raw = await AsyncStorage.getItem(EKeyAsyncStorage.coachChatHistory);
-  if (raw) {
-    try {
-      return JSON.parse(raw) as CoachChatMessageProps[];
-    } catch {
-      // Corrupted/partial write — fall through and re-seed below.
-    }
-  }
-  const seeded = [GREETING_MESSAGE];
-  await AsyncStorage.setItem(EKeyAsyncStorage.coachChatHistory, JSON.stringify(seeded));
-  return seeded;
-};
+let cachedThread: CoachChatMessageProps[] = [];
 
-const writeHistory = async (messages: CoachChatMessageProps[]): Promise<void> => {
-  await AsyncStorage.setItem(EKeyAsyncStorage.coachChatHistory, JSON.stringify(messages));
-};
+interface CoachMessageWire {
+  id?: string | number;
+  role?: 'user' | 'coach';
+  text?: string;
+  suggested_course_topic?: string | null;
+  created_at?: string | null;
+}
+
+function fromWire(m: CoachMessageWire): CoachChatMessageProps {
+  return {
+    id: String(m.id ?? `msg_${Date.now()}`),
+    role: m.role === 'coach' ? 'coach' : 'user',
+    text: m.text ?? '',
+    createdAt: m.created_at ? Date.parse(m.created_at) || Date.now() : Date.now(),
+    suggestedCourseTopic: m.suggested_course_topic || undefined,
+  };
+}
 
 /**
- * Read the full persisted chat history (seeded with a greeting on first
- * run). AsyncStorage-only — no GET history endpoint is part of this pass's
- * contract.
+ * GET /api/v1/coach/messages — the full persisted chat thread for this
+ * user, oldest-first. Falls back to a single client-side (never persisted)
+ * greeting bubble when the thread is genuinely empty (brand new user, or
+ * offline on first-ever open) — same greeting shown before this was
+ * network-backed, just no longer written anywhere.
  */
 export async function getChatHistory(): Promise<CoachChatMessageProps[]> {
-  return readHistory();
+  try {
+    const {data} = await apiClient.get<{messages?: CoachMessageWire[]}>('/api/v1/coach/messages');
+    const messages = (data.messages ?? []).map(fromWire);
+    cachedThread = messages.length > 0 ? messages : [GREETING_MESSAGE];
+    return cachedThread;
+  } catch {
+    // Offline / request failed — show whatever this session already has
+    // in memory (e.g. from an earlier successful load) rather than an
+    // empty thread; falls back to just the greeting if nothing's cached
+    // yet either.
+    if (cachedThread.length === 0) cachedThread = [GREETING_MESSAGE];
+    return cachedThread;
+  }
 }
 
 export interface CoachUserContext {
@@ -100,8 +122,6 @@ export async function sendMessage(
   text: string,
   context?: CoachUserContext,
 ): Promise<{userMessage: CoachChatMessageProps; coachMessage: CoachChatMessageProps}> {
-  const history = await readHistory();
-
   const userMessage: CoachChatMessageProps = {
     id: `msg_${Date.now()}_u`,
     role: 'user',
@@ -109,7 +129,7 @@ export async function sendMessage(
     createdAt: Date.now(),
   };
 
-  const recentTurns = history.slice(-8).map(m => ({role: m.role, text: m.text}));
+  const recentTurns = cachedThread.slice(-8).map(m => ({role: m.role, text: m.text}));
 
   let replyText: string;
   let suggestedCourseTopic: string | undefined;
@@ -124,6 +144,11 @@ export async function sendMessage(
       question: text,
       history: recentTurns,
       language: currentLanguage(),
+      // Writes both this question and the reply to the real, persisted,
+      // cross-device thread (CoachMessage) server-side — see
+      // app/api/coach.py's advice() docstring for why this flag exists
+      // (askOneOff below deliberately omits it).
+      persist_to_history: true,
       profile_context: context
         ? {
             goals: context.goals,
@@ -137,10 +162,13 @@ export async function sendMessage(
       data.reply ?? data.message ?? data.response ?? data.text ?? "I'm not sure how to answer that yet.";
     suggestedCourseTopic = data.suggested_course || undefined;
   } catch (e) {
-    // Persist at least the user's own message before propagating the error
-    // — Chat.tsx already shows it optimistically, so the cache shouldn't
-    // "lose" it on a reload just because the reply failed.
-    await writeHistory([...history, userMessage]);
+    // At least keep the user's own message in the in-memory cache before
+    // propagating the error — Chat.tsx already shows it optimistically, so
+    // a subsequent send in this same session still has it as context. Not
+    // persisted server-side (the failed request never reached the backend
+    // to write it), so a fresh getChatHistory() elsewhere won't show it —
+    // consistent with there being no real reply to go with it.
+    cachedThread = [...cachedThread, userMessage];
     throw e;
   }
 
@@ -156,16 +184,17 @@ export async function sendMessage(
     suggestedCourseTopic,
   };
 
-  await writeHistory([...history, userMessage, coachMessage]);
+  cachedThread = [...cachedThread, userMessage, coachMessage];
   return {userMessage, coachMessage};
 }
 
 /**
  * POST /api/v1/coach/advice with mode: "voice" — backs the live-voice
  * coach conversation (src/messages/VoiceCoachView.tsx). Shares the exact
- * same persisted history as sendMessage above (both write to the same
- * AsyncStorage thread), so switching between Voice and Text mode on the
- * Coach tab shows one continuous conversation either way — this is
+ * same persisted, cross-device thread as sendMessage above (both write to
+ * the same CoachMessage rows server-side), so switching between Voice and
+ * Text mode on the Coach tab shows one continuous conversation either way —
+ * this is
  * deliberately not a separate thread. `mode: "voice"` tells the backend to
  * pull in the user's real app-activity context (recent interview scores,
  * streak, career diary, learning progress, etc. — not just static profile
@@ -176,8 +205,6 @@ export async function sendVoiceMessage(
   text: string,
   context?: CoachUserContext,
 ): Promise<{userMessage: CoachChatMessageProps; coachMessage: CoachChatMessageProps}> {
-  const history = await readHistory();
-
   const userMessage: CoachChatMessageProps = {
     id: `msg_${Date.now()}_u`,
     role: 'user',
@@ -185,7 +212,7 @@ export async function sendVoiceMessage(
     createdAt: Date.now(),
   };
 
-  const recentTurns = history.slice(-8).map(m => ({role: m.role, text: m.text}));
+  const recentTurns = cachedThread.slice(-8).map(m => ({role: m.role, text: m.text}));
 
   let replyText: string;
   let suggestedCourseTopic: string | undefined;
@@ -201,6 +228,7 @@ export async function sendVoiceMessage(
       history: recentTurns,
       language: currentLanguage(),
       mode: 'voice',
+      persist_to_history: true,
       profile_context: context
         ? {
             goals: context.goals,
@@ -214,7 +242,7 @@ export async function sendVoiceMessage(
       data.reply ?? data.message ?? data.response ?? data.text ?? "I'm not sure how to answer that yet.";
     suggestedCourseTopic = data.suggested_course || undefined;
   } catch (e) {
-    await writeHistory([...history, userMessage]);
+    cachedThread = [...cachedThread, userMessage];
     throw e;
   }
 
@@ -226,7 +254,7 @@ export async function sendVoiceMessage(
     suggestedCourseTopic,
   };
 
-  await writeHistory([...history, userMessage, coachMessage]);
+  cachedThread = [...cachedThread, userMessage, coachMessage];
   return {userMessage, coachMessage};
 }
 
@@ -262,34 +290,30 @@ export async function askOneOff(prompt: string, context?: CoachUserContext): Pro
 }
 
 /**
- * Clear the chat history (e.g. a "Reset conversation" action). AsyncStorage-
- * only — no DELETE endpoint is part of this pass's contract.
+ * DELETE /api/v1/coach/messages — clears the persisted, cross-device
+ * conversation (e.g. a "Reset conversation" action). No screen calls this
+ * today; exposed for whichever settings/chat UI ends up owning that action.
  */
 export async function clearChatHistory(): Promise<void> {
-  await AsyncStorage.setItem(EKeyAsyncStorage.coachChatHistory, JSON.stringify([GREETING_MESSAGE]));
+  await apiClient.delete('/api/v1/coach/messages');
+  cachedThread = [GREETING_MESSAGE];
 }
 
 /**
- * Persists a local-only bubble (no backend round-trip — used for the
- * "📎 Attached: filename" confirmation Chat.tsx shows after a successful
- * file/photo attach) into the same AsyncStorage thread sendMessage/
- * sendVoiceMessage write to. Was previously added straight to the screen's
- * React state via setMessages and nowhere else — harmless while the screen
- * stayed mounted, but the notice silently vanished the moment the user
- * navigated away and back, since getChatHistory() on remount only ever
- * reads from this same AsyncStorage store, which never had it. Returns the
- * persisted message so the caller can still append it to local state
- * immediately without waiting on a re-read.
+ * POST /api/v1/coach/messages/note — persists a plain, no-AI-reply bubble
+ * (used for the "📎 Attached: filename" confirmation Chat.tsx shows after a
+ * successful file/photo attach) into the same real, cross-device thread
+ * sendMessage/sendVoiceMessage write to. Was previously added straight to
+ * the screen's React state via setMessages and nowhere else — harmless
+ * while the screen stayed mounted, but the notice silently vanished the
+ * moment the user navigated away and back. Returns the persisted message so
+ * the caller can still append it to local state immediately without
+ * waiting on a re-read.
  */
 export async function appendLocalNote(text: string): Promise<CoachChatMessageProps> {
-  const history = await readHistory();
-  const note: CoachChatMessageProps = {
-    id: `note_${Date.now()}`,
-    role: 'user',
-    text,
-    createdAt: Date.now(),
-  };
-  await writeHistory([...history, note]);
+  const {data} = await apiClient.post<CoachMessageWire>('/api/v1/coach/messages/note', {text});
+  const note = fromWire(data);
+  cachedThread = [...cachedThread, note];
   return note;
 }
 
