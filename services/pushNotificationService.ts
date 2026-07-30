@@ -4,7 +4,7 @@ import notifee, {AndroidImportance, AndroidStyle, EventType} from '@notifee/reac
 
 import {JobAlertProps} from 'constants/Types';
 import {
-  navigateToJobAlertWebView,
+  navigateToJobAlertDetails,
   navigateToNotifications,
   navigateToWeeklyCareerReport,
   navigateToDailyIndustryNews,
@@ -128,11 +128,10 @@ function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Reco
   if (data?.type === 'job_alert') {
     const job = jobFromPushData(data);
     if (job) {
-      // Straight to the real job/apply page now, not the metadata-only
-      // details screen — see navigationRef.ts's navigateToJobAlertWebView
-      // comment for why (matches the in-app tap behavior in JobAlerts.tsx
-      // and Notification/index.tsx).
-      navigateToJobAlertWebView(job);
+      // Reverted per explicit follow-up request — back to landing on the
+      // in-app job details screen (matches JobAlerts.tsx / Notification/
+      // index.tsx's in-app tap behavior).
+      navigateToJobAlertDetails(job);
       return;
     }
   }

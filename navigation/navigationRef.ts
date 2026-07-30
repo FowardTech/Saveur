@@ -68,18 +68,22 @@ function queueOrNavigate(nav: PendingNavigation): void {
   runNavigation(nav);
 }
 
+// Every job-alert tap path (JobAlerts list, notification bell, push tap,
+// shared-job deep link landing) lands here first — the in-app job details
+// screen (src/more/JobAlertDetails.tsx), whose own "Apply on {source}"
+// button is what actually opens the real posting via
+// navigateToJobAlertWebView below. There was a brief period where every
+// call site skipped straight to the WebView instead (to cut the extra tap)
+// — reverted per explicit follow-up request, back to this details-first
+// flow everywhere.
 export function navigateToJobAlertDetails(job: JobAlertProps): void {
   queueOrNavigate({name: 'JobAlertDetails', params: {job}});
 }
 
-// Job-alert push taps now land directly on the real job/apply page — see
-// services/pushNotificationService.ts's handleDataTap, and the matching
-// change in src/more/JobAlerts.tsx / src/home/Notification/index.tsx for
-// the in-app-tap equivalents. Used to route to navigateToJobAlertDetails
-// above (metadata-only screen, needing a second "Apply" tap to reach the
-// real posting) — kept that function around since JobAlertDetails is still
-// a valid destination in principle, just no longer the one anything
-// actually navigates to.
+// Reached from JobAlertDetails.tsx's "Apply on {source}" button (the one
+// action that actually leaves the details screen) — not navigated to
+// directly by any push/notification/list tap path itself; those all go
+// through navigateToJobAlertDetails above.
 export function navigateToJobAlertWebView(job: JobAlertProps): void {
   queueOrNavigate({
     name: 'WebViewScreen',

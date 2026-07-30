@@ -248,26 +248,12 @@ const JobAlerts = memo(() => {
       setAlerts(prev => prev.map(a => (a.id === alert.id ? {...a, read: true} : a)));
       jobAlertsService.markJobAlertsRead([alert.id]).catch(() => {});
     }
-    // Was: land on JobAlertDetails first (title/company/matched role/source
-    // only, no real posting text) and make the user tap a SECOND "Apply on
-    // {source}" button from there to actually see the job. That's exactly
-    // the "click on the job and it doesn't take you to the apply page"
-    // complaint — one tap on an alert should land straight on the real
-    // job/apply page, not an in-app summary card. Now goes directly to
-    // WebViewScreen with the real apply_url, same as JobAlertDetails' own
-    // onApply did — including the `job` payload, which is what enables
-    // WebViewScreen's application-submitted detection to auto-add this to
-    // the user's Application Tracker.
-    navigate('WebViewScreen', {
-      url: alert.applyUrl,
-      title: alert.title,
-      job: {
-        company: alert.company,
-        role: alert.title,
-        applyUrl: alert.applyUrl,
-        companyLogoUrl: alert.companyLogoUrl,
-      },
-    });
+    // Reverted per explicit follow-up request — back to landing on
+    // JobAlertDetails first (title/company/matched role/source, with its
+    // own "Apply on {source}" button to actually open the posting), not
+    // straight to WebViewScreen. See JobAlertDetails.tsx's onApply for the
+    // second-tap handoff to the real job/apply page.
+    navigate('JobAlertDetails', {job: alert});
   };
 
   if (!isPremium) {

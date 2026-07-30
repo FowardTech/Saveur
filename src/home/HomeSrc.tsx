@@ -32,7 +32,7 @@ import * as roadmapService from 'services/roadmapService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
-import {navigateToJobAlertWebView} from 'navigation/navigationRef';
+import {navigateToJobAlertDetails} from 'navigation/navigationRef';
 import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
 import useModal from 'hooks/useModal';
@@ -106,10 +106,9 @@ const HomeSrc = memo(() => {
   // Home.
   React.useEffect(() => {
     jobShareService.consumePendingJob().then(job => {
-      // Straight to the real job/apply page now, not the metadata-only
-      // details screen — see navigationRef.ts's navigateToJobAlertWebView
-      // comment for why (matches every other job-alert tap path).
-      if (job) navigateToJobAlertWebView(job);
+      // Reverted per explicit follow-up request — back to landing on the
+      // in-app job details screen (matches every other job-alert tap path).
+      if (job) navigateToJobAlertDetails(job);
     });
   }, []);
   // Refresh whenever the app returns to the foreground (e.g. after visiting
