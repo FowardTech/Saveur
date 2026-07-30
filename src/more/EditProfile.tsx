@@ -16,6 +16,7 @@ import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
 import Flex from 'components/Flex';
 import UserAvatar from 'components/UserAvatar';
+import AvatarPickerModal from 'components/AvatarPickerModal';
 import {Controller, useForm} from 'react-hook-form';
 import {RuleName} from 'utils/rules';
 import {RootStackParamList} from 'navigation/types';
@@ -42,12 +43,28 @@ const EditProfile = memo(() => {
   const [avatarUri, setAvatarUri] = React.useState<string | undefined>(profile?.avatarUrl);
   const [isUploadingPhoto, setIsUploadingPhoto] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
+  const [isAvatarPickerVisible, setIsAvatarPickerVisible] = React.useState(false);
 
   React.useEffect(() => {
     setAvatarUri(profile?.avatarUrl);
   }, [profile?.avatarUrl]);
 
-  const onChangePhoto = React.useCallback(() => {
+  const onSelectAvatar = React.useCallback(
+    async (url: string) => {
+      setIsAvatarPickerVisible(false);
+      const previous = profile?.avatarUrl;
+      setAvatarUri(url);
+      try {
+        await updateProfile({avatarUrl: url});
+      } catch (e: any) {
+        setAvatarUri(previous);
+        Alert.alert("Couldn't update photo", e?.message ?? 'Please try again in a moment.');
+      }
+    },
+    [profile?.avatarUrl, updateProfile],
+  );
+
+  const onPickFromLibrary = React.useCallback(() => {
     ImagePicker.launchImageLibrary(
       {mediaType: 'photo', includeBase64: false, selectionLimit: 1},
       async response => {
@@ -81,6 +98,27 @@ const EditProfile = memo(() => {
       },
     );
   }, [profile?.avatarUrl, updateProfile]);
+
+  // Tapping "Edit photo" now offers a choice (product request item: users
+  // want to pick a professional stand-in avatar instead of only ever being
+  // able to upload their own photo) -- picking a device photo keeps the
+  // existing upload flow above untouched; picking an avatar opens the new
+  // curated grid (constants/avatarPresets.ts / AvatarPickerModal.tsx).
+  const onPressEditPhoto = React.useCallback(() => {
+    Alert.alert(
+      t('more:edit-photo'),
+      undefined,
+      [
+        {text: t('more:upload_a_photo', {defaultValue: 'Upload a photo'}), onPress: onPickFromLibrary},
+        {
+          text: t('more:choose_an_avatar', {defaultValue: 'Choose an avatar'}),
+          onPress: () => setIsAvatarPickerVisible(true),
+        },
+        {text: t('common:cancel'), style: 'cancel'},
+      ],
+      {cancelable: true},
+    );
+  }, [t, onPickFromLibrary]);
 
   const {
     control,
@@ -154,7 +192,7 @@ const EditProfile = memo(() => {
           category="h8-s"
           status={'link'}
           center
-          onPress={isUploadingPhoto ? undefined : onChangePhoto}
+          onPress={isUploadingPhoto ? undefined : onPressEditPhoto}
           mt={24}
           mb={48}
           children={t('more:edit-photo')}
@@ -222,6 +260,12 @@ const EditProfile = memo(() => {
           )}
         />
       </KeyboardAwareScrollView>
+      <AvatarPickerModal
+        visible={isAvatarPickerVisible}
+        currentUrl={avatarUri}
+        onClose={() => setIsAvatarPickerVisible(false)}
+        onSelect={onSelectAvatar}
+      />
     </Container>
   );
 });
