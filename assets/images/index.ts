@@ -1,5 +1,12 @@
 export const Images = {
   logo: require('./logo.png'),
+  // Default artwork for the admin-configurable Home-screen banner (see
+  // src/home/HomeSrc.tsx and services/adsService.ts's getHomeBanner()) —
+  // used whenever the admin hasn't set an image_url on the active
+  // placement="home_banner" Advertisement row, so the banner still looks
+  // right the moment one is created with just title/body/detail_body
+  // filled in. Product-supplied "AI Career Coach" promo graphic.
+  homeBannerAiCoach: require('./img_home_banner_ai_coach.jpg'),
   // Real Saveur mark (see assets/images/applogo.png, the source the user
   // supplied — a blue "S" on a very light gray, #F4F4F4) — square with that
   // same light-gray background baked in, so it drops cleanly onto pretty

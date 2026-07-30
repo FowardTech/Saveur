@@ -59,3 +59,17 @@ export async function getNextAd(): Promise<AdvertisementProps | null> {
 export async function recordImpression(adId: number): Promise<void> {
   await apiClient.post(`/api/v1/ads/${adId}/impression`);
 }
+
+/**
+ * GET /api/v1/ads/banner — the current admin-configured Home-screen banner
+ * (placement="home_banner" on the backend), or null if none is active.
+ * Unlike getNextAd, this is never impression-capped and has no "record
+ * impression" call — see src/home/HomeSrc.tsx for where this renders as a
+ * persistent tappable card above the Today's Goal Tips card, and
+ * src/more/AdDetails.tsx for the screen tapping it opens (same screen the
+ * popup ad already uses — the row shape is identical either way).
+ */
+export async function getHomeBanner(): Promise<AdvertisementProps | null> {
+  const {data} = await apiClient.get<AdWire>('/api/v1/ads/banner');
+  return fromWire(data);
+}

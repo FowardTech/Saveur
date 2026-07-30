@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Image, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -474,6 +474,31 @@ const HomeSrc = memo(() => {
     }
   }, [hideAd, navigate]);
 
+  // Admin-configured Home banner — GET /api/v1/ads/banner (see
+  // services/adsService.ts's getHomeBanner, backend's app/api/ads.py).
+  // Separate surface from the popup ad above: rendered as a persistent
+  // card (see styles.homeBannerCard below), not a modal, and never
+  // impression-capped — it just shows for as long as the admin leaves it
+  // active. Fetched once per mount, same as the popup ad fetch.
+  const [homeBanner, setHomeBanner] = React.useState<AdvertisementProps | null>(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    adsService.getHomeBanner().then(banner => {
+      if (!cancelled) setHomeBanner(banner);
+    }).catch(() => {
+      // Offline or the request failed — no banner this session, same
+      // fail-quiet behavior as the popup ad fetch above.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const onOpenHomeBanner = React.useCallback(() => {
+    if (homeBanner) {
+      navigate('AdDetails', {ad: homeBanner});
+    }
+  }, [homeBanner, navigate]);
+
   return (
     <Container style={styles.container}>
       <HeaderHome
@@ -591,6 +616,29 @@ const HomeSrc = memo(() => {
               </Button>
             ) : null}
           </Layout>
+        ) : null}
+        {/* Admin-configured promo banner (see the effect above) —
+           deliberately rendered above the Goal Tips block regardless of
+           its loading/empty state, per explicit product placement:
+           "above the daily tip card". Only shows once a real, active
+           placement="home_banner" ad exists (see onOpenHomeBanner) so a
+           tap always has real content to navigate AdDetails to — no
+           banner is shown at all until the admin creates one. */}
+        {homeBanner ? (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.homeBannerCard}
+            onPress={onOpenHomeBanner}>
+            <Image
+              source={
+                homeBanner.imageUrl
+                  ? {uri: homeBanner.imageUrl}
+                  : Images.homeBannerAiCoach
+              }
+              style={styles.homeBannerImage}
+              resizeMode="cover"
+            />
+          </TouchableOpacity>
         ) : null}
         {goalTipsLoading && !goalTips ? (
           <Flex vertical center style={[styles.goalTipsCard, {paddingVertical: 24}]}>
@@ -965,6 +1013,17 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     borderWidth: 1,
     borderColor: 'color-warning-500',
+  },
+  homeBannerCard: {
+    borderRadius: 16,
+    marginTop: 16,
+    overflow: 'hidden',
+  },
+  homeBannerImage: {
+    width: '100%',
+    // Matches the source graphic's own 16:9 aspect ratio (1920x1080) so it
+    // never letterboxes or crops awkwardly regardless of device width.
+    aspectRatio: 16 / 9,
   },
   goalTipsCard: {
     borderRadius: 16,
