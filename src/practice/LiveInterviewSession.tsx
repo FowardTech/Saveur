@@ -25,7 +25,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList, LiveInterviewSessionScreenNavigationProp } from 'navigation/types';
-import { Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
+import { Interview_Type_Enum, Practice_Mode_Enum, VideoAnalysisMetrics } from 'constants/Types';
 import { DATA_INTERVIEW_QUESTION_BANK } from 'constants/Data';
 import { useFakeRecordingTimer } from 'services/recordingService';
 import { useVideoInterviewAnalysis } from 'services/videoAnalysisService';
@@ -33,6 +33,24 @@ import * as speechService from 'services/speechService';
 import { useSpeechToText } from 'services/speechService';
 import * as interviewService from 'services/interviewService';
 import * as feedbackService from 'services/feedbackService';
+import { withTimeout } from 'utils/withTimeout';
+
+// Fallback used when videoAnalysis.stopAnalysis() (see onEnd below) is
+// abandoned after its own hard timeout — a zeroed-out result is strictly
+// better than blocking navigation forever waiting on a native module that
+// may never resolve; the camera-summary cross-check right after already
+// treats a less-than-ideal on-device result as acceptable, same posture.
+const EMPTY_VIDEO_METRICS: VideoAnalysisMetrics = {
+  eyeContactPct: 0,
+  smilePct: 0,
+  avgHeadYaw: 0,
+  avgHeadPitch: 0,
+  fillerWordCount: 0,
+  fillerWordBreakdown: {},
+  speakingRateWpm: 0,
+  silenceGapCount: 0,
+  confidenceScore: 0,
+};
 
 // Live mock-interview screen. Voice mode now has real audio: the AI's
 // question is actually spoken aloud (services/speechService.ts's speak(),
@@ -492,15 +510,31 @@ const LiveInterviewSession = memo(() => {
     await stop();
     speechService.stopSpeaking();
     if (isVoiceMode) {
-      await speechToText.stop();
+      // Was a bare `await` on a native-module bridge promise
+      // (react-native-voice's Voice.stop()) with no timeout at all — this is
+      // the actual root cause of "stuck on Saving your Recording forever"
+      // for at least some reports: if the native side never fires its
+      // resolve/reject callback (a known class of RN native-module edge
+      // case), this await hung forever, and since `navigate()` only ever
+      // runs after this whole chain settles, the user was stuck with no way
+      // out (isEnding disables both End Interview and the X button the
+      // instant onEnd starts). withTimeout gives every hang-prone step in
+      // this teardown a hard ceiling instead.
+      await withTimeout(speechToText.stop(), 5000, '');
     }
     // Stop the real video recording BEFORE deactivating the camera view
     // below (isCameraActive) — stopVideoRecording() awaits the file
     // actually being finalized on disk, and flipping the <Camera>'s
     // `isActive` prop false while that's still in flight risks a
-    // corrupt/truncated recording.
-    const recordedVideo = isVideoMode ? await videoAnalysis.stopVideoRecording() : null;
-    let videoMetrics = isVideoMode ? await videoAnalysis.stopAnalysis() : undefined;
+    // corrupt/truncated recording. Also has no timeout of its own (awaits a
+    // VisionCamera onRecordingFinished callback that could in principle
+    // never fire) — same withTimeout treatment, same reasoning as above.
+    const recordedVideo = isVideoMode
+      ? await withTimeout(videoAnalysis.stopVideoRecording(), 15000, null)
+      : null;
+    let videoMetrics = isVideoMode
+      ? await withTimeout(videoAnalysis.stopAnalysis(), 8000, EMPTY_VIDEO_METRICS)
+      : undefined;
     if (isVideoMode) setIsCameraActive(false);
     try {
       if (isVideoMode && sessionId) {
@@ -550,27 +584,35 @@ const LiveInterviewSession = memo(() => {
       // Best-effort: a failed/slow upload should never block finishing the
       // interview or navigating to Feedback (every other part of the
       // session — transcript, scores, camera/voice metrics — was already
-      // saved independently of this). Was a single unretried attempt with
-      // the failure silently swallowed — a user could finish a normal
-      // interview, transcript/metrics would save fine, and the video would
-      // just vanish with zero error shown anywhere the moment the upload hit
-      // any transient issue (network blip right as the call ends, app
-      // briefly backgrounded during the up-to-3-minute upload, etc.).
-      // uploadSessionVideoResilient retries a couple of times in-session,
-      // and if it still fails, queues the local file for another attempt
-      // next time the app comes to the foreground (see App.tsx) instead of
-      // discarding it — InterviewReplay only shows "no video" once every
-      // one of those chances has actually been exhausted.
+      // saved independently of this).
+      //
+      // uploadSessionVideoResilient (services/interviewService.ts) retries a
+      // couple of times with backoff before falling back to a background
+      // queue — genuinely useful for reliability, but its own worst case is
+      // ~9 minutes (3 attempts × a 180s upload timeout, plus backoff delays)
+      // and this screen was `await`ing the whole thing before ever calling
+      // navigate(), with isEnding disabling both End Interview and the X
+      // button for the entire wait. That IS "stuck on Saving your
+      // Recording" for anyone on a bad connection, not a bug in the retry
+      // logic itself — just that it should never have been on the
+      // blocking path in the first place. withTimeout caps how long THIS
+      // screen waits; the upload (and its retries/queueing) keeps running
+      // in the background regardless of whether we've already moved on, so
+      // reliability is unchanged — only the user-visible wait is bounded now.
       if (isVideoMode && sessionId && recordedVideo) {
         setIsUploadingVideo(true);
         try {
-          await interviewService.uploadSessionVideoResilient(
-            sessionId,
-            recordedVideo.path,
-            recordedVideo.durationSec,
+          await withTimeout(
+            interviewService.uploadSessionVideoResilient(
+              sessionId,
+              recordedVideo.path,
+              recordedVideo.durationSec,
+            ),
+            20000,
+            undefined,
           );
         } catch (err) {
-          console.warn('[LiveInterviewSession] video upload failed after retries, queued for later', err);
+          console.warn('[LiveInterviewSession] video upload failed, continuing in background', err);
         } finally {
           setIsUploadingVideo(false);
         }
