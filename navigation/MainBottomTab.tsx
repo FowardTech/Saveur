@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { View } from "react-native";
+import { AppState, View } from "react-native";
 import {
   useTheme,
   useStyleSheet,
@@ -16,6 +16,7 @@ import ModalRequest from "components/ModalRequest";
 import useModal from "hooks/useModal";
 import { Images } from "assets/images";
 import * as notificationService from "services/notificationService";
+import { getMoreMenuBadges } from "services/moreMenuBadgesService";
 import { NotificationProps } from "constants/Types";
 import HomeStackNavigator from "./HomeStackNavigator";
 // "Find" is repurposed as the Practice hub (pick interview type / mode / difficulty).
@@ -87,6 +88,35 @@ const MainBottomTab = memo(() => {
       setFeedbackNotif(null);
     }
   }, []);
+  // Menu tab badge (product request item: "the badge count on the profile
+  // tab should be determined by the badge counts on these [Job Alerts,
+  // Daily Industry News, Weekly Career Report]") — reuses the exact same
+  // GET /api/v1/more/badges the More screen itself reads (see
+  // services/moreMenuBadgesService.ts / src/more/MoreSrc.tsx). Job Alerts
+  // contributes its real unread count; Daily Industry News/Weekly Career
+  // Report each contribute at most 1 (they're a single "is there something
+  // new" dot, not a countable list — see moreMenuBadgesService.ts's own
+  // comment on that distinction). Refetched on mount and whenever the app
+  // returns to the foreground — this component (unlike MoreSrc.tsx) stays
+  // mounted for the whole session once signed in, so there's no natural
+  // "screen focus" moment to hook a refetch to the way MoreSrc.tsx does.
+  const [menuBadgeCount, setMenuBadgeCount] = React.useState<number | undefined>(undefined);
+  const refreshMenuBadges = React.useCallback(async () => {
+    const badges = await getMoreMenuBadges();
+    const total =
+      badges.jobAlertsUnreadCount +
+      (badges.dailyIndustryNewsUnread ? 1 : 0) +
+      (badges.weeklyCareerReportUnread ? 1 : 0);
+    setMenuBadgeCount(total > 0 ? total : undefined);
+  }, []);
+  React.useEffect(() => {
+    refreshMenuBadges();
+    const subscription = AppState.addEventListener("change", nextState => {
+      if (nextState === "active") refreshMenuBadges();
+    });
+    return () => subscription.remove();
+  }, [refreshMenuBadges]);
+
   const onDismissFeedbackNotif = React.useCallback(() => {
     hide();
     const notif = feedbackNotifRef.current;
@@ -203,7 +233,15 @@ const MainBottomTab = memo(() => {
               <ButtonTab
                 focused={focused}
                 icon="comment"
-                numberNotification={1}
+                // Was a hardcoded numberNotification={1} — always showed
+                // "1" regardless of actual state, i.e. not dynamic at all,
+                // which is exactly the reported issue. Removed rather than
+                // wired to a fake signal: there's no real "unread" concept
+                // for Coach today (the chat isn't persisted server-side,
+                // and there's no proactive/unprompted coach message), so
+                // there's nothing genuine to count yet. Revisit once there
+                // is (e.g. unseen AI-suggested topics).
+                numberNotification={undefined}
               />
             ),
           }}
@@ -225,10 +263,24 @@ const MainBottomTab = memo(() => {
         <BottomTab.Screen
           name="Profile"
           component={MoreNavigator}
+          // Refetch the moment the user navigates AWAY from this tab, not
+          // just on app foreground/mount — the common path for clearing
+          // one of these badges is opening Job Alerts/Weekly Career
+          // Report/Daily Industry News (all reached from inside this tab),
+          // which marks it seen server-side, then backing out. Catching
+          // that here means the tab bar badge updates right away instead
+          // of waiting for the next app foreground.
+          listeners={{ blur: () => refreshMenuBadges() }}
           options={{
-            tabBarLabel: t("common:tab_profile", { defaultValue: "Profile" }),
+            // Renamed from "Profile" per explicit request — this tab is the
+            // Settings/More menu (My Documents, Job Alerts, Weekly Career
+            // Report, Logout, etc.), not an actual profile screen, so the
+            // old label was misleading. Route name/param key ("Profile")
+            // stays as-is — only the user-facing label changes — to avoid
+            // touching every navigate('Profile', ...) call site elsewhere.
+            tabBarLabel: t("common:tab_profile", { defaultValue: "Menu" }),
             tabBarIcon: ({ focused }) => (
-              <ButtonTab focused={focused} icon="more" numberNotification={3} />
+              <ButtonTab focused={focused} icon="more" numberNotification={menuBadgeCount} />
             ),
           }}
         />
