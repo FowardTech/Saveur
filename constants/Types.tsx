@@ -58,6 +58,16 @@ export enum EKeyAsyncStorage {
   // English again. Read back at i18n/config.ts's bootstrap; superseded by
   // the account's own `locale` field the moment a profile is fetched.
   preferredLocale = 'preferredLocale',
+  // Video interviews whose upload to the backend (interviewService.
+  // uploadSessionVideo) failed even after in-session retries -- e.g. the
+  // network dropped right as the interview ended, or the app got
+  // backgrounded mid-upload. The transcript/metrics/score for these
+  // sessions already saved fine (separate call), only the video itself is
+  // still sitting on-device; App.tsx flushes this queue on every foreground
+  // so it gets uploaded automatically as soon as the network's back,
+  // without the user having to redo the interview. See interviewService.ts's
+  // enqueuePendingVideoUpload/flushPendingVideoUploads.
+  pendingVideoUploads = 'pendingVideoUploads',
 }
 export enum Animation_Types_Enum {
   SlideTop,

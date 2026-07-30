@@ -21,6 +21,7 @@ import * as linkedinAuthService from 'services/linkedinAuthService';
 import * as jobShareService from 'services/jobShareService';
 import * as appsFlyerService from 'services/appsFlyerService';
 import * as configService from 'services/configService';
+import { flushPendingVideoUploads } from 'services/interviewService';
 import { AppConfig } from 'services/configService';
 import AppGateScreen from 'components/AppGateScreen';
 import BootSplash from 'react-native-bootsplash';
@@ -87,6 +88,22 @@ export default function App() {
       subscription.remove();
       appStateSub.remove();
     };
+  }, []);
+
+  // Retries any video interview uploads that failed even after
+  // LiveInterviewSession.tsx's own in-session retries (see
+  // interviewService.uploadSessionVideoResilient) — e.g. the network was
+  // still down, or the app got killed mid-upload. Cheap no-op when nothing's
+  // queued, which is the overwhelmingly common case; only actually does
+  // anything for the rare user who hit a real upload failure, and lets that
+  // resolve itself automatically the next time they open the app instead of
+  // requiring them to redo the interview.
+  React.useEffect(() => {
+    flushPendingVideoUploads().catch(() => {});
+    const sub = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') flushPendingVideoUploads().catch(() => {});
+    });
+    return () => sub.remove();
   }, []);
 
   // Admin-configurable maintenance mode / forced update gate — see

@@ -550,18 +550,27 @@ const LiveInterviewSession = memo(() => {
       // Best-effort: a failed/slow upload should never block finishing the
       // interview or navigating to Feedback (every other part of the
       // session — transcript, scores, camera/voice metrics — was already
-      // saved independently of this). InterviewReplay just shows "no video"
-      // if this never lands.
+      // saved independently of this). Was a single unretried attempt with
+      // the failure silently swallowed — a user could finish a normal
+      // interview, transcript/metrics would save fine, and the video would
+      // just vanish with zero error shown anywhere the moment the upload hit
+      // any transient issue (network blip right as the call ends, app
+      // briefly backgrounded during the up-to-3-minute upload, etc.).
+      // uploadSessionVideoResilient retries a couple of times in-session,
+      // and if it still fails, queues the local file for another attempt
+      // next time the app comes to the foreground (see App.tsx) instead of
+      // discarding it — InterviewReplay only shows "no video" once every
+      // one of those chances has actually been exhausted.
       if (isVideoMode && sessionId && recordedVideo) {
         setIsUploadingVideo(true);
         try {
-          await interviewService.uploadSessionVideo(
+          await interviewService.uploadSessionVideoResilient(
             sessionId,
             recordedVideo.path,
             recordedVideo.durationSec,
           );
         } catch (err) {
-          console.warn('[LiveInterviewSession] video upload failed', err);
+          console.warn('[LiveInterviewSession] video upload failed after retries, queued for later', err);
         } finally {
           setIsUploadingVideo(false);
         }

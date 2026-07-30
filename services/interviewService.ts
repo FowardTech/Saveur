@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNBlobUtil from 'react-native-blob-util';
 import i18n from 'i18next';
 import dayjs from 'utils/dayjs';
 import {
@@ -385,6 +386,129 @@ export async function uploadSessionVideo(
   await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/video`, formData, {
     timeout: 180000,
   });
+}
+
+// ---------------------------------------------------------------------------
+// Resilient video upload (product bug fix): a user could complete a video
+// interview normally -- transcript/metrics/score all saved fine via
+// completeSession() above -- and still see "no video was recorded" on
+// Interview Replay, with zero error shown anywhere. Root cause: onEnd() in
+// LiveInterviewSession.tsx made exactly ONE attempt at uploadSessionVideo()
+// and silently swallowed any failure (network blip right as the call ends,
+// the app briefly backgrounded during the up-to-3-minute upload, a
+// transient 5xx, etc.) -- InterviewReplay then correctly reports "no video"
+// because video_key genuinely never got set, but the recording itself was
+// real and just never made it off the device.
+//
+// uploadSessionVideoResilient() is what LiveInterviewSession.tsx now calls
+// instead of the raw uploadSessionVideo() above: it retries a couple of
+// times in-session, and if it still fails, persists the local file
+// reference to AsyncStorage instead of discarding it, so
+// flushPendingVideoUploads() (called from App.tsx on every foreground) can
+// keep trying once the network/app state recovers -- without the user ever
+// needing to redo the interview.
+// ---------------------------------------------------------------------------
+
+interface PendingVideoUpload {
+  sessionId: string;
+  localFileUri: string;
+  durationSec?: number;
+  attempts: number;
+  firstFailedAt: number;
+}
+
+const RETRY_DELAYS_MS = [3000, 8000]; // in-session retries before falling back to the queue
+const MAX_QUEUE_ATTEMPTS = 6; // spread across app foregrounds, not all at once
+const MAX_QUEUE_AGE_MS = 48 * 60 * 60 * 1000; // the local CacheDir file itself may get purged by the OS well before this, but there's no earlier signal available to know that ahead of time
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function getPendingVideoQueue(): Promise<PendingVideoUpload[]> {
+  try {
+    const raw = await AsyncStorage.getItem(EKeyAsyncStorage.pendingVideoUploads);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function setPendingVideoQueue(queue: PendingVideoUpload[]): Promise<void> {
+  await AsyncStorage.setItem(EKeyAsyncStorage.pendingVideoUploads, JSON.stringify(queue));
+}
+
+async function enqueuePendingVideoUpload(entry: Omit<PendingVideoUpload, 'attempts' | 'firstFailedAt'>): Promise<void> {
+  const queue = await getPendingVideoQueue();
+  if (queue.some(q => q.sessionId === entry.sessionId)) return; // already queued
+  queue.push({...entry, attempts: 0, firstFailedAt: Date.now()});
+  await setPendingVideoQueue(queue);
+}
+
+/** Same upload, retried a couple of times before giving up -- covers the
+ * common case (a brief network blip right as the interview ends) without
+ * needing the slower cross-session queue at all. Falls back to queuing the
+ * upload for later (rather than throwing) if every attempt fails, so the
+ * caller's existing "best-effort, never blocks navigation" posture still
+ * holds -- it just no longer means "give up forever" the way a single
+ * silently-swallowed attempt did. */
+export async function uploadSessionVideoResilient(
+  sessionId: string,
+  localFileUri: string,
+  durationSec?: number,
+): Promise<void> {
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      await uploadSessionVideo(sessionId, localFileUri, durationSec);
+      return;
+    } catch (err) {
+      const isLastAttempt = attempt === RETRY_DELAYS_MS.length;
+      console.warn(`[interviewService] video upload attempt ${attempt + 1} failed`, err);
+      if (isLastAttempt) {
+        await enqueuePendingVideoUpload({sessionId, localFileUri, durationSec});
+        throw err;
+      }
+      await sleep(RETRY_DELAYS_MS[attempt]);
+    }
+  }
+}
+
+/** Retries any video uploads that failed even after uploadSessionVideoResilient's
+ * in-session attempts. Called from App.tsx whenever the app returns to the
+ * foreground (same AppState pattern already used elsewhere -- see
+ * AuthContext.tsx's refreshEmailVerified) -- cheap no-op when the queue is
+ * empty, which is the overwhelmingly common case. */
+export async function flushPendingVideoUploads(): Promise<void> {
+  const queue = await getPendingVideoQueue();
+  if (queue.length === 0) return;
+
+  const remaining: PendingVideoUpload[] = [];
+
+  for (const entry of queue) {
+    const tooOld = Date.now() - entry.firstFailedAt > MAX_QUEUE_AGE_MS;
+    const tooManyAttempts = entry.attempts >= MAX_QUEUE_ATTEMPTS;
+    if (tooOld || tooManyAttempts) {
+      // Give up for good -- the transcript/score for this session are still
+      // intact either way, only the video itself is permanently lost.
+      continue;
+    }
+    const barePath = entry.localFileUri.replace(/^file:\/\//, '');
+    const stillExists = await RNBlobUtil.fs.exists(barePath).catch(() => false);
+    if (!stillExists) {
+      // The OS reclaimed the cache file before we got a chance to retry --
+      // nothing left to upload.
+      continue;
+    }
+    try {
+      await uploadSessionVideo(entry.sessionId, entry.localFileUri, entry.durationSec);
+      // Success -- drop it from the queue, nothing more to do.
+    } catch (err) {
+      console.warn('[interviewService] queued video upload retry failed', err);
+      remaining.push({...entry, attempts: entry.attempts + 1});
+    }
+  }
+
+  await setPendingVideoQueue(remaining);
 }
 
 /**

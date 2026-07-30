@@ -523,7 +523,18 @@ export function useVideoInterviewAnalysis() {
   const stopVideoRecording = React.useCallback(async (): Promise<
     {path: string; durationSec: number} | null
   > => {
-    if (!cameraRef.current || !recordingPromiseRef.current) return null;
+    if (!cameraRef.current || !recordingPromiseRef.current) {
+      // Previously a silent, unlogged no-op -- if startVideoRecording()
+      // never actually got a recording going for this session (ref not yet
+      // attached, or a synchronous startRecording() throw that isn't
+      // retried), this is the only place that would ever know that
+      // happened, and it said nothing. Logging here at least leaves a trace
+      // when a "no video was recorded" report turns out to be this path
+      // rather than an upload failure (see interviewService.
+      // uploadSessionVideoResilient for that half of the fix).
+      console.warn('[videoAnalysisService] stopVideoRecording called with no recording in progress -- video was never actually started for this session');
+      return null;
+    }
     const pending = recordingPromiseRef.current;
     recordingPromiseRef.current = null;
     try {
