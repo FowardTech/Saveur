@@ -3,7 +3,12 @@ import messaging, {FirebaseMessagingTypes} from '@react-native-firebase/messagin
 import notifee, {AndroidImportance, AndroidStyle, EventType} from '@notifee/react-native';
 
 import {JobAlertProps} from 'constants/Types';
-import {navigateToJobAlertWebView, navigateToNotifications} from 'navigation/navigationRef';
+import {
+  navigateToJobAlertWebView,
+  navigateToNotifications,
+  navigateToWeeklyCareerReport,
+  navigateToDailyIndustryNews,
+} from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 
 // ---------------------------------------------------------------------------
@@ -130,6 +135,22 @@ function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Reco
       navigateToJobAlertWebView(job);
       return;
     }
+  }
+  // Weekly Career Report / Daily Industry News (product request item:
+  // "when users click on the updates in the push notification, it should
+  // take them to the screen so they see the full details") — both pushes
+  // carry no extra fields beyond `type` (see Saveur-Backend's
+  // career_report_service.send_weekly_report_broadcast /
+  // news_service.send_daily_news_broadcast), so there's nothing to parse
+  // out of `data` here, just route to the matching screen, which re-fetches
+  // its own content (and marks it seen server-side) on mount.
+  if (data?.type === 'weekly_career_report') {
+    navigateToWeeklyCareerReport();
+    return;
+  }
+  if (data?.type === 'daily_industry_news') {
+    navigateToDailyIndustryNews();
+    return;
   }
   navigateToNotifications();
 }

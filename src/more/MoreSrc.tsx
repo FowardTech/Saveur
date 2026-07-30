@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {NavigationProp, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
 import {EKeyAsyncStorage} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
@@ -16,6 +16,7 @@ import ThemeContext from '../../ThemeContext';
 import {AuthContext} from '../../AuthContext';
 import * as configService from 'services/configService';
 import {FeatureFlags} from 'services/configService';
+import {getMoreMenuBadges, MoreMenuBadges} from 'services/moreMenuBadgesService';
 
 const MoreSrc = memo(() => {
   const styles = useStyleSheet(themedStyles);
@@ -29,6 +30,25 @@ const MoreSrc = memo(() => {
   const darkMode = appTheme === 'dark';
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const {profile, signOut, updateProfile} = React.useContext(AuthContext);
+
+  // Unread badges for Job Alerts / Weekly Career Report / Daily Industry
+  // News rows below (product request item — see services/
+  // moreMenuBadgesService.ts). Refetched on every screen focus (not just
+  // mount) so returning here after actually reading a job alert or opening
+  // the weekly report/news screen clears the badge without needing an app
+  // restart.
+  const [badges, setBadges] = React.useState<MoreMenuBadges | null>(null);
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      getMoreMenuBadges().then(result => {
+        if (!cancelled) setBadges(result);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   // Master push-notification toggle. Defaults true (matches
   // User.notifications_enabled's server-side default) so existing users who
@@ -128,8 +148,38 @@ const MoreSrc = memo(() => {
   // overrides aren't passed. Deliberately NOT applied to the dark-mode
   // toggle, push-notifications toggle, or logout row further down — those
   // three keep their existing colors, per the same original request.
-  const ICON_BG = theme['color-primary-400']; // subtle/pastel blue (#CFDFFB)
-  const ICON_GLYPH = '#2574FF'; // brand blue
+  //
+  // Was theme['color-primary-400'] (a literal #CFDFFB pastel, only ever
+  // defined once in constants/theme/appTheme.json with no light.json/
+  // dark.json override) + a hardcoded '#2574FF' glyph hex — neither one
+  // actually changed between light and dark mode, so in dark mode this
+  // chalky light-blue pastel sat on top of the screen's near-black
+  // background looking washed-out/low-contrast instead of adapting.
+  //
+  // The follow-up fix that switched this to theme['color-primary-transparent-200']
+  // (the comment above used to claim Eva's `-transparent-` tokens are
+  // computed per-theme) turned out to still look washed-out in dark mode,
+  // and checking Eva's actual theme source (@eva-design/eva/themes/{light,dark}.json)
+  // shows why: color-primary-transparent-200 is the literal fixed string
+  // "rgba(51, 102, 255, 0.16)" in BOTH themes -- it never adapts, it's the
+  // same 16%-opacity blue regardless of light/dark. 16% blue over a
+  // near-white light background reads as a nice soft pastel chip; the
+  // exact same 16% blue over this app's near-black dark background reads
+  // as barely-there and muddy, because opacity blends toward whatever's
+  // underneath, not toward "a lighter/richer version of itself." That's
+  // the real root cause of the washed-out look in dark mode.
+  // Fix: keep transparent-200 for light mode (unchanged, no complaint
+  // there), and use a notably higher-opacity step (transparent-400, 32%)
+  // for dark mode specifically, so the fill actually reads as a proper
+  // tinted chip against a near-black surface instead of nearly
+  // disappearing into it. color-primary-500 for the glyph is unchanged
+  // (already the app's standard icon-tint token elsewhere -- HomeSrc.tsx,
+  // JobAlerts.tsx, LearningCourses.tsx, etc.) and reads fine on both
+  // variants since it's a flat, non-transparent brand blue either way.
+  const ICON_BG = darkMode
+    ? theme['color-primary-transparent-400']
+    : theme['color-primary-transparent-200'];
+  const ICON_GLYPH = theme['color-primary-500'];
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
     {
       // Also where account deletion now lives (see ProfileSrc.tsx) — moved
@@ -238,6 +288,7 @@ const MoreSrc = memo(() => {
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
       featureKey: 'job_alerts',
+      badgeCount: badges?.jobAlertsUnreadCount,
       onPress: () => navigate('JobAlerts'),
     },
     {
@@ -247,6 +298,7 @@ const MoreSrc = memo(() => {
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
       featureKey: 'weekly_career_report',
+      badgeDot: badges?.weeklyCareerReportUnread,
       onPress: () => navigate('WeeklyCareerReport'),
     },
     {
@@ -256,6 +308,7 @@ const MoreSrc = memo(() => {
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
       featureKey: 'daily_industry_news',
+      badgeDot: badges?.dailyIndustryNewsUnread,
       onPress: () => navigate('DailyIndustryNews'),
     },
     {
@@ -415,6 +468,8 @@ const MoreSrc = memo(() => {
                 key={i}
                 onPress={item.onPress}
                 navigateSrc={item.navigateSrc}
+                badgeCount={item.badgeCount}
+                badgeDot={item.badgeDot}
               />
             );
           })}

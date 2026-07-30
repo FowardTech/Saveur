@@ -25,6 +25,8 @@ type PendingNavigation =
       params: {url: string; title?: string; job?: {company: string; role: string; applyUrl: string; companyLogoUrl?: string}};
     }
   | {name: 'Notification'}
+  | {name: 'WeeklyCareerReport'}
+  | {name: 'DailyIndustryNews'}
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
   // matters on first mount, so simply flipping `isSignedIn` to true after
@@ -44,6 +46,10 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('WebViewScreen', nav.params);
   } else if (nav.name === 'Notification') {
     navigationRef.navigate('Notification');
+  } else if (nav.name === 'WeeklyCareerReport') {
+    navigationRef.navigate('WeeklyCareerReport');
+  } else if (nav.name === 'DailyIndustryNews') {
+    navigationRef.navigate('DailyIndustryNews');
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -94,6 +100,24 @@ export function navigateToJobAlertWebView(job: JobAlertProps): void {
  * services/pushNotificationService.ts's handleNotificationTap. */
 export function navigateToNotifications(): void {
   queueOrNavigate({name: 'Notification'});
+}
+
+/** Weekly Career Report push tap (Saveur-Backend's
+ * career_report_service.send_weekly_report_broadcast sends
+ * data.type = "weekly_career_report") — takes the user straight to the
+ * report screen (src/more/WeeklyCareerReport.tsx) instead of the generic
+ * in-app notification list. */
+export function navigateToWeeklyCareerReport(): void {
+  queueOrNavigate({name: 'WeeklyCareerReport'});
+}
+
+/** Daily Industry News push tap (Saveur-Backend's
+ * news_service.send_daily_news_broadcast sends
+ * data.type = "daily_industry_news") — takes the user straight to the news
+ * screen (src/more/DailyIndustryNews.tsx) instead of the generic in-app
+ * notification list. */
+export function navigateToDailyIndustryNews(): void {
+  queueOrNavigate({name: 'DailyIndustryNews'});
 }
 
 /** See the ResetToMain case in PendingNavigation above — call once a cold-

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert} from 'react-native';
+import {Alert, View} from 'react-native';
 
 import Text from 'components/Text';
 import {
@@ -34,6 +34,18 @@ export interface ButtonOptionalProps {
   // MoreSrc.tsx's "subtle blue background, dark blue border" icon rows.
   iconColor?: string;
   iconBorderColor?: string;
+  // Small unread indicator on the icon's top-right corner (product request
+  // item: "job alert, daily industry news and Weekly reports count badge so
+  // that users can know when new updates arrive" — see
+  // services/moreMenuBadgesService.ts). `badgeCount` renders a numeric pill
+  // (clamped "9+", same convention as HeaderHome.tsx's bell badge) for
+  // Job Alerts, which has a real per-item unread count; `badgeDot` renders a
+  // plain dot for Daily Industry News / Weekly Career Report, which are each
+  // a single cached blob per period rather than a countable list — there's
+  // no meaningful "how many", just "is there something new". If both are
+  // passed, the count wins.
+  badgeCount?: number;
+  badgeDot?: boolean;
   status:
     | 'basic'
     | 'danger'
@@ -60,6 +72,8 @@ const ButtonOptional = ({
   iconBackgroundColor,
   iconColor,
   iconBorderColor,
+  badgeCount,
+  badgeDot,
 }: ButtonOptionalProps) => {
   const theme = useTheme();
   const {navigate, goBack} =
@@ -80,14 +94,25 @@ const ButtonOptional = ({
       mt={24}
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
-        <ButtonFill
-          icon={icon}
-          status={status}
-          size="medium"
-          backgroundColor={iconBackgroundColor}
-          iconColor={iconColor}
-          borderColor={iconBorderColor}
-        />
+        <View>
+          <ButtonFill
+            icon={icon}
+            status={status}
+            size="medium"
+            backgroundColor={iconBackgroundColor}
+            iconColor={iconColor}
+            borderColor={iconBorderColor}
+          />
+          {badgeCount ? (
+            <View style={styles.badgeCount}>
+              <Text category="h9" status="control" fontSize={11} lineHeight={13}>
+                {badgeCount > 9 ? '9+' : badgeCount}
+              </Text>
+            </View>
+          ) : badgeDot ? (
+            <View style={styles.badgeDot} />
+          ) : null}
+        </View>
         <Text ml={24} category="para-m">
           {title}
         </Text>
@@ -114,4 +139,34 @@ export default ButtonOptional;
 
 const themedStyles = StyleService.create({
   container: {},
+  // Same 20x20/count-badge shape as HeaderHome.tsx's bell badge (see that
+  // file's own sizing comment) — a small colored circle sitting on the
+  // icon square's top-right corner, offset just enough to look like it's
+  // "attached" to the icon rather than floating.
+  badgeCount: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 18,
+    height: 18,
+    paddingHorizontal: 3,
+    borderRadius: 9,
+    backgroundColor: 'color-danger-100',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Plain dot variant for Daily Industry News / Weekly Career Report — a
+  // "there's something new" indicator rather than a count, same idea as
+  // JobAlerts.tsx's unread-item dot.
+  badgeDot: {
+    position: 'absolute',
+    top: -1,
+    right: -1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: 'color-danger-100',
+    borderWidth: 2,
+    borderColor: 'background-basic-color-1',
+  },
 });
