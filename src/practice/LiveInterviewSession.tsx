@@ -488,12 +488,19 @@ const LiveInterviewSession = memo(() => {
   const mm = String(Math.floor(remainingSeconds / 60)).padStart(2, '0');
   const ss = String(remainingSeconds % 60).padStart(2, '0');
 
+  // Video mode no longer has a real mute action: it used to just stop/start
+  // videoAnalysisService's on-device speech recognizer, which has been
+  // removed entirely (see that file's header comment — it was fighting
+  // VisionCamera's own recording for the microphone, which is the actual
+  // fix for "no audio in the replay"). There's nothing left for a
+  // client-side mute to meaningfully pause — the camera keeps recording
+  // real audio the whole interview regardless — so the mute control is
+  // hidden for Video mode below (isTextMode || isVideoMode ? null : ...)
+  // rather than kept as a button that visibly does nothing.
   const onToggleMute = () => {
     setIsMuted(prev => {
       const next = !prev;
-      if (isVideoMode) {
-        videoAnalysis.setMuted(next);
-      } else if (isVoiceMode) {
+      if (isVoiceMode) {
         if (next) {
           speechToText.stop();
         } else if (!isAiSpeaking) {
@@ -800,14 +807,15 @@ const LiveInterviewSession = memo(() => {
                           : t('find:live_look_at_camera', { defaultValue: 'Look at camera' })}
                       </Text>
                     </View>
-                    <View style={styles.liveIndicatorPill}>
-                      <Text category="h10" status="control" bold>
-                        {t('find:live_fillers_count', {
-                          defaultValue: 'Fillers: {{count}}',
-                          count: videoAnalysis.liveMetrics.fillerWordCount,
-                        })}
-                      </Text>
-                    </View>
+                    {/* Was a live "Fillers: N" pill, driven by
+                        videoAnalysisService's on-device speech recognizer —
+                        removed along with that recognizer (see
+                        services/videoAnalysisService.ts's header comment):
+                        it was fighting VisionCamera's own recording for the
+                        microphone the entire interview, which is the actual
+                        cause of recorded interviews coming back with no
+                        audio. Only the two purely visual (ML Kit,
+                        audio-session-free) indicators remain. */}
                   </View>
                 </>
               )}
@@ -972,7 +980,7 @@ const LiveInterviewSession = memo(() => {
           </Text>
         ) : null}
         <Flex justify="center" itemsCenter>
-          {isTextMode ? null : (
+          {isTextMode || isVideoMode ? null : (
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onToggleMute}

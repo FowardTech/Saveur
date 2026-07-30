@@ -358,46 +358,20 @@ const InterviewFeedback = memo(() => {
               />
             </View>
 
-            <Layout level="2" style={styles.starRow}>
-              <Flex justify="space-between" itemsCenter mb={12}>
-                <Text category="h7" bold>
-                  {t('find:speaking_pace', { defaultValue: 'Speaking Pace' })}
-                </Text>
-                <Text category="h7" status="link" bold>
-                  {t('find:wpm_value', {
-                    count: videoAnalysis.speakingRateWpm,
-                    defaultValue: '{{count}} wpm',
-                  })}
-                </Text>
-              </Flex>
-              <Flex justify="space-between" itemsCenter mb={videoAnalysis.fillerWordCount > 0 ? 8 : 12}>
-                <Text category="h7" bold>
-                  {t('find:filler_words', { defaultValue: 'Filler Words' })}
-                </Text>
-                <Text category="h7" status="link" bold>
-                  {videoAnalysis.fillerWordCount}
-                </Text>
-              </Flex>
-              {Object.keys(videoAnalysis.fillerWordBreakdown).length > 0 ? (
-                <Flex wrap justify="flex-start" mb={12}>
-                  {Object.entries(videoAnalysis.fillerWordBreakdown).map(([word, count]) => (
-                    <View key={word} style={[styles.fillerChip, { backgroundColor: theme['background-basic-color-3'] }]}>
-                      <Text category="h10" status="placeholder">
-                        “{word}” × {count}
-                      </Text>
-                    </View>
-                  ))}
-                </Flex>
-              ) : null}
-              <Flex justify="space-between" itemsCenter>
-                <Text category="h7" bold>
-                  {t('find:awkward_pauses', { defaultValue: 'Awkward Pauses' })}
-                </Text>
-                <Text category="h7" status="link" bold>
-                  {videoAnalysis.silenceGapCount}
-                </Text>
-              </Flex>
-            </Layout>
+            {/* Was a Speaking Pace / Filler Words / Awkward Pauses card
+               here, driven by videoAnalysisService's on-device speech
+               recognizer. That recognizer has been removed entirely (see
+               services/videoAnalysisService.ts's header comment) because it
+               was confirmed fighting VisionCamera's own recording for the
+               microphone for the whole interview — the actual root cause of
+               recorded interviews coming back with no audio track. Those
+               three fields are always 0 now (see stopAnalysis's comment),
+               which would have rendered here as "0 wpm / 0 Filler Words /
+               0 Awkward Pauses" — indistinguishable from a genuinely
+               flawless answer rather than "not measured", so the card is
+               removed rather than shown with fake data. Eye Contact /
+               Smiling / Confidence above are unaffected — pure ML Kit face
+               detection, no microphone involved. */}
           </>
         ) : null}
 

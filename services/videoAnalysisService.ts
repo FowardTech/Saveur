@@ -7,37 +7,51 @@ import {
 } from 'react-native-vision-camera';
 import type {VideoFile} from 'react-native-vision-camera';
 import type {Face, FrameFaceDetectionOptions} from 'react-native-vision-camera-face-detector';
-import Voice from '@dev-amirzubair/react-native-voice';
-import type {
-  SpeechEndEvent,
-  SpeechErrorEvent,
-  SpeechResultsEvent,
-  SpeechStartEvent,
-} from '@dev-amirzubair/react-native-voice';
 import RNBlobUtil from 'react-native-blob-util';
-import i18n from 'i18next';
 
 import {VideoAnalysisMetrics} from 'constants/Types';
-import {getSttLocale} from 'constants/languages';
 
 // ---------------------------------------------------------------------------
-// videoAnalysisService — REAL on-device camera + speech analysis for
-// Video-mode mock interviews.
+// videoAnalysisService — REAL on-device camera analysis for Video-mode mock
+// interviews.
 //
 // Unlike services/recordingService.ts (still used for Voice/Text mode, which
 // stays a simulated timer — see that file), this module drives:
 //   - react-native-vision-camera (^4.7.3) for the camera preview + frame
-//     stream. Pinned to v4 deliberately: v5 rewrote frame processors around
-//     Nitro Modules and the face-detector plugin below is only confirmed
-//     compatible with v4's JSI-based frame processor API.
+//     stream, AND the real video+audio recording (startVideoRecording/
+//     stopVideoRecording below). Pinned to v4 deliberately: v5 rewrote frame
+//     processors around Nitro Modules and the face-detector plugin below is
+//     only confirmed compatible with v4's JSI-based frame processor API.
 //   - react-native-vision-camera-face-detector (^1.10.1) for on-device
 //     Google ML Kit face detection (bounding box, head Euler angles,
 //     smiling probability, eye-open probability). No cloud API, no API key
-//     — this runs entirely on-device via ML Kit.
-//   - @dev-amirzubair/react-native-voice (a New-Architecture-compatible fork
-//     of the abandoned @react-native-voice/voice) for on-device, no-cloud
-//     speech-to-text, from which filler words / speaking rate / silence
-//     gaps are derived client-side.
+//     — this runs entirely on-device via ML Kit, and — critically — never
+//     touches the microphone/audio session at all, just camera frames.
+//
+// Deliberately does NOT also run on-device speech-to-text (filler words /
+// speaking pace / silence gaps) concurrently with the recording anymore —
+// see computeConfidenceScore's own comment below for the full story. Short
+// version: this used to also run @dev-amirzubair/react-native-voice
+// alongside VisionCamera's recording, and real device logs from a repro
+// confirmed the two fighting over the shared iOS AVAudioSession the entire
+// time both were active (Voice.start() restarting itself every time the
+// user paused speaking, all through the interview, not just once) —
+// VisionCamera's video frames kept recording fine (a separate capture
+// output), but the audio input tap kept getting knocked out from under it,
+// producing a recording with no audio track. This is the SAME class of bug
+// already found and fixed for the AI's own TTS playback (see
+// services/speechService.ts's preserveRecordingSession) — that fix handled
+// the "AI voice" side of the conflict; this removes the OTHER, more
+// persistent source (this hook's own live speech recognition, which was
+// restarting itself continuously for the entire recording, not just at
+// question boundaries). Video-mode interviews no longer get a live
+// filler-word/pace HUD or those sub-scores in the final report as a result
+// — a real trade-off, but a much smaller one than the recording having no
+// audio at all. A server-side transcription pass over the uploaded video's
+// audio track (Saveur-Backend's app/services/stt_service.py, Deepgram —
+// currently unused/dormant) is the natural way to restore that data later
+// without reintroducing this exact conflict, since it would run AFTER the
+// recording finishes rather than concurrently with it.
 //
 // This hook does NOT render the <Camera> itself (that stays in
 // src/practice/LiveInterviewSession.tsx, using the <Camera> wrapper exported
@@ -46,8 +60,6 @@ import {getSttLocale} from 'constants/languages';
 // react-native-worklets-core). This hook instead owns:
 //   - camera/mic permission state
 //   - the face-detection frame callback (aggregates per-frame face metrics)
-//   - the speech-recognition event wiring (transcript + filler words + pace
-//     + silence-gap detection)
 //   - start/stop lifecycle + the final metrics aggregation/scoring
 //
 // RISK NOTE (read before debugging a crash/build failure here): VisionCamera
@@ -68,23 +80,10 @@ const EYE_CONTACT_YAW_THRESHOLD_DEG = 15;
 const EYE_CONTACT_PITCH_THRESHOLD_DEG = 15;
 const SMILE_PROBABILITY_THRESHOLD = 0.5;
 
-// Gap between the end of one speech segment and the start of the next that
-// counts as an "awkward pause", per the spec (~4s).
-const AWKWARD_PAUSE_MS = 4000;
-
 // How often (ms) the live UI indicator is allowed to re-render off the back
 // of face-detector callbacks, which can fire 15-30x/sec — without this,
 // LiveInterviewSession would re-render far more than the UI needs.
 const LIVE_METRICS_THROTTLE_MS = 250;
-
-// Was hardcoded to 'en-US' regardless of the user's preferred language (see
-// constants/languages.ts) — same bug fixed in services/speechService.ts's
-// currentSttLocale(), duplicated here since Video mode's STT is wired up
-// independently of Voice mode's. Read at call time (not once at module
-// load) so it always reflects whatever i18next's current language is.
-function currentSttLocale(): string {
-  return getSttLocale(i18n.language);
-}
 
 // How often (ms) a face-detection sample is pushed into the frame buffer
 // that gets streamed to the backend (POST /camera-frame — see
@@ -95,96 +94,57 @@ function currentSttLocale(): string {
 // without ballooning the buffer between flushes.
 const FRAME_BUFFER_SAMPLE_INTERVAL_MS = 1000;
 
-// Regex-based filler word counting — case-insensitive, word-boundary
-// matched, as specified. "um"/"uh" allow a trailing repeated vowel (e.g.
-// "ummm") since that's how STT engines often transcribe drawn-out fillers.
-const FILLER_PATTERNS: Array<[string, RegExp]> = [
-  ['um', /\bum+\b/gi],
-  ['uh', /\buh+\b/gi],
-  ['like', /\blike\b/gi],
-  ['you know', /\byou\s+know\b/gi],
-];
-
-function countFillerWords(text: string): {total: number; breakdown: Record<string, number>} {
-  const breakdown: Record<string, number> = {};
-  let total = 0;
-  for (const [label, pattern] of FILLER_PATTERNS) {
-    // RegExp objects with the /g flag are stateful (lastIndex) — reset by
-    // re-matching against a fresh pattern via `text.match`, which does not
-    // mutate/reuse `pattern`'s lastIndex the way `pattern.exec` would.
-    const matches = text.match(pattern);
-    const count = matches ? matches.length : 0;
-    if (count > 0) {
-      breakdown[label] = count;
-    }
-    total += count;
-  }
-  return {total, breakdown};
-}
-
-/**
- * Score how close a speaking rate is to a natural interview pace. 110-160
- * wpm is treated as "ideal" (scores 100); the score tapers off by 2 points
- * per wpm outside that band, floored at 0.
- */
-function speakingPaceScore(wpm: number): number {
-  if (wpm <= 0) return 0;
-  const IDEAL_MIN = 110;
-  const IDEAL_MAX = 160;
-  if (wpm >= IDEAL_MIN && wpm <= IDEAL_MAX) return 100;
-  const distance = wpm < IDEAL_MIN ? IDEAL_MIN - wpm : wpm - IDEAL_MAX;
-  return Math.max(0, 100 - distance * 2);
-}
-
 /**
  * CONFIDENCE_SCORE_FORMULA
  *
- * A heuristic 0-100 "how confident did this look/sound" score, blended from
- * five weighted sub-scores. This is intentionally simple and transparent —
- * every input is real, on-device signal (ML Kit face detection + on-device
- * speech-to-text); what's a heuristic is how they're *combined*.
+ * A heuristic 0-100 "how confident did this look" score, blended from two
+ * weighted sub-scores — both pure ML Kit face-detection signal, no
+ * microphone/speech-recognition involvement at all.
  *
  *   confidenceScore =
- *       eyeContactPct                              * 0.40   (looking at camera)
- *     + smilePct                                     * 0.15   (warmth/engagement)
- *     + max(0, 100 - fillerWordCount * 4)             * 0.25   (verbal fluency)
- *     + speakingPaceScore(speakingRateWpm)             * 0.10   (110-160 wpm ideal, tapers outside)
- *     + max(0, 100 - silenceGapCount * 15)             * 0.10   (fewer awkward pauses)
+ *       eyeContactPct * (0.40 / 0.55)   (looking at camera)
+ *     + smilePct       * (0.15 / 0.55)   (warmth/engagement)
  *
  *   ...clamped to [0, 100] and rounded.
  *
- * BACKEND TODO: the frame-level ML Kit face-detection output (yaw/pitch/
- * smiling/eye-open probabilities) and the on-device speech-to-text
- * transcript feeding into this ARE the real signal already — no cloud API
- * needed to produce those. What could later move server-side is this
- * aggregation/weighting: a backend could take the raw per-frame samples +
- * transcript (POST /interviews/sessions/{id}/video-analysis) and return a
- * properly trained/calibrated confidenceScore + richer coaching notes,
- * without changing this hook's public shape (`VideoAnalysisMetrics` stays
- * the contract InterviewFeedback renders).
+ * Used to blend THREE weighted sub-scores — the two above, plus filler-word
+ * count, speaking pace, and silence-gap count derived from a live on-device
+ * speech recognizer running alongside the recording. That recognizer
+ * (@dev-amirzubair/react-native-voice) has been removed entirely (see this
+ * file's header comment) because it was confirmed, via real device logs, to
+ * fight VisionCamera's own audio capture for the shared iOS AVAudioSession
+ * for the ENTIRE duration of every video-mode interview — the actual root
+ * cause of recorded interviews coming back with no audio track.
+ *
+ * The two remaining sub-scores' weights are rescaled to sum to 1.00 on
+ * their own (0.40 and 0.15 out of the original formula's 1.00, i.e. 0.55
+ * combined) rather than left at their original weights: this was
+ * deliberately NOT done by just zeroing the removed inputs and keeping the
+ * old weights, because a filler-word count that's always 0 (never measured,
+ * not "measured zero") would read as a maxed-out sub-score under the old
+ * formula (`max(0, 100 - 0*4) = 100`) — silently inflating every video-mode
+ * score by 25 points for a signal that was never actually collected. A
+ * speaking-pace score of 0 wpm would have done the opposite (deflating the
+ * score by a full 10 points). Removing those terms outright, rather than
+ * quietly feeding them zeros, is what keeps this score honest.
+ *
+ * BACKEND TODO: a server-side transcription pass over the uploaded video's
+ * audio track (Saveur-Backend's app/services/stt_service.py, Deepgram —
+ * currently dormant/unused) run AFTER the recording finishes (not
+ * concurrently with it, unlike the removed on-device approach) is the
+ * natural way to restore filler-word/pace/silence scoring without
+ * reintroducing the audio-session conflict this fix removes.
  */
-function computeConfidenceScore(m: {
-  eyeContactPct: number;
-  smilePct: number;
-  fillerWordCount: number;
-  speakingRateWpm: number;
-  silenceGapCount: number;
-}): number {
-  const raw =
-    m.eyeContactPct * 0.4 +
-    m.smilePct * 0.15 +
-    Math.max(0, 100 - m.fillerWordCount * 4) * 0.25 +
-    speakingPaceScore(m.speakingRateWpm) * 0.1 +
-    Math.max(0, 100 - m.silenceGapCount * 15) * 0.1;
+function computeConfidenceScore(m: {eyeContactPct: number; smilePct: number}): number {
+  const EYE_CONTACT_WEIGHT = 0.4 / 0.55;
+  const SMILE_WEIGHT = 0.15 / 0.55;
+  const raw = m.eyeContactPct * EYE_CONTACT_WEIGHT + m.smilePct * SMILE_WEIGHT;
   return Math.round(Math.min(100, Math.max(0, raw)));
 }
 
 export interface LiveVideoMetrics {
   isLookingAtCamera: boolean;
   isSmiling: boolean;
-  fillerWordCount: number;
-  speakingRateWpm: number;
-  silenceGapCount: number;
 }
 
 // One real, on-device face-detection sample, buffered for the consuming
@@ -203,9 +163,6 @@ export interface CameraFrameSample {
 const INITIAL_LIVE_METRICS: LiveVideoMetrics = {
   isLookingAtCamera: false,
   isSmiling: false,
-  fillerWordCount: 0,
-  speakingRateWpm: 0,
-  silenceGapCount: 0,
 };
 
 // Detection options passed straight through to
@@ -258,7 +215,7 @@ async function getFreeStorageBytes(): Promise<number | null> {
 
 /**
  * Hook that wraps the vision-camera frame processor + face-detector plugin
- * + on-device speech recognition for a single Video-mode interview session.
+ * + real video/audio recording for a single Video-mode interview session.
  *
  * The consuming screen (LiveInterviewSession) is responsible for actually
  * rendering the `<Camera>` from react-native-vision-camera-face-detector
@@ -320,39 +277,24 @@ export function useVideoInterviewAnalysis() {
   const frameBufferRef = React.useRef<CameraFrameSample[]>([]);
   const lastBufferPushRef = React.useRef(0);
 
-  // --- Speech-recognition aggregation state. ---
-  const transcriptRef = React.useRef('');
+  // sessionStartRef is still needed even with speech-recognition removed —
+  // it's what turns each face-detection frame's absolute Date.now() into
+  // the session-relative t_ms the backend/InterviewReplay's video-seek
+  // expects (see onFacesDetected's frameBufferRef.current.push below).
   const sessionStartRef = React.useRef<number | null>(null);
-  const lastSpeechEndAtRef = React.useRef<number | null>(null);
-  const silenceGapCountRef = React.useRef(0);
-  const isMutedRef = React.useRef(false);
   const isAnalyzingRef = React.useRef(false);
 
   const lastUiUpdateRef = React.useRef(0);
   const [liveMetrics, setLiveMetrics] = React.useState<LiveVideoMetrics>(INITIAL_LIVE_METRICS);
-
-  const computeSpeakingRate = React.useCallback(() => {
-    if (!sessionStartRef.current) return 0;
-    const elapsedSec = Math.max(1, (Date.now() - sessionStartRef.current) / 1000);
-    const words = transcriptRef.current.trim().split(/\s+/).filter(Boolean).length;
-    return Math.round((words / elapsedSec) * 60);
-  }, []);
 
   const refreshLiveMetrics = React.useCallback(
     (partial?: Partial<LiveVideoMetrics>, force?: boolean) => {
       const now = Date.now();
       if (!force && now - lastUiUpdateRef.current < LIVE_METRICS_THROTTLE_MS) return;
       lastUiUpdateRef.current = now;
-      const {total: fillerWordCount} = countFillerWords(transcriptRef.current);
-      setLiveMetrics(prev => ({
-        ...prev,
-        fillerWordCount,
-        speakingRateWpm: computeSpeakingRate(),
-        silenceGapCount: silenceGapCountRef.current,
-        ...partial,
-      }));
+      setLiveMetrics(prev => ({...prev, ...partial}));
     },
-    [computeSpeakingRate],
+    [],
   );
 
   /**
@@ -424,59 +366,6 @@ export function useVideoInterviewAnalysis() {
     return frames;
   }, []);
 
-  // --- Speech recognition event wiring. Registered once; guarded by
-  // isAnalyzingRef/isMutedRef internally so the same listeners can be reused
-  // across multiple start/stop cycles without re-subscribing. ---
-  React.useEffect(() => {
-    Voice.onSpeechStart = (_e: SpeechStartEvent) => {
-      if (!isAnalyzingRef.current) return;
-      const now = Date.now();
-      if (lastSpeechEndAtRef.current != null && !isMutedRef.current) {
-        const gap = now - lastSpeechEndAtRef.current;
-        if (gap > AWKWARD_PAUSE_MS) {
-          silenceGapCountRef.current += 1;
-          refreshLiveMetrics(undefined, true);
-        }
-      }
-    };
-    Voice.onSpeechEnd = (_e: SpeechEndEvent) => {
-      lastSpeechEndAtRef.current = Date.now();
-      // On-device recognizers (esp. Android's) commonly stop listening after
-      // a short pause in speech. Restart automatically so the session keeps
-      // capturing the whole interview rather than only the first utterance.
-      // NOTE: because we restart immediately here, the observed gap between
-      // this onSpeechEnd and the next onSpeechStart mostly reflects engine
-      // restart latency, not real-world silence — so silenceGapCount is an
-      // approximation of awkward pauses, not an exact measurement. A more
-      // precise approach would need native VAD (voice activity detection)
-      // timestamps, which this community package does not expose.
-      if (isAnalyzingRef.current && !isMutedRef.current) {
-        Voice.start(currentSttLocale()).catch(() => {});
-      }
-    };
-    Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-      const text = e.value?.[0];
-      if (text) {
-        transcriptRef.current = `${transcriptRef.current} ${text}`.trim();
-        refreshLiveMetrics(undefined, true);
-      }
-    };
-    Voice.onSpeechError = (_e: SpeechErrorEvent) => {
-      // "No speech detected" / timeout errors fire routinely during natural
-      // silence on some platforms — treat like a segment boundary and keep
-      // listening rather than surfacing this as a hard failure.
-      lastSpeechEndAtRef.current = Date.now();
-      if (isAnalyzingRef.current && !isMutedRef.current) {
-        Voice.start(currentSttLocale()).catch(() => {});
-      }
-    };
-    return () => {
-      Voice.destroy()
-        .then(() => Voice.removeAllListeners())
-        .catch(() => {});
-    };
-  }, [refreshLiveMetrics]);
-
   const requestPermissions = React.useCallback(async (): Promise<boolean> => {
     const cam = hasCameraPermission || (await requestCameraPermission());
     const mic = hasMicPermission || (await requestMicPermission());
@@ -491,21 +380,12 @@ export function useVideoInterviewAnalysis() {
     pitchSumRef.current = 0;
     frameBufferRef.current = [];
     lastBufferPushRef.current = 0;
-    transcriptRef.current = '';
-    silenceGapCountRef.current = 0;
-    lastSpeechEndAtRef.current = null;
-    isMutedRef.current = false;
     sessionStartRef.current = Date.now();
     isAnalyzingRef.current = true;
     setLiveMetrics(INITIAL_LIVE_METRICS);
-    try {
-      await Voice.start(currentSttLocale());
-    } catch (err) {
-      // Speech recognition failing to start (e.g. permission race, engine
-      // unavailable) shouldn't block the camera/face-detection half of the
-      // session — the final metrics will just show 0 filler words / 0 wpm.
-      console.warn('[videoAnalysisService] Voice.start failed to start speech recognition', err);
-    }
+    // No longer starts a speech recognizer here — see this file's header
+    // comment for why running one concurrently with VisionCamera's
+    // recording was the actual root cause of "no audio in the replay".
   }, []);
 
   // True from the moment startVideoRecording() is called until the first
@@ -720,22 +600,8 @@ export function useVideoInterviewAnalysis() {
     }
   }, []);
 
-  const setMuted = React.useCallback((muted: boolean) => {
-    isMutedRef.current = muted;
-    if (muted) {
-      Voice.stop().catch(() => {});
-    } else if (isAnalyzingRef.current) {
-      Voice.start(currentSttLocale()).catch(() => {});
-    }
-  }, []);
-
   const stopAnalysis = React.useCallback(async (): Promise<VideoAnalysisMetrics> => {
     isAnalyzingRef.current = false;
-    try {
-      await Voice.stop();
-    } catch {
-      // Already stopped/never started — fine to ignore.
-    }
 
     const frames = frameCountRef.current;
     const eyeContactPct = frames > 0 ? Math.round((lookingFrameCountRef.current / frames) * 100) : 0;
@@ -743,32 +609,29 @@ export function useVideoInterviewAnalysis() {
     const avgHeadYaw = frames > 0 ? Math.round((yawSumRef.current / frames) * 10) / 10 : 0;
     const avgHeadPitch = frames > 0 ? Math.round((pitchSumRef.current / frames) * 10) / 10 : 0;
 
-    const {total: fillerWordCount, breakdown: fillerWordBreakdown} = countFillerWords(
-      transcriptRef.current,
-    );
-    const speakingRateWpm = computeSpeakingRate();
-    const silenceGapCount = silenceGapCountRef.current;
-
-    const confidenceScore = computeConfidenceScore({
-      eyeContactPct,
-      smilePct,
-      fillerWordCount,
-      speakingRateWpm,
-      silenceGapCount,
-    });
+    const confidenceScore = computeConfidenceScore({eyeContactPct, smilePct});
 
     return {
       eyeContactPct,
       smilePct,
       avgHeadYaw,
       avgHeadPitch,
-      fillerWordCount,
-      fillerWordBreakdown,
-      speakingRateWpm,
-      silenceGapCount,
+      // No longer measured — see this file's header comment and
+      // computeConfidenceScore's docstring for why (the on-device speech
+      // recognizer that used to produce these was removed because it
+      // corrupted the recording's audio track). Zeroed rather than
+      // omitted to keep VideoAnalysisMetrics' shape unchanged for the
+      // backend/InterviewFeedback — but NOT fed into confidenceScore
+      // above, and NOT rendered in InterviewFeedback.tsx's Video Analysis
+      // section anymore, so a real "0 fillers" is never confused with
+      // "never measured".
+      fillerWordCount: 0,
+      fillerWordBreakdown: {},
+      speakingRateWpm: 0,
+      silenceGapCount: 0,
       confidenceScore,
     };
-  }, [computeSpeakingRate]);
+  }, []);
 
   return {
     device,
@@ -783,7 +646,6 @@ export function useVideoInterviewAnalysis() {
     startVideoRecording,
     stopVideoRecording,
     getRecordingError,
-    setMuted,
     liveMetrics,
     drainFrameBuffer,
   };
