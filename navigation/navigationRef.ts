@@ -20,6 +20,10 @@ export const navigationRef = createNavigationContainerRef<RootStackParamList>();
 // being silently dropped if it happens to launch the app cold.
 type PendingNavigation =
   | {name: 'JobAlertDetails'; params: {job: JobAlertProps}}
+  | {
+      name: 'WebViewScreen';
+      params: {url: string; title?: string; job?: {company: string; role: string; applyUrl: string; companyLogoUrl?: string}};
+    }
   | {name: 'Notification'}
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
@@ -36,6 +40,8 @@ let pendingNavigation: PendingNavigation | null = null;
 function runNavigation(nav: PendingNavigation): void {
   if (nav.name === 'JobAlertDetails') {
     navigationRef.navigate('JobAlertDetails', nav.params);
+  } else if (nav.name === 'WebViewScreen') {
+    navigationRef.navigate('WebViewScreen', nav.params);
   } else if (nav.name === 'Notification') {
     navigationRef.navigate('Notification');
   } else {
@@ -58,6 +64,30 @@ function queueOrNavigate(nav: PendingNavigation): void {
 
 export function navigateToJobAlertDetails(job: JobAlertProps): void {
   queueOrNavigate({name: 'JobAlertDetails', params: {job}});
+}
+
+// Job-alert push taps now land directly on the real job/apply page — see
+// services/pushNotificationService.ts's handleDataTap, and the matching
+// change in src/more/JobAlerts.tsx / src/home/Notification/index.tsx for
+// the in-app-tap equivalents. Used to route to navigateToJobAlertDetails
+// above (metadata-only screen, needing a second "Apply" tap to reach the
+// real posting) — kept that function around since JobAlertDetails is still
+// a valid destination in principle, just no longer the one anything
+// actually navigates to.
+export function navigateToJobAlertWebView(job: JobAlertProps): void {
+  queueOrNavigate({
+    name: 'WebViewScreen',
+    params: {
+      url: job.applyUrl,
+      title: job.title,
+      job: {
+        company: job.company,
+        role: job.title,
+        applyUrl: job.applyUrl,
+        companyLogoUrl: job.companyLogoUrl,
+      },
+    },
+  });
 }
 
 /** Generic fallback destination for any non-job-alert push tap — see

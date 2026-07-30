@@ -3,7 +3,7 @@ import messaging, {FirebaseMessagingTypes} from '@react-native-firebase/messagin
 import notifee, {AndroidImportance, AndroidStyle, EventType} from '@notifee/react-native';
 
 import {JobAlertProps} from 'constants/Types';
-import {navigateToJobAlertDetails, navigateToNotifications} from 'navigation/navigationRef';
+import {navigateToJobAlertWebView, navigateToNotifications} from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 
 // ---------------------------------------------------------------------------
@@ -123,7 +123,11 @@ function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Reco
   if (data?.type === 'job_alert') {
     const job = jobFromPushData(data);
     if (job) {
-      navigateToJobAlertDetails(job);
+      // Straight to the real job/apply page now, not the metadata-only
+      // details screen — see navigationRef.ts's navigateToJobAlertWebView
+      // comment for why (matches the in-app tap behavior in JobAlerts.tsx
+      // and Notification/index.tsx).
+      navigateToJobAlertWebView(job);
       return;
     }
   }

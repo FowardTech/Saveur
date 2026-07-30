@@ -18,6 +18,7 @@ import Flex from 'components/Flex';
 import {NotificationProps} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import * as notificationService from 'services/notificationService';
+import * as jobAlertsService from 'services/jobAlertsService';
 import Applications from './Applications';
 
 // Real in-app notification list — GET /api/v1/notifications /
@@ -59,14 +60,26 @@ const Notification = memo(() => {
 
   const onPressItem = React.useCallback(
     async (item: NotificationProps) => {
-      // Job alerts route straight to the in-app job details screen — see
-      // src/more/JobAlertDetails.tsx, reached the same way whether tapped
-      // here, from the Job Alerts list, or (once push notifications are
-      // wired) an OS push notification tap. That screen marks the alert
-      // read itself, so it's handled before the generic
-      // mark-this-notification-read path below.
+      // Job alerts route straight to the real job/apply page (WebViewScreen)
+      // now, same as src/more/JobAlerts.tsx's own onOpenAlert — used to land
+      // on src/more/JobAlertDetails.tsx first (metadata only, no real
+      // posting text), requiring a second "Apply on {source}" tap to
+      // actually see the job. That extra hop is what "click on the job and
+      // it doesn't take you to the apply page" was describing. Marks the
+      // JobAlert itself read directly here now, since JobAlertDetails isn't
+      // in the loop to do it anymore.
       if (item.type === 'job_alert' && item.jobAlert) {
-        navigate('JobAlertDetails', {job: item.jobAlert});
+        jobAlertsService.markJobAlertsRead([item.jobAlert.id]).catch(() => {});
+        navigate('WebViewScreen', {
+          url: item.jobAlert.applyUrl,
+          title: item.jobAlert.title,
+          job: {
+            company: item.jobAlert.company,
+            role: item.jobAlert.title,
+            applyUrl: item.jobAlert.applyUrl,
+            companyLogoUrl: item.jobAlert.companyLogoUrl,
+          },
+        });
       }
 
       if (item.read) return;
