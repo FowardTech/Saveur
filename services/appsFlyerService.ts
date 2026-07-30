@@ -1,3 +1,4 @@
+import {Platform} from 'react-native';
 import appsFlyer from 'react-native-appsflyer';
 import * as configService from './configService';
 
@@ -35,12 +36,19 @@ let initialized = false;
 export async function init(): Promise<void> {
   if (initialized) return;
   const cfg = configService.getCachedConfig().appsflyer;
-  if (!cfg?.enabled || !cfg.dev_key) return;
+  // AppsFlyer issues a separate dev key per platform app registration —
+  // see AppsFlyerConfig's own doc comment in configService.ts for why this
+  // isn't just `cfg.dev_key` for both. Using the wrong platform's key here
+  // silently breaks install attribution for that platform (the SDK
+  // "succeeds" but reports to the wrong AppsFlyer app), so this picks
+  // deliberately rather than falling back cross-platform.
+  const devKey = Platform.OS === 'ios' ? cfg?.ios_dev_key : cfg?.dev_key;
+  if (!cfg?.enabled || !devKey) return;
   try {
     await new Promise<void>((resolve) => {
       appsFlyer.initSdk(
         {
-          devKey: cfg.dev_key,
+          devKey,
           appId: cfg.ios_app_id || undefined, // iOS only; ignored on Android
           isDebug: false,
           onInstallConversionDataListener: true,

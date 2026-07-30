@@ -61,14 +61,24 @@ export interface MaintenanceConfig {
 
 // AppsFlyer deferred deep linking — "share a job" (see services/
 // jobShareService.ts and App.tsx's onInstallConversionData/
-// onAppOpenAttribution listeners). dev_key alone is enough to init the SDK
-// for install attribution; onelink_id + onelink_subdomain (set by an admin
-// from the AppsFlyer dashboard's OneLink template, Admin > System) are what
-// make generateInviteLink actually produce a deferred link — until both are
-// present, jobShareService falls back to a plain saveur:// share link.
+// onAppOpenAttribution listeners). A dev key alone is enough to init the
+// SDK for install attribution; onelink_id + onelink_subdomain (set by an
+// admin from the AppsFlyer dashboard's OneLink template, Admin > System)
+// are what make generateInviteLink actually produce a deferred link —
+// until both are present, jobShareService falls back to a plain saveur://
+// share link.
+//
+// dev_key / ios_dev_key: AppsFlyer issues a SEPARATE dev key per platform
+// app registration (iOS and Android are two different "apps" in the
+// AppsFlyer dashboard) — dev_key is Android's, ios_dev_key is iOS's. See
+// services/appsFlyerService.ts's init(), which picks the right one by
+// Platform.OS. These used to be a single shared `dev_key` field, which was
+// wrong — the one key that had actually been configured was iOS's, so
+// Android was silently initializing with the wrong platform's key.
 export interface AppsFlyerConfig {
   enabled: boolean;
   dev_key: string;
+  ios_dev_key: string;
   onelink_id: string;
   onelink_subdomain: string;
   ios_app_id: string;
@@ -161,7 +171,7 @@ const DEFAULT_CONFIG: AppConfig = {
     update_url_android: '',
   },
   maintenance: {enabled: false, title: 'Down for maintenance', message: ''},
-  appsflyer: {enabled: false, dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
+  appsflyer: {enabled: false, dev_key: '', ios_dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
   faq: {items: []},
   about: {tagline: '', description: '', contact_email: '', website_url: ''},
   store: {ios_app_store_id: '', android_package_name: 'com.saveur.app'},
