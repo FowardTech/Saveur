@@ -482,7 +482,14 @@ const GenerateResume = memo(() => {
             title={t('more:resume_preview_title', { defaultValue: 'Preview' })}
             accessoryLeft={
               <TouchableOpacity onPress={() => setShowPreview(false)} style={styles.previewCloseBtn}>
-                <Icon pack="eva" name="close-outline" style={globalStyle.icon24} />
+                {/* Was missing a tintColor entirely -- Eva's close-outline SVG
+                    has no fill of its own, so with no tintColor set it falls
+                    back to the SVG spec default of solid black, invisible
+                    against this header's dark background-basic-color-1 in
+                    dark mode. theme['text-basic-color'] tracks the theme
+                    correctly, same fix already applied elsewhere in the app
+                    (see ResumeBuilder.tsx's own close icon). */}
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
               </TouchableOpacity>
             }
           />

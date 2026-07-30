@@ -74,11 +74,18 @@ export async function redeemCode(code: string): Promise<boolean> {
 
 function extractCodeFromUrl(url: string): string | null {
   try {
-    // saveur://referral?code=XXXXXXX (custom scheme URLs don't always parse
-    // cleanly with the standard URL() constructor across RN's JS engines,
-    // so this is a plain regex rather than relying on URL/URLSearchParams).
-    const match = url.match(/[?&]code=([^&]+)/i);
-    return match ? decodeURIComponent(match[1]).trim().toUpperCase() : null;
+    // Two shapes now reach this: saveur://referral?code=XXXXXXX (custom
+    // scheme, query param) and, once Universal Links are live,
+    // https://api.saveurnow.com/r/XXXXXXX (a real https path — see
+    // app/web.py's referral_redirect() on the backend and
+    // caren_family.entitlements' associated-domains entry). Custom scheme
+    // URLs don't always parse cleanly with the standard URL() constructor
+    // across RN's JS engines, so this stays a plain regex rather than
+    // relying on URL/URLSearchParams for either shape.
+    const queryMatch = url.match(/[?&]code=([^&]+)/i);
+    if (queryMatch) return decodeURIComponent(queryMatch[1]).trim().toUpperCase();
+    const pathMatch = url.match(/\/r\/([^/?#]+)/i);
+    return pathMatch ? decodeURIComponent(pathMatch[1]).trim().toUpperCase() : null;
   } catch {
     return null;
   }
@@ -86,9 +93,12 @@ function extractCodeFromUrl(url: string): string | null {
 
 /** Called from App.tsx's deep-link handler for any incoming URL — a no-op
  * for URLs that aren't a referral link (e.g. the existing
- * saveur://stripe-redirect used by the payment sheet). */
+ * saveur://stripe-redirect used by the payment sheet). Checks for either
+ * the word "referral" (custom scheme) OR the "/r/" path segment
+ * (Universal Link) — a bare https://api.saveurnow.com/r/CODE URL doesn't
+ * contain the word "referral" anywhere in it. */
 export async function handleIncomingUrl(url: string | null | undefined): Promise<void> {
-  if (!url || !url.includes('referral')) return;
+  if (!url || (!url.includes('referral') && !/\/r\/[^/?#]+/i.test(url))) return;
   const code = extractCodeFromUrl(url);
   if (code) {
     await AsyncStorage.setItem(EKeyAsyncStorage.pendingReferralCode, code);

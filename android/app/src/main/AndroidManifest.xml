@@ -81,6 +81,24 @@
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="saveur" />
         </intent-filter>
+        <!-- App Links (product request item: shared links open the app
+             directly instead of a browser tab), Android's equivalent of
+             iOS Universal Links (see caren_family.entitlements' matching
+             associated-domains entry). autoVerify="true" makes Android
+             fetch https://api.saveurnow.com/.well-known/assetlinks.json
+             (Saveur-Backend's app/web.py) at install time to confirm this
+             app is allowed to claim these paths; that file's
+             sha256_cert_fingerprints is still blank until the release
+             keystore's fingerprint is set (see ANDROID_SHA256_FINGERPRINT
+             in web.py), so verification will silently fail and Android will
+             fall back to the plain saveur:// scheme above until then;
+             nothing regresses, this just isn't fully live yet. -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" android:host="api.saveurnow.com" />
+        </intent-filter>
       </activity>
     </application>
 </manifest>

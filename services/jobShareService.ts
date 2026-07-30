@@ -20,6 +20,18 @@ import * as jobAlertsService from './jobAlertsService';
 // below, same shape as referralService.ts's pending-code pattern.
 // ---------------------------------------------------------------------------
 
+// Real production domain this backend is deployed at (see Saveur-Backend's
+// app/web.py — GET /j/<id> is served by that same Flask app) — matches the
+// domain declared in ios/caren_family/caren_family.entitlements'
+// associated-domains entry and android/app/src/main/AndroidManifest.xml's
+// autoVerify intent-filter, so a recipient who already has Saveur installed
+// gets taken straight into the app on tap (Universal Links/App Links)
+// instead of ever seeing the /j/<id> browser page — that page (with proper
+// Open Graph tags, so the shared link previews as "A job match from
+// Saveur" rather than a bare URL) is only what a recipient WITHOUT the app
+// installed, or without Universal Links wired up yet, actually sees.
+const WEB_SHARE_BASE_URL = 'https://api.saveurnow.com';
+
 export async function shareJob(job: JobAlertProps): Promise<void> {
   const message = `Check out this job: ${job.title} at ${job.company} — via the Saveur app.`;
   const oneLink = await appsFlyerService.generateJobShareLink(job.id, job.title);
@@ -27,23 +39,37 @@ export async function shareJob(job: JobAlertProps): Promise<void> {
     await Share.share({message: `${message}\n${oneLink}`, url: oneLink}).catch(() => {});
     return;
   }
-  // Fallback: a plain custom-scheme link. Not deferred (does nothing useful
-  // if the recipient doesn't already have the app installed), but still a
-  // real, working link rather than the share button doing nothing while
-  // OneLink setup is incomplete.
-  const fallbackLink = `saveur://job?id=${encodeURIComponent(job.id)}`;
-  await Share.share({message: `${message}\n${fallbackLink}`}).catch(() => {});
+  // Fallback while AppsFlyer OneLink isn't configured yet (still-blank
+  // onelink_id/onelink_subdomain — see appsFlyerService.ts): a real
+  // https:// link to our own /j/<id> page, not a bare saveur://job?id=X
+  // custom-scheme link. Not deferred (a recipient without the app installed
+  // still just lands on the store-fallback page, same limitation as
+  // before), but it DOES get real link-preview branding when pasted
+  // anywhere, and — once Universal Links are live — opens the app directly
+  // for anyone who already has it installed, neither of which a bare custom
+  // scheme link can ever do.
+  const fallbackLink = `${WEB_SHARE_BASE_URL}/j/${encodeURIComponent(job.id)}`;
+  await Share.share({message: `${message}\n${fallbackLink}`, url: fallbackLink}).catch(() => {});
 }
 
-/** Extracts a job id from a plain saveur://job?id=X URL (the non-deferred
- * fallback link above, or App.tsx's existing Linking listener for a warm
- * open when the app was already running). Mirrors referralService.ts's
- * extractCodeFromUrl — plain regex, not URL()/URLSearchParams, since
- * custom-scheme URLs don't always parse cleanly across RN's JS engines. */
+/** Extracts a job id from either a saveur://job?id=X URL (custom scheme —
+ * a warm open while the app's already running, or the OS resolving the
+ * scheme link on the /j/<id> page's own JS redirect) or a real
+ * https://api.saveurnow.com/j/X Universal Link. Mirrors
+ * referralService.ts's extractCodeFromUrl — plain regex, not
+ * URL()/URLSearchParams, since custom-scheme URLs don't always parse
+ * cleanly across RN's JS engines. */
 export function extractJobIdFromUrl(url: string | null | undefined): string | null {
-  if (!url || !url.includes('job')) return null;
-  const match = url.match(/[?&]id=([^&]+)/i);
-  return match ? decodeURIComponent(match[1]).trim() : null;
+  // Gate stays specific (contains "job", or is a /j/ path) rather than
+  // matching a bare "?id=" against ANY incoming URL — this function runs
+  // unconditionally on every deep link App.tsx sees (referral links,
+  // LinkedIn OAuth callback, Stripe redirect), and "id" is generic enough
+  // that a loose match could false-positive against one of those someday.
+  if (!url || (!url.includes('job') && !/\/j\/[^/?#]+/i.test(url))) return null;
+  const queryMatch = url.match(/[?&]id=([^&]+)/i);
+  if (queryMatch) return decodeURIComponent(queryMatch[1]).trim();
+  const pathMatch = url.match(/\/j\/([^/?#]+)/i);
+  return pathMatch ? decodeURIComponent(pathMatch[1]).trim() : null;
 }
 
 export async function setPendingJobId(jobId: string): Promise<void> {

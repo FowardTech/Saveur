@@ -385,7 +385,12 @@ const ResumeBuilder = memo(() => {
                 {t('more:choose_a_document', { defaultValue: 'Choose a document' })}
               </Text>
               <TouchableOpacity onPress={() => setDocumentPickerFor(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Icon pack="eva" name="close-outline" style={globalStyle.icon24} />
+                {/* Same missing-tintColor gap as the picker-sheet fix above
+                    (line ~242) -- this close icon just never got the same
+                    treatment. Defaults to solid black with no tintColor,
+                    invisible against this sheet's dark background in dark
+                    mode. */}
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
               </TouchableOpacity>
             </Flex>
             {isLoadingMyDocuments ? (

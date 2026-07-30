@@ -4,6 +4,7 @@ import {
   TopNavigation,
   StyleService,
   useStyleSheet,
+  useTheme,
   Button,
   Icon,
 } from '@ui-kitten/components';
@@ -26,6 +27,7 @@ import {AuthContext} from '../../../AuthContext';
 const SelectLanguage = memo(() => {
   const {goBack} = useNavigation();
   const {bottom} = useLayout();
+  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['filter', 'common']);
   const {updateProfile} = React.useContext(AuthContext);
@@ -52,7 +54,13 @@ const SelectLanguage = memo(() => {
         title={t('common:language')}
         accessoryLeft={
           <TouchableOpacity activeOpacity={0.54} onPress={goBack}>
-            <Icon pack="assets" name="close" />
+            {/* Was pack="assets" name="close" -- a raster PNG (ic_close.png)
+                with a baked-in fixed dark navy color that can never adapt to
+                theme, invisible against this header's dark background in
+                dark mode. Switched to the eva icon pack (like every other
+                close button in the app) with an explicit theme-aware
+                tintColor. */}
+            <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
           </TouchableOpacity>
         }
       />

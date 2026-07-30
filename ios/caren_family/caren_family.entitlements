@@ -4,5 +4,19 @@
 <dict>
 	<key>aps-environment</key>
 	<string>development</string>
+	<!-- Universal Links (product request item: shared links open the app
+	     directly instead of a browser tab). This entitlement is already
+	     referenced by CODE_SIGN_ENTITLEMENTS in project.pbxproj (same fix
+	     that resolved the push notification entitlement issue), so no
+	     further pbxproj change is needed; Xcode will pick this up on the
+	     next build/reprovision the same way it did for aps-environment.
+	     applinks:api.saveurnow.com must match exactly the domain serving
+	     /.well-known/apple-app-site-association (see Saveur-Backend's
+	     app/web.py); both were confirmed against the app's real
+	     production domain and signed build config (Team ID, bundle id). -->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:api.saveurnow.com</string>
+	</array>
 </dict>
 </plist>
