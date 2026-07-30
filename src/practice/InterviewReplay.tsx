@@ -71,6 +71,34 @@ const InterviewReplay = memo(() => {
 
   const hasVideo = !!replay?.videoUrl && !videoError;
 
+  // Maps the technical reason (see interviewReplayService.ts's
+  // SessionReplay.videoError comment) to one short, human sentence --
+  // never shown verbatim, same reasoning as the interview-start
+  // llm_unavailable fix (services/apiClient.ts): a raw error code/message
+  // is meaningless to a user and just looks broken.
+  const noVideoReason = (() => {
+    const reason = replay?.videoError;
+    if (!reason) return null;
+    if (reason.startsWith('insufficient_storage')) {
+      return t('practice:replay_no_video_storage', {
+        defaultValue: "Your device didn't have enough free storage to save this recording.",
+      });
+    }
+    if (reason.includes('camera-not-ready') || reason.includes('camera_not_ready')) {
+      return t('practice:replay_no_video_camera', {
+        defaultValue: "The camera wasn't ready in time to record this session.",
+      });
+    }
+    if (reason.startsWith('upload_failed')) {
+      return t('practice:replay_no_video_upload', {
+        defaultValue: 'The recording could not finish saving to the server.',
+      });
+    }
+    return t('practice:replay_no_video_generic', {
+      defaultValue: "This session's video couldn't be saved.",
+    });
+  })();
+
   const jumpToAnnotation = (tMs: number) => {
     if (!replay) return;
     // Real seek into the actual recorded video, when there is one — this is
@@ -130,7 +158,7 @@ const InterviewReplay = memo(() => {
             </View>
           ) : (
             <Text category="h9-s" status="placeholder" mb={16}>
-              {t('practice:replay_scope_note', {
+              {noVideoReason ?? t('practice:replay_scope_note', {
                 defaultValue: 'A timeline of your transcript and in-session metrics — no video was recorded for this session.',
               })}
             </Text>

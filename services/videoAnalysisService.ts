@@ -222,6 +222,40 @@ const FACE_DETECTION_OPTIONS: FrameFaceDetectionOptions = {
   cameraFacing: 'front',
 };
 
+// Minimum free device storage (bytes) required before starting a Video-mode
+// recording -- matches the backend's own MAX_VIDEO_BYTES headroom (see
+// Saveur-Backend's app/api/interviews.py). Below this, VisionCamera's own
+// capture/insufficient-storage error is a real risk mid-recording, which
+// used to just silently produce "no video was recorded" with zero
+// indication of why -- see stopVideoRecording's own comment below on why
+// that used to be undiagnosable.
+const MIN_FREE_STORAGE_BYTES = 300 * 1024 * 1024;
+
+/**
+ * Free space on the device, in bytes, or null if it couldn't be determined
+ * (fails open -- an unknown amount is not treated as "not enough").
+ * react-native-blob-util's df() reports completely different shapes per
+ * platform: iOS gives numeric `free`/`total`; Android gives STRING
+ * `internal_free`/`external_free`/`internal_total`/`external_total` (see
+ * RNFetchBlobDf in node_modules/react-native-blob-util/index.d.ts) -- this
+ * normalizes both into one number.
+ */
+async function getFreeStorageBytes(): Promise<number | null> {
+  try {
+    const df = await RNBlobUtil.fs.df();
+    const androidFree = (df as any).internal_free ?? (df as any).external_free;
+    if (androidFree != null) {
+      const n = parseInt(androidFree, 10);
+      return Number.isFinite(n) ? n : null;
+    }
+    if (typeof (df as any).free === 'number') return (df as any).free;
+    return null;
+  } catch (err) {
+    console.warn('[videoAnalysisService] could not check free device storage', err);
+    return null;
+  }
+}
+
 /**
  * Hook that wraps the vision-camera frame processor + face-detector plugin
  * + on-device speech recognition for a single Video-mode interview session.
@@ -259,6 +293,17 @@ export function useVideoInterviewAnalysis() {
     reject: (error: unknown) => void;
   } | null>(null);
   const recordingPromiseRef = React.useRef<Promise<VideoFile> | null>(null);
+  // The real reason the most recent recording attempt failed, if any --
+  // e.g. "insufficient_storage: only 84MB free", "session/camera-not-ready:
+  // <native message>", "upload_failed: <message>". Every failure path in
+  // this file used to just do a console.warn and return null, which is
+  // invisible on a real device with no debugger attached -- "no video was
+  // recorded" was the ONLY signal anyone ever got, for every different
+  // root cause alike, making this genuinely undiagnosable from a bug
+  // report alone. Read via getLastRecordingError() below; the caller
+  // (LiveInterviewSession) reports it to the backend (POST .../video-error)
+  // so it's visible per-session instead of lost on-device.
+  const lastRecordingErrorRef = React.useRef<string | null>(null);
 
   // --- Face-detection aggregation state (refs, not state — this callback
   // can fire many times per second and we don't want a re-render per frame;
@@ -463,6 +508,14 @@ export function useVideoInterviewAnalysis() {
     }
   }, []);
 
+  // True from the moment startVideoRecording() is called until the first
+  // startRecording() attempt (storage check + native call) actually settles
+  // — a synchronous-enough guard against a second call slipping in during
+  // the `await getFreeStorageBytes()` window before recordingPromiseRef
+  // itself gets set (which only happens once the real VisionCamera call is
+  // made). Belt-and-braces: the caller only invokes this once in practice.
+  const isStartingRecordingRef = React.useRef(false);
+
   /**
    * Starts a real on-device video recording via VisionCamera's imperative
    * startRecording() API — separate from (but running alongside) the
@@ -474,39 +527,104 @@ export function useVideoInterviewAnalysis() {
    * already in progress — the caller (LiveInterviewSession) only calls this
    * once, right after the camera view becomes available.
    */
-  const startVideoRecording = React.useCallback(() => {
-    if (!cameraRef.current || recordingPromiseRef.current) return;
-    recordingPromiseRef.current = new Promise<VideoFile>((resolve, reject) => {
-      recordingResultRef.current = {resolve, reject};
-    });
-    try {
-      // videoBitRate is a <Camera> component prop (not a startRecording()
-      // option) — see LiveInterviewSession.tsx's videoBitRate="low" on the
-      // rendered <FaceDetectorCamera>, which is what actually keeps a
-      // multi-minute mock interview's file size upload-able over a typical
-      // mobile connection (talking-head footage, not action, so 'low' still
-      // holds up fine for reviewing your own delivery/body language later).
-      cameraRef.current.startRecording({
-        fileType: 'mp4',
-        videoCodec: 'h264',
-        onRecordingFinished: video => {
-          recordingResultRef.current?.resolve(video);
-          recordingResultRef.current = null;
-        },
-        onRecordingError: error => {
-          console.warn('[videoAnalysisService] recording error', error);
-          recordingResultRef.current?.reject(error);
-          recordingResultRef.current = null;
-        },
-      });
-    } catch (err) {
-      // startRecording() can throw synchronously (e.g. camera not ready,
-      // already recording) in addition to the async onRecordingError path.
-      console.warn('[videoAnalysisService] startRecording threw', err);
-      recordingResultRef.current?.reject(err);
-      recordingResultRef.current = null;
-      recordingPromiseRef.current = null;
+  const startVideoRecording = React.useCallback(async () => {
+    if (!cameraRef.current || recordingPromiseRef.current || isStartingRecordingRef.current) return;
+    isStartingRecordingRef.current = true;
+    lastRecordingErrorRef.current = null;
+
+    // Preflight: a device that's nearly out of storage is a real,
+    // completely silent way for a recording to fail mid-session
+    // (VisionCamera's own capture/insufficient-storage error) — catching
+    // it up front means the user gets one clear reason immediately instead
+    // of a session that quietly produces nothing to watch back later.
+    const freeBytes = await getFreeStorageBytes();
+    if (freeBytes != null && freeBytes < MIN_FREE_STORAGE_BYTES) {
+      lastRecordingErrorRef.current =
+        `insufficient_storage: only ${Math.round(freeBytes / (1024 * 1024))}MB free on device`;
+      console.warn('[videoAnalysisService]', lastRecordingErrorRef.current);
+      isStartingRecordingRef.current = false;
+      return;
     }
+
+    const attempt = (isRetry: boolean) => {
+      if (!cameraRef.current) {
+        isStartingRecordingRef.current = false;
+        return;
+      }
+      recordingPromiseRef.current = new Promise<VideoFile>((resolve, reject) => {
+        recordingResultRef.current = {resolve, reject};
+      });
+      try {
+        // videoBitRate is a <Camera> component prop (not a startRecording()
+        // option) — see LiveInterviewSession.tsx's videoBitRate="low" on the
+        // rendered <FaceDetectorCamera>, which is what actually keeps a
+        // multi-minute mock interview's file size upload-able over a typical
+        // mobile connection (talking-head footage, not action, so 'low' still
+        // holds up fine for reviewing your own delivery/body language later).
+        cameraRef.current.startRecording({
+          fileType: 'mp4',
+          videoCodec: 'h264',
+          onRecordingFinished: video => {
+            isStartingRecordingRef.current = false;
+            recordingResultRef.current?.resolve(video);
+            recordingResultRef.current = null;
+          },
+          onRecordingError: error => {
+            const code = (error as any)?.code as string | undefined;
+            // session/camera-not-ready is a real, previously-unhandled
+            // startup race: the native camera SESSION can still be
+            // finishing its own async configuration for a beat after
+            // React has already committed the <Camera> and this ref has
+            // attached (the two are not the same "ready"). One short-delay
+            // retry covers it instead of giving up on the whole recording
+            // — a session that never gets a SINGLE frame of video from a
+            // race like this is indistinguishable, from the replay
+            // screen's point of view, from a "storage full" or "upload
+            // failed" case, which is exactly why this needed its own
+            // explicit handling rather than folding into the generic
+            // catch-all below.
+            if (!isRetry && code === 'session/camera-not-ready') {
+              console.warn('[videoAnalysisService] camera not ready yet, retrying recording start once', error);
+              recordingResultRef.current = null;
+              recordingPromiseRef.current = null;
+              setTimeout(() => attempt(true), 800);
+              return;
+            }
+            const message = (error as any)?.message ?? String(error);
+            lastRecordingErrorRef.current = code ? `${code}: ${message}` : message;
+            console.warn('[videoAnalysisService] recording error', error);
+            isStartingRecordingRef.current = false;
+            recordingResultRef.current?.reject(error);
+            recordingResultRef.current = null;
+          },
+        });
+      } catch (err) {
+        // startRecording() can throw synchronously (e.g. camera not ready,
+        // already recording) in addition to the async onRecordingError path.
+        const code = (err as any)?.code as string | undefined;
+        if (!isRetry && code === 'session/camera-not-ready') {
+          console.warn('[videoAnalysisService] startRecording threw camera-not-ready, retrying once', err);
+          recordingResultRef.current = null;
+          recordingPromiseRef.current = null;
+          setTimeout(() => attempt(true), 800);
+          return;
+        }
+        console.warn('[videoAnalysisService] startRecording threw', err);
+        lastRecordingErrorRef.current = err instanceof Error ? err.message : String(err);
+        isStartingRecordingRef.current = false;
+        recordingResultRef.current?.reject(err);
+        recordingResultRef.current = null;
+        recordingPromiseRef.current = null;
+      }
+    };
+    attempt(false);
+  }, []);
+
+  /** The reason the most recent recording attempt failed, or null if it
+   * either succeeded or hasn't been attempted. See lastRecordingErrorRef's
+   * own comment above for why this exists. */
+  const getRecordingError = React.useCallback((): string | null => {
+    return lastRecordingErrorRef.current;
   }, []);
 
   /**
@@ -527,13 +645,15 @@ export function useVideoInterviewAnalysis() {
     if (!cameraRef.current || !recordingPromiseRef.current) {
       // Previously a silent, unlogged no-op -- if startVideoRecording()
       // never actually got a recording going for this session (ref not yet
-      // attached, or a synchronous startRecording() throw that isn't
-      // retried), this is the only place that would ever know that
-      // happened, and it said nothing. Logging here at least leaves a trace
-      // when a "no video was recorded" report turns out to be this path
-      // rather than an upload failure (see interviewService.
-      // uploadSessionVideoResilient for that half of the fix).
-      console.warn('[videoAnalysisService] stopVideoRecording called with no recording in progress -- video was never actually started for this session');
+      // attached, insufficient storage, or a startRecording() failure that
+      // exhausted its retry), this is the only place that would ever know
+      // that happened, and it said nothing. lastRecordingErrorRef carries
+      // the real reason now (set by startVideoRecording above) when there
+      // is one; falls back to a generic marker if somehow unset, so the
+      // backend report (see LiveInterviewSession's onEnd) is never blank.
+      const reason = lastRecordingErrorRef.current ?? 'no_recording_in_progress: video was never actually started for this session';
+      console.warn('[videoAnalysisService] stopVideoRecording called with no recording in progress:', reason);
+      lastRecordingErrorRef.current = reason;
       return null;
     }
     const pending = recordingPromiseRef.current;
@@ -592,6 +712,9 @@ export function useVideoInterviewAnalysis() {
       }
       return {path: `file://${persistentPath}`, durationSec: video.duration};
     } catch (err) {
+      const code = (err as any)?.code as string | undefined;
+      const message = (err as any)?.message ?? String(err);
+      lastRecordingErrorRef.current = code ? `${code}: ${message}` : message;
       console.warn('[videoAnalysisService] stopVideoRecording failed', err);
       return null;
     }
@@ -659,6 +782,7 @@ export function useVideoInterviewAnalysis() {
     stopAnalysis,
     startVideoRecording,
     stopVideoRecording,
+    getRecordingError,
     setMuted,
     liveMetrics,
     drainFrameBuffer,

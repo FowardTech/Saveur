@@ -554,7 +554,20 @@ const LiveInterviewSession = memo(() => {
     if (isVideoMode && sessionId) {
       recordedVideoPromise
         .then(async video => {
-          if (!video) return;
+          if (!video) {
+            // The recording itself never produced a file to upload --
+            // report WHY, not just that it happened. getRecordingError()
+            // holds the real native reason (insufficient storage,
+            // session/camera-not-ready surviving its retry, etc.) set by
+            // videoAnalysisService's startVideoRecording/stopVideoRecording
+            // — see that file's lastRecordingErrorRef comment. Previously
+            // this was invisible: a console.warn on-device and nothing
+            // else, which is exactly why repeated "no video was recorded"
+            // reports were impossible to diagnose past guessing.
+            const reason = videoAnalysis.getRecordingError() ?? 'unknown: stopVideoRecording resolved null with no reason set';
+            interviewService.reportVideoError(sessionId, reason).catch(() => {});
+            return;
+          }
           setIsUploadingVideo(true);
           try {
             // uploadSessionVideoResilient enqueues to its AsyncStorage
@@ -566,6 +579,13 @@ const LiveInterviewSession = memo(() => {
             );
           } catch (err) {
             console.warn('[LiveInterviewSession] deferred video upload failed, queued for retry', err);
+            // Not necessarily a permanent failure -- flushPendingVideoUploads
+            // will keep retrying from the queue -- but reporting it now
+            // still gives visibility into how often this path gets hit at
+            // all, and what the error looks like when it does.
+            interviewService.reportVideoError(
+              sessionId, `upload_failed (will retry): ${err instanceof Error ? err.message : String(err)}`,
+            ).catch(() => {});
           } finally {
             setIsUploadingVideo(false);
           }

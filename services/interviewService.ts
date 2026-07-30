@@ -388,6 +388,25 @@ export async function uploadSessionVideo(
   });
 }
 
+/** Diagnostic-only, best-effort report of WHY a Video-mode session ended up
+ * with no recording to upload -- e.g. videoAnalysisService's
+ * getRecordingError() (a VisionCamera error code like
+ * "session/camera-not-ready" or "insufficient_storage: only 84MB free"), or
+ * "upload_failed: <message>" when the recording existed but the upload
+ * itself never succeeded. Every failure in this pipeline used to just be a
+ * console.warn nobody could see on a real device -- see
+ * Saveur-Backend's app/models/interview.py video_error column comment for
+ * the full story. Never throws -- purely informational, so a failure here
+ * must never surface to the caller (LiveInterviewSession is already deep in
+ * best-effort teardown when this gets called). */
+export async function reportVideoError(sessionId: string, reason: string, code?: string): Promise<void> {
+  try {
+    await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/video-error`, {reason, code});
+  } catch (err) {
+    console.warn('[interviewService] reportVideoError itself failed (non-fatal)', err);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Resilient video upload (product bug fix): a user could complete a video
 // interview normally -- transcript/metrics/score all saved fine via

@@ -38,6 +38,14 @@ export interface SessionReplay {
    * none (Voice/Text mode, or a Video-mode upload that hasn't landed yet). */
   videoUrl: string | null;
   videoDurationSec: number | null;
+  /** Raw diagnostic string (e.g. "insufficient_storage: only 84MB free",
+   * "session/camera-not-ready: ...") set by POST .../video-error when this
+   * was a Video-mode session and the client knows why videoUrl is null --
+   * see Saveur-Backend's app/models/interview.py video_error column
+   * comment. This is technical/internal by design; InterviewReplay.tsx maps
+   * it to a short human sentence rather than ever showing it verbatim (same
+   * mistake, same fix, as the "raw provider error in an Alert" bug). */
+  videoError: string | null;
   transcript: ReplayTranscriptEntry[];
   voiceMetrics: ReplayVoiceMetrics | null;
   annotations: ReplayAnnotation[];
@@ -47,6 +55,7 @@ interface WireReplay {
   duration_ms?: number;
   video_url?: string | null;
   video_duration_sec?: number | null;
+  video_error?: string | null;
   transcript?: Array<{ role?: string; text?: string; t_ms?: number }>;
   voice_metrics?: { words_per_minute?: number; filler_count?: number; long_pauses?: number } | null;
   annotations?: Array<{ t_ms?: number; type?: string; label?: string }>;
@@ -58,6 +67,7 @@ export async function getSessionReplay(sessionId: string | number): Promise<Sess
     durationMs: data.duration_ms ?? 0,
     videoUrl: data.video_url ?? null,
     videoDurationSec: data.video_duration_sec ?? null,
+    videoError: data.video_error ?? null,
     transcript: (data.transcript ?? []).map(m => ({
       role: m.role ?? '', text: m.text ?? '', tMs: m.t_ms ?? 0,
     })),
