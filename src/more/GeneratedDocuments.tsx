@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Share, View } from 'react-native';
-import RNBlobUtil from 'react-native-blob-util';
+import { Alert, Platform, Share, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -20,6 +19,12 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import * as generatedDocumentsService from 'services/generatedDocumentsService';
 import { GeneratedDocument, GeneratedDocumentKind } from 'services/generatedDocumentsService';
+import {
+  downloadDocumentFile,
+  saveToAndroidDownloads,
+  mimeForFormat,
+  DocumentUnavailableError,
+} from 'services/documentDownloadService';
 
 // "Generated Documents" (product request item): redownload any resume/CV,
 // cover letter, or tailored resume variant this user has ever exported to
@@ -68,13 +73,35 @@ const GeneratedDocuments = memo(() => {
     try {
       const ext = (doc.format || 'pdf').toLowerCase();
       const filename = `${doc.label || 'Document'}.${ext}`;
-      const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
-      const res = await RNBlobUtil.config({ path: dest, overwrite: true }).fetch('GET', doc.url);
-      await Share.share({ url: `file://${res.path()}`, title: filename });
-    } catch {
+      // Goes through documentDownloadService.downloadDocumentFile, which
+      // validates the response instead of blindly saving whatever comes
+      // back -- this screen redownloads OLDER generated documents, which
+      // are exactly the ones most likely to hit a stale/expired link (e.g.
+      // one exported before a storage fix), so without this check a dead
+      // link here would silently produce an HTML "Not Found" page saved as
+      // if it were the real PDF/DOCX.
+      const tempPath = await downloadDocumentFile(doc.url, filename);
+      if (Platform.OS === 'android') {
+        await saveToAndroidDownloads(tempPath, filename, mimeForFormat(ext));
+        Alert.alert(
+          t('more:resume_download_complete_title', { defaultValue: 'Download complete' }),
+          t('more:resume_download_complete_message', {
+            defaultValue: '{{filename}} was saved to your Downloads folder.',
+            filename,
+          }),
+        );
+      } else {
+        await Share.share({ url: `file://${tempPath}`, title: filename });
+      }
+    } catch (e: any) {
+      const isStale = e instanceof DocumentUnavailableError;
       Alert.alert(
         t('more:download_failed_title', { defaultValue: "Couldn't open this document" }),
-        t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+        isStale
+          ? t('more:document_stale_message', {
+              defaultValue: "This document is too old to redownload. Please generate it again from scratch.",
+            })
+          : t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
       );
     } finally {
       setDownloadingId(null);

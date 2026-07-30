@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { Alert, Platform, Share, View } from 'react-native';
-import RNBlobUtil from 'react-native-blob-util';
 import {
   TopNavigation,
   StyleService,
@@ -20,6 +19,11 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as coverLetterService from 'services/coverLetterService';
+import {
+  downloadDocumentFile,
+  saveToAndroidDownloads,
+  mimeForFormat,
+} from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 
@@ -82,32 +86,22 @@ const CoverLetterGenerator = memo(() => {
         await Share.share({ message: letter, title: filename });
         return;
       }
+      // Goes through documentDownloadService.downloadDocumentFile so a
+      // stale/404'd document URL can never again be silently saved/shared
+      // as if it were a real PDF/DOCX (see that service for the full
+      // explanation) — same fix as GenerateResume.tsx's onDownload.
+      const tempPath = await downloadDocumentFile(url, filename);
       if (Platform.OS === 'android') {
-        await RNBlobUtil.config({
-          addAndroidDownloads: {
-            useDownloadManager: true,
-            notification: true,
-            title: filename,
-            description: t('more:resume_downloading', { defaultValue: 'Downloading {{label}}…', label: filename }),
-            mime:
-              format === 'pdf'
-                ? 'application/pdf'
-                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            mediaScannable: true,
-            path: `${RNBlobUtil.fs.dirs.DownloadDir}/${filename}`,
-          },
-        }).fetch('GET', url);
+        await saveToAndroidDownloads(tempPath, filename, mimeForFormat(format));
         Alert.alert(
-          t('more:resume_download_started_title', { defaultValue: 'Download started' }),
-          t('more:resume_download_started_message', {
-            defaultValue: '{{filename}} is downloading to your Downloads folder.',
+          t('more:resume_download_complete_title', { defaultValue: 'Download complete' }),
+          t('more:resume_download_complete_message', {
+            defaultValue: '{{filename}} was saved to your Downloads folder.',
             filename,
           }),
         );
       } else {
-        const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
-        const res = await RNBlobUtil.config({ path: dest, overwrite: true }).fetch('GET', url);
-        await Share.share({ url: `file://${res.path()}`, title: filename });
+        await Share.share({ url: `file://${tempPath}`, title: filename });
       }
     } catch (e: any) {
       Alert.alert(

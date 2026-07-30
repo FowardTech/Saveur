@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Modal, Platform, Share, View } from 'react-native';
-import RNBlobUtil from 'react-native-blob-util';
+import { Alert, Modal, Share, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -23,6 +22,7 @@ import { globalStyle } from 'styles/globalStyle';
 import * as resumeVariantsService from 'services/resumeVariantsService';
 import { ResumeVariant } from 'services/resumeVariantsService';
 import { toPlainTextResume } from 'services/resumeGenerationService';
+import { downloadDocumentFile } from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 
@@ -108,17 +108,12 @@ const ResumeVariants = memo(() => {
       const { url } = await resumeVariantsService.exportVariant(variant.id, 'pdf');
       if (!url) throw new Error('no_url');
       const filename = `${variant.label || 'Resume'}.pdf`;
-      if (Platform.OS === 'android') {
-        const res = await RNBlobUtil.config({
-          path: `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`,
-          overwrite: true,
-        }).fetch('GET', url);
-        await Share.share({ url: `file://${res.path()}`, title: filename });
-      } else {
-        const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
-        const res = await RNBlobUtil.config({ path: dest, overwrite: true }).fetch('GET', url);
-        await Share.share({ url: `file://${res.path()}`, title: filename });
-      }
+      // Goes through documentDownloadService.downloadDocumentFile so a
+      // stale/404'd export URL can't silently be shared as if it were a
+      // real PDF (see that service) -- falls through to the plain-text
+      // share below on any failure, same as before.
+      const tempPath = await downloadDocumentFile(url, filename);
+      await Share.share({ url: `file://${tempPath}`, title: filename });
     } catch {
       const text = toPlainTextResume(variant.sections, { role: variant.targetRole });
       Share.share({ message: text }).catch(() => {});

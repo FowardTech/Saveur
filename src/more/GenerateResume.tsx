@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { Alert, Modal, Platform, Share, TouchableOpacity, View } from 'react-native';
-import RNBlobUtil from 'react-native-blob-util';
 import {
   TopNavigation,
   StyleService,
@@ -23,6 +22,11 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as resumeGenerationService from 'services/resumeGenerationService';
+import {
+  downloadDocumentFile,
+  saveToAndroidDownloads,
+  mimeForFormat,
+} from 'services/documentDownloadService';
 import { ResumeSections, ResumeStyle, ResumeDocType } from 'services/resumeGenerationService';
 import { AuthContext } from '../../AuthContext';
 
@@ -160,29 +164,25 @@ const GenerateResume = memo(() => {
       // back to sharing the link as plain text there too. Either way the
       // user got a link, never an actual .docx/.pdf. Downloading the real
       // bytes first and handing the OS a local file fixes both platforms.
+      //
+      // Also now goes through documentDownloadService.downloadDocumentFile,
+      // which actually validates the response before treating it as a real
+      // file — the previous direct `addAndroidDownloads`/CacheDir fetch
+      // handed a possibly-404'd URL straight to the OS with no check, so a
+      // stale document link would silently save/share an HTML "Not Found"
+      // page as if it were the real PDF/DOCX. See that service for the full
+      // explanation.
+      const tempPath = await downloadDocumentFile(url, filename);
       if (Platform.OS === 'android') {
         // Android's DownloadManager drops the file straight into the public
         // Downloads folder with a real system download notification — this
         // is what "downloading a file" actually looks like on Android, and
         // sidesteps needing a FileProvider just to share a local file:// uri.
-        await RNBlobUtil.config({
-          addAndroidDownloads: {
-            useDownloadManager: true,
-            notification: true,
-            title: filename,
-            description: t('more:resume_downloading', { defaultValue: 'Downloading {{label}}…', label }),
-            mime:
-              format === 'pdf'
-                ? 'application/pdf'
-                : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-            mediaScannable: true,
-            path: `${RNBlobUtil.fs.dirs.DownloadDir}/${filename}`,
-          },
-        }).fetch('GET', url);
+        await saveToAndroidDownloads(tempPath, filename, mimeForFormat(format));
         Alert.alert(
-          t('more:resume_download_started_title', { defaultValue: 'Download started' }),
-          t('more:resume_download_started_message', {
-            defaultValue: '{{filename}} is downloading to your Downloads folder.',
+          t('more:resume_download_complete_title', { defaultValue: 'Download complete' }),
+          t('more:resume_download_complete_message', {
+            defaultValue: '{{filename}} was saved to your Downloads folder.',
             filename,
           }),
         );
@@ -191,9 +191,7 @@ const GenerateResume = memo(() => {
         // — the real-file equivalent there is downloading to a local temp
         // path, then sharing THAT local file (not the remote url) so
         // "Save to Files" in the share sheet writes actual file bytes.
-        const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
-        const res = await RNBlobUtil.config({ path: dest, overwrite: true }).fetch('GET', url);
-        await Share.share({ url: `file://${res.path()}`, title: filename });
+        await Share.share({ url: `file://${tempPath}`, title: filename });
       }
     } catch (e: any) {
       Alert.alert(
