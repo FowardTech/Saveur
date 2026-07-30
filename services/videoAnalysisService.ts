@@ -14,6 +14,7 @@ import type {
   SpeechResultsEvent,
   SpeechStartEvent,
 } from '@dev-amirzubair/react-native-voice';
+import RNBlobUtil from 'react-native-blob-util';
 import i18n from 'i18next';
 
 import {VideoAnalysisMetrics} from 'constants/Types';
@@ -553,8 +554,43 @@ export function useVideoInterviewAnalysis() {
       // was the one piece of the pipeline still passing a raw path through
       // instead of a real URI. Guarded so this stays a no-op if a future
       // VisionCamera version starts returning file:// already.
-      const path = video.path.startsWith('file://') ? video.path : `file://${video.path}`;
-      return {path, durationSec: video.duration};
+      const rawPath = video.path.startsWith('file://') ? video.path.slice('file://'.length) : video.path;
+      // VisionCamera writes the finished recording into the OS's own
+      // temporary/cache directory (its own TemporaryFile type docs say as
+      // much) — a location both iOS and Android are explicitly allowed to
+      // reclaim under storage pressure, independent of anything this app
+      // does. That's a real, separate cause behind "no video after
+      // feedback" reports surviving the interviewService.
+      // uploadSessionVideoResilient retry-queue fix: a video whose upload
+      // didn't succeed immediately gets queued in AsyncStorage for a later
+      // retry, but if the OS purges this temp file before that retry runs
+      // — entirely possible, sometimes within the same session if the
+      // device is low on storage — flushPendingVideoUploads' own
+      // RNBlobUtil.fs.exists() check (correctly) finds nothing there and
+      // silently drops the entry for good. Moving the finished recording
+      // into the app's own persistent Document directory RIGHT NOW, before
+      // any upload attempt or queueing even happens, takes it out of any
+      // OS-managed cache-eviction path entirely — the file now lives
+      // exactly where every other durable per-user file this app writes
+      // does, and only this app decides when it's deleted (see
+      // interviewService.uploadSessionVideoResilient/flushPendingVideoUploads,
+      // which now delete it themselves once the upload actually succeeds).
+      let persistentPath = rawPath;
+      try {
+        const destDir = `${RNBlobUtil.fs.dirs.DocumentDir}/pending-interview-videos`;
+        if (!(await RNBlobUtil.fs.isDir(destDir).catch(() => false))) {
+          await RNBlobUtil.fs.mkdir(destDir).catch(() => {});
+        }
+        const dest = `${destDir}/${Date.now()}.mp4`;
+        await RNBlobUtil.fs.mv(rawPath, dest);
+        persistentPath = dest;
+      } catch (err) {
+        // Best-effort — if the move fails for any reason, fall back to the
+        // original (still real, just less durable) temp path rather than
+        // losing the recording outright.
+        console.warn('[videoAnalysisService] could not move recording to persistent storage, using temp path', err);
+      }
+      return {path: `file://${persistentPath}`, durationSec: video.duration};
     } catch (err) {
       console.warn('[videoAnalysisService] stopVideoRecording failed', err);
       return null;

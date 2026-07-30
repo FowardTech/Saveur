@@ -445,27 +445,59 @@ async function enqueuePendingVideoUpload(entry: Omit<PendingVideoUpload, 'attemp
   await setPendingVideoQueue(queue);
 }
 
+async function dequeuePendingVideoUpload(sessionId: string): Promise<void> {
+  const queue = await getPendingVideoQueue();
+  const next = queue.filter(q => q.sessionId !== sessionId);
+  if (next.length !== queue.length) await setPendingVideoQueue(next);
+}
+
 /** Same upload, retried a couple of times before giving up -- covers the
  * common case (a brief network blip right as the interview ends) without
  * needing the slower cross-session queue at all. Falls back to queuing the
  * upload for later (rather than throwing) if every attempt fails, so the
  * caller's existing "best-effort, never blocks navigation" posture still
  * holds -- it just no longer means "give up forever" the way a single
- * silently-swallowed attempt did. */
+ * silently-swallowed attempt did.
+ *
+ * The queue entry is now written FIRST, before any upload attempt is even
+ * made -- not just as a last resort once every retry has failed. Root
+ * cause of "still no video after feedback" reports surviving the earlier
+ * version of this fix: LiveInterviewSession.tsx's onEnd() only waits up to
+ * 20s for this whole function (withTimeout) before navigating away, but
+ * this function itself keeps running detached for as long as ~9 minutes
+ * (3 attempts x a 180s upload timeout, plus backoff delays) -- the
+ * assumption was that a detached JS promise just keeps running in the
+ * background regardless of navigation, which is true on a desktop runtime
+ * but NOT reliably true on a real mobile OS: both iOS and Android suspend
+ * a backgrounded app's JS execution, typically within seconds, and a user
+ * has no reason to keep the app foregrounded once they've already been
+ * navigated to Feedback. If that suspension happens before this function's
+ * OWN retry loop ever reaches its last-attempt catch block, the
+ * "enqueue for later" line never runs at all -- the upload is silently
+ * lost forever, not just delayed, with nothing in the persistent queue for
+ * flushPendingVideoUploads to ever pick back up. Enqueueing immediately
+ * means a durable record of "this session's video still needs uploading"
+ * exists on disk before the very first network byte goes out, regardless
+ * of whether the app gets backgrounded a second later. */
 export async function uploadSessionVideoResilient(
   sessionId: string,
   localFileUri: string,
   durationSec?: number,
 ): Promise<void> {
+  await enqueuePendingVideoUpload({sessionId, localFileUri, durationSec});
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
       await uploadSessionVideo(sessionId, localFileUri, durationSec);
+      await dequeuePendingVideoUpload(sessionId);
+      cleanupUploadedFile(localFileUri);
       return;
     } catch (err) {
       const isLastAttempt = attempt === RETRY_DELAYS_MS.length;
       console.warn(`[interviewService] video upload attempt ${attempt + 1} failed`, err);
       if (isLastAttempt) {
-        await enqueuePendingVideoUpload({sessionId, localFileUri, durationSec});
+        // Already enqueued above -- nothing more to do here except let
+        // flushPendingVideoUploads (App.tsx, on every foreground) pick it
+        // up later.
         throw err;
       }
       await sleep(RETRY_DELAYS_MS[attempt]);
@@ -501,7 +533,10 @@ export async function flushPendingVideoUploads(): Promise<void> {
     }
     try {
       await uploadSessionVideo(entry.sessionId, entry.localFileUri, entry.durationSec);
-      // Success -- drop it from the queue, nothing more to do.
+      // Success -- drop it from the queue, and clean up the persistent
+      // local copy (see stopVideoRecording's move-to-DocumentDir comment)
+      // now that the backend has it durably.
+      cleanupUploadedFile(entry.localFileUri);
     } catch (err) {
       console.warn('[interviewService] queued video upload retry failed', err);
       remaining.push({...entry, attempts: entry.attempts + 1});
@@ -509,6 +544,19 @@ export async function flushPendingVideoUploads(): Promise<void> {
   }
 
   await setPendingVideoQueue(remaining);
+}
+
+/** Best-effort delete of a successfully-uploaded local video file — only
+ * ever called after the backend has confirmed receipt, so a failure here
+ * just leaves a harmless leftover file rather than losing anything. Scoped
+ * to this app's own pending-interview-videos folder (see
+ * videoAnalysisService.ts's stopVideoRecording), never the original
+ * VisionCamera temp path, so this can't accidentally try to delete
+ * something outside storage this app actually owns. */
+function cleanupUploadedFile(localFileUri: string): void {
+  const barePath = localFileUri.replace(/^file:\/\//, '');
+  if (!barePath.includes('/pending-interview-videos/')) return;
+  RNBlobUtil.fs.unlink(barePath).catch(() => {});
 }
 
 /**
