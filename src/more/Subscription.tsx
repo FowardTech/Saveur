@@ -596,7 +596,7 @@ const Subscription = memo(() => {
                 </Text>
                 {plan.features.map((feature, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={10}>
-                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                     <Text category="h9-s" ml={10}>{feature}</Text>
                   </Flex>
                 ))}

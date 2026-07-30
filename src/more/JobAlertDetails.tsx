@@ -122,7 +122,7 @@ const JobAlertDetails = memo(() => {
 
           {job.matchedRole ? (
             <Flex justify="flex-start" itemsCenter mb={12}>
-              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, {tintColor: theme['color-primary-500']}]} />
+              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
               <Text category="h9-s" ml={8}>
                 {t('more:matches_target_role', {defaultValue: 'Matches your target role:'})} <Text category="h9-s" bold>{job.matchedRole}</Text>
               </Text>

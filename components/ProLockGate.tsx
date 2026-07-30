@@ -73,7 +73,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
           <Icon
             pack="eva"
             name="lock-outline"
-            style={[globalStyle.icon40, {tintColor: theme['color-primary-500']}]}
+            style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
           <Text category="h5" bold center mt={20}>
             {isPremiumVariant ? 'This is a Pro Premium feature' : 'This is a Pro feature'}

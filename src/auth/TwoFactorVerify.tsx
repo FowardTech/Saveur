@@ -76,11 +76,11 @@ const TwoFactorVerify = memo(() => {
     <Container style={styles.container}>
       <Content padder contentContainerStyle={styles.content}>
         <Flex vertical itemsCenter justify="center">
-          <View style={[styles.iconCircle, {backgroundColor: theme['color-primary-transparent-200']}]}>
+          <View style={[styles.iconCircle, {backgroundColor: theme['background-basic-color-2']}]}>
             <Icon
               pack="eva"
               name="shield-outline"
-              style={[globalStyle.icon40, {tintColor: theme['color-primary-500']}]}
+              style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
             />
           </View>
           <Text category="h5" bold center mt={20}>

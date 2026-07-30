@@ -127,7 +127,7 @@ const PracticalScenarioSetup = memo(() => {
                 <Icon
                   pack="eva"
                   name={TYPE_ICONS[ptype]}
-                  style={[globalStyle.icon16, { tintColor: selected ? theme['color-primary-500'] : theme['text-hint-color'] }]}
+                  style={[globalStyle.icon16, { tintColor: selected ? theme['text-basic-color'] : theme['text-hint-color'] }]}
                 />
                 {/* Was status={selected ? 'primary' : 'basic'} -- 'primary'
                     resolves to text-primary-color, a near-white token meant

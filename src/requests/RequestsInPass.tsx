@@ -213,7 +213,7 @@ const RequestsInPast = memo(() => {
                     <Icon
                       pack="eva"
                       name="checkmark-circle-2"
-                      style={[globalStyle.icon20, {tintColor: theme['color-primary-500']}]}
+                      style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]}
                     />
                   ) : null}
                 </TouchableOpacity>

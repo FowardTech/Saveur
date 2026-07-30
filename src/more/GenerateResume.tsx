@@ -302,7 +302,7 @@ const GenerateResume = memo(() => {
                     ) : null}
                     {e.bullets.map((b, bi) => (
                       <Flex key={bi} justify="flex-start" itemsCenter mb={6}>
-                        <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+                        <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                         <Text category="h9-s" ml={10} style={globalStyle.flexOne}>
                           {b}
                         </Text>
@@ -417,7 +417,7 @@ const GenerateResume = memo(() => {
                       <Icon
                         pack="eva"
                         name="plus-outline"
-                        style={[globalStyle.icon16, { tintColor: theme['color-warning-600'], marginRight: 4 }]}
+                        style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 4 }]}
                       />
                       <Text category="h9" status="warning" bold>
                         {skill}
@@ -594,7 +594,7 @@ function SimpleListSection({ title, items, theme }: { title: string; items: stri
       </Text>
       {items.map((item, i) => (
         <Flex key={i} justify="flex-start" itemsCenter mb={6}>
-          <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+          <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
           <Text category="h9-s" ml={10} style={globalStyle.flexOne}>
             {item}
           </Text>

@@ -98,7 +98,7 @@ const DailyIndustryNews = memo(() => {
                   itemsCenter
                   onPress={() => Linking.openURL(item.sourceUrl).catch(() => {})}
                 >
-                  <Icon pack="eva" name="external-link-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                  <Icon pack="eva" name="external-link-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                   <Text category="h10" status="link" ml={6}>{item.sourceName || item.sourceUrl}</Text>
                 </Flex>
               ) : null}

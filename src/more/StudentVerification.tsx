@@ -331,7 +331,7 @@ const StudentVerification = memo(() => {
                 <Flex key={i} mb={i < 2 ? 14 : 0}>
                   <Icon
                     pack="eva" name={perk.icon}
-                    style={[globalStyle.icon20, { tintColor: theme['color-primary-500'], marginTop: 2 }]}
+                    style={[globalStyle.icon20, { tintColor: theme['text-basic-color'], marginTop: 2 }]}
                   />
                   <View style={{ flex: 1, marginLeft: 10 }}>
                     <Text category="h9" bold>{perk.title}</Text>

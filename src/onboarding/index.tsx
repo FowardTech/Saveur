@@ -122,7 +122,7 @@ const Onboarding = memo(() => {
                       <Icon
                         pack="eva"
                         name="checkmark-outline"
-                        style={{ width: 18, height: 18, tintColor: theme['color-primary-500'] }}
+                        style={{ width: 18, height: 18, tintColor: theme['text-basic-color'] }}
                       />
                     ) : null}
                   </TouchableOpacity>

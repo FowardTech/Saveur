@@ -137,13 +137,13 @@ const EmotionalCoach = memo(() => {
         {latest ? (
           <Layout level="2" style={[styles.card, { marginTop: 24 }]}>
             <Flex justify="flex-start" itemsCenter mb={10}>
-              <Icon pack="eva" name="heart-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+              <Icon pack="eva" name="heart-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
               <Text category="h8" bold ml={8}>{t('more:coach_says', { defaultValue: 'Your coach says' })}</Text>
             </Flex>
             <Text category="h9-s" mb={latest.suggestedActions.length ? 12 : 0}>{latest.aiResponse}</Text>
             {latest.suggestedActions.map((action, i) => (
               <Flex key={i} justify="flex-start" itemsCenter mt={6}>
-                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                 <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{action}</Text>
               </Flex>
             ))}

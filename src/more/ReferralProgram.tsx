@@ -123,7 +123,7 @@ const ReferralProgram = memo(() => {
         ) : summary ? (
           <>
             <Layout level="2" style={styles.heroCard}>
-              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]} />
+              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
               <Text category="h5" bold center mt={16}>
                 {t('more:referral_hero_title', {defaultValue: 'Give {{reward}}, Get {{reward}}', reward: rewardLabel})}
               </Text>

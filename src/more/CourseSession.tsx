@@ -267,7 +267,7 @@ const CourseSession = memo(() => {
         <TopNavigation title={topic} accessoryLeft={<NavigationAction onPress={goBack} />} />
         <Content padder contentContainerStyle={styles.content}>
           <Flex vertical itemsCenter justify="center" style={{ flex: 1, paddingTop: 60 }}>
-            <Icon pack="eva" name="award-outline" style={[globalStyle.icon40, { tintColor: theme['color-success-500'] }]} />
+            <Icon pack="eva" name="award-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
             <Text category="h5" bold center mt={20}>
               {t('more:course_tier_complete', {
                 defaultValue: '{{level}} Tier Complete!',
@@ -384,7 +384,7 @@ const CourseSession = memo(() => {
 
             {mode === 'voice' && isSpeaking ? (
               <Flex justify="flex-start" itemsCenter mb={12}>
-                <Icon pack="eva" name="volume-up-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                <Icon pack="eva" name="volume-up-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                 <Text category="h9" status="link" ml={8}>
                   {t('more:course_speaking', { defaultValue: 'Speaking…' })}
                 </Text>

@@ -102,7 +102,7 @@ const ProfileSrc = memo(() => {
         <UserAvatar uri={profile?.avatarUrl} name={profile?.name} size="giant" style={studentStatus?.studentDiscountActive ? styles.avatarWithBadge : styles.avatar} />
         {studentStatus?.studentDiscountActive ? (
           <View style={[styles.studentBadge, { backgroundColor: theme['color-primary-transparent-200'], alignSelf: 'center' }]}>
-            <Icon pack="eva" name="award-outline" style={{ width: 14, height: 14, tintColor: theme['color-primary-500'] }} />
+            <Icon pack="eva" name="award-outline" style={{ width: 14, height: 14, tintColor: theme['text-basic-color'] }} />
             {/* status="link" (not "primary" -- see the delete-icon fix
                above and ProfileSrc's siblings for why: "primary" resolves
                to near-white, invisible on a light tinted background). */}
@@ -149,11 +149,11 @@ const ProfileSrc = memo(() => {
              same semi-transparent danger tint already used successfully
              elsewhere in the app (e.g. JDAnalyzer's missing-skills chips)
              and keeps real contrast against the icon in both themes. */}
-          <View style={[styles.deleteIconWrap, {backgroundColor: theme['color-danger-transparent-200']}]}>
+          <View style={[styles.deleteIconWrap, {backgroundColor: theme['background-basic-color-2']}]}>
             <Icon
               pack="eva"
               name="trash-2-outline"
-              style={{width: 20, height: 20, tintColor: theme['color-danger-500']}}
+              style={{width: 20, height: 20, tintColor: theme['text-basic-color']}}
             />
           </View>
           <Text ml={24} category="para-m" status="danger">

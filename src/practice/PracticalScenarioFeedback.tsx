@@ -133,7 +133,7 @@ const PracticalScenarioFeedback = memo(() => {
               <Text category="h7" bold mb={12}>{t('find:practical_strengths', { defaultValue: 'What went well' })}</Text>
               {feedback.strengths.map((s, i) => (
                 <Flex key={i} justify="flex-start" itemsCenter mb={8}>
-                  <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+                  <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                   <Text category="h9-s" ml={8} style={globalStyle.flexOne}>{s}</Text>
                 </Flex>
               ))}
@@ -145,7 +145,7 @@ const PracticalScenarioFeedback = memo(() => {
               <Text category="h7" bold mb={12}>{t('find:practical_improvements', { defaultValue: 'Where to grow' })}</Text>
               {feedback.improvements.map((s, i) => (
                 <Flex key={i} justify="flex-start" itemsCenter mb={8}>
-                  <Icon pack="eva" name="alert-circle-outline" style={[globalStyle.icon16, { tintColor: theme['color-warning-500'] }]} />
+                  <Icon pack="eva" name="alert-circle-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                   <Text category="h9-s" ml={8} style={globalStyle.flexOne}>{s}</Text>
                 </Flex>
               ))}

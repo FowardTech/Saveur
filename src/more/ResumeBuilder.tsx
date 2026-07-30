@@ -313,7 +313,7 @@ const ResumeBuilder = memo(() => {
             </Text>
             {atsTips.map((tip, i) => (
               <Layout key={i} level="2" style={styles.tipRow}>
-                <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                 <Text category="h9-s" ml={12} style={globalStyle.flexOne}>
                   {tip}
                 </Text>
@@ -417,7 +417,7 @@ const ResumeBuilder = memo(() => {
                 {myDocuments.map(doc => (
                   <TouchableOpacity key={doc.id} activeOpacity={0.7} onPress={() => onPickFromMyDocuments(doc)}>
                     <Layout level="2" style={styles.pickerRow}>
-                      <Icon pack="assets" name="myPost" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                      <Icon pack="assets" name="myPost" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                       <Text category="h9" ml={10} style={globalStyle.flexOne} numberOfLines={1}>
                         {doc.name ?? 'Untitled file'}
                       </Text>

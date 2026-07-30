@@ -55,7 +55,7 @@ const AboutScreen = () => {
                 itemsCenter
                 mb={about.website_url ? 10 : 0}
                 onPress={() => Linking.openURL(`mailto:${about.contact_email}`).catch(() => {})}>
-                <Icon pack="eva" name="email-outline" style={[globalStyle.icon20, {tintColor: theme['color-primary-500']}]} />
+                <Icon pack="eva" name="email-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
                 <Text category="h9-s" ml={10} status="info">
                   {about.contact_email}
                 </Text>
@@ -63,7 +63,7 @@ const AboutScreen = () => {
             ) : null}
             {about.website_url ? (
               <Flex justify="flex-start" itemsCenter onPress={() => Linking.openURL(about.website_url).catch(() => {})}>
-                <Icon pack="eva" name="globe-outline" style={[globalStyle.icon20, {tintColor: theme['color-primary-500']}]} />
+                <Icon pack="eva" name="globe-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
                 <Text category="h9-s" ml={10} status="info">
                   {about.website_url}
                 </Text>

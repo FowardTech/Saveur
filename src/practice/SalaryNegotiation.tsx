@@ -209,7 +209,7 @@ const SalaryNegotiation = memo(() => {
           <View style={{ marginTop: 24 }}>
             <Layout level="2" style={[styles.offerCard, { borderColor: theme['color-primary-500'], borderWidth: 1 }]}>
               <Flex justify="flex-start" itemsCenter mb={8}>
-                <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
+                <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
                 <Text category="h7" bold ml={8}>{t('find:negotiation_summary', {defaultValue: 'Negotiation Summary'})}</Text>
               </Flex>
               <Text category="h9-s">{critique?.summary}</Text>
@@ -219,7 +219,7 @@ const SalaryNegotiation = memo(() => {
                   <Text category="h9" bold mb={6}>{t('find:negotiation_strengths', {defaultValue: 'What worked'})}</Text>
                   {critique.strengths.map((s, i) => (
                     <Flex key={i} justify="flex-start" itemsCenter mb={4}>
-                      <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
+                      <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                       <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{s}</Text>
                     </Flex>
                   ))}
@@ -231,7 +231,7 @@ const SalaryNegotiation = memo(() => {
                   <Text category="h9" bold mb={6}>{t('find:negotiation_improvements', {defaultValue: 'Try next time'})}</Text>
                   {critique.improvements.map((s, i) => (
                     <Flex key={i} justify="flex-start" itemsCenter mb={4}>
-                      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['color-warning-500'] }]} />
+                      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                       <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{s}</Text>
                     </Flex>
                   ))}

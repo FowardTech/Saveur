@@ -347,7 +347,7 @@ const CodingInterview = memo(() => {
             </Text>
             {review.feedback.map((line, i) => (
               <Flex key={i} justify="flex-start" itemsCenter mt={i === 0 ? 0 : 8}>
-                <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                 <Text category="h9-s" ml={10} style={globalStyle.flexOne}>{line}</Text>
               </Flex>
             ))}

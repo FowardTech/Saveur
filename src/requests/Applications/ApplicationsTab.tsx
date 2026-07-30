@@ -94,7 +94,7 @@ const ApplicationsTab = memo(() => {
           <Icon
             pack="eva"
             name="lock-outline"
-            style={[globalStyle.icon40, {tintColor: theme['color-primary-500']}]}
+            style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
           <Text category="h6" bold center mt={16}>
             {t('request:application_tracker_pro_gate_title', {defaultValue: 'This is a Pro Premium feature'})}

@@ -138,11 +138,11 @@ const AppTour = memo(({visible, onClose}: AppTourProps) => {
               </Text>
             </Flex>
 
-            <View style={[styles.iconWrap, {backgroundColor: theme['color-primary-transparent-200']}]}>
+            <View style={[styles.iconWrap, {backgroundColor: theme['background-basic-color-2']}]}>
               <Icon
                 pack="eva"
                 name={step.icon}
-                style={{width: 32, height: 32, tintColor: theme['color-primary-500']}}
+                style={{width: 32, height: 32, tintColor: theme['text-basic-color']}}
               />
             </View>
 

@@ -164,7 +164,7 @@ const MyDocuments = memo(() => {
         ) : (
           documents.map(doc => (
             <Layout key={doc.id} level="2" style={styles.docRow}>
-              <Icon pack="assets" name="myPost" style={[globalStyle.icon24, {tintColor: theme['color-primary-500']}]} />
+              <Icon pack="assets" name="myPost" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
               <View style={[globalStyle.flexOne, {marginLeft: 12}]}>
                 <Text category="h9" bold numberOfLines={1}>
                   {doc.name ?? t('more:documents_untitled_file', {defaultValue: 'Untitled file'})}
@@ -179,7 +179,7 @@ const MyDocuments = memo(() => {
                 <Spinner size="small" />
               ) : (
                 <TouchableOpacity onPress={() => onDelete(doc)} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                  <Icon pack="eva" name="trash-2-outline" style={[globalStyle.icon20, {tintColor: theme['color-danger-500']}]} />
+                  <Icon pack="eva" name="trash-2-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
                 </TouchableOpacity>
               )}
             </Layout>

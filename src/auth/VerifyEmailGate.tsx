@@ -115,7 +115,7 @@ const VerifyEmailGate = memo(() => {
           <Icon
             pack="eva"
             name="email-outline"
-            style={[globalStyle.icon40, {tintColor: theme['color-primary-500'], marginTop: 24}]}
+            style={[globalStyle.icon40, {tintColor: theme['text-basic-color'], marginTop: 24}]}
           />
           <Text category="h5" bold center mt={20}>
             {t('auth:verify_email_gate_title', {defaultValue: 'Verify your email'})}

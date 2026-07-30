@@ -109,7 +109,7 @@ const CompanyIntelligence = memo(() => {
                 <Text category="h9" bold mb={10}>{t('more:recent_developments', { defaultValue: 'Recent Developments' })}</Text>
                 {intel.recentDevelopments.map((d, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={6}>
-                    <Icon pack="eva" name="radio-button-on-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                    <Icon pack="eva" name="radio-button-on-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                     <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{d}</Text>
                   </Flex>
                 ))}
@@ -137,7 +137,7 @@ const CompanyIntelligence = memo(() => {
                 <Text category="h9" bold mb={10}>{t('more:talking_points', { defaultValue: 'Talking Points To Bring Up' })}</Text>
                 {intel.talkingPoints.map((p, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={6}>
-                    <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-warning-500'] }]} />
+                    <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
                     <Text category="h10" style={{ marginLeft: 8, flex: 1 }}>{p}</Text>
                   </Flex>
                 ))}

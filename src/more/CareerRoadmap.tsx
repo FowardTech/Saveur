@@ -212,7 +212,7 @@ const CareerRoadmap = memo(() => {
 
             {roadmap.isComplete ? (
               <View style={styles.completeBanner}>
-                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                 <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
                   {t('more:roadmap_all_complete', {
                     defaultValue: "You've reached every milestone toward {{role}}!",

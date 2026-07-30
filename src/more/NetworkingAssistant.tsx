@@ -227,7 +227,7 @@ const NetworkingAssistant = memo(() => {
             <Flex justify="space-between" itemsCenter mb={4}>
               <Text category="h7" bold>{contact.name}</Text>
               <TouchableOpacity onPress={() => onDelete(contact.id)}>
-                <Icon pack="assets" name="trash" style={[globalStyle.icon16, { tintColor: theme['color-danger-500'] }]} />
+                <Icon pack="assets" name="trash" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
               </TouchableOpacity>
             </Flex>
             <Text category="h9-s" status="placeholder" mb={8}>

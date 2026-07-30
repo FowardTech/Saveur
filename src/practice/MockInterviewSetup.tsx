@@ -205,7 +205,7 @@ const MockInterviewSetup = memo(() => {
             activeOpacity={0.7}
             onPress={() => navigate('Subscription')}
             style={[styles.freeLimitBanner, { backgroundColor: theme['background-basic-color-2'] }]}>
-            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
             <Text category="h9-s" status={remainingFreeSessions > 0 ? 'basic' : 'danger'} style={globalStyle.flexOne} ml={8}>
               {remainingFreeSessions > 0
                 ? t('find:free_sessions_remaining', {

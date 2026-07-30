@@ -346,7 +346,7 @@ const Chat = memo(() => {
         style={[styles.suggestedCourseChip, { backgroundColor: theme['color-primary-transparent-200'] }]}
         onPress={() => onStartSuggestedCourse(topic)}
       >
-        <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+        <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
         <Text
           category="h10"
           bold

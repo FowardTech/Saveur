@@ -151,7 +151,7 @@ const GeneratedDocuments = memo(() => {
               <Layout key={doc.id} level="2" style={styles.docCard}>
                 <Flex itemsCenter>
                   <View style={[styles.iconCircle, { backgroundColor: theme['background-basic-color-3'] }]}>
-                    <Icon pack="eva" name={meta.icon} style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                    <Icon pack="eva" name={meta.icon} style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                   </View>
                   <Flex vertical style={globalStyle.flexOne} ml={12}>
                     <Text category="h9" bold numberOfLines={1}>{doc.label || t(meta.labelKey, { defaultValue: meta.defaultLabel })}</Text>
@@ -167,12 +167,12 @@ const GeneratedDocuments = memo(() => {
                     <Flex itemsCenter>
                       <Icon
                         pack="eva" name="download-outline"
-                        style={[globalStyle.icon24, { tintColor: theme['color-primary-500'], marginRight: 16 }]}
+                        style={[globalStyle.icon24, { tintColor: theme['text-basic-color'], marginRight: 16 }]}
                         onPress={() => onDownload(doc)}
                       />
                       <Icon
                         pack="eva" name="trash-2-outline"
-                        style={[globalStyle.icon20, { tintColor: theme['color-danger-500'] }]}
+                        style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]}
                         onPress={() => onDelete(doc)}
                       />
                     </Flex>

@@ -26,11 +26,11 @@ const AppGateScreen = memo(({iconName, title, message, actionLabel, onAction}: P
   return (
     <Layout style={styles.root} level="1">
       <View style={styles.body}>
-        <View style={[styles.iconCircle, {backgroundColor: theme['color-primary-transparent-200']}]}>
+        <View style={[styles.iconCircle, {backgroundColor: theme['background-basic-color-2']}]}>
           <Icon
             pack="eva"
             name={iconName}
-            style={[globalStyle.icon40, {tintColor: theme['color-primary-500']}]}
+            style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
         </View>
         <Text category="h5" bold center mt={20}>

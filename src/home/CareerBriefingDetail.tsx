@@ -63,11 +63,11 @@ const CareerBriefingDetail = memo(() => {
           style={[styles.heroCard, { borderColor: theme['color-primary-transparent-300'] }]}
         >
           <Flex justify="flex-start" itemsCenter mb={14}>
-            <View style={[styles.iconBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+            <View style={[styles.iconBadge, { backgroundColor: theme['background-basic-color-2'] }]}>
               <Icon
                 pack="eva"
                 name={isTeaser ? 'bulb-outline' : 'sun-outline'}
-                style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
+                style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]}
               />
             </View>
             <View style={{ marginLeft: 12, flex: 1 }}>

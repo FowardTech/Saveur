@@ -313,7 +313,7 @@ const JobAlerts = memo(() => {
           <Icon
             pack="eva"
             name="info-outline"
-            style={[globalStyle.icon20, {tintColor: theme['color-primary-500'], marginRight: 10}]}
+            style={[globalStyle.icon20, {tintColor: theme['text-basic-color'], marginRight: 10}]}
           />
           <Text category="h10" status="placeholder" style={globalStyle.flexOne}>
             {t('more:job_alerts_retention_notice', {

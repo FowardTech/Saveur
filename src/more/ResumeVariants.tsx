@@ -167,7 +167,7 @@ const ResumeVariants = memo(() => {
                 <Text category="h8" bold style={globalStyle.flexOne}>{variant.label}</Text>
                 <Icon
                   pack="eva" name="trash-2-outline"
-                  style={[globalStyle.icon20, { tintColor: theme['color-danger-500'] }]}
+                  style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]}
                   onPress={() => onDelete(variant)}
                 />
               </Flex>

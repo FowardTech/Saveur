@@ -144,7 +144,7 @@ const WeeklyCareerReport = memo(() => {
                 </Text>
                 {report.highlights.map((h, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={8}>
-                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                     <Text category="h9" style={{ marginLeft: 10, flex: 1 }}>{h}</Text>
                   </Flex>
                 ))}
@@ -158,7 +158,7 @@ const WeeklyCareerReport = memo(() => {
                 </Text>
                 {report.recommendations.map((r, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={8}>
-                    <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                    <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                     <Text category="h9" style={{ marginLeft: 10, flex: 1 }}>{r}</Text>
                   </Flex>
                 ))}

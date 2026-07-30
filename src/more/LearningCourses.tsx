@@ -315,8 +315,8 @@ const LearningCourses = memo(() => {
         {showContinueBanner ? (
           <Layout level="2" style={[styles.customCard, styles.continueCard]}>
             <Flex justify="flex-start" itemsCenter>
-              <View style={[styles.continueIconWrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+              <View style={[styles.continueIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
+                <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
               </View>
               <View style={{ marginLeft: 12, flex: 1 }}>
                 <Text category="h10" status="placeholder">{t('more:continue_where_left_off', { defaultValue: 'Continue where you left off' })}</Text>
@@ -344,7 +344,7 @@ const LearningCourses = memo(() => {
             </Text>
             {certificates.map(c => (
               <Flex key={c.code} justify="flex-start" itemsCenter mb={8}>
-                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                 <View style={{ marginLeft: 10, flex: 1 }}>
                   <Text category="h9" bold>{c.topic}</Text>
                   <Text category="h10" status="placeholder">
@@ -384,7 +384,7 @@ const LearningCourses = memo(() => {
                 <Text category="h9" bold mb={12}>{curriculum.goal}</Text>
                 {curriculum.weeks.every(w => w.completed) ? (
                   <View style={styles.curriculumDoneBox}>
-                    <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+                    <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                     <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
                       {t('more:curriculum_all_weeks_done', { defaultValue: "You've completed every week of this curriculum!" })}
                     </Text>
@@ -521,7 +521,7 @@ const LearningCourses = memo(() => {
                     {getCareerPathLabel(path, t)}
                   </Text>
                   {careerPath === path ? (
-                    <Icon pack="eva" name="checkmark-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                    <Icon pack="eva" name="checkmark-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                   ) : null}
                 </TouchableOpacity>
               ))}
