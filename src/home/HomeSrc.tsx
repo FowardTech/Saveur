@@ -70,7 +70,12 @@ const HomeSrc = memo(() => {
   // Content.tsx), so this is the actual rendered card width, not the full
   // screen width.
   const bannerWidth = width - 48;
-  const bannerHeight = Math.round(bannerWidth * (9 / 16));
+  // Moderately shorter than a full 16:9 banner, per explicit product
+  // direction — matches the bundled default image's own baked-in crop
+  // (assets/images/img_home_banner_ai_coach.jpg is 1920x900, not the
+  // original 1920x1080; see that asset's own history for why) so this
+  // still renders full-bleed with zero letterboxing for the default image.
+  const bannerHeight = Math.round(bannerWidth * (900 / 1920));
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPro } =
