@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, View } from 'react-native';
+import { Alert, AppState, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -36,6 +36,7 @@ import {navigateToJobAlertDetails} from 'navigation/navigationRef';
 import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
+import BadgesModal from 'components/BadgesModal';
 import * as appRatingService from 'services/appRatingService';
 import useModal from 'hooks/useModal';
 import { Images } from 'assets/images';
@@ -378,6 +379,9 @@ const HomeSrc = memo(() => {
   // docs/BACKEND_API_SPEC.md §15), this client-side computation goes away —
   // out of scope for this pass, which only wires streak/XP/leaderboard.
   const [unlockedBadgeIds, setUnlockedBadgeIds] = React.useState<Set<string>>(new Set());
+  // Full-grid modal (components/BadgesModal.tsx) -- see that file's comment
+  // for why this moved out of an always-expanded inline grid on Home.
+  const [isBadgesModalVisible, setIsBadgesModalVisible] = React.useState(false);
 
   // Was a plain useEffect keyed only on [streakDays] — practice history (and
   // therefore the Weekly Practice chart, Sessions This Week / Average Score
@@ -607,90 +611,49 @@ const HomeSrc = memo(() => {
             ))}
           </View>
         ) : null}
-        {/* Orientation card into the AI Career Roadmap — the first thing a
-            new user should be pointed at, same idea as a new student being
-            handed a campus map on day one. Always visible (not hidden for
-            free users): most people land here with a roadmap already built
-            from their signup goal; anyone without one yet still gets a
-            useful destination (build one manually, or the Pro upsell). */}
-        <Flex
-          level="2"
-          style={styles.progressCard}
-          justify="flex-start"
-          itemsCenter
-          onPress={() => navigate('CareerRoadmap')}>
-          <View style={[styles.progressIconWrap, { backgroundColor: theme['color-warning-transparent-200'] ?? theme['background-basic-color-2'] }]}>
-            <Icon pack="assets" name="map" style={[globalStyle.icon24, { tintColor: theme['color-warning-500'] }]} />
-          </View>
-          <View style={globalStyle.flexOne}>
-            <Text category="h7" bold>
-              {t('home:career_roadmap_card_title', { defaultValue: 'Your Career Roadmap' })}
+        {/* Consolidated (UI cleanup pass): these three used to be full-width
+            cards stacked one after another — same tap-through-to-a-screen
+            shape repeated three times, taking up most of a first screenful
+            on their own. One compact row of tiles gets to all three
+            destinations in the same space one of the old cards used to
+            take. Subtitles (roadmap target role, sessions/score, "AI
+            recap") dropped from the tile itself — each destination screen
+            already shows that detail immediately on open. */}
+        <View style={styles.navTilesRow}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.navTile}
+            onPress={() => navigate('CareerRoadmap')}>
+            <View style={[styles.navTileIconWrap, { backgroundColor: theme['color-warning-transparent-200'] ?? theme['background-basic-color-2'] }]}>
+              <Icon pack="assets" name="map" style={[globalStyle.icon20, { tintColor: theme['color-warning-500'] }]} />
+            </View>
+            <Text category="h10" bold center mt={8} numberOfLines={2}>
+              {t('home:career_roadmap_card_title_short', { defaultValue: 'Career Roadmap' })}
             </Text>
-            <Text category="h9-s" status="placeholder" mt={2}>
-              {dashboardRoadmap
-                ? t('home:career_roadmap_card_subtitle_ready', {
-                    defaultValue: 'Your path to {{role}} — see what\'s next.',
-                    role: dashboardRoadmap.targetRole,
-                  })
-                : t('home:career_roadmap_card_subtitle_empty', {
-                    defaultValue: 'Your orientation guide to landing your next role.',
-                  })}
-            </Text>
-          </View>
-          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
-        </Flex>
-        {/* Quick link into MyProgress — was previously only reachable via the
-            AI Coach chat's "View My Progress" attachment action, with no
-            entry point from the Home dashboard itself. Placed right under
-            Today's Goal Tips per explicit request. */}
-        <Flex
-          level="2"
-          style={styles.progressCard}
-          justify="flex-start"
-          itemsCenter
-          onPress={() => navigate('MyProgress')}>
-          <View style={[styles.progressIconWrap, { backgroundColor: theme['color-primary-transparent-200'] ?? theme['background-basic-color-2'] }]}>
-            <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
-          </View>
-          <View style={globalStyle.flexOne}>
-            <Text category="h7" bold>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.navTile}
+            onPress={() => navigate('MyProgress')}>
+            <View style={[styles.navTileIconWrap, { backgroundColor: theme['color-primary-transparent-200'] ?? theme['background-basic-color-2'] }]}>
+              <Icon pack="assets" name="rateFull" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            </View>
+            <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:your_progress', { defaultValue: 'Your Progress' })}
             </Text>
-            <Text category="h9-s" status="placeholder" mt={2}>
-              {t('home:your_progress_subtitle', {
-                defaultValue: '{{sessions}} sessions this week · {{score}}% avg score',
-                sessions: sessionsThisWeek,
-                score: avgScore,
-              })}
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.navTile}
+            onPress={() => navigate('WeeklyCareerReport')}>
+            <View style={[styles.navTileIconWrap, { backgroundColor: theme['color-success-transparent-200'] ?? theme['background-basic-color-2'] }]}>
+              <Icon pack="assets" name="stats" style={[globalStyle.icon20, { tintColor: theme['color-success-500'] }]} />
+            </View>
+            <Text category="h10" bold center mt={8} numberOfLines={2}>
+              {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
             </Text>
-          </View>
-          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
-        </Flex>
-        {/* AI Weekly Career Report — product request item, Pro feature.
-            Destination screen (src/more/WeeklyCareerReport.tsx) shows a
-            ProLockGate for non-Pro users, same convention as the cover
-            letter entry point in ResumeBuilder.tsx. */}
-        <Flex
-          level="2"
-          style={styles.progressCard}
-          justify="flex-start"
-          itemsCenter
-          onPress={() => navigate('WeeklyCareerReport')}>
-          <View style={[styles.progressIconWrap, { backgroundColor: theme['color-success-transparent-200'] ?? theme['background-basic-color-2'] }]}>
-            <Icon pack="assets" name="stats" style={[globalStyle.icon24, { tintColor: theme['color-success-500'] }]} />
-          </View>
-          <View style={globalStyle.flexOne}>
-            <Text category="h7" bold>
-              {t('home:weekly_career_report', { defaultValue: 'Weekly Career Report' })}
-            </Text>
-            <Text category="h9-s" status="placeholder" mt={2}>
-              {t('home:weekly_career_report_subtitle', {
-                defaultValue: 'Your AI-written recap of this week, with tips for next week.',
-              })}
-            </Text>
-          </View>
-          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
-        </Flex>
+          </TouchableOpacity>
+        </View>
         <View style={styles.statsRow}>
           <Layout level="2" style={styles.statCard}>
             <Icon pack="assets" name="stats" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
@@ -839,55 +802,59 @@ const HomeSrc = memo(() => {
           </Flex>
         )}
 
-        <Flex
-          style={styles.ctaCard}
-          justify="flex-start"
-          vertical
-          onPress={() => navigate('MockInterviewSetup', {})}>
-          <Text category="h6" status="control" bold mb={4}>
-            {t('home:ready_to_practice', { defaultValue: 'Ready to practice?' })}
-          </Text>
-          <Text category="h9-s" status="control">
-            {t('home:ready_to_practice_description', {
-              defaultValue: 'Pick an interview type and start a mock session.',
-            })}
-          </Text>
-        </Flex>
+        {/* Dropped the standalone "Ready to practice?" CTA banner (UI
+            cleanup pass) — it pushed the same "go start an interview"
+            action as both the Upcoming Session card right above it and the
+            dedicated Practice tab in the bottom nav (navigation/
+            MainBottomTab.tsx's "Find" tab, repurposed as the practice hub).
+            Three entry points to the same action on one screen was noise,
+            not helpfulness. */}
 
+        {/* Compact preview (UI cleanup pass) — was an always-expanded grid
+            of every single badge (10 of them, locked and unlocked alike),
+            roughly 3-4 full rows on every Home visit whether or not the
+            user cared to look. Now a single tappable row showing just the
+            unlocked ones (or, if none yet, the first few to work toward) —
+            "See all" opens the full grid in BadgesModal. */}
         <Flex justify="space-between" itemsCenter mt={32} mb={16}>
           <Text category="h6" bold>
             {t('home:badges', { defaultValue: 'Badges' })}
           </Text>
-          <Text category="h9-s" status="placeholder">
-            {unlockedBadgeIds.size}/{DATA_BADGES.length}
+          <Text category="h9" status="link" bold onPress={() => setIsBadgesModalVisible(true)}>
+            {t('home:badges_count_see_all', {
+              defaultValue: '{{unlocked}}/{{total}} · See all',
+              unlocked: unlockedBadgeIds.size,
+              total: DATA_BADGES.length,
+            })}
           </Text>
         </Flex>
-        <View style={styles.badgesGrid}>
-          {DATA_BADGES.map(badge => {
-            const unlocked = unlockedBadgeIds.has(badge.id);
-            return (
-              <View key={badge.id} style={[styles.badgeCard, !unlocked && styles.badgeCardLocked]}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={styles.badgesPreviewRow}
+          onPress={() => setIsBadgesModalVisible(true)}>
+          {(DATA_BADGES.filter(b => unlockedBadgeIds.has(b.id)).length > 0
+            ? DATA_BADGES.filter(b => unlockedBadgeIds.has(b.id))
+            : DATA_BADGES
+          )
+            .slice(0, 6)
+            .map(badge => {
+              const unlocked = unlockedBadgeIds.has(badge.id);
+              return (
                 <View
+                  key={badge.id}
                   style={[
-                    styles.badgeIconWrap,
+                    styles.badgePreviewIconWrap,
                     { backgroundColor: unlocked ? theme['color-primary-500'] : theme['background-basic-color-3'] },
                   ]}>
                   <Icon
                     pack={badge.iconPack ?? 'assets'}
                     name={badge.icon}
-                    style={[globalStyle.icon20, { tintColor: unlocked ? theme['text-primary-color'] : theme['text-hint-color'] }]}
+                    style={[globalStyle.icon16, { tintColor: unlocked ? theme['text-primary-color'] : theme['text-hint-color'] }]}
                   />
                 </View>
-                <Text category="h10" bold center mt={8} numberOfLines={2} status={unlocked ? 'basic' : 'placeholder'}>
-                  {t(`home:badge_${badge.id}_title`, { defaultValue: badge.title })}
-                </Text>
-                <Text category="h10" center mt={2} status="placeholder" numberOfLines={2}>
-                  {t(`home:badge_${badge.id}_desc`, { defaultValue: badge.description })}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
+              );
+            })}
+        </TouchableOpacity>
 
         <Flex justify="space-between" itemsCenter mt={32} mb={16}>
           <Text category="h6" bold>
@@ -969,6 +936,11 @@ const HomeSrc = memo(() => {
       />
       <AppTour visible={showTour} onClose={onCloseTour} />
       <AppRatingModal visible={showRatingPrompt} onSubmit={onSubmitRating} onDismiss={onDismissRating} />
+      <BadgesModal
+        visible={isBadgesModalVisible}
+        unlockedBadgeIds={unlockedBadgeIds}
+        onClose={() => setIsBadgesModalVisible(false)}
+      />
     </Container>
   );
 });
@@ -1029,18 +1001,25 @@ const themedStyles = StyleService.create({
   verifyBannerText: {
     marginHorizontal: 10,
   },
-  progressCard: {
-    borderRadius: 16,
-    padding: 16,
+  navTilesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 16,
   },
-  progressIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  navTile: {
+    width: '31%',
+    borderRadius: 16,
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 6,
+    backgroundColor: 'background-basic-color-2',
+  },
+  navTileIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
   },
   statsRow: {
     flexDirection: 'row',
@@ -1064,34 +1043,17 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
   },
-  ctaCard: {
-    borderRadius: 16,
-    padding: 24,
-    marginTop: 32,
-    backgroundColor: 'button-basic-color',
-    ...globalStyle.shadowBtn,
-  },
-  badgesGrid: {
+  badgesPreviewRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  badgeCard: {
-    width: '31%',
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 8,
-    marginBottom: 12,
+    padding: 16,
+    gap: 10,
   },
-  badgeCardLocked: {
-    opacity: 0.55,
-  },
-  badgeIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  badgePreviewIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
