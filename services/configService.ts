@@ -114,6 +114,10 @@ export interface AboutConfig {
 export interface StoreConfig {
   ios_app_store_id: string;
   android_package_name: string;
+  // Full App Store listing URL (Admin > System > App Store / Play Store
+  // listing) — reference-only today, nothing on mobile reads this yet
+  // (utils/appRating.ts builds its deep link from ios_app_store_id above).
+  ios_app_store_url: string;
 }
 
 // Student verification eligibility + discount (see src/more/StudentVerification.tsx
@@ -174,7 +178,7 @@ const DEFAULT_CONFIG: AppConfig = {
   appsflyer: {enabled: false, dev_key: '', ios_dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
   faq: {items: []},
   about: {tagline: '', description: '', contact_email: '', website_url: ''},
-  store: {ios_app_store_id: '', android_package_name: 'com.saveur.app'},
+  store: {ios_app_store_id: '', android_package_name: 'com.saveur.app', ios_app_store_url: ''},
   student_eligibility: {eligible_countries: [], discount_percent: 3},
 };
 
