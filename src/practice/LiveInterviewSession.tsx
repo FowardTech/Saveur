@@ -171,6 +171,32 @@ const LiveInterviewSession = memo(() => {
   const [videoSpeechSource, setVideoSpeechSource] = React.useState<speechService.ElevenLabsAudioSource | null>(null);
   const [videoSpeechPaused, setVideoSpeechPaused] = React.useState(true);
   const videoSpeechResolveRef = React.useRef<(() => void) | null>(null);
+  // True once videoAnalysis.startVideoRecording() has actually been CALLED
+  // (see the effect below) — gates the very first question's speakSmart()
+  // call in Video mode (see the "speak each question" effect) so
+  // VisionCamera's own activateAudioSession()/.playAndRecord category
+  // switch, which happens synchronously inside startRecording(), always
+  // wins the race against any playback (ElevenLabs-via-RNV OR the
+  // on-device fallback) trying to use the audio session first. Without
+  // this, both effects fire independently on mount with no ordering
+  // between them — the "speak the first question" effect doesn't wait on
+  // anything camera-related at all, while startVideoRecording depends on
+  // an async permission check + the camera device resolving, so it's
+  // entirely possible (and, given a network fetch for the ElevenLabs audio
+  // takes real time, quite likely) for TTS/ElevenLabs playback to already
+  // be underway by the time VisionCamera activates ITS OWN session and
+  // switches category out from under it -- the exact same class of
+  // mid-utterance category-switch conflict already diagnosed and fixed for
+  // Tts.setDucking (see speechService.ts's preserveRecordingSession
+  // comment), just triggered by mount-order timing instead of an explicit
+  // per-question call. This is the most likely explanation for recordings
+  // made on iOS coming back with NO audio track at all, confirmed by
+  // cross-device testing (an iOS-recorded file has no audio on ANY
+  // player, while an Android-recorded file plays fine even on iOS) --
+  // i.e. the audio was never captured in the first place, not a playback
+  // issue, which points squarely at something disrupting VisionCamera's
+  // capture-time session setup, and this mount-order race is exactly that.
+  const [videoRecordingStarted, setVideoRecordingStarted] = React.useState(false);
 
   // Stops whatever the hidden player is doing and drops its source —
   // called both when a new utterance's effect gets cancelled/superseded
@@ -398,6 +424,26 @@ const LiveInterviewSession = memo(() => {
   // silent (the user still answers on camera as before).
   React.useEffect(() => {
     if (!isVoiceMode && !isVideoMode) return;
+    // Video mode: don't speak until startVideoRecording() has actually been
+    // called (see videoRecordingStarted's own comment above) — otherwise
+    // this fires on mount with no ordering guarantee against VisionCamera's
+    // own session activation, which is the most likely cause of iOS
+    // recordings coming back with no audio track at all. Voice mode has no
+    // camera/recording session to race against, so it's unaffected.
+    //
+    // Also unblocks (rather than waiting forever) once it's clear recording
+    // is simply never going to happen at all — camera/mic permission was
+    // denied, or this device has no front camera (videoAnalysis.device
+    // resolves to undefined and stays that way) — either is a dead end
+    // videoRecordingStarted would otherwise never flip true for, which
+    // would strand the interview on "AI speaking" forever with nothing
+    // ever actually said. Both states are already surfaced to the user via
+    // their own dedicated UI branches below (denied/no-camera messaging),
+    // so there's nothing left to protect by staying silent too.
+    const videoRecordingWontHappen =
+      cameraPermissionState === 'denied' ||
+      (cameraPermissionState === 'granted' && !videoAnalysis.device);
+    if (isVideoMode && !videoRecordingStarted && !videoRecordingWontHappen) return;
     let cancelled = false;
     setIsAiSpeaking(true);
     if (isVoiceMode) speechToText.reset();
@@ -420,7 +466,7 @@ const LiveInterviewSession = memo(() => {
       stopVideoModeSpeech();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [question, isVoiceMode, isVideoMode]);
+  }, [question, isVoiceMode, isVideoMode, videoRecordingStarted, cameraPermissionState, videoAnalysis.device]);
 
   // Video mode only: request real camera+mic permission, then kick off the
   // face-detection/speech-recognition pipeline once granted.
@@ -454,6 +500,13 @@ const LiveInterviewSession = memo(() => {
   React.useEffect(() => {
     if (!isVideoMode || cameraPermissionState !== 'granted' || !videoAnalysis.device) return;
     videoAnalysis.startVideoRecording();
+    // Flips the gate the "speak each question" effect checks (see
+    // videoRecordingStarted's own comment) — startRecording()'s native call
+    // (and the activateAudioSession()/.playAndRecord switch inside it)
+    // happens synchronously the moment this line runs, so anything gated on
+    // this flag is guaranteed to only attempt playback AFTER that, never
+    // racing it.
+    setVideoRecordingStarted(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideoMode, cameraPermissionState, videoAnalysis.device]);
 
