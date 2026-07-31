@@ -107,6 +107,43 @@ function resolveAudioUrl(audioUrl: string): string {
   return /^https?:\/\//i.test(audioUrl) ? audioUrl : `${API_BASE_URL}${audioUrl}`;
 }
 
+export interface ElevenLabsAudioSource {
+  uri: string;
+  headers: Record<string, string>;
+}
+
+/**
+ * Same backend call as speakRemote below (POST /api/v1/tts/speak), but
+ * returns the resolved, auth-header-ready audio source instead of playing
+ * it — for Video-mode's own playback path (see
+ * src/practice/LiveInterviewSession.tsx's VideoModeSpeechPlayer), which
+ * plays this through react-native-video instead of react-native-nitro-sound
+ * specifically so it can pass disableAudioSessionManagement. nitro-sound's
+ * startPlayer() takes no such option (see speak()'s own comment on
+ * preserveRecordingSession for the full history of why that mattered), so
+ * it could never be made safe to use DURING an active VisionCamera
+ * recording the way react-native-video now can be.
+ *
+ * Returns null (never throws) on any failure — missing/failed request or
+ * missing audio_url — so the caller can fall back to on-device TTS instead
+ * of the interview going silent.
+ */
+export async function fetchElevenLabsAudioUrl(text: string, language: string): Promise<ElevenLabsAudioSource | null> {
+  try {
+    const {data} = await apiClient.post<TtsSpeakWire>('/api/v1/tts/speak', {text, language});
+    if (!data?.audio_url) return null;
+    const uri = resolveAudioUrl(data.audio_url);
+    const user = auth().currentUser;
+    const headers: Record<string, string> = {};
+    if (user) {
+      headers.Authorization = `Bearer ${await user.getIdToken()}`;
+    }
+    return {uri, headers};
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST /api/v1/tts/speak — asks the backend to synthesize `text` via
  * ElevenLabs and hands back a URL to the generated audio. Plays it via

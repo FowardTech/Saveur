@@ -17,6 +17,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { Camera as FaceDetectorCamera } from 'react-native-vision-camera-face-detector';
+import Video from 'react-native-video';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
@@ -149,6 +150,66 @@ const LiveInterviewSession = memo(() => {
   const { isRecording, seconds, start, stop } = useFakeRecordingTimer();
   const [isMuted, setIsMuted] = React.useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = React.useState(true);
+
+  // Video-mode ElevenLabs playback ("the AI voice defaults to the device
+  // voice instead of ElevenLabs during a video interview") — the AI's
+  // speech used to be forced onto react-native-tts's on-device voice for
+  // the entire Video-mode interview (see speechService.ts's speak(),
+  // preserveRecordingSession) because react-native-nitro-sound (the
+  // default ElevenLabs playback engine) has NO option to opt out of
+  // managing the shared iOS AVAudioSession, and device logs from a real
+  // repro confirmed it fighting VisionCamera's concurrent .playAndRecord
+  // recording session for control of it — the confirmed root cause of
+  // recorded video interviews coming back with no audio track.
+  // react-native-video (already used for interview replay, see
+  // InterviewReplay.tsx) DOES expose disableAudioSessionManagement, so it
+  // can play the exact same ElevenLabs audio file without touching
+  // VisionCamera's session at all. This hidden player (rendered at the
+  // bottom of this component's JSX) is that path — Video mode only; Voice
+  // mode keeps using speechService.speak()'s normal nitro-sound path
+  // unchanged, since there's no camera recording to conflict with there.
+  const [videoSpeechSource, setVideoSpeechSource] = React.useState<speechService.ElevenLabsAudioSource | null>(null);
+  const [videoSpeechPaused, setVideoSpeechPaused] = React.useState(true);
+  const videoSpeechResolveRef = React.useRef<(() => void) | null>(null);
+
+  // Stops whatever the hidden player is doing and drops its source —
+  // called both when a new utterance's effect gets cancelled/superseded
+  // (mirrors speechService.stopSpeaking()'s role in the same cleanup) and
+  // isn't needed for a resolved playback (onEnd/onError below already
+  // clear the ref themselves).
+  const stopVideoModeSpeech = React.useCallback(() => {
+    videoSpeechResolveRef.current = null;
+    setVideoSpeechPaused(true);
+    setVideoSpeechSource(null);
+  }, []);
+
+  const speakVideoMode = React.useCallback(async (text: string): Promise<void> => {
+    const source = await speechService.fetchElevenLabsAudioUrl(text, i18n.language);
+    if (!source) {
+      // Fetch failed (offline, backend/ElevenLabs error, timeout) — same
+      // safety net Video mode has always had: the on-device voice, not a
+      // silent interview.
+      await speechService.speak(text, i18n.language, {preserveRecordingSession: true});
+      return;
+    }
+    return new Promise<void>(resolve => {
+      videoSpeechResolveRef.current = resolve;
+      setVideoSpeechSource(source);
+      setVideoSpeechPaused(false);
+    });
+  }, []);
+
+  // Single entry point every call site below uses instead of calling
+  // speechService.speak() directly — picks the right engine per mode so
+  // none of the three speaking call sites (question, acknowledgment,
+  // closing statement) need their own isVideoMode branching.
+  const speakSmart = React.useCallback(async (text: string): Promise<void> => {
+    if (isVideoMode) {
+      await speakVideoMode(text);
+    } else {
+      await speechService.speak(text, i18n.language);
+    }
+  }, [isVideoMode, speakVideoMode]);
   const [isEnding, setIsEnding] = React.useState(false);
   // Deliberately separate from `isEnding` (which flips true immediately on
   // "End Interview", before the real video file has finished being
@@ -264,7 +325,7 @@ const LiveInterviewSession = memo(() => {
         // firing-and-forgetting) is what keeps it from being cut off.
         setIsAiSpeaking(true);
         try {
-          await speechService.speak(pickAcknowledgment(), i18n.language, {preserveRecordingSession: isVideoMode});
+          await speakSmart(pickAcknowledgment());
         } catch {
           // best-effort — a TTS hiccup shouldn't block the interview
         }
@@ -342,7 +403,7 @@ const LiveInterviewSession = memo(() => {
     if (isVoiceMode) speechToText.reset();
     (async () => {
       try {
-        await speechService.speak(question, i18n.language, {preserveRecordingSession: isVideoMode});
+        await speakSmart(question);
       } catch {
         // best-effort — a TTS failure shouldn't strand the session with
         // isAiSpeaking stuck true forever
@@ -356,6 +417,7 @@ const LiveInterviewSession = memo(() => {
     return () => {
       cancelled = true;
       speechService.stopSpeaking();
+      stopVideoModeSpeech();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [question, isVoiceMode, isVideoMode]);
@@ -451,7 +513,7 @@ const LiveInterviewSession = memo(() => {
       if (isVoiceMode || isVideoMode) {
         setIsAiSpeaking(true);
         try {
-          await speechService.speak(CLOSING_STATEMENT(), i18n.language, {preserveRecordingSession: isVideoMode});
+          await speakSmart(CLOSING_STATEMENT());
         } catch {
           // best-effort — still end the session even if the closing line
           // fails to play
@@ -1026,6 +1088,35 @@ const LiveInterviewSession = memo(() => {
           <View style={[styles.recDot, { backgroundColor: theme['color-danger-100'] }]} />
         )}
       </View>
+      {/* Hidden ElevenLabs player for Video mode — see videoSpeechSource's
+         own comment above. 1x1/opacity 0 rather than 0x0: some players
+         skip decoding entirely for a zero-size view, since that's
+         normally a signal nothing is ever going to be visible. Never
+         rendered in Voice/Text mode (videoSpeechSource only ever gets set
+         from speakVideoMode, which speakSmart only calls in Video mode). */}
+      {videoSpeechSource ? (
+        <Video
+          source={{ uri: videoSpeechSource.uri, headers: videoSpeechSource.headers }}
+          paused={videoSpeechPaused}
+          disableAudioSessionManagement
+          ignoreSilentSwitch="ignore"
+          style={styles.hiddenSpeechPlayer}
+          onEnd={() => {
+            setVideoSpeechPaused(true);
+            videoSpeechResolveRef.current?.();
+            videoSpeechResolveRef.current = null;
+          }}
+          onError={() => {
+            // Playback failed after all — resolve anyway so the interview
+            // moves on rather than hanging; the question was already
+            // fetched successfully so there's no fallback-to-on-device
+            // retry here (same "don't strand isAiSpeaking" posture as
+            // every other catch block around speakSmart's call sites).
+            videoSpeechResolveRef.current?.();
+            videoSpeechResolveRef.current = null;
+          }}
+        />
+      ) : null}
     </Container>
   );
 });
@@ -1036,6 +1127,18 @@ const ORB_SIZE = 200;
 const HALO_SIZE = ORB_SIZE * 1.6;
 
 const styles = StyleSheet.create({
+  // Hidden ElevenLabs player, Video mode only — see videoSpeechSource's
+  // comment near the top of this component. 1x1 + opacity 0 (not 0x0):
+  // some native video players treat a zero-size view as "never going to
+  // be visible" and skip decoding entirely, which would silently break
+  // this the exact same way the original bug looked (audio track exists,
+  // nothing audible).
+  hiddenSpeechPlayer: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    opacity: 0,
+  },
   container: {
     // No hardcoded background here anymore — Container (ui-kitten Layout)
     // already picks up background-basic-color-1 from the active theme, so
