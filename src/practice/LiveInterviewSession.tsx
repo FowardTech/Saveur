@@ -536,16 +536,54 @@ const LiveInterviewSession = memo(() => {
   // this effect runs, the ref from that same commit is guaranteed attached.
   // This is the fix for "Interview Replay isn't real video" — everything
   // else in this screen already worked without it.
+  //
+  // ROOT CAUSE OF "iOS records video but no audio" (found by reading
+  // VisionCamera's native iOS source, not guessing):
+  // - CameraSession.swift's configure() dispatches configureAudioSession()
+  //   onto CameraQueues.audioQueue.async — a SEPARATE serial queue from the
+  //   one used for video/session setup.
+  // - CameraSession+Video.swift's startRecording() runs on
+  //   CameraQueues.cameraQueue.async and only initializes an audio track if
+  //   `self.audioOutput`/`self.audioDeviceInput` are already non-nil — and
+  //   those two properties are ONLY set inside configureAudioSession(), on
+  //   the other queue.
+  // - cameraQueue and audioQueue have NO ordering guarantee between them.
+  //   Video setup always survives because configure()'s video work and
+  //   startRecording() both run on the same cameraQueue (FIFO), but if
+  //   startRecording() fires before the audioQueue's configureAudioSession()
+  //   task has finished, the `if let audioOutput = ..., let audioInput = ...`
+  //   guard in startRecording() silently fails — no error thrown, no
+  //   callback fired — and recording proceeds video-only. This matches
+  //   every observed symptom exactly (100% reproducible, zero surfaced
+  //   error) and explains why the earlier permission-timing fix alone
+  //   wasn't enough: permission being granted doesn't mean
+  //   configureAudioSession() has actually FINISHED running on its own
+  //   queue yet.
+  // - VisionCamera exposes no JS callback for "audio session configuration
+  //   finished", so the safe fix (no touching the `audio` prop again, no
+  //   repeat of the earlier hot-reconfiguration regression) is a fixed
+  //   delay between the Camera mounting and calling startRecording(),
+  //   giving the audioQueue's task time to complete first. Adding/removing
+  //   an AVCaptureDeviceInput + AVCaptureAudioDataOutput is normally a
+  //   low-tens-of-milliseconds operation, so 600ms is a generous safety
+  //   margin, not a fragile guess.
   React.useEffect(() => {
     if (!isVideoMode || cameraPermissionState !== 'granted' || !videoAnalysis.device) return;
-    videoAnalysis.startVideoRecording();
-    // Flips the gate the "speak each question" effect checks (see
-    // videoRecordingStarted's own comment) — startRecording()'s native call
-    // (and the activateAudioSession()/.playAndRecord switch inside it)
-    // happens synchronously the moment this line runs, so anything gated on
-    // this flag is guaranteed to only attempt playback AFTER that, never
-    // racing it.
-    setVideoRecordingStarted(true);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      if (cancelled) return;
+      videoAnalysis.startVideoRecording();
+      // Flips the gate the "speak each question" effect checks (see
+      // videoRecordingStarted's own comment) — startRecording()'s native
+      // call happens synchronously the moment this line runs, so anything
+      // gated on this flag is guaranteed to only attempt playback AFTER
+      // that, never racing it.
+      setVideoRecordingStarted(true);
+    }, 600);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isVideoMode, cameraPermissionState, videoAnalysis.device]);
 
