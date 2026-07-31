@@ -1,33 +1,50 @@
 // ---------------------------------------------------------------------------
 // A fixed, curated set of professional-looking profile avatars users can pick
-// from in Edit Profile (product request item — the app previously only ever
-// showed the user's own uploaded/OAuth photo, or plain initials; there was no
-// way to pick a stand-in avatar at all).
+// from in Edit Profile and at signup (product request item — the app
+// previously only ever showed the user's own uploaded/OAuth photo, or plain
+// initials; there was no way to pick a stand-in avatar at all).
 //
 // Rendered via DiceBear's free, keyless HTTP avatar API (same approach and
 // base URL as the backend's leaderboard avatars — see Saveur-Backend's
-// app/services/avatar_service.py) using the "personas" style: flat-design,
-// half-body characters with subtle skin shading — DiceBear's own description.
-// Deliberately NOT one of the cartoonish/childlike styles (e.g. "adventurer",
-// "big-smile", "bottts") the leaderboard defaults to, since those are what
-// prompted this request in the first place ("professional looking avatar...
-// not baby like").
+// app/services/avatar_service.py) using the "avataaars" style — DiceBear's
+// best-known, business-casual illustrated style (bold, colorful, half-body
+// characters), NOT the "personas" style this file used previously.
 //
-// Every preset pins `hair` (and `facialHair`/`facialHairProbability` for the
-// masculine-presenting half) so gender presentation is deliberate rather than
-// left to DiceBear's per-seed randomization, and pins `mouth=smile` +
-// `eyes=open` on every preset so no avatar can randomly land on an
-// unprofessional expression (DiceBear's default pool includes things like a
-// "pacifier" mouth or "sleep"/"wink" eyes, which is the opposite of what was
-// asked for here). Only `seed` (which drives skin tone, hair color, clothing
-// color, and clothing shape) is left to vary per preset, so the 12 options
-// still look visually distinct from each other despite the shared style.
+// Why the switch: personas' 6 masculine presets leaned on `bald`, `balding`,
+// and `shortCombover` hairstyles to keep them visually distinct from each
+// other, which combined with that style's muted, mature rendering read as
+// "old people" rather than "career people" (direct product feedback — the
+// whole reason this file changed). avataaars' own `top` (hairstyle) enum
+// has NO bald/comb-over/receding-hairline option at all — every avatar has a
+// full head of hair (or, unused here, a hat/hijab/turban) — so that specific
+// failure mode isn't reachable no matter which style option is picked below.
+//
+// Every param that affects how "professional" the result looks is pinned
+// explicitly (verified against DiceBear's own published schema at
+// https://api.dicebear.com/9.x/avataaars/schema.json, not guessed):
+//   - clothing: ONLY blazerAndShirt / blazerAndSweater / collarAndSweater /
+//     shirtCrewNeck / shirtScoopNeck / shirtVNeck — i.e. business/business-
+//     casual tops. hoodie / overall / graphicShirt (also valid enum values)
+//     are deliberately never used here.
+//   - clothesColor: ONLY a business-appropriate subset of the style's own
+//     palette (charcoal/navy/slate/blue/gray) — never the bright
+//     pink/yellow/red options also in that same enum.
+//   - hairColor / skinColor: natural tones only, from the style's own palette.
+//   - eyes=default, eyebrows=defaultNatural, mouth=smile on every preset, so
+//     no avatar can randomly land on an unprofessional expression.
+//   - accessoriesProbability=0 — no sunglasses/eyepatch.
+//   - backgroundColor=e6e6e6 (one consistent neutral gray) on every preset,
+//     so the picker grid reads as one cohesive set rather than a random
+//     rainbow of per-seed background colors.
+// Only `seed` is otherwise irrelevant here (every visually meaningful param
+// is already pinned above) — kept unique per entry only so each preset has
+// a stable, distinct identity to reference.
 //
 // Exactly 6 masculine-presenting + 6 feminine-presenting presets, as
 // requested ("evenly distributed male and female").
 // ---------------------------------------------------------------------------
 
-const DICEBEAR_BASE = 'https://api.dicebear.com/9.x/personas/png';
+const DICEBEAR_BASE = 'https://api.dicebear.com/9.x/avataaars/png';
 
 export interface AvatarPreset {
   id: string;
@@ -38,18 +55,29 @@ export interface AvatarPreset {
   url: string;
 }
 
-function personaUrl(params: {
+function avataaarsUrl(params: {
   seed: string;
-  hair: string;
+  top: string;
+  clothing: string;
+  clothesColor: string;
+  hairColor: string;
+  skinColor: string;
   facialHair?: string;
   facialHairProbability: number;
 }): string {
   const qs = new URLSearchParams({
     seed: params.seed,
-    hair: params.hair,
+    top: params.top,
+    clothing: params.clothing,
+    clothesColor: params.clothesColor,
+    hairColor: params.hairColor,
+    skinColor: params.skinColor,
     facialHairProbability: String(params.facialHairProbability),
+    accessoriesProbability: '0',
+    eyes: 'default',
+    eyebrows: 'defaultNatural',
     mouth: 'smile',
-    eyes: 'open',
+    backgroundColor: 'e6e6e6',
     size: '256',
   });
   if (params.facialHair) qs.set('facialHair', params.facialHair);
@@ -57,66 +85,104 @@ function personaUrl(params: {
 }
 
 export const AVATAR_PRESETS: AvatarPreset[] = [
-  // -- Masculine-presenting (6): short/no hair, optional facial hair --
+  // -- Masculine-presenting (6): short, business-appropriate hairstyles --
   {
     id: 'male_01',
     presentation: 'masculine',
-    url: personaUrl({seed: 'saveur-marcus', hair: 'buzzcut', facialHair: 'shadow', facialHairProbability: 100}),
+    url: avataaarsUrl({
+      seed: 'saveur-marcus', top: 'shortFlat', clothing: 'blazerAndShirt',
+      clothesColor: '262e33', hairColor: '2c1b18', skinColor: 'd08b5b', facialHairProbability: 0,
+    }),
   },
   {
     id: 'male_02',
     presentation: 'masculine',
-    url: personaUrl({seed: 'saveur-elijah', hair: 'fade', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-elijah', top: 'shortWaved', clothing: 'collarAndSweater',
+      clothesColor: '3c4f5c', hairColor: '4a312c', skinColor: '614335', facialHairProbability: 0,
+    }),
   },
   {
     id: 'male_03',
     presentation: 'masculine',
-    url: personaUrl({seed: 'saveur-andre', hair: 'shortCombover', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-andre', top: 'shortRound', clothing: 'blazerAndSweater',
+      clothesColor: '25557c', hairColor: '2c1b18', skinColor: 'ae5d29',
+      facialHair: 'beardLight', facialHairProbability: 100,
+    }),
   },
   {
     id: 'male_04',
     presentation: 'masculine',
-    url: personaUrl({seed: 'saveur-diego', hair: 'sideShave', facialHair: 'goatee', facialHairProbability: 100}),
+    url: avataaarsUrl({
+      seed: 'saveur-diego', top: 'theCaesar', clothing: 'shirtCrewNeck',
+      clothesColor: '5199e4', hairColor: '724133', skinColor: 'edb98a', facialHairProbability: 0,
+    }),
   },
   {
     id: 'male_05',
     presentation: 'masculine',
-    url: personaUrl({seed: 'saveur-kenji', hair: 'bald', facialHair: 'beardMustache', facialHairProbability: 100}),
+    url: avataaarsUrl({
+      seed: 'saveur-kenji', top: 'theCaesarAndSidePart', clothing: 'blazerAndShirt',
+      clothesColor: '929598', hairColor: '2c1b18', skinColor: 'ffdbb4',
+      facialHair: 'beardMedium', facialHairProbability: 100,
+    }),
   },
   {
     id: 'male_06',
     presentation: 'masculine',
-    url: personaUrl({seed: 'saveur-omar', hair: 'balding', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-omar', top: 'sides', clothing: 'shirtVNeck',
+      clothesColor: '262e33', hairColor: '4a312c', skinColor: 'fd9841', facialHairProbability: 0,
+    }),
   },
-  // -- Feminine-presenting (6): longer/styled hair, no facial hair --
+  // -- Feminine-presenting (6): longer/styled, business-appropriate hair --
   {
     id: 'female_01',
     presentation: 'feminine',
-    url: personaUrl({seed: 'saveur-aisha', hair: 'bobCut', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-aisha', top: 'bob', clothing: 'blazerAndShirt',
+      clothesColor: '262e33', hairColor: '2c1b18', skinColor: 'ae5d29', facialHairProbability: 0,
+    }),
   },
   {
     id: 'female_02',
     presentation: 'feminine',
-    url: personaUrl({seed: 'saveur-priya', hair: 'bobBangs', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-priya', top: 'straight01', clothing: 'collarAndSweater',
+      clothesColor: '3c4f5c', hairColor: '2c1b18', skinColor: 'd08b5b', facialHairProbability: 0,
+    }),
   },
   {
     id: 'female_03',
     presentation: 'feminine',
-    url: personaUrl({seed: 'saveur-elena', hair: 'long', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-elena', top: 'straight02', clothing: 'blazerAndSweater',
+      clothesColor: '25557c', hairColor: 'b58143', skinColor: 'ffdbb4', facialHairProbability: 0,
+    }),
   },
   {
     id: 'female_04',
     presentation: 'feminine',
-    url: personaUrl({seed: 'saveur-naomi', hair: 'extraLong', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-naomi', top: 'straightAndStrand', clothing: 'shirtScoopNeck',
+      clothesColor: '5199e4', hairColor: '4a312c', skinColor: '614335', facialHairProbability: 0,
+    }),
   },
   {
     id: 'female_05',
     presentation: 'feminine',
-    url: personaUrl({seed: 'saveur-sofia', hair: 'straightBun', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-sofia', top: 'longButNotTooLong', clothing: 'shirtVNeck',
+      clothesColor: '929598', hairColor: 'd6b370', skinColor: 'edb98a', facialHairProbability: 0,
+    }),
   },
   {
     id: 'female_06',
     presentation: 'feminine',
-    url: personaUrl({seed: 'saveur-grace', hair: 'curlyBun', facialHairProbability: 0}),
+    url: avataaarsUrl({
+      seed: 'saveur-grace', top: 'bun', clothing: 'blazerAndShirt',
+      clothesColor: '65c9ff', hairColor: '724133', skinColor: 'fd9841', facialHairProbability: 0,
+    }),
   },
 ];
