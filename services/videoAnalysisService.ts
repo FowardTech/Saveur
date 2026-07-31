@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Camera as VisionCamera,
   useCameraDevice,
+  useCameraFormat,
   useCameraPermission,
   useMicrophonePermission,
 } from 'react-native-vision-camera';
@@ -226,6 +227,21 @@ async function getFreeStorageBytes(): Promise<number | null> {
  */
 export function useVideoInterviewAnalysis() {
   const device = useCameraDevice('front');
+  // Required on Android as soon as videoBitRate is set (see
+  // LiveInterviewSession.tsx's videoBitRate="low" on the rendered
+  // <Camera>): without an explicit format, Android has no baseline
+  // hardware-recommended bitrate to apply that "low" multiplier against,
+  // and throws format/format-required synchronously during camera init --
+  // which is what was producing the black-screen-with-no-preview report
+  // (the whole camera session failed to start, silently, before this had
+  // on-screen error surfacing). iOS never required this. 720p/30fps is
+  // plenty for reviewing a talking-head interview recording and keeps this
+  // consistent with videoBitRate="low"'s own goal of an upload-able file
+  // size for a multi-minute session.
+  const format = useCameraFormat(device, [
+    {videoResolution: {width: 1280, height: 720}},
+    {fps: 30},
+  ]);
   const {hasPermission: hasCameraPermission, requestPermission: requestCameraPermission} =
     useCameraPermission();
   const {hasPermission: hasMicPermission, requestPermission: requestMicPermission} =
@@ -635,6 +651,7 @@ export function useVideoInterviewAnalysis() {
 
   return {
     device,
+    format,
     cameraRef,
     hasCameraPermission,
     hasMicPermission,

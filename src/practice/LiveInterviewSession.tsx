@@ -791,6 +791,12 @@ const LiveInterviewSession = memo(() => {
                     ref={videoAnalysis.cameraRef}
                     style={StyleSheet.absoluteFill}
                     device={cameraDevice}
+                    // Required on Android whenever videoBitRate is set (see
+                    // videoAnalysisService.ts's format/useCameraFormat
+                    // comment) — Android throws format/format-required and
+                    // fails camera init entirely without this, which is what
+                    // was causing the black-screen-with-no-preview report.
+                    format={videoAnalysis.format}
                     isActive={isCameraActive}
                     // Enables the real video+audio recording pipeline this
                     // screen now drives via videoAnalysis.startVideoRecording/
