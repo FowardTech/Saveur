@@ -136,26 +136,36 @@ export async function listUpcoming(): Promise<ScheduledInterviewProps[]> {
 }
 
 /**
- * POST /api/v1/interviews/scheduled. On network failure, still creates the
- * reminder locally (with a client-generated id) so scheduling isn't blocked
- * on the backend endpoint existing yet — it just won't sync to another
- * device until it does.
+ * POST /api/v1/interviews/scheduled.
+ *
+ * REGRESSION FIX ("Upcoming session is not sending push notifications"):
+ * this used to silently fall back to a client-generated `local_${Date.now()}`
+ * id and cache-only entry whenever the network call failed, on the theory
+ * that the row would "sync to another device once [the endpoint exists]" —
+ * but nothing anywhere ever actually re-POSTs a locally-created entry to the
+ * server later (no retry queue, unlike e.g. video uploads' explicit
+ * flushPendingVideoUploads). A locally-created row is a permanent dead end:
+ * it renders fine in the Upcoming Session card on THIS device (listUpcoming()
+ * merges from cache), so the user sees exactly what they'd expect and has no
+ * reason to think anything's wrong — but app/services/scheduled_interview_
+ * service.py's send_due_reminders() only ever queries the real ScheduledInterview
+ * table, which never received this row at all. No server-side row means no
+ * possible reminder, ever, no matter how correctly the reminder scheduler
+ * itself runs. Now re-throws instead, so ScheduleInterview.tsx's existing
+ * catch block (already written to show "Could not schedule interview" +
+ * retry) actually fires instead of being permanently unreachable dead code —
+ * a failed schedule now looks like a failure, not a silent, undetectable
+ * success that can never produce the one thing this whole feature exists
+ * for.
  */
 export async function createScheduled(
   input: Omit<ScheduledInterviewProps, 'id'>,
 ): Promise<ScheduledInterviewProps> {
-  try {
-    const {data} = await apiClient.post<ScheduledInterviewWire>('/api/v1/interviews/scheduled', toWire(input));
-    const created = fromWire(data);
-    const cached = await readCache();
-    await writeCache([...cached, created]);
-    return created;
-  } catch {
-    const created: ScheduledInterviewProps = {...input, id: `local_${Date.now()}`};
-    const cached = await readCache();
-    await writeCache([...cached, created]);
-    return created;
-  }
+  const {data} = await apiClient.post<ScheduledInterviewWire>('/api/v1/interviews/scheduled', toWire(input));
+  const created = fromWire(data);
+  const cached = await readCache();
+  await writeCache([...cached, created]);
+  return created;
 }
 
 /**
