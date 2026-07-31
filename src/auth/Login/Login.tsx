@@ -7,6 +7,7 @@ import {
   Input,
   Icon,
   Button,
+  CheckBox,
 } from '@ui-kitten/components';
 import {
   CommonActions,
@@ -51,6 +52,23 @@ const Login = memo(() => {
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [invisible, setInvisible] = useToggle(true);
+  // Terms & Privacy Policy acceptance (product request item) — required
+  // before ANY sign-in path completes, not just email/password, since
+  // Google and LinkedIn are equally "logging in". Unchecked by default on
+  // every visit (not persisted) so a returning user re-affirms it each
+  // session, same as re-typing a password rather than it being
+  // autofilled/remembered.
+  const [agreedToTerms, setAgreedToTerms] = React.useState(false);
+  const requireTermsAcceptance = React.useCallback((): boolean => {
+    if (agreedToTerms) return true;
+    Alert.alert(
+      t('auth:must_accept_terms_title', {defaultValue: 'Terms required'}),
+      t('auth:must_accept_terms_body', {
+        defaultValue: 'Please accept the Terms of Service and Privacy Policy to continue.',
+      }),
+    );
+    return false;
+  }, [agreedToTerms, t]);
   const {
     control,
     handleSubmit,
@@ -75,6 +93,7 @@ const Login = memo(() => {
   }, [errors.email, errors.password]);
 
   const onLogin = handleSubmit(async ({email, password}) => {
+    if (!requireTermsAcceptance()) return;
     setIsSubmitting(true);
     try {
       await signIn(email, password);
@@ -93,6 +112,7 @@ const Login = memo(() => {
   const [isSocialSubmitting, setIsSocialSubmitting] = React.useState(false);
   const onGoogle = React.useCallback(async () => {
     if (isSocialSubmitting) return;
+    if (!requireTermsAcceptance()) return;
     setIsSocialSubmitting(true);
     try {
       await signInWithGoogle();
@@ -118,13 +138,14 @@ const Login = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithGoogle, nextScreen, isSocialSubmitting, t]);
+  }, [signInWithGoogle, nextScreen, isSocialSubmitting, t, requireTermsAcceptance]);
   // LinkedIn has no first-party Firebase/RN SDK — AuthContext's
   // signInWithLinkedIn drives a custom OAuth2 flow (system browser +
   // backend code exchange) instead. Shares the same busy-state/error
   // handling as Google above.
   const onLinkedIn = React.useCallback(async () => {
     if (isSocialSubmitting) return;
+    if (!requireTermsAcceptance()) return;
     setIsSocialSubmitting(true);
     try {
       await signInWithLinkedIn();
@@ -137,7 +158,7 @@ const Login = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithLinkedIn, nextScreen, isSocialSubmitting, t]);
+  }, [signInWithLinkedIn, nextScreen, isSocialSubmitting, t, requireTermsAcceptance]);
   const onAuth = React.useCallback(
     screen => () => {
       navigate('AuthStack', {screen: screen});
@@ -205,6 +226,34 @@ const Login = memo(() => {
           style={styles.forgetPass}>
           <Text category="h8-s" status={'placeholder'} mv={24} center underline>
             {t('auth:forgot_password')}?
+          </Text>
+        </TouchableOpacity>
+        {/* Terms & Privacy Policy acceptance (product request item) — gates
+            onLogin/onGoogle/onLinkedIn above via requireTermsAcceptance().
+            term_of_service/privacy_policy/agree_term/and are pre-existing,
+            already-translated-in-all-12-locales keys (leftover from this
+            app's original template, which had this same consent line —
+            reused here rather than adding new duplicate strings). */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setAgreedToTerms(v => !v)}
+          style={styles.termsRow}>
+          <CheckBox checked={agreedToTerms} onChange={setAgreedToTerms} />
+          <Text category="h9-s" ml={8} style={globalStyle.flexOne}>
+            {t('auth:agree_term')}{' '}
+            <Text
+              category="h9-s"
+              status="link"
+              onPress={() => navigate('PolicyScreen', {initialTab: 'terms_of_service'})}>
+              {t('auth:term_of_service')}
+            </Text>{' '}
+            {t('auth:and')}{' '}
+            <Text
+              category="h9-s"
+              status="link"
+              onPress={() => navigate('PolicyScreen', {initialTab: 'privacy_policy'})}>
+              {t('auth:privacy_policy')}
+            </Text>
           </Text>
         </TouchableOpacity>
         <Button
@@ -281,5 +330,10 @@ const themedStyles = StyleService.create({
   },
   forgetPass: {
     alignSelf: 'center',
+  },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 24,
   },
 });

@@ -31,7 +31,14 @@ export type RootStackParamList = {
   // card shows only the top 4 with a "View all" link into this screen.
   Leaderboard: undefined;
   FaqScreen: undefined;
-  PolicyScreen: undefined;
+  // initialTab lets a caller (e.g. the signup/login Terms & Privacy
+  // acceptance link — see src/auth/Signup/SignupThirdStep.tsx and
+  // src/auth/Login/Login.tsx) open straight to the relevant tab instead of
+  // always landing on Privacy Policy. 'privacy_policy' | 'terms_of_service'
+  // written out plainly here (matches services/contentService.ts's
+  // LegalSlug) rather than importing that type, to avoid a services -> nav
+  // types import for one string union.
+  PolicyScreen: {initialTab?: 'privacy_policy' | 'terms_of_service'} | undefined;
   AboutScreen: undefined;
   SuccessScr: {
     successScr: SuccessScreenType;

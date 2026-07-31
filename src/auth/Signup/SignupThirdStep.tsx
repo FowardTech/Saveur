@@ -8,6 +8,7 @@ import {
   Icon,
   Button,
   Avatar,
+  CheckBox,
 } from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 
@@ -39,6 +40,21 @@ const SignupThirdStep = memo(() => {
   const [invisible, setInvisible] = useToggle(true);
   const [canContinue, setContinue] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  // Terms & Privacy Policy acceptance (product request item) — required
+  // before ANY account-creation path completes below (email/password,
+  // Google, LinkedIn) — see Login.tsx's identical requireTermsAcceptance
+  // for the sign-in-side counterpart of this same product requirement.
+  const [agreedToTerms, setAgreedToTerms] = React.useState(false);
+  const requireTermsAcceptance = React.useCallback((): boolean => {
+    if (agreedToTerms) return true;
+    Alert.alert(
+      t('auth:must_accept_terms_title', {defaultValue: 'Terms required'}),
+      t('auth:must_accept_terms_body', {
+        defaultValue: 'Please accept the Terms of Service and Privacy Policy to continue.',
+      }),
+    );
+    return false;
+  }, [agreedToTerms, t]);
 
   // Optional leaderboard avatar preset, picked here per explicit product
   // request ("users should be giving the option to set it during signup").
@@ -138,6 +154,7 @@ const SignupThirdStep = memo(() => {
   }, [t, navigate]);
 
   const handleSignup = handleSubmit(async data => {
+    if (!requireTermsAcceptance()) return;
     setIsSubmitting(true);
     try {
       await signUp({
@@ -174,6 +191,7 @@ const SignupThirdStep = memo(() => {
   const [isSocialSubmitting, setIsSocialSubmitting] = React.useState(false);
   const onGoogle = React.useCallback(async () => {
     if (isSocialSubmitting) return;
+    if (!requireTermsAcceptance()) return;
     setIsSocialSubmitting(true);
     try {
       // `{isSignup: true}` makes AuthContext check Firebase's
@@ -212,12 +230,13 @@ const SignupThirdStep = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl, goToStudentPrompt, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
+  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl, goToStudentPrompt, isSocialSubmitting, t, showAlreadyRegisteredAlert, requireTermsAcceptance]);
   // LinkedIn has no first-party Firebase/RN SDK — AuthContext's
   // signInWithLinkedIn drives a custom OAuth2 flow instead. Same
   // isSignup/already-registered handling as onGoogle above.
   const onLinkedIn = React.useCallback(async () => {
     if (isSocialSubmitting) return;
+    if (!requireTermsAcceptance()) return;
     setIsSocialSubmitting(true);
     try {
       await signInWithLinkedIn({isSignup: true});
@@ -235,7 +254,7 @@ const SignupThirdStep = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl, goToStudentPrompt, isSocialSubmitting, t, showAlreadyRegisteredAlert]);
+  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl, goToStudentPrompt, isSocialSubmitting, t, showAlreadyRegisteredAlert, requireTermsAcceptance]);
   return (
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />
@@ -340,6 +359,34 @@ const SignupThirdStep = memo(() => {
               )}
             </TouchableOpacity>
           </Flex>
+          {/* Terms & Privacy Policy acceptance (product request item) —
+              gates handleSignup/onGoogle/onLinkedIn above via
+              requireTermsAcceptance(). Reuses term_of_service/
+              privacy_policy/agree_term/and — pre-existing, already-
+              translated-in-all-12-locales keys left over from this app's
+              original template, which had this same consent line. */}
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setAgreedToTerms(v => !v)}
+            style={styles.termsRow}>
+            <CheckBox checked={agreedToTerms} onChange={setAgreedToTerms} />
+            <Text category="h9-s" ml={8} style={{flex: 1}}>
+              {t('auth:agree_term')}{' '}
+              <Text
+                category="h9-s"
+                status="link"
+                onPress={() => navigate('PolicyScreen', {initialTab: 'terms_of_service'})}>
+                {t('auth:term_of_service')}
+              </Text>{' '}
+              {t('auth:and')}{' '}
+              <Text
+                category="h9-s"
+                status="link"
+                onPress={() => navigate('PolicyScreen', {initialTab: 'privacy_policy'})}>
+                {t('auth:privacy_policy')}
+              </Text>
+            </Text>
+          </TouchableOpacity>
           <Button
             children={isSubmitting ? `${t('auth:sign_up')}…` : t('auth:sign_up')}
             onPress={handleSignup}
@@ -415,5 +462,10 @@ const themedStyles = StyleService.create({
     width: 20,
     height: 20,
     tintColor: 'text-hint-color',
+  },
+  termsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 24,
   },
 });

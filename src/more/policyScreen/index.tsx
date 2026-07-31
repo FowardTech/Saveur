@@ -14,9 +14,11 @@ import Content from "components/Content";
 import Text from "components/Text";
 import Flex from "components/Flex";
 import { useTranslation } from "react-i18next";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import NavigationAction from "components/NavigationAction";
 import * as contentService from "services/contentService";
 import { LegalSlug } from "services/contentService";
+import { RootStackParamList } from "navigation/types";
 
 // Was static, hardcoded placeholder copy ("TODO: replace with real legal
 // text") with no way to update it short of an app-store release. Now fetches
@@ -90,8 +92,17 @@ const PolicyScreen = () => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const { t } = useTranslation(["common", "auth"]);
+  // Optional deep-link into a specific tab (see navigation/types.tsx's
+  // PolicyScreen param doc) — the signup/login Terms & Privacy acceptance
+  // link opens straight to "terms_of_service" instead of always landing on
+  // Privacy Policy. route.params is undefined for every other existing
+  // caller (MoreSrc's plain "Privacy of Policy" entry), which is exactly
+  // why this still defaults to "privacy_policy" below.
+  const route = useRoute<RouteProp<RootStackParamList, "PolicyScreen">>();
 
-  const [activeTab, setActiveTab] = React.useState<LegalSlug>("privacy_policy");
+  const [activeTab, setActiveTab] = React.useState<LegalSlug>(
+    route.params?.initialTab ?? "privacy_policy",
+  );
   const [content, setContent] = React.useState<Record<LegalSlug, contentService.LegalContent | null>>({
     privacy_policy: null,
     terms_of_service: null,
