@@ -240,24 +240,30 @@ const InterviewReplay = memo(() => {
                 // session left active.
                 ignoreSilentSwitch="ignore"
                 audioOutput="speaker"
-                // Third, separate cause of "no audio in the replay" (on top
-                // of the two AVAudioSession conflicts already fixed in
-                // speechService.ts's preserveRecordingSession and
-                // videoAnalysisService.ts's removed on-device Voice
-                // recognizer): react-native-video 6.17+ actively manages/
-                // activates the shared iOS AVAudioSession itself, which
-                // multiple confirmed reports against this exact combination
-                // (react-native-vision-camera 4.7.x + react-native-video
-                // 6.17-6.19) describe as starving VisionCamera's own
-                // recording session of audio input -- the recorded file
-                // ends up with a video track but no audio track at all
-                // (not a playback/routing issue, an actual missing-track
-                // issue). See github.com/mrousavy/react-native-vision-camera
-                // issues #3560/#3582/#2129. disableAudioSessionManagement
-                // stops react-native-video from touching the session,
-                // leaving VisionCamera's own activateAudioSession() (during
-                // the NEXT recording) uncontested.
-                disableAudioSessionManagement
+                // REVERTED -- disableAudioSessionManagement was tried here
+                // to protect a FUTURE VisionCamera recording from react-
+                // native-video's own AVAudioSession management, on the
+                // theory that RNV's session claim during THIS replay could
+                // linger and starve the next interview's recording. Reading
+                // RNV's own iOS source (AudioSessionManager.swift) proved
+                // that theory wrong in a much more damaging way: whenever
+                // ANY mounted <Video> has this prop set,
+                // configureAudioSession() returns immediately at its very
+                // first line and NEVER runs again for that view --
+                // meaning the AVAudioSession is never activated or put into
+                // a playback-appropriate category AT ALL for this player.
+                // The video's audio track was never the problem; nothing
+                // was ever telling iOS to actually play it audibly. That's
+                // the real cause of "the audio in iOS is always muted" --
+                // a regression this same fix introduced. Android (which now
+                // has real audio, see videoAnalysisService.ts's format fix)
+                // never used this prop in the first place (it's iOS-only in
+                // RNV's own types), so removing it here doesn't touch
+                // Android at all. If a future recording ever does come back
+                // silent again because of a genuine RNV-vs-VisionCamera
+                // conflict, that needs solving a different way (e.g. a
+                // native-level fix, not blanket-disabling this player's own
+                // session management) -- not by re-adding this prop.
                 onPlaybackStateChanged={(e) => setPaused(!e.isPlaying)}
                 onError={() => setVideoError(true)}
               />
@@ -287,28 +293,52 @@ const InterviewReplay = memo(() => {
             </View>
           ) : null}
 
-          {replay.annotations.length ? (
+          {/* Was `replay.annotations.length ? (...) : null` -- a session
+             with a real video but zero flagged moments (perfectly normal:
+             confidence_dip needs 3 straight low-eye-contact frames,
+             strong_moment needs 5 straight high-eye-contact+smiling frames
+             -- see Saveur-Backend's feedback.py replay(), plenty of
+             sessions legitimately cross neither threshold) rendered
+             NOTHING here at all, not even the section header. That's
+             indistinguishable from "this is broken" -- which is almost
+             certainly what was behind "flagged moments aren't showing on
+             Android": the annotation logic itself is 100% platform-
+             agnostic (same backend endpoint, same client code, no
+             Android/iOS branching anywhere in this feature), so the far
+             more likely explanation was always an empty array read as a
+             missing feature rather than a real per-platform bug. Now
+             always shows the section (once a video exists at all) with an
+             explicit empty-state line instead of silently disappearing. */}
+          {hasVideo ? (
             <View style={{ marginTop: 20 }}>
               <Text category="h7" bold mb={12}>{t('practice:flagged_moments', { defaultValue: 'Flagged Moments' })}</Text>
-              {replay.annotations.map((a, i) => (
-                <Flex
-                  key={i}
-                  justify="flex-start"
-                  itemsCenter
-                  style={styles.annotationRow}
-                  onPress={() => jumpToAnnotation(a.tMs)}
-                >
-                  <Icon
-                    pack="eva"
-                    name={a.type === 'strong_moment' ? 'checkmark-circle-2-outline' : 'alert-circle-outline'}
-                    style={[globalStyle.icon20, { tintColor: a.type === 'strong_moment' ? theme['color-success-500'] : theme['color-warning-500'] }]}
-                  />
-                  <View style={{ marginLeft: 10, flex: 1 }}>
-                    <Text category="h9-s">{a.label}</Text>
-                    <Text category="h10" status="placeholder">{formatMs(a.tMs)}</Text>
-                  </View>
-                </Flex>
-              ))}
+              {replay.annotations.length ? (
+                replay.annotations.map((a, i) => (
+                  <Flex
+                    key={i}
+                    justify="flex-start"
+                    itemsCenter
+                    style={styles.annotationRow}
+                    onPress={() => jumpToAnnotation(a.tMs)}
+                  >
+                    <Icon
+                      pack="eva"
+                      name={a.type === 'strong_moment' ? 'checkmark-circle-2-outline' : 'alert-circle-outline'}
+                      style={[globalStyle.icon20, { tintColor: a.type === 'strong_moment' ? theme['color-success-500'] : theme['color-warning-500'] }]}
+                    />
+                    <View style={{ marginLeft: 10, flex: 1 }}>
+                      <Text category="h9-s">{a.label}</Text>
+                      <Text category="h10" status="placeholder">{formatMs(a.tMs)}</Text>
+                    </View>
+                  </Flex>
+                ))
+              ) : (
+                <Text category="h9-s" status="placeholder">
+                  {t('practice:no_flagged_moments', {
+                    defaultValue: 'No flagged moments in this session — nothing stood out as a notable dip or a standout stretch.',
+                  })}
+                </Text>
+              )}
             </View>
           ) : null}
 

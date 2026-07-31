@@ -1,4 +1,4 @@
-import {StyleSheet} from 'react-native';
+import {Platform, StyleSheet} from 'react-native';
 
 // Shared shadow preset used by both `shadowFade` (kept for existing call
 // sites) and the new `card` composite below — a design-consistency pass
@@ -7,16 +7,44 @@ import {StyleSheet} from 'react-native';
 // card") with no shadow at all, sitting flat next to shadowed cards
 // elsewhere on the same screen. `card` is the new default: reach for it on
 // any new content card instead of a one-off borderRadius/shadow pair.
-const cardShadow = {
-  shadowColor: 'rgba(29, 30, 44, 0.28)',
-  shadowOffset: {
-    width: 1,
-    height: 1,
+//
+// elevation: 12 (Android) was the actual bug behind "the box shadow looks
+// so bad on Android" once `card` got applied to ~45 cards app-wide: Android's
+// `elevation` has no shadowColor/shadowOpacity equivalent to soften it —
+// it's always a flat, dark, fixed-appearance halo, and its SIZE scales
+// directly with the elevation number. 12dp is Material Design's own spec
+// for a raised dialog/modal, not a resting content card (Material's card
+// spec is ~1dp resting / up to ~8dp only when actively being dragged) — so
+// every single card on Android was rendering with a dialog-sized dark halo
+// around it. iOS's shadowOpacity/shadowRadius/shadowColor trio doesn't have
+// this problem (it's a real, tintable, soft-edged shadow), which is exactly
+// why this only ever looked bad on Android and nobody noticed until it was
+// applied everywhere. Platform.select splits the two instead of one shared
+// number that was only ever tuned by eye on iOS.
+const cardShadow = Platform.select({
+  ios: {
+    shadowColor: 'rgba(29, 30, 44, 0.28)',
+    shadowOffset: {
+      width: 1,
+      height: 1,
+    },
+    shadowOpacity: 0.38,
+    shadowRadius: 12.0,
   },
-  shadowOpacity: 0.38,
-  shadowRadius: 12.0,
-  elevation: 12,
-};
+  android: {
+    elevation: 3,
+  },
+  default: {
+    shadowColor: 'rgba(29, 30, 44, 0.28)',
+    shadowOffset: {
+      width: 1,
+      height: 1,
+    },
+    shadowOpacity: 0.38,
+    shadowRadius: 12.0,
+    elevation: 3,
+  },
+}) as object;
 
 export const globalStyle = StyleSheet.create({
   flexOne: {
