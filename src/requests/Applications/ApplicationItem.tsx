@@ -21,7 +21,9 @@ export interface ApplicationItemProps {
   item: JobApplicationProps;
 }
 
-// TODO: swap for a real application-tracker data source once the backend exists.
+// Maps a tracked application's real backend stage (services/
+// applicationsService.ts's listApplications) to this design system's status
+// color tokens for the stage pill below.
 const getStageStatus = (stage: Application_Stage_Enum) => {
   switch (stage) {
     case Application_Stage_Enum.Applied:

@@ -47,10 +47,15 @@ import { AuthContext } from '../../AuthContext';
 // for the same reasoning.
 const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 
-// Dashboard — streak/XP/leaderboard now come from the real backend (see
-// services/gamificationService.ts). Weekly practice stats, upcoming session
-// and badge unlock state are still mock/client-computed — TODO: wire those
-// up to real session history once that domain's backend work lands here too.
+// Dashboard — streak/XP/leaderboard, weekly practice stats, and upcoming
+// session all come from the real backend now (see the fetches below:
+// interviewService.getPracticeHistory, scheduledInterviewService.listUpcoming,
+// gamificationService.getStreak/getLeaderboard). Badge unlock state is the
+// one remaining piece computed client-side — from real signals (actual
+// completed-session count, real streak days, real resume-import count, real
+// contact count), just evaluated here instead of server-side. See the
+// "Gamification: badge unlock state" comment further down for the current
+// scope decision on that.
 const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
