@@ -220,6 +220,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 60,
   },
   card: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 18,
     marginBottom: 16,

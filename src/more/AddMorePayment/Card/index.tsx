@@ -2,6 +2,7 @@ import {CardFields, FormModel} from 'constants/Types';
 import CreditCardContext from '../../../../CreditCardContext';
 import React, {useContext, useEffect, useRef} from 'react';
 import {Image, StyleSheet} from 'react-native';
+import {globalStyle} from 'styles/globalStyle';
 import FlipCard from './FlipCard';
 
 import BackSide from './BackSide';
@@ -66,6 +67,7 @@ const Card: React.FC<Props> = ({model, cardType, focusedField}) => {
 
 const styles = StyleSheet.create({
   container: {
+    ...globalStyle.card,
     width: '100%',
     height: 200,
     paddingVertical: 24,

@@ -412,6 +412,7 @@ const themedStyles = StyleService.create({
     fontFamily: 'PlusJakartaSans-Regular',
   },
   resultBox: {
+    ...globalStyle.card,
     marginTop: 16,
     borderRadius: 12,
     padding: 16,
@@ -430,6 +431,7 @@ const themedStyles = StyleService.create({
     marginLeft: 12,
   },
   reviewBox: {
+    ...globalStyle.card,
     marginTop: 16,
     borderRadius: 12,
     padding: 16,

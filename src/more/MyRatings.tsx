@@ -115,6 +115,7 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   ratingCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,

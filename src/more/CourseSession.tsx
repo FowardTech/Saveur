@@ -487,6 +487,7 @@ const themedStyles = StyleService.create({
     marginBottom: 16,
   },
   checkCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     backgroundColor: 'background-basic-color-2',
@@ -497,6 +498,7 @@ const themedStyles = StyleService.create({
     minHeight: 60,
   },
   certCard: {
+    ...globalStyle.card,
     marginTop: 24,
     padding: 16,
     borderRadius: 16,

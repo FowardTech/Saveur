@@ -358,6 +358,7 @@ const themedStyles = StyleService.create({
     justifyContent: 'space-between',
   },
   statCard: {
+    ...globalStyle.card,
     flex: 1,
     borderRadius: 16,
     paddingVertical: 14,

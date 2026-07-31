@@ -680,6 +680,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   customCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
@@ -727,6 +728,7 @@ const themedStyles = StyleService.create({
     borderBottomColor: 'background-basic-color-3',
   },
   rejectedBox: {
+    ...globalStyle.card,
     marginTop: 16,
     padding: 12,
     borderRadius: 12,
@@ -738,6 +740,7 @@ const themedStyles = StyleService.create({
     borderTopColor: 'background-basic-color-3',
   },
   curriculumDoneBox: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
@@ -746,6 +749,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'color-success-transparent-200',
   },
   courseCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,

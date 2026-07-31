@@ -149,6 +149,7 @@ const themedStyles = StyleService.create({
     marginRight: 16,
   },
   negotiationCard: {
+    ...globalStyle.card,
     marginTop: 16,
     padding: 20,
     borderRadius: 20,

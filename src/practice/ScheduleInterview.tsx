@@ -368,6 +368,7 @@ const themedStyles = StyleService.create({
     borderWidth: 1,
   },
   modeCard: {
+    ...globalStyle.card,
     width: '31%',
     borderWidth: 2,
     borderRadius: 16,

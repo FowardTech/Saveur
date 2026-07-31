@@ -304,6 +304,7 @@ const themedStyles = StyleService.create({
   content: { paddingBottom: 80 },
   input: { borderRadius: 12 },
   formCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
   },
@@ -314,6 +315,7 @@ const themedStyles = StyleService.create({
     marginBottom: 16,
   },
   completeBanner: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,

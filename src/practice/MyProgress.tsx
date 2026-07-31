@@ -256,6 +256,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 60,
   },
   goalCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
   },
@@ -267,6 +268,7 @@ const themedStyles = StyleService.create({
     marginBottom: 8,
   },
   statCard: {
+    ...globalStyle.card,
     flex: 1,
     borderRadius: 16,
     padding: 16,

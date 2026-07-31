@@ -217,6 +217,7 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
   },
   toolCard: {
+    ...globalStyle.card,
     width: '30%',
     aspectRatio: 1,
     borderRadius: 16,
@@ -235,6 +236,7 @@ const themedStyles = StyleService.create({
     justifyContent: 'space-between',
   },
   typeCard: {
+    ...globalStyle.card,
     width: '48%',
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',

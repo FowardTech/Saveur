@@ -549,12 +549,14 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   hintCard: {
+    ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
   retentionBanner: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'background-basic-color-2',
@@ -563,6 +565,7 @@ const themedStyles = StyleService.create({
     marginBottom: 16,
   },
   prefsCard: {
+    ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
     borderRadius: 16,
     padding: 16,
@@ -590,6 +593,7 @@ const themedStyles = StyleService.create({
     marginBottom: 8,
   },
   alertCard: {
+    ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
     borderRadius: 16,
     padding: 16,

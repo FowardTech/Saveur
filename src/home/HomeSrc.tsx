@@ -1094,6 +1094,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 40,
   },
   verifyBanner: {
+    ...globalStyle.card,
     // Was 14/14 -- every other card on this screen (goalTipsCard,
     // briefingCard, progressCard, statCard, etc.) uses borderRadius 16 /
     // padding 16; this was the one outlier. Task #66 visual polish pass.

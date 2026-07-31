@@ -456,6 +456,7 @@ const themedStyles = StyleService.create({
     gap: 10,
   },
   importCard: {
+    ...globalStyle.card,
     width: '30%',
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
@@ -481,6 +482,7 @@ const themedStyles = StyleService.create({
     textAlignVertical: 'top',
   },
   bulletCard: {
+    ...globalStyle.card,
     borderRadius: 12,
     padding: 16,
   },

@@ -193,6 +193,7 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 60 },
   docCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,

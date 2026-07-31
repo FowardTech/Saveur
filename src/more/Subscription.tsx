@@ -710,6 +710,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   planCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,

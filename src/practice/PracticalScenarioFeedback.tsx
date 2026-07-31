@@ -191,6 +191,7 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   overallCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     paddingVertical: 24,
     marginBottom: 16,
@@ -201,6 +202,7 @@ const themedStyles = StyleService.create({
     marginHorizontal: -4,
   },
   statCard: {
+    ...globalStyle.card,
     flexBasis: '46%',
     flexGrow: 1,
     borderRadius: 16,

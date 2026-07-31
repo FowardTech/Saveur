@@ -241,6 +241,7 @@ const themedStyles = StyleService.create({
     borderRadius: 12,
   },
   letterBox: {
+    ...globalStyle.card,
     marginTop: 24,
     padding: 16,
     borderRadius: 16,

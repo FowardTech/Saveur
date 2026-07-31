@@ -215,11 +215,13 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   heroCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
   },
   codeBox: {
+    ...globalStyle.card,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: 'color-primary-500',
@@ -232,6 +234,7 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   creditCard: {
+    ...globalStyle.card,
     backgroundColor: 'color-success-transparent-200',
     borderRadius: 16,
     padding: 16,

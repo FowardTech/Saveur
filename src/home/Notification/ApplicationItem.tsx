@@ -102,6 +102,7 @@ export default ApplicationItem;
 
 const themedStyles = StyleService.create({
   card: {
+    ...globalStyle.card,
     flexDirection: 'row',
     borderRadius: 16,
     padding: 14,

@@ -205,6 +205,7 @@ const themedStyles = StyleService.create({
     marginBottom: 8,
   },
   buildResumeCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
   },

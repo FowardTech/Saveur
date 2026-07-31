@@ -120,10 +120,12 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   situationCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
   },
   choiceCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,

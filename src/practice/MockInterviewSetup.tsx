@@ -412,6 +412,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   freeLimitBanner: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 12,
@@ -419,6 +420,7 @@ const themedStyles = StyleService.create({
     marginBottom: 24,
   },
   modeCard: {
+    ...globalStyle.card,
     width: '31%',
     borderWidth: 2,
     borderRadius: 16,

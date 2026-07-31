@@ -292,6 +292,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   offerCard: {
+    ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
   },
@@ -338,6 +339,7 @@ const themedStyles = StyleService.create({
     borderBottomLeftRadius: 4,
   },
   approachCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,

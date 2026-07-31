@@ -181,6 +181,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   summaryCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
@@ -191,6 +192,7 @@ const themedStyles = StyleService.create({
     marginBottom: 8,
   },
   statCard: {
+    ...globalStyle.card,
     flex: 1,
     borderRadius: 16,
     paddingVertical: 16,
@@ -201,6 +203,7 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 4,
   },
   sectionCard: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
