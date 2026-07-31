@@ -200,6 +200,23 @@ const HomeSrc = memo(() => {
   // to have tips about.
   const [goalTips, setGoalTips] = React.useState<GoalTipProps[] | null>(null);
   const [goalTipsLoading, setGoalTipsLoading] = React.useState(false);
+  // Visual redesign: a goal tip's AI-generated body text was rendering as a
+  // full, unformatted paragraph directly in the card — several sentences
+  // long with no truncation, the exact "wall of text in a small card" issue
+  // already solved for the Career OS Briefing card below (see that card's
+  // own "Visual redesign (task #42)" comment) but never applied here.
+  // Mirrors that same pattern: truncate by default, let the user tap to see
+  // the rest — but in-place (no dedicated "Goal Tip Detail" screen exists,
+  // unlike the briefing), so this just tracks which tip ids are expanded.
+  const [expandedGoalTipIds, setExpandedGoalTipIds] = React.useState<Set<string>>(new Set());
+  const toggleGoalTipExpanded = React.useCallback((id: string) => {
+    setExpandedGoalTipIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
   const hasGoals = (profile?.goals?.length ?? 0) > 0;
   React.useEffect(() => {
     if (!hasGoals) return;
@@ -646,29 +663,39 @@ const HomeSrc = memo(() => {
            tap always has real content to navigate AdDetails to — no
            banner is shown at all until the admin creates one. */}
         {homeBanner ? (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={[styles.homeBannerCard, {width: bannerWidth, height: bannerHeight}]}
-            onPress={onOpenHomeBanner}>
-            <Image
-              source={
-                homeBanner.imageUrl
-                  ? {uri: homeBanner.imageUrl}
-                  : Images.homeBannerAiCoach
-              }
-              style={{width: bannerWidth, height: bannerHeight}}
-              // "contain" (not "cover") per explicit product direction: the
-              // full banner image should always be visible, never cropped
-              // — cover would zoom/crop whenever an admin-uploaded
-              // image_url's aspect ratio doesn't exactly match 16:9. Since
-              // bannerHeight above is computed to exactly match the
-              // bundled default image's own 16:9 ratio, this produces
-              // identical (letterbox-free) results for that image, and
-              // degrades gracefully (letterboxed, not cropped) for a
-              // future admin image with a different ratio.
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
+          // Shadow lives on this outer wrapper, not the TouchableOpacity
+          // below — a view can't both clip its content to rounded corners
+          // (overflow: 'hidden', needed so the image doesn't spill past the
+          // card's corners) AND cast a visible shadow itself, since
+          // overflow: hidden clips the shadow along with everything else.
+          // Standard RN split: shadow on the outer box, clipping on the
+          // inner one.
+          <View style={[globalStyle.shadowFade, {borderRadius: 16, marginTop: 16}]}>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              style={[styles.homeBannerCard, {width: bannerWidth, height: bannerHeight, marginTop: 0}]}
+              onPress={onOpenHomeBanner}>
+              <Image
+                source={
+                  homeBanner.imageUrl
+                    ? {uri: homeBanner.imageUrl}
+                    : Images.homeBannerAiCoach
+                }
+                style={{width: bannerWidth, height: bannerHeight}}
+                // "contain" (not "cover") per explicit product direction:
+                // the full banner image should always be visible, never
+                // cropped — cover would zoom/crop whenever an admin-
+                // uploaded image_url's aspect ratio doesn't exactly match
+                // 16:9. Since bannerHeight above is computed to exactly
+                // match the bundled default image's own 16:9 ratio, this
+                // produces identical (letterbox-free) results for that
+                // image, and degrades gracefully (letterboxed, not
+                // cropped) for a future admin image with a different
+                // ratio.
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          </View>
         ) : null}
         {goalTipsLoading && !goalTips ? (
           <Flex vertical center style={[styles.goalTipsCard, {paddingVertical: 24}]}>
@@ -676,17 +703,50 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : goalTips && goalTips.length > 0 ? (
           <View style={styles.goalTipsCard}>
-            <Text category="h7" bold mb={12}>
+            {/* Was h7/mb-only — every other section header on this screen
+               (Weekly Practice, Upcoming Session, Badges, Leaderboard) uses
+               h6 bold with mt=32/mb=16; this was the one outlier, which is
+               part of why the screen reads as inconsistently designed
+               rather than one coherent system. */}
+            <Text category="h6" bold mb={16}>
               {t('home:goal_tips_title', { defaultValue: "Today's Goal Tips" })}
             </Text>
-            {goalTips.map(tip => (
-              <View key={tip.id} style={styles.goalTipRow}>
-                <Text category="h10" status="link" bold mb={4}>
-                  {tip.goal}
-                </Text>
-                <Text category="h9-s">{tip.tip}</Text>
-              </View>
-            ))}
+            {goalTips.map(tip => {
+              const isExpanded = expandedGoalTipIds.has(tip.id);
+              return (
+                <View key={tip.id} style={[styles.goalTipRow, globalStyle.card]}>
+                  {/* tip.goal used to render as plain bold colored text —
+                     reads as a label floating in space with nothing to
+                     anchor it. An actual pill (background + rounded caps)
+                     is the standard "tag" treatment big-tech apps use for
+                     exactly this — a short category marker above a longer
+                     body. */}
+                  <View style={[styles.goalTipPill, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+                    {/* status="primary" resolves to near-white in this theme
+                       (meant for text on a solid color-primary button, not a
+                       tinted chip) — see the identical gotcha already
+                       documented on the briefing card's "Read more" link
+                       above. Explicit color instead. */}
+                    <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
+                      {tip.goal}
+                    </Text>
+                  </View>
+                  <Text category="h9-s" mt={8} numberOfLines={isExpanded ? undefined : 3} style={styles.goalTipBody}>
+                    {tip.tip}
+                  </Text>
+                  <Text
+                    category="h10"
+                    status="link"
+                    bold
+                    mt={6}
+                    onPress={() => toggleGoalTipExpanded(tip.id)}>
+                    {isExpanded
+                      ? t('common:show_less', { defaultValue: 'Show less' })
+                      : t('common:read_more', { defaultValue: 'Read more' })}
+                  </Text>
+                </View>
+              );
+            })}
           </View>
         ) : null}
         {/* Consolidated (UI cleanup pass): these three used to be full-width
@@ -1078,15 +1138,26 @@ const themedStyles = StyleService.create({
     borderRadius: 3,
   },
   goalTipRow: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 10,
     // Subtle purple to make the AI-generated tip visually distinct from the
     // neutral cards around it — was a plain themed Layout level="2" (same
-    // gray as every other card on the screen).
+    // gray as every other card on the screen). globalStyle.card (spread at
+    // the usage site) adds the same elevation/shadow every other redesigned
+    // card on this screen now has, instead of a flat border-only fill.
     backgroundColor: 'rgba(195, 165, 248, 0.08)',
     borderWidth: 1,
     borderColor: '#7e4fcbff',
+  },
+  goalTipPill: {
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  goalTipBody: {
+    lineHeight: 21,
   },
   verifyBannerText: {
     marginHorizontal: 10,
@@ -1097,19 +1168,24 @@ const themedStyles = StyleService.create({
     marginTop: 16,
   },
   navTile: {
+    ...globalStyle.card,
     width: '31%',
-    borderRadius: 16,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 6,
     backgroundColor: 'background-basic-color-2',
   },
+  // Was the exact same color as navTile's own background — a wrapper with
+  // no visible purpose beyond centering, so the icon just floated on the
+  // card with nothing to anchor it. A tinted chip (same treatment as
+  // goalTipPill above) reads as a deliberate icon container instead.
   navTileIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'color-primary-transparent-200',
   },
   statsRow: {
     flexDirection: 'row',
@@ -1117,10 +1193,11 @@ const themedStyles = StyleService.create({
     marginTop: 16,
   },
   statCard: {
+    ...globalStyle.card,
     width: '31%',
-    borderRadius: 16,
     alignItems: 'center',
     paddingVertical: 16,
+    backgroundColor: 'background-basic-color-2',
   },
   streakSpinner: {
     marginTop: 8,
@@ -1130,12 +1207,13 @@ const themedStyles = StyleService.create({
     marginLeft: -8,
   },
   upcomingCard: {
-    borderRadius: 16,
+    ...globalStyle.card,
     padding: 16,
+    backgroundColor: 'background-basic-color-2',
   },
   badgesPreviewRow: {
+    ...globalStyle.card,
     flexDirection: 'row',
-    borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
     padding: 16,
     gap: 10,
@@ -1149,9 +1227,9 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
   },
   checkInCard: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
     padding: 16,
     marginTop: 16,
     // Subtle warning tint to make the daily XP check-in stand out from the
