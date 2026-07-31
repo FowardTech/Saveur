@@ -53,7 +53,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to sign in to Saveur quickly and securely.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Saveur connects to your local development server while testing during development.</string>
+	<string>Saveur may connect to devices on your local network to improve connectivity.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.</string>
 	<key>NSMicrophoneUsageDescription</key>
@@ -80,19 +80,18 @@
 		<string>PlusJakartaSans-Medium.ttf</string>
 		<string>PlusJakartaSans-Bold.ttf</string>
 	</array>
+	<!-- Pruned to only what's actually used (see AppDelegate.swift /
+	     package.json — @react-native-firebase/messaging for push,
+	     VisionCamera/react-native-video for audio recording+playback
+	     continuity). The removed modes (bluetooth-*, external-accessory,
+	     nearby-interaction, push-to-talk, voip, processing, fetch,
+	     location) had zero corresponding code anywhere in the app and are
+	     a common App Store review rejection reason (Guideline 2.5.4 —
+	     declaring background capabilities the app doesn't actually use). -->
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
 		<string>audio</string>
-		<string>bluetooth-peripheral</string>
-		<string>fetch</string>
-		<string>processing</string>
-		<string>location</string>
-		<string>push-to-talk</string>
-		<string>bluetooth-central</string>
-		<string>voip</string>
-		<string>external-accessory</string>
-		<string>nearby-interaction</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>BootSplash</string>
