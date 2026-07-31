@@ -28,7 +28,23 @@ import * as interviewService from 'services/interviewService';
 
 // Video Interview Replay — product request item ("the real catch of the
 // app... users can replay and see the part where they need to improve
-// themselves"). Now a REAL, seekable recorded video (react-native-video)
+// themselves").
+//
+// AUDIO TROUBLESHOOTING HISTORY (read before touching audio-related props
+// again): three SEPARATE causes have been found and fixed for "recorded
+// video plays with no audio", in order of discovery: (1) speechService.ts's
+// ElevenLabs/nitro-sound TTS playback fighting VisionCamera's recording
+// session mid-interview (preserveRecordingSession), (2)
+// videoAnalysisService.ts running an on-device Voice/STT recognizer
+// concurrently with the recording for the entire interview (removed
+// entirely), (3) react-native-video itself managing/activating the shared
+// iOS AVAudioSession, starving VisionCamera's session on the NEXT
+// recording (disableAudioSessionManagement below). All three are iOS
+// AVAudioSession-specific; if a future report is Android-only, the cause
+// is NOT this class of bug (Android has no shared AVAudioSession-style
+// conflict) and needs its own fresh diagnosis from real device logs.
+//
+// Now a REAL, seekable recorded video (react-native-video)
 // when one exists — see services/interviewReplayService.ts's SessionReplay.
 // videoUrl for how that gets here, and services/videoAnalysisService.ts's
 // startVideoRecording/stopVideoRecording for how it's actually captured
@@ -224,6 +240,24 @@ const InterviewReplay = memo(() => {
                 // session left active.
                 ignoreSilentSwitch="ignore"
                 audioOutput="speaker"
+                // Third, separate cause of "no audio in the replay" (on top
+                // of the two AVAudioSession conflicts already fixed in
+                // speechService.ts's preserveRecordingSession and
+                // videoAnalysisService.ts's removed on-device Voice
+                // recognizer): react-native-video 6.17+ actively manages/
+                // activates the shared iOS AVAudioSession itself, which
+                // multiple confirmed reports against this exact combination
+                // (react-native-vision-camera 4.7.x + react-native-video
+                // 6.17-6.19) describe as starving VisionCamera's own
+                // recording session of audio input -- the recorded file
+                // ends up with a video track but no audio track at all
+                // (not a playback/routing issue, an actual missing-track
+                // issue). See github.com/mrousavy/react-native-vision-camera
+                // issues #3560/#3582/#2129. disableAudioSessionManagement
+                // stops react-native-video from touching the session,
+                // leaving VisionCamera's own activateAudioSession() (during
+                // the NEXT recording) uncontested.
+                disableAudioSessionManagement
                 onPlaybackStateChanged={(e) => setPaused(!e.isPlaying)}
                 onError={() => setVideoError(true)}
               />
