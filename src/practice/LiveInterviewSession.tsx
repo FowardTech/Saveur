@@ -709,6 +709,21 @@ const LiveInterviewSession = memo(() => {
   // cleanly inside the ternary below.
   const cameraDevice = videoAnalysis.device;
 
+  // DIAGNOSTIC (temporary): the Android "camera preview is a black screen,
+  // no error, no crash" report has no code-identifiable cause -- every
+  // permission/gating check upstream of this render already passes (that's
+  // WHY it's a black screen and not one of the checking/denied/no-device
+  // branches above), which means whatever's failing is failing silently
+  // inside VisionCamera's own native init on that device. That class of bug
+  // has many different real-world root causes across different devices/
+  // versions (see react-native-vision-camera's own issue tracker), so there
+  // is no single blind fix to apply -- the actual native error needs to
+  // surface somewhere reachable without adb. onError/onInitialized/
+  // onStarted below do exactly that: whatever VisionCamera's native layer
+  // is doing gets shown directly on this screen. Remove this block (and the
+  // Text render below) once the real cause is found and fixed.
+  const [cameraDebugStatus, setCameraDebugStatus] = React.useState<string | null>(null);
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -791,7 +806,19 @@ const LiveInterviewSession = memo(() => {
                     videoBitRate="low"
                     faceDetectionOptions={videoAnalysis.faceDetectionOptions}
                     faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}
+                    // DIAGNOSTIC (temporary) — see cameraDebugStatus's own
+                    // comment above.
+                    onInitialized={() => setCameraDebugStatus('initialized, waiting for first frame…')}
+                    onStarted={() => setCameraDebugStatus(null)}
+                    onError={(e) => setCameraDebugStatus(`ERROR ${e.code}: ${e.message}`)}
                   />
+                  {cameraDebugStatus ? (
+                    <View style={styles.cameraDebugBanner} pointerEvents="none">
+                      <Text category="h10" status="control" center>
+                        {cameraDebugStatus}
+                      </Text>
+                    </View>
+                  ) : null}
                   <View style={styles.liveIndicatorRow}>
                     <View style={styles.liveIndicatorPill}>
                       <Text category="h10" status="control" bold>
@@ -1120,6 +1147,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginRight: 8,
     marginBottom: 8,
+  },
+  // DIAGNOSTIC (temporary) — see LiveInterviewSession's cameraDebugStatus
+  // comment. Bottom-anchored so it never collides with liveIndicatorRow
+  // (top) or the flagged-moment/transcript UI below the camera.
+  cameraDebugBanner: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12,
+    backgroundColor: 'rgba(220,50,50,0.85)',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   footer: {
     paddingHorizontal: 24,
