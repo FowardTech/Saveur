@@ -365,7 +365,7 @@
   "referral_hero_title": "Gib {{reward}}, erhalte {{reward}}",
   "referral_load_failed": "Deine Empfehlungsinfos konnten nicht geladen werden.",
   "referral_share_button": "Meinen Link teilen",
-  "referral_share_message": "Tritt Saveur bei und erhalte {{reward}} Rabatt auf dein erstes Pro-Abo — ich bekomme auch {{reward}} Rabatt! {{url}}",
+  "referral_share_message": "Tritt Saveur bei und erhalte {{reward}} Rabatt auf dein erstes Pro-Abo — ich bekomme auch {{reward}} Rabatt!",
   "referral_stat_invited": "Eingeladen",
   "referral_stat_pending": "Ausstehend",
   "referral_stat_rewarded": "Belohnt",

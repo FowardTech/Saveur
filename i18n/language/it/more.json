@@ -365,7 +365,7 @@
   "referral_hero_title": "Dai {{reward}}, Ricevi {{reward}}",
   "referral_load_failed": "Impossibile caricare le tue informazioni di invito.",
   "referral_share_button": "Condividi il mio link",
-  "referral_share_message": "Unisciti a Saveur e ottieni {{reward}} di sconto sul tuo primo abbonamento Pro — otterrò anche io {{reward}} di sconto! {{url}}",
+  "referral_share_message": "Unisciti a Saveur e ottieni {{reward}} di sconto sul tuo primo abbonamento Pro — otterrò anche io {{reward}} di sconto!",
   "referral_stat_invited": "Invitati",
   "referral_stat_pending": "In sospeso",
   "referral_stat_rewarded": "Premiati",

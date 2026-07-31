@@ -365,7 +365,7 @@
   "referral_hero_title": "{{reward}} दें, {{reward}} पाएं",
   "referral_load_failed": "आपकी रेफ़रल जानकारी लोड नहीं हो सकी।",
   "referral_share_button": "मेरा लिंक साझा करें",
-  "referral_share_message": "Saveur से जुड़ें और अपनी पहली Pro सदस्यता पर {{reward}} की छूट पाएं — मुझे भी {{reward}} की छूट मिलेगी! {{url}}",
+  "referral_share_message": "Saveur से जुड़ें और अपनी पहली Pro सदस्यता पर {{reward}} की छूट पाएं — मुझे भी {{reward}} की छूट मिलेगी!",
   "referral_stat_invited": "आमंत्रित",
   "referral_stat_pending": "लंबित",
   "referral_stat_rewarded": "पुरस्कृत",

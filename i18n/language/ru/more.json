@@ -365,7 +365,7 @@
   "referral_hero_title": "Подарите {{reward}}, получите {{reward}}",
   "referral_load_failed": "Не удалось загрузить информацию о рефералах.",
   "referral_share_button": "Поделиться моей ссылкой",
-  "referral_share_message": "Присоединяйтесь к Saveur и получите скидку {{reward}} на первую Pro-подписку — я тоже получу скидку {{reward}}! {{url}}",
+  "referral_share_message": "Присоединяйтесь к Saveur и получите скидку {{reward}} на первую Pro-подписку — я тоже получу скидку {{reward}}!",
   "referral_stat_invited": "Приглашено",
   "referral_stat_pending": "В ожидании",
   "referral_stat_rewarded": "Вознаграждено",

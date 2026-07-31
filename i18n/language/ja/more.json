@@ -365,7 +365,7 @@
   "referral_hero_title": "{{reward}}をあげて、{{reward}}をもらう",
   "referral_load_failed": "紹介情報を読み込めませんでした。",
   "referral_share_button": "自分のリンクを共有",
-  "referral_share_message": "Saveurに参加して、最初のPro購読で{{reward}}割引をゲット — 私も{{reward}}割引をもらえます！{{url}}",
+  "referral_share_message": "Saveurに参加して、最初のPro購読で{{reward}}割引をゲット — 私も{{reward}}割引をもらえます！",
   "referral_stat_invited": "招待済み",
   "referral_stat_pending": "保留中",
   "referral_stat_rewarded": "報酬あり",

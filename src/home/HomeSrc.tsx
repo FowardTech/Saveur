@@ -768,7 +768,7 @@ const HomeSrc = memo(() => {
             style={styles.navTile}
             onPress={() => navigate('CareerRoadmap')}>
             <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="map" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+              <Icon pack="assets" name="map" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
             </View>
             <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:career_roadmap_card_title_short', { defaultValue: 'Career Roadmap' })}
@@ -779,7 +779,7 @@ const HomeSrc = memo(() => {
             style={styles.navTile}
             onPress={() => navigate('MyProgress')}>
             <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="rateFull" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+              <Icon pack="assets" name="rateFull" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
             </View>
             <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:your_progress', { defaultValue: 'Your Progress' })}
@@ -790,7 +790,7 @@ const HomeSrc = memo(() => {
             style={styles.navTile}
             onPress={() => navigate('WeeklyCareerReport')}>
             <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="stats" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+              <Icon pack="assets" name="stats" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
             </View>
             <Text category="h10" bold center mt={8} numberOfLines={2}>
               {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
@@ -799,7 +799,7 @@ const HomeSrc = memo(() => {
         </View>
         <View style={styles.statsRow}>
           <Layout level="2" style={styles.statCard}>
-            <Icon pack="assets" name="stats" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
+            <Icon pack="assets" name="stats" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
             {streakLoading && !streak ? (
               <Spinner size="small" style={styles.streakSpinner} />
             ) : (
@@ -812,7 +812,7 @@ const HomeSrc = memo(() => {
             </Text>
           </Layout>
           <Layout level="2" style={styles.statCard}>
-            <Icon pack="assets" name="interview" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
+            <Icon pack="assets" name="interview" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
             <Text category="h3" bold center mt={8}>
               {sessionsThisWeek}
             </Text>
@@ -821,7 +821,7 @@ const HomeSrc = memo(() => {
             </Text>
           </Layout>
           <Layout level="2" style={styles.statCard}>
-            <Icon pack="assets" name="rateFull" style={[globalStyle.icon24, { tintColor: theme['color-primary-500'] }]} />
+            <Icon pack="assets" name="rateFull" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
             <Text category="h3" bold center mt={8}>
               {avgScore}%
             </Text>

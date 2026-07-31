@@ -365,7 +365,7 @@
   "referral_hero_title": "Dê {{reward}}, Ganhe {{reward}}",
   "referral_load_failed": "Não foi possível carregar suas informações de indicação.",
   "referral_share_button": "Compartilhar meu link",
-  "referral_share_message": "Junte-se ao Saveur e ganhe {{reward}} de desconto na sua primeira assinatura Pro — eu também ganho {{reward}} de desconto! {{url}}",
+  "referral_share_message": "Junte-se ao Saveur e ganhe {{reward}} de desconto na sua primeira assinatura Pro — eu também ganho {{reward}} de desconto!",
   "referral_stat_invited": "Convidados",
   "referral_stat_pending": "Pendentes",
   "referral_stat_rewarded": "Recompensados",

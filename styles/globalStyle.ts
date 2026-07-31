@@ -236,6 +236,12 @@ export const globalStyle = StyleSheet.create({
     width: 24,
     height: 24,
   },
+  // Home dashboard's nav tiles + stat cards (product request item — those
+  // icons were "too small" at icon20/icon24) — see src/home/HomeSrc.tsx.
+  icon28: {
+    width: 28,
+    height: 28,
+  },
   icon40: {
     width: 40,
     height: 40,

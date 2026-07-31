@@ -365,7 +365,7 @@
   "referral_hero_title": "赠送 {{reward}}，获得 {{reward}}",
   "referral_load_failed": "无法加载您的推荐信息。",
   "referral_share_button": "分享我的链接",
-  "referral_share_message": "加入 Saveur，首次 Pro 订阅可享 {{reward}} 优惠 — 我也能获得 {{reward}} 优惠！{{url}}",
+  "referral_share_message": "加入 Saveur，首次 Pro 订阅可享 {{reward}} 优惠 — 我也能获得 {{reward}} 优惠！",
   "referral_stat_invited": "已邀请",
   "referral_stat_pending": "待处理",
   "referral_stat_rewarded": "已奖励",

@@ -365,7 +365,7 @@
   "referral_hero_title": "Offrez {{reward}}, Recevez {{reward}}",
   "referral_load_failed": "Impossible de charger vos informations de parrainage.",
   "referral_share_button": "Partager mon lien",
-  "referral_share_message": "Rejoignez-moi sur Saveur et obtenez {{reward}} de réduction sur votre premier abonnement Pro — j'obtiendrai aussi {{reward}} de réduction ! {{url}}",
+  "referral_share_message": "Rejoignez-moi sur Saveur et obtenez {{reward}} de réduction sur votre premier abonnement Pro — j'obtiendrai aussi {{reward}} de réduction !",
   "referral_stat_invited": "Invités",
   "referral_stat_pending": "En attente",
   "referral_stat_rewarded": "Récompensés",

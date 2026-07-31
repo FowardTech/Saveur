@@ -34,9 +34,14 @@ const WEB_SHARE_BASE_URL = 'https://api.saveurnow.com';
 
 export async function shareJob(job: JobAlertProps): Promise<void> {
   const message = `Check out this job: ${job.title} at ${job.company} — via the Saveur app.`;
+  // `url` on both Share.share() calls below already carries the link (and
+  // is what gives iOS its native Open-Graph link-preview card via web.py's
+  // job_share_redirect page) — message used to ALSO have the same link
+  // appended to it, which made iOS's share sheet show it twice: once
+  // inside the message text, once as the separate preview card for `url`.
   const oneLink = await appsFlyerService.generateJobShareLink(job.id, job.title);
   if (oneLink) {
-    await Share.share({message: `${message}\n${oneLink}`, url: oneLink}).catch(() => {});
+    await Share.share({message, url: oneLink}).catch(() => {});
     return;
   }
   // Fallback while AppsFlyer OneLink isn't configured yet (still-blank
@@ -49,7 +54,7 @@ export async function shareJob(job: JobAlertProps): Promise<void> {
   // for anyone who already has it installed, neither of which a bare custom
   // scheme link can ever do.
   const fallbackLink = `${WEB_SHARE_BASE_URL}/j/${encodeURIComponent(job.id)}`;
-  await Share.share({message: `${message}\n${fallbackLink}`, url: fallbackLink}).catch(() => {});
+  await Share.share({message, url: fallbackLink}).catch(() => {});
 }
 
 /** Extracts a job id from either a saveur://job?id=X URL (custom scheme —

@@ -65,11 +65,15 @@ const ReferralProgram = memo(() => {
     if (!summary) return;
     try {
       await Share.share({
+        // `url` below already carries the link (and is what gives iOS its
+        // native Open-Graph link-preview card via web.py's referral_redirect
+        // page) — the message text used to ALSO interpolate {{url}} into
+        // itself, which made iOS's share sheet show the link twice: once
+        // inside this text, once as the separate preview card for `url`.
         message: t('more:referral_share_message', {
           defaultValue:
-            "Join me on Saveur and get {{reward}} off your first Pro subscription — I'll get {{reward}} off mine too! {{url}}",
+            "Join me on Saveur and get {{reward}} off your first Pro subscription — I'll get {{reward}} off mine too!",
           reward: rewardLabel,
-          url: summary.shareUrl,
         }),
         url: summary.shareUrl,
       });

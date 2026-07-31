@@ -365,7 +365,7 @@
   "referral_hero_title": "امنح {{reward}}، واحصل على {{reward}}",
   "referral_load_failed": "تعذّر تحميل معلومات الإحالة الخاصة بك.",
   "referral_share_button": "شارك رابطي",
-  "referral_share_message": "انضم إليّ في Saveur واحصل على خصم {{reward}} على أول اشتراك Pro لك — وسأحصل أنا أيضًا على خصم {{reward}}! {{url}}",
+  "referral_share_message": "انضم إليّ في Saveur واحصل على خصم {{reward}} على أول اشتراك Pro لك — وسأحصل أنا أيضًا على خصم {{reward}}!",
   "referral_stat_invited": "المدعوون",
   "referral_stat_pending": "قيد الانتظار",
   "referral_stat_rewarded": "تمت مكافأتهم",

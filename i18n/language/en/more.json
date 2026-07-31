@@ -368,7 +368,7 @@
   "referral_hero_title": "Give {{reward}}, Get {{reward}}",
   "referral_load_failed": "Could not load your referral info.",
   "referral_share_button": "Share My Link",
-  "referral_share_message": "Join me on Saveur and get {{reward}} off your first Pro subscription — I'll get {{reward}} off mine too! {{url}}",
+  "referral_share_message": "Join me on Saveur and get {{reward}} off your first Pro subscription — I'll get {{reward}} off mine too!",
   "referral_stat_invited": "Invited",
   "referral_stat_pending": "Pending",
   "referral_stat_rewarded": "Rewarded",

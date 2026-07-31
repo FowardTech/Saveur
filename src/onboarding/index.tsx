@@ -209,7 +209,7 @@ const Onboarding = memo(() => {
           </Button>
         </Flex>
       </Content>
-      <Flex center mb={16}>
+      {/* <Flex center mb={16}>
         <Text category="h8" status={'placeholder'}>
           {t('intro:find_a_job')}{' '}
         </Text>
@@ -218,7 +218,7 @@ const Onboarding = memo(() => {
             {t('intro:get_here')}
           </Text>
         </TouchableOpacity>
-      </Flex>
+      </Flex> */}
     </Container>
   );
 });

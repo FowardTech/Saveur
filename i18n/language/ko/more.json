@@ -365,7 +365,7 @@
   "referral_hero_title": "{{reward}} 주고, {{reward}} 받기",
   "referral_load_failed": "추천 정보를 불러올 수 없습니다.",
   "referral_share_button": "내 링크 공유",
-  "referral_share_message": "Saveur에 가입하고 첫 Pro 구독에서 {{reward}} 할인을 받으세요 — 저도 {{reward}} 할인을 받습니다! {{url}}",
+  "referral_share_message": "Saveur에 가입하고 첫 Pro 구독에서 {{reward}} 할인을 받으세요 — 저도 {{reward}} 할인을 받습니다!",
   "referral_stat_invited": "초대됨",
   "referral_stat_pending": "보류 중",
   "referral_stat_rewarded": "보상됨",
