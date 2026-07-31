@@ -199,71 +199,6 @@ const LiveInterviewSession = memo(() => {
   // capture-time session setup, and this mount-order race is exactly that.
   const [videoRecordingStarted, setVideoRecordingStarted] = React.useState(false);
 
-  // THE actual root cause of "iOS records video with no audio track at
-  // all, every single time" (found by reading VisionCamera's own iOS
-  // native source, not guessed): CameraSession.swift's configure() only
-  // calls configureAudioSession() when `difference.audioSessionChanged` is
-  // true — i.e. only the FIRST time the `audio` prop's value actually
-  // changes. This screen used to render <Camera ... audio /> with `audio`
-  // hardcoded true from the very first commit, so that "first change" (from
-  // no-config to audio-enabled) happens the INSTANT the Camera mounts —
-  // which can very plausibly race ahead of AVCaptureDevice.authorizationStatus
-  // actually settling to .authorized on the OS side, even though our OWN JS
-  // permission check already resolved true. CameraSession+Configuration.swift's
-  // configureAudioSession() explicitly checks that OS-level status and
-  // THROWS if it isn't .authorized yet (CameraError.permission(.microphone))
-  // — and because audioSessionChanged only fires on a genuine value
-  // TRANSITION, a failed attempt here is NEVER retried for the rest of that
-  // Camera instance's lifetime: the prop is stuck at `true`, so there's no
-  // future "difference" to detect. Video has its own entirely separate
-  // AVCaptureSession (audioCaptureSession vs. the video session) and its
-  // own configuration path, which is exactly why video capture always
-  // succeeded while audio silently never did, with no crash and no visible
-  // error — a completely deterministic, code-level explanation for a
-  // completely deterministic, 100%-reproducible bug.
-  //
-  // Fix: `audio` now starts FALSE (so the Camera's first configure() has
-  // nothing audio-related to fail) and flips to TRUE in the effect below,
-  // safely after cameraPermissionState is already 'granted' — a real prop
-  // VALUE CHANGE that gives VisionCamera's diff engine a genuine, later
-  // "audioSessionChanged" transition to act on, by which point
-  // AVCaptureDevice.authorizationStatus is guaranteed to have long since
-  // settled. The short delay is deliberate breathing room, not a magic
-  // number — same defensive posture as this file's own existing
-  // session/camera-not-ready retry delay in videoAnalysisService.ts.
-  const [enableAudioCapture, setEnableAudioCapture] = React.useState(false);
-  React.useEffect(() => {
-    if (!isVideoMode || cameraPermissionState !== 'granted') return;
-    let cancelled = false;
-    let attempts = 0;
-    // Polls VisionCamera's own static getMicrophonePermissionStatus() --
-    // a direct, synchronous read of AVCaptureDevice.authorizationStatus(for:
-    // .audio) on iOS -- instead of trusting a blind delay to be "long
-    // enough". Confirms the exact condition configureAudioSession() itself
-    // checks before flipping the prop that triggers it, rather than
-    // guessing at a timeout. 10 attempts * 150ms = 1.5s ceiling before
-    // giving up and flipping anyway (matching this codebase's existing
-    // "never block the interview waiting on a native module forever"
-    // posture elsewhere, e.g. onEnd's various hard timeouts) -- a
-    // real-world case where this never resolves would mean permission
-    // wasn't actually granted, which the denied-state UI already handles
-    // via a completely separate path.
-    const poll = () => {
-      if (cancelled) return;
-      attempts += 1;
-      if (VisionCameraBase.getMicrophonePermissionStatus() === 'granted' || attempts >= 10) {
-        setEnableAudioCapture(true);
-        return;
-      }
-      setTimeout(poll, 150);
-    };
-    const initialDelay = setTimeout(poll, 150);
-    return () => {
-      cancelled = true;
-      clearTimeout(initialDelay);
-    };
-  }, [isVideoMode, cameraPermissionState]);
-
   // Stops whatever the hidden player is doing and drops its source —
   // called both when a new utterance's effect gets cancelled/superseded
   // (mirrors speechService.stopSpeaking()'s role in the same cleanup) and
@@ -536,16 +471,54 @@ const LiveInterviewSession = memo(() => {
 
   // Video mode only: request real camera+mic permission, then kick off the
   // face-detection/speech-recognition pipeline once granted.
+  //
+  // REVISED (previous version of this fix caused "This session's video
+  // couldn't be saved" — a regression, not a fix): the first attempt at
+  // fixing "iOS records no audio track" mounted the <Camera> immediately
+  // with audio={false}, then flipped audio to true on that SAME, already-
+  // mounted, already-running instance once permission settled. That's a
+  // hot reconfiguration of a LIVE AVCaptureSession's audio input, which is
+  // a materially riskier operation than configuring it once at initial
+  // mount — and very plausibly what broke recording entirely this time
+  // (worse than before: previously video always recorded fine, just
+  // without audio). Reverted that approach.
+  //
+  // This version keeps the underlying real fix (don't let VisionCamera's
+  // one-shot audio configuration attempt race ahead of
+  // AVCaptureDevice.authorizationStatus actually settling) but applies it
+  // BEFORE the Camera ever mounts at all, by delaying the
+  // cameraPermissionState → 'granted' transition itself — so the Camera
+  // component's very FIRST commit already has a settled, confirmed-granted
+  // audio permission and a plain, constant `audio` prop, with no later
+  // reconfiguration of a live session required.
   React.useEffect(() => {
     if (!isVideoMode) return;
     let cancelled = false;
     (async () => {
       const granted = await videoAnalysis.requestPermissions();
       if (cancelled) return;
-      setCameraPermissionState(granted ? 'granted' : 'denied');
-      if (granted) {
-        await videoAnalysis.startAnalysis();
+      if (!granted) {
+        setCameraPermissionState('denied');
+        return;
       }
+      // Confirm the OS-level authorization has actually settled (see
+      // VisionCameraBase.getMicrophonePermissionStatus() — a direct read
+      // of AVCaptureDevice.authorizationStatus(for: .audio) on iOS) before
+      // ever mounting the Camera, rather than trusting that our own JS
+      // permission promise resolving means the native side already agrees.
+      // Polled, not a blind delay; 1.5s ceiling before proceeding anyway
+      // (same "never block the interview forever on a native module"
+      // posture as this file's other hard timeouts) — a real-world case
+      // where this never resolves would mean permission wasn't actually
+      // granted, which the denied-state UI already covers separately.
+      for (let attempt = 0; attempt < 10; attempt++) {
+        if (cancelled) return;
+        if (VisionCameraBase.getMicrophonePermissionStatus() === 'granted') break;
+        await new Promise(resolve => setTimeout(resolve, 150));
+      }
+      if (cancelled) return;
+      setCameraPermissionState('granted');
+      await videoAnalysis.startAnalysis();
     })();
     return () => {
       cancelled = true;
@@ -564,11 +537,7 @@ const LiveInterviewSession = memo(() => {
   // This is the fix for "Interview Replay isn't real video" — everything
   // else in this screen already worked without it.
   React.useEffect(() => {
-    // Also waits on enableAudioCapture now (see its own comment above) —
-    // starting to record before the Camera's audio input has actually been
-    // (re-)configured would capture video against a session that may still
-    // have no audio input attached yet.
-    if (!isVideoMode || cameraPermissionState !== 'granted' || !videoAnalysis.device || !enableAudioCapture) return;
+    if (!isVideoMode || cameraPermissionState !== 'granted' || !videoAnalysis.device) return;
     videoAnalysis.startVideoRecording();
     // Flips the gate the "speak each question" effect checks (see
     // videoRecordingStarted's own comment) — startRecording()'s native call
@@ -578,7 +547,7 @@ const LiveInterviewSession = memo(() => {
     // racing it.
     setVideoRecordingStarted(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVideoMode, cameraPermissionState, videoAnalysis.device, enableAudioCapture]);
+  }, [isVideoMode, cameraPermissionState, videoAnalysis.device]);
 
   // Make sure the mic/analysis pipeline is torn down even if the user
   // navigates away without tapping "End Interview" (e.g. the close button).
@@ -977,15 +946,22 @@ const LiveInterviewSession = memo(() => {
                     // straight through to the underlying VisionCamera (see
                     // react-native-vision-camera-face-detector's Camera.tsx:
                     // `<VisionCamera {...props} ref={ref} .../>`).
+                    // Plain, constant props again — audio is safe as a
+                    // one-shot `true` here because by the time this
+                    // component ever mounts, cameraPermissionState is
+                    // already 'granted' via the REVISED permission effect
+                    // above, which now itself waits for
+                    // VisionCameraBase.getMicrophonePermissionStatus() to
+                    // confirm 'granted' before flipping that state. So
+                    // VisionCamera's one-shot audio configuration attempt
+                    // (see that effect's own comment) already happens at a
+                    // safe, settled moment on this component's very FIRST
+                    // commit — no later hot-reconfiguration of a live
+                    // session needed, which is what the previous version of
+                    // this fix did and which caused a new "video couldn't
+                    // be saved" regression.
                     video
-                    // Starts false, flips true ~400ms after permission is
-                    // confirmed granted (see enableAudioCapture's own
-                    // comment above) — a real prop transition VisionCamera's
-                    // native diffing needs to actually (re)configure audio
-                    // input, instead of a value that's constant from the
-                    // very first mount and therefore only ever attempted
-                    // once, at the riskiest possible moment.
-                    audio={enableAudioCapture}
+                    audio
                     videoBitRate="low"
                     faceDetectionOptions={videoAnalysis.faceDetectionOptions}
                     faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}
