@@ -812,7 +812,7 @@ const HomeSrc = memo(() => {
               {t('home:day_streak_caption', { defaultValue: 'Keep practicing daily to build your streak.' })}
             </Text>
           </Layout>
-          <Layout level="2" style={styles.statCard}>
+          {/* <Layout level="2" style={styles.statCard}>
             <View style={styles.statPill}>
               <Icon pack="assets" name="interview" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
               <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
@@ -825,8 +825,8 @@ const HomeSrc = memo(() => {
             <Text category="h9-s" status="placeholder" mt={4}>
               {t('home:sessions_this_week_caption', { defaultValue: 'Mock interviews completed in the last 7 days.' })}
             </Text>
-          </Layout>
-          <Layout level="2" style={styles.statCard}>
+          </Layout> */}
+          {/* <Layout level="2" style={styles.statCard}>
             <View style={styles.statPill}>
               <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
               <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
@@ -839,7 +839,7 @@ const HomeSrc = memo(() => {
             <Text category="h9-s" status="placeholder" mt={4}>
               {t('home:average_score_caption', { defaultValue: 'Your average across recent practice sessions.' })}
             </Text>
-          </Layout>
+          </Layout> */}
         </View>
 
         {/* Two layers, not one (product bug: "extra white card behind" on
@@ -1100,6 +1100,7 @@ const themedStyles = StyleService.create({
     // the card, see bannerWidth's own comment for the full explanation.
     marginTop: 16,
     overflow: 'hidden',
+    borderWidth:0,
     backgroundColor: 'transparent',
   },
   briefingCard: {
@@ -1231,7 +1232,7 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
     // Subtle warning tint to make the daily XP check-in stand out from the
     // neutral stat cards above it — was a plain themed Layout level="2".
-    backgroundColor: 'color-warning-transparent-200',
+    // backgroundColor: 'color-warning-transparent-200',
     borderWidth: 1,
     borderColor: 'color-warning-500',
   },
