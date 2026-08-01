@@ -60,7 +60,7 @@ const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: string; text: string } => {
   switch (rank) {
     case 1:
-      return { bg: theme['color-warning-transparent-200'], text: theme['color-warning-500'] };
+      return { bg: '#2574ff', text: '#FFFFFF' };
     case 2:
       return { bg: theme['background-basic-color-3'], text: theme['background-basic-color-6'] };
     case 3:
@@ -980,7 +980,7 @@ const HomeSrc = memo(() => {
             source of truth for "top N". */}
         <Flex justify="space-between" itemsCenter mt={24} mb={12}>
           <Text category="h7" bold>
-            {t('home:leaderboard', { defaultValue: 'Leaderboard' })}
+            {t('home:leaderboard', { defaultValue: 'Leaderboard' })} 🏆
           </Text>
           {/* Was category="h10" (12px, not bold) — the thinnest text style
               in the app, mismatched against every other "link" affordance
@@ -991,7 +991,7 @@ const HomeSrc = memo(() => {
             {t('common:view_all', { defaultValue: 'View all' })}
           </Text>
         </Flex>
-        <Layout level="2" style={styles.leaderboardCard}>
+        <Layout level="1" style={styles.leaderboardCard}>
           {leaderboardLoading ? (
             <Flex itemsCenter justify="center" style={styles.leaderboardStatus}>
               <Spinner size="small" />
@@ -1018,7 +1018,7 @@ const HomeSrc = memo(() => {
                   style={[
                     styles.leaderboardRow,
                     index > 0 && globalStyle.divider,
-                    entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-200'] },
+                    entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
                   ]}>
                   <View style={[styles.leaderboardRank, { backgroundColor: medal.bg }]}>
                     <Text category="h9-s" bold style={{ color: medal.text }}>
@@ -1244,7 +1244,7 @@ const themedStyles = StyleService.create({
   leaderboardCard: {
     ...globalStyle.card,
     marginTop: 8,
-    padding: 8,
+    padding: 12,
     backgroundColor: 'transparent',
   },
   leaderboardStatus: {

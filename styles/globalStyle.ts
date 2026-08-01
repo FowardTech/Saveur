@@ -253,7 +253,7 @@ export const globalStyle = StyleSheet.create({
   // out here so it's one shared value instead of N copies that could each
   // drift differently.
   divider: {
-    borderBottomWidth: 1,
+    // borderBottomWidth: 1,
     borderBottomColor: 'rgba(128,128,128,0.15)',
   },
 });
