@@ -171,8 +171,16 @@ const MainBottomTab = memo(() => {
             style={{
               width: 24,
               height: 24,
+              // Redesign (product request item, ZipRecruiter reference —
+              // the bottom tab bar there is monochrome: active tab reads
+              // as solid near-black, not a bright brand-color accent).
+              // Was theme['button-basic-color'] (the app's brand blue,
+              // #2574FF) — this whole redesign moves color accents
+              // (mint CTA, purple highlight) to be reserved for specific
+              // meaningful things elsewhere, not the tab bar, which now
+              // matches the reference's flat black/gray look.
               tintColor: focused
-                ? theme["button-basic-color"]
+                ? theme["text-basic-color"]
                 : theme["text-placeholder-color"],
             }}
           />
@@ -188,6 +196,16 @@ const MainBottomTab = memo(() => {
         screenOptions={{
           headerShown: false,
           tabBarLabelStyle: styles.styleLabel,
+          // Was unset — react-navigation's bottom-tabs falls back to its
+          // own default active tint (a bright blue) for the label text
+          // whenever this isn't provided, regardless of the ButtonTab
+          // icon's own tintColor logic just above (that only recolors the
+          // icon, not react-navigation's separately-rendered label). Per
+          // explicit follow-up ("the color of these tab text should be
+          // black when active not blue"), matches the icon's own
+          // focused/unfocused colors exactly.
+          tabBarActiveTintColor: theme["text-basic-color"],
+          tabBarInactiveTintColor: theme["text-placeholder-color"],
           tabBarStyle: [
             styles.tabBarStyle,
             {

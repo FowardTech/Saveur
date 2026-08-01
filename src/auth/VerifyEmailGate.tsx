@@ -12,6 +12,7 @@ import {globalStyle} from 'styles/globalStyle';
 import {AuthContext} from '../../AuthContext';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import useLayout from 'hooks/useLayout';
+import CtaButton from 'components/CtaButton';
 
 // Shown IN PLACE of the Home/Practice/Coach/Interviews tabs (see
 // navigation/MainBottomTab.tsx) whenever a signed-in user hasn't verified
@@ -117,7 +118,7 @@ const VerifyEmailGate = memo(() => {
             name="email-outline"
             style={[globalStyle.icon40, {tintColor: theme['text-basic-color'], marginTop: 24}]}
           />
-          <Text category="h5" bold center mt={20}>
+          <Text category="h3" bold center mt={20}>
             {t('auth:verify_email_gate_title', {defaultValue: 'Verify your email'})}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={12} maxWidth={320}>
@@ -128,7 +129,7 @@ const VerifyEmailGate = memo(() => {
             })}
           </Text>
 
-          <Button
+          <CtaButton
             style={{marginTop: 32, width: '100%'}}
             disabled={isResending}
             onPress={onResend}>
@@ -137,7 +138,7 @@ const VerifyEmailGate = memo(() => {
                 ? t('auth:sending', {defaultValue: 'Sending…'})
                 : t('auth:resend_verification_email', {defaultValue: 'Resend verification email'}),
             )}
-          </Button>
+          </CtaButton>
           <Button
             style={{marginTop: 12, width: '100%'}}
             appearance="outline"

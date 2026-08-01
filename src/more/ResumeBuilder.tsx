@@ -30,6 +30,7 @@ import * as documentsService from 'services/documentsService';
 import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 const IMPORT_OPTIONS: Array<{ key: ResumeImportSourceKey; title: string; icon: string }> = [
   { key: 'resume', title: 'Resume', icon: 'myPost' },
@@ -257,7 +258,7 @@ const ResumeBuilder = memo(() => {
           ))}
         </View>
 
-        <Button
+        <CtaButton
           children={
             isAnalyzing
               ? t('more:analyzing', { defaultValue: 'Analyzing…' })
@@ -340,7 +341,7 @@ const ResumeBuilder = memo(() => {
           value={bulletText}
           onChangeText={setBulletText}
         />
-        <Button
+        <CtaButton
           children={renderCenteredLabel(
             isRewriting
               ? t('more:rewriting', { defaultValue: 'Rewriting…' })
@@ -459,7 +460,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     width: '30%',
     borderRadius: 16,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     paddingVertical: 16,
     marginBottom: 12,

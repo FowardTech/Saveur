@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -27,6 +27,8 @@ import { RootStackParamList } from 'navigation/types';
 import { MockInterviewSessionProps } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as gamificationService from 'services/gamificationService';
+import * as roadmapService from 'services/roadmapService';
+import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { GamificationStreakProps } from 'constants/Types';
 import { AuthContext } from '../../AuthContext';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
@@ -51,6 +53,18 @@ const MyProgress = memo(() => {
 
   const [history, setHistory] = React.useState<MockInterviewSessionProps[]>([]);
   const [streak, setStreak] = React.useState<GamificationStreakProps | null>(null);
+  // Overall progress toward the user's career goal (product request item:
+  // "There should be an overall progress of the user towards the goal in the
+  // progress screen not just a repeated stats from the homescreen" — the
+  // stat cards above were literally the same three numbers already shown on
+  // Home's dashboard, with no actual "toward the goal" content anywhere).
+  // The AI Career Roadmap (services/roadmapService.ts) is the one feature
+  // that already tracks a linear, ordered sequence of real-world milestones
+  // from today to the goal role — and per CareerRoadmap.tsx's own comment,
+  // every user lands with one auto-generated from their signup goal/role
+  // (see backend's career_roadmap_service.ensure_auto_roadmap), so this is
+  // reliably populated rather than a Pro-only dead end.
+  const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
@@ -58,12 +72,14 @@ const MyProgress = memo(() => {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [historyResult, streakResult] = await Promise.all([
+      const [historyResult, streakResult, roadmapResult] = await Promise.all([
         interviewService.getPracticeHistory(),
         gamificationService.getStreak().catch(() => null),
+        roadmapService.getSavedRoadmap(),
       ]);
       setHistory(historyResult);
       setStreak(streakResult);
+      setRoadmap(roadmapResult);
     } catch (error: any) {
       setLoadError(error?.message ?? t('find:could_not_load_progress', { defaultValue: 'Could not load your progress.' }));
     } finally {
@@ -88,6 +104,13 @@ const MyProgress = memo(() => {
     ? Math.round(scored.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) / scored.length)
     : null;
   const weeklyPractice = React.useMemo(() => interviewService.computeWeeklyPractice(completed), [completed]);
+  const roadmapPercent = roadmap && roadmap.totalCount > 0
+    ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
+    : 0;
+  const currentRoadmapStep = React.useMemo(
+    () => roadmap?.steps.find(s => s.status === 'current') ?? null,
+    [roadmap],
+  );
   const recent = React.useMemo(
     () =>
       [...completed]
@@ -156,9 +179,73 @@ const MyProgress = memo(() => {
               </Button>
             </Layout>
 
+            <Layout level="2" style={[styles.goalCard, { marginTop: 16 }]}>
+              <Flex justify="space-between" itemsCenter>
+                <Text category="h8" bold>
+                  {t('find:goal_progress_title', { defaultValue: 'Progress toward your goal' })}
+                </Text>
+                {roadmap ? (
+                  <Text category="h8" bold status="primary">
+                    {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
+                  </Text>
+                ) : null}
+              </Flex>
+              {roadmap ? (
+                <>
+                  <Text category="h9" status="placeholder" mt={4}>
+                    {roadmap.targetRole}
+                  </Text>
+                  <View style={styles.progressTrack}>
+                    <View style={[styles.progressFill, { width: `${roadmapPercent}%`, backgroundColor: theme['color-primary-500'] }]} />
+                  </View>
+                  <Text category="h10" status="placeholder" mt={8}>
+                    {t('find:goal_progress_steps_of', {
+                      defaultValue: '{{completed}} of {{total}} steps complete',
+                      completed: roadmap.completedCount,
+                      total: roadmap.totalCount,
+                    })}
+                  </Text>
+                  {roadmap.isComplete ? (
+                    <Text category="h9" bold status="success" mt={8}>
+                      {t('find:goal_progress_complete', { defaultValue: "You've completed every step — congratulations!" })}
+                    </Text>
+                  ) : currentRoadmapStep ? (
+                    <Text category="h9" mt={8}>
+                      {t('find:goal_progress_current_step', {
+                        defaultValue: 'Current step: {{step}}',
+                        step: currentRoadmapStep.title,
+                      })}
+                    </Text>
+                  ) : null}
+                  <Button
+                    size="small"
+                    appearance="ghost"
+                    style={{ marginTop: 12, alignSelf: 'flex-start' }}
+                    onPress={() => navigate('CareerRoadmap')}>
+                    {t('find:goal_progress_view_roadmap', { defaultValue: 'View full roadmap' })}
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Text category="h9-s" status="placeholder" mt={8} mb={4}>
+                    {t('find:goal_progress_no_roadmap', {
+                      defaultValue: 'Build a step-by-step roadmap to see your progress toward this goal.',
+                    })}
+                  </Text>
+                  <Button
+                    size="small"
+                    appearance="ghost"
+                    style={{ marginTop: 8, alignSelf: 'flex-start' }}
+                    onPress={() => navigate('CareerRoadmap')}>
+                    {t('find:goal_progress_build_roadmap', { defaultValue: 'Build my roadmap' })}
+                  </Button>
+                </>
+              )}
+            </Layout>
+
             <Flex justify="space-between" style={{ marginTop: 20 }}>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h4" bold>
+                <Text category="h3" bold>
                   {completed.length}
                 </Text>
                 <Text category="h10" status="placeholder">
@@ -166,7 +253,7 @@ const MyProgress = memo(() => {
                 </Text>
               </Layout>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h4" bold>
+                <Text category="h3" bold>
                   {streak?.streakDays ?? 0}
                 </Text>
                 <Text category="h10" status="placeholder">
@@ -174,7 +261,7 @@ const MyProgress = memo(() => {
                 </Text>
               </Layout>
               <Layout level="2" style={[styles.statCard, { marginRight: 0 }]}>
-                <Text category="h4" bold>
+                <Text category="h3" bold>
                   {avgScore ?? '—'}
                 </Text>
                 <Text category="h10" status="placeholder">
@@ -259,6 +346,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
+    backgroundColor: 'transparent',
   },
   goalChip: {
     borderRadius: 99,
@@ -274,9 +362,21 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginRight: 12,
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   chart: {
     borderRadius: 16,
+  },
+  progressTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'background-basic-color-3',
+    overflow: 'hidden',
+    marginTop: 12,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 5,
   },
   sessionRow: {
     paddingVertical: 12,

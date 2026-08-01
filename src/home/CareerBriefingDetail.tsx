@@ -63,11 +63,16 @@ const CareerBriefingDetail = memo(() => {
           style={[styles.heroCard, { borderColor: theme['color-primary-transparent-300'] }]}
         >
           <Flex justify="flex-start" itemsCenter mb={14}>
-            <View style={[styles.iconBadge, { backgroundColor: theme['background-basic-color-2'] }]}>
+            {/* "Colored glass" icon treatment (app-wide consistency pass) —
+                was a flat gray circle + monochrome icon; now a tinted
+                primary-blue circle + matching solid icon, same convention
+                as Home's stat card icons and this same card's own
+                priorityBadge (already tinted) below. */}
+            <View style={[styles.iconBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
               <Icon
                 pack="eva"
                 name={isTeaser ? 'bulb-outline' : 'sun-outline'}
-                style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]}
+                style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
               />
             </View>
             <View style={{ marginLeft: 12, flex: 1 }}>
@@ -138,6 +143,13 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     padding: 18,
     borderWidth: 1,
+    // No fill — border-only, matching the app-wide "cards are transparent,
+    // not gray-filled" pass. Explicit 'transparent' rather than omitting
+    // backgroundColor, since this renders via <Layout level="2" .../> —
+    // Layout's own level="2" mapping would otherwise still fill it (RN
+    // merges style arrays left-to-right and this style prop is spread
+    // after Layout's internal eva style, so it wins).
+    backgroundColor: 'transparent',
   },
   iconBadge: {
     width: 36,
@@ -150,6 +162,8 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     padding: 14,
     marginBottom: 10,
+    // Same as heroCard above — renders via <Flex level="2" .../>.
+    backgroundColor: 'transparent',
   },
   priorityBadge: {
     width: 28,

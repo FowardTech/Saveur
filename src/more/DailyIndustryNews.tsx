@@ -120,5 +120,6 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    backgroundColor: 'transparent',
   },
 });

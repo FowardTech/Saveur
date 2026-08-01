@@ -66,7 +66,7 @@ function renderMarkdownLite(bodyMd: string, styles: any) {
     } else if (line.startsWith("# ")) {
       flushParagraph(`p${i}`);
       blocks.push(
-        <Text key={`h1-${i}`} category="h4" bold mb={12}>
+        <Text key={`h1-${i}`} category="h3" bold mb={12}>
           {line.replace(/^#\s+/, "")}
         </Text>,
       );

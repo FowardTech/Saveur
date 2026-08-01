@@ -89,10 +89,9 @@ export default PracticeSessionItem;
 
 const themedStyles = StyleService.create({
   container: {
+    ...globalStyle.card,
     marginBottom: 16,
-    borderRadius: 16,
     padding: 16,
-    ...globalStyle.shadowFade,
   },
   statusTag: {
     paddingVertical: 4,

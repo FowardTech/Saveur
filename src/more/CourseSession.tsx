@@ -27,6 +27,7 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import { notifyFirstCourseCompleted } from 'utils/appRating';
 import { getCourseLevelLabel } from 'utils/learningLabels';
+import CtaButton from 'components/CtaButton';
 
 type LessonMode = 'voice' | 'text';
 
@@ -268,7 +269,7 @@ const CourseSession = memo(() => {
         <Content padder contentContainerStyle={styles.content}>
           <Flex vertical itemsCenter justify="center" style={{ flex: 1, paddingTop: 60 }}>
             <Icon pack="eva" name="award-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
-            <Text category="h5" bold center mt={20}>
+            <Text category="h3" bold center mt={20}>
               {t('more:course_tier_complete', {
                 defaultValue: '{{level}} Tier Complete!',
                 level: getCourseLevelLabel(level, t),
@@ -283,19 +284,24 @@ const CourseSession = memo(() => {
               })}
             </Text>
             {earnedCertificate ? (
-              <View style={styles.certCard}>
-                <Text category="h8" bold status="success" center>
-                  {t('more:course_certificate_earned', { defaultValue: 'Badge Earned' })}
-                </Text>
-                <Text category="h9-s" status="placeholder" center mt={4}>
-                  {t('more:course_certificate_subtitle', {
-                    defaultValue: '{{topic}} — Basic, Intermediate & Advanced',
-                    topic,
-                  })}
-                </Text>
-                <Text category="h10" status="placeholder" center mt={6}>
-                  {earnedCertificate.code}
-                </Text>
+              // Two layers, not one (product bug: "extra white card behind"
+              // on Android, fine on iOS) — see HomeSrc.tsx's
+              // checkInCardOuter/checkInCardInner for the full explanation.
+              <View style={styles.certCardOuter}>
+                <View style={styles.certCard}>
+                  <Text category="h8" bold status="success" center>
+                    {t('more:course_certificate_earned', { defaultValue: 'Badge Earned' })}
+                  </Text>
+                  <Text category="h9-s" status="placeholder" center mt={4}>
+                    {t('more:course_certificate_subtitle', {
+                      defaultValue: '{{topic}} — Basic, Intermediate & Advanced',
+                      topic,
+                    })}
+                  </Text>
+                  <Text category="h10" status="placeholder" center mt={6}>
+                    {earnedCertificate.code}
+                  </Text>
+                </View>
               </View>
             ) : nextLevel ? (
               <Text category="h9-s" status="link" center mt={16}>
@@ -305,9 +311,9 @@ const CourseSession = memo(() => {
                 })}
               </Text>
             ) : null}
-            <Button style={{ marginTop: 32, width: '100%' }} onPress={goBack}>
+            <CtaButton style={{ marginTop: 32, width: '100%' }} onPress={goBack}>
               {t('more:course_back_to_courses', { defaultValue: 'Back to Courses' })}
-            </Button>
+            </CtaButton>
           </Flex>
         </Content>
       </Container>
@@ -443,11 +449,11 @@ const CourseSession = memo(() => {
               <Button appearance="ghost" disabled={moduleIndex === 0} onPress={onPrevious}>
                 {t('more:course_previous', { defaultValue: 'Previous' })}
               </Button>
-              <Button onPress={onNext}>
+              <CtaButton onPress={onNext}>
                 {moduleIndex + 1 >= totalModules
                   ? t('more:course_finish', { defaultValue: 'Finish' })
                   : t('more:course_next_module', { defaultValue: 'Next Module' })}
-              </Button>
+              </CtaButton>
             </Flex>
           </>
         ) : null}
@@ -490,18 +496,29 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     marginTop: 8,
   },
   answerInput: {
     borderRadius: 12,
     minHeight: 60,
   },
-  certCard: {
+  // Split in two (product bug: "extra white card behind" on Android) — see
+  // the JSX comment above where these are used.
+  certCardOuter: {
     ...globalStyle.card,
     marginTop: 24,
+    width: '100%',
+    // Was opaque (needed back when `card` still carried Android elevation
+    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
+    // `card` is border-only now, so transparent is safe and matches the
+    // app-wide "cards are transparent" pass.
+    backgroundColor: 'transparent',
+  },
+  certCard: {
     padding: 16,
     borderRadius: 16,
+    overflow: 'hidden',
     backgroundColor: 'color-success-transparent-200',
     width: '100%',
   },

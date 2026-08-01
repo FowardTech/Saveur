@@ -85,19 +85,34 @@
              directly instead of a browser tab), Android's equivalent of
              iOS Universal Links (see caren_family.entitlements' matching
              associated-domains entry). autoVerify="true" makes Android
-             fetch https://api.saveurnow.com/.well-known/assetlinks.json
-             (Saveur-Backend's app/web.py) at install time to confirm this
-             app is allowed to claim these paths; that file's
-             sha256_cert_fingerprints is still blank until the release
-             keystore's fingerprint is set (see ANDROID_SHA256_FINGERPRINT
-             in web.py), so verification will silently fail and Android will
-             fall back to the plain saveur:// scheme above until then;
-             nothing regresses, this just isn't fully live yet. -->
+             fetch https://<host>/.well-known/assetlinks.json
+             (Saveur-Backend's app/web.py) at install time, per host listed
+             below, to confirm this app is allowed to claim these paths;
+             that file's sha256_cert_fingerprints is still blank until the
+             release keystore's fingerprint is set (see
+             ANDROID_SHA256_FINGERPRINT in web.py), so verification will
+             silently fail and Android will fall back to the plain saveur://
+             scheme above until then; nothing regresses, this just isn't
+             fully live yet.
+             share.saveurnow.com added alongside api.saveurnow.com (NOT
+             replacing it): product/security concern, job/referral share
+             links were showing "api." in the URL bar to recipients,
+             exposing backend naming, so new links now use this dedicated
+             share.saveurnow.com subdomain instead (see
+             jobShareService.ts's WEB_SHARE_BASE_URL / referralService.ts
+             and Saveur-Backend's PUBLIC_SHARE_BASE_URL). Keeping
+             api.saveurnow.com listed too means any link already shared
+             before this change keeps opening the app directly. Multiple
+             data elements inside one intent-filter are combined
+             (Android's own docs: "all the data elements are combined into
+             a full pattern set"), so both hosts are verified/matched by
+             this single filter; no need for a second intent-filter. -->
         <intent-filter android:autoVerify="true">
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.DEFAULT" />
             <category android:name="android.intent.category.BROWSABLE" />
             <data android:scheme="https" android:host="api.saveurnow.com" />
+            <data android:scheme="https" android:host="share.saveurnow.com" />
         </intent-filter>
       </activity>
     </application>

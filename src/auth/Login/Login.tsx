@@ -20,6 +20,7 @@ import Text from 'components/Text';
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
 import BrandWordmark from 'components/BrandWordmark';
+import CtaButton from 'components/CtaButton';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Controller, useForm} from 'react-hook-form';
 import {RuleEmail, RulePassword} from 'utils/rules';
@@ -169,7 +170,13 @@ const Login = memo(() => {
     <Container style={styles.container}>
       <KeyboardAwareScrollView contentContainerStyle={styles.content}>
         <BrandWordmark size={44} />
-        <Text mt={24} category="h7" mb={72}>
+        {/* Redesign (product follow-up — "big text" consistency pass):
+            was category="h7" (16px, not bold), the smallest heading size
+            used anywhere as an actual screen title in this app. Bumped to
+            match the same big-bold treatment src/auth/Signup/
+            SignupSecondStep.tsx and SignupThirdStep.tsx already use for
+            their own headings, so the whole auth flow reads consistently. */}
+        <Text mt={24} category="h2" bold mb={72}>
           {t('auth:welcome_back')}
         </Text>
         <Controller
@@ -256,12 +263,9 @@ const Login = memo(() => {
             </Text>
           </Text>
         </TouchableOpacity>
-        <Button
-          onPress={onLogin}
-          disabled={canContinue || isSubmitting}
-          style={globalStyle.shadowBtn}>
-          {isSubmitting ? `${t('auth:login').toString()}…` : t('auth:login').toString()}
-        </Button>
+        <CtaButton onPress={onLogin} disabled={canContinue || isSubmitting} loading={isSubmitting}>
+          {t('auth:login').toString()}
+        </CtaButton>
         <Text category="h8-s" status={'placeholder'} mt={40} mb={24} center>
           {t('auth:or')}
         </Text>
@@ -284,7 +288,7 @@ const Login = memo(() => {
           />
         </View>
       </KeyboardAwareScrollView>
-      <Flex center mb={bottom + 16} style={styles.bottom}>
+      <Flex center mt={20} mb={bottom + 16} style={styles.bottom}>
         <Text category="h8-s">{t('auth:dont_have_an_account')}</Text>
         <TouchableOpacity activeOpacity={0.54} onPress={onAuth('SignupFirstStep')}>
           <Text status={'link'} category="h8-s">
@@ -324,10 +328,19 @@ const themedStyles = StyleService.create({
     left: 16,
     top: 14,
   },
-  bottom: {
-    position: 'absolute',
-    bottom: 0,
-  },
+  // Was `position: 'absolute', bottom: 0` — floating this row fixed at the
+  // very bottom of the screen regardless of scroll position, which is what
+  // caused it to sit right on top of the LinkedIn button (my first attempt
+  // at fixing that fought the symptom with a big padding buffer instead of
+  // the actual cause, which just pushed a large dead gap between the two
+  // instead). Removed the absolute positioning entirely — this row now
+  // flows normally right after the LinkedIn button like every other
+  // element on this screen, so it sits close to it again ("the way they
+  // are before") with just a small `mt={20}` gap (see the JSX) instead of
+  // either overlapping or being stranded at the screen edge. `mb`
+  // (safe-area inset + 16, set in the JSX) still keeps it clear of the
+  // home indicator on devices that need it.
+  bottom: {},
   forgetPass: {
     alignSelf: 'center',
   },

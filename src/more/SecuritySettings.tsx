@@ -11,6 +11,7 @@ import NavigationAction from 'components/NavigationAction';
 import * as biometricAuthService from 'services/biometricAuthService';
 import * as twoFactorService from 'services/twoFactorService';
 import {AuthContext} from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 // Reached from More > Security. Houses both device-local biometric app-lock
 // (services/biometricAuthService.ts) and account-level email-code 2FA
@@ -221,11 +222,11 @@ const SecuritySettings = memo(() => {
               <Button appearance="ghost" status="basic" disabled={twoFABusy} onPress={onCancelEnable2FA}>
                 {t('common:cancel', {defaultValue: 'Cancel'})}
               </Button>
-              <Button disabled={twoFABusy || twoFACode.length < 6} onPress={onConfirmEnable2FA}>
+              <CtaButton disabled={twoFABusy || twoFACode.length < 6} onPress={onConfirmEnable2FA}>
                 {twoFABusy
                   ? t('more:two_factor_verifying', {defaultValue: 'Verifying…'})
                   : t('more:two_factor_confirm', {defaultValue: 'Confirm'})}
-              </Button>
+              </CtaButton>
             </Flex>
           </View>
         ) : twoFAEnabled ? (
@@ -233,11 +234,11 @@ const SecuritySettings = memo(() => {
             {t('more:two_factor_disable', {defaultValue: 'Turn off'})}
           </Button>
         ) : (
-          <Button disabled={twoFABusy} onPress={onStartEnable2FA}>
+          <CtaButton disabled={twoFABusy} onPress={onStartEnable2FA}>
             {twoFABusy
               ? t('more:two_factor_sending', {defaultValue: 'Sending…'})
               : t('more:two_factor_enable', {defaultValue: 'Turn on'})}
-          </Button>
+          </CtaButton>
         )}
       </Content>
     </Container>

@@ -46,11 +46,21 @@ const BasicTabBar = ({ style, activeIndex, onChange, tabs }: Props) => {
             onPress={() => changeIndex(i)}
             activeOpacity={0.54}
           >
+            {/* Active tab label was status="link" (theme blue) — per
+                explicit follow-up ("The hover color on the tab buttons
+                texts should be black not blue") this is now the app's own
+                near-black text-basic-color instead, via an explicit style
+                override (status stays 'placeholder'/'basic' for the base
+                color/weight, the override wins since it's applied after —
+                see components/Text.tsx). The underline/progress indicator
+                below keeps its accent color; only the label text itself
+                changed, per the literal ask. */}
             <Text
               mb={8}
               mh={12}
               category="h8"
-              status={activeIndex === i ? 'link' : 'placeholder'}
+              status="placeholder"
+              style={activeIndex === i ? {color: theme['text-basic-color']} : undefined}
               uppercase
               bold
             >

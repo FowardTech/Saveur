@@ -19,6 +19,7 @@ import {RuleEmail} from 'utils/rules';
 import {AuthStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
 import * as emailService from 'services/emailService';
+import CtaButton from 'components/CtaButton';
 
 // Real Firebase-hosted password reset (POST /api/v1/email/send-password-reset
 // — see services/emailService.ts). The actual password change now happens on
@@ -110,7 +111,7 @@ const ForgetPassword = memo(() => {
             )}
           />
         )}
-        <Button
+        <CtaButton
           children={
             sent
               ? t('auth:resend_link', {defaultValue: 'Resend link'})

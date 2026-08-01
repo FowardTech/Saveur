@@ -29,6 +29,7 @@ import {
 import { getApproachTitle, getApproachDescription } from 'utils/negotiationLabels';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 interface LogEntry {
   round: number;
@@ -238,7 +239,7 @@ const SalaryNegotiation = memo(() => {
                 </View>
               ) : null}
             </Layout>
-            <Button
+            <CtaButton
               children={t('find:try_another_scenario', {defaultValue: 'Try Another Scenario'})}
               onPress={loadScenario}
               style={[globalStyle.shadowBtn, { marginTop: 24 }]}

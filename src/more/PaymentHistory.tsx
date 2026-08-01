@@ -224,6 +224,15 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 18,
     marginBottom: 16,
+    // No fill — border-only (app-wide "cards are transparent" pass).
+    // Explicit 'transparent' since this renders via <Layout level="2" .../>,
+    // whose own level mapping would otherwise still fill it. See the
+    // "Send receipt"/"Download receipt" buttons below for why their status
+    // choices stay as-is regardless of this: that white-on-white bug was
+    // about a button's text color exactly matching background-basic-
+    // color-2's own value, not about the card being opaque, so it's not
+    // reintroduced by removing the fill.
+    backgroundColor: 'transparent',
   },
   cardIcon: {
     width: 28,

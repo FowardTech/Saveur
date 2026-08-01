@@ -1,32 +1,32 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Image, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Image, ScrollView, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
+// Redesign (product request item, ZipRecruiter reference) — primary CTA
+// buttons (the daily XP check-in, the Pro upgrade prompt) get the new
+// mint-green/black-text look; secondary/contextual actions (Resend, Try
+// again above) stay as plain UI Kitten <Button> — see CtaButton.tsx's own
+// comment for why it's reserved for "the" primary action, not every button.
+import CtaButton from 'components/CtaButton';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import { BarChart } from 'react-native-chart-kit';
 
 import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
-import UserAvatar from 'components/UserAvatar';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { chartConfig } from 'utils/chartConfig';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import useLayout from 'hooks/useLayout';
-import {
-  DATA_BADGES,
-} from 'constants/Data';
-import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, GoalTipProps, Interview_Type_Enum, LeaderboardEntryProps, MockInterviewSessionProps, ScheduledInterviewProps } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, Interview_Type_Enum, LeaderboardEntryProps, MockInterviewSessionProps, ScheduledInterviewProps } from 'constants/Types';
+import UserAvatar from 'components/UserAvatar';
 import * as interviewService from 'services/interviewService';
 import * as resumeService from 'services/resumeService';
 import * as networkingService from 'services/networkingService';
 import * as gamificationService from 'services/gamificationService';
 import * as notificationService from 'services/notificationService';
-import * as goalTipsService from 'services/goalTipsService';
 import * as careerOsService from 'services/careerOsService';
 import * as roadmapService from 'services/roadmapService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
@@ -46,6 +46,29 @@ import { AuthContext } from '../../AuthContext';
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
 // for the same reasoning.
 const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
+
+// Leaderboard preview's per-rank medal badge colors (module scope, not
+// inline in JSX, for the same "don't recompute a literal object every
+// render" reason as renderCheckInSpinner above). Ranks 1/2 use existing
+// theme tokens (warning=gold, the app's own neutral basic-color-3/6 pair
+// for silver); rank 3 has no dedicated "bronze" token anywhere in
+// constants/theme/{light,dark}.json (only primary/success/info/warning/
+// danger/basic exist), so it's a literal copper hex — a reasonable one-off
+// for a purely decorative 3rd-place medal, same call already made for other
+// one-off accent colors elsewhere in this app. Every rank past 3 falls back
+// to the same neutral pill the rest of this screen's placeholder text uses.
+const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: string; text: string } => {
+  switch (rank) {
+    case 1:
+      return { bg: theme['color-warning-transparent-200'], text: theme['color-warning-500'] };
+    case 2:
+      return { bg: theme['background-basic-color-3'], text: theme['background-basic-color-6'] };
+    case 3:
+      return { bg: 'rgba(205, 127, 50, 0.18)', text: '#CD7F32' };
+    default:
+      return { bg: theme['background-basic-color-3'], text: theme['text-placeholder-color'] };
+  }
+};
 
 // Dashboard — streak/XP/leaderboard, weekly practice stats, and upcoming
 // session all come from the real backend now (see the fetches below:
@@ -80,7 +103,7 @@ const HomeSrc = memo(() => {
   // (assets/images/img_home_banner_ai_coach.jpg is 1920x900, not the
   // original 1920x1080; see that asset's own history for why) so this
   // still renders full-bleed with zero letterboxing for the default image.
-  const bannerHeight = Math.round(bannerWidth * (900 / 1920));
+  const bannerHeight = Math.round(bannerWidth * (799 / 1922));
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPro } =
@@ -199,50 +222,13 @@ const HomeSrc = memo(() => {
     careerOsService.getTodayBriefing().then(setBriefing).catch(() => {});
   }, []);
 
-  // "Today's Goal Tips" card — GET /api/v1/goals/tips/today (see
-  // services/goalTipsService.ts), one AI-generated tip per goal the user set
-  // at signup (profile.goals). Only fetched when there's at least one goal
-  // to have tips about.
-  const [goalTips, setGoalTips] = React.useState<GoalTipProps[] | null>(null);
-  const [goalTipsLoading, setGoalTipsLoading] = React.useState(false);
-  // Visual redesign: a goal tip's AI-generated body text was rendering as a
-  // full, unformatted paragraph directly in the card — several sentences
-  // long with no truncation, the exact "wall of text in a small card" issue
-  // already solved for the Career OS Briefing card below (see that card's
-  // own "Visual redesign (task #42)" comment) but never applied here.
-  // Mirrors that same pattern: truncate by default, let the user tap to see
-  // the rest — but in-place (no dedicated "Goal Tip Detail" screen exists,
-  // unlike the briefing), so this just tracks which tip ids are expanded.
-  const [expandedGoalTipIds, setExpandedGoalTipIds] = React.useState<Set<string>>(new Set());
-  const toggleGoalTipExpanded = React.useCallback((id: string) => {
-    setExpandedGoalTipIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }, []);
-  const hasGoals = (profile?.goals?.length ?? 0) > 0;
-  React.useEffect(() => {
-    if (!hasGoals) return;
-    let cancelled = false;
-    setGoalTipsLoading(true);
-    goalTipsService
-      .getTodayTips()
-      .then(tips => {
-        if (!cancelled) setGoalTips(tips);
-      })
-      .catch(() => {
-        // Non-critical — the card just doesn't render if this fails, same
-        // treatment as the notification badge count above.
-      })
-      .finally(() => {
-        if (!cancelled) setGoalTipsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [hasGoals]);
+  // "Today's Goal Tips" dashboard card was removed (product request item:
+  // "remove the today's daily tip card and let user see the push
+  // notification and when they click it it takes them to more details
+  // about today's goal tip") — that content now lives only on
+  // src/home/GoalTipDetail.tsx, reached via the daily "goal_tip" push
+  // notification tap (see navigation/navigationRef.ts's
+  // navigateToGoalTipDetail). No fetch/state needed here anymore.
 
   // Orientation card into the AI Career Roadmap -- "someone walking into a
   // school for the first time needs a roadmap to orientation" -- everyone
@@ -388,7 +374,14 @@ const HomeSrc = memo(() => {
     }
   }, [checkingIn, streakLoading, streak, t]);
 
-  // Leaderboard — GET /api/v1/gamification/leaderboard.
+  // Leaderboard preview (GET /api/v1/gamification/leaderboard) — top 4,
+  // same fetch src/home/Leaderboard.tsx's own full-list screen uses (see
+  // that file's comment on why it's the same call unsliced). Brought back
+  // to the dashboard per explicit follow-up ("bring back the leaderboard
+  // to the homescreen") after a brief decluttering pass had replaced it
+  // with a nav pill only — the pill is now removed again in favor of this
+  // live preview card (with its own "View all" link into the same screen),
+  // so there's a single entry point, not two.
   const [leaderboard, setLeaderboard] = React.useState<LeaderboardEntryProps[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = React.useState(true);
   const [leaderboardError, setLeaderboardError] = React.useState<string | null>(null);
@@ -593,13 +586,13 @@ const HomeSrc = memo(() => {
           // framing and, for free users specifically, adds an upgrade CTA —
           // previously this state didn't render at all.
           <Layout
-            level="2"
+            level="1"
             style={[
               styles.briefingCard,
-              { borderColor: theme['color-primary-transparent-300'] },
+              { borderColor: theme['color-primary-transparent-300'], display:'none' },
             ]}
           >
-            <Flex justify="flex-start" itemsCenter mb={10}>
+            <Flex justify="flex-start" itemsCenter mb={8}>
               <View style={[styles.briefingIconBadge, { backgroundColor: theme['background-basic-color-2'] }]}>
                 {briefing.isTeaser ? (
                   // No "rocket"/launch icon exists in the custom "assets"
@@ -624,7 +617,7 @@ const HomeSrc = memo(() => {
                3-line preview with a "Read more" arrow into
                CareerBriefingDetail.tsx, which shows the complete narrative
                plus all priorities. */}
-            <Text category="h9-s" numberOfLines={3} style={{ lineHeight: 21 }}>{briefing.narrative}</Text>
+            <Text category="h9-s" numberOfLines={3} style={{ lineHeight: 19 }}>{briefing.narrative}</Text>
             {/* status="primary" resolves to near-white in this theme (meant
                for text sitting on a solid color-primary button, not a light
                card) -- that's why "Read more" was invisible and only the
@@ -637,7 +630,7 @@ const HomeSrc = memo(() => {
             <Flex
               justify="flex-end"
               itemsCenter
-              mt={4}
+              mt={2}
               onPress={() => navigate('CareerBriefingDetail', { narrative: briefing.narrative!, priorities: briefing.priorities, isTeaser: briefing.isTeaser })}
             >
               <Text category="h10" status="link" bold>
@@ -650,13 +643,13 @@ const HomeSrc = memo(() => {
                stays a short, scannable preview rather than duplicating the
                full breakdown on the dashboard itself. */}
             {briefing.isTeaser && !isPro ? (
-              <Button
+              <CtaButton
                 size="small"
-                style={[globalStyle.shadowBtn, { marginTop: 12 }]}
+                style={{ marginTop: 12 }}
                 onPress={() => navigate('Subscription')}
               >
                 {t('home:career_os_upgrade_cta', { defaultValue: 'See Pro plans' })}
-              </Button>
+              </CtaButton>
             ) : null}
           </Layout>
         ) : null}
@@ -667,224 +660,244 @@ const HomeSrc = memo(() => {
            placement="home_banner" ad exists (see onOpenHomeBanner) so a
            tap always has real content to navigate AdDetails to — no
            banner is shown at all until the admin creates one. */}
-        {homeBanner ? (
-          // Shadow lives on this outer wrapper, not the TouchableOpacity
-          // below — a view can't both clip its content to rounded corners
-          // (overflow: 'hidden', needed so the image doesn't spill past the
-          // card's corners) AND cast a visible shadow itself, since
-          // overflow: hidden clips the shadow along with everything else.
-          // Standard RN split: shadow on the outer box, clipping on the
-          // inner one.
-          <View style={[globalStyle.shadowFade, {borderRadius: 16, marginTop: 16}]}>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              style={[styles.homeBannerCard, {width: bannerWidth, height: bannerHeight, marginTop: 0}]}
-              onPress={onOpenHomeBanner}>
-              <Image
-                source={
-                  homeBanner.imageUrl
-                    ? {uri: homeBanner.imageUrl}
-                    : Images.homeBannerAiCoach
-                }
-                style={{width: bannerWidth, height: bannerHeight}}
-                // "contain" (not "cover") per explicit product direction:
-                // the full banner image should always be visible, never
-                // cropped — cover would zoom/crop whenever an admin-
-                // uploaded image_url's aspect ratio doesn't exactly match
-                // 16:9. Since bannerHeight above is computed to exactly
-                // match the bundled default image's own 16:9 ratio, this
-                // produces identical (letterbox-free) results for that
-                // image, and degrades gracefully (letterboxed, not
-                // cropped) for a future admin image with a different
-                // ratio.
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
-          </View>
-        ) : null}
-        {goalTipsLoading && !goalTips ? (
-          <Flex vertical center style={[styles.goalTipsCard, {paddingVertical: 24}]}>
-            <Spinner size="small" />
-          </Flex>
-        ) : goalTips && goalTips.length > 0 ? (
-          <View style={styles.goalTipsCard}>
-            {/* Was h7/mb-only — every other section header on this screen
-               (Weekly Practice, Upcoming Session, Badges, Leaderboard) uses
-               h6 bold with mt=32/mb=16; this was the one outlier, which is
-               part of why the screen reads as inconsistently designed
-               rather than one coherent system. */}
-            <Text category="h6" bold mb={16}>
-              {t('home:goal_tips_title', { defaultValue: "Today's Goal Tips" })}
-            </Text>
-            {goalTips.map(tip => {
-              const isExpanded = expandedGoalTipIds.has(tip.id);
-              return (
-                <View key={tip.id} style={[styles.goalTipRow, globalStyle.card]}>
-                  {/* tip.goal used to render as plain bold colored text —
-                     reads as a label floating in space with nothing to
-                     anchor it. An actual pill (background + rounded caps)
-                     is the standard "tag" treatment big-tech apps use for
-                     exactly this — a short category marker above a longer
-                     body. */}
-                  <View style={[styles.goalTipPill, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                    {/* status="primary" resolves to near-white in this theme
-                       (meant for text on a solid color-primary button, not a
-                       tinted chip) — see the identical gotcha already
-                       documented on the briefing card's "Read more" link
-                       above. Explicit color instead. */}
-                    <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
-                      {tip.goal}
-                    </Text>
-                  </View>
-                  <Text category="h9-s" mt={8} numberOfLines={isExpanded ? undefined : 3} style={styles.goalTipBody}>
-                    {tip.tip}
-                  </Text>
-                  <Text
-                    category="h10"
-                    status="link"
-                    bold
-                    mt={6}
-                    onPress={() => toggleGoalTipExpanded(tip.id)}>
-                    {isExpanded
-                      ? t('common:show_less', { defaultValue: 'Show less' })
-                      : t('common:read_more', { defaultValue: 'Read more' })}
-                  </Text>
-                </View>
-              );
-            })}
-          </View>
-        ) : null}
-        {/* Consolidated (UI cleanup pass): these three used to be full-width
-            cards stacked one after another — same tap-through-to-a-screen
-            shape repeated three times, taking up most of a first screenful
-            on their own. One compact row of tiles gets to all three
-            destinations in the same space one of the old cards used to
-            take. Subtitles (roadmap target role, sessions/score, "AI
-            recap") dropped from the tile itself — each destination screen
-            already shows that detail immediately on open. */}
-        <View style={styles.navTilesRow}>
+        
+        {/* Pill-button row (product request item, screenshot reference —
+            dark rounded filter-chip style) replacing what used to be a
+            row of icon tiles, which itself had replaced three stacked
+            full-width cards. Same three destinations, no icon box.
+            Deliberately NOT all identical: Career Roadmap is the one filled
+            pill — the "primary/active" slot, same visual role as the
+            reference screenshot's dark "For you" chip — while Your
+            Progress/Weekly Report are outline pills (transparent fill, dark
+            border + dark text) per explicit follow-up ("I only want the
+            career roadmap to have the dark color background the rest
+            should have not background just a black color border and a
+            black text"). Career Roadmap's fill was later changed again
+            (separate follow-up: "change the background of the career
+            roadmap pill button to the default blue color") from that dark
+            chip color to the app's own established brand blue
+            (color-primary-100, same token CtaButton.tsx uses) + white
+            text, so it no longer shares a color with the other two pills'
+            border/text ink. Horizontally scrollable so it degrades
+            gracefully on narrow screens instead of ever wrapping or
+            truncating a label. Your Progress/Weekly Report still use
+            background-basic-color-6 for their border/text, not a literal
+            black — that token is literally defined as the app's own
+            text-basic-color (and vice versa for background-basic-color-1)
+            — see constants/theme/light.json vs dark.json — so it's near-
+            black in light mode and correctly flips to near-white in dark
+            mode instead of rendering true black-on-black. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.navPillsRow}>
           <TouchableOpacity
             activeOpacity={0.8}
-            style={styles.navTile}
+            // Was background-basic-color-6 (the dark/near-black fill the
+            // other two pills' outline still keys off) — per explicit
+            // follow-up, this pill now uses the app's own established brand
+            // blue instead (same color-primary-100 token CtaButton.tsx
+            // uses), so it reads as "the" primary action of the row rather
+            // than a neutral dark chip.
+            style={[styles.navPill, { backgroundColor: theme['color-primary-100'] }]}
             onPress={() => navigate('CareerRoadmap')}>
-            <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="map" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
-            </View>
-            <Text category="h10" bold center mt={8} numberOfLines={2}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['text-primary-color'] }}>
               {t('home:career_roadmap_card_title_short', { defaultValue: 'Career Roadmap' })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.8}
-            style={styles.navTile}
+            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
             onPress={() => navigate('MyProgress')}>
-            <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="rateFull" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
-            </View>
-            <Text category="h10" bold center mt={8} numberOfLines={2}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
               {t('home:your_progress', { defaultValue: 'Your Progress' })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.8}
-            style={styles.navTile}
+            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
             onPress={() => navigate('WeeklyCareerReport')}>
-            <View style={[styles.navTileIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon pack="assets" name="stats" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
-            </View>
-            <Text category="h10" bold center mt={8} numberOfLines={2}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
               {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
             </Text>
           </TouchableOpacity>
-        </View>
-        <View style={styles.statsRow}>
+          {/* Badges pill added here (product follow-up, decluttering pass —
+              "remove too much things and place them in a different page if
+              necessary") — opens the existing full-grid modal
+              (components/BadgesModal.tsx) instead of a stacked preview row
+              on the dashboard. Leaderboard's own pill was added in that
+              same pass but has since been removed again: per a later
+              follow-up ("bring back the leaderboard to the homescreen and
+              make it look more nice"), the live leaderboard preview card is
+              back further down this screen with its own "View all" link
+              into src/home/Leaderboard.tsx — keeping the pill too would
+              have meant two entry points to the same screen on one
+              dashboard. */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
+            onPress={() => setIsBadgesModalVisible(true)}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
+              {t('home:badges', { defaultValue: 'Badges' })}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+        {homeBanner ? (
+          // Was a shadow on an outer wrapper View (a view can't both clip
+          // content to rounded corners via overflow:'hidden' AND cast a
+          // visible shadow itself, since overflow:hidden clips the shadow
+          // too — hence the old two-View split). Redesign sweep: this is a
+          // content card exactly like every job/tip/goal card elsewhere on
+          // this screen, so it gets the same border treatment, not a
+          // shadow — and a border has no such conflict with overflow:
+          // hidden, so the extra wrapper View isn't needed anymore either.
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={[styles.homeBannerCard, {width: bannerWidth, height: bannerHeight}]}
+            onPress={onOpenHomeBanner}>
+            <Image
+              source={
+                homeBanner.imageUrl
+                  ? {uri: homeBanner.imageUrl}
+                  : Images.homeBannerAiCoach
+              }
+              style={{width: bannerWidth, height: bannerHeight}}
+              // "contain" (not "cover") per explicit product direction: the
+              // full banner image should always be visible, never cropped —
+              // cover would zoom/crop whenever an admin-uploaded image_url's
+              // aspect ratio doesn't exactly match 16:9. Since bannerHeight
+              // above is computed to exactly match the bundled default
+              // image's own 16:9 ratio, this produces identical (letterbox-
+              // free) results for that image, and degrades gracefully
+              // (letterboxed, not cropped) for a future admin image with a
+              // different ratio.
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        ) : null}
+        {/* Redesign (product follow-up, exact "New on ZipRecruiter" promo-
+            card screenshot reference this time — a small colored icon pill
+            at the top, a bold headline below it, then a supporting
+            description line underneath that) — was 3 side-by-side cards
+            with just an icon + number + label each; now each stat is its
+            own full-width card with that same pill/headline/description
+            structure, stacked vertically per explicit follow-up ("make
+            them stack on each other") instead of a row. One deliberate
+            departure from the reference: no dismiss "X" in the corner —
+            these are live stats, not a one-time promo a user can permanently
+            close, so a close button would be a dead/misleading affordance
+            here. Card itself goes back to the app's own established
+            border-only/transparent surface (globalStyle.card, same as every
+            other card on this screen) rather than the reference's solid
+            fill, so it still matches the rest of the now-consistent app —
+            the color accent lives on the pill instead, same role the
+            reference's purple "Be Seen First" pill plays against its own
+            plain white card. */}
+        <View style={styles.statsColumn}>
           <Layout level="2" style={styles.statCard}>
-            <Icon pack="assets" name="stats" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
+            <View style={styles.statPill}>
+              <Icon pack="assets" name="stats" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+              <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
+                {t('home:day_streak', { defaultValue: 'Day Streak' })}
+              </Text>
+            </View>
             {streakLoading && !streak ? (
               <Spinner size="small" style={styles.streakSpinner} />
             ) : (
-              <Text category="h3" bold center mt={8}>
-                {streakDays}
+              <Text category="h3" bold mt={12}>
+                {t('home:day_streak_headline', { defaultValue: '{{count}}-day streak', count: streakDays })}
               </Text>
             )}
-            <Text category="h9-s" status="placeholder" center>
-              {t('home:day_streak', { defaultValue: 'Day Streak' })}
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {t('home:day_streak_caption', { defaultValue: 'Keep practicing daily to build your streak.' })}
             </Text>
           </Layout>
           <Layout level="2" style={styles.statCard}>
-            <Icon pack="assets" name="interview" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
-            <Text category="h3" bold center mt={8}>
-              {sessionsThisWeek}
+            <View style={styles.statPill}>
+              <Icon pack="assets" name="interview" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+              <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
+                {t('home:sessions_this_week', { defaultValue: 'Sessions This Week' })}
+              </Text>
+            </View>
+            <Text category="h3" bold mt={12}>
+              {t('home:sessions_this_week_headline', { defaultValue: '{{count}} sessions this week', count: sessionsThisWeek })}
             </Text>
-            <Text category="h9-s" status="placeholder" center>
-              {t('home:sessions_this_week', { defaultValue: 'Sessions This Week' })}
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {t('home:sessions_this_week_caption', { defaultValue: 'Mock interviews completed in the last 7 days.' })}
             </Text>
           </Layout>
           <Layout level="2" style={styles.statCard}>
-            <Icon pack="assets" name="rateFull" style={[globalStyle.icon28, { tintColor: theme['text-basic-color'] }]} />
-            <Text category="h3" bold center mt={8}>
-              {avgScore}%
+            <View style={styles.statPill}>
+              <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+              <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
+                {t('home:average_score', { defaultValue: 'Average Score' })}
+              </Text>
+            </View>
+            <Text category="h3" bold mt={12}>
+              {t('home:average_score_headline', { defaultValue: '{{score}}% average score', score: avgScore })}
             </Text>
-            <Text category="h9-s" status="placeholder" center>
-              {t('home:average_score', { defaultValue: 'Average Score' })}
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {t('home:average_score_caption', { defaultValue: 'Your average across recent practice sessions.' })}
             </Text>
           </Layout>
         </View>
 
-        <Layout level="2" style={styles.checkInCard}>
-          <View style={globalStyle.flexOne}>
-            <Text category="h9-s" status="placeholder">
-              {t('home:xp_label', { defaultValue: 'XP' })}
-            </Text>
-            <Text category="h7" bold mt={2}>
-              {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} XP`}
-            </Text>
-            {streakError ? (
-              <Flex justify="flex-start" itemsCenter mt={6}>
-                <Text category="h10" status="danger" mr={12}>
-                  {streakError}
-                </Text>
-                <Text category="h10" status="link" onPress={loadStreak}>
-                  {t('common:try_again', { defaultValue: 'Try again' }).toString()}
-                </Text>
-              </Flex>
-            ) : null}
-          </View>
-          <Button
-            size="small"
-            // Was 'primary' (bright blue) — clashed against the card's new
-            // warning/amber tint. 'warning' keeps the button in the same
-            // color family as the card it sits in.
-            status={streak?.checkedInToday ? 'basic' : 'warning'}
-            disabled={checkingIn || streakLoading || !!streakError || !!streak?.checkedInToday}
-            onPress={onCheckIn}
-            accessoryLeft={checkingIn ? renderCheckInSpinner : undefined}>
-            {streak?.checkedInToday
-              ? t('home:checked_in_today', { defaultValue: 'Checked in' })
-              : t('home:check_in', { defaultValue: 'Check In' })}
-          </Button>
-        </Layout>
+        {/* Two layers, not one (product bug: "extra white card behind" on
+            Android, fine on iOS) -- Android's elevation shadow needs an
+            OPAQUE background to compute a rounded shadow silhouette from;
+            with the translucent amber tint directly on the same elevated
+            view, Android falls back to a plain rectangular surface behind
+            the rounded card. Outer view is opaque + carries the shadow;
+            inner view carries the actual translucent tint/border, clipped
+            to the same radius via overflow:hidden, sized identically so
+            none of the outer's opaque fill peeks out -- only its shadow
+            does. See styles.checkInCardOuter/checkInCardInner below. */}
+        <View style={styles.checkInCardOuter}>
+          <Layout level="2" style={styles.checkInCardInner}>
+            <View style={globalStyle.flexOne}>
+              <Text category="h9-s" status="placeholder">
+                {t('home:xp_label', { defaultValue: 'XP' })}
+              </Text>
+              <Text category="h7" bold mt={2}>
+                {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} XP`}
+              </Text>
+              {streakError ? (
+                <Flex justify="flex-start" itemsCenter mt={6}>
+                  <Text category="h10" status="danger" mr={12}>
+                    {streakError}
+                  </Text>
+                  <Text category="h10" status="link" onPress={loadStreak}>
+                    {t('common:try_again', { defaultValue: 'Try again' }).toString()}
+                  </Text>
+                </Flex>
+              ) : null}
+            </View>
+            {streak?.checkedInToday ? (
+              // Already done today — a plain disabled/basic button reads as
+              // "completed", not as another action to take. CtaButton is
+              // reserved for an actual actionable primary CTA (see its own
+              // comment), which this no longer is once checked in.
+              <Button size="small" status="basic" disabled>
+                {t('home:checked_in_today', { defaultValue: 'Checked in' })}
+              </Button>
+            ) : (
+              <CtaButton
+                size="small"
+                disabled={checkingIn || streakLoading || !!streakError}
+                onPress={onCheckIn}
+                accessoryLeft={checkingIn ? renderCheckInSpinner : undefined}>
+                {t('home:check_in', { defaultValue: 'Check In' })}
+              </CtaButton>
+            )}
+          </Layout>
+        </View>
 
-        <Text category="h6" bold mt={32} mb={16}>
-          {t('home:weekly_practice', { defaultValue: 'Weekly Practice' })}
-        </Text>
-        <BarChart
-          data={{
-            labels: weeklyPractice.map(d => d.day),
-            datasets: [{ data: weeklyPractice.map(d => d.sessions) }],
-          }}
-          width={width - 48}
-          height={180}
-          fromZero
-          showValuesOnTopOfBars
-          withInnerLines={false}
-          chartConfig={chartConfig}
-          yAxisLabel=""
-          yAxisSuffix=""
-          style={styles.chart}
-        />
-
-        <Flex justify="space-between" itemsCenter mt={16} mb={16}>
+        {/* Weekly Practice chart removed from here (decluttering pass) — it
+            was a plain duplicate of MyProgress.tsx's own "This week" chart
+            (same computeWeeklyPractice data), reachable one tap away via
+            the "Your Progress" pill above, so keeping it here too was pure
+            repetition rather than something Home uniquely needed. */}
+        <Flex justify="space-between" itemsCenter mt={32} mb={16}>
           <Text category="h6" bold>
             {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
           </Text>
@@ -953,113 +966,78 @@ const HomeSrc = memo(() => {
             Three entry points to the same action on one screen was noise,
             not helpfulness. */}
 
-        {/* Compact preview (UI cleanup pass) — was an always-expanded grid
-            of every single badge (10 of them, locked and unlocked alike),
-            roughly 3-4 full rows on every Home visit whether or not the
-            user cared to look. Now a single tappable row showing just the
-            unlocked ones (or, if none yet, the first few to work toward) —
-            "See all" opens the full grid in BadgesModal. */}
-        <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-          <Text category="h6" bold>
-            {t('home:badges', { defaultValue: 'Badges' })}
-          </Text>
-          <Text category="h9" status="link" bold onPress={() => setIsBadgesModalVisible(true)}>
-            {t('home:badges_count_see_all', {
-              defaultValue: '{{unlocked}}/{{total}} · See all',
-              unlocked: unlockedBadgeIds.size,
-              total: DATA_BADGES.length,
-            })}
-          </Text>
-        </Flex>
-        <TouchableOpacity
-          activeOpacity={0.8}
-          style={styles.badgesPreviewRow}
-          onPress={() => setIsBadgesModalVisible(true)}>
-          {(DATA_BADGES.filter(b => unlockedBadgeIds.has(b.id)).length > 0
-            ? DATA_BADGES.filter(b => unlockedBadgeIds.has(b.id))
-            : DATA_BADGES
-          )
-            .slice(0, 6)
-            .map(badge => {
-              const unlocked = unlockedBadgeIds.has(badge.id);
-              return (
-                // Was a 36x36 circle with a faint gray fill behind a tiny
-                // 16x16 icon -- reported as "too small" and asked to have
-                // "no background". Now a bare icon at icon24 (50% bigger),
-                // no wrapping fill at all; unlocked/locked still stays
-                // distinguishable via glyph shade alone (basic-color vs
-                // hint-color).
-                <View key={badge.id} style={styles.badgePreviewIconWrap}>
-                  <Icon
-                    pack={badge.iconPack ?? 'assets'}
-                    name={badge.icon}
-                    style={[globalStyle.icon24, { tintColor: unlocked ? theme['text-basic-color'] : theme['text-hint-color'] }]}
-                  />
-                </View>
-              );
-            })}
-        </TouchableOpacity>
-
-        <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-          <Text category="h6" bold>
+        {/* Leaderboard preview — brought back per explicit follow-up
+            ("bring back the leaderboard to the homescreen and make it look
+            more nice") after a brief decluttering pass had swapped it out
+            for a nav pill only. Redesigned rather than just restored:
+            wrapped in the same bordered/transparent-fill card every other
+            section on this screen now uses (was bare unstyled rows before),
+            top-3 ranks get a colored medal badge instead of plain "#N" text,
+            and the current user's row gets its own tinted pill instead of a
+            flat background swap on an otherwise plain row. Still just the
+            top 4 with a "View all" into src/home/Leaderboard.tsx for the
+            same reason that screen's own comment gives — one fetch, one
+            source of truth for "top N". */}
+        <Flex justify="space-between" itemsCenter mt={24} mb={12}>
+          <Text category="h7" bold>
             {t('home:leaderboard', { defaultValue: 'Leaderboard' })}
           </Text>
-          {!leaderboardLoading && !leaderboardError && leaderboard.length > 4 ? (
-            <Text category="h9" status="link" bold onPress={() => navigate('Leaderboard')}>
-              {t('home:view_all', { defaultValue: 'View all' })}
-            </Text>
-          ) : null}
-        </Flex>
-        {leaderboardLoading ? (
-          <Flex itemsCenter justify="center" style={styles.leaderboardStatus}>
-            <Spinner size="small" />
-          </Flex>
-        ) : leaderboardError ? (
-          <Flex vertical itemsCenter style={styles.leaderboardStatus}>
-            <Text category="h9-s" status="danger" center mb={12}>
-              {leaderboardError}
-            </Text>
-            <Button size="small" onPress={loadLeaderboard}>
-              {t('common:try_again', { defaultValue: 'Try again' }).toString()}
-            </Button>
-          </Flex>
-        ) : leaderboard.length === 0 ? (
-          <Text category="h9-s" status="placeholder" center mv={16}>
-            {t('home:leaderboard_empty', { defaultValue: 'No leaderboard data yet.' })}
+          {/* Was category="h10" (12px, not bold) — the thinnest text style
+              in the app, mismatched against every other "link" affordance
+              on this screen. Matched to the same category="h9" bold used by
+              the Upcoming Session card's "+ Schedule" link right above this
+              section, so both read as the same weight of tappable link. */}
+          <Text category="h9" status="link" bold onPress={() => navigate('Leaderboard')}>
+            {t('common:view_all', { defaultValue: 'View all' })}
           </Text>
-        ) : (
-          <View>
-            {/* Top 4 only here — see the "View all" link above, which opens
-                src/home/Leaderboard.tsx for the full ranked list (same fetch,
-                unsliced). Keeps the Home dashboard card compact instead of
-                showing up to 10 rows inline. */}
-            {leaderboard.slice(0, 4).map(entry => (
-              <Flex
-                key={entry.id}
-                justify="flex-start"
-                itemsCenter
-                mb={12}
-                style={[styles.leaderboardRow, entry.isCurrentUser && { backgroundColor: theme['background-basic-color-2'] }]}>
-                <Text category="h8" bold status="placeholder" style={styles.leaderboardRank}>
-                  #{entry.rank}
-                </Text>
-                <UserAvatar
-                  uri={entry.avatarUrl}
-                  name={entry.name}
-                  size="tiny"
-                  style={styles.leaderboardAvatar}
-                />
-                <Text category="h8" bold style={globalStyle.flexOne} numberOfLines={1}>
-                  {entry.name}
-                  {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
-                </Text>
-                <Text category="h8-s" status="placeholder">
-                  {entry.xp} XP
-                </Text>
-              </Flex>
-            ))}
-          </View>
-        )}
+        </Flex>
+        <Layout level="2" style={styles.leaderboardCard}>
+          {leaderboardLoading ? (
+            <Flex itemsCenter justify="center" style={styles.leaderboardStatus}>
+              <Spinner size="small" />
+            </Flex>
+          ) : leaderboardError ? (
+            <Flex vertical itemsCenter justify="center" style={styles.leaderboardStatus}>
+              <Text category="h10" status="danger" center mb={8}>
+                {leaderboardError}
+              </Text>
+              <Text category="h10" status="link" onPress={loadLeaderboard}>
+                {t('common:try_again', { defaultValue: 'Try again' }).toString()}
+              </Text>
+            </Flex>
+          ) : leaderboard.length === 0 ? (
+            <Text category="h9-s" status="placeholder" center style={styles.leaderboardStatus}>
+              {t('home:leaderboard_empty', { defaultValue: 'No leaderboard data yet.' })}
+            </Text>
+          ) : (
+            leaderboard.slice(0, 4).map((entry, index) => {
+              const medal = rankMedalStyle(entry.rank, theme);
+              return (
+                <View
+                  key={entry.id}
+                  style={[
+                    styles.leaderboardRow,
+                    index > 0 && globalStyle.divider,
+                    entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-200'] },
+                  ]}>
+                  <View style={[styles.leaderboardRank, { backgroundColor: medal.bg }]}>
+                    <Text category="h9-s" bold style={{ color: medal.text }}>
+                      {entry.rank}
+                    </Text>
+                  </View>
+                  <UserAvatar uri={entry.avatarUrl} name={entry.name} size="tiny" style={styles.leaderboardAvatar} />
+                  <Text category="h9-s" bold numberOfLines={1} style={globalStyle.flexOne}>
+                    {entry.name}
+                    {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
+                  </Text>
+                  <Text category="h10" status="placeholder">
+                    {entry.xp} XP
+                  </Text>
+                </View>
+              );
+            })
+          )}
+        </Layout>
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
@@ -1100,36 +1078,41 @@ const themedStyles = StyleService.create({
   },
   verifyBanner: {
     ...globalStyle.card,
-    // Was 14/14 -- every other card on this screen (goalTipsCard,
-    // briefingCard, progressCard, statCard, etc.) uses borderRadius 16 /
+    // Was 14/14 -- every other card on this screen (briefingCard,
+    // progressCard, statCard, etc.) uses borderRadius 16 /
     // padding 16; this was the one outlier. Task #66 visual polish pass.
     borderRadius: 16,
     padding: 16,
     marginTop: 16,
-    backgroundColor: 'background-basic-color-2',
+    // No fill — border-only (app-wide "cards are transparent" pass); the
+    // warning-colored border below stays as the deliberate "needs
+    // attention" signal, it just no longer also has a gray fill behind it.
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: 'color-warning-500',
   },
   homeBannerCard: {
+    ...globalStyle.card,
     // width/height are computed per-render from actual screen width (see
     // bannerWidth/bannerHeight above the component's return statement) and
     // applied inline, not here — a plain aspectRatio here previously
     // rendered at the source image's raw pixel size instead of scaling to
     // the card, see bannerWidth's own comment for the full explanation.
-    borderRadius: 16,
     marginTop: 16,
     overflow: 'hidden',
-    backgroundColor: 'background-basic-color-2',
-  },
-  goalTipsCard: {
-    borderRadius: 16,
-    marginTop: 16,
+    backgroundColor: 'transparent',
   },
   briefingCard: {
     ...globalStyle.card,
-    padding: 16,
+    // Trimmed from 16 (product follow-up: "reduce the height of the
+    // Today's Briefing card a little bit") — the icon badge/title row and
+    // "Read more" row below also had their own margins tightened to match
+    // (see the JSX), so the card reads slightly more compact overall
+    // without dropping any content.
+    padding: 12,
     marginTop: 16,
     borderWidth: 1,
+   
   },
   briefingIconBadge: {
     width: 28,
@@ -1143,119 +1126,145 @@ const themedStyles = StyleService.create({
     height: 6,
     borderRadius: 3,
   },
-  goalTipRow: {
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 10,
-    // Subtle purple to make the AI-generated tip visually distinct from the
-    // neutral cards around it — was a plain themed Layout level="2" (same
-    // gray as every other card on the screen). globalStyle.card (spread at
-    // the usage site) adds the same elevation/shadow every other redesigned
-    // card on this screen now has, instead of a flat border-only fill.
-    backgroundColor: 'rgba(195, 165, 248, 0.08)',
-    borderWidth: 1,
-    borderColor: '#7e4fcbff',
-  },
-  goalTipPill: {
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  goalTipBody: {
-    lineHeight: 21,
-  },
   verifyBannerText: {
     marginHorizontal: 10,
   },
-  navTilesRow: {
+  // Pill-button row replacing the old icon-tile row (see the JSX comment
+  // above this style's usage). contentContainerStyle on a horizontal
+  // ScrollView (this row's own, nested inside <Content padder>'s existing
+  // 24pt horizontal inset) rather than a plain View style, since this now
+  // scrolls independently of the rest of the vertically-scrolling screen.
+  navPillsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 16,
   },
-  navTile: {
-    ...globalStyle.card,
-    width: '31%',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 6,
-    backgroundColor: 'background-basic-color-2',
+  navPill: {
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    marginRight: 10,
   },
-  // Was the exact same color as navTile's own background — a wrapper with
-  // no visible purpose beyond centering, so the icon just floated on the
-  // card with nothing to anchor it. A tinted chip (same treatment as
-  // goalTipPill above) reads as a deliberate icon container instead.
-  navTileIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'color-primary-transparent-200',
+  // Outline variant (Your Progress/Weekly Report) — same shape/padding as
+  // the filled navPill, transparent fill instead, border color/text color
+  // applied inline per-usage (see JSX) since it's the same
+  // background-basic-color-6 token as the filled pill's fill, just used as
+  // ink here instead.
+  navPillOutline: {
+    borderRadius: 999,
+    paddingVertical: 11,
+    borderWidth: 1,
+    paddingHorizontal: 19,
+    marginRight: 10,
+    backgroundColor: 'transparent',
   },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  // Vertical stack (product follow-up: "make them stack on each other") —
+  // was a horizontal row of 3 equal-width cards; now a single column, full-
+  // width cards one after another, each with its own bottom margin (see
+  // statCard's marginBottom) instead of this container's justify-content
+  // doing the spacing.
+  statsColumn: {
     marginTop: 16,
   },
   statCard: {
+    // Back to the app's own established border-only/transparent card (see
+    // globalStyle.card's own comment) — the reference screenshot's card is
+    // a solid flat fill, but that was a deliberate one-off departure from
+    // this app's now-consistent "cards are transparent" look (see the JSX
+    // comment above where these render); the accent color here lives on
+    // the pill instead, same role the reference's colored pill plays
+    // against its own plain white card.
     ...globalStyle.card,
-    width: '31%',
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: 'transparent',
+  },
+  // Small pill at the top of each stat card (product follow-up,
+  // ZipRecruiter "Be Seen First" pill reference) — self-sized (alignSelf:
+  // 'flex-start'), not full-width, same as the reference's own pill. Was
+  // solid brand blue with white icon/text — per explicit follow-up this is
+  // now a neutral gray fill instead, with the icon/text switched to dark
+  // ink (color-primary-500/background-basic-color-6) for contrast against
+  // the lighter gray rather than white-on-white.
+  statPill: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    backgroundColor: 'background-basic-color-2',
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: 'background-basic-color-3',
+  },
+  statPillText: {
+    marginLeft: 6,
   },
   streakSpinner: {
     marginTop: 8,
   },
-  chart: {
-    borderRadius: 16,
-    marginLeft: -8,
-  },
   upcomingCard: {
     ...globalStyle.card,
     padding: 16,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
   },
-  badgesPreviewRow: {
+  // Split in two (product bug: "extra white card behind" on Android) — see
+  // the JSX comment above where these are used. Outer casts the shadow
+  // against an OPAQUE background; inner carries the translucent amber tint.
+  checkInCardOuter: {
     ...globalStyle.card,
-    flexDirection: 'row',
-    backgroundColor: 'background-basic-color-2',
-    padding: 16,
-    gap: 10,
-  },
-  // No more fixed circle/fill -- just enough of a box to keep the bigger
-  // (24x24) icons evenly spaced via badgesPreviewRow's `gap`.
-  badgePreviewIconWrap: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkInCard: {
-    ...globalStyle.card,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
     marginTop: 16,
+    // Was an opaque fill (background-basic-color-1) — needed back when
+    // `card` still carried Android `elevation` (see this style's own
+    // original comment about the "extra white card behind" bug: elevation
+    // needs an opaque background to compute a correctly-rounded shadow).
+    // `card` is border-only now with no elevation at all, so that
+    // requirement is gone — transparent brings this in line with every
+    // other card in the app-wide "cards are transparent" pass. The inner
+    // checkInCardInner's own translucent tint (see below) still renders
+    // correctly on top either way, clipped to the same radius via its own
+    // overflow:hidden.
+    backgroundColor: 'transparent',
+  },
+  checkInCardInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
     // Subtle warning tint to make the daily XP check-in stand out from the
     // neutral stat cards above it — was a plain themed Layout level="2".
     backgroundColor: 'color-warning-transparent-200',
     borderWidth: 1,
     borderColor: 'color-warning-500',
   },
+  // Leaderboard preview card (see the JSX comment above where this is
+  // used) — same bordered/transparent-fill treatment as every other card
+  // on this screen; padding is smaller than the others (8, not 16) since
+  // each row already carries its own vertical padding, and a second full
+  // 16px on top of that made the rows feel oddly far from the card edge.
+  leaderboardCard: {
+    ...globalStyle.card,
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: 'transparent',
+  },
   leaderboardStatus: {
-    paddingVertical: 16,
+    paddingVertical: 24,
   },
   leaderboardRow: {
-    borderRadius: 12,
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
     paddingHorizontal: 8,
+    borderRadius: 12,
   },
   leaderboardRank: {
-    width: 32,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
   leaderboardAvatar: {
-    marginRight: 12,
+    marginRight: 10,
   },
 });

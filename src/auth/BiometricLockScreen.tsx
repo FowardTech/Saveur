@@ -10,6 +10,7 @@ import Flex from 'components/Flex';
 import {globalStyle} from 'styles/globalStyle';
 import * as biometricAuthService from 'services/biometricAuthService';
 import {AuthContext} from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 type Props = {
   label: string; // "Face ID" / "Touch ID" / "Fingerprint" — from checkAvailability()
@@ -81,7 +82,7 @@ const BiometricLockScreen = memo(({label, onUnlock}: Props) => {
               style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
             />
           </View>
-          <Text category="h5" bold center mt={20}>
+          <Text category="h3" bold center mt={20}>
             {t('auth:biometric_locked_title', {defaultValue: 'Saveur is locked'})}
           </Text>
           <Text category="h8" status="placeholder" center mt={10} maxWidth={320}>
@@ -95,11 +96,11 @@ const BiometricLockScreen = memo(({label, onUnlock}: Props) => {
                   label,
                 })}
           </Text>
-          <Button style={styles.button} disabled={isPrompting} onPress={runPrompt}>
+          <CtaButton style={styles.button} disabled={isPrompting} onPress={runPrompt}>
             {isPrompting
               ? t('auth:biometric_checking', {defaultValue: 'Checking…'})
               : t('auth:biometric_unlock', {defaultValue: 'Unlock with {{label}}', label})}
-          </Button>
+          </CtaButton>
           <Button
             appearance="ghost"
             status="danger"

@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {View} from 'react-native';
-import {TopNavigation, StyleService, useStyleSheet, useTheme, Layout, Button, Icon} from '@ui-kitten/components';
+import {TopNavigation, StyleService, useStyleSheet, useTheme, Layout, Icon} from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 
 import Text from 'components/Text';
@@ -9,10 +9,13 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import StatusBadge from 'components/StatusBadge';
+import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import * as jobAlertsService from 'services/jobAlertsService';
 import * as jobShareService from 'services/jobShareService';
+import ShareToUserModal from 'components/ShareToUserModal';
 import {useTranslation} from 'react-i18next';
 
 // The in-app landing spot for a matched job — reached from three places that
@@ -58,6 +61,10 @@ const JobAlertDetails = memo(() => {
     }
   }, [job, isSharing]);
 
+  // "Share to a Saveur user" (product request item) — additive to, not a
+  // replacement for, the external OS-share-sheet button above.
+  const [isShareUserModalVisible, setIsShareUserModalVisible] = React.useState(false);
+
   const onApply = () => {
     navigate('WebViewScreen', {
       url: job.applyUrl,
@@ -83,13 +90,27 @@ const JobAlertDetails = memo(() => {
         title={t('more:job_details_title', {defaultValue: 'Job Details'})}
         accessoryLeft={<NavigationAction />}
         accessoryRight={() => (
-          <Icon
-            pack="eva"
-            name="share-outline"
-            style={[globalStyle.icon24, {tintColor: isSharing ? theme['text-hint-color'] : theme['text-basic-color']}]}
-            onPress={onShare}
-          />
+          <Flex justify="flex-start" itemsCenter>
+            <Icon
+              pack="eva"
+              name="people-outline"
+              style={[globalStyle.icon24, {marginRight: 16, tintColor: theme['text-basic-color']}]}
+              onPress={() => setIsShareUserModalVisible(true)}
+            />
+            <Icon
+              pack="eva"
+              name="share-outline"
+              style={[globalStyle.icon24, {tintColor: isSharing ? theme['text-hint-color'] : theme['text-basic-color']}]}
+              onPress={onShare}
+            />
+          </Flex>
         )}
+      />
+      <ShareToUserModal
+        visible={isShareUserModalVisible}
+        onClose={() => setIsShareUserModalVisible(false)}
+        contentType="job"
+        contentId={job.id}
       />
       <Content padder contentContainerStyle={styles.content}>
         <Layout level="2" style={styles.card}>
@@ -102,15 +123,15 @@ const JobAlertDetails = memo(() => {
             />
             <View style={globalStyle.flexOne}>
               <Flex justify="space-between" itemsCenter>
-                <Text category="h5" bold style={globalStyle.flexOne} numberOfLines={2}>
+                <Text category="h3" bold style={globalStyle.flexOne} numberOfLines={2}>
                   {job.title}
                 </Text>
                 {job.applied ? (
-                  <View style={[styles.appliedBadge, {backgroundColor: theme['color-info-100']}]}>
-                    <Text category="h10" bold status="info">
-                      {t('more:applied_badge', {defaultValue: 'Applied'})}
-                    </Text>
-                  </View>
+                  <StatusBadge
+                    variant="info"
+                    label={t('more:applied_badge', {defaultValue: 'Applied'}).toString()}
+                    style={{marginLeft: 8}}
+                  />
                 ) : null}
               </Flex>
               <Text category="h8" status="placeholder" mt={4}>
@@ -123,24 +144,36 @@ const JobAlertDetails = memo(() => {
           {job.matchedRole ? (
             <Flex justify="flex-start" itemsCenter mb={12}>
               <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
-              <Text category="h9-s" ml={8}>
+              <Text category="h9-s" ml={8} style={{flex: 1}}>
                 {t('more:matches_target_role', {defaultValue: 'Matches your target role:'})} <Text category="h9-s" bold>{job.matchedRole}</Text>
               </Text>
             </Flex>
           ) : null}
 
-          <View style={styles.metaRow}>
+          {/* Icon + label metadata rows (product request item, ZipRecruiter
+              reference — the $ salary / briefcase / clock rows on its job
+              details screen). Saveur's JobAlertProps has no salary or
+              employment-type field to show (this app doesn't scrape/store
+              that data, so nothing fabricated here) — Source and Posted
+              date are the two real fields available, now in the same
+              icon-per-row rhythm as the reference instead of the previous
+              label-above-value mini-columns. */}
+          <View style={styles.metaRows}>
             {job.source ? (
-              <View style={styles.metaItem}>
-                <Text category="h10" status="placeholder">{t('more:job_source', {defaultValue: 'Source'})}</Text>
-                <Text category="h9" bold>{job.source}</Text>
-              </View>
+              <Flex justify="flex-start" itemsCenter style={styles.metaRow}>
+                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, {tintColor: theme['text-placeholder-color']}]} />
+                <Text category="h9" ml={10} numberOfLines={1}>
+                  {t('more:job_source_via', {defaultValue: 'Via {{source}}', source: job.source})}
+                </Text>
+              </Flex>
             ) : null}
             {job.postedAt ? (
-              <View style={styles.metaItem}>
-                <Text category="h10" status="placeholder">{t('more:job_posted', {defaultValue: 'Posted'})}</Text>
-                <Text category="h9" bold>{new Date(job.postedAt).toLocaleDateString()}</Text>
-              </View>
+              <Flex justify="flex-start" itemsCenter style={styles.metaRow}>
+                <Icon pack="eva" name="clock-outline" style={[globalStyle.icon20, {tintColor: theme['text-placeholder-color']}]} />
+                <Text category="h9" ml={10} numberOfLines={1}>
+                  {t('more:job_posted_on', {defaultValue: 'Posted {{date}}', date: new Date(job.postedAt).toLocaleDateString()})}
+                </Text>
+              </Flex>
             ) : null}
           </View>
         </Layout>
@@ -156,11 +189,11 @@ const JobAlertDetails = memo(() => {
               })}
         </Text>
 
-        <Button style={[globalStyle.shadowBtn]} onPress={onApply}>
+        <CtaButton onPress={onApply} style={{display:job.applied ? 'none':'flex'}}>
           {job.source
             ? t('more:apply_on_source', {defaultValue: `Apply on ${job.source}`, source: job.source})
             : t('more:apply_for_this_job', {defaultValue: 'Apply for this job'})}
-        </Button>
+        </CtaButton>
       </Content>
     </Container>
   );
@@ -180,18 +213,12 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
+    backgroundColor: 'transparent',
   },
-  metaRow: {
-    flexDirection: 'row',
+  metaRows: {
     marginTop: 8,
   },
-  metaItem: {
-    marginRight: 32,
-  },
-  appliedBadge: {
-    paddingVertical: 3,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    marginLeft: 8,
+  metaRow: {
+    marginBottom: 8,
   },
 });

@@ -24,6 +24,8 @@ import { SkillScoreProps, StarBreakdownItemProps } from 'constants/Types';
 import * as feedbackService from 'services/feedbackService';
 import {isFeedbackPending} from 'services/feedbackService';
 import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
+import ShareToUserModal from 'components/ShareToUserModal';
+import CtaButton from 'components/CtaButton';
 
 // Post-interview feedback. The session has already been finalized by the
 // time this screen mounts (LiveInterviewSession/CodingInterview both call
@@ -57,6 +59,9 @@ const InterviewFeedback = memo(() => {
   // job as still in progress, instead of treating the first 0-score
   // response as final.
   const [isScoringPending, setIsScoringPending] = React.useState(false);
+  // "Share to a Saveur user" (product request item) — additive to whatever
+  // external sharing this screen may gain later, not a replacement.
+  const [isShareUserModalVisible, setIsShareUserModalVisible] = React.useState(false);
   const isMountedRef = React.useRef(true);
   const pollAttemptsRef = React.useRef(0);
   const pollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -183,7 +188,7 @@ const InterviewFeedback = memo(() => {
               {t('find:no_interview_session', { defaultValue: 'No interview session to show feedback for.' })}
             </Text>
           </Flex>
-          <Button children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 32 }]} />
+          <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 32 }]} />
         </Content>
       </Container>
     );
@@ -207,7 +212,7 @@ const InterviewFeedback = memo(() => {
             <Text category="h9-s" status="placeholder" center mt={8} maxWidth={280}>
               {error}
             </Text>
-            <Button
+            <CtaButton
               children={t('common:retry', { defaultValue: 'Retry' })}
               onPress={fetchFeedback}
               style={{ marginTop: 24 }}
@@ -223,7 +228,27 @@ const InterviewFeedback = memo(() => {
       <TopNavigation
         title={t('find:interview_feedback')}
         accessoryLeft={<NavigationAction onPress={goBack} />}
+        accessoryRight={
+          sessionId
+            ? () => (
+                <Icon
+                  pack="eva"
+                  name="people-outline"
+                  style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]}
+                  onPress={() => setIsShareUserModalVisible(true)}
+                />
+              )
+            : undefined
+        }
       />
+      {sessionId ? (
+        <ShareToUserModal
+          visible={isShareUserModalVisible}
+          onClose={() => setIsShareUserModalVisible(false)}
+          contentType="feedback"
+          contentId={sessionId}
+        />
+      ) : null}
       <Content padder contentContainerStyle={styles.content}>
         <Flex center itemsCenter justify="center" vertical mb={24}>
           <ProgressCard
@@ -396,7 +421,7 @@ const InterviewFeedback = memo(() => {
             style={{ marginTop: 32 }}
           />
         ) : null}
-        <Button children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: sessionId ? 16 : 32 }]} />
+        <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: sessionId ? 16 : 32 }]} />
         <Button children={t('common:done')} status="outline" onPress={onDone} style={{ marginTop: 16 }} />
       </Content>
     </Container>
@@ -422,9 +447,11 @@ const themedStyles = StyleService.create({
     marginBottom: 24,
   },
   starRow: {
+    ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: 'transparent',
   },
   starBadge: {
     width: 32,

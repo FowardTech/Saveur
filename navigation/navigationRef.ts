@@ -1,5 +1,5 @@
 import {CommonActions, createNavigationContainerRef} from '@react-navigation/native';
-import {JobAlertProps} from 'constants/Types';
+import {Difficulty_Enum, Interview_Type_Enum, JobAlertProps, Practice_Mode_Enum} from 'constants/Types';
 import {RootStackParamList} from './types';
 
 // Standard React Navigation "navigate without the navigation prop" escape
@@ -27,6 +27,40 @@ type PendingNavigation =
   | {name: 'Notification'}
   | {name: 'WeeklyCareerReport'}
   | {name: 'DailyIndustryNews'}
+  // Push-tap destinations added for "push notifications aren't navigating to
+  // the actual screens" (product request item — previously only job_alert,
+  // weekly_career_report and daily_industry_news pushes went anywhere
+  // specific; everything else silently fell back to the generic in-app
+  // Notification list). See services/pushNotificationService.ts's
+  // handleDataTap for the full data.type -> destination mapping.
+  | {
+      name: 'MockInterviewSetup';
+      params: {
+        interviewType?: Interview_Type_Enum;
+        mode?: Practice_Mode_Enum;
+        difficulty?: Difficulty_Enum;
+        role?: string;
+        company?: string;
+        durationMin?: number;
+      };
+    }
+  | {name: 'InterviewFeedback'; params: {sessionId?: string}}
+  | {name: 'PracticalScenarioFeedback'; params: {sessionId: number}}
+  | {name: 'CareerRoadmap'}
+  | {name: 'Leaderboard'}
+  | {name: 'Subscription'}
+  | {name: 'PaymentHistory'}
+  | {name: 'Home'}
+  | {name: 'GoalTipDetail'}
+  | {name: 'SharedContentDetail'; params: {shareId: string}}
+  // connection_request / connection_accepted push taps (product request
+  // item: "Before a user can share something with another Saveur user they
+  // must send a request first and until the other person accept it...").
+  // `initialTab: 1` lands directly on SharedWithMe.tsx's "Pending Requests"
+  // tab for an incoming request; connection_accepted has nothing specific
+  // to show (the requester already knows who they requested), so it just
+  // opens the default "Shared with Me" tab (0).
+  | {name: 'SharedWithMe'; params?: {initialTab?: number}}
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
   // matters on first mount, so simply flipping `isSignedIn` to true after
@@ -50,6 +84,26 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('WeeklyCareerReport');
   } else if (nav.name === 'DailyIndustryNews') {
     navigationRef.navigate('DailyIndustryNews');
+  } else if (nav.name === 'MockInterviewSetup') {
+    navigationRef.navigate('MockInterviewSetup', nav.params);
+  } else if (nav.name === 'InterviewFeedback') {
+    navigationRef.navigate('InterviewFeedback', nav.params);
+  } else if (nav.name === 'PracticalScenarioFeedback') {
+    navigationRef.navigate('PracticalScenarioFeedback', nav.params);
+  } else if (nav.name === 'CareerRoadmap') {
+    navigationRef.navigate('CareerRoadmap');
+  } else if (nav.name === 'Leaderboard') {
+    navigationRef.navigate('Leaderboard');
+  } else if (nav.name === 'Subscription') {
+    navigationRef.navigate('Subscription');
+  } else if (nav.name === 'PaymentHistory') {
+    navigationRef.navigate('PaymentHistory');
+  } else if (nav.name === 'Home') {
+    navigationRef.navigate('MainBottomTab', {screen: 'Home'});
+  } else if (nav.name === 'SharedContentDetail') {
+    navigationRef.navigate('SharedContentDetail', nav.params);
+  } else if (nav.name === 'SharedWithMe') {
+    navigationRef.navigate('SharedWithMe', nav.params);
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -122,6 +176,99 @@ export function navigateToWeeklyCareerReport(): void {
  * notification list. */
 export function navigateToDailyIndustryNews(): void {
   queueOrNavigate({name: 'DailyIndustryNews'});
+}
+
+/** Scheduled interview reminder push tap (Saveur-Backend's
+ * scheduled_interview_service.send_due_reminders sends
+ * data.type = "scheduled_interview_reminder") — takes the user straight into
+ * MockInterviewSetup pre-filled with that session's details, matching
+ * HomeSrc.tsx's own "Upcoming Session" card tap behavior, instead of the
+ * generic in-app notification list. */
+export function navigateToMockInterviewSetup(params: {
+  interviewType?: Interview_Type_Enum;
+  mode?: Practice_Mode_Enum;
+  difficulty?: Difficulty_Enum;
+  role?: string;
+  company?: string;
+  durationMin?: number;
+}): void {
+  queueOrNavigate({name: 'MockInterviewSetup', params});
+}
+
+/** AI interview feedback ready push tap (Saveur-Backend's
+ * app/tasks/feedback_job.py sends data.type = "feedback_ready") — takes the
+ * user straight to that session's feedback screen instead of the generic
+ * in-app notification list. */
+export function navigateToInterviewFeedback(sessionId?: string): void {
+  queueOrNavigate({name: 'InterviewFeedback', params: {sessionId}});
+}
+
+/** Practical Scenario feedback ready push tap (Saveur-Backend's
+ * app/tasks/practical_feedback_job.py sends
+ * data.type = "practical_feedback_ready") — takes the user straight to that
+ * session's feedback screen. */
+export function navigateToPracticalScenarioFeedback(sessionId: number): void {
+  queueOrNavigate({name: 'PracticalScenarioFeedback', params: {sessionId}});
+}
+
+/** AI Career Roadmap ready push tap (Saveur-Backend's
+ * career_roadmap_service sends data.type = "roadmap_ready"). */
+export function navigateToCareerRoadmap(): void {
+  queueOrNavigate({name: 'CareerRoadmap'});
+}
+
+/** Daily leaderboard + tip push tap (Saveur-Backend's
+ * daily_broadcast_service sends data.type = "daily_leaderboard_tip") — takes
+ * the user to the full leaderboard instead of the generic in-app
+ * notification list. */
+export function navigateToLeaderboard(): void {
+  queueOrNavigate({name: 'Leaderboard'});
+}
+
+/** Payment-failed / graduation (billing reverted to full price) push taps
+ * (Saveur-Backend's billing.py and student_service.py send
+ * data.type = "payment_failed" / "graduation") — takes the user to the
+ * Subscription screen so they can see/fix their plan. */
+export function navigateToSubscription(): void {
+  queueOrNavigate({name: 'Subscription'});
+}
+
+/** Payment receipt push tap (Saveur-Backend's receipt_service sends
+ * data.type = "payment") — takes the user to their payment history instead
+ * of the generic in-app notification list. */
+export function navigateToPaymentHistory(): void {
+  queueOrNavigate({name: 'PaymentHistory'});
+}
+
+export function navigateToHome(): void {
+  queueOrNavigate({name: 'Home'});
+}
+
+/** Goal-tip push tap (Saveur-Backend's goal_tip_service sends
+ * data.type = "goal_tip") — the "Today's Goal Tips" dashboard card was
+ * removed (product request item: rely on the push notification itself
+ * instead of a persistent home card) in favor of a dedicated detail screen
+ * (src/home/GoalTipDetail.tsx) that fetches the same
+ * GET /api/v1/goals/tips/today the old card used, so a tap always lands on
+ * the full, current content regardless of which specific tip triggered the
+ * push. */
+export function navigateToGoalTipDetail(): void {
+  queueOrNavigate({name: 'GoalTipDetail'});
+}
+
+/** Content-shared push tap (Saveur-Backend's shares_service sends
+ * data.type = "content_shared") — takes the user straight to the shared
+ * item instead of the generic in-app notification list. */
+export function navigateToSharedContentDetail(shareId: string): void {
+  queueOrNavigate({name: 'SharedContentDetail', params: {shareId}});
+}
+
+/** connection_request / connection_accepted push tap (Saveur-Backend's
+ * shares_service sends data.type = "connection_request" or
+ * "connection_accepted") — opens SharedWithMe.tsx, optionally landing
+ * directly on the "Pending Requests" tab. */
+export function navigateToSharedWithMe(initialTab?: number): void {
+  queueOrNavigate({name: 'SharedWithMe', params: initialTab !== undefined ? {initialTab} : undefined});
 }
 
 /** See the ResetToMain case in PendingNavigation above — call once a cold-

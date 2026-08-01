@@ -19,6 +19,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import CtaButton from 'components/CtaButton';
 
 const CreditCardForm: React.FC<LibraryProps> = props => {
   const {
@@ -237,7 +238,7 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
           </ScrollView>
         </View>
         <Conditional condition={isHorizontal}>
-          <Button
+          <CtaButton
             style={[
               {
                 width: width - 48,

@@ -157,6 +157,15 @@ export type RootStackParamList = {
   // continuing on into the normal SuccessScr celebration, and adds a
   // "Skip for now" way out for the (majority of) non-student signups.
   StudentVerification: {fromSignup?: boolean} | undefined;
+  // "Choose your username" signup step (product request item) — lets the
+  // user either keep/regenerate the random handle auto-assigned at signup
+  // (see Saveur-Backend's app/services/username_service.py) or type their
+  // own, with live availability + "don't use your real name" checking. See
+  // src/auth/Signup/ChooseUsername.tsx. `fromSignup` mirrors
+  // StudentVerification's flag above — same "reached right after account
+  // creation" placement in the wizard, before the celebratory success
+  // screen.
+  ChooseUsername: {fromSignup?: boolean} | undefined;
   // Full-page "Today's Briefing" — HomeSrc.tsx's dashboard card only shows a
   // 3-line preview of the narrative with a "Read more" arrow; this shows the
   // whole thing plus all priorities. Takes the already-fetched briefing
@@ -172,6 +181,13 @@ export type RootStackParamList = {
     // synthesize yet.
     isTeaser?: boolean;
   };
+  // Full-page "Today's Goal Tips" — HomeSrc.tsx's dashboard card was removed
+  // (product request item: rely on the daily push notification instead of a
+  // persistent home card); this is where a "goal_tip" push tap now lands.
+  // No params — fetches GET /api/v1/goals/tips/today itself (same cached,
+  // same-day, same-language value the old card used), so it's always
+  // current regardless of which tip triggered the push.
+  GoalTipDetail: undefined;
   SalaryNegotiation: undefined;
   SystemDesignWhiteboard: undefined;
   LearningCourses: undefined;
@@ -252,6 +268,16 @@ export type RootStackParamList = {
   // Payment History — src/more/PaymentHistory.tsx. Reached from
   // MoreSrc.tsx, right next to Subscription/Payment Methods.
   PaymentHistory: undefined;
+  // In-app, user-to-user sharing inbox (product request item: share AI
+  // feedback/video replay/jobs to other Saveur users by username) — see
+  // services/sharesService.ts, src/more/SharedWithMe.tsx (the list) and
+  // src/more/SharedContentDetail.tsx (one item, opened either from that
+  // list or a "content_shared" push tap).
+  // `initialTab: 1` opens directly on the "Pending Requests" tab — used by
+  // a connection_request push tap (see navigationRef.ts's
+  // navigateToSharedWithMe).
+  SharedWithMe: {initialTab?: number} | undefined;
+  SharedContentDetail: {shareId: string};
 };
 export type MainBottomTabStackParamList = {
   Home: undefined;

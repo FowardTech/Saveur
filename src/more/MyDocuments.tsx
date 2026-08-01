@@ -22,6 +22,7 @@ import {globalStyle} from 'styles/globalStyle';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import * as documentsService from 'services/documentsService';
 import {DocumentRecord} from 'services/documentsService';
+import CtaButton from 'components/CtaButton';
 
 function formatSize(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return '';
@@ -126,7 +127,7 @@ const MyDocuments = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('more:my_documents', {defaultValue: 'My Documents'})} accessoryLeft={<NavigationAction />} />
       <Content padder contentContainerStyle={styles.content}>
-        <Button
+        <CtaButton
           children={renderCenteredLabel(
             isUploading
               ? t('more:documents_uploading', {defaultValue: 'Uploading…'})
@@ -148,9 +149,9 @@ const MyDocuments = memo(() => {
             <Text category="h9-s" status="danger" center mb={12}>
               {loadError}
             </Text>
-            <Button size="small" onPress={loadDocuments}>
+            <CtaButton size="small" onPress={loadDocuments}>
               {t('common:try_again', {defaultValue: 'Try again'})}
-            </Button>
+            </CtaButton>
           </Flex>
         ) : documents.length === 0 ? (
           <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
@@ -200,10 +201,12 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   docRow: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
+    backgroundColor: 'transparent',
   },
 });

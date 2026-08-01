@@ -42,8 +42,28 @@ export function lucideIcon(
 ): IconProvider<any> {
   return {
     toReactElement: (props: any) => {
-      const flat: Record<string, any> = StyleSheet.flatten(props?.style) || {};
-      const {width, height, tintColor, color, ...rest} = flat;
+      // BUG FIX: this used to only pull `style` out of `props` and threw
+      // away everything else UI Kitten's <Icon> forwards here (onPress,
+      // hitSlop, testID, accessibilityLabel, disabled, ...) -- Icon.
+      // component.js passes through every prop except name/pack/animation/
+      // animationConfig (see node_modules/@ui-kitten/components/ui/icon/
+      // icon.component.js's `iconProps`), so any call site doing
+      // <Icon pack="eva"/"assets" name="..." onPress={...}/> instead of
+      // wrapping the Icon in a TouchableOpacity silently lost its tap
+      // handler app-wide the moment this pack switched from real SVG eva-
+      // icons/raster PNGs (which happened to forward onPress) to Lucide
+      // (product bug report: the Job Details header's people/share icons
+      // "not working" -- same root cause almost certainly affects every
+      // other bare onPress-on-Icon call site across the app, e.g. tab bar
+      // icons, Settings rows, etc., not just this one screen). Spreading
+      // `...rest` (everything but `style`) onto <LucideComponent> restores
+      // that -- lucide-react-native's icons forward unknown props to the
+      // underlying react-native-svg <Svg>, which already supports the
+      // standard RN touch-responder props (onPress, onPressIn/Out, hitSlop)
+      // the same way <Image> and eva-icons' SVGs always did.
+      const {style, ...rest} = props || {};
+      const flat: Record<string, any> = StyleSheet.flatten(style) || {};
+      const {width, height, tintColor, color, ...restStyle} = flat;
       const size = width ?? height ?? 24;
       // Falls back to a plain dark gray rather than pure black when no
       // tintColor/color was set at all (a handful of call sites render the
@@ -53,11 +73,12 @@ export function lucideIcon(
       const iconColor = tintColor ?? color ?? '#1A1A1A';
       return (
         <LucideComponent
+          {...rest}
           size={size}
           color={iconColor}
           fill={filled ? iconColor : 'none'}
           strokeWidth={2}
-          style={rest}
+          style={restStyle}
         />
       );
     },

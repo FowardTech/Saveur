@@ -40,7 +40,11 @@ import EmotionalCoach from 'src/more/EmotionalCoach';
 import CompanyIntelligence from 'src/more/CompanyIntelligence';
 import InterviewReplay from 'src/practice/InterviewReplay';
 import StudentVerification from 'src/more/StudentVerification';
+import ChooseUsername from 'src/auth/Signup/ChooseUsername';
+import SharedWithMe from 'src/more/SharedWithMe';
+import SharedContentDetail from 'src/more/SharedContentDetail';
 import CareerBriefingDetail from 'src/home/CareerBriefingDetail';
+import GoalTipDetail from 'src/home/GoalTipDetail';
 import SalaryNegotiation from 'src/practice/SalaryNegotiation';
 import SystemDesignWhiteboard from 'src/practice/SystemDesignWhiteboard';
 import LearningCourses from 'src/more/LearningCourses';
@@ -201,7 +205,11 @@ const AppContainer = () => {
         <Stack.Screen name="CompanyIntelligence" component={CompanyIntelligence} />
         <Stack.Screen name="InterviewReplay" component={InterviewReplay} />
         <Stack.Screen name="StudentVerification" component={StudentVerification} />
+        <Stack.Screen name="ChooseUsername" component={ChooseUsername} />
+        <Stack.Screen name="SharedWithMe" component={SharedWithMe} />
+        <Stack.Screen name="SharedContentDetail" component={SharedContentDetail} />
         <Stack.Screen name="CareerBriefingDetail" component={CareerBriefingDetail} />
+        <Stack.Screen name="GoalTipDetail" component={GoalTipDetail} />
         <Stack.Screen name="CourseSession" component={CourseSession} />
         <Stack.Screen name="SalaryNegotiation" component={SalaryNegotiation} />
         <Stack.Screen name="SystemDesignWhiteboard" component={SystemDesignWhiteboard} />

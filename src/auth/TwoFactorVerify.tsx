@@ -1,14 +1,17 @@
 import React, {memo} from 'react';
-import {Alert, View} from 'react-native';
-import {StyleService, useStyleSheet, useTheme, Input, Icon, Button, Spinner} from '@ui-kitten/components';
+import {Alert, TextInput, TouchableWithoutFeedback, View} from 'react-native';
+import {StyleService, useStyleSheet, useTheme, Icon, Button} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
 import Content from 'components/Content';
 import Flex from 'components/Flex';
+import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
 import {AuthContext} from '../../AuthContext';
+
+const CODE_LENGTH = 6;
 
 // Full-screen gate rendered by navigation/AppContainer.tsx whenever
 // AuthContext.twoFactorPending is true — i.e. the user is Firebase-
@@ -26,6 +29,19 @@ const TwoFactorVerify = memo(() => {
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
   const [isCancelling, setIsCancelling] = React.useState(false);
+  // Real input element driving the 6 visual boxes below (product request
+  // item, ZipRecruiter reference — individually bordered digit boxes
+  // instead of one wide text field). A single hidden TextInput capturing
+  // every keystroke, rather than 6 separate focus-juggling TextInputs, so
+  // `code`/setCode/onVerify/onResend/onCancel below are ALL completely
+  // unchanged from before this redesign — this only replaces how the code
+  // is drawn on screen, not how it's captured, which matters on a
+  // security-sensitive login step. Also means SMS/email autofill (iOS/
+  // Android's one-tap "use code from message" suggestion) keeps working
+  // exactly as it did on the old single Input, since that's tied to a real
+  // focused TextInput, not something achievable with 6 separate ones
+  // without extra plumbing.
+  const hiddenInputRef = React.useRef<TextInput>(null);
 
   const onVerify = React.useCallback(async () => {
     if (isVerifying || code.length < 6) return;
@@ -83,7 +99,7 @@ const TwoFactorVerify = memo(() => {
               style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
             />
           </View>
-          <Text category="h5" bold center mt={20}>
+          <Text category="h3" bold center mt={20}>
             {t('auth:two_factor_title', {defaultValue: 'Enter your code'})}
           </Text>
           <Text category="h8" status="placeholder" center mt={10} maxWidth={320}>
@@ -94,25 +110,51 @@ const TwoFactorVerify = memo(() => {
                 })
               : t('auth:two_factor_body', {defaultValue: 'We sent a 6-digit code to your email.'})}
           </Text>
-          <Input
+          {/* 6 bordered boxes (product request item, ZipRecruiter
+              reference) sitting on top of one hidden real TextInput — see
+              hiddenInputRef's own comment above for why. Tapping anywhere
+              in the row focuses the hidden input, same as tapping the old
+              single Input would have. */}
+          <TouchableWithoutFeedback onPress={() => hiddenInputRef.current?.focus()}>
+            <View style={styles.codeRow}>
+              {Array.from({length: CODE_LENGTH}).map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.codeBox,
+                    {borderColor: code.length === i ? theme['color-accent-purple'] : theme['border-card-default']},
+                  ]}>
+                  <Text category="h3" bold center>
+                    {code[i] ?? ''}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </TouchableWithoutFeedback>
+          <TextInput
+            ref={hiddenInputRef}
             value={code}
-            onChangeText={value => setCode(value.replace(/[^0-9]/g, '').slice(0, 6))}
+            onChangeText={value => setCode(value.replace(/[^0-9]/g, '').slice(0, CODE_LENGTH))}
             keyboardType="number-pad"
-            maxLength={6}
-            placeholder="000000"
-            style={styles.codeInput}
-            textStyle={styles.codeInputText}
+            maxLength={CODE_LENGTH}
             autoFocus
+            // Real, focusable, and actually receiving text (so OS
+            // autofill/one-time-code suggestions still work) — just
+            // rendered with zero visible footprint since the 6 boxes above
+            // are what the user actually sees.
+            style={styles.hiddenInput}
+            textContentType="oneTimeCode"
+            autoComplete="sms-otp"
           />
-          <Button
+          <CtaButton
             style={styles.verifyButton}
-            disabled={code.length < 6 || isVerifying}
+            disabled={code.length < CODE_LENGTH || isVerifying}
             onPress={onVerify}
-            accessoryLeft={isVerifying ? () => <Spinner size="small" status="control" /> : undefined}>
+            loading={isVerifying}>
             {isVerifying
               ? t('auth:two_factor_verifying', {defaultValue: 'Verifying…'})
               : t('auth:two_factor_verify', {defaultValue: 'Verify'})}
-          </Button>
+          </CtaButton>
           <Button
             appearance="ghost"
             status="basic"
@@ -155,15 +197,28 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  codeInput: {
-    marginTop: 28,
+  codeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '100%',
+    marginTop: 28,
   },
-  codeInputText: {
-    fontSize: 24,
-    letterSpacing: 8,
-    fontWeight: '700',
-    textAlign: 'center',
+  codeBox: {
+    width: 46,
+    height: 54,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Zero visible footprint (not display:none -- that would stop it from
+  // being focusable/receiving text on some RN/Android versions) but a
+  // real, focused, keyboard-driving TextInput underneath the 6 boxes.
+  hiddenInput: {
+    position: 'absolute',
+    height: 0,
+    width: 0,
+    opacity: 0,
   },
   verifyButton: {
     marginTop: 20,

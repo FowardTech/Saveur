@@ -1,11 +1,12 @@
 import React, {memo} from 'react';
 import {Modal, TouchableOpacity, View} from 'react-native';
-import {Button, Icon, Input, Spinner, useTheme} from '@ui-kitten/components';
+import {Icon, Input, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
 import Text from './Text';
 import Flex from './Flex';
 import {globalStyle} from 'styles/globalStyle';
+import CtaButton from 'components/CtaButton';
 
 interface Props {
   visible: boolean;
@@ -102,13 +103,13 @@ const AppRatingModal = memo(({visible, onSubmit, onDismiss}: Props) => {
             textStyle={styles.commentInputInner}
           />
 
-          <Button
-            style={[globalStyle.shadowBtn, {marginTop: 20}]}
+          <CtaButton
+            style={{marginTop: 20}}
             disabled={score === 0 || isSubmitting}
-            onPress={onPressSubmit}
-            accessoryLeft={isSubmitting ? () => <Spinner size="small" status="control" /> : undefined}>
+            loading={isSubmitting}
+            onPress={onPressSubmit}>
             {t('common:rating_modal_submit', {defaultValue: 'Submit Rating'})}
-          </Button>
+          </CtaButton>
           <TouchableOpacity onPress={onDismiss} disabled={isSubmitting} style={{marginTop: 12}}>
             <Text category="h9-s" status="placeholder" center>
               {t('common:rating_modal_later', {defaultValue: 'Maybe later'})}

@@ -20,6 +20,7 @@ import NavigationAction from 'components/NavigationAction';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
+import CtaButton from 'components/CtaButton';
 
 const NewPassword = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
@@ -155,12 +156,12 @@ const NewPassword = memo(() => {
             />
           )}
         />
-        <Button
+        <CtaButton
           onPress={handleFinish}
           disabled={!canContinue}
           style={globalStyle.shadowBtn}>
           {t('auth:change_password').toString()}
-        </Button>
+        </CtaButton>
       </Content>
     </Container>
   );

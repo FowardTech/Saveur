@@ -28,7 +28,7 @@ const AboutScreen = () => {
       <TopNavigation accessoryLeft={() => <NavigationAction />} title={t("auth:about", {defaultValue: "About"})} />
       <Content contentContainerStyle={styles.content}>
         <Flex vertical itemsCenter style={styles.hero}>
-          <Text category="h4" bold center>
+          <Text category="h3" bold center>
             {t("auth:app_name", {defaultValue: "Saveur"})}
           </Text>
           {about.tagline ? (
@@ -97,5 +97,6 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: 'transparent',
   },
 });

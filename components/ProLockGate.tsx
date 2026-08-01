@@ -11,6 +11,7 @@ import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import useLayout from 'hooks/useLayout';
 import {renderCenteredLabel} from 'utils/buttonLabel';
+import CtaButton from 'components/CtaButton';
 
 interface ProLockGateProps {
   title?: string;
@@ -75,19 +76,19 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
             name="lock-outline"
             style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
-          <Text category="h5" bold center mt={20}>
+          <Text category="h3" bold center mt={20}>
             {isPremiumVariant ? 'This is a Pro Premium feature' : 'This is a Pro feature'}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={12} maxWidth={320}>
             {description}
           </Text>
-          <Button
+          <CtaButton
             style={styles.cta}
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
             {renderCenteredLabel(isPremiumVariant ? 'See Pro Premium plans' : 'See Pro plans', {stretch: false})}
-          </Button>
+          </CtaButton>
         </Flex>
       </Content>
     </Container>

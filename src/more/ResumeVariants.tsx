@@ -25,6 +25,7 @@ import { toPlainTextResume } from 'services/resumeGenerationService';
 import { downloadDocumentFile } from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 // AI Resume Evolution — product request item, Pro Premium feature: multiple
 // independently AI-tailored resume variants saved side by side (one per
@@ -147,12 +148,12 @@ const ResumeVariants = memo(() => {
           })}
         </Text>
 
-        <Button
+        <CtaButton
           style={[globalStyle.shadowBtn, { marginBottom: 20 }]}
           onPress={() => setShowCreate(true)}
         >
           {t('more:new_variant', { defaultValue: '+ New Variant' })}
-        </Button>
+        </CtaButton>
 
         {isLoading ? (
           <Flex center style={{ paddingVertical: 40 }}><Spinner size="large" /></Flex>
@@ -211,9 +212,9 @@ const ResumeVariants = memo(() => {
               onChangeText={setTargetCompany}
               style={[styles.input, { marginBottom: 20 }]}
             />
-            <Button disabled={!label.trim() || !targetRole.trim() || isCreating} onPress={onCreate}>
+            <CtaButton disabled={!label.trim() || !targetRole.trim() || isCreating} onPress={onCreate}>
               {isCreating ? () => <Spinner size="small" status="control" /> : t('more:generate', { defaultValue: 'Generate' })}
-            </Button>
+            </CtaButton>
             <Button appearance="outline" style={{ marginTop: 12 }} onPress={() => setShowCreate(false)}>
               {t('common:cancel', { defaultValue: 'Cancel' })}
             </Button>
@@ -234,6 +235,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    backgroundColor: 'transparent',
   },
   input: { borderRadius: 12 },
   modalOverlay: {

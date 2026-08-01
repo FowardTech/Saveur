@@ -187,13 +187,23 @@ const PaymentMethod = memo(() => {
               deleteLabel={t('common:delete', {defaultValue: 'Delete'})}
               onEdit={() => onSetDefault(item)}
               onDelete={() => onDelete(item)}>
+              {/* No fill — border-only (app-wide "cards are transparent"
+                  pass), same hairline border globalStyle.card uses
+                  elsewhere (not spreading globalStyle.card itself here
+                  since its own borderRadius:16 would fight the `border={12}`
+                  prop above), with the default-card highlight (brand blue
+                  border) layered on top for the item that's actually set as
+                  default instead of being the only bordered state. */}
               <Flex
                 level="2"
                 pv={24}
                 ml={24}
                 justify="flex-start"
                 border={12}
-                style={item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined}>
+                style={[
+                  {backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
+                  item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined,
+                ]}>
                 <Icon pack="assets" name={BRAND_ICON[item.brand?.toLowerCase()] ?? 'master'} style={styles.iconLogoBank} />
                 <View style={globalStyle.flexOne}>
                   <Flex justify="flex-start" itemsCenter>

@@ -25,6 +25,7 @@ import { CodingInterviewScreenNavigationProp, RootStackParamList } from 'navigat
 import * as interviewService from 'services/interviewService';
 import * as codingService from 'services/codingService';
 import { CodingLanguage, RunResult, TestRunResult } from 'services/codingService';
+import CtaButton from 'components/CtaButton';
 
 // Real coding-interview screen: a plain text area stands in for a real
 // syntax-highlighted code editor (TODO: integrate a real code editor, e.g.
@@ -310,7 +311,7 @@ const CodingInterview = memo(() => {
             </Layout>
           );
         })}
-        <Button
+        <CtaButton
           children={renderCenteredLabel(
             runningTests ? t('find:running_tests') : t('find:run_tests'),
             {stretch: false},

@@ -21,6 +21,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import * as referralService from 'services/referralService';
 import { ReferralSummary } from 'services/referralService';
+import CtaButton from 'components/CtaButton';
 
 // Referral program — share a link, both sides get a reward off their next
 // subscription once the referred person actually subscribes to a paid plan
@@ -128,7 +129,7 @@ const ReferralProgram = memo(() => {
           <>
             <Layout level="2" style={styles.heroCard}>
               <Icon pack="eva" name="gift-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
-              <Text category="h5" bold center mt={16}>
+              <Text category="h3" bold center mt={16}>
                 {t('more:referral_hero_title', {defaultValue: 'Give {{reward}}, Get {{reward}}', reward: rewardLabel})}
               </Text>
               <Text category="h9-s" status="placeholder" center mt={8} mb={20}>
@@ -143,9 +144,9 @@ const ReferralProgram = memo(() => {
                   {summary.code}
                 </Text>
               </View>
-              <Button style={{ marginTop: 16, width: '100%' }} onPress={onShare}>
+              <CtaButton style={{ marginTop: 16, width: '100%' }} onPress={onShare}>
                 {t('more:referral_share_button', {defaultValue: 'Share My Link'})}
-              </Button>
+              </CtaButton>
             </Layout>
 
             <Flex justify="space-between" mt={20} mb={20}>
@@ -155,19 +156,26 @@ const ReferralProgram = memo(() => {
             </Flex>
 
             {summary.creditEarnedCents > 0 ? (
-              <Layout level="2" style={styles.creditCard}>
-                <Text category="h9" bold status="success">
-                  {t('more:referral_credit_earned', {
-                    defaultValue: '${{amount}} in credit earned',
-                    amount: (summary.creditEarnedCents / 100).toFixed(2),
-                  })}
-                </Text>
-                <Text category="h10" status="placeholder" mt={4}>
-                  {t('more:referral_credit_auto_applied', {
-                    defaultValue: 'Automatically applied to your next Saveur invoice.',
-                  })}
-                </Text>
-              </Layout>
+              // Two layers, not one (product bug: "extra white card behind"
+              // on Android, fine on iOS) — see HomeSrc.tsx's
+              // checkInCardOuter/checkInCardInner for the full explanation
+              // of this same Android elevation + translucent-background
+              // pattern.
+              <View style={styles.creditCardOuter}>
+                <Layout level="2" style={styles.creditCard}>
+                  <Text category="h9" bold status="success">
+                    {t('more:referral_credit_earned', {
+                      defaultValue: '${{amount}} in credit earned',
+                      amount: (summary.creditEarnedCents / 100).toFixed(2),
+                    })}
+                  </Text>
+                  <Text category="h10" status="placeholder" mt={4}>
+                    {t('more:referral_credit_auto_applied', {
+                      defaultValue: 'Automatically applied to your next Saveur invoice.',
+                    })}
+                  </Text>
+                </Layout>
+              </View>
             ) : null}
 
             <Text category="h8" bold mt={28} mb={8}>
@@ -203,7 +211,7 @@ function StatBlock({ label, value, styles }: { label: string; value: number; sty
   // that actually centers these two Text children horizontally.
   return (
     <Flex vertical itemsCenter style={styles.statBlock}>
-      <Text category="h5" bold>{value}</Text>
+      <Text category="h3" bold>{value}</Text>
       <Text category="h10" status="placeholder">{label}</Text>
     </Flex>
   );
@@ -223,6 +231,7 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   codeBox: {
     ...globalStyle.card,
@@ -237,11 +246,22 @@ const themedStyles = StyleService.create({
   statBlock: {
     flex: 1,
   },
-  creditCard: {
+  // Split in two (product bug: "extra white card behind" on Android) — see
+  // the JSX comment above where these are used.
+  creditCardOuter: {
     ...globalStyle.card,
+    // Was opaque (needed back when `card` still carried Android elevation
+    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
+    // `card` is border-only now, so transparent is safe and matches the
+    // app-wide "cards are transparent" pass; the inner creditCard's own
+    // translucent success-tint still renders on top either way.
+    backgroundColor: 'transparent',
+  },
+  creditCard: {
     backgroundColor: 'color-success-transparent-200',
     borderRadius: 16,
     padding: 16,
+    overflow: 'hidden',
   },
   redeemInput: {
     borderRadius: 12,

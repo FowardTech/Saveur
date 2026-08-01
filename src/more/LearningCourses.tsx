@@ -34,6 +34,7 @@ import {
   getCourseLevelLabel, getCareerPathLabel, getCourseCategoryLabel,
   getCourseTitleLabel, getCourseDescriptionLabel,
 } from 'utils/learningLabels';
+import CtaButton from 'components/CtaButton';
 
 const CUSTOM_TOPIC_MODULES = 5;
 
@@ -315,8 +316,10 @@ const LearningCourses = memo(() => {
         {showContinueBanner ? (
           <Layout level="2" style={[styles.customCard, styles.continueCard]}>
             <Flex justify="flex-start" itemsCenter>
-              <View style={[styles.continueIconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-                <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+              {/* "Colored glass" icon treatment (app-wide consistency pass)
+                  — was a flat gray circle + monochrome icon. */}
+              <View style={[styles.continueIconWrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+                <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
               </View>
               <View style={{ marginLeft: 12, flex: 1 }}>
                 <Text category="h10" status="placeholder">{t('more:continue_where_left_off', { defaultValue: 'Continue where you left off' })}</Text>
@@ -330,9 +333,9 @@ const LearningCourses = memo(() => {
                   })}
                 </Text>
               </View>
-              <Button size="small" onPress={onContinueMostRecent}>
+              <CtaButton size="small" onPress={onContinueMostRecent}>
                 {t('more:continue', { defaultValue: 'Continue' })}
-              </Button>
+              </CtaButton>
             </Flex>
           </Layout>
         ) : null}
@@ -383,11 +386,13 @@ const LearningCourses = memo(() => {
               <View>
                 <Text category="h9" bold mb={12}>{curriculum.goal}</Text>
                 {curriculum.weeks.every(w => w.completed) ? (
-                  <View style={styles.curriculumDoneBox}>
-                    <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                    <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
-                      {t('more:curriculum_all_weeks_done', { defaultValue: "You've completed every week of this curriculum!" })}
-                    </Text>
+                  <View style={styles.curriculumDoneBoxOuter}>
+                    <View style={styles.curriculumDoneBox}>
+                      <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+                      <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
+                        {t('more:curriculum_all_weeks_done', { defaultValue: "You've completed every week of this curriculum!" })}
+                      </Text>
+                    </View>
                   </View>
                 ) : null}
                 {curriculum.weeks.map(week => {
@@ -415,24 +420,55 @@ const LearningCourses = memo(() => {
                             : week.description}
                         </Text>
                       </View>
-                      <Button
-                        size="tiny"
-                        appearance={isWeekComplete ? 'outline' : locked ? 'outline' : 'filled'}
-                        status={isWeekComplete ? 'success' : locked ? 'basic' : 'primary'}
+                      {/* Was a plain UI Kitten <Button> — per explicit
+                          follow-up ("remove the box shadow you gave to
+                          this buttons its making them look awful"), this is
+                          now a plain flat pill with an explicit style array
+                          (no globalStyle.shadowBtn/shadow spread at all, so
+                          there's no theme-level shadow source left to trip
+                          over) instead of relying on UI Kitten's own
+                          filled/outline Button appearances, which is also
+                          what let the two "off" states (locked, complete)
+                          fall back to a slightly-inconsistent gray/green
+                          outline before. One consistent shape, three clear
+                          colors: solid brand blue for the actionable
+                          state, a soft green tint for a completed week you
+                          can revisit, a muted gray tint (lower opacity) for
+                          a week that isn't reachable yet. */}
+                      <TouchableOpacity
+                        activeOpacity={locked ? 1 : 0.7}
                         disabled={locked}
-                        accessoryLeft={locked
-                          ? p => <Icon {...p} pack="eva" name="lock-outline" />
-                          : undefined}
-                        style={{ marginLeft: 12 }}
-                        onPress={() => onStartCurriculumWeek(week)}>
-                        {locked
-                          ? t('more:locked', { defaultValue: 'Locked' })
-                          : isWeekComplete
-                          ? t('more:review', { defaultValue: 'Review' })
-                          : completed > 0
-                          ? t('more:continue', { defaultValue: 'Continue' })
-                          : t('more:start', { defaultValue: 'Start' })}
-                      </Button>
+                        onPress={() => onStartCurriculumWeek(week)}
+                        style={[
+                          styles.weekActionPill,
+                          isWeekComplete
+                            ? {backgroundColor: theme['color-success-transparent-200']}
+                            : locked
+                            ? {backgroundColor: theme['background-basic-color-3'], opacity: 0.7}
+                            : {backgroundColor: theme['color-primary-100']},
+                        ]}>
+                        {locked ? (
+                          <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, {tintColor: theme['text-placeholder-color'], marginRight: 4}]} />
+                        ) : null}
+                        <Text
+                          category="h10"
+                          bold
+                          style={{
+                            color: isWeekComplete
+                              ? theme['color-success-500']
+                              : locked
+                              ? theme['text-placeholder-color']
+                              : theme['text-primary-color'],
+                          }}>
+                          {locked
+                            ? t('more:locked', { defaultValue: 'Locked' })
+                            : isWeekComplete
+                            ? t('more:review', { defaultValue: 'Review' })
+                            : completed > 0
+                            ? t('more:continue', { defaultValue: 'Continue' })
+                            : t('more:start', { defaultValue: 'Start' })}
+                        </Text>
+                      </TouchableOpacity>
                     </Flex>
                   );
                 })}
@@ -459,7 +495,7 @@ const LearningCourses = memo(() => {
                   onChangeText={setCurriculumGoal}
                   style={[styles.customInput, globalStyle.flexOne]}
                 />
-                <Button
+                <CtaButton
                   size="small"
                   disabled={!curriculumGoal.trim() || isGeneratingCurriculum}
                   style={styles.customStartBtn}
@@ -467,7 +503,7 @@ const LearningCourses = memo(() => {
                   {isGeneratingCurriculum
                     ? <Spinner size="tiny" status="control" />
                     : t('more:curriculum_build_cta', { defaultValue: 'Build' })}
-                </Button>
+                </CtaButton>
               </Flex>
             )}
           </Layout>
@@ -538,13 +574,13 @@ const LearningCourses = memo(() => {
               onChangeText={text => { setCustomTopic(text); setTopicCheck(null); }}
               style={[styles.customInput, globalStyle.flexOne]}
             />
-            <Button
+            <CtaButton
               size="small"
               disabled={!careerPath || isCheckingTopic}
               style={styles.customStartBtn}
               onPress={onCheckTopic}>
               {isCheckingTopic ? t('more:ellipsis', { defaultValue: '…' }) : t('more:check_topic', { defaultValue: 'Check' })}
-            </Button>
+            </CtaButton>
           </Flex>
 
           {isCheckingTopic ? (
@@ -552,12 +588,14 @@ const LearningCourses = memo(() => {
               <Spinner size="small" />
             </Flex>
           ) : topicCheck && !topicCheck.valid ? (
-            <View style={styles.rejectedBox}>
-              <Text category="h9-s" status="warning">
-                {topicCheck.reason || t('more:topic_rejected_generic', {
-                  defaultValue: "That doesn't look like a specific professional or career skill yet — try something more concrete.",
-                })}
-              </Text>
+            <View style={styles.rejectedBoxOuter}>
+              <View style={styles.rejectedBox}>
+                <Text category="h9-s" status="warning">
+                  {topicCheck.reason || t('more:topic_rejected_generic', {
+                    defaultValue: "That doesn't look like a specific professional or career skill yet — try something more concrete.",
+                  })}
+                </Text>
+              </View>
             </View>
           ) : topicCheck?.valid ? (
             <View style={{ marginTop: 16 }}>
@@ -588,20 +626,43 @@ const LearningCourses = memo(() => {
                           : t('more:modules_progress', { defaultValue: `${completed}/${total} modules`, completed, total })}
                       </Text>
                     </View>
-                    <Button
-                      size="tiny"
-                      appearance={unlocked ? 'filled' : 'outline'}
-                      status={isTierComplete ? 'success' : 'primary'}
+                    {/* Same flat pill treatment as the AI Curriculum
+                        Builder's week rows above — see weekActionPill's
+                        own comment. */}
+                    <TouchableOpacity
+                      activeOpacity={!unlocked ? 1 : 0.7}
                       disabled={!unlocked}
-                      onPress={() => onStartTier(level)}>
-                      {!unlocked
-                        ? t('more:locked', { defaultValue: 'Locked' })
-                        : isTierComplete
-                        ? t('more:review', { defaultValue: 'Review' })
-                        : completed > 0
-                        ? t('more:continue', { defaultValue: 'Continue' })
-                        : t('more:start', { defaultValue: 'Start' })}
-                    </Button>
+                      onPress={() => onStartTier(level)}
+                      style={[
+                        styles.weekActionPill,
+                        isTierComplete
+                          ? {backgroundColor: theme['color-success-transparent-200']}
+                          : !unlocked
+                          ? {backgroundColor: theme['background-basic-color-3'], opacity: 0.7}
+                          : {backgroundColor: theme['color-primary-100']},
+                      ]}>
+                      {!unlocked ? (
+                        <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, {tintColor: theme['text-placeholder-color'], marginRight: 4}]} />
+                      ) : null}
+                      <Text
+                        category="h10"
+                        bold
+                        style={{
+                          color: isTierComplete
+                            ? theme['color-success-500']
+                            : !unlocked
+                            ? theme['text-placeholder-color']
+                            : theme['text-primary-color'],
+                        }}>
+                        {!unlocked
+                          ? t('more:locked', { defaultValue: 'Locked' })
+                          : isTierComplete
+                          ? t('more:review', { defaultValue: 'Review' })
+                          : completed > 0
+                          ? t('more:continue', { defaultValue: 'Continue' })
+                          : t('more:start', { defaultValue: 'Start' })}
+                      </Text>
+                    </TouchableOpacity>
                   </Flex>
                 );
               })}
@@ -684,6 +745,10 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
+    // No fill — border-only (app-wide "cards are transparent" pass).
+    // Explicit 'transparent' since every usage is <Layout level="2" .../>,
+    // whose own level mapping would otherwise still fill it.
+    backgroundColor: 'transparent',
   },
   continueCard: {
     padding: 16,
@@ -727,11 +792,26 @@ const themedStyles = StyleService.create({
     borderBottomWidth: 1,
     borderBottomColor: 'background-basic-color-3',
   },
-  rejectedBox: {
+  // Split each into an opaque shadow-casting outer + a translucent-tint
+  // inner (product bug: "extra white card behind" on Android, fine on
+  // iOS) -- Android's elevation shadow needs an OPAQUE background to
+  // compute a rounded shadow silhouette from; with the tint directly on
+  // the same elevated view, Android falls back to a plain rectangular
+  // surface behind the rounded card. See HomeSrc.tsx's checkInCardOuter/
+  // checkInCardInner for the first fix of this same pattern.
+  rejectedBoxOuter: {
     ...globalStyle.card,
     marginTop: 16,
+    // Was opaque (needed back when `card` still carried Android elevation
+    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
+    // `card` is border-only now, so transparent is safe and matches the
+    // app-wide "cards are transparent" pass.
+    backgroundColor: 'transparent',
+  },
+  rejectedBox: {
     padding: 12,
     borderRadius: 12,
+    overflow: 'hidden',
     backgroundColor: 'color-warning-transparent-200',
   },
   tierRow: {
@@ -739,13 +819,29 @@ const themedStyles = StyleService.create({
     borderTopWidth: 1,
     borderTopColor: 'background-basic-color-3',
   },
-  curriculumDoneBox: {
+  // Flat pill for each curriculum week's action button (Start/Continue/
+  // Review/Locked) — deliberately no elevation/shadow property anywhere in
+  // this object, see the JSX comment at its usage site.
+  weekActionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    marginLeft: 12,
+  },
+  curriculumDoneBoxOuter: {
     ...globalStyle.card,
+    marginBottom: 8,
+    // Same as rejectedBoxOuter above.
+    backgroundColor: 'transparent',
+  },
+  curriculumDoneBox: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    marginBottom: 8,
+    overflow: 'hidden',
     backgroundColor: 'color-success-transparent-200',
   },
   courseCard: {
@@ -753,6 +849,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: 'transparent',
   },
   categoryPill: {
     backgroundColor: 'background-basic-color-3',

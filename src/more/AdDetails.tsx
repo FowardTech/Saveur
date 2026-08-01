@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
+import CtaButton from 'components/CtaButton';
 
 // Landing screen for tapping the admin-configured ad popup — see
 // src/home/HomeSrc.tsx for where that popup is triggered and
@@ -39,7 +40,7 @@ const AdDetails = memo(() => {
           <Image source={{uri: ad.imageUrl}} style={styles.image} resizeMode="cover" />
         ) : null}
         <Layout level="2" style={styles.card}>
-          <Text category="h5" bold mb={12}>
+          <Text category="h3" bold mb={12}>
             {ad.title}
           </Text>
           <Text category="h8-s" style={styles.detailBody}>
@@ -48,9 +49,9 @@ const AdDetails = memo(() => {
         </Layout>
 
         {ad.ctaUrl ? (
-          <Button style={[globalStyle.shadowBtn]} onPress={onCta}>
+          <CtaButton style={[globalStyle.shadowBtn]} onPress={onCta}>
             {ad.ctaLabel || t('more:learn_more', {defaultValue: 'Learn more'})}
-          </Button>
+          </CtaButton>
         ) : null}
       </Content>
     </Container>
@@ -77,6 +78,7 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
+    backgroundColor: 'transparent',
   },
   detailBody: {
     lineHeight: 22,

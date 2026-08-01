@@ -22,6 +22,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as practicalService from 'services/practicalService';
 import { PracticalSessionDetail } from 'services/practicalService';
+import CtaButton from 'components/CtaButton';
 
 // Judgment scoring across the whole decision path — generated in the
 // background right after the scenario's final choice (see
@@ -116,7 +117,7 @@ const PracticalScenarioFeedback = memo(() => {
           <View style={styles.statsGrid}>
             {RUBRIC_KEYS.map(rk => (
               <Layout level="2" key={rk.key} style={styles.statCard}>
-                <Text category="h5" bold center>{feedback?.[rk.key] ?? '—'}</Text>
+                <Text category="h3" bold center>{feedback?.[rk.key] ?? '—'}</Text>
                 <Text category="h10" status="placeholder" center mt={4}>
                   {t(`find:${rk.labelKey}`, { defaultValue: rk.fallback })}
                 </Text>
@@ -173,12 +174,12 @@ const PracticalScenarioFeedback = memo(() => {
             </View>
           ) : null}
 
-          <Button
+          <CtaButton
             style={[globalStyle.shadowBtn, { marginTop: 32 }]}
             onPress={() => navigate('PracticalScenarioSetup')}
           >
             {t('find:practical_try_another', { defaultValue: 'Try another scenario' })}
-          </Button>
+          </CtaButton>
         </Content>
       )}
     </Container>
@@ -208,11 +209,19 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     paddingVertical: 16,
     margin: 4,
+    // No fill — border-only (app-wide "cards are transparent" pass).
+    // Explicit 'transparent' since this renders via <Layout level="2" .../>,
+    // whose own level mapping would otherwise still fill it.
+    backgroundColor: 'transparent',
   },
+  // Was a flat gray fill with no border at all — brought in line with
+  // every other list row in the app (globalStyle.card's border, no fill)
+  // for the same app-wide consistency pass.
   noteRow: {
+    ...globalStyle.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
   },
 });

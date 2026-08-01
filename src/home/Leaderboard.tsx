@@ -17,6 +17,7 @@ import NavigationAction from 'components/NavigationAction';
 import UserAvatar from 'components/UserAvatar';
 import {LeaderboardEntryProps} from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
+import CtaButton from 'components/CtaButton';
 
 // Full leaderboard (GET /api/v1/gamification/leaderboard returns up to the
 // backend's own top-50 cap — see app/api/gamification.py's leaderboard()).
@@ -67,9 +68,9 @@ const Leaderboard = memo(() => {
             <Text category="h9-s" status="danger" center mb={12}>
               {loadError}
             </Text>
-            <Button size="small" onPress={load}>
+            <CtaButton size="small" onPress={load}>
               {t('common:try_again', {defaultValue: 'Try again'}).toString()}
-            </Button>
+            </CtaButton>
           </Flex>
         ) : leaderboard.length === 0 ? (
           <Text category="h9-s" status="placeholder" center mv={16}>

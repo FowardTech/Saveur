@@ -10,13 +10,23 @@
 	     that resolved the push notification entitlement issue), so no
 	     further pbxproj change is needed; Xcode will pick this up on the
 	     next build/reprovision the same way it did for aps-environment.
-	     applinks:api.saveurnow.com must match exactly the domain serving
+	     Each applinks: entry must match exactly a domain serving
 	     /.well-known/apple-app-site-association (see Saveur-Backend's
-	     app/web.py); both were confirmed against the app's real
-	     production domain and signed build config (Team ID, bundle id). -->
+	     app/web.py); api.saveurnow.com was confirmed against the app's
+	     real production domain and signed build config (Team ID, bundle
+	     id). share.saveurnow.com added alongside it (NOT replacing it):
+	     product/security concern, job/referral share links were showing
+	     "api." in the URL bar to recipients, exposing backend naming, so
+	     new links now use this dedicated share.saveurnow.com subdomain
+	     instead (see jobShareService.ts's WEB_SHARE_BASE_URL /
+	     referralService.ts and Saveur-Backend's PUBLIC_SHARE_BASE_URL).
+	     Keeping api.saveurnow.com listed here too means any link already
+	     shared before this change keeps opening the app directly instead
+	     of silently falling back to a browser tab. -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:api.saveurnow.com</string>
+		<string>applinks:share.saveurnow.com</string>
 	</array>
 </dict>
 </plist>

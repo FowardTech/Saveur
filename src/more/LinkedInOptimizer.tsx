@@ -23,6 +23,7 @@ import { OptimizationResult, OptimizationHistoryEntry } from 'services/linkedinO
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import dayjs from 'utils/dayjs';
+import CtaButton from 'components/CtaButton';
 
 // AI LinkedIn Optimizer — product request item, Pro Premium feature. Paste
 // your current headline/about/bullets, get AI-rewritten versions + feedback.
@@ -139,13 +140,13 @@ const LinkedInOptimizer = memo(() => {
         </Text>
         <Input value={bulletsText} onChangeText={setBulletsText} multiline textStyle={{ minHeight: 80 }} style={styles.input} />
 
-        <Button
+        <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 24 }]}
           disabled={isLoading || (!headline.trim() && !about.trim() && !bulletsText.trim())}
           onPress={onOptimize}
         >
           {isLoading ? () => <Spinner size="small" status="control" /> : t('more:optimize', { defaultValue: 'Optimize' })}
-        </Button>
+        </CtaButton>
 
         {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}
 
@@ -220,5 +221,6 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    backgroundColor: 'transparent',
   },
 });

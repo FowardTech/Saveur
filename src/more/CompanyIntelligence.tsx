@@ -25,6 +25,7 @@ import * as companyIntelService from 'services/companyIntelService';
 import { CompanyIntel } from 'services/companyIntelService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 // Company Intelligence — product request item: real, web-search-grounded
 // pre-interview research plus AI-generated likely questions. See
@@ -87,13 +88,13 @@ const CompanyIntelligence = memo(() => {
           onChangeText={setRole}
           style={styles.input}
         />
-        <Button
+        <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 20 }]}
           disabled={!company.trim() || isLoading}
           onPress={onResearch}
         >
           {isLoading ? () => <Spinner size="small" status="control" /> : t('more:research', { defaultValue: 'Research' })}
-        </Button>
+        </CtaButton>
 
         {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}
 
@@ -161,5 +162,6 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    backgroundColor: 'transparent',
   },
 });

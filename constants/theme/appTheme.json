@@ -19,6 +19,12 @@
   "color-danger-100": "#FA4169",
   "color-warning-100": "#FE9870",
 
+  "color-accent-purple": "#8B5CF6",
+  "color-accent-purple-bg": "#F3EEFF",
+  "color-badge-info-bg": "#E1EEFF",
+  "color-badge-info-text": "#1D4ED8",
+  "border-card-default": "#E7E7F0",
+
   "text-font-family": "PlusJakartaSans-Regular",
   "text-font-family-medium": "PlusJakartaSans-Medium",
   "text-heading-1-font-family": "PlusJakartaSans-Medium",

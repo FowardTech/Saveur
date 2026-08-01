@@ -21,5 +21,8 @@
   "color-warning-default": "#FE9870",
   "text-success-color-100": "#00D65B",
   "text-completed-color": "#0EAD69",
-  "text-twitter-color": "#53D0EC"
+  "text-twitter-color": "#53D0EC",
+  "border-card-default": "#3A3A57",
+  "color-accent-purple-bg": "#2A2140",
+  "color-badge-info-bg": "#16233D"
 }

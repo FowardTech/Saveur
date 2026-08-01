@@ -24,6 +24,7 @@ import * as practicalService from 'services/practicalService';
 import { PracticalType } from 'services/practicalService';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { AuthContext } from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 // Practical Scenarios setup — "coding practice already gives software
 // engineers something hands-on to actually DO; every other career type only
@@ -158,7 +159,7 @@ const PracticalScenarioSetup = memo(() => {
           style={[styles.input, { marginBottom: 24 }]}
         />
 
-        <Button
+        <CtaButton
           style={globalStyle.shadowBtn}
           disabled={isStarting}
           onPress={onStart}
@@ -166,7 +167,7 @@ const PracticalScenarioSetup = memo(() => {
           {isStarting
             ? () => <Spinner size="small" status="control" />
             : t('find:practical_start_cta', { defaultValue: 'Start scenario' })}
-        </Button>
+        </CtaButton>
       </Content>
     </Container>
   );

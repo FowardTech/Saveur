@@ -18,6 +18,7 @@ import {globalStyle} from 'styles/globalStyle';
 import ICheckbox from 'components/ICheckbox';
 import {SUPPORTED_LANGUAGES} from 'constants/languages';
 import {AuthContext} from '../../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 // Real language switching (see i18n/config.ts) — SUPPORTED_LANGUAGES
 // (constants/languages.ts) only lists locales that actually have full
@@ -81,7 +82,7 @@ const SelectLanguage = memo(() => {
         keyExtractor={item => item.code}
         showsVerticalScrollIndicator={false}
       />
-      <Button
+      <CtaButton
         children={t('common:ok')}
         style={[styles.button, {bottom: bottom + 8}]}
         onPress={goBack}

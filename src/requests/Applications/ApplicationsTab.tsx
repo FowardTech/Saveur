@@ -14,6 +14,7 @@ import {MainBottomTabStackParamList, RootStackParamList} from 'navigation/types'
 import {Application_Stage_Enum, JobApplicationProps, Request_Type_Enum} from 'constants/Types';
 import * as applicationsService from 'services/applicationsService';
 import {AuthContext} from '../../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 // Applications tab — fetches the full tracked-application list from
 // applicationsService and splits it client-side into "active" (Applied /
@@ -104,12 +105,12 @@ const ApplicationsTab = memo(() => {
               defaultValue: "Track every job you've applied for, all the way to offer — Application Tracker is a Pro Premium feature.",
             })}
           </Text>
-          <Button
+          <CtaButton
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
             {renderCenteredLabel(t('request:see_pro_premium_plans', {defaultValue: 'See Pro Premium plans'}), {stretch: false})}
-          </Button>
+          </CtaButton>
         </Flex>
       </View>
     );
@@ -165,7 +166,13 @@ const themedStyles = StyleService.create({
     paddingTop: 32,
   },
   lockCard: {
+    // Added the app's own border-only card treatment (product follow-up,
+    // app-wide consistency pass) — was unbordered/unstyled, floating
+    // directly on the screen instead of reading as a defined card the way
+    // every other lock/upgrade prompt in the app does.
+    ...globalStyle.card,
     paddingHorizontal: 24,
     paddingVertical: 32,
+    backgroundColor: 'transparent',
   },
 });

@@ -2,6 +2,30 @@ import i18n from 'i18next';
 import {initReactI18next} from 'react-i18next';
 import dayjs from 'dayjs';
 import 'dayjs/locale/ms';
+// Registers every locale this app actually supports (see
+// constants/languages.ts's SUPPORTED_LANGUAGES) with dayjs itself, matched
+// by the exact same bare ISO 639-1 code i18next uses -- without importing a
+// locale file first, dayjs.locale(code) below silently no-ops and stays on
+// whatever locale was last successfully set (previously that meant only
+// 'en' ever actually worked, since 'ms' -- not even a supported app
+// language -- was the only non-English locale file ever imported here).
+// This is the root cause behind relative timestamps ("4 hours ago"),
+// calendar month names, and other dayjs-formatted "subordinate text"
+// staying in English everywhere in the app regardless of the selected
+// language, even though the surrounding i18next-driven strings switched
+// correctly -- exactly the "header translated, body/subordinate text not"
+// gap reported for push notifications/Notification Center and elsewhere.
+import 'dayjs/locale/es';
+import 'dayjs/locale/fr';
+import 'dayjs/locale/de';
+import 'dayjs/locale/pt';
+import 'dayjs/locale/it';
+import 'dayjs/locale/zh';
+import 'dayjs/locale/ja';
+import 'dayjs/locale/ko';
+import 'dayjs/locale/ar';
+import 'dayjs/locale/hi';
+import 'dayjs/locale/ru';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {EKeyAsyncStorage} from 'constants/Types';
 import {isSupportedLanguageCode} from 'constants/languages';

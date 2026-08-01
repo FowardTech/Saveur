@@ -25,6 +25,7 @@ import * as interviewService from 'services/interviewService';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 
@@ -204,7 +205,7 @@ const MockInterviewSetup = memo(() => {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigate('Subscription')}
-            style={[styles.freeLimitBanner, { backgroundColor: theme['background-basic-color-2'] }]}>
+            style={[styles.freeLimitBanner, { backgroundColor: 'transparent' }]}>
             <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
             <Text category="h9-s" status={remainingFreeSessions > 0 ? 'basic' : 'danger'} style={globalStyle.flexOne} ml={8}>
               {remainingFreeSessions > 0
@@ -391,7 +392,7 @@ const MockInterviewSetup = memo(() => {
           })}
         </Flex>
 
-        <Button
+        <CtaButton
           children={isStarting ? t('find:starting', { defaultValue: 'Starting…' }) : t('find:start_interview')}
           onPress={onStart}
           disabled={isStarting}

@@ -153,7 +153,7 @@ const themedStyles = StyleService.create({
     marginTop: 16,
     padding: 20,
     borderRadius: 20,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
   },
   topicRow: {
     flexDirection: 'row',

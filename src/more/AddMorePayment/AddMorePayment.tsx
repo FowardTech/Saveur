@@ -17,6 +17,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import LottieView from 'lottie-react-native';
 import { FormModel } from 'constants/Types';
 import CreditCardForm from './CreditCardForm';
+import CtaButton from 'components/CtaButton';
 
 const AddMorePayment = memo(() => {
   const { goBack } = useNavigation();
@@ -59,7 +60,7 @@ const AddMorePayment = memo(() => {
             />
           </KeyboardAvoidingView>
           {formState.isValid && (
-            <Button
+            <CtaButton
               style={[styles.button]}
               children={'Save'}
               onPress={handleSubmit(goBack)}

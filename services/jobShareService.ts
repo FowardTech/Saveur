@@ -20,17 +20,25 @@ import * as jobAlertsService from './jobAlertsService';
 // below, same shape as referralService.ts's pending-code pattern.
 // ---------------------------------------------------------------------------
 
-// Real production domain this backend is deployed at (see Saveur-Backend's
-// app/web.py — GET /j/<id> is served by that same Flask app) — matches the
-// domain declared in ios/caren_family/caren_family.entitlements'
-// associated-domains entry and android/app/src/main/AndroidManifest.xml's
-// autoVerify intent-filter, so a recipient who already has Saveur installed
-// gets taken straight into the app on tap (Universal Links/App Links)
-// instead of ever seeing the /j/<id> browser page — that page (with proper
-// Open Graph tags, so the shared link previews as "A job match from
-// Saveur" rather than a bare URL) is only what a recipient WITHOUT the app
-// installed, or without Universal Links wired up yet, actually sees.
-const WEB_SHARE_BASE_URL = 'https://api.saveurnow.com';
+// Public share-link domain (see Saveur-Backend's app/web.py — GET /j/<id>
+// is served by that same Flask app, just reached through a second host).
+// Deliberately NOT api.saveurnow.com (product/security concern raised
+// explicitly: a recipient tapping a shared job link shouldn't see "api." in
+// the URL bar, which exposes backend naming for no reason) — this is a
+// dedicated subdomain (Caddy on the Droplet proxies it to the same backend;
+// see Saveur-Backend's PUBLIC_SHARE_BASE_URL / .env.example) that only ever
+// serves these public landing pages, never the JSON API itself. Matches the
+// domain declared ALONGSIDE api.saveurnow.com (that one stays, so links
+// already shared before this change keep working) in
+// ios/caren_family/caren_family.entitlements' associated-domains entry and
+// android/app/src/main/AndroidManifest.xml's autoVerify intent-filter, so a
+// recipient who already has Saveur installed still gets taken straight
+// into the app on tap (Universal Links/App Links) instead of ever seeing
+// the /j/<id> browser page — that page (with proper Open Graph tags, so the
+// shared link previews as "A job match from Saveur" rather than a bare
+// URL) is only what a recipient WITHOUT the app installed, or without
+// Universal Links wired up yet, actually sees.
+const WEB_SHARE_BASE_URL = 'https://share.saveurnow.com';
 
 export async function shareJob(job: JobAlertProps): Promise<void> {
   const message = `Check out this job: ${job.title} at ${job.company} — via the Saveur app.`;
@@ -60,7 +68,9 @@ export async function shareJob(job: JobAlertProps): Promise<void> {
 /** Extracts a job id from either a saveur://job?id=X URL (custom scheme —
  * a warm open while the app's already running, or the OS resolving the
  * scheme link on the /j/<id> page's own JS redirect) or a real
- * https://api.saveurnow.com/j/X Universal Link. Mirrors
+ * https://share.saveurnow.com/j/X Universal Link (domain-agnostic regex, so
+ * this also still matches old https://api.saveurnow.com/j/X links shared
+ * before WEB_SHARE_BASE_URL moved to the new domain). Mirrors
  * referralService.ts's extractCodeFromUrl — plain regex, not
  * URL()/URLSearchParams, since custom-scheme URLs don't always parse
  * cleanly across RN's JS engines. */

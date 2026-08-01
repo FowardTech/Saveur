@@ -19,6 +19,7 @@ import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import {AuthStackParamList, RootStackParamList} from 'navigation/types';
 import {COUNTRIES} from 'constants/countries';
+import CtaButton from 'components/CtaButton';
 
 // Step 2 of signup: which countries is the user open to working in? This
 // used to be a react-native-maps address picker (leftover from the
@@ -226,7 +227,7 @@ const SignupSecondStep = memo(() => {
           })}
         </View>
       </Content>
-      <Button
+      <CtaButton
         style={styles.button}
         children={t('auth:choose_this_location')}
         onPress={onContinue}

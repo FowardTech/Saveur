@@ -23,6 +23,7 @@ import * as jdService from 'services/jdService';
 import { JDAnalysisResult } from 'services/jdService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 // Job-description analyzer: paste a JD, get a match score + gap analysis via
 // jdService, which calls POST /jd/analyze and POST /jd/match in parallel and
@@ -83,7 +84,7 @@ const JDAnalyzer = memo(() => {
           value={jd}
           onChangeText={setJd}
         />
-        <Button
+        <CtaButton
           children={
             isAnalyzing
               ? t('more:analyzing', { defaultValue: 'Analyzing…' })
@@ -148,7 +149,7 @@ const JDAnalyzer = memo(() => {
                   defaultValue: "We'll draft a resume around this job's keywords and skills, ready to download.",
                 })}
               </Text>
-              <Button
+              <CtaButton
                 children={t('more:build_matching_resume_cta', { defaultValue: 'Build Resume' })}
                 onPress={() =>
                   navigate('GenerateResume', {

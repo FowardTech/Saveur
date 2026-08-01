@@ -23,6 +23,7 @@ import * as networkingService from 'services/networkingService';
 import { MESSAGE_TONES, MessageTone } from 'services/networkingService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 const emptyForm = {name: '', company: '', role: '', note: ''};
 
@@ -198,7 +199,7 @@ const NetworkingAssistant = memo(() => {
               style={styles.formInput}
             />
             <Flex justify="flex-start" mt={4}>
-              <Button
+              <CtaButton
                 children={isSaving ? t('more:saving', { defaultValue: 'Saving…' }) : t('common:save', { defaultValue: 'Save' })}
                 disabled={isSaving || !form.name.trim()}
                 onPress={onSave}
@@ -236,12 +237,12 @@ const NetworkingAssistant = memo(() => {
             {contact.note ? (
               <Text category="h9-s" mb={8}>{contact.note}</Text>
             ) : null}
+            <Text category="h10" status="placeholder">
+              {contact.lastContactedDate
+                ? `${t('more:last_contacted', { defaultValue: 'Last contacted' })}: ${new Date(contact.lastContactedDate).toLocaleDateString()}`
+                : t('more:never_contacted', { defaultValue: 'Not yet contacted' })}
+            </Text>
             <Flex justify="space-between" itemsCenter mt={4}>
-              <Text category="h10" status="placeholder">
-                {contact.lastContactedDate
-                  ? `${t('more:last_contacted', { defaultValue: 'Last contacted' })}: ${new Date(contact.lastContactedDate).toLocaleDateString()}`
-                  : t('more:never_contacted', { defaultValue: 'Not yet contacted' })}
-              </Text>
               <Flex justify="flex-start">
                 <TouchableOpacity onPress={() => onMarkContactedToday(contact)} style={{ marginRight: 16 }}>
                   <Text category="h10" status="link" bold>
@@ -303,7 +304,7 @@ const NetworkingAssistant = memo(() => {
                     </TouchableOpacity>
                   ))}
                 </Flex>
-                <Button
+                <CtaButton
                   children={isGeneratingMessage ? t('more:generating', { defaultValue: 'Generating…' }) : t('more:generate', { defaultValue: 'Generate' })}
                   size="small"
                   disabled={isGeneratingMessage || !messageContext.trim()}
@@ -345,6 +346,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
+    backgroundColor: 'transparent',
   },
   formInput: {
     marginBottom: 12,
@@ -355,6 +357,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
+    backgroundColor: 'transparent',
   },
   messagePanel: {
     marginTop: 12,

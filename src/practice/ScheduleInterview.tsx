@@ -25,6 +25,7 @@ import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'consta
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 
@@ -339,7 +340,7 @@ const ScheduleInterview = memo(() => {
           })}
         </Flex>
 
-        <Button
+        <CtaButton
           children={isSaving ? t('find:scheduling', { defaultValue: 'Scheduling…' }) : t('find:schedule_interview', { defaultValue: 'Schedule Interview' })}
           onPress={onSchedule}
           disabled={isSaving}

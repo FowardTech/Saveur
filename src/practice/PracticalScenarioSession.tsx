@@ -123,9 +123,11 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
+    backgroundColor: 'transparent',
   },
   choiceCard: {
     ...globalStyle.card,
+    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,

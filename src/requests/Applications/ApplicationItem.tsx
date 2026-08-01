@@ -105,9 +105,15 @@ export default ApplicationItem;
 
 const themedStyles = StyleService.create({
   container: {
+    ...globalStyle.card,
     marginBottom: 24,
-    ...globalStyle.shadowFade,
-    borderRadius: 16,
+    // Explicit 'transparent' (app-wide "cards are transparent" pass) —
+    // this renders via <Layout level="1" style={styles.container}>, whose
+    // own eva level="1" mapping would otherwise still fill it opaque gray,
+    // since the passed style prop is applied after Layout's internal eva
+    // style in the merge order and would otherwise be the one thing
+    // missing to make this card match every other bordered card in the app.
+    backgroundColor: 'transparent',
   },
   avatar: {
     marginRight: 4,
@@ -119,6 +125,12 @@ const themedStyles = StyleService.create({
     borderColor: 'background-basic-color-3',
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
+    // Same explicit 'transparent' as container above — this half renders
+    // via <Layout level="2" style={styles.bottom}>, same override-order
+    // reasoning. The borderTopWidth/borderColor above still renders fine
+    // against a transparent fill, giving the same top/bottom divider look
+    // without the opaque gray card fill.
+    backgroundColor: 'transparent',
   },
   icon: {
     width: 14,

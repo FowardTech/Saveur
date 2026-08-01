@@ -19,6 +19,7 @@ import {NotificationProps} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import * as notificationService from 'services/notificationService';
 import Applications from './Applications';
+import CtaButton from 'components/CtaButton';
 
 // Real in-app notification list — GET /api/v1/notifications /
 // POST /api/v1/notifications/read (see services/notificationService.ts).
@@ -131,7 +132,7 @@ const Notification = memo(() => {
           <Text category="h9-s" status="danger" mb={20} center>
             {loadError}
           </Text>
-          <Button onPress={load}>{t('common:try_again', {defaultValue: 'Try again'}).toString()}</Button>
+          <CtaButton onPress={load}>{t('common:try_again', {defaultValue: 'Try again'}).toString()}</CtaButton>
         </Content>
       ) : (
         <Content contentContainerStyle={styles.content} padder>

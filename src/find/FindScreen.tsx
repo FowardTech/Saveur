@@ -125,7 +125,7 @@ const FindScreen = memo(() => {
           vertical
           onPress={() => onStartSetup()}
           justify="flex-start">
-          <Text category="h5" status="control" bold mb={8}>
+          <Text category="h3" status="control" bold mb={8}>
             {t('find:start_mock_interview')}
           </Text>
           <Text category="h8-s" status="control" mb={16}>
@@ -221,7 +221,9 @@ const themedStyles = StyleService.create({
     width: '30%',
     aspectRatio: 1,
     borderRadius: 16,
-    backgroundColor: 'background-basic-color-2',
+    // No fill — just the border outline (product follow-up: "remove the
+    // white background from all the cards in the practice screen").
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -239,7 +241,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     width: '48%',
     borderRadius: 16,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     padding: 16,
     marginBottom: 16,
   },

@@ -76,12 +76,14 @@ function extractCodeFromUrl(url: string): string | null {
   try {
     // Two shapes now reach this: saveur://referral?code=XXXXXXX (custom
     // scheme, query param) and, once Universal Links are live,
-    // https://api.saveurnow.com/r/XXXXXXX (a real https path — see
+    // https://share.saveurnow.com/r/XXXXXXX (a real https path — see
     // app/web.py's referral_redirect() on the backend and
-    // caren_family.entitlements' associated-domains entry). Custom scheme
-    // URLs don't always parse cleanly with the standard URL() constructor
-    // across RN's JS engines, so this stays a plain regex rather than
-    // relying on URL/URLSearchParams for either shape.
+    // caren_family.entitlements' associated-domains entry; the regex below
+    // is domain-agnostic, so old https://api.saveurnow.com/r/XXXXXXX links
+    // shared before share.saveurnow.com existed still resolve fine too).
+    // Custom scheme URLs don't always parse cleanly with the standard URL()
+    // constructor across RN's JS engines, so this stays a plain regex
+    // rather than relying on URL/URLSearchParams for either shape.
     const queryMatch = url.match(/[?&]code=([^&]+)/i);
     if (queryMatch) return decodeURIComponent(queryMatch[1]).trim().toUpperCase();
     const pathMatch = url.match(/\/r\/([^/?#]+)/i);
@@ -95,7 +97,7 @@ function extractCodeFromUrl(url: string): string | null {
  * for URLs that aren't a referral link (e.g. the existing
  * saveur://stripe-redirect used by the payment sheet). Checks for either
  * the word "referral" (custom scheme) OR the "/r/" path segment
- * (Universal Link) — a bare https://api.saveurnow.com/r/CODE URL doesn't
+ * (Universal Link) — a bare https://share.saveurnow.com/r/CODE URL doesn't
  * contain the word "referral" anywhere in it. */
 export async function handleIncomingUrl(url: string | null | undefined): Promise<void> {
   if (!url || (!url.includes('referral') && !/\/r\/[^/?#]+/i.test(url))) return;

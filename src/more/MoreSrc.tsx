@@ -270,6 +270,14 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('JobAlerts'),
     },
     {
+      title: t('more:shared_with_me', {defaultValue: 'Shared with Me'}),
+      icon: 'share',
+      status: 'primary',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('SharedWithMe'),
+    },
+    {
       title: t('more:weekly_career_report', {defaultValue: 'Weekly Career Report'}),
       icon: 'stats',
       status: 'success',

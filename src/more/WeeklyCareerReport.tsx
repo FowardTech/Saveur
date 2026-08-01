@@ -185,6 +185,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
+    backgroundColor: 'transparent',
   },
   statsRow: {
     flexDirection: 'row',
@@ -197,6 +198,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     paddingVertical: 16,
     marginHorizontal: 4,
+    backgroundColor: 'transparent',
   },
   secondaryStatsRow: {
     marginBottom: 20,
@@ -207,5 +209,6 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: 'transparent',
   },
 });

@@ -26,6 +26,7 @@ import { RootStackParamList, SubscriptionScreenNavigationProp } from 'navigation
 import { stripeAppearance } from 'utils/stripeAppearance';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { AuthContext } from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 // Matches urlScheme: 'saveur' passed to initStripe() below, and the
 // CFBundleURLTypes/intent-filter registered natively for it (ios/Info.plist,
@@ -483,7 +484,7 @@ const Subscription = memo(() => {
           <Text category="h9-s" status="danger" mb={20}>
             {loadError ?? t('more:subscription_load_failed', { defaultValue: 'Could not load subscription plans.' })}
           </Text>
-          <Button children={t('common:try_again', { defaultValue: 'Try again' })} onPress={loadAll} style={{ marginBottom: 4 }} />
+          <CtaButton children={t('common:try_again', { defaultValue: 'Try again' })} onPress={loadAll} style={{ marginBottom: 4 }} />
           {fromOnboarding ? (
             <Button
               status="basic"
@@ -668,7 +669,7 @@ const Subscription = memo(() => {
                     ) : null}
                   </View>
                 ) : (
-                  <Button
+                  <CtaButton
                     children={
                       isCheckingOut
                         ? t('more:subscribing', { defaultValue: 'Opening checkout…' })
@@ -715,7 +716,15 @@ const themedStyles = StyleService.create({
     padding: 20,
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: 'transparent',
+    // Was borderColor: 'transparent' here, unconditionally, with only the
+    // current/recommended states (see usage site) overriding it to a real
+    // color — safe before because the opaque gray fill still gave an
+    // unselected card visible shape even with no border at all. Now that
+    // the fill is transparent too (app-wide "cards are transparent" pass),
+    // an unselected card needs its own real border to still read as a
+    // card — falls through to globalStyle.card's own default hairline
+    // border color instead of overriding it away.
+    backgroundColor: 'transparent',
   },
   currentBadge: {
     borderRadius: 8,

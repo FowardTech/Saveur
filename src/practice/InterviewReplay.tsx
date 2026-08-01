@@ -25,6 +25,7 @@ import * as interviewReplayService from 'services/interviewReplayService';
 import { SessionReplay } from 'services/interviewReplayService';
 import { formatMs } from 'services/interviewReplayService';
 import * as interviewService from 'services/interviewService';
+import ShareToUserModal from 'components/ShareToUserModal';
 
 // Video Interview Replay — product request item ("the real catch of the
 // app... users can replay and see the part where they need to improve
@@ -76,6 +77,7 @@ const InterviewReplay = memo(() => {
   // presses play, with JS state tracking what the native controls did.
   const [paused, setPaused] = React.useState(true);
   const [isDeletingVideo, setIsDeletingVideo] = React.useState(false);
+  const [isShareUserModalVisible, setIsShareUserModalVisible] = React.useState(false);
   const scrollRef = React.useRef<ScrollView>(null);
   const rowOffsets = React.useRef<Record<number, number>>({});
   const videoRef = React.useRef<VideoRef>(null);
@@ -187,18 +189,36 @@ const InterviewReplay = memo(() => {
       <TopNavigation
         title={t('practice:interview_replay', { defaultValue: 'Interview Replay' })}
         accessoryLeft={<NavigationAction />}
-        accessoryRight={
-          hasVideo
-            ? () => (
-                <TopNavigationAction
-                  icon={props => <Icon {...props} pack="eva" name="trash-2-outline" />}
-                  onPress={onDeleteVideo}
-                  disabled={isDeletingVideo}
-                />
-              )
-            : undefined
-        }
+        accessoryRight={() => (
+          <Flex justify="flex-start" itemsCenter>
+            {hasVideo ? (
+              // "Share to a Saveur user" (product request item: "share...
+              // the recorded video interview alongside the flagged
+              // moments") — additive to the delete-video action below, not
+              // a replacement.
+              <TopNavigationAction
+                icon={props => <Icon {...props} pack="eva" name="people-outline" />}
+                onPress={() => setIsShareUserModalVisible(true)}
+              />
+            ) : null}
+            {hasVideo ? (
+              <TopNavigationAction
+                icon={props => <Icon {...props} pack="eva" name="trash-2-outline" />}
+                onPress={onDeleteVideo}
+                disabled={isDeletingVideo}
+              />
+            ) : null}
+          </Flex>
+        )}
       />
+      {hasVideo && sessionId ? (
+        <ShareToUserModal
+          visible={isShareUserModalVisible}
+          onClose={() => setIsShareUserModalVisible(false)}
+          contentType="video"
+          contentId={sessionId}
+        />
+      ) : null}
       {isLoading ? (
         <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
       ) : error || !replay ? (
@@ -279,15 +299,15 @@ const InterviewReplay = memo(() => {
           {replay.voiceMetrics ? (
             <View style={styles.statsRow}>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h5" bold center>{replay.voiceMetrics.wordsPerMinute ?? '—'}</Text>
+                <Text category="h3" bold center>{replay.voiceMetrics.wordsPerMinute ?? '—'}</Text>
                 <Text category="h10" status="placeholder" center mt={4}>{t('practice:wpm', { defaultValue: 'WPM' })}</Text>
               </Layout>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h5" bold center>{replay.voiceMetrics.fillerCount ?? '—'}</Text>
+                <Text category="h3" bold center>{replay.voiceMetrics.fillerCount ?? '—'}</Text>
                 <Text category="h10" status="placeholder" center mt={4}>{t('practice:filler_words', { defaultValue: 'Filler words' })}</Text>
               </Layout>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h5" bold center>{replay.voiceMetrics.longPauses ?? '—'}</Text>
+                <Text category="h3" bold center>{replay.voiceMetrics.longPauses ?? '—'}</Text>
                 <Text category="h10" status="placeholder" center mt={4}>{t('practice:long_pauses', { defaultValue: 'Long pauses' })}</Text>
               </Layout>
             </View>
@@ -393,6 +413,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     paddingVertical: 14,
     marginHorizontal: 4,
+    backgroundColor: 'transparent',
   },
   annotationRow: {
     borderRadius: 12,

@@ -36,6 +36,7 @@ import { useSpeechToText } from 'services/speechService';
 import * as interviewService from 'services/interviewService';
 import * as feedbackService from 'services/feedbackService';
 import { withTimeout } from 'utils/withTimeout';
+import CtaButton from 'components/CtaButton';
 
 // Fallback used when videoAnalysis.stopAnalysis() (see onEnd below) is
 // abandoned after its own hard timeout — a zeroed-out result is strictly
@@ -948,13 +949,13 @@ const LiveInterviewSession = memo(() => {
                       defaultValue: 'Enable Camera and Microphone access in Settings to run a video mock interview.',
                     })}
                   </Text>
-                  <Button
+                  <CtaButton
                     style={{ marginTop: 20 }}
                     size="small"
                     onPress={() => Linking.openSettings()}
                   >
                     {t('find:live_open_settings', { defaultValue: 'Open Settings' })}
-                  </Button>
+                  </CtaButton>
                 </Flex>
               ) : !cameraDevice ? (
                 <Flex vertical center justify="center" style={styles.cameraStateFill}>

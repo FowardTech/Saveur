@@ -36,10 +36,20 @@ import {
 // the user's own uploaded SOURCE files (resumes, certificates,
 // transcripts) — this screen is the opposite direction: things the app
 // generated FOR the user (see app/models/generated_document.py).
-const KIND_META: Record<GeneratedDocumentKind, { icon: string; labelKey: string; defaultLabel: string }> = {
-  resume: { icon: 'file-text-outline', labelKey: 'more:doc_kind_resume', defaultLabel: 'Resume/CV' },
-  cover_letter: { icon: 'email-outline', labelKey: 'more:doc_kind_cover_letter', defaultLabel: 'Cover Letter' },
-  resume_variant: { icon: 'copy-outline', labelKey: 'more:doc_kind_resume_variant', defaultLabel: 'Resume Variant' },
+// `status` drives the "colored glass" icon treatment below (app-wide
+// consistency pass) — was one flat gray circle for every kind, now each
+// kind gets its own tinted circle + matching solid icon color, same
+// convention as src/home/Notification/ApplicationItem.tsx's KIND_STYLE.
+const KIND_META: Record<GeneratedDocumentKind, { icon: string; labelKey: string; defaultLabel: string; status: 'primary' | 'warning' | 'success' }> = {
+  resume: { icon: 'file-text-outline', labelKey: 'more:doc_kind_resume', defaultLabel: 'Resume/CV', status: 'primary' },
+  cover_letter: { icon: 'email-outline', labelKey: 'more:doc_kind_cover_letter', defaultLabel: 'Cover Letter', status: 'warning' },
+  resume_variant: { icon: 'copy-outline', labelKey: 'more:doc_kind_resume_variant', defaultLabel: 'Resume Variant', status: 'success' },
+};
+
+const KIND_COLOR: Record<'primary' | 'warning' | 'success', {bg: string; fg: string}> = {
+  primary: {bg: 'color-primary-transparent-200', fg: 'color-primary-500'},
+  warning: {bg: 'color-warning-transparent-200', fg: 'color-warning-500'},
+  success: {bg: 'color-success-transparent-200', fg: 'color-success-500'},
 };
 
 function formatDate(iso: string | null): string {
@@ -147,11 +157,12 @@ const GeneratedDocuments = memo(() => {
         ) : (
           documents.map(doc => {
             const meta = KIND_META[doc.kind] ?? KIND_META.resume;
+            const kindColor = KIND_COLOR[meta.status];
             return (
               <Layout key={doc.id} level="2" style={styles.docCard}>
                 <Flex itemsCenter>
-                  <View style={[styles.iconCircle, { backgroundColor: theme['background-basic-color-3'] }]}>
-                    <Icon pack="eva" name={meta.icon} style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+                  <View style={[styles.iconCircle, { backgroundColor: theme[kindColor.bg] }]}>
+                    <Icon pack="eva" name={meta.icon} style={[globalStyle.icon20, { tintColor: theme[kindColor.fg] }]} />
                   </View>
                   <Flex vertical style={globalStyle.flexOne} ml={12}>
                     <Text category="h9" bold numberOfLines={1}>{doc.label || t(meta.labelKey, { defaultValue: meta.defaultLabel })}</Text>
@@ -197,6 +208,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,
+    backgroundColor: 'transparent',
   },
   iconCircle: {
     width: 40,

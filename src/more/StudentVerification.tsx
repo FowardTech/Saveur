@@ -28,6 +28,7 @@ import { RootStackParamList } from 'navigation/types';
 import * as studentVerificationService from 'services/studentVerificationService';
 import { University, StudentProfile, YEAR_OPTIONS } from 'services/studentVerificationService';
 import * as configService from 'services/configService';
+import CtaButton from 'components/CtaButton';
 
 // The perks shown below are all real, already-shipped behavior — not
 // aspirational copy. "3% off" alone undersold what verifying actually
@@ -274,9 +275,9 @@ const StudentVerification = memo(() => {
             </Text>
           </Layout>
           {fromSignup ? (
-            <Button style={[globalStyle.shadowBtn, { marginTop: 24 }]} onPress={goToSuccess}>
+            <CtaButton style={[globalStyle.shadowBtn, { marginTop: 24 }]} onPress={goToSuccess}>
               {t('more:continue', { defaultValue: 'Continue' })}
-            </Button>
+            </CtaButton>
           ) : null}
         </Content>
       </Container>
@@ -428,13 +429,13 @@ const StudentVerification = memo(() => {
 
             {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}
 
-            <Button
+            <CtaButton
               style={[globalStyle.shadowBtn, { marginTop: 24 }]}
               disabled={!canSendCode}
               onPress={onSendCode}
             >
               {isSubmitting ? () => <Spinner size="small" status="control" /> : t('more:send_code', { defaultValue: 'Send Verification Code' })}
-            </Button>
+            </CtaButton>
             {fromSignup ? (
               <Button appearance="ghost" status="basic" style={{ marginTop: 12 }} onPress={goToSuccess}>
                 {t('more:student_skip_for_now', { defaultValue: "I'm not a student — skip for now" })}
@@ -458,13 +459,13 @@ const StudentVerification = memo(() => {
               style={styles.input}
             />
             {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}
-            <Button
+            <CtaButton
               style={[globalStyle.shadowBtn, { marginTop: 24 }]}
               disabled={!code.trim() || isSubmitting}
               onPress={onConfirmCode}
             >
               {isSubmitting ? () => <Spinner size="small" status="control" /> : t('more:verify_code', { defaultValue: 'Verify' })}
-            </Button>
+            </CtaButton>
             <Button appearance="outline" style={{ marginTop: 12 }} onPress={() => setStep('form')}>
               {t('common:back', { defaultValue: 'Back' })}
             </Button>
@@ -490,12 +491,14 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 20,
+    backgroundColor: 'transparent',
   },
   perksCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
+    backgroundColor: 'transparent',
   },
   resultsList: {
     marginTop: 8,

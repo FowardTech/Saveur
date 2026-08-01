@@ -24,6 +24,7 @@ import * as emotionalCoachService from 'services/emotionalCoachService';
 import { Mood, MOODS, MoodCheckIn } from 'services/emotionalCoachService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 const MOOD_EMOJI: Record<Mood, string> = {
   great: '😄', okay: '🙂', stressed: '😥', overwhelmed: '😩', discouraged: '😞',
@@ -126,13 +127,13 @@ const EmotionalCoach = memo(() => {
           style={[styles.input, { marginTop: 20 }]}
         />
 
-        <Button
+        <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 20 }]}
           disabled={!selectedMood || isSubmitting}
           onPress={onSubmit}
         >
           {isSubmitting ? () => <Spinner size="small" status="control" /> : t('more:check_in_cta', { defaultValue: 'Check In' })}
-        </Button>
+        </CtaButton>
 
         {latest ? (
           <Layout level="2" style={[styles.card, { marginTop: 24 }]}>
@@ -188,10 +189,15 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
+    backgroundColor: 'transparent',
   },
+  // Was a flat gray fill with no border — brought in line with every
+  // other list row in the app (globalStyle.card's border, no fill).
   historyRow: {
+    ...globalStyle.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
+    backgroundColor: 'transparent',
   },
 });

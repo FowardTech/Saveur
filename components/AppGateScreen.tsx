@@ -4,6 +4,7 @@ import {Button, Icon, Layout, useTheme} from '@ui-kitten/components';
 
 import Text from 'components/Text';
 import {globalStyle} from 'styles/globalStyle';
+import CtaButton from 'components/CtaButton';
 
 // Full-screen blocker shown instead of the main app when the admin-
 // configured "maintenance" or "release" (force-update) config says so — see
@@ -33,16 +34,16 @@ const AppGateScreen = memo(({iconName, title, message, actionLabel, onAction}: P
             style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
         </View>
-        <Text category="h5" bold center mt={20}>
+        <Text category="h3" bold center mt={20}>
           {title}
         </Text>
         <Text category="h8" status="placeholder" center mt={10} maxWidth={320}>
           {message}
         </Text>
         {actionLabel && onAction ? (
-          <Button style={styles.button} onPress={onAction}>
+          <CtaButton style={styles.button} onPress={onAction}>
             {actionLabel}
-          </Button>
+          </CtaButton>
         ) : null}
       </View>
     </Layout>

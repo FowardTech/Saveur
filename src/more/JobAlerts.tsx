@@ -28,6 +28,8 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import StatusBadge from 'components/StatusBadge';
+import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
 import {JobAlertProps} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
@@ -298,9 +300,9 @@ const JobAlerts = memo(() => {
                 defaultValue: "Add the roles you're targeting and the countries you'd work in so we know what to alert you about.",
               })}
             </Text>
-            <Button size="small" style={{marginTop: 12}} onPress={() => setIsPrefsOpen(true)}>
+            <CtaButton size="small" style={{marginTop: 12}} onPress={() => setIsPrefsOpen(true)}>
               {t('more:job_alerts_set_preferences', {defaultValue: 'Set preferences'})}
-            </Button>
+            </CtaButton>
           </Layout>
         ) : null}
 
@@ -419,15 +421,11 @@ const JobAlerts = memo(() => {
               })}
             </Text>
 
-            <Button
-              style={{marginTop: 20}}
-              disabled={isSavingPrefs}
-              accessoryLeft={isSavingPrefs ? () => <Spinner size="small" status="control" /> : undefined}
-              onPress={onSavePrefs}>
+            <CtaButton style={{marginTop: 20}} loading={isSavingPrefs} onPress={onSavePrefs}>
               {isSavingPrefs
                 ? t('more:job_alerts_saving', {defaultValue: 'Saving…'})
                 : t('more:job_alerts_save_preferences', {defaultValue: 'Save preferences'})}
-            </Button>
+            </CtaButton>
           </Layout>
         ) : null}
 
@@ -456,7 +454,15 @@ const JobAlerts = memo(() => {
                 level="2"
                 style={[
                   styles.alertCard,
-                  !alert.read && {borderColor: theme['color-primary-500'], borderWidth: 1},
+                  // Purple border for an unread alert (product request
+                  // item, ZipRecruiter reference — the purple-bordered
+                  // "Be Seen First" treatment for a card that stands out
+                  // from the rest of the list; unread is Saveur's closest
+                  // equivalent to "something new/highlighted here"). Was
+                  // color-primary-500 (blue) -- moved to the new
+                  // color-accent-purple token to match the reference
+                  // instead of the app's old default blue highlight.
+                  !alert.read && {borderColor: theme['color-accent-purple'], borderWidth: 1},
                 ]}>
                 <Flex justify="flex-start">
                   <CompanyLogoAvatar
@@ -466,11 +472,17 @@ const JobAlerts = memo(() => {
                     style={{marginRight: 10, marginTop: 2}}
                   />
                   <View style={globalStyle.flexOne}>
+                    {!alert.read ? (
+                      <StatusBadge
+                        variant="accent"
+                        label={t('more:job_alert_new_badge', {defaultValue: 'New'}).toString()}
+                        style={{marginBottom: 6}}
+                      />
+                    ) : null}
                     <Flex justify="space-between" itemsCenter mb={4}>
                       <Text category="h7" bold style={{flex: 1}} numberOfLines={1}>
                         {alert.title}
                       </Text>
-                      {!alert.read ? <View style={[styles.unreadDot, {marginRight: 8, backgroundColor: theme['color-primary-500']}]} /> : null}
                       <TouchableOpacity
                         hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
                         disabled={isTogglingPinId === alert.id}
@@ -491,21 +503,30 @@ const JobAlerts = memo(() => {
                         {alert.location ? ` · ${alert.location}` : ''}
                       </Text>
                       {alert.applied ? (
-                        <View style={[styles.appliedBadge, {backgroundColor: theme['color-info-100']}]}>
-                          <Text category="h10" bold status="info">
-                            {t('more:applied_badge', {defaultValue: 'Applied'})}
-                          </Text>
-                        </View>
+                        <StatusBadge
+                          variant="info"
+                          label={t('more:applied_badge', {defaultValue: 'Applied'}).toString()}
+                          style={{marginLeft: 8}}
+                        />
                       ) : null}
                     </Flex>
                     <Flex justify="space-between" itemsCenter mt={8}>
                       {alert.matchedRole ? (
-                        <Text category="h10" status="link" bold>
+                        <Text
+                          category="h10"
+                          status="link"
+                          bold
+                          numberOfLines={1}
+                          style={{flexShrink: 1, marginRight: 8}}>
                           {t('more:job_alerts_matches', {defaultValue: 'Matches: {{role}}', role: alert.matchedRole})}
                         </Text>
                       ) : <View />}
                       {alert.source ? (
-                        <Text category="h10" status="placeholder">
+                        <Text
+                          category="h10"
+                          status="placeholder"
+                          numberOfLines={1}
+                          style={{flexShrink: 0, maxWidth: '45%'}}>
                           {t('more:job_alerts_via_source', {defaultValue: 'via {{source}}', source: alert.source})}
                         </Text>
                       ) : null}
@@ -550,7 +571,7 @@ const themedStyles = StyleService.create({
   },
   hintCard: {
     ...globalStyle.card,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -559,14 +580,14 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 14,
     marginBottom: 16,
   },
   prefsCard: {
     ...globalStyle.card,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
@@ -594,22 +615,17 @@ const themedStyles = StyleService.create({
   },
   alertCard: {
     ...globalStyle.card,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  appliedBadge: {
-    paddingVertical: 2,
-    paddingHorizontal: 8,
-    borderRadius: 6,
-    marginLeft: 8,
+    // Was borderColor: 'transparent' here unconditionally, with only the
+    // unread state (see usage site) overriding it to purple — safe before
+    // because the opaque gray fill still gave a read alert visible shape
+    // even with no border. Now that the fill is transparent too (app-wide
+    // "cards are transparent" pass), a read alert needs its own real
+    // border to still read as a card — falls through to globalStyle.card's
+    // own default hairline border color instead of overriding it away.
   },
 });

@@ -15,6 +15,7 @@ import useLayout from 'hooks/useLayout';
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
+import CtaButton from 'components/CtaButton';
 import { ONBOARDING_ART } from './illustrations';
 import Animated, {
   Extrapolation,
@@ -200,13 +201,9 @@ const Onboarding = memo(() => {
           <Button style={styles.login} status="outline" onPress={onLogin}>
             {t('auth:login')}
           </Button>
-          <Button
-            style={[styles.signup, globalStyle.shadowBtn]}
-            status="basic"
-            onPress={onSignup}
-          >
+          <CtaButton style={styles.signup} onPress={onSignup}>
             {t('auth:sign_up').toString()}
-          </Button>
+          </CtaButton>
         </Flex>
       </Content>
       {/* <Flex center mb={16}>

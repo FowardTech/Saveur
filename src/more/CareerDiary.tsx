@@ -21,6 +21,7 @@ import EmptyState from 'components/EmptyState';
 import { globalStyle } from 'styles/globalStyle';
 import * as careerDiaryService from 'services/careerDiaryService';
 import { CareerDiaryEntry, DiaryCategory } from 'services/careerDiaryService';
+import CtaButton from 'components/CtaButton';
 
 const CATEGORY_KEYS: DiaryCategory[] = ['did', 'learned', 'achieved'];
 
@@ -183,12 +184,12 @@ const CareerDiary = memo(() => {
             onChangeText={setRole}
             style={styles.roleInput}
           />
-          <Button
+          <CtaButton
             disabled={!text.trim() || isSaving}
             onPress={onAdd}
             style={{ marginTop: 12 }}>
             {isSaving ? t('more:career_diary_saving', {defaultValue: 'Saving…'}) : t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
-          </Button>
+          </CtaButton>
         </Layout>
 
         {isLoading ? (
@@ -270,6 +271,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
+    backgroundColor: 'transparent',
   },
   textInput: {
     borderRadius: 12,
@@ -293,6 +295,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
+    backgroundColor: 'transparent',
   },
   entryTag: {
     paddingVertical: 3,

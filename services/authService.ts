@@ -78,6 +78,7 @@ function fromWire(wire: UserProfileWire): UserProfileProps {
 function toWirePatch(partial: Partial<UserProfileProps>): Record<string, unknown> {
   const wire: Record<string, unknown> = {};
   if (partial.name !== undefined) wire.name = partial.name;
+  if (partial.username !== undefined) wire.username = partial.username;
   if (partial.goals !== undefined) wire.goals = partial.goals;
   if (partial.industries !== undefined) wire.industries = partial.industries;
   if (partial.preferredCountries !== undefined) wire.preferred_countries = partial.preferredCountries;
@@ -162,6 +163,47 @@ export async function updateProfile(
 ): Promise<UserProfileProps> {
   const {data} = await apiClient.patch<UserProfileWire>('/api/users/me', toWirePatch(partial));
   return writeCache(fromWire(data));
+}
+
+export type UsernameAvailabilityReason = 'invalid_format' | 'looks_like_name' | 'taken' | null;
+
+/**
+ * GET /api/users/username-availability?username=X — live as-you-type check
+ * for the "choose your own username" signup step (product request item).
+ * Deliberately swallows network/network-shape errors into `{available:
+ * false, reason: null}` (neither a green check nor a specific red reason) —
+ * this only ever gates enabling the signup step's "Continue" button, so a
+ * flaky connection should read as "can't confirm yet," not falsely claim a
+ * name is available (which PATCH /users/me would then reject anyway) or
+ * falsely block on a made-up reason.
+ */
+export async function checkUsernameAvailability(
+  username: string,
+): Promise<{available: boolean; reason: UsernameAvailabilityReason}> {
+  try {
+    const {data} = await apiClient.get<{available: boolean; reason: UsernameAvailabilityReason}>(
+      '/api/users/username-availability',
+      {params: {username}},
+    );
+    return {available: !!data.available, reason: data.reason ?? null};
+  } catch {
+    return {available: false, reason: null};
+  }
+}
+
+/**
+ * POST /api/users/me/regenerate-username — "Generate a username" action on
+ * the signup username step (product request item). Picks a fresh random
+ * handle server-side and persists it immediately (unlike the custom-name
+ * path, there's no separate "confirm" step needed since a generated handle
+ * can't fail the real-name/availability checks). Also writes the local
+ * profile cache so the rest of the app reflects it right away.
+ */
+export async function regenerateUsername(): Promise<string> {
+  const {data} = await apiClient.post<{username: string}>('/api/users/me/regenerate-username');
+  const cached = await readCache();
+  if (cached) await writeCache({...cached, username: data.username});
+  return data.username;
 }
 
 /**

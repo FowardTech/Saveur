@@ -26,6 +26,7 @@ import {
 } from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CtaButton from 'components/CtaButton';
 
 // AI Cover Letter Generator — product request item. Reuses the caller's
 // already-stored resume server-side (see services/coverLetterService.ts /
@@ -167,7 +168,7 @@ const CoverLetterGenerator = memo(() => {
           style={styles.input}
         />
 
-        <Button
+        <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 24 }]}
           disabled={!company.trim() || !role.trim() || isGenerating}
           onPress={onGenerate}
@@ -175,7 +176,7 @@ const CoverLetterGenerator = memo(() => {
           {isGenerating
             ? () => <Spinner size="small" status="control" />
             : t('more:generate_cover_letter', { defaultValue: 'Generate Cover Letter' })}
-        </Button>
+        </CtaButton>
 
         {error ? (
           <Text category="h9-s" status="danger" mt={16} center>
@@ -245,7 +246,7 @@ const themedStyles = StyleService.create({
     marginTop: 24,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
   },
   letterText: {
     lineHeight: 24,

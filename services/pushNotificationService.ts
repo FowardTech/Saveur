@@ -8,8 +8,20 @@ import {
   navigateToNotifications,
   navigateToWeeklyCareerReport,
   navigateToDailyIndustryNews,
+  navigateToMockInterviewSetup,
+  navigateToInterviewFeedback,
+  navigateToPracticalScenarioFeedback,
+  navigateToCareerRoadmap,
+  navigateToLeaderboard,
+  navigateToSubscription,
+  navigateToPaymentHistory,
+  navigateToHome,
+  navigateToGoalTipDetail,
+  navigateToSharedContentDetail,
+  navigateToSharedWithMe,
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
+import * as scheduledInterviewService from './scheduledInterviewService';
 
 // ---------------------------------------------------------------------------
 // Push notifications — the piece notificationService.ts's registerDeviceToken
@@ -151,6 +163,97 @@ function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Reco
     navigateToDailyIndustryNews();
     return;
   }
+  // Below: the rest of the product-request item "push notifications are not
+  // navigating to the actual screens. They should its not only job alerts
+  // that should navigate to the detail page" — every other data.type the
+  // backend actually sends (see push_service.py / feedback_job.py /
+  // practical_feedback_job.py / career_roadmap_service.py /
+  // daily_broadcast_service.py / billing.py / student_service.py /
+  // receipt_service.py / goal_tip_service.py / scheduled_interview_
+  // service.py) now lands on the specific screen it's about, instead of all
+  // of them falling through to the generic in-app notification list below.
+  if (data?.type === 'feedback_ready') {
+    navigateToInterviewFeedback(data.session_id);
+    return;
+  }
+  if (data?.type === 'practical_feedback_ready') {
+    const sid = Number(data.session_id);
+    if (Number.isFinite(sid)) {
+      navigateToPracticalScenarioFeedback(sid);
+      return;
+    }
+  }
+  if (data?.type === 'roadmap_ready') {
+    navigateToCareerRoadmap();
+    return;
+  }
+  if (data?.type === 'daily_leaderboard_tip') {
+    navigateToLeaderboard();
+    return;
+  }
+  if (data?.type === 'payment_failed' || data?.type === 'graduation') {
+    navigateToSubscription();
+    return;
+  }
+  if (data?.type === 'payment') {
+    navigateToPaymentHistory();
+    return;
+  }
+  if (data?.type === 'goal_tip') {
+    navigateToGoalTipDetail();
+    return;
+  }
+  if (data?.type === 'content_shared' && data.share_id) {
+    navigateToSharedContentDetail(String(data.share_id));
+    return;
+  }
+  // Connection-request gating (product request item: "Before a user can
+  // share something with another Saveur user they must send a request
+  // first..."). A connection_request tap lands directly on the Pending
+  // Requests tab so the recipient can accept/decline right away;
+  // connection_accepted has nothing specific to show, so it opens the
+  // default "Shared with Me" tab.
+  if (data?.type === 'connection_request') {
+    navigateToSharedWithMe(1);
+    return;
+  }
+  if (data?.type === 'connection_accepted') {
+    navigateToSharedWithMe(0);
+    return;
+  }
+  if (data?.type === 'scheduled_interview_reminder') {
+    // The push payload only carries the id (see scheduled_interview_
+    // service.py's send_due_reminders) -- resolve it against the user's
+    // upcoming sessions to get the same interviewType/mode/difficulty/role/
+    // company/durationMin HomeSrc.tsx's own "Upcoming Session" card tap
+    // already passes into MockInterviewSetup, so a push tap lands on the
+    // exact same pre-filled setup screen a manual tap would.
+    const id = data.scheduled_interview_id;
+    scheduledInterviewService
+      .listUpcoming()
+      .then(list => {
+        const match = id ? list.find(s => s.id === id) : undefined;
+        if (match) {
+          navigateToMockInterviewSetup({
+            interviewType: match.interviewType,
+            mode: match.mode,
+            difficulty: match.difficulty,
+            role: match.role,
+            company: match.company,
+            durationMin: match.durationMin,
+          });
+        } else {
+          // Already started, canceled, or expired by the time the tap
+          // resolved -- Home (where the Upcoming Session card, or its
+          // empty state, lives) beats a dead end.
+          navigateToHome();
+        }
+      })
+      .catch(() => navigateToHome());
+    return;
+  }
+  // admin_broadcast / test / anything unrecognized: no specific screen to
+  // go to, so the generic in-app notification list is the right fallback.
   navigateToNotifications();
 }
 

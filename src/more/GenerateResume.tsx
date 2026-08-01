@@ -29,6 +29,7 @@ import {
 } from 'services/documentDownloadService';
 import { ResumeSections, ResumeStyle, ResumeDocType } from 'services/resumeGenerationService';
 import { AuthContext } from '../../AuthContext';
+import CtaButton from 'components/CtaButton';
 
 // Module-scope function (not a hook) so it can't just call useTranslation
 // itself — callers inside the component pass their own `t` in, same pattern
@@ -454,7 +455,7 @@ const GenerateResume = memo(() => {
               })}
             </Flex>
 
-            <Button
+            <CtaButton
               children={
                 docType === 'cv'
                   ? t('more:resume_preview_cv', { defaultValue: 'Preview CV' })
@@ -559,7 +560,7 @@ const GenerateResume = memo(() => {
               </View>
             ) : null}
 
-            <Button
+            <CtaButton
               children={
                 downloadingFormat === 'docx'
                   ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
@@ -647,7 +648,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 24,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'transparent',
   },
   previewCloseBtn: {
     paddingHorizontal: 16,

@@ -1,26 +1,8 @@
 import {Platform, StyleSheet} from 'react-native';
 
-// Shared shadow preset used by both `shadowFade` (kept for existing call
-// sites) and the new `card` composite below — a design-consistency pass
-// found 60+ files hand-rolling their own card borderRadius (12/14/16/18/20/
-// 24/28 all used interchangeably for what's visually "the same kind of
-// card") with no shadow at all, sitting flat next to shadowed cards
-// elsewhere on the same screen. `card` is the new default: reach for it on
-// any new content card instead of a one-off borderRadius/shadow pair.
-//
-// elevation: 12 (Android) was the actual bug behind "the box shadow looks
-// so bad on Android" once `card` got applied to ~45 cards app-wide: Android's
-// `elevation` has no shadowColor/shadowOpacity equivalent to soften it —
-// it's always a flat, dark, fixed-appearance halo, and its SIZE scales
-// directly with the elevation number. 12dp is Material Design's own spec
-// for a raised dialog/modal, not a resting content card (Material's card
-// spec is ~1dp resting / up to ~8dp only when actively being dragged) — so
-// every single card on Android was rendering with a dialog-sized dark halo
-// around it. iOS's shadowOpacity/shadowRadius/shadowColor trio doesn't have
-// this problem (it's a real, tintable, soft-edged shadow), which is exactly
-// why this only ever looked bad on Android and nobody noticed until it was
-// applied everywhere. Platform.select splits the two instead of one shared
-// number that was only ever tuned by eye on iOS.
+// Shared shadow preset used by `shadowFade` (kept for existing call sites
+// that still explicitly want a soft lift, e.g. modals/sheets) — NOT used by
+// `card` below anymore. See cardBorder's own comment for why.
 const cardShadow = Platform.select({
   ios: {
     shadowColor: 'rgba(29, 30, 44, 0.28)',
@@ -45,6 +27,38 @@ const cardShadow = Platform.select({
     elevation: 3,
   },
 }) as object;
+
+// Redesign (product request item — explicit ZipRecruiter reference: "all
+// the cards have no box shadows they have border lines... Very clean,
+// precise and professional"): `card`'s shadow is replaced with a thin
+// 1px border, matching the reference screenshots exactly instead of
+// approximating them with a softened shadow.
+//
+// This is also the permanent, correct fix for the WHOLE CLASS of Android
+// "extra white/ghost card behind" bugs fixed earlier this session
+// (HomeSrc.tsx's checkInCard, LearningCourses.tsx's rejectedBox/
+// curriculumDoneBox, ReferralProgram.tsx's creditCard, CareerRoadmap.tsx's
+// completeBanner, CourseSession.tsx's certCard) — those all had to be
+// split into two nested Views specifically to work around `elevation`
+// needing an opaque background to compute a correctly-rounded shadow on
+// Android. A border has no such requirement — it renders identically
+// regardless of the fill underneath, translucent or not, on both
+// platforms. Any NEW translucent-tinted card added going forward doesn't
+// need that two-layer workaround anymore.
+//
+// Theme-agnostic translucent color (matches globalStyle.divider's existing
+// `rgba(128,128,128,0.15)` convention below) rather than a theme token,
+// since `card` is a plain StyleSheet.create value spread by ~60+ files at
+// module scope with no theme/hook access — reads as a light hairline on
+// light backgrounds and a slightly-lighter one on dark backgrounds without
+// needing separate light/dark values (constants/theme/*.json's new
+// `border-card-default` token is the theme-aware equivalent, used by
+// screens that already have `theme` in scope and want an exact token
+// match, e.g. new StatusBadge/InfoBox components).
+const cardBorder = {
+  borderWidth: 1,
+  borderColor: 'rgba(39, 39, 85, 0.12)',
+} as object;
 
 export const globalStyle = StyleSheet.create({
   flexOne: {
@@ -85,55 +99,42 @@ export const globalStyle = StyleSheet.create({
     backgroundColor: 'rgba(30, 31, 32, 0.86)',
   },
   //Shadow
-  shadow: {
-    shadowColor: 'rgba(29, 30, 44, 0.61)',
-    shadowOffset: {
-      width: 1,
-      height: 12,
-    },
-
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 10,
-  },
+  // Redesign (product request item, ZipRecruiter reference): was a heavy
+  // drop shadow (elevation:10 on Android) behind ButtonFill's round icon
+  // circles (MoreSrc.tsx's row icons, etc.) — flattened to nothing for the
+  // same "no box shadows" reason as `shadowBtn`/`shadowFilter` above.
+  // NOT given a border like `card`/`shadow`-on-cards got: ButtonFill's
+  // shape comes from a squircle PNG (Images.fillActive), not real
+  // borderRadius clipping on this container — see that component's own
+  // borderColor-prop comment for why a plain rectangular
+  // borderWidth/borderColor here would draw a square outline poking out
+  // past the image's rounded corners instead of following its curve.
+  shadow: {},
   shadowFade: cardShadow,
   // The canonical "content card": 16px radius (the size already used most
-  // often across the app) + the shadowFade lift, in one style instead of
+  // often across the app) + a thin border (see cardBorder above for why
+  // this moved off shadow/elevation entirely), in one style instead of
   // every screen re-picking its own radius and deciding whether to bother
-  // with a shadow at all. Doesn't set backgroundColor/padding since those
+  // with a border at all. Doesn't set backgroundColor/padding since those
   // vary (Layout level="1"/"2" usually supplies the background) — just the
-  // shape + lift.
+  // shape + outline.
   card: {
     borderRadius: 16,
-    ...cardShadow,
+    ...cardBorder,
   },
-  // Was shadowOpacity 0.58 / shadowRadius 12 / elevation 24 — a genuinely
-  // huge blue glow around every primary button, especially visible on
-  // Android where `elevation` alone (no opacity control) rendered it as a
-  // heavy dark halo. Toned down to a subtle lift instead of a floating-glow
-  // effect.
-  shadowBtn: {
-    shadowColor: '#2574FF',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 6.0,
-
-    elevation: 4,
-  },
-  shadowFilter: {
-    shadowColor: '#FE9870',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.58,
-    shadowRadius: 12.0,
-
-    elevation: 24,
-  },
+  // Redesign (product request item, ZipRecruiter reference — buttons in
+  // the reference are completely flat, no glow/lift of any kind): was a
+  // shadowColor/shadowOpacity/shadowRadius/elevation glow around every
+  // primary button (already toned down once from an even bigger one, per
+  // the comment history this replaced). Flattened to nothing rather than
+  // re-tuning the glow smaller a second time, since the actual target now
+  // is "no shadow", not "a smaller shadow". Kept as a real (empty) style
+  // object rather than deleting it outright so every existing
+  // `style={[globalStyle.shadowBtn, ...]}` call site across the app keeps
+  // working unchanged — it now just contributes nothing.
+  shadowBtn: {},
+  // Same flattening as shadowBtn above, same reasoning.
+  shadowFilter: {},
 
   //Border
   border12: {

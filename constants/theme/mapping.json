@@ -6186,13 +6186,13 @@
       "appearances": {
         "default": {
           "mapping": {
-            "minHeight": 44,
+            "minHeight": 50,
             "paddingVertical": 0,
             "paddingHorizontal": 12,
             "backgroundColor": "background-basic-color-1",
-            "titleFontSize": "text-heading-6-font-size",
-            "titleFontWeight": "text-heading-6-font-weight",
-            "titleFontFamily": "text-heading-6-font-family",
+            "titleFontSize": "text-heading-3-font-size",
+            "titleFontWeight": "text-heading-3-font-weight",
+            "titleFontFamily": "text-heading-3-font-family",
             "titleColor": "text-basic-color",
             "subtitleFontSize": "text-caption-1-font-size",
             "subtitleFontWeight": "text-caption-1-font-weight",
@@ -6214,13 +6214,13 @@
         },
         "primary": {
           "mapping": {
-            "minHeight": 44,
+            "minHeight": 50,
             "paddingVertical": 10,
             "paddingHorizontal": 24,
             "backgroundColor": "background-basic-color-2",
-            "titleFontSize": "text-heading-6-font-size",
-            "titleFontWeight": "text-heading-6-font-weight",
-            "titleFontFamily": "text-heading-6-font-family",
+            "titleFontSize": "text-heading-3-font-size",
+            "titleFontWeight": "text-heading-3-font-weight",
+            "titleFontFamily": "text-heading-3-font-family",
             "titleColor": "text-basic-color",
             "subtitleFontSize": "text-caption-1-font-size",
             "subtitleFontWeight": "text-caption-1-font-weight",

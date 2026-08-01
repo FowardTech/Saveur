@@ -23,6 +23,7 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan, RoadmapStep, RoadmapStepType } from 'services/roadmapService';
+import CtaButton from 'components/CtaButton';
 
 // AI Career Roadmap — product request item #15 (⭐⭐⭐⭐⭐): "I want to
 // become a Senior Backend Engineer" -> the AI plans a linear sequence of
@@ -177,7 +178,7 @@ const CareerRoadmap = memo(() => {
               onChangeText={setCurrentRole}
               style={styles.input}
             />
-            <Button
+            <CtaButton
               style={[globalStyle.shadowBtn, { marginTop: 20 }]}
               disabled={!targetRole.trim() || isGenerating}
               onPress={onGenerate}
@@ -185,7 +186,7 @@ const CareerRoadmap = memo(() => {
               {isGenerating
                 ? () => <Spinner size="small" status="control" />
                 : t('more:roadmap_build_cta', { defaultValue: 'Plan my roadmap' })}
-            </Button>
+            </CtaButton>
           </Layout>
         ) : null}
 
@@ -211,14 +212,19 @@ const CareerRoadmap = memo(() => {
             </View>
 
             {roadmap.isComplete ? (
-              <View style={styles.completeBanner}>
-                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
-                  {t('more:roadmap_all_complete', {
-                    defaultValue: "You've reached every milestone toward {{role}}!",
-                    role: roadmap.targetRole,
-                  })}
-                </Text>
+              // Two layers, not one (product bug: "extra white card behind"
+              // on Android, fine on iOS) — see HomeSrc.tsx's
+              // checkInCardOuter/checkInCardInner for the full explanation.
+              <View style={styles.completeBannerOuter}>
+                <View style={styles.completeBanner}>
+                  <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+                  <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
+                    {t('more:roadmap_all_complete', {
+                      defaultValue: "You've reached every milestone toward {{role}}!",
+                      role: roadmap.targetRole,
+                    })}
+                  </Text>
+                </View>
               </View>
             ) : null}
 
@@ -307,6 +313,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
+    backgroundColor: 'transparent',
   },
   headerRow: {
     flexDirection: 'row',
@@ -314,13 +321,23 @@ const themedStyles = StyleService.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  completeBanner: {
+  // Split in two (product bug: "extra white card behind" on Android) — see
+  // the JSX comment above where these are used.
+  completeBannerOuter: {
     ...globalStyle.card,
+    marginBottom: 20,
+    // Was opaque (needed back when `card` still carried Android elevation
+    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
+    // `card` is border-only now, so transparent is safe and matches the
+    // app-wide "cards are transparent" pass.
+    backgroundColor: 'transparent',
+  },
+  completeBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    marginBottom: 20,
+    overflow: 'hidden',
     backgroundColor: 'color-success-transparent-200',
   },
   timeline: {
