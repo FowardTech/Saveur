@@ -21,6 +21,16 @@ import {Platform, StyleSheet} from 'react-native';
 // ReferralProgram.tsx creditCard, CareerRoadmap.tsx completeBanner,
 // CourseSession.tsx certCard) — that workaround is back in play now that
 // `card` uses elevation again.
+//
+// BUG FIX (product request: "remove the box shadow on all the cards and
+// buttons for the Android app. Leave the iOS the way it is"): Android's
+// `elevation` is the ONLY thing that produces a visible shadow there
+// (shadowColor/shadowOffset/shadowOpacity/shadowRadius are iOS-only and
+// Android silently ignores them) — so dropping `elevation` from the
+// android branch below removes the shadow on Android specifically while
+// leaving the ios branch, and therefore iOS's actual rendered shadow,
+// completely untouched. `default` (non-iOS/Android RN targets, not
+// applicable to this app in practice) is left as-is.
 const cardShadow = Platform.select({
   ios: {
     shadowColor: 'rgba(31, 41, 84, 0.35)',
@@ -31,9 +41,7 @@ const cardShadow = Platform.select({
     shadowOpacity: 0.10,
     shadowRadius: 16.0,
   },
-  android: {
-    elevation: 4,
-  },
+  android: {},
   default: {
     shadowColor: 'rgba(31, 41, 84, 0.35)',
     shadowOffset: {
@@ -108,6 +116,8 @@ export const globalStyle = StyleSheet.create({
   // neutral card shadow (see CtaButton.tsx, the only thing that reads
   // this). Was flattened to `{}` for the earlier flat-bordered direction —
   // re-enabled and re-tuned rather than restoring the old heavier glow.
+  // Android's `elevation` dropped per the same "remove Android shadows,
+  // leave iOS alone" request as cardShadow above.
   shadowBtn: Platform.select({
     ios: {
       shadowColor: 'rgba(0, 99, 248, 0.45)',
@@ -115,7 +125,7 @@ export const globalStyle = StyleSheet.create({
       shadowOpacity: 0.28,
       shadowRadius: 12.0,
     },
-    android: { elevation: 6 },
+    android: {},
     default: {
       shadowColor: 'rgba(0, 99, 248, 0.45)',
       shadowOffset: { width: 0, height: 6 },

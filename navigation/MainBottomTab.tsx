@@ -344,11 +344,16 @@ const themedStyles = StyleService.create({
     // (matches globalStyle.shadowFade) instead of the flat borderless bar
     // from the earlier ZipRecruiter direction — a visible seam between the
     // bar and the screen content above it is part of the reference look.
+    // shadowColor/Offset/Opacity/Radius below are iOS-only (Android
+    // ignores them entirely); elevation is Android-only (iOS ignores it) —
+    // so `elevation: 0` per the "remove Android shadows, leave iOS alone"
+    // request removes the tab bar's shadow on Android specifically without
+    // touching iOS's shadow at all.
     shadowColor: "rgba(31, 41, 84, 0.35)",
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.08,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 0,
   },
   // The colored pill behind the active tab's icon (see ButtonTab above).
   activePill: {

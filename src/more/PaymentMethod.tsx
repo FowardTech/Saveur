@@ -270,7 +270,7 @@ const themedStyles = StyleService.create({
     // `backgroundColor: 'transparent'` lets this color show through
     // unchanged, so the border-only look is preserved, same fill every
     // other card in the app already uses.
-    backgroundColor: 'background-basic-color-2',
+    
     marginBottom: 24,
     borderRadius: 12,
     marginRight: 24,
