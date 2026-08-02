@@ -212,19 +212,18 @@ const CareerRoadmap = memo(() => {
             </View>
 
             {roadmap.isComplete ? (
-              // Two layers, not one (product bug: "extra white card behind"
-              // on Android, fine on iOS) — see HomeSrc.tsx's
-              // checkInCardOuter/checkInCardInner for the full explanation.
-              <View style={styles.completeBannerOuter}>
-                <View style={styles.completeBanner}>
-                  <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                  <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
-                    {t('more:roadmap_all_complete', {
-                      defaultValue: "You've reached every milestone toward {{role}}!",
-                      role: roadmap.targetRole,
-                    })}
-                  </Text>
-                </View>
+              // Plain success-tinted card (gradient fill removed — reserved
+              // for the homescreen XP card only). Reverted to the
+              // pre-reskin semantic: status="success" text/icon on a
+              // color-success-transparent-200 fill.
+              <View style={[styles.completeBanner, styles.completeBannerInner]}>
+                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: 'color-success-500' }]} />
+                <Text category="h9" bold status="success" style={{ marginLeft: 10, flex: 1 }}>
+                  {t('more:roadmap_all_complete', {
+                    defaultValue: "You've reached every milestone toward {{role}}!",
+                    role: roadmap.targetRole,
+                  })}
+                </Text>
               </View>
             ) : null}
 
@@ -308,12 +307,14 @@ export default CareerRoadmap;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
   formCard: {
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   headerRow: {
     flexDirection: 'row',
@@ -321,24 +322,16 @@ const themedStyles = StyleService.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  // Split in two (product bug: "extra white card behind" on Android) — see
-  // the JSX comment above where these are used.
-  completeBannerOuter: {
-    ...globalStyle.card,
-    marginBottom: 20,
-    // Was opaque (needed back when `card` still carried Android elevation
-    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
-    // `card` is border-only now, so transparent is safe and matches the
-    // app-wide "cards are transparent" pass.
-    backgroundColor: 'transparent',
-  },
+  // Plain success-tinted card (gradient fill removed).
   completeBanner: {
+    marginBottom: 20,
+    borderRadius: 12,
+    backgroundColor: 'color-success-transparent-200',
+  },
+  completeBannerInner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'color-success-transparent-200',
   },
   timeline: {
     marginTop: 4,

@@ -189,19 +189,32 @@ const ButtonFill = ({
   const sizePx = getSize(size);
   const BORDER_RING = 2;
 
+  const fillColor = backgroundColor ? backgroundColor : getColor(status);
   const fill = (
     <ImageBackground
       source={Images.fillActive}
       imageStyle={{
         width: sizePx,
         height: sizePx,
-        tintColor: backgroundColor ? backgroundColor : getColor(status),
+        tintColor: fillColor,
       }}
       style={[
         styles.container,
         {
           width: sizePx,
           height: sizePx,
+          // Bug fix (Android elevation-needs-an-opaque-background — see
+          // globalStyle.ts's own comment): this View's own visible fill
+          // came entirely from the squircle PNG's tintColor, not a real
+          // `backgroundColor` on the View itself, which Android's shadow
+          // renderer needs to compute a soft, correctly-shaped shadow —
+          // without it these small icon circles got the same heavy gray
+          // block as the bigger cards. Same color as the image tint (plus
+          // a matching round borderRadius so nothing peeks past the
+          // squircle's rounded corners) so nothing looks different, just
+          // renders correctly.
+          backgroundColor: fillColor,
+          borderRadius: sizePx / 2,
         },
         style,
       ]}>

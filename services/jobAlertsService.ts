@@ -253,3 +253,22 @@ export async function toggleJobAlertPin(id: string, pinned?: boolean): Promise<J
   );
   return fromWire(data);
 }
+
+/**
+ * POST /api/v1/job-alerts/{id}/report-dead — called by src/more/
+ * WebViewScreen.tsx the moment it detects the apply page it just loaded is
+ * actually a dead/expired posting (e.g. Workday's "the page you are looking
+ * for does not exist"), rather than letting the user sit on that broken
+ * page with no way for the backend to ever learn about it. The backend
+ * removes this apply_url for every user who has it, not just the reporter
+ * (see that endpoint's own docstring) — best-effort, deliberately swallows
+ * its own errors so a failed report never blocks/interrupts the user
+ * dismissing the broken page in front of them.
+ */
+export async function reportDeadJobAlert(id: string): Promise<void> {
+  try {
+    await apiClient.post(`/api/v1/job-alerts/${id}/report-dead`, {});
+  } catch {
+    // Best-effort — see docstring above.
+  }
+}

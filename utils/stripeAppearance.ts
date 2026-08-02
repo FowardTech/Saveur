@@ -8,7 +8,7 @@ import {AppearanceParams} from '@stripe/stripe-react-native';
 // `appearance` param (a first-class part of initPaymentSheet — no separate
 // "custom checkout" build needed, and unlike hand-rolling raw CardField UI,
 // this keeps Stripe's own PCI-compliant, accessible native sheet, just
-// reskinned to match Saveur's brand color (#2574FF — same blue as
+// reskinned to match Saveur's brand color (#0063f8 — same blue as
 // button-basic-color/color-primary-500, see utils/chartConfig.ts's
 // `rgba(37, 116, 255, 1)`) and rounded-corner visual language used
 // throughout the rest of the app (16/20/24px radii on cards, 24-28px on
@@ -16,7 +16,7 @@ import {AppearanceParams} from '@stripe/stripe-react-native';
 export const stripeAppearance: AppearanceParams = {
   colors: {
     light: {
-      primary: '#2574FF',
+      primary: '#0063f8',
       background: '#FFFFFF',
       componentBackground: '#F4F6FA',
       componentBorder: '#E4E9F2',
@@ -25,11 +25,11 @@ export const stripeAppearance: AppearanceParams = {
       secondaryText: '#8F9BB3',
       componentText: '#181B22',
       placeholderText: '#8F9BB3',
-      icon: '#2574FF',
+      icon: '#0063f8',
       error: '#FF4D4D',
     },
     dark: {
-      primary: '#2574FF',
+      primary: '#0063f8',
       background: '#1A1F2B',
       componentBackground: '#242A38',
       componentBorder: '#323A4B',
@@ -38,7 +38,7 @@ export const stripeAppearance: AppearanceParams = {
       secondaryText: '#8F9BB3',
       componentText: '#FFFFFF',
       placeholderText: '#8F9BB3',
-      icon: '#2574FF',
+      icon: '#0063f8',
       error: '#FF6B6B',
     },
   },
@@ -48,8 +48,8 @@ export const stripeAppearance: AppearanceParams = {
   },
   primaryButton: {
     colors: {
-      light: {background: '#2574FF', text: '#FFFFFF'},
-      dark: {background: '#2574FF', text: '#FFFFFF'},
+      light: {background: '#0063f8', text: '#FFFFFF'},
+      dark: {background: '#0063f8', text: '#FFFFFF'},
     },
     shapes: {
       borderRadius: 24,

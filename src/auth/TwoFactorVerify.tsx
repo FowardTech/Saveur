@@ -90,7 +90,7 @@ const TwoFactorVerify = memo(() => {
 
   return (
     <Container style={styles.container}>
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Flex vertical itemsCenter justify="center">
           <View style={[styles.iconCircle, {backgroundColor: theme['background-basic-color-2']}]}>
             <Icon

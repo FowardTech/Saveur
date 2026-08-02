@@ -44,6 +44,16 @@ import creat_job from 'i18n/language/en/create_job.json';
 import payment from 'i18n/language/en/payment.json';
 import more from 'i18n/language/en/more.json';
 import countries from 'i18n/language/en/countries.json';
+// BUG FIX (product report: "a lot of screens... are not automatically
+// translated... nothing must be left"): this namespace's JSON file has
+// existed, fully translated, for all 12 supported locales on disk this
+// whole time (i18n/language/<locale>/practice.json) but was never actually
+// imported/registered below -- so every t('practice:...') call anywhere in
+// the app (e.g. src/practice/InterviewReplay.tsx) always fell back to its
+// hardcoded English defaultValue regardless of the user's selected
+// language, since i18next had no translated resource loaded for this
+// namespace in ANY language to serve instead.
+import practice from 'i18n/language/en/practice.json';
 
 // Spanish — every namespace is now fully translated (see i18n/language/es/),
 // so switching to Spanish (signup or Settings → Language, see
@@ -64,6 +74,7 @@ import creatJobEs from 'i18n/language/es/create_job.json';
 import paymentEs from 'i18n/language/es/payment.json';
 import moreEs from 'i18n/language/es/more.json';
 import countriesEs from 'i18n/language/es/countries.json';
+import practiceEs from 'i18n/language/es/practice.json';
 
 // French, German, Portuguese, Italian, Chinese (Simplified), Japanese, Korean,
 // Arabic, Hindi, Russian — added to round out coverage of the world's largest
@@ -91,6 +102,7 @@ import creatJobFr from 'i18n/language/fr/create_job.json';
 import paymentFr from 'i18n/language/fr/payment.json';
 import moreFr from 'i18n/language/fr/more.json';
 import countriesFr from 'i18n/language/fr/countries.json';
+import practiceFr from 'i18n/language/fr/practice.json';
 
 import authDe from 'i18n/language/de/auth.json';
 import introDe from 'i18n/language/de/intro.json';
@@ -106,6 +118,7 @@ import creatJobDe from 'i18n/language/de/create_job.json';
 import paymentDe from 'i18n/language/de/payment.json';
 import moreDe from 'i18n/language/de/more.json';
 import countriesDe from 'i18n/language/de/countries.json';
+import practiceDe from 'i18n/language/de/practice.json';
 
 import authPt from 'i18n/language/pt/auth.json';
 import introPt from 'i18n/language/pt/intro.json';
@@ -121,6 +134,7 @@ import creatJobPt from 'i18n/language/pt/create_job.json';
 import paymentPt from 'i18n/language/pt/payment.json';
 import morePt from 'i18n/language/pt/more.json';
 import countriesPt from 'i18n/language/pt/countries.json';
+import practicePt from 'i18n/language/pt/practice.json';
 
 import authIt from 'i18n/language/it/auth.json';
 import introIt from 'i18n/language/it/intro.json';
@@ -136,6 +150,7 @@ import creatJobIt from 'i18n/language/it/create_job.json';
 import paymentIt from 'i18n/language/it/payment.json';
 import moreIt from 'i18n/language/it/more.json';
 import countriesIt from 'i18n/language/it/countries.json';
+import practiceIt from 'i18n/language/it/practice.json';
 
 import authZh from 'i18n/language/zh/auth.json';
 import introZh from 'i18n/language/zh/intro.json';
@@ -151,6 +166,7 @@ import creatJobZh from 'i18n/language/zh/create_job.json';
 import paymentZh from 'i18n/language/zh/payment.json';
 import moreZh from 'i18n/language/zh/more.json';
 import countriesZh from 'i18n/language/zh/countries.json';
+import practiceZh from 'i18n/language/zh/practice.json';
 
 import authJa from 'i18n/language/ja/auth.json';
 import introJa from 'i18n/language/ja/intro.json';
@@ -166,6 +182,7 @@ import creatJobJa from 'i18n/language/ja/create_job.json';
 import paymentJa from 'i18n/language/ja/payment.json';
 import moreJa from 'i18n/language/ja/more.json';
 import countriesJa from 'i18n/language/ja/countries.json';
+import practiceJa from 'i18n/language/ja/practice.json';
 
 import authKo from 'i18n/language/ko/auth.json';
 import introKo from 'i18n/language/ko/intro.json';
@@ -181,6 +198,7 @@ import creatJobKo from 'i18n/language/ko/create_job.json';
 import paymentKo from 'i18n/language/ko/payment.json';
 import moreKo from 'i18n/language/ko/more.json';
 import countriesKo from 'i18n/language/ko/countries.json';
+import practiceKo from 'i18n/language/ko/practice.json';
 
 import authAr from 'i18n/language/ar/auth.json';
 import introAr from 'i18n/language/ar/intro.json';
@@ -196,6 +214,7 @@ import creatJobAr from 'i18n/language/ar/create_job.json';
 import paymentAr from 'i18n/language/ar/payment.json';
 import moreAr from 'i18n/language/ar/more.json';
 import countriesAr from 'i18n/language/ar/countries.json';
+import practiceAr from 'i18n/language/ar/practice.json';
 
 import authHi from 'i18n/language/hi/auth.json';
 import introHi from 'i18n/language/hi/intro.json';
@@ -211,6 +230,7 @@ import creatJobHi from 'i18n/language/hi/create_job.json';
 import paymentHi from 'i18n/language/hi/payment.json';
 import moreHi from 'i18n/language/hi/more.json';
 import countriesHi from 'i18n/language/hi/countries.json';
+import practiceHi from 'i18n/language/hi/practice.json';
 
 import authRu from 'i18n/language/ru/auth.json';
 import introRu from 'i18n/language/ru/intro.json';
@@ -226,6 +246,7 @@ import creatJobRu from 'i18n/language/ru/create_job.json';
 import paymentRu from 'i18n/language/ru/payment.json';
 import moreRu from 'i18n/language/ru/more.json';
 import countriesRu from 'i18n/language/ru/countries.json';
+import practiceRu from 'i18n/language/ru/practice.json';
 
 export const defaultNS = 'common';
 
@@ -247,6 +268,7 @@ declare module 'react-i18next' {
       payment: typeof payment;
       more: typeof more;
       countries: typeof countries;
+      practice: typeof practice;
     };
   }
 }
@@ -267,6 +289,7 @@ export const resources = {
     payment,
     more,
     countries,
+    practice,
   },
   es: {
     auth: authEs,
@@ -283,6 +306,7 @@ export const resources = {
     payment: paymentEs,
     more: moreEs,
     countries: countriesEs,
+    practice: practiceEs,
   },
   fr: {
     auth: authFr,
@@ -299,6 +323,7 @@ export const resources = {
     payment: paymentFr,
     more: moreFr,
     countries: countriesFr,
+    practice: practiceFr,
   },
   de: {
     auth: authDe,
@@ -315,6 +340,7 @@ export const resources = {
     payment: paymentDe,
     more: moreDe,
     countries: countriesDe,
+    practice: practiceDe,
   },
   pt: {
     auth: authPt,
@@ -331,6 +357,7 @@ export const resources = {
     payment: paymentPt,
     more: morePt,
     countries: countriesPt,
+    practice: practicePt,
   },
   it: {
     auth: authIt,
@@ -347,6 +374,7 @@ export const resources = {
     payment: paymentIt,
     more: moreIt,
     countries: countriesIt,
+    practice: practiceIt,
   },
   zh: {
     auth: authZh,
@@ -363,6 +391,7 @@ export const resources = {
     payment: paymentZh,
     more: moreZh,
     countries: countriesZh,
+    practice: practiceZh,
   },
   ja: {
     auth: authJa,
@@ -379,6 +408,7 @@ export const resources = {
     payment: paymentJa,
     more: moreJa,
     countries: countriesJa,
+    practice: practiceJa,
   },
   ko: {
     auth: authKo,
@@ -395,6 +425,7 @@ export const resources = {
     payment: paymentKo,
     more: moreKo,
     countries: countriesKo,
+    practice: practiceKo,
   },
   ar: {
     auth: authAr,
@@ -411,6 +442,7 @@ export const resources = {
     payment: paymentAr,
     more: moreAr,
     countries: countriesAr,
+    practice: practiceAr,
   },
   hi: {
     auth: authHi,
@@ -427,6 +459,7 @@ export const resources = {
     payment: paymentHi,
     more: moreHi,
     countries: countriesHi,
+    practice: practiceHi,
   },
   ru: {
     auth: authRu,
@@ -443,6 +476,7 @@ export const resources = {
     payment: paymentRu,
     more: moreRu,
     countries: countriesRu,
+    practice: practiceRu,
   },
 } as const;
 

@@ -615,7 +615,7 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   roleInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
     marginRight: 8,
   },
   regenerateBtn: {
@@ -638,6 +638,11 @@ const themedStyles = StyleService.create({
   },
   styleCard: {
     ...globalStyle.card,
+    // Bug fix (Android elevation-needs-an-opaque-background — see
+    // globalStyle.ts's own comment): plain TouchableOpacity, no `level`
+    // wrapper to supply a fill, so the shadow rendered as a heavy gray
+    // block instead of a soft lift.
+    backgroundColor: 'background-basic-color-1',
     flex: 1,
     borderWidth: 2,
     borderRadius: 16,
@@ -648,7 +653,11 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 24,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android (was
+    // 'transparent') — this renders on a plain View (no `level` prop), so
+    // the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
   },
   previewCloseBtn: {
     paddingHorizontal: 16,

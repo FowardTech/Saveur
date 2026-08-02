@@ -143,13 +143,9 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     padding: 18,
     borderWidth: 1,
-    // No fill — border-only, matching the app-wide "cards are transparent,
-    // not gray-filled" pass. Explicit 'transparent' rather than omitting
-    // backgroundColor, since this renders via <Layout level="2" .../> —
-    // Layout's own level="2" mapping would otherwise still fill it (RN
-    // merges style arrays left-to-right and this style prop is spread
-    // after Layout's internal eva style, so it wins).
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   iconBadge: {
     width: 36,
@@ -163,7 +159,6 @@ const themedStyles = StyleService.create({
     padding: 14,
     marginBottom: 10,
     // Same as heroCard above — renders via <Flex level="2" .../>.
-    backgroundColor: 'transparent',
   },
   priorityBadge: {
     width: 28,

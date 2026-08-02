@@ -486,19 +486,21 @@ export default StudentVerification;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
+  // Redesign v2 (full reskin): `card` carries a real shadow again, which
+  // needs an opaque fill on Android — dropped the 'transparent' overrides
+  // below so each Layout's own `level="2"` background shows through
+  // instead.
   card: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 20,
-    backgroundColor: 'transparent',
   },
   perksCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
-    backgroundColor: 'transparent',
   },
   resultsList: {
     marginTop: 8,

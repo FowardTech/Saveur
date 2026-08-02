@@ -192,8 +192,27 @@ export default memo(
             // switched at the user's request to more closely match a
             // reference (Google Sans-style) look, since Google Sans itself
             // is proprietary and not available for bundling.
+            //
+            // BUG FIX (custom fonts silently not rendering on Android): this
+            // used to ALSO set `fontWeight: bold ? 'bold' : '400'` alongside
+            // the family name above. Android's ReactFontManager resolves a
+            // requested (family, style) pair by looking for an asset file
+            // named "<family><suffix>.ttf" where suffix is "" for normal and
+            // "_bold" for a bold style bit — it does NOT look at the family
+            // name to know it already denotes a specific weight. So asking
+            // for family "PlusJakartaSans-Bold" at style BOLD made it search
+            // for a nonexistent "PlusJakartaSans-Bold_bold.ttf", fail, and
+            // silently fall back to the system font — exactly the
+            // "font style not taking effect on Android" symptom, and only on
+            // Android since iOS resolves the family string directly by its
+            // real PostScript name regardless of the weight flag. Always
+            // passing fontWeight 'normal' keeps the style bit at its default
+            // (no suffix) so the exact filename is found on both platforms —
+            // the actual bold *look* still comes from loading the real
+            // PlusJakartaSans-Bold.ttf file by name, not from the weight
+            // flag.
             fontFamily: bold ? 'PlusJakartaSans-Bold' : 'PlusJakartaSans-Regular',
-            fontWeight: bold ? 'bold' : '400',
+            fontWeight: 'normal',
           },
           style,
         ]}

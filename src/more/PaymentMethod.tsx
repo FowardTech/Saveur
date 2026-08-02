@@ -1,11 +1,10 @@
 import React, {memo} from 'react';
-import {Alert, View} from 'react-native';
+import {Alert, Image, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
   useTheme,
-  Icon,
   Spinner,
 } from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
@@ -21,16 +20,12 @@ import {globalStyle} from 'styles/globalStyle';
 import SwiperCard from 'components/SwiperCard';
 import * as billingService from 'services/billingService';
 import {stripeAppearance} from 'utils/stripeAppearance';
+import {Icons} from 'assets/icons';
 
 // Matches Subscription.tsx's STRIPE_RETURN_URL — required by initPaymentSheet
 // even in setup mode, in case a saved card's verification redirects out
 // (e.g. certain bank flows) and needs to hand control back to the app.
 const STRIPE_RETURN_URL = 'saveur://stripe-redirect';
-
-const BRAND_ICON: Record<string, string> = {
-  visa: 'master',
-  mastercard: 'master',
-};
 
 // Real saved-card management — GET/POST/DELETE /api/v1/billing/payment-methods
 // (see services/billingService.ts). Replaces the old DATA_PAYMENT mock list
@@ -204,7 +199,21 @@ const PaymentMethod = memo(() => {
                   {backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
                   item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined,
                 ]}>
-                <Icon pack="assets" name={BRAND_ICON[item.brand?.toLowerCase()] ?? 'master'} style={styles.iconLogoBank} />
+                {/* Bug report: this used to be a real colored card-brand
+                    logo — went through <Icon pack="assets" name="master"/>
+                    (assets/AssetIconsPack.tsx) after the app-wide PNG ->
+                    lucide-vector icon migration, which maps "master" to a
+                    plain Crown glyph (lucide dropped brand marks; Crown was
+                    a placeholder, not an actual card logo) and gets tinted
+                    like every other themed icon — unreadable in both light
+                    and dark mode, and not a card logo at all. Rendering the
+                    original ic_master.png directly (assets/icons/index.ts)
+                    bypasses the icon pack's tinting entirely, so the real
+                    colored Mastercard mark shows as designed, same in both
+                    themes. Only one brand-logo asset exists (no separate
+                    Visa PNG), so every card shows it, same as before this
+                    regression. */}
+                <Image source={Icons.master} style={styles.iconLogoBank} resizeMode="contain" />
                 <View style={globalStyle.flexOne}>
                   <Flex justify="flex-start" itemsCenter>
                     <Text category="h6" style={{textTransform: 'capitalize'}}>
@@ -251,6 +260,16 @@ const themedStyles = StyleService.create({
   },
   swiperContainer: {
     ...globalStyle.shadow,
+    // Bug fix (Android elevation-needs-an-opaque-background — see
+    // globalStyle.ts's own comment): this is the actual shadow-casting
+    // View (SwiperCard's outer TouchableOpacity, see containerStyle prop),
+    // separate from the visually "transparent, border-only" Flex rendered
+    // inside it below — with no fill of its own, Android drew a heavy gray
+    // block instead of a soft shadow. The inner Flex's explicit
+    // `backgroundColor: 'transparent'` lets this color show through
+    // unchanged, so the border-only look is preserved, same fill every
+    // other card in the app already uses.
+    backgroundColor: 'background-basic-color-2',
     marginBottom: 24,
     borderRadius: 12,
     marginRight: 24,

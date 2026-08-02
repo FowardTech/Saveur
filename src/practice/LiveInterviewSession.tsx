@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { ActivityIndicator, Alert, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   TopNavigationAction,
@@ -37,6 +37,7 @@ import * as interviewService from 'services/interviewService';
 import * as feedbackService from 'services/feedbackService';
 import { withTimeout } from 'utils/withTimeout';
 import CtaButton from 'components/CtaButton';
+import { Images } from 'assets/images';
 
 // Fallback used when videoAnalysis.stopAnalysis() (see onEnd below) is
 // abandoned after its own hard timeout — a zeroed-out result is strictly
@@ -1131,23 +1132,17 @@ const LiveInterviewSession = memo(() => {
             <Flex vertical center style={styles.orbWrap}>
               <Animated.View style={[styles.halo, haloStyle]}>
                 <LinearGradient
-                  colors={['rgba(124,109,255,0.35)', 'rgba(90,150,255,0.05)']}
+                  colors={['rgba(90,150,255,0.35)', 'rgba(90,150,255,0.05)']}
                   style={styles.haloFill}
                 />
               </Animated.View>
+              {/* Redesign (explicit product request — "replace the pink
+                  circle design... with image 4"): was the same two-layer
+                  purple/pink LinearGradient sphere as VoiceCoachView.tsx
+                  (see that file's own comment) — now Images.voiceOrb,
+                  same image, same reasoning. */}
               <Animated.View style={[styles.orb, orbStyle]}>
-                <LinearGradient
-                  colors={['#6E8CFF', '#9B7BFF', '#C58BFF']}
-                  start={{ x: 0.1, y: 0.1 }}
-                  end={{ x: 0.9, y: 0.9 }}
-                  style={styles.orbFill}
-                />
-                <LinearGradient
-                  colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
-                  start={{ x: 0.25, y: 0.15 }}
-                  end={{ x: 0.7, y: 0.6 }}
-                  style={styles.orbHighlight}
-                />
+                <Image source={Images.voiceOrb} style={styles.orbImage} resizeMode="contain" />
               </Animated.View>
             </Flex>
 
@@ -1325,14 +1320,10 @@ const styles = StyleSheet.create({
   orb: {
     width: ORB_SIZE,
     height: ORB_SIZE,
-    borderRadius: ORB_SIZE / 2,
-    overflow: 'hidden',
   },
-  orbFill: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  orbHighlight: {
-    ...StyleSheet.absoluteFillObject,
+  orbImage: {
+    width: '100%',
+    height: '100%',
   },
   textModeWrap: {
     width: '100%',

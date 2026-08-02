@@ -21,6 +21,7 @@ import {
   useTheme,
   Layout,
 } from "@ui-kitten/components";
+import { useTranslation } from "react-i18next";
 import useLayout from "hooks/useLayout";
 import Container from "components/Container";
 import NavigationAction from "components/NavigationAction";
@@ -80,6 +81,7 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
 // read/clear stay local for now).
 const Chat = memo(() => {
   const styles = useStyleSheet(themedStyles);
+  const { t } = useTranslation(["message", "common", "more"]);
   const { width, bottom } = useLayout();
   const { keyboardShow } = useKeyboard();
   const [messages, setMessages] = React.useState<CoachIMessage[]>([]);
@@ -144,13 +146,15 @@ const Chat = memo(() => {
       // already happened, and coachService persists it too) but no reply
       // arrives, so surface it instead of leaving the chat hanging silently.
       Alert.alert(
-        "Coach unavailable",
-        e?.message ?? "Couldn't reach your AI coach. Please try again."
+        t("message:coach_unavailable_title", { defaultValue: "Coach unavailable" }),
+        e?.message ?? t("message:coach_unavailable_body", {
+          defaultValue: "Couldn't reach your AI coach. Please try again.",
+        })
       );
     } finally {
       setIsSending(false);
     }
-  }, [isSending, profile]);
+  }, [isSending, profile, t]);
 
   // Arrived here from a "Suggested Topic" tap on the Coach tab
   // (src/messages/MessagesScreen.tsx) — auto-send that topic's text as the
@@ -229,14 +233,16 @@ const Chat = memo(() => {
         appendAttachmentNotice(file);
       } catch (e: any) {
         Alert.alert(
-          "Upload failed",
-          e?.message ?? "Something went wrong. Please try again.",
+          t("more:upload_failed", { defaultValue: "Upload failed" }),
+          e?.message ?? t("common:something_went_wrong", {
+            defaultValue: "Something went wrong. Please try again.",
+          }),
         );
       } finally {
         setIsAttaching(false);
       }
     },
-    [isAttaching, appendAttachmentNotice],
+    [isAttaching, appendAttachmentNotice, t],
   );
 
   const onAttach = React.useCallback(async () => {
@@ -250,9 +256,12 @@ const Chat = memo(() => {
       );
     } catch (err) {
       if (isErrorWithCode(err) && err.code === errorCodes.OPERATION_CANCELED) return;
-      Alert.alert("Upload failed", "Something went wrong. Please try again.");
+      Alert.alert(
+        t("more:upload_failed", { defaultValue: "Upload failed" }),
+        t("common:something_went_wrong", { defaultValue: "Something went wrong. Please try again." }),
+      );
     }
-  }, [uploadAttachment]);
+  }, [uploadAttachment, t]);
 
   const onCamera = React.useCallback(() => {
     ImagePicker.launchCamera({ mediaType: 'photo', saveToPhotos: false }, response => {
@@ -353,11 +362,11 @@ const Chat = memo(() => {
           style={{ color: theme['color-primary-500'], marginLeft: 6 }}
           numberOfLines={1}
         >
-          {`Learn more about ${topic}`}
+          {t("message:learn_more_about_topic", { defaultValue: "Learn more about {{topic}}", topic })}
         </Text>
       </TouchableOpacity>
     );
-  }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse]);
+  }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse, t]);
 
   // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
   // (no logo.png asset needed). Returns null for the current user's own
@@ -376,12 +385,16 @@ const Chat = memo(() => {
   return (
     <Container style={[styles.container, { marginBottom: -bottom }]}>
       <TopNavigation
-        title={"AI Career Coach"}
+        title={t("message:ai_coach_name", { defaultValue: "AI Career Coach" })}
         accessoryLeft={<NavigationAction />}
         accessoryRight={
           voiceCoachEnabled ? (
             <NavigationAction
-              title={mode === 'voice' ? 'Text' : 'Voice'}
+              title={
+                mode === 'voice'
+                  ? t("message:mode_text", { defaultValue: "Text" })
+                  : t("message:mode_voice", { defaultValue: "Voice" })
+              }
               titleStatus="link"
               onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
             />
@@ -451,17 +464,17 @@ const Chat = memo(() => {
           <Layout level={"3"}>
             <Flex margin={32}>
               <AttachItem
-                title={"Attach Resume / Files"}
+                title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
                 icon={"attach"}
                 _onPress={onAttach}
               />
               <AttachItem
-                title={"Start Video Practice"}
+                title={t("message:start_video_practice", { defaultValue: "Start Video Practice" })}
                 icon={"call"}
                 _onPress={onMakeCall}
               />
               <AttachItem
-                title={"View My Progress"}
+                title={t("message:view_my_progress", { defaultValue: "View My Progress" })}
                 icon={"payment"}
                 _onPress={onViewProgress}
               />

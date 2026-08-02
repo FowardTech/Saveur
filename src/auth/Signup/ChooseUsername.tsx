@@ -324,8 +324,10 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
-    // No fill — border-only (app-wide "cards are transparent" pass).
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android — dropped the
+    // explicit 'transparent' override so this Layout's own `level="2"`
+    // background shows through instead.
   },
   input: {
     borderBottomWidth: 2,

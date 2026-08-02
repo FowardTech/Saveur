@@ -16,5 +16,13 @@
   "ai_coach_subtitle": "اسألني أي شيء عن بحثك عن وظيفة — أنا هنا لمساعدتك.",
   "salary_negotiation_description": "تدرّب على التفاوض حول عرض وظيفي تجريبي عبر عدة جولات.",
   "salary_negotiation_title": "محاكي التفاوض على الراتب",
-  "suggested_topics": "مواضيع مقترحة"
+  "suggested_topics": "مواضيع مقترحة",
+  "attach_resume_files": "إرفاق السيرة الذاتية / الملفات",
+  "coach_unavailable_body": "تعذر الوصول إلى مدربك الذكي. حاول مرة أخرى.",
+  "coach_unavailable_title": "المدرب غير متاح",
+  "learn_more_about_topic": "معرفة المزيد عن {{topic}}",
+  "mode_text": "نص",
+  "mode_voice": "صوت",
+  "start_video_practice": "بدء تدريب بالفيديو",
+  "view_my_progress": "عرض تقدمي"
 }

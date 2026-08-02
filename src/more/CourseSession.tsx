@@ -284,24 +284,23 @@ const CourseSession = memo(() => {
               })}
             </Text>
             {earnedCertificate ? (
-              // Two layers, not one (product bug: "extra white card behind"
-              // on Android, fine on iOS) — see HomeSrc.tsx's
-              // checkInCardOuter/checkInCardInner for the full explanation.
-              <View style={styles.certCardOuter}>
-                <View style={styles.certCard}>
-                  <Text category="h8" bold status="success" center>
-                    {t('more:course_certificate_earned', { defaultValue: 'Badge Earned' })}
-                  </Text>
-                  <Text category="h9-s" status="placeholder" center mt={4}>
-                    {t('more:course_certificate_subtitle', {
-                      defaultValue: '{{topic}} — Basic, Intermediate & Advanced',
-                      topic,
-                    })}
-                  </Text>
-                  <Text category="h10" status="placeholder" center mt={6}>
-                    {earnedCertificate.code}
-                  </Text>
-                </View>
+              // Plain success-tinted card (gradient fill removed — reserved
+              // for the homescreen XP card only). Reverted to the
+              // pre-reskin semantic: status="success" title on a
+              // color-success-transparent-200 fill.
+              <View style={[styles.certCard, styles.certCardInner]}>
+                <Text category="h8" bold status="success" center>
+                  {t('more:course_certificate_earned', { defaultValue: 'Badge Earned' })}
+                </Text>
+                <Text category="h9-s" status="placeholder" center mt={4}>
+                  {t('more:course_certificate_subtitle', {
+                    defaultValue: '{{topic}} — Basic, Intermediate & Advanced',
+                    topic,
+                  })}
+                </Text>
+                <Text category="h10" status="placeholder" center mt={6}>
+                  {earnedCertificate.code}
+                </Text>
               </View>
             ) : nextLevel ? (
               <Text category="h9-s" status="link" center mt={16}>
@@ -496,30 +495,26 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android (was
+    // 'transparent') — this renders on a plain View (no `level` prop), so
+    // the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
     marginTop: 8,
   },
   answerInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
     minHeight: 60,
   },
-  // Split in two (product bug: "extra white card behind" on Android) — see
-  // the JSX comment above where these are used.
-  certCardOuter: {
-    ...globalStyle.card,
+  // Plain success-tinted card (gradient fill removed).
+  certCard: {
     marginTop: 24,
     width: '100%',
-    // Was opaque (needed back when `card` still carried Android elevation
-    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
-    // `card` is border-only now, so transparent is safe and matches the
-    // app-wide "cards are transparent" pass.
-    backgroundColor: 'transparent',
-  },
-  certCard: {
-    padding: 16,
     borderRadius: 16,
-    overflow: 'hidden',
     backgroundColor: 'color-success-transparent-200',
+  },
+  certCardInner: {
+    padding: 16,
     width: '100%',
   },
 });

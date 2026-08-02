@@ -239,14 +239,18 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
   input: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
   },
   letterBox: {
     ...globalStyle.card,
     marginTop: 24,
     padding: 16,
     borderRadius: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android (was
+    // 'transparent') — this renders on a plain View (no `level` prop), so
+    // the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
   },
   letterText: {
     lineHeight: 24,

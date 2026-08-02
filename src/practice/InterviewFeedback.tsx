@@ -26,6 +26,23 @@ import {isFeedbackPending} from 'services/feedbackService';
 import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import ShareToUserModal from 'components/ShareToUserModal';
 import CtaButton from 'components/CtaButton';
+import StarRating, { percentToStars } from 'components/StarRating';
+import { lightenColor } from 'utils/color';
+
+// Redesign v2 (full reskin) — this screen has 5 separate ProgressCard
+// rings, 3 of which use the same score>=80/60 success/warning/danger
+// threshold ladder repeated inline. Centralized here so the gradient
+// "from"/"to" pair (see utils/color.ts's lightenColor) and the plain
+// progressStokeColor fallback always agree with each other instead of each
+// call site re-deriving the threshold color separately and risking drift.
+const scoreRingColors = (score: number, theme: Record<string, string>) => {
+  const base =
+    score >= 80 ? theme['color-success-500'] : score >= 60 ? theme['color-warning-500'] : theme['color-danger-500'];
+  return { progressStokeColor: base, progressGradientFrom: lightenColor(base), progressGradientTo: base };
+};
+// Brand-blue gradient for the rings that don't carry threshold semantics
+// (Overall Score, Smiling) — same two stops GradientCard.tsx defaults to.
+const PRIMARY_RING_GRADIENT = { progressGradientFrom: '#1DA1F2', progressGradientTo: '#0063f8' };
 
 // Post-interview feedback. The session has already been finalized by the
 // time this screen mounts (LiveInterviewSession/CodingInterview both call
@@ -258,6 +275,7 @@ const InterviewFeedback = memo(() => {
             strokeWidth={10}
             stokeColor={theme['background-basic-color-3']}
             progressStokeColor={theme['color-primary-500']}
+            {...PRIMARY_RING_GRADIENT}
           />
           {interviewType ? (
             <Text category="h8" status="placeholder" mt={12} center>
@@ -300,14 +318,8 @@ const InterviewFeedback = memo(() => {
               d={84}
               strokeWidth={6}
               stokeColor={theme['background-basic-color-3']}
-              progressStokeColor={
-                item.score >= 80
-                  ? theme['color-success-500']
-                  : item.score >= 60
-                  ? theme['color-warning-500']
-                  : theme['color-danger-500']
-              }
               style={styles.skillCard}
+              {...scoreRingColors(item.score, theme)}
             />
           ))}
         </View>
@@ -330,6 +342,14 @@ const InterviewFeedback = memo(() => {
                 {item.score}%
               </Text>
             </Flex>
+            {/* Redesign v2 (full reskin, components/StarRating.tsx) — this
+                section is literally titled "STAR Breakdown" (the interview
+                method: Situation/Task/Action/Result), which previously had
+                nothing to do with actual stars despite the name. Added as a
+                quick-glance read alongside the existing S/T/A/R letter badge
+                + exact percentage, not a replacement — the percentage stays
+                for anyone who wants the precise number. */}
+            <StarRating value={percentToStars(item.score)} size={14} style={{ marginBottom: 8 }} />
             <Text category="h9-s" status="placeholder">
               {item.note}
             </Text>
@@ -348,14 +368,8 @@ const InterviewFeedback = memo(() => {
                 d={84}
                 strokeWidth={6}
                 stokeColor={theme['background-basic-color-3']}
-                progressStokeColor={
-                  videoAnalysis.eyeContactPct >= 80
-                    ? theme['color-success-500']
-                    : videoAnalysis.eyeContactPct >= 60
-                    ? theme['color-warning-500']
-                    : theme['color-danger-500']
-                }
                 style={styles.skillCard}
+                {...scoreRingColors(videoAnalysis.eyeContactPct, theme)}
               />
               <ProgressCard
                 title={t('find:smiling', { defaultValue: 'Smiling' })}
@@ -365,6 +379,7 @@ const InterviewFeedback = memo(() => {
                 stokeColor={theme['background-basic-color-3']}
                 progressStokeColor={theme['color-primary-500']}
                 style={styles.skillCard}
+                {...PRIMARY_RING_GRADIENT}
               />
               <ProgressCard
                 title={t('find:confidence', { defaultValue: 'Confidence' })}
@@ -372,14 +387,8 @@ const InterviewFeedback = memo(() => {
                 d={84}
                 strokeWidth={6}
                 stokeColor={theme['background-basic-color-3']}
-                progressStokeColor={
-                  videoAnalysis.confidenceScore >= 80
-                    ? theme['color-success-500']
-                    : videoAnalysis.confidenceScore >= 60
-                    ? theme['color-warning-500']
-                    : theme['color-danger-500']
-                }
                 style={styles.skillCard}
+                {...scoreRingColors(videoAnalysis.confidenceScore, theme)}
               />
             </View>
 
@@ -451,7 +460,9 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   starBadge: {
     width: 32,

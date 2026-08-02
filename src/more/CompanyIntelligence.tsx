@@ -156,12 +156,14 @@ export default CompanyIntelligence;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
   card: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
 });

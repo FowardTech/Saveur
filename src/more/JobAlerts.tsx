@@ -569,9 +569,12 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Redesign v2 (full reskin): `card` carries a real shadow again, which
+  // needs an opaque fill on Android — dropped the 'transparent' overrides
+  // below so each Layout's own `level="2"` background shows through
+  // instead.
   hintCard: {
     ...globalStyle.card,
-    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -580,21 +583,19 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 14,
     marginBottom: 16,
   },
   prefsCard: {
     ...globalStyle.card,
-    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
   },
   prefsInput: {
+    ...globalStyle.inputField,
     marginBottom: 8,
-    borderRadius: 12,
   },
   slider: {
     height: 32,
@@ -615,17 +616,13 @@ const themedStyles = StyleService.create({
   },
   alertCard: {
     ...globalStyle.card,
-    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    // Was borderColor: 'transparent' here unconditionally, with only the
-    // unread state (see usage site) overriding it to purple — safe before
-    // because the opaque gray fill still gave a read alert visible shape
-    // even with no border. Now that the fill is transparent too (app-wide
-    // "cards are transparent" pass), a read alert needs its own real
-    // border to still read as a card — falls through to globalStyle.card's
-    // own default hairline border color instead of overriding it away.
+    // No border by default — was `borderWidth: 1` with no matching
+    // `borderColor`, which React Native silently renders as a black
+    // hairline on every card (bug report: "black border on job alert
+    // screen"). Only the unread state gets a border now (see usage site,
+    // which sets its own purple color+width).
   },
 });

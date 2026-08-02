@@ -17,6 +17,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import CircularProgress from 'components/CircularProgress';
 import { globalStyle } from 'styles/globalStyle';
 import * as linkedinOptimizerService from 'services/linkedinOptimizerService';
 import { OptimizationResult, OptimizationHistoryEntry } from 'services/linkedinOptimizerService';
@@ -154,8 +155,22 @@ const LinkedInOptimizer = memo(() => {
           <View style={{ marginTop: 24 }}>
             {result.profileStrengthScore != null ? (
               <Layout level="2" style={[styles.card, { alignItems: 'center' }]}>
-                <Text category="h3" bold>{result.profileStrengthScore}%</Text>
-                <Text category="h10" status="placeholder">{t('more:current_profile_strength', { defaultValue: 'Current profile strength' })}</Text>
+                {/* Redesign v2 (full reskin) — was a plain "{score}%" text,
+                    the one profile-quality score in this app not already
+                    shown as a ring (ResumeBuilder's ATS Score, JDAnalyzer's
+                    Match Score, InterviewFeedback's Overall Score all are —
+                    see components/CircleSlider.tsx). Same brand-blue
+                    gradient as the other "no threshold semantics" rings. */}
+                <CircularProgress
+                  progress={result.profileStrengthScore}
+                  size={88}
+                  strokeWidth={8}
+                  trackColor={theme['background-basic-color-3']}
+                  gradientFrom="#1DA1F2"
+                  gradientTo="#0063f8">
+                  <Text category="h5" bold>{result.profileStrengthScore}%</Text>
+                </CircularProgress>
+                <Text category="h10" status="placeholder" mt={8}>{t('more:current_profile_strength', { defaultValue: 'Current profile strength' })}</Text>
                 {previousScore != null ? (
                   <Text
                     category="h10"
@@ -215,12 +230,14 @@ export default LinkedInOptimizer;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
   card: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
 });

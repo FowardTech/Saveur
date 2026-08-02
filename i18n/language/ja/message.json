@@ -16,5 +16,13 @@
   "ai_coach_subtitle": "就職活動について何でも聞いてください — サポートします。",
   "salary_negotiation_description": "模擬オファーに対する交渉を数ラウンドにわたって練習しましょう。",
   "salary_negotiation_title": "給与交渉シミュレーター",
-  "suggested_topics": "おすすめのトピック"
+  "suggested_topics": "おすすめのトピック",
+  "attach_resume_files": "履歴書 / ファイルを添付",
+  "coach_unavailable_body": "AIコーチに接続できませんでした。もう一度お試しください。",
+  "coach_unavailable_title": "コーチを利用できません",
+  "learn_more_about_topic": "{{topic}}についてもっと詳しく",
+  "mode_text": "テキスト",
+  "mode_voice": "音声",
+  "start_video_practice": "ビデオ練習を開始",
+  "view_my_progress": "進捗を見る"
 }

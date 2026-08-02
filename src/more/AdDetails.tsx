@@ -78,7 +78,9 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   detailBody: {
     lineHeight: 22,

@@ -386,13 +386,15 @@ const LearningCourses = memo(() => {
               <View>
                 <Text category="h9" bold mb={12}>{curriculum.goal}</Text>
                 {curriculum.weeks.every(w => w.completed) ? (
-                  <View style={styles.curriculumDoneBoxOuter}>
-                    <View style={styles.curriculumDoneBox}>
-                      <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                      <Text category="h9" bold status="success" style={{ marginLeft: 8, flex: 1 }}>
-                        {t('more:curriculum_all_weeks_done', { defaultValue: "You've completed every week of this curriculum!" })}
-                      </Text>
-                    </View>
+                  // Plain success-tinted card (gradient fill removed —
+                  // reserved for the homescreen XP card only). Reverted to
+                  // the pre-reskin semantic: status="success" text/icon on a
+                  // color-success-transparent-200 fill.
+                  <View style={[styles.curriculumDoneBox, styles.curriculumDoneBoxInner]}>
+                    <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: 'color-success-500' }]} />
+                    <Text category="h9" bold status="success" style={{ marginLeft: 10, flex: 1 }}>
+                      {t('more:curriculum_all_weeks_done', { defaultValue: "You've completed every week of this curriculum!" })}
+                    </Text>
                   </View>
                 ) : null}
                 {curriculum.weeks.map(week => {
@@ -745,10 +747,9 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
-    // No fill — border-only (app-wide "cards are transparent" pass).
-    // Explicit 'transparent' since every usage is <Layout level="2" .../>,
-    // whose own level mapping would otherwise still fill it.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   continueCard: {
     padding: 16,
@@ -761,7 +762,7 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
   },
   customInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
     marginRight: 8,
   },
   customStartBtn: {
@@ -802,11 +803,11 @@ const themedStyles = StyleService.create({
   rejectedBoxOuter: {
     ...globalStyle.card,
     marginTop: 16,
-    // Was opaque (needed back when `card` still carried Android elevation
-    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
-    // `card` is border-only now, so transparent is safe and matches the
-    // app-wide "cards are transparent" pass.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, so
+    // this goes back to needing an opaque fill for Android to compute a
+    // correctly-rounded shadow silhouette (see globalStyle.ts's own note
+    // calling this file out by name).
+    backgroundColor: 'background-basic-color-2',
   },
   rejectedBox: {
     padding: 12,
@@ -830,26 +831,23 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 14,
     marginLeft: 12,
   },
-  curriculumDoneBoxOuter: {
-    ...globalStyle.card,
-    marginBottom: 8,
-    // Same as rejectedBoxOuter above.
-    backgroundColor: 'transparent',
-  },
+  // Plain success-tinted card (gradient fill removed).
   curriculumDoneBox: {
+    marginBottom: 8,
+    borderRadius: 12,
+    backgroundColor: 'color-success-transparent-200',
+  },
+  curriculumDoneBoxInner: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: 'color-success-transparent-200',
   },
   courseCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    backgroundColor: 'transparent',
+    // Same as customCard above — renders via <Layout level="2" .../>.
   },
   categoryPill: {
     backgroundColor: 'background-basic-color-3',

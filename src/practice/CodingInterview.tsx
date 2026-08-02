@@ -173,7 +173,7 @@ const CodingInterview = memo(() => {
         accessoryLeft={<NavigationAction onPress={goBack} />}
         accessoryRight={<NavigationAction icon="edit_full" onPress={() => navigate('SystemDesignWhiteboard')} />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h7" bold mb={8}>
           {t('find:coding_prompt_title')}
         </Text>

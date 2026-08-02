@@ -97,8 +97,11 @@ const WeeklyCareerReport = memo(() => {
         ) : (
           <>
             {report?.summary ? (
-              <Layout level="2" style={styles.summaryCard}>
-                <Text category="h9" style={{ lineHeight: 22 }}>{report.summary}</Text>
+              // Plain card, same as every other section on this screen —
+              // gradient fill is reserved for the homescreen XP check-in
+              // card only (explicit product direction), not used elsewhere.
+              <Layout level="2" style={[styles.summaryCard, styles.summaryCardInner]}>
+                <Text category="h9" style={styles.summaryCardText}>{report.summary}</Text>
               </Layout>
             ) : null}
 
@@ -180,12 +183,22 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Redesign v2 (full reskin): `card` carries a real shadow again, which
+  // needs an opaque fill on Android — dropped the 'transparent' overrides
+  // below so each Layout's own `level="2"` background shows through
+  // instead.
+  // Plain card (gradient fill removed — reserved for the homescreen XP
+  // card only), same shape as sectionCard below.
   summaryCard: {
     ...globalStyle.card,
     borderRadius: 16,
-    padding: 16,
     marginBottom: 20,
-    backgroundColor: 'transparent',
+  },
+  summaryCardInner: {
+    padding: 16,
+  },
+  summaryCardText: {
+    lineHeight: 22,
   },
   statsRow: {
     flexDirection: 'row',
@@ -198,7 +211,6 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     paddingVertical: 16,
     marginHorizontal: 4,
-    backgroundColor: 'transparent',
   },
   secondaryStatsRow: {
     marginBottom: 20,
@@ -209,6 +221,5 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    backgroundColor: 'transparent',
   },
 });

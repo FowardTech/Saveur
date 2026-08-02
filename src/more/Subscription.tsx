@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Linking, View } from 'react-native';
+import { Alert, AppState, Linking, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -565,24 +565,25 @@ const Subscription = memo(() => {
             const anyFlagged = visiblePlans.some(p => p.recommended);
             const isRecommended =
               plan.recommended ?? (!anyFlagged && plan.code === visiblePlans.find(p => p.code)?.code && !!plan.code);
-            return (
-              <Layout
-                key={planKey}
-                level="2"
-                style={[
-                  styles.planCard,
-                  isCurrent && { borderColor: theme['color-primary-500'], borderWidth: 2 },
-                  isRecommended && !isCurrent && { borderColor: theme['color-primary-300'], borderWidth: 2 },
-                ]}>
+            // At most one plan is ever flagged recommended-and-not-current
+            // at a time (see isRecommended above), so that single plan —
+            // the upsell this whole screen exists to drive — is the hero
+            // that gets the flat solid-blue fill treatment. A plan the
+            // user is already on never becomes the hero even if flagged
+            // recommended; "upgrade to the plan you're already on" isn't a
+            // real upsell.
+            const isHero = isRecommended && !isCurrent;
+            const cardBody = (
+              <>
                 {isRecommended ? (
-                  <View style={[styles.popularRibbon, { backgroundColor: theme['color-primary-500'] }]}>
-                    <Text category="h10" bold status="control">
+                  <View style={[styles.popularRibbon, isHero ? styles.popularRibbonHero : { backgroundColor: theme['color-primary-500'] }]}>
+                    <Text category="h10" bold status={isHero ? 'basic' : 'control'} style={isHero ? styles.popularRibbonHeroText : undefined}>
                       {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
                     </Text>
                   </View>
                 ) : null}
                 <Flex justify="space-between" itemsCenter mb={8}>
-                  <Text category="h6" bold>{plan.title}</Text>
+                  <Text category="h6" bold style={isHero ? styles.heroText : undefined}>{plan.title}</Text>
                   {isCurrent ? (
                     <View style={[styles.currentBadge, { backgroundColor: theme['color-primary-500'] }]}>
                       <Text category="h10" bold status="control">
@@ -591,14 +592,14 @@ const Subscription = memo(() => {
                     </View>
                   ) : null}
                 </Flex>
-                <Text category="h3" bold mb={16}>
+                <Text category="h3" bold mb={16} style={isHero ? styles.heroText : undefined}>
                   {plan.price}
-                  <Text category="h9-s" status="placeholder">{plan.period}</Text>
+                  <Text category="h9-s" status={isHero ? 'basic' : 'placeholder'} style={isHero ? styles.heroSubText : undefined}>{plan.period}</Text>
                 </Text>
                 {plan.features.map((feature, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={10}>
-                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-                    <Text category="h9-s" ml={10}>{feature}</Text>
+                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: isHero ? '#FFFFFF' : theme['text-basic-color'] }]} />
+                    <Text category="h9-s" ml={10} style={isHero ? styles.heroText : undefined}>{feature}</Text>
                   </Flex>
                 ))}
                 {isCurrent ? (
@@ -668,6 +669,28 @@ const Subscription = memo(() => {
                       </View>
                     ) : null}
                   </View>
+                ) : isHero ? (
+                  // Plain TouchableOpacity, not CtaButton — same reasoning as
+                  // HomeSrc.tsx's checkInButton: CtaButton always renders
+                  // white text on a solid brand-blue fill by design, which
+                  // would be nearly invisible on top of this card's own blue
+                  // gradient. An inverted white-pill/blue-text control reads
+                  // correctly against the fill instead.
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    disabled={!!checkoutPlanId}
+                    onPress={() => onSelectPlan(plan, planKey)}
+                    style={[styles.heroSubscribeButton, !!checkoutPlanId && styles.heroSubscribeButtonDisabled]}>
+                    {isCheckingOut ? (
+                      <Spinner size="small" status="primary" />
+                    ) : (
+                      <Text category="h9-s" bold style={styles.heroSubscribeButtonText}>
+                        {plan.code
+                          ? t('more:subscribe', { defaultValue: 'Subscribe' })
+                          : t('more:downgrade', { defaultValue: 'Switch to this plan' })}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
                 ) : (
                   <CtaButton
                     children={
@@ -683,6 +706,21 @@ const Subscription = memo(() => {
                     style={{ marginTop: 4 }}
                   />
                 )}
+              </>
+            );
+            // Flat solid-blue hero card (gradient fill removed — reserved
+            // for the homescreen XP card only) — see the isHero comment
+            // above for why only ever one plan at a time qualifies.
+            return isHero ? (
+              <View key={planKey} style={[styles.planCardHero, styles.planCardHeroInner]}>
+                {cardBody}
+              </View>
+            ) : (
+              <Layout
+                key={planKey}
+                level="2"
+                style={[styles.planCard, isCurrent && { borderColor: theme['color-primary-500'], borderWidth: 2 }]}>
+                {cardBody}
               </Layout>
             );
           })}
@@ -715,16 +753,15 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 16,
-    borderWidth: 2,
-    // Was borderColor: 'transparent' here, unconditionally, with only the
-    // current/recommended states (see usage site) overriding it to a real
-    // color — safe before because the opaque gray fill still gave an
-    // unselected card visible shape even with no border at all. Now that
-    // the fill is transparent too (app-wide "cards are transparent" pass),
-    // an unselected card needs its own real border to still read as a
-    // card — falls through to globalStyle.card's own default hairline
-    // border color instead of overriding it away.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
+    // No border by default — was `borderWidth: 2` with no matching
+    // `borderColor`, which React Native silently renders as a black
+    // 2px border on every card (bug report: "black border on
+    // Subscription/Payment cards"). Only the current-plan state gets a
+    // border now, and it explicitly sets its own color+width at the
+    // usage site.
   },
   currentBadge: {
     borderRadius: 8,
@@ -738,5 +775,43 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     paddingVertical: 5,
     paddingHorizontal: 14,
+  },
+  // Flat solid-blue hero card (gradient fill removed) — the ribbon flips to
+  // a white fill/blue text (`popularRibbonHero`) since the original
+  // solid-blue ribbon would blend into this card's own blue fill.
+  planCardHero: {
+    ...globalStyle.card,
+    borderRadius: 20,
+    marginBottom: 16,
+    backgroundColor: 'color-primary-500',
+  },
+  planCardHeroInner: {
+    padding: 20,
+  },
+  popularRibbonHero: {
+    backgroundColor: '#FFFFFF',
+  },
+  popularRibbonHeroText: {
+    color: '#0063f8',
+  },
+  heroText: {
+    color: '#FFFFFF',
+  },
+  heroSubText: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  heroSubscribeButton: {
+    marginTop: 4,
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  heroSubscribeButtonDisabled: {
+    opacity: 0.6,
+  },
+  heroSubscribeButtonText: {
+    color: '#0063f8',
   },
 });

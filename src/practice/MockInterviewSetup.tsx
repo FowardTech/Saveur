@@ -205,7 +205,12 @@ const MockInterviewSetup = memo(() => {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigate('Subscription')}
-            style={[styles.freeLimitBanner, { backgroundColor: 'transparent' }]}>
+            // Redesign v2 (full reskin): `card` (spread by freeLimitBanner)
+            // carries a real shadow again, which needs an opaque fill to
+            // render correctly on Android — dropped the inline
+            // 'transparent' override (this is a plain TouchableOpacity, no
+            // `level` prop, so the fill lives on the style itself).
+            style={styles.freeLimitBanner}>
             <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
             <Text category="h9-s" status={remainingFreeSessions > 0 ? 'basic' : 'danger'} style={globalStyle.flexOne} ml={8}>
               {remainingFreeSessions > 0
@@ -419,9 +424,18 @@ const themedStyles = StyleService.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 24,
+    backgroundColor: 'background-basic-color-2',
   },
   modeCard: {
     ...globalStyle.card,
+    // Bug report ("box shadow... looking very bad on android", screenshot
+    // of these exact 3 mode cards): `card` spreads Android's `elevation`
+    // (see globalStyle.ts's own comment on this) which needs an OPAQUE
+    // backgroundColor on the same View to render as a soft, correctly-
+    // clipped shadow — without one, Android draws a heavy, hard-edged gray
+    // block instead. This was a plain TouchableOpacity with no fill at all
+    // (just a borderColor), so it hit exactly that bug.
+    backgroundColor: 'background-basic-color-1',
     width: '31%',
     borderWidth: 2,
     borderRadius: 16,
@@ -447,8 +461,8 @@ const themedStyles = StyleService.create({
     flexWrap: 'wrap',
   },
   companySearchInput: {
+    ...globalStyle.inputField,
     marginBottom: 12,
-    borderRadius: 12,
   },
   chip: {
     paddingVertical: 10,

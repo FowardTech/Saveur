@@ -120,28 +120,29 @@ const FindScreen = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('find:title')} />
       <Content contentContainerStyle={styles.content} padder>
-        <Flex
-          style={styles.hero}
-          vertical
-          onPress={() => onStartSetup()}
-          justify="flex-start">
-          <Text category="h3" status="control" bold mb={8}>
-            {t('find:start_mock_interview')}
-          </Text>
-          <Text category="h8-s" status="control" mb={16}>
-            {t('find:start_mock_interview_description')}
-          </Text>
-          <View style={styles.heroButton}>
-            <Text style={{color: "#fff"}} category="h8" status="link" bold>
-              {t('find:choose_type_mode')}
+        {/* Flat solid-blue hero card (gradient fill removed — reserved for
+            the homescreen XP card only). Text/icon stay white/control,
+            still readable on the flat blue fill. */}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => onStartSetup()}>
+          <View style={[styles.hero, styles.heroInner]}>
+            <Text category="h3" status="control" bold mb={8}>
+              {t('find:start_mock_interview')}
             </Text>
-            <Icon
-              pack="assets"
-              name="arrowRight"
-              style={[globalStyle.icon16, { tintColor: theme['text-control-color'] }]}
-            />
+            <Text category="h8-s" status="control" mb={16}>
+              {t('find:start_mock_interview_description')}
+            </Text>
+            <View style={styles.heroButton}>
+              <Text style={{color: "#fff"}} category="h8" status="link" bold>
+                {t('find:choose_type_mode')}
+              </Text>
+              <Icon
+                pack="assets"
+                name="arrowRight"
+                style={[globalStyle.icon16, { tintColor: theme['text-control-color'] }]}
+              />
+            </View>
           </View>
-        </Flex>
+        </TouchableOpacity>
 
         <Text category="h6" bold mt={32} mb={16}>
           {t('find:tools')}
@@ -205,12 +206,15 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Flat solid-blue hero card (gradient fill removed).
   hero: {
+    ...globalStyle.card,
     marginTop: 16,
-    padding: 24,
     borderRadius: 24,
-    backgroundColor: 'button-basic-color',
-    ...globalStyle.shadowBtn,
+    backgroundColor: 'color-primary-500',
+  },
+  heroInner: {
+    padding: 24,
   },
   heroButton: {
     flexDirection: 'row',
@@ -221,9 +225,10 @@ const themedStyles = StyleService.create({
     width: '30%',
     aspectRatio: 1,
     borderRadius: 16,
-    // No fill — just the border outline (product follow-up: "remove the
-    // white background from all the cards in the practice screen").
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android (was
+    // 'transparent' for the earlier border-only direction).
+    backgroundColor: 'background-basic-color-2',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -241,7 +246,9 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     width: '48%',
     borderRadius: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
+    // renders correctly on Android (was 'transparent').
+    backgroundColor: 'background-basic-color-2',
     padding: 16,
     marginBottom: 16,
   },

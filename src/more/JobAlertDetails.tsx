@@ -76,6 +76,7 @@ const JobAlertDetails = memo(() => {
       // if it can't confirm automatically. See that screen's own comments
       // for how detection works.
       job: {
+        id: job.id,
         company: job.company,
         role: job.title,
         applyUrl: job.applyUrl,
@@ -213,7 +214,9 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 20,
     marginBottom: 24,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   metaRows: {
     marginTop: 8,

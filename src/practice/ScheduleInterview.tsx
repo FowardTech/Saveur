@@ -370,6 +370,10 @@ const themedStyles = StyleService.create({
   },
   modeCard: {
     ...globalStyle.card,
+    // Bug fix — same Android elevation-needs-an-opaque-background issue as
+    // MockInterviewSetup.tsx's identical modeCard style (see that file's
+    // comment for the full explanation).
+    backgroundColor: 'background-basic-color-1',
     width: '31%',
     borderWidth: 2,
     borderRadius: 16,
@@ -395,8 +399,8 @@ const themedStyles = StyleService.create({
     flexWrap: 'wrap',
   },
   companySearchInput: {
+    ...globalStyle.inputField,
     marginBottom: 12,
-    borderRadius: 12,
   },
   chip: {
     paddingVertical: 10,

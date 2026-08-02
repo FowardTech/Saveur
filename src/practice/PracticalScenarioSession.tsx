@@ -119,15 +119,17 @@ export default PracticalScenarioSession;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
+  // Redesign v2 (full reskin): `card` carries a real shadow again, which
+  // needs an opaque fill on Android — dropped the 'transparent' overrides
+  // below so each Layout/Flex's own `level="2"` background shows through
+  // instead.
   situationCard: {
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
-    backgroundColor: 'transparent',
   },
   choiceCard: {
     ...globalStyle.card,
-    backgroundColor: 'transparent',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,

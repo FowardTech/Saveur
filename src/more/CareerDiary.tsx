@@ -271,10 +271,12 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   textInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
     minHeight: 70,
   },
   textInputInner: {
@@ -288,14 +290,14 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
   },
   roleInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
   },
   entryCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 14,
     marginBottom: 10,
-    backgroundColor: 'transparent',
+    // Same as composerCard above — renders via <Layout level="2" .../>.
   },
   entryTag: {
     paddingVertical: 3,

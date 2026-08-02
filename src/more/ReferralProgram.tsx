@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Share, View } from 'react-native';
+import { Alert, Share, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   TopNavigation,
@@ -21,7 +21,6 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import * as referralService from 'services/referralService';
 import { ReferralSummary } from 'services/referralService';
-import CtaButton from 'components/CtaButton';
 
 // Referral program — share a link, both sides get a reward off their next
 // subscription once the referred person actually subscribes to a paid plan
@@ -127,8 +126,14 @@ const ReferralProgram = memo(() => {
           </Flex>
         ) : summary ? (
           <>
-            <Layout level="2" style={styles.heroCard}>
-              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
+            {/* Plain card — gradient fill removed (explicit product
+                direction: gradient is reserved for the homescreen XP
+                check-in card only). Icons/text now use normal theme colors
+                instead of the white/light re-theme the gradient fill used
+                to need; the share button keeps its solid brand-blue fill
+                since that reads fine on a plain card too. */}
+            <Layout level="2" style={[styles.heroCard, styles.heroCardInner]}>
+              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]} />
               <Text category="h3" bold center mt={16}>
                 {t('more:referral_hero_title', {defaultValue: 'Give {{reward}}, Get {{reward}}', reward: rewardLabel})}
               </Text>
@@ -140,13 +145,15 @@ const ReferralProgram = memo(() => {
                 })}
               </Text>
               <View style={styles.codeBox}>
-                <Text category="h6" bold center>
+                <Text category="h6" bold center style={{ color: theme['color-primary-500'] }}>
                   {summary.code}
                 </Text>
               </View>
-              <CtaButton style={{ marginTop: 16, width: '100%' }} onPress={onShare}>
-                {t('more:referral_share_button', {defaultValue: 'Share My Link'})}
-              </CtaButton>
+              <TouchableOpacity activeOpacity={0.85} onPress={onShare} style={styles.heroShareButton}>
+                <Text category="h9-s" bold style={styles.heroShareButtonText}>
+                  {t('more:referral_share_button', {defaultValue: 'Share My Link'})}
+                </Text>
+              </TouchableOpacity>
             </Layout>
 
             <Flex justify="space-between" mt={20} mb={20}>
@@ -226,15 +233,16 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Plain card (gradient fill removed) — `card` shadow + a `level="2"`
+  // background, same shape as every other card on this screen.
   heroCard: {
     ...globalStyle.card,
-    borderRadius: 20,
+  },
+  heroCardInner: {
     padding: 24,
     alignItems: 'center',
-    backgroundColor: 'transparent',
   },
   codeBox: {
-    ...globalStyle.card,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: 'color-primary-500',
@@ -242,6 +250,19 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     width: '100%',
+    backgroundColor: 'rgba(0,99,248,0.08)',
+  },
+  heroShareButton: {
+    marginTop: 16,
+    width: '100%',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  heroShareButtonText: {
+    color: '#0063f8',
   },
   statBlock: {
     flex: 1,
@@ -250,12 +271,12 @@ const themedStyles = StyleService.create({
   // the JSX comment above where these are used.
   creditCardOuter: {
     ...globalStyle.card,
-    // Was opaque (needed back when `card` still carried Android elevation
-    // — see HomeSrc.tsx's checkInCardOuter for the full explanation).
-    // `card` is border-only now, so transparent is safe and matches the
-    // app-wide "cards are transparent" pass; the inner creditCard's own
+    // Redesign v2 (full reskin): `card` carries a real shadow again, so
+    // this goes back to needing an opaque fill for Android to compute a
+    // correctly-rounded shadow silhouette (see globalStyle.ts's own note
+    // calling this file out by name); the inner creditCard's own
     // translucent success-tint still renders on top either way.
-    backgroundColor: 'transparent',
+    backgroundColor: 'background-basic-color-2',
   },
   creditCard: {
     backgroundColor: 'color-success-transparent-200',
@@ -264,6 +285,6 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
   },
   redeemInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
   },
 });

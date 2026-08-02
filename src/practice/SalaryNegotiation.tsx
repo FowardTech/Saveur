@@ -150,30 +150,35 @@ const SalaryNegotiation = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('find:salary_negotiation', {defaultValue: 'Salary Negotiation'})} accessoryLeft={<NavigationAction onPress={goBack} />} />
       <Content padder contentContainerStyle={styles.content}>
-        <Layout level="2" style={styles.offerCard}>
+        {/* Flat solid-blue hero card (gradient fill removed — reserved for
+            the homescreen XP card only). The end-of-round "Negotiation
+            Summary" card further down stays a plain card (still reuses
+            `offerCard`'s shape/padding) — it's a secondary, conditional
+            result, not the hero. */}
+        <View style={[styles.heroOfferCard, styles.offerCardInner]}>
           <Flex justify="space-between" itemsCenter mb={4}>
-            <Text category="h7" bold>{currentOffer.title}</Text>
-            <Text category="h9" status="link" bold>{currentOffer.company}</Text>
+            <Text category="h7" bold status="control">{currentOffer.title}</Text>
+            <Text category="h9" bold style={styles.offerCompany}>{currentOffer.company}</Text>
           </Flex>
-          <Text category="h3" bold mt={8}>
+          <Text category="h3" bold status="control" mt={8}>
             ${currentOffer.baseSalary.toLocaleString()}
-            <Text category="h9-s" status="placeholder"> {t('find:per_year_base', {defaultValue: '/ year base'})}</Text>
+            <Text category="h9-s" style={styles.offerMuted}> {t('find:per_year_base', {defaultValue: '/ year base'})}</Text>
           </Text>
           <View style={styles.offerDetailsRow}>
             <View style={styles.offerDetail}>
-              <Text category="h10" status="placeholder">{t('find:bonus', {defaultValue: 'Bonus'})}</Text>
-              <Text category="h8" bold>${currentOffer.bonus.toLocaleString()}</Text>
+              <Text category="h10" style={styles.offerMuted}>{t('find:bonus', {defaultValue: 'Bonus'})}</Text>
+              <Text category="h8" bold status="control">${currentOffer.bonus.toLocaleString()}</Text>
             </View>
             <View style={styles.offerDetail}>
-              <Text category="h10" status="placeholder">{t('find:signing_bonus', {defaultValue: 'Signing Bonus'})}</Text>
-              <Text category="h8" bold>${currentOffer.signingBonus.toLocaleString()}</Text>
+              <Text category="h10" style={styles.offerMuted}>{t('find:signing_bonus', {defaultValue: 'Signing Bonus'})}</Text>
+              <Text category="h8" bold status="control">${currentOffer.signingBonus.toLocaleString()}</Text>
             </View>
             <View style={styles.offerDetail}>
-              <Text category="h10" status="placeholder">{t('find:equity', {defaultValue: 'Equity'})}</Text>
-              <Text category="h8" bold numberOfLines={1}>{currentOffer.equity}</Text>
+              <Text category="h10" style={styles.offerMuted}>{t('find:equity', {defaultValue: 'Equity'})}</Text>
+              <Text category="h8" bold status="control" numberOfLines={1}>{currentOffer.equity}</Text>
             </View>
           </View>
-        </Layout>
+        </View>
 
         {log.length > 0 ? (
           <View style={{ marginTop: 24 }}>
@@ -296,6 +301,21 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 20,
     padding: 20,
+  },
+  // Flat solid-blue hero card (gradient fill removed).
+  heroOfferCard: {
+    ...globalStyle.card,
+    borderRadius: 20,
+    backgroundColor: 'color-primary-500',
+  },
+  offerCardInner: {
+    padding: 20,
+  },
+  offerMuted: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  offerCompany: {
+    color: '#FFFFFF',
   },
   offerDetailsRow: {
     flexDirection: 'row',

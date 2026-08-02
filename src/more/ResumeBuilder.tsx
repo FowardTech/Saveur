@@ -300,6 +300,9 @@ const ResumeBuilder = memo(() => {
         {analyzed ? (
           <>
             <Flex vertical itemsCenter justify="center" mt={40} mb={24}>
+              {/* Redesign v2 (full reskin) — gradient ring, brand blue
+                  (see components/CircleSlider.tsx's optional gradient
+                  props), replacing the old flat progressStokeColor. */}
               <ProgressCard
                 title={t('more:ats_score', { defaultValue: 'ATS Score' })}
                 progress={atsScore}
@@ -307,6 +310,8 @@ const ResumeBuilder = memo(() => {
                 strokeWidth={10}
                 stokeColor={theme['background-basic-color-3']}
                 progressStokeColor={theme['color-primary-500']}
+                progressGradientFrom="#1DA1F2"
+                progressGradientTo="#0063f8"
               />
             </Flex>
             <Text category="h6" bold mb={16}>
@@ -460,7 +465,11 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     width: '30%',
     borderRadius: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android (was
+    // 'transparent') — this renders on a plain TouchableOpacity (no
+    // `level` prop), so the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
     alignItems: 'center',
     paddingVertical: 16,
     marginBottom: 12,
@@ -473,7 +482,7 @@ const themedStyles = StyleService.create({
     marginBottom: 12,
   },
   bulletInput: {
-    borderRadius: 12,
+    ...globalStyle.inputField,
     minHeight: 80,
   },
   bulletInputText: {
@@ -497,7 +506,7 @@ const themedStyles = StyleService.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'background-basic-color-2',
   },
   pickerRow: {
     flexDirection: 'row',

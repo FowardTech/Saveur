@@ -16,5 +16,13 @@
   "ai_coach_subtitle": "Спрашивайте меня о чём угодно, что касается поиска работы, — я здесь, чтобы помочь.",
   "salary_negotiation_description": "Потренируйтесь отвечать на условное предложение о работе в несколько раундов.",
   "salary_negotiation_title": "Симулятор переговоров о зарплате",
-  "suggested_topics": "Предлагаемые темы"
+  "suggested_topics": "Предлагаемые темы",
+  "attach_resume_files": "Прикрепить резюме / файлы",
+  "coach_unavailable_body": "Не удалось связаться с вашим AI-коучем. Попробуйте ещё раз.",
+  "coach_unavailable_title": "Коуч недоступен",
+  "learn_more_about_topic": "Узнать больше о {{topic}}",
+  "mode_text": "Текст",
+  "mode_voice": "Голос",
+  "start_video_practice": "Начать видеотренировку",
+  "view_my_progress": "Посмотреть мой прогресс"
 }

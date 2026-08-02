@@ -257,7 +257,18 @@ export type RootStackParamList = {
   WebViewScreen: {
     url: string;
     title?: string;
-    job?: {company: string; role: string; applyUrl: string; companyLogoUrl?: string};
+    job?: {
+      // The originating JobAlertProps.id, when this apply page came from a
+      // job alert — lets WebViewScreen report this specific alert dead (see
+      // services/jobAlertsService.ts's reportDeadJobAlert) if it detects a
+      // dead-posting page after loading. Optional since not every WebViewScreen
+      // call originates from a job alert with a real backend id.
+      id?: string;
+      company: string;
+      role: string;
+      applyUrl: string;
+      companyLogoUrl?: string;
+    };
   };
   Subscription:
     | {

@@ -43,7 +43,12 @@ const RequestsSrc = memo(() => {
   }, [activeIndex, shouldLoadComponent, styles.footer]);
   const ListHeaderComponent = React.useCallback(() => {
     return (
-      <Layout>
+      // No explicit `level` here defaulted to level="1" (near-white), which
+      // sat on top of Container's own level="3" page background (grayer) —
+      // showed up as a faint pale band right under the header (same bug as
+      // SharedWithMe.tsx's tabBarWrap). Transparent instead, so this sits
+      // directly on the page with no seam.
+      <Layout style={{backgroundColor: 'transparent'}}>
         <BasicTabBar
           style={styles.tabBar}
           activeIndex={activeIndex}

@@ -16,5 +16,13 @@
   "voice_status_speaking": "Sto parlando…",
   "voice_status_starting": "Avvio in corso…",
   "voice_status_thinking": "Sto pensando…",
-  "voice_tap_to_interrupt": "Tocca per interrompere"
+  "voice_tap_to_interrupt": "Tocca per interrompere",
+  "attach_resume_files": "Allega curriculum / file",
+  "coach_unavailable_body": "Impossibile contattare il tuo coach IA. Riprova.",
+  "coach_unavailable_title": "Coach non disponibile",
+  "learn_more_about_topic": "Scopri di più su {{topic}}",
+  "mode_text": "Testo",
+  "mode_voice": "Voce",
+  "start_video_practice": "Avvia pratica video",
+  "view_my_progress": "Visualizza i miei progressi"
 }

@@ -153,7 +153,11 @@ const themedStyles = StyleService.create({
     marginTop: 16,
     padding: 20,
     borderRadius: 20,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill to render correctly on Android (was
+    // 'transparent') — this renders on a plain `<Flex>` with no `level`
+    // prop, so the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
   },
   topicRow: {
     flexDirection: 'row',

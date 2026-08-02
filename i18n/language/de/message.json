@@ -16,5 +16,13 @@
   "ai_coach_subtitle": "Frag mich alles rund um deine Jobsuche — ich bin hier, um zu helfen.",
   "salary_negotiation_description": "Übe in mehreren Runden, ein simuliertes Angebot zu kontern.",
   "salary_negotiation_title": "Gehaltsverhandlungs-Simulator",
-  "suggested_topics": "Vorgeschlagene Themen"
+  "suggested_topics": "Vorgeschlagene Themen",
+  "attach_resume_files": "Lebenslauf / Dateien anhängen",
+  "coach_unavailable_body": "Dein KI-Coach konnte nicht erreicht werden. Bitte versuche es erneut.",
+  "coach_unavailable_title": "Coach nicht verfügbar",
+  "learn_more_about_topic": "Mehr über {{topic}} erfahren",
+  "mode_text": "Text",
+  "mode_voice": "Sprache",
+  "start_video_practice": "Video-Übung starten",
+  "view_my_progress": "Meinen Fortschritt ansehen"
 }

@@ -18,6 +18,11 @@ interface ProgressCardProps extends ViewProps {
   d?: number;
   strokeWidth: number;
   style?: StyleProp<ViewStyle>;
+  // Redesign v2 (full reskin) — see CircleSlider.tsx's own comment; optional
+  // and additive, existing call sites that only pass progressStokeColor are
+  // unaffected.
+  progressGradientFrom?: string;
+  progressGradientTo?: string;
 }
 
 const ProgressCard = ({
@@ -28,6 +33,8 @@ const ProgressCard = ({
   d = 84,
   strokeWidth = 4,
   style,
+  progressGradientFrom,
+  progressGradientTo,
   ...rest
 }: ProgressCardProps) => {
   return (
@@ -38,6 +45,8 @@ const ProgressCard = ({
         strokeWidth={strokeWidth}
         progressStokeColor={progressStokeColor}
         stokeColor={stokeColor}
+        progressGradientFrom={progressGradientFrom}
+        progressGradientTo={progressGradientTo}
       />
       <Text mt={12} category="h9" numberOfLines={1}>
         {title}

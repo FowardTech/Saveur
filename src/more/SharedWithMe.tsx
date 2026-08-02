@@ -271,9 +271,17 @@ const themedStyles = StyleService.create({
   container: {
     flex: 1,
   },
+  // No explicit `level` on the wrapping <Layout> below defaulted it to
+  // level="1" (near-white, #FAFAFA in light mode) sitting on top of
+  // Container's own level="3" page background (#F0F0F0, grayer) — the
+  // color difference between the two showed up as a faint pale band/line
+  // right under the header, exactly where this tab bar sits (bug report:
+  // "dividing white line... below the header text"). Transparent instead,
+  // so the tab bar sits directly on the page with no seam.
   tabBarWrap: {
     paddingHorizontal: 12,
     paddingTop: 4,
+    backgroundColor: 'transparent',
   },
   content: {
     paddingBottom: 40,
@@ -283,6 +291,11 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
+    // `card` carries a real shadow, which needs an opaque fill to render
+    // correctly on Android — this renders on a plain <Flex> with no
+    // `level` prop (its own default fill is 'transparent'), so the fill
+    // has to live here.
+    backgroundColor: 'background-basic-color-2',
   },
   iconCircle: {
     width: 40,

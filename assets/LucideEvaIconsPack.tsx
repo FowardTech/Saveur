@@ -64,6 +64,7 @@ import {
   Sun,
   Trash2,
   TrendingUp,
+  Trophy,
   Upload,
   User,
   Users,
@@ -98,6 +99,11 @@ const LucideEvaIconsPack: IconPack<any> = {
     'arrow-forward-outline': lucideIcon(ArrowRight),
     'arrow-upward-outline': lucideIcon(ArrowUp),
     'award-outline': lucideIcon(Award),
+    // Filled variant (full reskin — Leaderboard.tsx's podium crown icon,
+    // src/home/Leaderboard.tsx, added this session) — same "outline vs
+    // solid via the `filled` param" convention as the tab-bar Active icons
+    // further down; a crown/award reads better solid than outlined.
+    award: lucideIcon(Award, true),
     'bar-chart-outline': lucideIcon(BarChart2),
     'bar-chart-2-outline': lucideIcon(BarChart2),
     'bell-outline': lucideIcon(Bell),
@@ -161,10 +167,21 @@ const LucideEvaIconsPack: IconPack<any> = {
     'share-outline': lucideIcon(Share2),
     'shield-outline': lucideIcon(Shield),
     'star-outline': lucideIcon(Star),
+    // Filled variant — was missing entirely, meaning EVERY filled-star
+    // render (components/AppRatingModal.tsx's tap-to-rate picker, and now
+    // also components/StarRating.tsx used across MyRatings/InterviewFeedback
+    // /PracticalScenarioFeedback/SharedContentDetail) would throw this
+    // exact "icon not registered" crash the moment a star was actually
+    // filled in — e.g. AppRatingModal as soon as the user tapped a star.
+    star: lucideIcon(Star, true),
     'sun-outline': lucideIcon(Sun),
     'swap-outline': lucideIcon(ArrowLeftRight),
     'trash-2-outline': lucideIcon(Trash2),
     'trending-up-outline': lucideIcon(TrendingUp),
+    // Filled — Leaderboard.tsx's #1 podium spot ("add a yellow trophy svg
+    // there to show who is leading").
+    trophy: lucideIcon(Trophy, true),
+    'trophy-outline': lucideIcon(Trophy),
     'upload-outline': lucideIcon(Upload),
     'video-off-outline': lucideIcon(VideoOff),
     'video-outline': lucideIcon(Video),

@@ -18,6 +18,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import ProgressCard from 'src/find/Component/ProgressCard';
 import { globalStyle } from 'styles/globalStyle';
+import { lightenColor } from 'utils/color';
 import { RootStackParamList } from 'navigation/types';
 import * as jdService from 'services/jdService';
 import { JDAnalysisResult } from 'services/jdService';
@@ -98,6 +99,14 @@ const JDAnalyzer = memo(() => {
         {result ? (
           <>
             <Flex center vertical mt={40} mb={24}>
+              {/* Redesign v2 (full reskin) — gradient ring, but keeps the
+                  existing success/warning/danger "traffic light" semantics
+                  intact: gradient "from" stop is a lighter tint of
+                  whichever base color the threshold already picked (see
+                  utils/color.ts's lightenColor), not a fixed brand-blue
+                  gradient — a flat blue gradient here would lose the
+                  meaningful red/amber/green signal this ring exists to
+                  give. */}
               <ProgressCard
                 title={t('more:match_score', { defaultValue: 'Match Score' })}
                 progress={result.score}
@@ -105,6 +114,20 @@ const JDAnalyzer = memo(() => {
                 strokeWidth={10}
                 stokeColor={theme['background-basic-color-3']}
                 progressStokeColor={
+                  result.score >= 75
+                    ? theme['color-success-500']
+                    : result.score >= 50
+                    ? theme['color-warning-500']
+                    : theme['color-danger-500']
+                }
+                progressGradientFrom={lightenColor(
+                  result.score >= 75
+                    ? theme['color-success-500']
+                    : result.score >= 50
+                    ? theme['color-warning-500']
+                    : theme['color-danger-500'],
+                )}
+                progressGradientTo={
                   result.score >= 75
                     ? theme['color-success-500']
                     : result.score >= 50
@@ -187,12 +210,13 @@ const themedStyles = StyleService.create({
     // `scrollEnabled` on the Input (above) and `overflow: 'hidden'` here,
     // the text just kept rendering past the box's bottom edge instead of
     // scrolling inside it, which is what was actually happening before.
-    height: 460,
+    height: 260,
     overflow: 'hidden',
   },
   jdText: {
     height: '100%',
     textAlignVertical: 'top',
+    minHeight: 200,
   },
   chipsWrap: {
     flexDirection: 'row',

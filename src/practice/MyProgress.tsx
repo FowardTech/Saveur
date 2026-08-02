@@ -19,6 +19,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import CircularProgress from 'components/CircularProgress';
 import { globalStyle } from 'styles/globalStyle';
 import { chartConfig } from 'utils/chartConfig';
 import useLayout from 'hooks/useLayout';
@@ -180,37 +181,48 @@ const MyProgress = memo(() => {
             </Layout>
 
             <Layout level="2" style={[styles.goalCard, { marginTop: 16 }]}>
-              <Flex justify="space-between" itemsCenter>
-                <Text category="h8" bold>
-                  {t('find:goal_progress_title', { defaultValue: 'Progress toward your goal' })}
-                </Text>
-                {roadmap ? (
-                  <Text category="h8" bold status="primary">
-                    {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
-                  </Text>
-                ) : null}
-              </Flex>
+              <Text category="h8" bold mb={roadmap ? 14 : 0}>
+                {t('find:goal_progress_title', { defaultValue: 'Progress toward your goal' })}
+              </Text>
               {roadmap ? (
                 <>
-                  <Text category="h9" status="placeholder" mt={4}>
-                    {roadmap.targetRole}
-                  </Text>
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${roadmapPercent}%`, backgroundColor: theme['color-primary-500'] }]} />
-                  </View>
-                  <Text category="h10" status="placeholder" mt={8}>
-                    {t('find:goal_progress_steps_of', {
-                      defaultValue: '{{completed}} of {{total}} steps complete',
-                      completed: roadmap.completedCount,
-                      total: roadmap.totalCount,
-                    })}
-                  </Text>
+                  {/* Redesign v2 (full reskin, "screenshot 3" reference —
+                      circular progress rings instead of plain numbers/bars):
+                      replaces the old header-row percent + separate linear
+                      track with one ring showing the same roadmapPercent
+                      value, gradient-filled in the app's own brand blue. */}
+                  <Flex justify="flex-start" itemsCenter>
+                    <CircularProgress
+                      progress={roadmapPercent}
+                      size={72}
+                      strokeWidth={7}
+                      trackColor={theme['background-basic-color-3']}
+                      gradientFrom="#0063f8"
+                      gradientTo="#1DA1F2"
+                      style={{ marginRight: 16 }}>
+                      <Text category="h8" bold status="primary">
+                        {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
+                      </Text>
+                    </CircularProgress>
+                    <View style={globalStyle.flexOne}>
+                      <Text category="h9" bold numberOfLines={1}>
+                        {roadmap.targetRole}
+                      </Text>
+                      <Text category="h10" status="placeholder" mt={4}>
+                        {t('find:goal_progress_steps_of', {
+                          defaultValue: '{{completed}} of {{total}} steps complete',
+                          completed: roadmap.completedCount,
+                          total: roadmap.totalCount,
+                        })}
+                      </Text>
+                    </View>
+                  </Flex>
                   {roadmap.isComplete ? (
-                    <Text category="h9" bold status="success" mt={8}>
+                    <Text category="h9" bold status="success" mt={12}>
                       {t('find:goal_progress_complete', { defaultValue: "You've completed every step — congratulations!" })}
                     </Text>
                   ) : currentRoadmapStep ? (
-                    <Text category="h9" mt={8}>
+                    <Text category="h9" mt={12}>
                       {t('find:goal_progress_current_step', {
                         defaultValue: 'Current step: {{step}}',
                         step: currentRoadmapStep.title,
@@ -243,28 +255,57 @@ const MyProgress = memo(() => {
               )}
             </Layout>
 
+            {/* Redesign v2 (full reskin): each stat is now a small ring
+                instead of a plain number. Sessions/streak have no natural
+                0-100 ceiling, so they're framed against the same
+                milestones the badge-unlock logic elsewhere (HomeSrc.tsx)
+                already uses — 10 sessions / 7-day streak — purely as a
+                visual frame, not a claim that 10 or 7 is "the goal".
+                Average score is already a real 0-100 value, so its ring is
+                literal, not framed. */}
             <Flex justify="space-between" style={{ marginTop: 20 }}>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h3" bold>
-                  {completed.length}
-                </Text>
-                <Text category="h10" status="placeholder">
+                <CircularProgress
+                  progress={Math.min(100, (completed.length / 10) * 100)}
+                  size={56}
+                  strokeWidth={5}
+                  trackColor={theme['background-basic-color-3']}
+                  color={theme['color-primary-100']}>
+                  <Text category="h7" bold>
+                    {completed.length}
+                  </Text>
+                </CircularProgress>
+                <Text category="h10" status="placeholder" center mt={8}>
                   {t('find:sessions_completed', { defaultValue: 'Sessions completed' })}
                 </Text>
               </Layout>
               <Layout level="2" style={styles.statCard}>
-                <Text category="h3" bold>
-                  {streak?.streakDays ?? 0}
-                </Text>
-                <Text category="h10" status="placeholder">
+                <CircularProgress
+                  progress={Math.min(100, ((streak?.streakDays ?? 0) / 7) * 100)}
+                  size={56}
+                  strokeWidth={5}
+                  trackColor={theme['background-basic-color-3']}
+                  color={theme['color-warning-500']}>
+                  <Text category="h7" bold>
+                    {streak?.streakDays ?? 0}
+                  </Text>
+                </CircularProgress>
+                <Text category="h10" status="placeholder" center mt={8}>
                   {t('find:day_streak', { defaultValue: 'Day streak' })}
                 </Text>
               </Layout>
               <Layout level="2" style={[styles.statCard, { marginRight: 0 }]}>
-                <Text category="h3" bold>
-                  {avgScore ?? '—'}
-                </Text>
-                <Text category="h10" status="placeholder">
+                <CircularProgress
+                  progress={avgScore ?? 0}
+                  size={56}
+                  strokeWidth={5}
+                  trackColor={theme['background-basic-color-3']}
+                  color={theme['color-success-100']}>
+                  <Text category="h7" bold>
+                    {avgScore ?? '—'}
+                  </Text>
+                </CircularProgress>
+                <Text category="h10" status="placeholder" center mt={8}>
                   {t('find:average_score', { defaultValue: 'Average score' })}
                 </Text>
               </Layout>
@@ -342,11 +383,14 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 60,
   },
+  // Redesign v2 (full reskin): `card` carries a real shadow again, which
+  // needs an opaque fill on Android — dropped the 'transparent' overrides
+  // below so each Layout's own `level="2"` background shows through
+  // instead.
   goalCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
-    backgroundColor: 'transparent',
   },
   goalChip: {
     borderRadius: 99,
@@ -362,22 +406,13 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginRight: 12,
     alignItems: 'center',
-    backgroundColor: 'transparent',
   },
   chart: {
     borderRadius: 16,
   },
-  progressTrack: {
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'background-basic-color-3',
-    overflow: 'hidden',
-    marginTop: 12,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
+  // Redesign v2 (full reskin): the linear progressTrack/progressFill pair
+  // that used to render "progress toward your goal" was replaced by a
+  // CircularProgress ring (see the JSX above) — no longer used.
   sessionRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,

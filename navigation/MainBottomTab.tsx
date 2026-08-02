@@ -27,7 +27,7 @@ import RequestsBottomNavigator from "./RequestsBottomNavigator";
 import MoreNavigator from "./MoreNavigator";
 import VerifyEmailGate from "src/auth/VerifyEmailGate";
 import ProLockGate from "components/ProLockGate";
-import {AuthContext} from "../AuthContext";
+import { AuthContext } from "../AuthContext";
 
 // Module scope (not defined inline in the BottomTab.Screen component prop)
 // so it's a stable component reference across renders — same reasoning as
@@ -121,7 +121,7 @@ const MainBottomTab = memo(() => {
     hide();
     const notif = feedbackNotifRef.current;
     if (notif) {
-      notificationService.markNotificationsRead([notif.id]).catch(() => {});
+      notificationService.markNotificationsRead([notif.id]).catch(() => { });
       feedbackNotifRef.current = null;
       setFeedbackNotif(null);
     }
@@ -165,25 +165,28 @@ const MainBottomTab = memo(() => {
               </View>
             )
           ) : null}
-          <Icon
-            pack="assets"
-            name={!focused ? icon : `${icon}Active`}
-            style={{
-              width: 24,
-              height: 24,
-              // Redesign (product request item, ZipRecruiter reference —
-              // the bottom tab bar there is monochrome: active tab reads
-              // as solid near-black, not a bright brand-color accent).
-              // Was theme['button-basic-color'] (the app's brand blue,
-              // #2574FF) — this whole redesign moves color accents
-              // (mint CTA, purple highlight) to be reserved for specific
-              // meaningful things elsewhere, not the tab bar, which now
-              // matches the reference's flat black/gray look.
-              tintColor: focused
-                ? theme["text-basic-color"]
-                : theme["text-placeholder-color"],
-            }}
-          />
+          {/* Redesign v2 (full reskin, "screenshot 3" reference —
+              "colorful pill bottom nav"): the active tab's icon now sits on
+              a filled brand-blue pill instead of the earlier flat black/
+              gray monochrome look (which itself replaced an even older
+              plain-blue-tint icon). Icon tints white on the pill so it
+              stays legible against the solid fill; inactive icons keep the
+              same neutral placeholder tint as before. Not pink — the
+              reskin reference's color is swapped for Saveur's own brand
+              blue (color-primary-100) per explicit instruction. */}
+          <View style={focused ? styles.activePill : undefined}>
+            <Icon
+              pack="assets"
+              name={!focused ? icon : `${icon}Active`}
+              style={{
+                width: 22,
+                height: 22,
+                tintColor: focused
+                  ? theme["text-primary-color"]
+                  : theme["text-placeholder-color"],
+              }}
+            />
+          </View>
         </View>
       );
     },
@@ -330,13 +333,31 @@ const themedStyles = StyleService.create({
   },
   tabBarStyle: {
     overflow: "hidden",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     marginTop: -46,
     paddingTop: 12,
     backgroundColor: "background-basic-color-2",
     borderColor: "transparent",
-    borderTopWidth: -1
+    borderTopWidth: -1,
+    // Redesign v2 (full reskin): soft ambient lift above the tab bar
+    // (matches globalStyle.shadowFade) instead of the flat borderless bar
+    // from the earlier ZipRecruiter direction — a visible seam between the
+    // bar and the screen content above it is part of the reference look.
+    shadowColor: "rgba(31, 41, 84, 0.35)",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  // The colored pill behind the active tab's icon (see ButtonTab above).
+  activePill: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "color-primary-100",
+    justifyContent: "center",
+    alignItems: "center",
   },
   styleLabel: {
     fontFamily: "PlusJakartaSans-Medium",

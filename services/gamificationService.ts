@@ -79,8 +79,15 @@ const readStreakCache = async (): Promise<GamificationStreakProps | null> => {
   }
 };
 
-const readLeaderboardCache = async (): Promise<LeaderboardEntryProps[] | null> => {
-  const raw = await AsyncStorage.getItem(EKeyAsyncStorage.gamificationLeaderboard);
+// Cache key is period-specific (`${base}:${period}`) — the three tabs are
+// genuinely different rankings (see getLeaderboard's `period` param below),
+// so a single shared cache slot would show the Daily tab's last-fetched
+// list while offline on the Weekly tab and vice versa.
+const leaderboardCacheKey = (period: LeaderboardPeriod) =>
+  `${EKeyAsyncStorage.gamificationLeaderboard}:${period}`;
+
+const readLeaderboardCache = async (period: LeaderboardPeriod): Promise<LeaderboardEntryProps[] | null> => {
+  const raw = await AsyncStorage.getItem(leaderboardCacheKey(period));
   if (!raw) return null;
   try {
     return JSON.parse(raw) as LeaderboardEntryProps[];
@@ -126,19 +133,30 @@ export async function checkin(): Promise<GamificationStreakProps> {
   return streak;
 }
 
+export type LeaderboardPeriod = 'all' | 'daily' | 'weekly' | 'monthly';
+
 /**
- * GET /api/v1/gamification/leaderboard. Falls back to the last-known cached
- * list on a network failure, same offline-read-fallback pattern as the rest
- * of this file.
+ * GET /api/v1/gamification/leaderboard?period=. `period` selects which
+ * ranking the backend returns — "all" (default, lifetime User.xp, the
+ * original behavior) or "daily"/"weekly"/"monthly" (XP earned within that
+ * calendar window only, backed by the new XpEvent ledger — see that
+ * endpoint's own docstring on Saveur-Backend for the exact cutoffs). Backs
+ * the Daily/Weekly/Monthly tabs on src/home/Leaderboard.tsx, which were
+ * previously presentational only (every tab showed the same all-time list).
+ * Falls back to the last-known cached list *for that same period* on a
+ * network failure, same offline-read-fallback pattern as the rest of this
+ * file.
  */
-export async function getLeaderboard(): Promise<LeaderboardEntryProps[]> {
+export async function getLeaderboard(period: LeaderboardPeriod = 'all'): Promise<LeaderboardEntryProps[]> {
   try {
-    const {data} = await apiClient.get<LeaderboardEntryWire[]>('/api/v1/gamification/leaderboard');
+    const {data} = await apiClient.get<LeaderboardEntryWire[]>('/api/v1/gamification/leaderboard', {
+      params: {period},
+    });
     const entries = data.map(fromLeaderboardWire);
-    await AsyncStorage.setItem(EKeyAsyncStorage.gamificationLeaderboard, JSON.stringify(entries));
+    await AsyncStorage.setItem(leaderboardCacheKey(period), JSON.stringify(entries));
     return entries;
   } catch (error) {
-    const cached = await readLeaderboardCache();
+    const cached = await readLeaderboardCache(period);
     if (cached) return cached;
     throw error;
   }

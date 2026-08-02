@@ -178,7 +178,7 @@ export default PracticalScenarioSetup;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
   typeChip: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {View} from 'react-native';
-import {StyleService, useStyleSheet, useTheme, Icon, Button} from '@ui-kitten/components';
+import {StyleService, useStyleSheet, useTheme, Icon, Button, Input} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
@@ -10,6 +10,7 @@ import ApplicationItem from './ApplicationItem';
 import TitleList from '../Components/TitleList';
 import {globalStyle} from 'styles/globalStyle';
 import {renderCenteredLabel} from 'utils/buttonLabel';
+import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
 import {MainBottomTabStackParamList, RootStackParamList} from 'navigation/types';
 import {Application_Stage_Enum, JobApplicationProps, Request_Type_Enum} from 'constants/Types';
 import * as applicationsService from 'services/applicationsService';
@@ -42,6 +43,7 @@ const ApplicationsTab = memo(() => {
   const [applications, setApplications] = React.useState<JobApplicationProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [query, setQuery] = React.useState('');
 
   React.useEffect(() => {
     if (!isPremium) {
@@ -70,16 +72,36 @@ const ApplicationsTab = memo(() => {
     };
   }, [isPremium]);
 
+  // Client-side search — matches company, role, location, or the stage's
+  // display label (not the raw enum value, for the same translated-locale
+  // reason as PracticeHistoryTab's search).
+  const q = query.trim().toLowerCase();
+  const matchesQuery = React.useCallback(
+    (item: JobApplicationProps) => {
+      if (!q) return true;
+      const haystack = [item.company, item.role, item.location, getApplicationStageLabel(item.stage, t)]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    },
+    [q, t],
+  );
+
   const activeApplications = applications.filter(
     item =>
-      item.stage === Application_Stage_Enum.Applied ||
-      item.stage === Application_Stage_Enum.Interviewing,
+      (item.stage === Application_Stage_Enum.Applied ||
+        item.stage === Application_Stage_Enum.Interviewing) &&
+      matchesQuery(item),
   );
   const closedApplications = applications.filter(
     item =>
-      item.stage === Application_Stage_Enum.Offer ||
-      item.stage === Application_Stage_Enum.Rejected,
+      (item.stage === Application_Stage_Enum.Offer ||
+        item.stage === Application_Stage_Enum.Rejected) &&
+      matchesQuery(item),
   );
+  const isFiltering = q.length > 0;
+  const hasAnyApplications = applications.length > 0;
 
   const onSeeAllPast = () => {
     navigate('Interviews', {
@@ -138,22 +160,39 @@ const ApplicationsTab = memo(() => {
 
   return (
     <View style={styles.container}>
-      <>
-        <TitleList current dataLength={activeApplications.length} />
-        {activeApplications.map((item, i) => {
-          return <ApplicationItem item={item} key={i} />;
-        })}
-      </>
-      <>
-        <TitleList
-          dataLength={closedApplications.length}
-          current={false}
-          onSeeAll={onSeeAllPast}
+      {hasAnyApplications ? (
+        <Input
+          placeholder={t('request:search_applications', {defaultValue: 'Search by company, role, or location…'})}
+          value={query}
+          onChangeText={setQuery}
+          style={styles.searchInput}
+          accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
         />
-        {closedApplications.map((item, i) => {
-          return <ApplicationItem item={item} key={i} />;
-        })}
-      </>
+      ) : null}
+      {isFiltering && activeApplications.length === 0 && closedApplications.length === 0 ? (
+        <Text category="h8-s" status="placeholder" center mt={24}>
+          {t('request:no_applications_match', {defaultValue: 'No applications match your search.'})}
+        </Text>
+      ) : (
+        <>
+          <>
+            <TitleList current dataLength={activeApplications.length} />
+            {activeApplications.map((item, i) => {
+              return <ApplicationItem item={item} key={i} />;
+            })}
+          </>
+          <>
+            <TitleList
+              dataLength={closedApplications.length}
+              current={false}
+              onSeeAll={onSeeAllPast}
+            />
+            {closedApplications.map((item, i) => {
+              return <ApplicationItem item={item} key={i} />;
+            })}
+          </>
+        </>
+      )}
     </View>
   );
 });
@@ -166,13 +205,20 @@ const themedStyles = StyleService.create({
     paddingTop: 32,
   },
   lockCard: {
-    // Added the app's own border-only card treatment (product follow-up,
-    // app-wide consistency pass) — was unbordered/unstyled, floating
-    // directly on the screen instead of reading as a defined card the way
-    // every other lock/upgrade prompt in the app does.
+    // Added the app's own card treatment (product follow-up, app-wide
+    // consistency pass) — was unbordered/unstyled, floating directly on
+    // the screen instead of reading as a defined card the way every other
+    // lock/upgrade prompt in the app does.
     ...globalStyle.card,
     paddingHorizontal: 24,
     paddingVertical: 32,
-    backgroundColor: 'transparent',
+    // `card`'s shadow needs an opaque fill to render correctly on Android
+    // (was 'transparent') — this renders on a plain <Flex> with no
+    // `level` prop, so the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
+  },
+  searchInput: {
+    ...globalStyle.inputField,
+    marginBottom: 20,
   },
 });

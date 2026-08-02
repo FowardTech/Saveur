@@ -16,5 +16,13 @@
   "ai_coach_subtitle": "Posez-moi n'importe quelle question sur votre recherche d'emploi — je suis là pour vous aider.",
   "salary_negotiation_description": "Entraînez-vous à contrer une offre fictive sur plusieurs tours.",
   "salary_negotiation_title": "Simulateur de négociation salariale",
-  "suggested_topics": "Sujets suggérés"
+  "suggested_topics": "Sujets suggérés",
+  "attach_resume_files": "Joindre CV / fichiers",
+  "coach_unavailable_body": "Impossible de contacter votre coach IA. Veuillez réessayer.",
+  "coach_unavailable_title": "Coach indisponible",
+  "learn_more_about_topic": "En savoir plus sur {{topic}}",
+  "mode_text": "Texte",
+  "mode_voice": "Voix",
+  "start_video_practice": "Démarrer une pratique vidéo",
+  "view_my_progress": "Voir ma progression"
 }

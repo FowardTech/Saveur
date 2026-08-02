@@ -8,6 +8,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import {globalStyle} from 'styles/globalStyle';
 import * as biometricAuthService from 'services/biometricAuthService';
 import * as twoFactorService from 'services/twoFactorService';
 import {AuthContext} from '../../AuthContext';
@@ -164,7 +165,7 @@ const SecuritySettings = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation title={t('more:security', {defaultValue: 'Security'})} accessoryLeft={<NavigationAction />} />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h9-s" bold mb={12}>
           {t('more:biometric_section_title', {defaultValue: 'App Lock'})}
         </Text>
@@ -216,7 +217,7 @@ const SecuritySettings = memo(() => {
               keyboardType="number-pad"
               maxLength={6}
               placeholder="000000"
-              style={{marginBottom: 12}}
+              style={[globalStyle.inputField, {marginBottom: 12}]}
             />
             <Flex justify="space-between" itemsCenter>
               <Button appearance="ghost" status="basic" disabled={twoFABusy} onPress={onCancelEnable2FA}>

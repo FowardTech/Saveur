@@ -215,6 +215,16 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('JobPreferences'),
     },
     {
+      title: t('more:job_alerts', {defaultValue: 'Job Alerts'}),
+      icon: 'notification',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      featureKey: 'job_alerts',
+      badgeCount: badges?.jobAlertsUnreadCount,
+      onPress: () => navigate('JobAlerts'),
+    },
+    {
       title: t('more:learning_courses', {defaultValue: 'Learning Courses'}),
       icon: 'tutoring',
       status: 'twitter',
@@ -258,16 +268,6 @@ const MoreSrc = memo(() => {
       iconColor: ICON_GLYPH,
       featureKey: 'referral_program',
       onPress: () => navigate('ReferralProgram'),
-    },
-    {
-      title: t('more:job_alerts', {defaultValue: 'Job Alerts'}),
-      icon: 'notification',
-      status: 'twitter',
-      iconBackgroundColor: ICON_BG,
-      iconColor: ICON_GLYPH,
-      featureKey: 'job_alerts',
-      badgeCount: badges?.jobAlertsUnreadCount,
-      onPress: () => navigate('JobAlerts'),
     },
     {
       title: t('more:shared_with_me', {defaultValue: 'Shared with Me'}),

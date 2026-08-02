@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {ActivityIndicator, Linking} from 'react-native';
+import {ActivityIndicator, Linking, View} from 'react-native';
 import Video from 'react-native-video';
 import {
   TopNavigation,
@@ -28,6 +28,7 @@ import {SharedContentDetailProps} from 'services/sharesService';
 import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import {formatMs} from 'services/interviewReplayService';
 import CtaButton from 'components/CtaButton';
+import StarRating, {percentToStars} from 'components/StarRating';
 
 const SCORE_KEYS = [
   'confidence', 'communication', 'technical', 'leadership',
@@ -132,17 +133,28 @@ const SharedContentDetail = memo(() => {
                     {t('find:overall_score', {defaultValue: 'Overall Score'})}
                   </Text>
                 </Flex>
+                {/* Redesign v2 (full reskin, components/StarRating.tsx) —
+                    quick-glance read on this read-only viewer, same content
+                    the owner sees on InterviewFeedback.tsx as a progress
+                    ring instead. Additive next to the exact percentage
+                    above, not a replacement. */}
+                <StarRating value={percentToStars(content.overall_score ?? 0)} size={16} style={{marginTop: 10}} />
               </Layout>
 
               {hasVideo ? (
-                <Layout level="2" style={[styles.card, {padding: 0, overflow: 'hidden'}]}>
-                  <Video
-                    source={{uri: content.video_url}}
-                    style={styles.video}
-                    controls
-                    resizeMode="cover"
-                    paused
-                  />
+                // Two-layer split (see styles.videoCardInner's comment) —
+                // a single view can't both cast `card`'s shadow and clip
+                // the Video to the rounded corners via overflow:'hidden'.
+                <Layout level="2" style={[styles.card, {padding: 0}]}>
+                  <View style={styles.videoCardInner}>
+                    <Video
+                      source={{uri: content.video_url}}
+                      style={styles.video}
+                      controls
+                      resizeMode="cover"
+                      paused
+                    />
+                  </View>
                 </Layout>
               ) : null}
 
@@ -171,9 +183,18 @@ const SharedContentDetail = memo(() => {
                     <Text category="h9-s" style={{textTransform: 'capitalize'}}>
                       {key.replace('_', ' ')}
                     </Text>
-                    <Text category="h9" bold>
-                      {content.scores?.[key] ?? 0}%
-                    </Text>
+                    <Flex itemsCenter>
+                      {/* Redesign v2 (full reskin, components/StarRating.tsx)
+                          — per-category quality score in a detailed
+                          breakdown table; added as a quick-glance summary
+                          next to the exact percentage rather than replacing
+                          it, same treatment as InterviewFeedback.tsx's own
+                          STAR Breakdown. */}
+                      <StarRating value={percentToStars(content.scores?.[key] ?? 0)} size={12} style={{marginRight: 8}} />
+                      <Text category="h9" bold>
+                        {content.scores?.[key] ?? 0}%
+                      </Text>
+                    </Flex>
                   </Flex>
                 ))}
               </Layout>
@@ -208,17 +229,25 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    // No fill — border-only (app-wide "cards are transparent" pass).
-    // Explicit 'transparent' since every usage is <Layout level="2" .../>,
-    // whose own level mapping would otherwise still fill it.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
   messageCard: {
     ...globalStyle.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
-    backgroundColor: 'transparent',
+    // Same as `card` above — renders via <Layout level="2" .../>.
+  },
+  // Two layers, not one: overflow:'hidden' (needed to clip the Video to
+  // the card's rounded corners) would also clip `card`'s own shadow if
+  // applied to the same view — see HomeSrc.tsx's homeBannerCard/
+  // homeBannerCardInner for the same split. Outer is `styles.card` +
+  // padding:0 (see JSX); this inner carries the actual clip + Video.
+  videoCardInner: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
   video: {
     width: '100%',

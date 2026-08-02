@@ -16,6 +16,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import StarRating from 'components/StarRating';
 import { globalStyle } from 'styles/globalStyle';
 import * as appRatingService from 'services/appRatingService';
 import { AppRatingProps } from 'services/appRatingService';
@@ -79,21 +80,11 @@ const MyRatings = memo(() => {
           ratings.map(r => (
             <Layout key={r.id} level="2" style={styles.ratingCard}>
               <Flex justify="space-between" itemsCenter mb={r.comment ? 8 : 0}>
-                <Flex justify="flex-start">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <Icon
-                      key={n}
-                      pack="eva"
-                      name={n <= r.score ? 'star' : 'star-outline'}
-                      style={{
-                        width: 16,
-                        height: 16,
-                        marginRight: 2,
-                        tintColor: n <= r.score ? theme['color-warning-500'] : theme['text-hint-color'],
-                      }}
-                    />
-                  ))}
-                </Flex>
+                {/* Redesign v2 (full reskin): replaced this screen's own
+                    hand-rolled star loop with the shared read-only
+                    components/StarRating.tsx — same visual result, one
+                    fewer place duplicating the same star-fill logic. */}
+                <StarRating value={r.score} size={16} />
                 <Text category="h10" status="placeholder">
                   {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
                 </Text>
@@ -119,6 +110,8 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
 });

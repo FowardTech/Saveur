@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Modal, Share, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Share, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -191,7 +191,10 @@ const ResumeVariants = memo(() => {
       </Content>
 
       <Modal visible={showCreate} transparent animationType="slide" onRequestClose={() => setShowCreate(false)}>
-        <View style={styles.modalOverlay}>
+        {/* Bug report: "the keyboard is covering the input field while
+            typing" — a raw <Modal> bottom sheet does nothing on its own
+            when the keyboard opens, same issue as ShareToUserModal.tsx. */}
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Layout level="1" style={styles.modalSheet}>
             <Text category="h7" bold mb={16}>{t('more:new_variant', { defaultValue: '+ New Variant' })}</Text>
             <Input
@@ -219,7 +222,7 @@ const ResumeVariants = memo(() => {
               {t('common:cancel', { defaultValue: 'Cancel' })}
             </Button>
           </Layout>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </Container>
   );
@@ -235,9 +238,11 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',

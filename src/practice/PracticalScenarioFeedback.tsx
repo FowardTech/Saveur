@@ -23,6 +23,7 @@ import { RootStackParamList } from 'navigation/types';
 import * as practicalService from 'services/practicalService';
 import { PracticalSessionDetail } from 'services/practicalService';
 import CtaButton from 'components/CtaButton';
+import StarRating, { percentToStars } from 'components/StarRating';
 
 // Judgment scoring across the whole decision path — generated in the
 // background right after the scenario's final choice (see
@@ -108,6 +109,13 @@ const PracticalScenarioFeedback = memo(() => {
                   directly instead, same fix as JobAlerts.tsx's daily-limit
                   digit. */}
               <Text category="h2" bold center style={{color: theme['color-primary-500']}}>{feedback.overall}</Text>
+              {/* Redesign v2 (full reskin, components/StarRating.tsx) —
+                  quick-glance read on the same overview card as the exact
+                  number above, same idea as MyRatings.tsx's read-only star
+                  row. Additive, not a replacement: the precise 0-100 number
+                  stays since "Overall judgment score" is the headline stat
+                  on this screen. */}
+              <StarRating value={percentToStars(feedback.overall)} size={18} style={{ alignSelf: 'center', marginTop: 6 }} />
               <Text category="h9-s" status="placeholder" center mt={4}>
                 {t('find:practical_overall_score', { defaultValue: 'Overall judgment score' })}
               </Text>
@@ -115,14 +123,25 @@ const PracticalScenarioFeedback = memo(() => {
           ) : null}
 
           <View style={styles.statsGrid}>
-            {RUBRIC_KEYS.map(rk => (
-              <Layout level="2" key={rk.key} style={styles.statCard}>
-                <Text category="h3" bold center>{feedback?.[rk.key] ?? '—'}</Text>
-                <Text category="h10" status="placeholder" center mt={4}>
-                  {t(`find:${rk.labelKey}`, { defaultValue: rk.fallback })}
-                </Text>
-              </Layout>
-            ))}
+            {RUBRIC_KEYS.map(rk => {
+              const val = feedback?.[rk.key];
+              return (
+                <Layout level="2" key={rk.key} style={styles.statCard}>
+                  <Text category="h3" bold center>{val ?? '—'}</Text>
+                  <Text category="h10" status="placeholder" center mt={4}>
+                    {t(`find:${rk.labelKey}`, { defaultValue: rk.fallback })}
+                  </Text>
+                  {/* Redesign v2 (full reskin, components/StarRating.tsx) —
+                      each of these IS a 0-100 quality/judgment score (not a
+                      raw count), so a quick-glance star row fits alongside
+                      the exact number the same way it does on the
+                      overall-score card above. */}
+                  {val != null ? (
+                    <StarRating value={percentToStars(val)} size={11} style={{ alignSelf: 'center', marginTop: 6 }} />
+                  ) : null}
+                </Layout>
+              );
+            })}
           </View>
 
           {feedback?.summary ? (
@@ -209,19 +228,18 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     paddingVertical: 16,
     margin: 4,
-    // No fill — border-only (app-wide "cards are transparent" pass).
-    // Explicit 'transparent' since this renders via <Layout level="2" .../>,
-    // whose own level mapping would otherwise still fill it.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
-  // Was a flat gray fill with no border at all — brought in line with
-  // every other list row in the app (globalStyle.card's border, no fill)
-  // for the same app-wide consistency pass.
   noteRow: {
     ...globalStyle.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
-    backgroundColor: 'transparent',
+    // `card`'s shadow needs an opaque fill to render correctly on Android
+    // (was 'transparent') — this renders on a plain <Flex> with no
+    // `level` prop, so the fill has to live here.
+    backgroundColor: 'background-basic-color-2',
   },
 });

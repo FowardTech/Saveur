@@ -56,7 +56,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
-                        <!-- Was brand blue (#2574FF) — changed to the same very light gray
+                        <!-- Was brand blue (#0063f8) — changed to the same very light gray
                              baked into assets/images/applogo.png (#F4F4F4) so the new blue
                              "S" mark (SplashLogo, regenerated from applogo.png) is actually
                              visible instead of a blue-on-blue mark. See android/.../colors.xml's

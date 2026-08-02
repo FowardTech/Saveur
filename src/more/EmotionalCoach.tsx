@@ -184,20 +184,20 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     alignItems: 'center',
   },
-  input: { borderRadius: 12 },
+  input: { ...globalStyle.inputField },
   card: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="2"` background shows through instead.
   },
-  // Was a flat gray fill with no border — brought in line with every
-  // other list row in the app (globalStyle.card's border, no fill).
   historyRow: {
     ...globalStyle.card,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
-    backgroundColor: 'transparent',
+    // Same as `card` above — renders via <Layout level="2" .../>.
   },
 });

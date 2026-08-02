@@ -208,8 +208,12 @@ const ApplicationDetails = memo(() => {
         <Text category="h8" status={'placeholder'} bold mb={8}>
           {t('request:when')}
         </Text>
+        {/* dayjs.utc(...) — see ApplicationItem.tsx's comment on the same
+            fix; appliedDate is a UTC-midnight-encoded calendar date, not a
+            real moment in time, so it must not be reinterpreted in the
+            device's local timezone. */}
         <Text category="h7" bold mb={24}>
-          {dayjs(application.appliedDate).format('MMM DD, YYYY')}
+          {dayjs.utc(application.appliedDate).format('MMM DD, YYYY')}
         </Text>
 
         {/* Stage tracker */}
@@ -304,7 +308,7 @@ const themedStyles = StyleService.create({
   content: {
     ...globalStyle.topBorder16,
     paddingHorizontal: 24,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'background-basic-color-2',
     paddingBottom: 80,
   },
   stageDot: {

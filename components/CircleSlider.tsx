@@ -8,7 +8,7 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { ReText } from 'react-native-redash';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { useTheme } from '@ui-kitten/components';
 import Flex from './Flex';
 import Text from './Text';
@@ -20,6 +20,13 @@ interface CircleProps {
   progressStokeColor: string | ColorValue;
   d: number;
   strokeWidth: number;
+  // Redesign v2 (full reskin, "screenshot 3" reference — gradient rings):
+  // optional two-stop gradient stroke, additive on top of the existing
+  // solid `progressStokeColor` API so every current call site keeps
+  // working unchanged. When both are provided, they win over
+  // progressStokeColor.
+  progressGradientFrom?: string;
+  progressGradientTo?: string;
 }
 export default function CircleProgressBar({
   value,
@@ -27,8 +34,12 @@ export default function CircleProgressBar({
   stokeColor,
   d,
   strokeWidth = 4,
+  progressGradientFrom,
+  progressGradientTo,
 }: CircleProps) {
   const theme = useTheme();
+  const useGradient = !!progressGradientFrom && !!progressGradientTo;
+  const gradientId = React.useId();
   const progress = useSharedValue(0);
   // Keep the stroke fully inside the d x d SVG canvas: R must leave room for
   // half the strokeWidth on every side, otherwise the ring's outer edge
@@ -65,6 +76,14 @@ export default function CircleProgressBar({
           { width: d, height: d, transform: [{ rotateZ: '-90deg' }] },
         ]}
       >
+        {useGradient ? (
+          <Defs>
+            <SvgLinearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor={progressGradientFrom} />
+              <Stop offset="100%" stopColor={progressGradientTo} />
+            </SvgLinearGradient>
+          </Defs>
+        ) : null}
         <Circle
           cx={d / 2}
           cy={d / 2}
@@ -77,7 +96,7 @@ export default function CircleProgressBar({
           cx={d / 2}
           cy={d / 2}
           r={R}
-          stroke={progressStokeColor}
+          stroke={useGradient ? `url(#${gradientId})` : progressStokeColor}
           strokeWidth={strokeWidth}
           strokeDasharray={CIRCLE_LENGTH}
           animatedProps={animatedProps}

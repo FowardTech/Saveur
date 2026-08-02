@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { AppState, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppState, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useTheme } from '@ui-kitten/components';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Text from 'components/Text';
+import { Images } from 'assets/images';
 import * as coachService from 'services/coachService';
 import { CoachUserContext } from 'services/coachService';
 import * as speechService from 'services/speechService';
@@ -25,9 +26,9 @@ import * as speechService from 'services/speechService';
 // talks with the AI... like a chat but a voice response... a conversation
 // between a coach and a student kind."
 //
-// Visuals deliberately reuse the exact same pulsing gradient orb used by
-// the mock-interview Voice mode (src/practice/LiveInterviewSession.tsx) —
-// same ORB_SIZE/HALO_SIZE, same gradient colors, same reanimated pulse
+// Visuals deliberately reuse the exact same pulsing orb used by the
+// mock-interview Voice mode (src/practice/LiveInterviewSession.tsx) — same
+// ORB_SIZE/HALO_SIZE, same Images.voiceOrb image, same reanimated pulse
 // approach — so this feels like the same app's voice UI, not a
 // one-off screen. The first version of this screen used the shared Flex
 // component with `vertical center` for layout, which doesn't do what it
@@ -248,23 +249,19 @@ const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }
         style={styles.orbWrap}>
         <Animated.View style={[styles.halo, haloStyle]}>
           <LinearGradient
-            colors={['rgba(124,109,255,0.35)', 'rgba(90,150,255,0.05)']}
+            colors={['rgba(90,150,255,0.35)', 'rgba(90,150,255,0.05)']}
             style={styles.haloFill}
           />
         </Animated.View>
+        {/* Redesign (explicit product request — "replace the pink circle
+            design... with image 4"): was a two-layer purple/pink
+            LinearGradient sphere (base gradient + a glossy highlight
+            overlay, both simulating a 3D sphere out of flat color); now a
+            real image of one (Images.voiceOrb — see assets/images/index.ts
+            for the transparency/sizing notes), so no more hand-rolled
+            highlight layer needed, the image already has that baked in. */}
         <Animated.View style={[styles.orb, orbStyle]}>
-          <LinearGradient
-            colors={['#6E8CFF', '#9B7BFF', '#C58BFF']}
-            start={{ x: 0.1, y: 0.1 }}
-            end={{ x: 0.9, y: 0.9 }}
-            style={styles.orbFill}
-          />
-          <LinearGradient
-            colors={['rgba(255,255,255,0.55)', 'rgba(255,255,255,0)']}
-            start={{ x: 0.25, y: 0.15 }}
-            end={{ x: 0.7, y: 0.6 }}
-            style={styles.orbHighlight}
-          />
+          <Image source={Images.voiceOrb} style={styles.orbImage} resizeMode="contain" />
         </Animated.View>
       </TouchableOpacity>
 
@@ -334,14 +331,14 @@ const styles = StyleSheet.create({
   orb: {
     width: ORB_SIZE,
     height: ORB_SIZE,
-    borderRadius: ORB_SIZE / 2,
-    overflow: 'hidden',
   },
-  orbFill: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  orbHighlight: {
-    ...StyleSheet.absoluteFillObject,
+  // No overflow/borderRadius clipping needed anymore — Images.voiceOrb is
+  // already a circular image on a transparent background (was needed for
+  // the old two-layer LinearGradient version, which was a flat rectangle
+  // that had to be clipped into a circle).
+  orbImage: {
+    width: '100%',
+    height: '100%',
   },
   interruptPill: {
     marginTop: 28,

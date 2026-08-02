@@ -85,8 +85,15 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
           <Flex justify="flex-start" itemsCenter>
             <Icon pack="assets" name="calendar" style={styles.icon} />
             <Text category="h8-s" ml={8}>
+              {/* dayjs.utc(...), not local dayjs(...) — item.appliedDate is
+                  a plain calendar date encoded as UTC midnight by the
+                  backend (see Saveur-Backend's app/api/tracker.py
+                  _to_wire's comment); formatting it in the device's local
+                  timezone rolled back to the previous day on any device
+                  behind UTC (bug report: "user applied today and it's
+                  showing July 31"). */}
               {t('request:applied-on', {
-                date: dayjs(item.appliedDate).format('MMM DD, YYYY'),
+                date: dayjs.utc(item.appliedDate).format('MMM DD, YYYY'),
               })}
             </Text>
           </Flex>
@@ -107,13 +114,9 @@ const themedStyles = StyleService.create({
   container: {
     ...globalStyle.card,
     marginBottom: 24,
-    // Explicit 'transparent' (app-wide "cards are transparent" pass) —
-    // this renders via <Layout level="1" style={styles.container}>, whose
-    // own eva level="1" mapping would otherwise still fill it opaque gray,
-    // since the passed style prop is applied after Layout's internal eva
-    // style in the merge order and would otherwise be the one thing
-    // missing to make this card match every other bordered card in the app.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real shadow again, which
+    // needs an opaque fill on Android — dropped the 'transparent' override
+    // so this Layout's own `level="1"` background shows through instead.
   },
   avatar: {
     marginRight: 4,

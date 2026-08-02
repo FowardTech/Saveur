@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Modal, View, TouchableOpacity, ActivityIndicator, Alert} from 'react-native';
+import {Modal, View, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform} from 'react-native';
 import {Icon, useTheme, Input, Button} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
@@ -160,7 +160,15 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      {/* Bug report: "the keyboard is covering the input field while
+          typing" — a raw <Modal> (unlike Content's own KeyboardAwareScroll
+          convention) does nothing on its own when the keyboard opens; the
+          sheet stayed pinned to the bottom and the keyboard just slid up
+          on top of it, covering the username field. Same fix/convention as
+          AddMorePayment.tsx's own KeyboardAvoidingView. */}
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[styles.sheet, {backgroundColor: theme['background-basic-color-1']}]}>
           <Flex justify="space-between" itemsCenter mb={16}>
             <Text category="h7" bold>
@@ -243,7 +251,7 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
             </Button>
           )}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 });

@@ -1,18 +1,21 @@
 import React from 'react';
-import {Button, ButtonProps, Spinner, Text as KittenText, useTheme} from '@ui-kitten/components';
+import { Button, ButtonProps, Spinner, Text as KittenText, useTheme } from '@ui-kitten/components';
+import { globalStyle } from 'styles/globalStyle';
 
-// Primary call-to-action button (product request item — explicit
-// ZipRecruiter reference for the overall redesign: bordered cards, no box
-// shadows, clean layout). Fully rounded, completely flat (no shadow/
-// elevation — see styles/globalStyle.ts's shadowBtn, now an intentional
-// no-op) but keeps Saveur's own established brand blue fill + white text —
-// an earlier pass tried a mint-green fill to mirror the reference's
-// "Quick Apply" color too, but that was reverted per explicit follow-up
-// ("i did not ask you to change the color of buttons to green, revert
-// back to the blue color they were before"). Since every primary button
-// app-wide now renders through this one component, this file is the
-// single place that color lives — no other file needed touching to
-// revert it.
+// Primary call-to-action button (full reskin, product request item —
+// "screenshot 3" reference: soft shadows, big rounded cards, colorful pill
+// nav). Fully rounded with a soft brand-blue-tinted lift (see
+// styles/globalStyle.ts's shadowBtn) — was completely flat for the earlier
+// ZipRecruiter-reference direction; that flatness is now replaced by this
+// softer look. Keeps Saveur's own established brand blue fill + white
+// text — an earlier pass tried a mint-green fill to mirror a different
+// reference's "Quick Apply" color, but that was reverted per explicit
+// follow-up ("i did not ask you to change the color of buttons to green,
+// revert back to the blue color they were before") and the "not pink,
+// that's not our primary color" instruction for this reskin keeps it that
+// way. Since every primary button app-wide now renders through this one
+// component, this file is the single place that color/shadow lives — no
+// other file needs touching to adjust it.
 //
 // A thin wrapper around UI Kitten's own Button rather than a fully custom
 // component, so every prop that already works on <Button> (accessoryLeft/
@@ -37,7 +40,7 @@ export interface CtaButtonProps extends Omit<ButtonProps, 'status' | 'appearance
 
 const renderLoadingSpinner = () => <Spinner size="small" status="basic" />;
 
-const CtaButton: React.FC<CtaButtonProps> = ({loading, disabled, style, accessoryLeft, children, ...rest}) => {
+const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accessoryLeft, children, ...rest }) => {
   const theme = useTheme();
   return (
     <Button
@@ -46,16 +49,15 @@ const CtaButton: React.FC<CtaButtonProps> = ({loading, disabled, style, accessor
       accessoryLeft={loading ? renderLoadingSpinner : accessoryLeft}
       style={[
         {
-          // Saveur's established brand blue (matches the shadowColor the
-          // old globalStyle.shadowBtn used to glow with, #2574FF -- same
-          // blue, just without the glow now) -- NOT theme['color-primary-
+          // Saveur's established brand blue -- NOT theme['color-primary-
           // 500'], which resolves to Eva's own default blue (#3366FF) and
           // would be a subtly different shade than what buttons actually
           // looked like before this whole redesign pass started.
           backgroundColor: theme['color-primary-100'],
           borderColor: theme['color-primary-100'],
-          borderRadius: 14,
+          borderRadius: 16,
         },
+        globalStyle.shadowBtn,
         style,
       ]}>
       {/* UI Kitten's Button has no textStyle/labelColor prop — the label
@@ -82,9 +84,9 @@ const CtaButton: React.FC<CtaButtonProps> = ({loading, disabled, style, accessor
           button's white/bold styling first so the centered label still
           picks up CtaButton's look instead of losing it. */}
       {evaProps => {
-        const labelStyle = [evaProps?.style, {color: theme['text-primary-color'], fontWeight: '700' as const}];
+        const labelStyle = [evaProps?.style, { color: theme['text-primary-color'], fontWeight: '700' as const }];
         return typeof children === 'function'
-          ? (children as (props: {style?: unknown}) => React.ReactElement)({style: labelStyle})
+          ? (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle })
           : <KittenText {...evaProps} style={labelStyle}>{children as React.ReactNode}</KittenText>;
       }}
     </Button>

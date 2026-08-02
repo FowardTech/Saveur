@@ -16,5 +16,13 @@
   "ai_coach_subtitle": "关于求职的任何问题都可以问我 — 我随时为您提供帮助。",
   "salary_negotiation_description": "通过几轮对话，练习如何应对模拟录用报价并提出还价。",
   "salary_negotiation_title": "薪资谈判模拟器",
-  "suggested_topics": "推荐话题"
+  "suggested_topics": "推荐话题",
+  "attach_resume_files": "附加简历/文件",
+  "coach_unavailable_body": "无法连接到您的 AI 教练，请重试。",
+  "coach_unavailable_title": "教练暂不可用",
+  "learn_more_about_topic": "了解更多关于{{topic}}的信息",
+  "mode_text": "文字",
+  "mode_voice": "语音",
+  "start_video_practice": "开始视频练习",
+  "view_my_progress": "查看我的进度"
 }

@@ -58,6 +58,27 @@ export const Images = {
   noBooking: require('./img_no_booking.png'),
   noInterview: require('./img_no_interview.png'),
   bgSuggestion: require('./img_bg_suggestion.png'),
+  // Product-supplied replacement (explicit request: "replace the pink
+  // circle design... with image 4") for the AI-coach "listening/thinking/
+  // speaking" orb — was a purple/pink LinearGradient sphere (VoiceCoachView.
+  // tsx and src/practice/LiveInterviewSession.tsx both rendered the exact
+  // same ['#6E8CFF', '#9B7BFF', '#C58BFF'] gradient), swapped for this real
+  // photographed/rendered glassy blue sphere image instead — genuinely
+  // transparent PNG (only the sphere itself is opaque, verified via its
+  // alpha channel), @1x/@2x/@3x provided at 240/480/720px so it stays
+  // crisp at this app's largest current orb size (200px, LiveInterviewSession.
+  // tsx's ORB_SIZE) with headroom.
+  voiceOrb: require('./img_voice_orb.png'),
+  // Product-supplied replacement for the homescreen XP check-in card's
+  // gamification badge (was the eva "award" icon, tinted gold) — a real
+  // 3D-rendered gold medal/ribbon graphic. Genuinely transparent PNG
+  // (verified via its alpha channel — corner pixel is (255,255,255,0),
+  // fully transparent, not an opaque white/black square), tightly cropped
+  // to the medal's own bounding box plus a small margin. @1x/@2x/@3x at
+  // 36x46/72x92/108x138 — the medal's own aspect ratio (~36:46, taller
+  // than wide because of the ribbon tails) rather than a square, unlike
+  // most of this app's other small icon assets.
+  xpMedal: require('./img_xp_medal.png'),
   creditCard: require('./img_credit_card.png'),
   shape: require('./img_shape.png'),
   createPost: require('./img_create_post.png'),

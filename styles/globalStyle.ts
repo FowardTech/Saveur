@@ -1,64 +1,50 @@
 import {Platform, StyleSheet} from 'react-native';
 
-// Shared shadow preset used by `shadowFade` (kept for existing call sites
-// that still explicitly want a soft lift, e.g. modals/sheets) — NOT used by
-// `card` below anymore. See cardBorder's own comment for why.
+// Redesign v2 (full reskin, product request item — explicit reference:
+// "screenshot 3", described as soft shadows / big rounded cards / colorful
+// pill nav, replacing the earlier flat-bordered ZipRecruiter direction
+// above). `card` goes back to a real soft shadow instead of a hairline
+// border — tuned lighter/softer than the pre-ZipRecruiter `cardShadow` this
+// replaces (lower opacity, bigger radius, no directional offset) so it reads
+// as an ambient lift rather than a hard drop shadow.
+//
+// Still theme-agnostic (matches globalStyle.divider's existing
+// `rgba(128,128,128,0.15)` convention) rather than a theme token, since
+// `card` is a plain StyleSheet.create value spread by ~60+ files at module
+// scope with no theme/hook access.
+//
+// NOTE on Android: `elevation` needs an opaque backgroundColor on the same
+// View to compute a correctly-rounded shadow — any card whose fill is
+// translucent (or applied via a separate underlay) still needs the
+// two-layer split called out in the older comment history here (HomeSrc.tsx
+// checkInCard, LearningCourses.tsx rejectedBox/curriculumDoneBox,
+// ReferralProgram.tsx creditCard, CareerRoadmap.tsx completeBanner,
+// CourseSession.tsx certCard) — that workaround is back in play now that
+// `card` uses elevation again.
 const cardShadow = Platform.select({
   ios: {
-    shadowColor: 'rgba(29, 30, 44, 0.28)',
+    shadowColor: 'rgba(31, 41, 84, 0.35)',
     shadowOffset: {
-      width: 1,
-      height: 1,
+      width: 0,
+      height: 6,
     },
-    shadowOpacity: 0.38,
-    shadowRadius: 12.0,
+    shadowOpacity: 0.10,
+    shadowRadius: 16.0,
   },
   android: {
-    elevation: 3,
+    elevation: 4,
   },
   default: {
-    shadowColor: 'rgba(29, 30, 44, 0.28)',
+    shadowColor: 'rgba(31, 41, 84, 0.35)',
     shadowOffset: {
-      width: 1,
-      height: 1,
+      width: 0,
+      height: 6,
     },
-    shadowOpacity: 0.38,
-    shadowRadius: 12.0,
-    elevation: 3,
+    shadowOpacity: 0.10,
+    shadowRadius: 16.0,
+    elevation: 4,
   },
 }) as object;
-
-// Redesign (product request item — explicit ZipRecruiter reference: "all
-// the cards have no box shadows they have border lines... Very clean,
-// precise and professional"): `card`'s shadow is replaced with a thin
-// 1px border, matching the reference screenshots exactly instead of
-// approximating them with a softened shadow.
-//
-// This is also the permanent, correct fix for the WHOLE CLASS of Android
-// "extra white/ghost card behind" bugs fixed earlier this session
-// (HomeSrc.tsx's checkInCard, LearningCourses.tsx's rejectedBox/
-// curriculumDoneBox, ReferralProgram.tsx's creditCard, CareerRoadmap.tsx's
-// completeBanner, CourseSession.tsx's certCard) — those all had to be
-// split into two nested Views specifically to work around `elevation`
-// needing an opaque background to compute a correctly-rounded shadow on
-// Android. A border has no such requirement — it renders identically
-// regardless of the fill underneath, translucent or not, on both
-// platforms. Any NEW translucent-tinted card added going forward doesn't
-// need that two-layer workaround anymore.
-//
-// Theme-agnostic translucent color (matches globalStyle.divider's existing
-// `rgba(128,128,128,0.15)` convention below) rather than a theme token,
-// since `card` is a plain StyleSheet.create value spread by ~60+ files at
-// module scope with no theme/hook access — reads as a light hairline on
-// light backgrounds and a slightly-lighter one on dark backgrounds without
-// needing separate light/dark values (constants/theme/*.json's new
-// `border-card-default` token is the theme-aware equivalent, used by
-// screens that already have `theme` in scope and want an exact token
-// match, e.g. new StatusBadge/InfoBox components).
-const cardBorder = {
-  borderWidth: 1,
-  borderColor: 'rgba(39, 39, 85, 0.12)',
-} as object;
 
 export const globalStyle = StyleSheet.create({
   flexOne: {
@@ -99,42 +85,72 @@ export const globalStyle = StyleSheet.create({
     backgroundColor: 'rgba(30, 31, 32, 0.86)',
   },
   //Shadow
-  // Redesign (product request item, ZipRecruiter reference): was a heavy
-  // drop shadow (elevation:10 on Android) behind ButtonFill's round icon
-  // circles (MoreSrc.tsx's row icons, etc.) — flattened to nothing for the
-  // same "no box shadows" reason as `shadowBtn`/`shadowFilter` above.
-  // NOT given a border like `card`/`shadow`-on-cards got: ButtonFill's
-  // shape comes from a squircle PNG (Images.fillActive), not real
-  // borderRadius clipping on this container — see that component's own
-  // borderColor-prop comment for why a plain rectangular
-  // borderWidth/borderColor here would draw a square outline poking out
-  // past the image's rounded corners instead of following its curve.
-  shadow: {},
+  // Redesign v2 (full reskin — soft ambient shadow is back everywhere, see
+  // cardShadow's comment above): ButtonFill's round icon circles
+  // (MoreSrc.tsx's row icons, etc.) get the same soft lift as everything
+  // else now. Shape still comes from a squircle PNG (Images.fillActive),
+  // not real borderRadius clipping, but a shadow (unlike a border) doesn't
+  // need to follow the image's curve exactly to look right.
+  shadow: cardShadow,
   shadowFade: cardShadow,
-  // The canonical "content card": 16px radius (the size already used most
-  // often across the app) + a thin border (see cardBorder above for why
-  // this moved off shadow/elevation entirely), in one style instead of
-  // every screen re-picking its own radius and deciding whether to bother
-  // with a border at all. Doesn't set backgroundColor/padding since those
-  // vary (Layout level="1"/"2" usually supplies the background) — just the
-  // shape + outline.
+  // The canonical "content card": 20px radius (bumped up from 16px to read
+  // as the bigger, softer rounded-card look the reskin reference uses) +
+  // the soft ambient shadow above, in one style instead of every screen
+  // re-picking its own radius/shadow. Doesn't set backgroundColor/padding
+  // since those vary (Layout level="1"/"2" usually supplies the
+  // background) — just the shape + lift.
   card: {
-    borderRadius: 16,
-    ...cardBorder,
+    borderRadius: 20,
+    ...cardShadow,
   },
-  // Redesign (product request item, ZipRecruiter reference — buttons in
-  // the reference are completely flat, no glow/lift of any kind): was a
-  // shadowColor/shadowOpacity/shadowRadius/elevation glow around every
-  // primary button (already toned down once from an even bigger one, per
-  // the comment history this replaced). Flattened to nothing rather than
-  // re-tuning the glow smaller a second time, since the actual target now
-  // is "no shadow", not "a smaller shadow". Kept as a real (empty) style
-  // object rather than deleting it outright so every existing
-  // `style={[globalStyle.shadowBtn, ...]}` call site across the app keeps
-  // working unchanged — it now just contributes nothing.
-  shadowBtn: {},
-  // Same flattening as shadowBtn above, same reasoning.
-  shadowFilter: {},
+  // Redesign v2 (full reskin): primary buttons get the same soft ambient
+  // lift as cards now, tinted toward the brand blue instead of the
+  // neutral card shadow (see CtaButton.tsx, the only thing that reads
+  // this). Was flattened to `{}` for the earlier flat-bordered direction —
+  // re-enabled and re-tuned rather than restoring the old heavier glow.
+  shadowBtn: Platform.select({
+    ios: {
+      shadowColor: 'rgba(0, 99, 248, 0.45)',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.28,
+      shadowRadius: 12.0,
+    },
+    android: { elevation: 6 },
+    default: {
+      shadowColor: 'rgba(0, 99, 248, 0.45)',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.28,
+      shadowRadius: 12.0,
+      elevation: 6,
+    },
+  }) as object,
+  // Same soft ambient shadow as `card`, for filter/chip pills that sit on
+  // top of other content (e.g. floating filter bars) and need to visually
+  // separate from what's behind them.
+  shadowFilter: cardShadow,
+
+  // Bug report: "users can't tell there's an input field there" — the
+  // app's default <Input> theme mapping (constants/theme/mapping.json,
+  // "Input" > appearances.default > status="basic") sets
+  // backgroundColor:'transparent' AND borderWidth:0 for the default
+  // "medium" size, so a plain `<Input status="basic" />` with no extra
+  // style renders with zero visible affordance — no border, no fill,
+  // indistinguishable from empty space. Fixing that mapping directly isn't
+  // an option: login/signup screens deliberately rely on the exact same
+  // default/basic mapping and add their OWN explicit
+  // `borderBottomWidth: 2` override per field (see src/auth/Login/
+  // Login.tsx's `email`/`password` styles) — a global mapping change would
+  // touch those too, and the explicit ask was "not talking about signup or
+  // login." This is instead an opt-in style every OTHER screen's <Input>
+  // spreads locally: a real border + a white fill, so a field reads as an
+  // input the same way a white card reads as a card against this app's
+  // gray page background.
+  inputField: {
+    borderWidth: 1,
+    borderColor: 'rgba(39, 39, 85, 0.15)',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+  },
 
   //Border
   border12: {
@@ -246,6 +262,7 @@ export const globalStyle = StyleSheet.create({
   icon40: {
     width: 40,
     height: 40,
+    
   },
   // The exact same `rgba(128,128,128,0.15)` bottom-border was independently
   // hand-rolled in several unrelated screens (InterviewReplay, Student

@@ -2,12 +2,13 @@ import React, { memo } from 'react';
 import { Alert, AppState, Image, ScrollView, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
-// Redesign (product request item, ZipRecruiter reference) — primary CTA
-// buttons (the daily XP check-in, the Pro upgrade prompt) get the new
-// mint-green/black-text look; secondary/contextual actions (Resend, Try
-// again above) stay as plain UI Kitten <Button> — see CtaButton.tsx's own
-// comment for why it's reserved for "the" primary action, not every button.
-import CtaButton from 'components/CtaButton';
+// The daily XP check-in card below has its own inverted white-pill button
+// (see the JSX comment there for why it's not CtaButton) — CtaButton itself
+// has no remaining call site on this screen, so it's not imported here
+// anymore. Secondary/contextual actions (Resend verification, etc.) still
+// use plain UI Kitten <Button>.
+import CircularProgress from 'components/CircularProgress';
+import LinearGradient from 'react-native-linear-gradient';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import Content from 'components/Content';
@@ -20,19 +21,18 @@ import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import useLayout from 'hooks/useLayout';
-import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, Interview_Type_Enum, LeaderboardEntryProps, MockInterviewSessionProps, ScheduledInterviewProps } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, Interview_Type_Enum, LeaderboardEntryProps, ScheduledInterviewProps } from 'constants/Types';
 import UserAvatar from 'components/UserAvatar';
 import * as interviewService from 'services/interviewService';
 import * as resumeService from 'services/resumeService';
 import * as networkingService from 'services/networkingService';
 import * as gamificationService from 'services/gamificationService';
 import * as notificationService from 'services/notificationService';
-import * as careerOsService from 'services/careerOsService';
 import * as roadmapService from 'services/roadmapService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
-import {navigateToJobAlertDetails} from 'navigation/navigationRef';
+import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
@@ -60,7 +60,7 @@ const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: string; text: string } => {
   switch (rank) {
     case 1:
-      return { bg: '#2574ff', text: '#FFFFFF' };
+      return { bg: '#0063f8', text: '#FFFFFF' };
     case 2:
       return { bg: theme['background-basic-color-3'], text: theme['background-basic-color-6'] };
     case 3:
@@ -103,10 +103,10 @@ const HomeSrc = memo(() => {
   // (assets/images/img_home_banner_ai_coach.jpg is 1920x900, not the
   // original 1920x1080; see that asset's own history for why) so this
   // still renders full-bleed with zero letterboxing for the default image.
-  const bannerHeight = Math.round(bannerWidth * (799 / 1922));
+  const bannerHeight = Math.round(bannerWidth * (900 / 1600));
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
-  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPro } =
+  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
@@ -141,7 +141,7 @@ const HomeSrc = memo(() => {
   );
   const onCloseTour = React.useCallback(() => {
     setShowTour(false);
-    AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => {});
+    AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => { });
   }, []);
 
   // Regular QA rating prompt (product request item: "a regular if not
@@ -178,7 +178,7 @@ const HomeSrc = memo(() => {
   }, [t]);
   const onDismissRating = React.useCallback(() => {
     setShowRatingPrompt(false);
-    appRatingService.dismissRatingPrompt().catch(() => {});
+    appRatingService.dismissRatingPrompt().catch(() => { });
   }, []);
 
   // "Share a job" deep-link landing (product request item) — a pending job
@@ -210,17 +210,10 @@ const HomeSrc = memo(() => {
     return () => listener.remove();
   }, [loadUnreadCount]);
 
-  // AI Career Operating System briefing — product request item, the user's
-  // stated "dream feature": one cohesive AI-written summary of what matters
-  // today, synthesizing streak/applications/scheduled interviews/goal tip
-  // into a single narrative instead of the user piecing it together from
-  // five different screens. See services/careerOsService.ts. Fetched for
-  // every signed-in user (not gated to a paid tier) — it's a synthesis of
-  // data the user already has access to elsewhere, not new AI content.
-  const [briefing, setBriefing] = React.useState<{ narrative: string | null; priorities: { label: string; action: string }[]; isTeaser: boolean } | null>(null);
-  React.useEffect(() => {
-    careerOsService.getTodayBriefing().then(setBriefing).catch(() => {});
-  }, []);
+  // "Today's Briefing" (AI Career Operating System summary) card was
+  // removed from the dashboard (manual product edit) — no longer fetched
+  // or rendered here. See services/careerOsService.ts /
+  // CareerBriefingDetail.tsx if this comes back later.
 
   // "Today's Goal Tips" dashboard card was removed (product request item:
   // "remove the today's daily tip card and let user see the push
@@ -243,7 +236,7 @@ const HomeSrc = memo(() => {
   const [dashboardRoadmap, setDashboardRoadmap] = React.useState<roadmapService.CareerRoadmap | null>(null);
   React.useEffect(() => {
     if (!isSignedIn) return;
-    roadmapService.getSavedRoadmap().then(setDashboardRoadmap).catch(() => {});
+    roadmapService.getSavedRoadmap().then(setDashboardRoadmap).catch(() => { });
   }, [isSignedIn]);
 
   // Non-blocking "verify your email" banner — see AuthContext.emailVerified's
@@ -286,26 +279,13 @@ const HomeSrc = memo(() => {
     return () => listener.remove();
   }, [isSignedIn, emailVerified, refreshEmailVerified]);
 
-  // Real practice history (GET /api/v1/interviews/sessions) — was fetched
-  // below already (for badge-unlock logic) but its result was discarded
-  // everywhere else on this screen, leaving the weekly chart and these two
-  // stat cards reading DATA_WEEKLY_PRACTICE/DATA_PAST_SESSIONS, two static
-  // arrays that never reflected what any real account had actually done.
-  // Now stored so all three can derive from the same real fetch.
-  const [practiceHistory, setPracticeHistory] = React.useState<MockInterviewSessionProps[]>([]);
-  const completedSessions = React.useMemo(
-    () => practiceHistory.filter(s => s.status === 'Completed'),
-    [practiceHistory],
-  );
-  const weeklyPractice = React.useMemo(
-    () => interviewService.computeWeeklyPractice(completedSessions),
-    [completedSessions],
-  );
-  const sessionsThisWeek = weeklyPractice.reduce((sum, d) => sum + d.sessions, 0);
-  const scoredSessions = completedSessions.filter(s => typeof s.overallScore === 'number');
-  const avgScore = scoredSessions.length
-    ? Math.round(scoredSessions.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) / scoredSessions.length)
-    : 0;
+  // The Day Streak / Sessions This Week / Average Score stat cards that
+  // used to derive from a stored `practiceHistory` here were removed
+  // (manual product edit) — that state and its derived weeklyPractice/
+  // sessionsThisWeek/avgScore values had no other reader left, so they're
+  // gone too rather than left computing values nothing renders. Practice
+  // history is still fetched below (in the badge-unlock effect) for badge
+  // computation, just no longer stored in component state.
 
   // Upcoming Session — GET /api/v1/interviews/scheduled (see
   // services/scheduledInterviewService.ts). Was a single hardcoded
@@ -419,17 +399,14 @@ const HomeSrc = memo(() => {
   // for why this moved out of an always-expanded inline grid on Home.
   const [isBadgesModalVisible, setIsBadgesModalVisible] = React.useState(false);
 
-  // Was a plain useEffect keyed only on [streakDays] — practice history (and
-  // therefore the Weekly Practice chart, Sessions This Week / Average Score
-  // stat cards, all derived from it via the useMemos above) only ever
-  // refetched on mount or when the streak day-count happened to change.
-  // Completing another interview and coming back to Home doesn't bump
-  // streakDays if the user already checked in today, so the chart looked
-  // permanently frozen no matter how many sessions were completed —
-  // reported as "the chart just remained static." useFocusEffect (already
-  // used below for upcomingSessions) re-runs this every time the Home tab
-  // regains focus, which is exactly when a just-finished interview would
-  // land back here.
+  // Was a plain useEffect keyed only on [streakDays] — practice history only
+  // ever refetched on mount or when the streak day-count happened to
+  // change. Completing another interview and coming back to Home doesn't
+  // bump streakDays if the user already checked in today, so badge unlocks
+  // looked permanently frozen no matter how many sessions were completed.
+  // useFocusEffect (already used below for upcomingSessions) re-runs this
+  // every time the Home tab regains focus, which is exactly when a
+  // just-finished interview would land back here.
   useFocusEffect(
     React.useCallback(() => {
       let cancelled = false;
@@ -440,7 +417,6 @@ const HomeSrc = memo(() => {
           networkingService.listContacts(),
         ]);
         if (cancelled) return;
-        setPracticeHistory(history);
         const completed = history.filter(s => s.status === 'Completed');
         const importedCount = Object.keys(importedSources).length;
 
@@ -475,7 +451,7 @@ const HomeSrc = memo(() => {
   // the latest fetched ad without needing it in their own dependency arrays.
   const [pendingAd, setPendingAd] = React.useState<AdvertisementProps | null>(null);
   const adRef = React.useRef<AdvertisementProps | null>(null);
-  const {visible: adVisible, show: showAd, hide: hideAd} = useModal();
+  const { visible: adVisible, show: showAd, hide: hideAd } = useModal();
   React.useEffect(() => {
     let cancelled = false;
     adsService.getNextAd().then(ad => {
@@ -488,7 +464,7 @@ const HomeSrc = memo(() => {
         // Recorded once the popup actually renders, not on fetch — a
         // fetched-but-never-shown ad (e.g. the user left the screen before
         // the delay above fired) shouldn't burn one of its limited views.
-        adsService.recordImpression(ad.id).catch(() => {});
+        adsService.recordImpression(ad.id).catch(() => { });
       }, 1500);
     }).catch(() => {
       // Offline or the request failed — no ad this session, same
@@ -506,7 +482,7 @@ const HomeSrc = memo(() => {
   const onOpenAd = React.useCallback(() => {
     hideAd();
     if (adRef.current) {
-      navigate('AdDetails', {ad: adRef.current});
+      navigate('AdDetails', { ad: adRef.current });
     }
   }, [hideAd, navigate]);
 
@@ -531,7 +507,7 @@ const HomeSrc = memo(() => {
   }, []);
   const onOpenHomeBanner = React.useCallback(() => {
     if (homeBanner) {
-      navigate('AdDetails', {ad: homeBanner});
+      navigate('AdDetails', { ad: homeBanner });
     }
   }, [homeBanner, navigate]);
 
@@ -574,85 +550,11 @@ const HomeSrc = memo(() => {
             </Button>
           </Flex>
         ) : null}
-        {briefing?.narrative ? (
-          // Visual redesign (task #42): was a plain, unbordered card
-          // indistinguishable from every other card on the dashboard, for
-          // what the user described as their "dream feature" — now has a
-          // colored icon badge (matching the icon-in-circle treatment used
-          // elsewhere in the app) and a subtle primary-tinted border so it
-          // reads as the standout card it's meant to be. The teaser variant
-          // (briefing.isTeaser — a user with nothing real to synthesize yet,
-          // see careerOsService.ts) swaps the icon/title to a "Get Started"
-          // framing and, for free users specifically, adds an upgrade CTA —
-          // previously this state didn't render at all.
-          <Layout
-            level="1"
-            style={[
-              styles.briefingCard,
-              { borderColor: theme['color-primary-transparent-300'], display:'none' },
-            ]}
-          >
-            <Flex justify="flex-start" itemsCenter mb={8}>
-              <View style={[styles.briefingIconBadge, { backgroundColor: theme['background-basic-color-2'] }]}>
-                {briefing.isTeaser ? (
-                  // No "rocket"/launch icon exists in the custom "assets"
-                  // pack (see assets/icons/index.ts — it's a fixed template
-                  // icon list). bulb-outline is a real eva-pack icon already
-                  // used elsewhere in this app for the same "here's a tip to
-                  // get going" meaning (see StudentVerification.tsx's perks
-                  // list) rather than risking a silently-missing custom icon.
-                  <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-                ) : (
-                  <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-                )}
-              </View>
-              <Text category="h8" bold ml={10}>
-                {briefing.isTeaser
-                  ? t('home:career_os_get_started_title', { defaultValue: 'Get Started' })
-                  : t('home:career_os_briefing_title', { defaultValue: "Today's Briefing" })}
-              </Text>
-            </Flex>
-            {/* Was the full narrative inline — often several sentences long,
-               which made this card dominate the dashboard. Truncated to a
-               3-line preview with a "Read more" arrow into
-               CareerBriefingDetail.tsx, which shows the complete narrative
-               plus all priorities. */}
-            <Text category="h9-s" numberOfLines={3} style={{ lineHeight: 19 }}>{briefing.narrative}</Text>
-            {/* status="primary" resolves to near-white in this theme (meant
-               for text sitting on a solid color-primary button, not a light
-               card) -- that's why "Read more" was invisible and only the
-               arrow showed. status="link" is what the rest of the app
-               already uses for this exact kind of inline text link (see
-               DailyIndustryNews.tsx's "Try again"). Right-aligned
-               (justify="flex-end") so it reads as a compact link tucked
-               under the truncated paragraph instead of a wide, oddly
-               spaced row. */}
-            <Flex
-              justify="flex-end"
-              itemsCenter
-              mt={2}
-              onPress={() => navigate('CareerBriefingDetail', { narrative: briefing.narrative!, priorities: briefing.priorities, isTeaser: briefing.isTeaser })}
-            >
-              <Text category="h10" status="link" bold>
-                {t('home:read_more', { defaultValue: 'Read more' })}
-              </Text>
-              <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { marginLeft: 4, tintColor: theme['color-primary-500'] }]} />
-            </Flex>
-            {/* Priorities used to render here too — moved entirely into
-               CareerBriefingDetail.tsx (behind "Read more") so this card
-               stays a short, scannable preview rather than duplicating the
-               full breakdown on the dashboard itself. */}
-            {briefing.isTeaser && !isPro ? (
-              <CtaButton
-                size="small"
-                style={{ marginTop: 12 }}
-                onPress={() => navigate('Subscription')}
-              >
-                {t('home:career_os_upgrade_cta', { defaultValue: 'See Pro plans' })}
-              </CtaButton>
-            ) : null}
-          </Layout>
-        ) : null}
+        {/* "Today's Briefing" (AI Career OS summary) card removed from here
+            (manual product edit) — was previously rendered right above the
+            promo banner when a real briefing narrative existed. See
+            services/careerOsService.ts / CareerBriefingDetail.tsx if this
+            comes back later. */}
         {/* Admin-configured promo banner (see the effect above) —
            deliberately rendered above the Goal Tips block regardless of
            its loading/empty state, per explicit product placement:
@@ -660,7 +562,7 @@ const HomeSrc = memo(() => {
            placement="home_banner" ad exists (see onOpenHomeBanner) so a
            tap always has real content to navigate AdDetails to — no
            banner is shown at all until the admin creates one. */}
-        
+
         {/* Pill-button row (product request item, screenshot reference —
             dark rounded filter-chip style) replacing what used to be a
             row of icon tiles, which itself had replaced three stacked
@@ -743,25 +645,21 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         </ScrollView>
         {homeBanner ? (
-          // Was a shadow on an outer wrapper View (a view can't both clip
-          // content to rounded corners via overflow:'hidden' AND cast a
-          // visible shadow itself, since overflow:hidden clips the shadow
-          // too — hence the old two-View split). Redesign sweep: this is a
-          // content card exactly like every job/tip/goal card elsewhere on
-          // this screen, so it gets the same border treatment, not a
-          // shadow — and a border has no such conflict with overflow:
-          // hidden, so the extra wrapper View isn't needed anymore either.
+          // Redesign v2 follow-up (product bug report — "remove the white
+          // background from the homebanner card"): back to one plain view
+          // (see homeBannerCard's own comment for why the shadow-driven
+          // two-layer split is gone) — just the rounded clip + Image.
           <TouchableOpacity
             activeOpacity={0.9}
-            style={[styles.homeBannerCard, {width: bannerWidth, height: bannerHeight}]}
+            style={[styles.homeBannerCard, { width: bannerWidth, height: bannerHeight }]}
             onPress={onOpenHomeBanner}>
             <Image
               source={
                 homeBanner.imageUrl
-                  ? {uri: homeBanner.imageUrl}
+                  ? { uri: homeBanner.imageUrl }
                   : Images.homeBannerAiCoach
               }
-              style={{width: bannerWidth, height: bannerHeight}}
+              style={{ width: bannerWidth, height: bannerHeight }}
               // "contain" (not "cover") per explicit product direction: the
               // full banner image should always be visible, never cropped —
               // cover would zoom/crop whenever an admin-uploaded image_url's
@@ -775,121 +673,127 @@ const HomeSrc = memo(() => {
             />
           </TouchableOpacity>
         ) : null}
-        {/* Redesign (product follow-up, exact "New on ZipRecruiter" promo-
-            card screenshot reference this time — a small colored icon pill
-            at the top, a bold headline below it, then a supporting
-            description line underneath that) — was 3 side-by-side cards
-            with just an icon + number + label each; now each stat is its
-            own full-width card with that same pill/headline/description
-            structure, stacked vertically per explicit follow-up ("make
-            them stack on each other") instead of a row. One deliberate
-            departure from the reference: no dismiss "X" in the corner —
-            these are live stats, not a one-time promo a user can permanently
-            close, so a close button would be a dead/misleading affordance
-            here. Card itself goes back to the app's own established
-            border-only/transparent surface (globalStyle.card, same as every
-            other card on this screen) rather than the reference's solid
-            fill, so it still matches the rest of the now-consistent app —
-            the color accent lives on the pill instead, same role the
-            reference's purple "Be Seen First" pill plays against its own
-            plain white card. */}
-        <View style={styles.statsColumn}>
-          <Layout level="2" style={styles.statCard}>
-            <View style={styles.statPill}>
-              <Icon pack="assets" name="stats" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
-              <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
-                {t('home:day_streak', { defaultValue: 'Day Streak' })}
-              </Text>
-            </View>
-            {streakLoading && !streak ? (
-              <Spinner size="small" style={styles.streakSpinner} />
-            ) : (
-              <Text category="h3" bold mt={12}>
-                {t('home:day_streak_headline', { defaultValue: '{{count}}-day streak', count: streakDays })}
-              </Text>
-            )}
-            <Text category="h9-s" status="placeholder" mt={4}>
-              {t('home:day_streak_caption', { defaultValue: 'Keep practicing daily to build your streak.' })}
-            </Text>
-          </Layout>
-          {/* <Layout level="2" style={styles.statCard}>
-            <View style={styles.statPill}>
-              <Icon pack="assets" name="interview" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
-              <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
-                {t('home:sessions_this_week', { defaultValue: 'Sessions This Week' })}
-              </Text>
-            </View>
-            <Text category="h3" bold mt={12}>
-              {t('home:sessions_this_week_headline', { defaultValue: '{{count}} sessions this week', count: sessionsThisWeek })}
-            </Text>
-            <Text category="h9-s" status="placeholder" mt={4}>
-              {t('home:sessions_this_week_caption', { defaultValue: 'Mock interviews completed in the last 7 days.' })}
-            </Text>
-          </Layout> */}
-          {/* <Layout level="2" style={styles.statCard}>
-            <View style={styles.statPill}>
-              <Icon pack="assets" name="rateFull" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
-              <Text category="h10" bold style={[styles.statPillText, { color: theme['background-basic-color-6'] }]}>
-                {t('home:average_score', { defaultValue: 'Average Score' })}
-              </Text>
-            </View>
-            <Text category="h3" bold mt={12}>
-              {t('home:average_score_headline', { defaultValue: '{{score}}% average score', score: avgScore })}
-            </Text>
-            <Text category="h9-s" status="placeholder" mt={4}>
-              {t('home:average_score_caption', { defaultValue: 'Your average across recent practice sessions.' })}
-            </Text>
-          </Layout> */}
-        </View>
+        {/* Day Streak / Sessions This Week / Average Score stat cards
+            removed from here (manual product edit) — this dashboard no
+            longer shows them at all; the same numbers are still available
+            one tap away via the "Your Progress" pill above
+            (src/practice/MyProgress.tsx). */}
 
-        {/* Two layers, not one (product bug: "extra white card behind" on
-            Android, fine on iOS) -- Android's elevation shadow needs an
-            OPAQUE background to compute a rounded shadow silhouette from;
-            with the translucent amber tint directly on the same elevated
-            view, Android falls back to a plain rectangular surface behind
-            the rounded card. Outer view is opaque + carries the shadow;
-            inner view carries the actual translucent tint/border, clipped
-            to the same radius via overflow:hidden, sized identically so
-            none of the outer's opaque fill peeks out -- only its shadow
-            does. See styles.checkInCardOuter/checkInCardInner below. */}
-        <View style={styles.checkInCardOuter}>
-          <Layout level="2" style={styles.checkInCardInner}>
-            <View style={globalStyle.flexOne}>
-              <Text category="h9-s" status="placeholder">
-                {t('home:xp_label', { defaultValue: 'XP' })}
+        {/* Flat solid-blue card — was a GradientCard (react-native-linear-
+            gradient) filling the WHOLE card. Removed after repeated,
+            persistent clipping of whatever content sits at the bottom of
+            this card (the check-in pill/button), even after three separate
+            rounds of reshaping the JSX/styles inside it. Root cause: a
+            full-size LinearGradient carries `overflow:'hidden'` with no
+            explicit height, and (unlike a plain View) doesn't reliably grow
+            to wrap its own children's intrinsic height in every layout pass
+            — so anything past whatever height it settles on gets silently
+            clipped, no matter how the content itself is laid out.
+            Follow-up (product request — "add the other blue color gradient
+            back, concentrated at the top-right corner"): a small, FIXED-SIZE
+            (170x170, not auto-measured) LinearGradient accent, absolutely
+            positioned in the corner — since position:absolute takes it out
+            of flow entirely, it can never influence this card's real
+            height/layout no matter what happens to its own size, so it
+            can't reintroduce the original bug. Outer/inner split (shadow on
+            the outer plain View, `overflow:'hidden'` + the accent + real
+            content on the inner plain View) purely so the accent clips to
+            the card's rounded corners without clipping the outer shadow
+            too (a View can't cast a shadow and clip its own content at the
+            same time) — both are still plain Views, not LinearGradients, so
+            neither has the intrinsic-sizing problem the old GradientCard
+            did. The ring shows streak progress toward a 7-day week (purely
+            a visual framing — streakDays itself is uncapped elsewhere, e.g.
+            the badge-unlock thresholds below) with the raw day count
+            centered inside it. The award icon (top-right, gold) is a purely
+            decorative gamification cue — same color convention
+            components/StarRating.tsx already uses for a "you earned this"
+            visual. Check-in action is a plain TouchableOpacity, not
+            CtaButton/<Button>, specifically so it can be an inverted
+            white-pill/blue-text control that reads against the solid blue
+            fill — CtaButton always renders white text on a colored fill by
+            design (see its own comment), which would be invisible here. */}
+        <View style={styles.checkInCard}>
+          <View style={styles.checkInCardInner}>
+            <LinearGradient
+              pointerEvents="none"
+              colors={['#1df2d2ff', 'rgba(29, 160, 242, 0.43)']}
+              start={{ x: 1, y: 0 }}
+              end={{ x: 0.15, y: 0.9 }}
+              style={styles.checkInCardAccent}
+            />
+            <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="contain" />
+          <View style={styles.checkInTopRow}>
+            <CircularProgress
+              progress={Math.min(100, (streakDays / 7) * 100)}
+              size={44}
+              strokeWidth={4}
+              trackColor="rgba(255,255,255,0.28)"
+              color="#FFFFFF"
+              style={styles.checkInRing}>
+              <Text category="h9" bold style={styles.checkInRingText}>
+                {streakDays}
               </Text>
-              <Text category="h7" bold mt={2}>
+            </CircularProgress>
+            <View style={globalStyle.flexOne}>
+              <Text category="h7" bold style={styles.checkInValue} numberOfLines={1}>
                 {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} XP`}
               </Text>
               {streakError ? (
                 <Flex justify="flex-start" itemsCenter mt={6}>
-                  <Text category="h10" status="danger" mr={12}>
+                  <Text category="h10" mr={12} style={styles.checkInError}>
                     {streakError}
                   </Text>
-                  <Text category="h10" status="link" onPress={loadStreak}>
+                  <Text category="h10" bold style={styles.checkInRetry} onPress={loadStreak}>
                     {t('common:try_again', { defaultValue: 'Try again' }).toString()}
                   </Text>
                 </Flex>
               ) : null}
             </View>
-            {streak?.checkedInToday ? (
-              // Already done today — a plain disabled/basic button reads as
-              // "completed", not as another action to take. CtaButton is
-              // reserved for an actual actionable primary CTA (see its own
-              // comment), which this no longer is once checked in.
-              <Button size="small" status="basic" disabled>
+          </View>
+          {/* Redesign v2 follow-up (product bug report, twice now — content
+              kept getting clipped sharing a row with the ring+XP text,
+              even after removing the button's minWidth). Rather than keep
+              guessing at exact text/font pixel widths I can't verify
+              without a device, this is now structurally impossible to
+              overflow: its own row, `alignSelf: 'flex-end'` (not a
+              full-width stretched row, not sharing space with any
+              sibling), so the pill/button hugs only its own short content
+              and is right-aligned within whatever width is actually
+              available — it cannot be squeezed by anything else on
+              screen. */}
+          {streak?.checkedInToday ? (
+            // Solid white pill + blue checkmark — was a translucent
+            // white-on-white-ish fill (too low contrast to read clearly
+            // against the gradient), now matches checkInButton's own solid
+            // white pill exactly (just a checkmark + label instead of an
+            // actionable label — this is a completed state, not a live
+            // action).
+            <View style={[styles.checkInButton, styles.checkedInPill]}>
+              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
+              <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
                 {t('home:checked_in_today', { defaultValue: 'Checked in' })}
-              </Button>
-            ) : (
-              <CtaButton
-                size="small"
-                disabled={checkingIn || streakLoading || !!streakError}
-                onPress={onCheckIn}
-                accessoryLeft={checkingIn ? renderCheckInSpinner : undefined}>
-                {t('home:check_in', { defaultValue: 'Check In' })}
-              </CtaButton>
-            )}
-          </Layout>
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              disabled={checkingIn || streakLoading || !!streakError}
+              onPress={onCheckIn}
+              style={[
+                styles.checkInButton,
+                (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
+              ]}>
+              {checkingIn ? (
+                <Spinner size="tiny" status="primary" />
+              ) : (
+                <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
+                  {t('home:check_in', { defaultValue: 'Check In' })}
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
+          </View>
         </View>
 
         {/* Weekly Practice chart removed from here (decluttering pass) — it
@@ -1084,48 +988,36 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 16,
     marginTop: 16,
-    // No fill — border-only (app-wide "cards are transparent" pass); the
-    // warning-colored border below stays as the deliberate "needs
-    // attention" signal, it just no longer also has a gray fill behind it.
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): `card` carries a real soft shadow again
+    // (see globalStyle.ts), which needs an opaque fill to render correctly
+    // (was 'transparent' for the border-only ZipRecruiter direction — a
+    // shadow behind a transparent view looks broken/invisible, especially
+    // on Android). The warning-colored border stays as the "needs
+    // attention" accent on top of that opaque fill.
+    backgroundColor: 'background-basic-color-2',
     borderWidth: 1,
     borderColor: 'color-warning-500',
   },
+  // Redesign v2 follow-up (product bug report — "remove the white
+  // background from the homebanner card"): dropped globalStyle.card
+  // entirely here (no shadow, no opaque backing fill) instead of just
+  // swapping the fill to a different color. The two-layer shadow/clip
+  // split (see checkInCardOuter/Inner elsewhere on this screen) only
+  // exists to give Android's elevation shadow an opaque silhouette to
+  // render against — with no shadow at all on this card, that requirement
+  // goes away too, so this collapsed back to one view: just the rounded
+  // clip + the Image, genuinely transparent (no fill color standing in
+  // behind it, e.g. if an admin-uploaded image's aspect ratio doesn't
+  // exactly fill the card and lets a sliver of background show through).
   homeBannerCard: {
-    ...globalStyle.card,
     // width/height are computed per-render from actual screen width (see
     // bannerWidth/bannerHeight above the component's return statement) and
     // applied inline, not here — a plain aspectRatio here previously
     // rendered at the source image's raw pixel size instead of scaling to
     // the card, see bannerWidth's own comment for the full explanation.
     marginTop: 16,
+    borderRadius: 20,
     overflow: 'hidden',
-    borderWidth:0,
-    backgroundColor: 'transparent',
-  },
-  briefingCard: {
-    ...globalStyle.card,
-    // Trimmed from 16 (product follow-up: "reduce the height of the
-    // Today's Briefing card a little bit") — the icon badge/title row and
-    // "Read more" row below also had their own margins tightened to match
-    // (see the JSX), so the card reads slightly more compact overall
-    // without dropping any content.
-    padding: 12,
-    marginTop: 16,
-    borderWidth: 1,
-   
-  },
-  briefingIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  priorityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   verifyBannerText: {
     marginHorizontal: 10,
@@ -1158,83 +1050,122 @@ const themedStyles = StyleService.create({
     marginRight: 10,
     backgroundColor: 'transparent',
   },
-  // Vertical stack (product follow-up: "make them stack on each other") —
-  // was a horizontal row of 3 equal-width cards; now a single column, full-
-  // width cards one after another, each with its own bottom margin (see
-  // statCard's marginBottom) instead of this container's justify-content
-  // doing the spacing.
-  statsColumn: {
-    marginTop: 16,
-  },
-  statCard: {
-    // Back to the app's own established border-only/transparent card (see
-    // globalStyle.card's own comment) — the reference screenshot's card is
-    // a solid flat fill, but that was a deliberate one-off departure from
-    // this app's now-consistent "cards are transparent" look (see the JSX
-    // comment above where these render); the accent color here lives on
-    // the pill instead, same role the reference's colored pill plays
-    // against its own plain white card.
-    ...globalStyle.card,
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: 'transparent',
-  },
-  // Small pill at the top of each stat card (product follow-up,
-  // ZipRecruiter "Be Seen First" pill reference) — self-sized (alignSelf:
-  // 'flex-start'), not full-width, same as the reference's own pill. Was
-  // solid brand blue with white icon/text — per explicit follow-up this is
-  // now a neutral gray fill instead, with the icon/text switched to dark
-  // ink (color-primary-500/background-basic-color-6) for contrast against
-  // the lighter gray rather than white-on-white.
-  statPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: 'background-basic-color-3',
-  },
-  statPillText: {
-    marginLeft: 6,
-  },
-  streakSpinner: {
-    marginTop: 8,
-  },
   upcomingCard: {
     ...globalStyle.card,
     padding: 16,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): opaque fill again (was 'transparent',
+    // which also silently overrode this Flex's own `level="2"` background —
+    // see Flex.tsx, style always wins over the level prop) so `card`'s
+    // real shadow renders correctly.
+    backgroundColor: 'background-basic-color-2',
   },
-  // Split in two (product bug: "extra white card behind" on Android) — see
-  // the JSX comment above where these are used. Outer casts the shadow
-  // against an OPAQUE background; inner carries the translucent amber tint.
-  checkInCardOuter: {
+  // Flat solid-blue card (gradient removed — see the JSX comment above for
+  // why) — outer layer just casts the shadow (no overflow:'hidden' here;
+  // that would clip the shadow itself on iOS, same reason GradientCard's
+  // own outer/inner split existed).
+  checkInCard: {
     ...globalStyle.card,
     marginTop: 16,
-    // Was an opaque fill (background-basic-color-1) — needed back when
-    // `card` still carried Android `elevation` (see this style's own
-    // original comment about the "extra white card behind" bug: elevation
-    // needs an opaque background to compute a correctly-rounded shadow).
-    // `card` is border-only now with no elevation at all, so that
-    // requirement is gone — transparent brings this in line with every
-    // other card in the app-wide "cards are transparent" pass. The inner
-    // checkInCardInner's own translucent tint (see below) still renders
-    // correctly on top either way, clipped to the same radius via its own
-    // overflow:hidden.
-    backgroundColor: 'transparent',
+    borderRadius: 20,
+    backgroundColor: 'color-primary-300',
   },
+  // Inner layer: `overflow:'hidden'` so the corner accent (see JSX comment)
+  // clips to the card's rounded corners, `position:'relative'` so that
+  // accent's `position:'absolute'` is measured against THIS box. One row:
+  // ring, XP text (flexOne — absorbs/shrinks to whatever's left), action
+  // pill/button flexed to the right. An earlier pass split this into two
+  // stacked rows to fix a clipping bug caused by the button's own
+  // hardcoded `minWidth` — reverted per explicit follow-up ("flex it to
+  // the right the way it used to be"); the actual fix this time is on the
+  // button/pill itself (no more minWidth, numberOfLines=1 labels — see
+  // checkInButton below) rather than changing the row shape.
   checkInCardInner: {
+    borderRadius: 20,
+    overflow: 'hidden',
+    position: 'relative',
+    padding: 16,
+  },
+  // Decorative accent (product request — "add the other blue color
+  // gradient back, concentrated at the top-right corner"). Fixed size, not
+  // auto-measured — position:'absolute' takes it out of flow entirely, so
+  // it can never affect this card's real height (see the JSX comment for
+  // why that matters). Deliberately bigger than it needs to be and
+  // positioned past the top-right corner (negative offsets) so the visible
+  // wedge reads as a soft directional wash rather than a hard-edged circle.
+  checkInCardAccent: {
+    position: 'absolute',
+    top: -60,
+    right: -60,
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+  },
+  // Gamification cue (product request — "use this medal in the XP card
+  // instead of the one there", the uploaded 3D gold medal/ribbon graphic —
+  // see assets/images/index.ts's `xpMedal` for the asset itself). Pinned
+  // to the same corner as the accent above, right above where the
+  // check-in pill sits. Explicit width/height (not just a bounding icon
+  // size) since this is a real image with its own aspect ratio (~36:46,
+  // taller than wide because of the ribbon tails), not a square glyph.
+  checkInMedalIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 14,
+    width: 28,
+    height: 36,
+    zIndex: 2,
+  },
+  checkInTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    overflow: 'hidden',
-    // Subtle warning tint to make the daily XP check-in stand out from the
-    // neutral stat cards above it — was a plain themed Layout level="2".
-    // backgroundColor: 'color-warning-transparent-200',
-    borderWidth: 1,
-    borderColor: 'color-warning-500',
+  },
+  checkInRing: {
+    marginRight: 14,
+  },
+  checkInRingText: {
+    color: '#FFFFFF',
+  },
+  // checkInLabel (the standalone "XP" caption above the "39 XP" value) was
+  // removed as part of the row-width fix above — no reader left.
+  checkInValue: {
+    color: '#FFFFFF',
+  },
+  checkInError: {
+    color: '#FFE3E3',
+  },
+  checkInRetry: {
+    color: '#FFFFFF',
+    textDecorationLine: 'underline',
+  },
+  // Layered on top of checkInButton's own white-pill shape/spacing/padding
+  // (see the JSX above, [styles.checkInButton, styles.checkedInPill]) —
+  // this just adds the icon+label row direction, everything else (bg,
+  // radius, padding, margin) is shared/inherited from checkInButton.
+  checkedInPill: {
+    flexDirection: 'row',
+  },
+  checkedInIcon: {
+    tintColor: '#0063f8',
+  },
+  // alignSelf: 'flex-end' — its own row, hugging only its own content and
+  // right-aligned (see the JSX comment above for why this replaced sharing
+  // a row with the ring+XP text). No minWidth, so it's exactly as wide as
+  // its icon/spinner + numberOfLines=1 label need, never more.
+  checkInButton: {
+    alignSelf: 'flex-end',
+    marginTop: 12,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  checkInButtonDisabled: {
+    opacity: 0.6,
+  },
+  checkInButtonText: {
+    color: '#0063f8',
   },
   // Leaderboard preview card (see the JSX comment above where this is
   // used) — same bordered/transparent-fill treatment as every other card
@@ -1245,7 +1176,10 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     marginTop: 8,
     padding: 12,
-    backgroundColor: 'transparent',
+    // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
+    // renders correctly (was 'transparent', overriding this Layout's own
+    // `level="1"` background — see the JSX usage below).
+    backgroundColor: 'background-basic-color-2',
   },
   leaderboardStatus: {
     paddingVertical: 24,

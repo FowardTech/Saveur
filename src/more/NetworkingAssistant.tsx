@@ -341,23 +341,25 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Redesign v2 (full reskin): `card` carries a real shadow again, which
+  // needs an opaque fill on Android — dropped the 'transparent' overrides
+  // below so each Layout's own `level="2"` background shows through
+  // instead.
   formCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
-    backgroundColor: 'transparent',
   },
   formInput: {
+    ...globalStyle.inputField,
     marginBottom: 12,
-    borderRadius: 12,
   },
   contactCard: {
     ...globalStyle.card,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: 'transparent',
   },
   messagePanel: {
     marginTop: 12,
