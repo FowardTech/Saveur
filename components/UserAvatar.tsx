@@ -41,6 +41,12 @@ interface Props {
   name?: string | null;
   size?: Size;
   style?: StyleProp<ViewStyle>;
+  // Defaults to this component's original rounded-square look everywhere
+  // it was already in use (Edit Profile, Profile tab, More/Home headers,
+  // etc.) so nothing else changes. 'round' gives a fully circular avatar —
+  // added for the homescreen leaderboard preview per explicit follow-up
+  // ("make it rounded instead of square shaped").
+  shape?: 'rounded' | 'round';
 }
 
 function getInitials(name?: string | null): string {
@@ -52,11 +58,11 @@ function getInitials(name?: string | null): string {
   return (first + last).toUpperCase();
 }
 
-const UserAvatar = memo(({uri, name, size = 'medium', style}: Props) => {
+const UserAvatar = memo(({uri, name, size = 'medium', style, shape = 'rounded'}: Props) => {
   const theme = useTheme();
 
   if (uri) {
-    return <Avatar source={{uri}} size={size} shape="rounded" style={style} />;
+    return <Avatar source={{uri}} size={size} shape={shape} style={style} />;
   }
 
   const px = SIZE_PX[size];
@@ -68,7 +74,7 @@ const UserAvatar = memo(({uri, name, size = 'medium', style}: Props) => {
         {
           width: px,
           height: px,
-          borderRadius: px / 4,
+          borderRadius: shape === 'round' ? px / 2 : px / 4,
           backgroundColor: initials ? theme['color-primary-500'] : theme['background-basic-color-3'],
           alignItems: 'center',
           justifyContent: 'center',

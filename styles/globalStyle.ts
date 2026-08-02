@@ -145,11 +145,46 @@ export const globalStyle = StyleSheet.create({
   // spreads locally: a real border + a white fill, so a field reads as an
   // input the same way a white card reads as a card against this app's
   // gray page background.
+  // BUG FIX (product report: "input fields don't have padding so text/icons
+  // are touching the edges, and text isn't visible in dark mode when
+  // typing"):
+  // Dark mode text — `backgroundColor` was a hardcoded '#FFFFFF' literal in
+  // a plain (non-theme-aware) StyleSheet, so it never adapted to dark mode.
+  // The text typed inside an <Input> DOES follow the theme's
+  // `text-basic-color`, which is near-white (#F5F5FA — see constants/theme/
+  // dark.json) in dark mode for legibility against dark surfaces — paired
+  // with this permanently-white field, that's white text on a white field,
+  // invisible while typing. Switched to the `background-basic-color-2`
+  // token instead: it resolves to the exact same white this hardcoded value
+  // gave in light mode ($color-basic-100 in light.json), but the correct
+  // dark card surface (#1B1B2E) in dark mode, the same token every other
+  // card/surface in this app already uses — so the paired light text
+  // becomes legible again, consistent with how every other surface already
+  // handles theme switching. Works even though this file is plain RN
+  // StyleSheet with no theme hook: every call site spreads `...globalStyle.
+  // inputField` into its own `StyleService.create({...})`, which resolves
+  // theme-token strings in the final merged style regardless of which layer
+  // contributed the key.
   inputField: {
     borderWidth: 1,
     borderColor: 'rgba(39, 39, 85, 0.15)',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'background-basic-color-2',
     borderRadius: 12,
+  },
+  // Follow-up correction: paddingHorizontal/paddingVertical used to live on
+  // `inputField` above, applied to the Input's OUTER container/border box —
+  // explicit feedback was that this shrank the field's own visible
+  // width/box instead of just spacing the text inside it (padding on that
+  // outer container eats into the box from the border inward, on top of the
+  // icon's own existing `iconMarginHorizontal` gap, which reads as a
+  // narrower field rather than the same-size field with roomier text).
+  // Moved here instead — pass this as the <Input>'s `textStyle` prop
+  // (applies directly to the inner TextInput, not the bordered container),
+  // so the field itself stays exactly full width/size, and only the
+  // text/placeholder inside it gets breathing room from the edges.
+  inputText: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
 
   //Border

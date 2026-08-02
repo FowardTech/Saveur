@@ -32,12 +32,19 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
 
-const IMPORT_OPTIONS: Array<{ key: ResumeImportSourceKey; title: string; icon: string }> = [
-  { key: 'resume', title: 'Resume', icon: 'myPost' },
-  { key: 'linkedin', title: 'LinkedIn', icon: 'searchHistory' },
-  { key: 'portfolio', title: 'Portfolio', icon: 'photoLibrary' },
-  { key: 'certificates', title: 'Certificates', icon: 'bgCheck' },
-  { key: 'transcript', title: 'Transcript', icon: 'term' },
+// BUG FIX (product report: "resume builder screen — some content still in
+// English regardless of language"): these titles were plain hardcoded
+// English strings rendered directly at {opt.title} below with no t() call
+// at all, so they never translated no matter what language was selected.
+// Now a translation key + English fallback per option, resolved with t()
+// at render time instead of baked into this const. LinkedIn is a proper
+// noun/brand name, kept as-is like other screens do for brand names.
+const IMPORT_OPTIONS: Array<{ key: ResumeImportSourceKey; titleKey: string; titleDefault: string; icon: string }> = [
+  { key: 'resume', titleKey: 'more:import_option_resume', titleDefault: 'Resume', icon: 'myPost' },
+  { key: 'linkedin', titleKey: 'more:import_option_linkedin', titleDefault: 'LinkedIn', icon: 'searchHistory' },
+  { key: 'portfolio', titleKey: 'more:import_option_portfolio', titleDefault: 'Portfolio', icon: 'photoLibrary' },
+  { key: 'certificates', titleKey: 'more:import_option_certificates', titleDefault: 'Certificates', icon: 'bgCheck' },
+  { key: 'transcript', titleKey: 'more:import_option_transcript', titleDefault: 'Transcript', icon: 'term' },
 ];
 
 // Real device file access — each "import" option below opens the native
@@ -45,14 +52,14 @@ const IMPORT_OPTIONS: Array<{ key: ResumeImportSourceKey; title: string; icon: s
 // upload, so users pick an actual file from their phone/iCloud/Drive/etc.
 // See services/resumeService.ts for what happens to the picked file
 // afterward — it's uploaded as multipart/form-data to POST /resume/upload.
-async function pickDocument(): Promise<ImportedFileInfo | null> {
+async function pickDocument(fallbackName: string): Promise<ImportedFileInfo | null> {
   try {
     const [result] = await pick({
       type: [documentTypes.pdf, documentTypes.doc, documentTypes.docx, documentTypes.plainText, documentTypes.images],
     });
     return {
       uri: result.uri,
-      name: result.name ?? 'Selected file',
+      name: result.name ?? fallbackName,
       sizeBytes: result.size,
       mimeType: result.type,
     };
@@ -134,13 +141,13 @@ const ResumeBuilder = memo(() => {
       [
         { text: t('common:cancel', { defaultValue: 'Cancel' }).toString(), style: 'cancel' },
         {
-          text: 'Choose from My Documents',
+          text: t('more:choose_from_my_documents', { defaultValue: 'Choose from My Documents' }).toString(),
           onPress: () => setDocumentPickerFor(key),
         },
         {
-          text: 'Choose from Device',
+          text: t('more:choose_from_device', { defaultValue: 'Choose from Device' }).toString(),
           onPress: async () => {
-            const file = await pickDocument();
+            const file = await pickDocument(t('more:selected_file_fallback_name', { defaultValue: 'Selected file' }).toString());
             if (!file) return; // user canceled the native picker
             runImport(key, file);
           },
@@ -156,9 +163,9 @@ const ResumeBuilder = memo(() => {
     documentsService
       .listDocuments()
       .then(setMyDocuments)
-      .catch((e: any) => setMyDocumentsError(e?.message ?? 'Could not load My Documents.'))
+      .catch((e: any) => setMyDocumentsError(e?.message ?? t('more:could_not_load_my_documents', { defaultValue: 'Could not load My Documents.' }).toString()))
       .finally(() => setIsLoadingMyDocuments(false));
-  }, [documentPickerFor]);
+  }, [documentPickerFor, t]);
 
   const onPickFromMyDocuments = (doc: DocumentRecord) => {
     const key = documentPickerFor;
@@ -170,7 +177,12 @@ const ResumeBuilder = memo(() => {
     // uris (not just local file:// paths) when building a multipart body,
     // the same mechanism that lets a remote image URI be re-posted without
     // downloading it to disk first.
-    runImport(key, { uri: doc.url, name: doc.name ?? 'Document', sizeBytes: doc.sizeBytes, mimeType: doc.mimeType });
+    runImport(key, {
+      uri: doc.url,
+      name: doc.name ?? t('more:document_fallback_name', { defaultValue: 'Document' }).toString(),
+      sizeBytes: doc.sizeBytes,
+      mimeType: doc.mimeType,
+    });
   };
   const onAnalyze = async () => {
     setIsAnalyzing(true);
@@ -210,10 +222,16 @@ const ResumeBuilder = memo(() => {
   };
 
   if (!isPro) {
+    // BUG FIX (product report: resume builder content stuck in English) —
+    // this gate's title/description were plain string literals, not even
+    // passed through t(), so a non-Pro user landing here always saw English
+    // no matter their selected language.
     return (
       <ProLockGate
-        title="Resume Builder"
-        description="Import your resume, get AI bullet rewrites, and build an ATS-ready document — Resume Builder is a Pro feature."
+        title={t('more:resume_builder', { defaultValue: 'Resume Builder' })}
+        description={t('more:resume_builder_pro_gate_description', {
+          defaultValue: 'Import your resume, get AI bullet rewrites, and build an ATS-ready document — Resume Builder is a Pro feature.',
+        })}
       />
     );
   }
@@ -245,7 +263,7 @@ const ResumeBuilder = memo(() => {
                 style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
               />
               <Text category="h9" mt={8} bold center>
-                {opt.title}
+                {t(opt.titleKey, { defaultValue: opt.titleDefault })}
               </Text>
               <Text category="h9-s" mt={4} status={imported[opt.key] ? 'success' : 'placeholder'} numberOfLines={1}>
                 {importingKey === opt.key
@@ -338,7 +356,7 @@ const ResumeBuilder = memo(() => {
         </Text>
         <Input
           multiline
-          textStyle={styles.bulletInputText}
+          textStyle={[globalStyle.inputText, styles.bulletInputText]}
           style={styles.bulletInput}
           placeholder={t('more:bullet_placeholder', {
             defaultValue: 'e.g. Responsible for managing the onboarding process for new hires',
@@ -425,7 +443,7 @@ const ResumeBuilder = memo(() => {
                     <Layout level="2" style={styles.pickerRow}>
                       <Icon pack="assets" name="myPost" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
                       <Text category="h9" ml={10} style={globalStyle.flexOne} numberOfLines={1}>
-                        {doc.name ?? 'Untitled file'}
+                        {doc.name ?? t('more:untitled_file', { defaultValue: 'Untitled file' })}
                       </Text>
                     </Layout>
                   </TouchableOpacity>

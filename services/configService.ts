@@ -1,5 +1,6 @@
 import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {EKeyAsyncStorage} from 'constants/Types';
 import apiClient from './apiClient';
 
@@ -247,7 +248,19 @@ export async function loadAppConfig(): Promise<AppConfig> {
     // ignore — cached stays at DEFAULT_CONFIG
   }
   try {
-    const {data} = await apiClient.get<Partial<AppConfig>>('/api/v1/content/config');
+    // BUG FIX (product report: "help & FAQs screen" / "about this app
+    // screen" stuck in English regardless of language) — this call never
+    // told the backend what language to respond in, so the "faq"/"about"
+    // sections always came back as the single admin-authored English copy.
+    // The backend now translates those two sections when `language` is
+    // non-English (see app/api/content.py's get_public_config) — same
+    // one-fetch-at-launch tradeoff every other cold-start config value in
+    // this module already accepts (see this file's own header comment), so
+    // a language switched mid-session picks this up on the next app launch
+    // rather than instantly, consistent with how the rest of this cache works.
+    const {data} = await apiClient.get<Partial<AppConfig>>('/api/v1/content/config', {
+      params: {language: i18n.language || 'en'},
+    });
     cached = {
       feature_flags: {...DEFAULT_CONFIG.feature_flags, ...data.feature_flags},
       release: {...DEFAULT_CONFIG.release, ...data.release},

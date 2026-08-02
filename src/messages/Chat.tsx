@@ -213,10 +213,12 @@ const Chat = memo(() => {
   // persists via coachService.appendLocalNote (same store sendMessage
   // writes to) so it's part of the real thread, same as everything else.
   const appendAttachmentNotice = React.useCallback((file: ImportedFileInfo) => {
-    coachService.appendLocalNote(`📎 Attached: ${file.name}`).then(note => {
+    coachService.appendLocalNote(
+      t("message:attachment_note", { defaultValue: "📎 Attached: {{fileName}}", fileName: file.name }),
+    ).then(note => {
       setMessages(previous => GiftedChat.append(previous, [toGiftedMessage(note)]));
     });
-  }, []);
+  }, [t]);
 
   const [isAttaching, setIsAttaching] = React.useState(false);
   const uploadAttachment = React.useCallback(
@@ -251,7 +253,12 @@ const Chat = memo(() => {
         type: [documentTypes.pdf, documentTypes.doc, documentTypes.docx, documentTypes.plainText, documentTypes.images],
       });
       await uploadAttachment(
-        { uri: result.uri, name: result.name ?? 'Selected file', sizeBytes: result.size, mimeType: result.type },
+        {
+          uri: result.uri,
+          name: result.name ?? t("message:selected_file_fallback", { defaultValue: "Selected file" }),
+          sizeBytes: result.size,
+          mimeType: result.type,
+        },
         'resume',
       );
     } catch (err) {
@@ -268,22 +275,32 @@ const Chat = memo(() => {
       const asset = response.assets?.[0];
       if (response.didCancel || !asset?.uri) return;
       uploadAttachment(
-        { uri: asset.uri, name: asset.fileName ?? 'Photo.jpg', sizeBytes: asset.fileSize, mimeType: asset.type },
+        {
+          uri: asset.uri,
+          name: asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" }),
+          sizeBytes: asset.fileSize,
+          mimeType: asset.type,
+        },
         'portfolio',
       );
     });
-  }, [uploadAttachment]);
+  }, [uploadAttachment, t]);
 
   const onPhotoLibrary = React.useCallback(() => {
     ImagePicker.launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, response => {
       const asset = response.assets?.[0];
       if (response.didCancel || !asset?.uri) return;
       uploadAttachment(
-        { uri: asset.uri, name: asset.fileName ?? 'Photo.jpg', sizeBytes: asset.fileSize, mimeType: asset.type },
+        {
+          uri: asset.uri,
+          name: asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" }),
+          sizeBytes: asset.fileSize,
+          mimeType: asset.type,
+        },
         'portfolio',
       );
     });
-  }, [uploadAttachment]);
+  }, [uploadAttachment, t]);
 
   // Routes to the real, already-working video interview flow
   // (LiveInterviewSession, Video mode) via MockInterviewSetup so the user can
@@ -448,6 +465,13 @@ const Chat = memo(() => {
           // placeholderTextColor covers the empty-state hint text.
           textInputStyle={{ color: theme['text-basic-color'] }}
           placeholderTextColor={theme['text-hint-color']}
+          // BUG FIX (product report: "Coach Text chat is not translating —
+          // renders in English even when the language is changed"): with no
+          // `placeholder` prop, gifted-chat's Composer falls back to its own
+          // hardcoded English default ("Type a message..."), which is the
+          // single most visible string on this screen (the empty input
+          // field) and was rendering in English regardless of app language.
+          placeholder={t("message:chat_input_placeholder", { defaultValue: "Type a message..." })}
           showUserAvatar
           alwaysShowSend
           renderMessageImage={(props) => {

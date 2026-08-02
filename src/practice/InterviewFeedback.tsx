@@ -124,12 +124,12 @@ const InterviewFeedback = memo(() => {
       }
     } catch (e: any) {
       if (!isMountedRef.current) return;
-      setError(e?.message ?? 'Could not load your feedback. Please try again.');
+      setError(e?.message ?? t('find:could_not_load_feedback_retry', { defaultValue: 'Could not load your feedback. Please try again.' }));
     } finally {
       if (isMountedRef.current) setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+  }, [sessionId, t]);
 
   const pollFeedback = React.useCallback(async () => {
     if (!sessionId || !isMountedRef.current) return;
@@ -172,8 +172,8 @@ const InterviewFeedback = memo(() => {
       setStarBreakdown(result.starBreakdown);
     } catch (e: any) {
       Alert.alert(
-        'Regenerate failed',
-        e?.message ?? 'Something went wrong regenerating your feedback. Please try again.',
+        t('find:regenerate_failed_title', { defaultValue: 'Regenerate failed' }),
+        e?.message ?? t('find:regenerate_failed_body', { defaultValue: 'Something went wrong regenerating your feedback. Please try again.' }),
       );
     } finally {
       setIsRegenerating(false);

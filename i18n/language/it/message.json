@@ -18,11 +18,15 @@
   "voice_status_thinking": "Sto pensando…",
   "voice_tap_to_interrupt": "Tocca per interrompere",
   "attach_resume_files": "Allega curriculum / file",
+  "attachment_note": "📎 Allegato: {{fileName}}",
+  "chat_input_placeholder": "Scrivi un messaggio...",
   "coach_unavailable_body": "Impossibile contattare il tuo coach IA. Riprova.",
   "coach_unavailable_title": "Coach non disponibile",
   "learn_more_about_topic": "Scopri di più su {{topic}}",
   "mode_text": "Testo",
   "mode_voice": "Voce",
+  "photo_fallback_name": "Foto.jpg",
+  "selected_file_fallback": "File selezionato",
   "start_video_practice": "Avvia pratica video",
   "view_my_progress": "Visualizza i miei progressi"
 }

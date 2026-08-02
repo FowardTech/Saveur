@@ -19,7 +19,7 @@ import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import useLayout from 'hooks/useLayout';
 import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, Interview_Type_Enum, LeaderboardEntryProps, ScheduledInterviewProps } from 'constants/Types';
 import UserAvatar from 'components/UserAvatar';
@@ -491,20 +491,42 @@ const HomeSrc = memo(() => {
   // Separate surface from the popup ad above: rendered as a persistent
   // card (see styles.homeBannerCard below), not a modal, and never
   // impression-capped — it just shows for as long as the admin leaves it
-  // active. Fetched once per mount, same as the popup ad fetch.
+  // active.
+  //
+  // BUG FIX (product report: "the homebanner is not displaying at all
+  // sometimes... when I minimize the app and open it again the homebanner
+  // will not display"): this used to fetch exactly once per mount with no
+  // way to recover — getHomeBanner() already retries transient failures a
+  // few times internally now (see adsService.ts), but that's no help if the
+  // ORIGINAL mount-time fetch happened before the network/auth token was
+  // fully ready (a real possibility on the very first render) or if backgrounding/
+  // foregrounding the OS app causes this screen to remount (Android in
+  // particular can recreate the Activity under memory pressure) racing this
+  // effect's own fetch against its cleanup's `cancelled` flag — either way,
+  // once that one attempt was lost, nothing ever tried again for the rest
+  // of the session. Now also re-fetches every time the app returns to the
+  // foreground, the same AppState 'active' pattern already used elsewhere
+  // in this file (see the unread-count and email-verification effects
+  // above) — purely additive: a failed refetch here still just leaves
+  // whatever banner (or lack of one) was already showing, same as before.
   const [homeBanner, setHomeBanner] = React.useState<AdvertisementProps | null>(null);
-  React.useEffect(() => {
-    let cancelled = false;
+  const loadHomeBanner = React.useCallback(() => {
     adsService.getHomeBanner().then(banner => {
-      if (!cancelled) setHomeBanner(banner);
+      setHomeBanner(banner);
     }).catch(() => {
-      // Offline or the request failed — no banner this session, same
-      // fail-quiet behavior as the popup ad fetch above.
+      // Offline or the request failed — leave whatever's currently shown
+      // (or not shown) alone; the next foreground/retry will try again.
     });
-    return () => {
-      cancelled = true;
-    };
   }, []);
+  React.useEffect(() => {
+    loadHomeBanner();
+  }, [loadHomeBanner]);
+  React.useEffect(() => {
+    const listener = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') loadHomeBanner();
+    });
+    return () => listener.remove();
+  }, [loadHomeBanner]);
   const onOpenHomeBanner = React.useCallback(() => {
     if (homeBanner) {
       navigate('AdDetails', { ad: homeBanner });
@@ -717,21 +739,21 @@ const HomeSrc = memo(() => {
           <View style={styles.checkInCardInner}>
             <LinearGradient
               pointerEvents="none"
-              colors={['#1df2d2ff', 'rgba(29, 160, 242, 0.43)']}
+              colors={['#1df2d2ff','rgba(29, 160, 242, 0.1)']}
               start={{ x: 1, y: 0 }}
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
             />
-            <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="contain" />
+            <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
           <View style={styles.checkInTopRow}>
             <CircularProgress
               progress={Math.min(100, (streakDays / 7) * 100)}
-              size={44}
-              strokeWidth={4}
+              size={100}
+              strokeWidth={10}
               trackColor="rgba(255,255,255,0.28)"
               color="#FFFFFF"
               style={styles.checkInRing}>
-              <Text category="h9" bold style={styles.checkInRingText}>
+              <Text category="h4" bold style={styles.checkInRingText}>
                 {streakDays}
               </Text>
             </CircularProgress>
@@ -839,7 +861,8 @@ const HomeSrc = memo(() => {
                 })}
               </Text>
               <Text category="h9-s" status="placeholder" mt={2}>
-                {nextSession.mode} · {nextSession.difficulty} · {nextSession.durationMin} min
+                {getPracticeModeLabel(nextSession.mode, t)} · {getDifficultyLabel(nextSession.difficulty, t)} ·{' '}
+                {nextSession.durationMin} {t('find:minutes_unit', {defaultValue: 'min'})}
               </Text>
             </View>
             <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
@@ -925,11 +948,37 @@ const HomeSrc = memo(() => {
                     entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
                   ]}>
                   <View style={[styles.leaderboardRank, { backgroundColor: medal.bg }]}>
-                    <Text category="h9-s" bold style={{ color: medal.text }}>
-                      {entry.rank}
-                    </Text>
+                    {/* Trophy icon instead of the "1" for whoever's leading,
+                        per explicit follow-up — every other rank keeps its
+                        plain number badge. */}
+                    {entry.rank === 1 ? (
+                      <Icon
+                        pack="eva"
+                        name="trophy"
+                        style={{ width: 16, height: 16, tintColor: medal.text }}
+                      />
+                    ) : (
+                      <Text category="h9-s" bold style={{ color: medal.text }}>
+                        {entry.rank}
+                      </Text>
+                    )}
                   </View>
-                  <UserAvatar uri={entry.avatarUrl} name={entry.name} size="tiny" style={styles.leaderboardAvatar} />
+                  {/* Bumped tiny (24px) -> small (32px) -> medium (40px)
+                      across two follow-ups ("too small", then "increase it
+                      more again"), and shape switched to fully circular
+                      ("round") instead of the component's default rounded-
+                      square per explicit request — see UserAvatar.tsx's
+                      `shape` prop, scoped to this one call site so every
+                      other UserAvatar usage in the app (Edit Profile,
+                      Profile tab, More/Home headers, etc.) keeps its
+                      original look. */}
+                  <UserAvatar
+                    uri={entry.avatarUrl}
+                    name={entry.name}
+                    size="medium"
+                    shape="round"
+                    style={styles.leaderboardAvatar}
+                  />
                   <Text category="h9-s" bold numberOfLines={1} style={globalStyle.flexOne}>
                     {entry.name}
                     {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
@@ -1067,7 +1116,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     marginTop: 16,
     borderRadius: 20,
-    backgroundColor: 'color-primary-300',
+    backgroundColor: 'color-primary-500',
   },
   // Inner layer: `overflow:'hidden'` so the corner accent (see JSX comment)
   // clips to the card's rounded corners, `position:'relative'` so that

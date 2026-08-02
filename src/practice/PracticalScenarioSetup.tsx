@@ -157,6 +157,7 @@ const PracticalScenarioSetup = memo(() => {
           value={role}
           onChangeText={setRole}
           style={[styles.input, { marginBottom: 24 }]}
+          textStyle={globalStyle.inputText}
         />
 
         <CtaButton

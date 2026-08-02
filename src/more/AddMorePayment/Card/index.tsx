@@ -68,6 +68,17 @@ const Card: React.FC<Props> = ({model, cardType, focusedField}) => {
 const styles = StyleSheet.create({
   container: {
     ...globalStyle.card,
+    // `card` carries a real elevation on Android (see globalStyle.ts's own
+    // note on this), which needs an opaque backgroundColor on this exact
+    // View to compute a proper rounded shadow — otherwise Android draws a
+    // flat gray block behind the card instead of a soft shadow (same bug
+    // class already fixed in ButtonFill.tsx/MockInterviewSetup.tsx/
+    // PaymentMethod.tsx). This View's own fill is never actually seen
+    // (FrontSide/BackSide's <Image style={styles.background} .../> covers
+    // it edge-to-edge with the same borderRadius), so the exact color just
+    // needs to be opaque and close to img_credit_card.png's dominant blue
+    // for the brief moment before/around that image.
+    backgroundColor: '#0B63D6',
     width: '100%',
     height: 200,
     paddingVertical: 24,

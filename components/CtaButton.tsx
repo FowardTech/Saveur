@@ -84,7 +84,19 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           button's white/bold styling first so the centered label still
           picks up CtaButton's look instead of losing it. */}
       {evaProps => {
-        const labelStyle = [evaProps?.style, { color: theme['text-primary-color'], fontWeight: '700' as const }];
+        // BUG FIX (custom fonts not rendering on Android): this used to also
+        // set `fontWeight: '700'` here, on top of evaProps.style which
+        // already carries the button's mapped fontFamily (mapping.json's
+        // Button "filled" appearance -> PlusJakartaSans-Medium). Android's
+        // font resolver appends a "_bold" suffix to the family name when it
+        // sees a bold-ish weight and looks for a file like
+        // "PlusJakartaSans-Medium_bold.ttf" — that file doesn't exist, so it
+        // silently fell back to the system font for every CtaButton label on
+        // Android (fine on iOS, which matches the family string directly).
+        // 'normal' keeps the exact filename lookup intact; the label still
+        // reads as bold because PlusJakartaSans-Medium is already a heavier
+        // cut than the app's Regular body text.
+        const labelStyle = [evaProps?.style, { color: theme['text-primary-color'], fontWeight: 'normal' as const }];
         return typeof children === 'function'
           ? (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle })
           : <KittenText {...evaProps} style={labelStyle}>{children as React.ReactNode}</KittenText>;

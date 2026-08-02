@@ -348,6 +348,7 @@ const StudentVerification = memo(() => {
               value={selectedUniversity ? selectedUniversity.name : universityQuery}
               onChangeText={text => { setUniversityQuery(text); setSelectedUniversity(null); }}
               style={styles.input}
+              textStyle={globalStyle.inputText}
             />
             {isSearching ? <Spinner size="tiny" style={{ marginTop: 8 }} /> : null}
             {!selectedUniversity && universityResults.length > 0 ? (
@@ -374,6 +375,7 @@ const StudentVerification = memo(() => {
               autoCapitalize="none"
               status={emailWarning ? (emailWarning.severity === 'block' ? 'danger' : 'warning') : 'basic'}
               style={styles.input}
+              textStyle={globalStyle.inputText}
             />
             {emailWarning ? (
               <Text category="h10" status={emailWarning.severity === 'block' ? 'danger' : 'warning'} mt={6}>
@@ -457,6 +459,7 @@ const StudentVerification = memo(() => {
               keyboardType="number-pad"
               maxLength={6}
               style={styles.input}
+              textStyle={globalStyle.inputText}
             />
             {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}
             <CtaButton

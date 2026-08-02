@@ -7,6 +7,7 @@ import {
   Button,
   Spinner,
 } from '@ui-kitten/components';
+import notifee from '@notifee/react-native';
 import {useTranslation} from 'react-i18next';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
@@ -20,6 +21,17 @@ import {RootStackParamList} from 'navigation/types';
 import * as notificationService from 'services/notificationService';
 import Applications from './Applications';
 import CtaButton from 'components/CtaButton';
+
+// Sets the app-icon badge to the given list's actual local unread count.
+// Best-effort/fire-and-forget, same as every other notifee call in this
+// codebase (services/pushNotificationService.ts) — a failed badge update
+// shouldn't surface an error or block the read-marking UI it's attached to.
+function syncBadgeCount(notifications: NotificationProps[]): void {
+  const unread = notifications.filter(n => !n.read).length;
+  notifee.setBadgeCount(unread).catch(err => {
+    console.warn('[push] setBadgeCount (mark-read sync) failed', err);
+  });
+}
 
 // Real in-app notification list — GET /api/v1/notifications /
 // POST /api/v1/notifications/read (see services/notificationService.ts).
@@ -45,6 +57,13 @@ const Notification = memo(() => {
     try {
       const data = await notificationService.listNotifications();
       setNotifications(data);
+      // Baseline re-sync against the server's own truth whenever this
+      // screen is opened/refreshed — covers cases the push-driven and
+      // mark-read-driven updates elsewhere can't (a fresh install/reinstall,
+      // a notification read on another device, a push that silently failed
+      // to update the badge for any reason) so the icon can't drift
+      // permanently out of sync with reality.
+      syncBadgeCount(data);
     } catch (error: any) {
       setLoadError(
         error?.message ?? t('notification:load_failed', {defaultValue: 'Could not load your notifications.'}),
@@ -73,11 +92,26 @@ const Notification = memo(() => {
       if (item.read) return;
       // Optimistic — flip it locally right away, roll back if the server
       // call fails so the unread dot doesn't lie about server state.
-      setNotifications(prev => prev.map(n => (n.id === item.id ? {...n, read: true} : n)));
+      setNotifications(prev => {
+        const next = prev.map(n => (n.id === item.id ? {...n, read: true} : n));
+        // App-icon badge (product report: "Saveur's app icon doesn't show a
+        // notification badge count like other apps do"). The backend only
+        // re-stamps the badge on the NEXT push it sends — reading a
+        // notification in-app, with no push involved, would otherwise leave
+        // the icon stuck showing a now-stale (too high) count until
+        // whenever that next push happens to arrive. Recomputed from local
+        // state right after every read here rather than waiting on that.
+        syncBadgeCount(next);
+        return next;
+      });
       try {
         await notificationService.markNotificationsRead([item.id]);
       } catch (error: any) {
-        setNotifications(prev => prev.map(n => (n.id === item.id ? {...n, read: false} : n)));
+        setNotifications(prev => {
+          const next = prev.map(n => (n.id === item.id ? {...n, read: false} : n));
+          syncBadgeCount(next);
+          return next;
+        });
         Alert.alert(
           t('notification:mark_read_failed_title', {defaultValue: "Couldn't update notification"}),
           error?.message ?? t('notification:mark_read_failed_body', {defaultValue: 'Please try again in a moment.'}),
@@ -93,11 +127,16 @@ const Notification = memo(() => {
     if (unreadIds.length === 0 || markingAll) return;
     setMarkingAll(true);
     const previous = notifications;
-    setNotifications(prev => prev.map(n => ({...n, read: true})));
+    setNotifications(prev => {
+      const next = prev.map(n => ({...n, read: true}));
+      syncBadgeCount(next); // see onPressItem's comment on why this runs locally too
+      return next;
+    });
     try {
       await notificationService.markNotificationsRead(unreadIds);
     } catch (error: any) {
       setNotifications(previous);
+      syncBadgeCount(previous);
       Alert.alert(
         t('notification:mark_read_failed_title', {defaultValue: "Couldn't update notification"}),
         error?.message ?? t('notification:mark_read_failed_body', {defaultValue: 'Please try again in a moment.'}),
@@ -121,7 +160,20 @@ const Notification = memo(() => {
       <TopNavigation
         accessoryLeft={<NavigationAction />}
         accessoryRight={unreadIds.length > 0 ? renderMarkAllRead : undefined}
-        title={t('notification:title').toString()}
+        title={
+          // Plain-string titles here previously ran into the back button
+          // (user report, explicitly named this screen) — the "Mark all
+          // read" accessoryRight only shows up when there are unread items,
+          // so an unbalanced left-icon-only header made a translated title
+          // (this string is much longer in several locales than the English
+          // "Notifications") drift into the icon. numberOfLines={1} +
+          // ellipsizeMode keeps it to one truncated line no matter the
+          // locale or accessory state (see components/NavigationAction.tsx
+          // for the back button this sits next to).
+          <Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">
+            {t('notification:title').toString()}
+          </Text>
+        }
       />
       {loading ? (
         <Flex style={styles.center} itemsCenter justify="center">

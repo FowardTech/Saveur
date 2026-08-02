@@ -69,7 +69,34 @@ export async function recordImpression(adId: number): Promise<void> {
  * src/more/AdDetails.tsx for the screen tapping it opens (same screen the
  * popup ad already uses — the row shape is identical either way).
  */
+// BUG FIX (product report: "the homebanner sometimes does not load and
+// sometimes it loads"): HomeSrc.tsx fetches this exactly once per mount
+// with no retry at all, so any single transient failure — a dropped
+// connection, or the backend's ad_translation_service.get_localized_ad
+// doing a real synchronous LLM call the first time any user requests a
+// given (ad, locale) pair before it's cached (see that function's own
+// comment; every request after the first is fast/cached) pushing this
+// particular request close to apiClient's 20s timeout — permanently blanked
+// the banner for that session with nothing to recover it. A couple of quick
+// retries smooths over exactly that kind of one-off hiccup without masking
+// a genuinely-no-banner-configured response (that's a clean `{}` -> null
+// from fromWire, not a thrown error, so it's never retried here).
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3, delayMs = 800): Promise<T> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      lastError = e;
+      if (i < attempts - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayMs * (i + 1)));
+      }
+    }
+  }
+  throw lastError;
+}
+
 export async function getHomeBanner(): Promise<AdvertisementProps | null> {
-  const {data} = await apiClient.get<AdWire>('/api/v1/ads/banner');
+  const {data} = await withRetry(() => apiClient.get<AdWire>('/api/v1/ads/banner'));
   return fromWire(data);
 }

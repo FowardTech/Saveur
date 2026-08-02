@@ -131,15 +131,15 @@ const LinkedInOptimizer = memo(() => {
         ) : null}
 
         <Text category="h10" status="placeholder" mb={6}>{t('more:linkedin_headline_label', { defaultValue: 'Headline' })}</Text>
-        <Input value={headline} onChangeText={setHeadline} multiline style={[styles.input, { marginBottom: 16 }]} />
+        <Input value={headline} onChangeText={setHeadline} multiline textStyle={globalStyle.inputText} style={[styles.input, { marginBottom: 16 }]} />
 
         <Text category="h10" status="placeholder" mb={6}>{t('more:linkedin_about_label', { defaultValue: 'About section' })}</Text>
-        <Input value={about} onChangeText={setAbout} multiline textStyle={{ minHeight: 80 }} style={[styles.input, { marginBottom: 16 }]} />
+        <Input value={about} onChangeText={setAbout} multiline textStyle={[globalStyle.inputText, { minHeight: 80 }]} style={[styles.input, { marginBottom: 16 }]} />
 
         <Text category="h10" status="placeholder" mb={6}>
           {t('more:linkedin_bullets_label', { defaultValue: 'Experience bullet points (one per line)' })}
         </Text>
-        <Input value={bulletsText} onChangeText={setBulletsText} multiline textStyle={{ minHeight: 80 }} style={styles.input} />
+        <Input value={bulletsText} onChangeText={setBulletsText} multiline textStyle={[globalStyle.inputText, { minHeight: 80 }]} style={styles.input} />
 
         <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 24 }]}

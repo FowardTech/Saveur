@@ -18,11 +18,15 @@
   "salary_negotiation_title": "Simulateur de négociation salariale",
   "suggested_topics": "Sujets suggérés",
   "attach_resume_files": "Joindre CV / fichiers",
+  "attachment_note": "📎 Pièce jointe : {{fileName}}",
+  "chat_input_placeholder": "Écrivez un message...",
   "coach_unavailable_body": "Impossible de contacter votre coach IA. Veuillez réessayer.",
   "coach_unavailable_title": "Coach indisponible",
   "learn_more_about_topic": "En savoir plus sur {{topic}}",
   "mode_text": "Texte",
   "mode_voice": "Voix",
+  "photo_fallback_name": "Photo.jpg",
+  "selected_file_fallback": "Fichier sélectionné",
   "start_video_practice": "Démarrer une pratique vidéo",
   "view_my_progress": "Voir ma progression"
 }

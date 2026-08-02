@@ -29,6 +29,17 @@ import CtaButton from 'components/CtaButton';
 // Job-description analyzer: paste a JD, get a match score + gap analysis via
 // jdService, which calls POST /jd/analyze and POST /jd/match in parallel and
 // merges them (see services/jdService.ts).
+//
+// Product request item: "let users paste a job posting URL instead of the
+// full job description text." Adds a second input mode alongside the
+// original paste-text one — a simple two-way tab, not a separate screen,
+// since both modes feed the exact same downstream analysis. Submitting a
+// URL first resolves it server-side to plain jd_text (POST
+// /jd/extract-url — see jdService.ts), then reuses
+// analyzeJobDescription(jdText) completely unchanged; from that point on a
+// URL-sourced analysis is indistinguishable from a pasted-text one.
+type InputMode = 'text' | 'url';
+
 const JDAnalyzer = memo(() => {
   const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
@@ -36,15 +47,56 @@ const JDAnalyzer = memo(() => {
   const { t } = useTranslation(['more', 'common']);
   const { isPro } = React.useContext(AuthContext);
 
+  const [inputMode, setInputMode] = React.useState<InputMode>('text');
   const [jd, setJd] = React.useState('');
+  const [jdUrl, setJdUrl] = React.useState('');
   const [result, setResult] = React.useState<JDAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+  // Distinct from isAnalyzing so the button label can say "Fetching…"
+  // during the URL-resolve step, before the normal analyze/match calls
+  // (which is what isAnalyzing already covers) even start.
+  const [isFetchingUrl, setIsFetchingUrl] = React.useState(false);
+
+  const switchMode = React.useCallback((mode: InputMode) => {
+    setInputMode(mode);
+    setResult(null);
+  }, []);
 
   const onAnalyze = async () => {
-    if (!jd.trim() || isAnalyzing) return;
+    if (isAnalyzing || isFetchingUrl) return;
+    let jdText = jd;
+    if (inputMode === 'url') {
+      if (!jdUrl.trim()) return;
+      setIsFetchingUrl(true);
+      try {
+        jdText = await jdService.extractJDFromUrl(jdUrl);
+      } catch (e: any) {
+        setIsFetchingUrl(false);
+        Alert.alert(
+          t('more:jd_url_fetch_failed', { defaultValue: "Couldn't read that job posting" }),
+          e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+        );
+        return;
+      }
+      setIsFetchingUrl(false);
+      if (!jdText.trim()) {
+        Alert.alert(
+          t('more:jd_url_fetch_failed', { defaultValue: "Couldn't read that job posting" }),
+          t('more:jd_url_empty_result', { defaultValue: 'Try pasting the job description text instead.' }),
+        );
+        return;
+      }
+      // Mirrored into the same `jd` state the text tab uses — the "Build
+      // Resume" CTA below (and any other downstream consumer of this
+      // screen's result) always reads jdText off `jd`, regardless of which
+      // tab originally produced it, so a URL-sourced analysis needs this
+      // populated too or GenerateResume would receive an empty jdText.
+      setJd(jdText);
+    }
+    if (!jdText.trim()) return;
     setIsAnalyzing(true);
     try {
-      const analysis = await jdService.analyzeJobDescription(jd);
+      const analysis = await jdService.analyzeJobDescription(jdText);
       setResult(analysis);
     } catch (e: any) {
       Alert.alert(
@@ -55,6 +107,9 @@ const JDAnalyzer = memo(() => {
       setIsAnalyzing(false);
     }
   };
+
+  const isBusy = isAnalyzing || isFetchingUrl;
+  const canSubmit = inputMode === 'text' ? !!jd.trim() : !!jdUrl.trim();
 
   if (!isPro) {
     return (
@@ -74,25 +129,79 @@ const JDAnalyzer = memo(() => {
         accessoryLeft={<NavigationAction onPress={goBack} />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        <Text category="h8" bold status="placeholder" mb={12}>
-          {t('more:paste_job_description', { defaultValue: 'Paste a job description' })}
-        </Text>
-        <Input
-          multiline
-          scrollEnabled
-          textStyle={styles.jdText}
-          style={styles.jdInput}
-          value={jd}
-          onChangeText={setJd}
-        />
+        {/* Paste text / Paste URL tabs — two input modes feeding the same
+            downstream analysis (see this file's top comment). A plain
+            two-button toggle rather than a full TabView/TabBar component,
+            since there's nothing else on this screen that needs to switch
+            with it (just the one input area below). */}
+        <Flex style={styles.modeToggle}>
+          <Button
+            appearance={inputMode === 'text' ? 'filled' : 'ghost'}
+            status={inputMode === 'text' ? 'primary' : 'basic'}
+            size="small"
+            style={styles.modeButton}
+            onPress={() => switchMode('text')}
+          >
+            {t('more:paste_text', { defaultValue: 'Paste text' }).toString()}
+          </Button>
+          <Button
+            appearance={inputMode === 'url' ? 'filled' : 'ghost'}
+            status={inputMode === 'url' ? 'primary' : 'basic'}
+            size="small"
+            style={styles.modeButton}
+            onPress={() => switchMode('url')}
+          >
+            {t('more:paste_url', { defaultValue: 'Paste URL' }).toString()}
+          </Button>
+        </Flex>
+
+        {inputMode === 'text' ? (
+          <>
+            <Text category="h8" bold status="placeholder" mb={12}>
+              {t('more:paste_job_description', { defaultValue: 'Paste a job description' })}
+            </Text>
+            <Input
+              multiline
+              scrollEnabled
+              textStyle={styles.jdText}
+              style={styles.jdInput}
+              value={jd}
+              onChangeText={setJd}
+            />
+          </>
+        ) : (
+          <>
+            <Text category="h8" bold status="placeholder" mb={12}>
+              {t('more:paste_job_url', { defaultValue: 'Paste a job posting link' })}
+            </Text>
+            <Input
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder={t('more:job_url_placeholder', {
+                defaultValue: 'e.g. https://jobs.lever.co/company/role',
+              }).toString()}
+              value={jdUrl}
+              onChangeText={setJdUrl}
+              disabled={isFetchingUrl}
+            />
+            <Text category="h9-s" status="placeholder" mt={8}>
+              {t('more:job_url_hint', {
+                defaultValue: "We'll fetch the posting and pull out the job description for you.",
+              })}
+            </Text>
+          </>
+        )}
         <CtaButton
           children={
-            isAnalyzing
+            isFetchingUrl
+              ? t('more:fetching_posting', { defaultValue: 'Fetching posting…' })
+              : isAnalyzing
               ? t('more:analyzing', { defaultValue: 'Analyzing…' })
               : t('more:analyze', { defaultValue: 'Analyze Match' })
           }
           onPress={onAnalyze}
-          disabled={isAnalyzing || !jd.trim()}
+          disabled={isBusy || !canSubmit}
           style={[globalStyle.shadowBtn, { marginTop: 24 }]}
         />
 
@@ -156,7 +265,12 @@ const JDAnalyzer = memo(() => {
             <View style={styles.chipsWrap}>
               {result.keywordSuggestions.map((word, i) => (
                 <View key={i} style={[styles.chip, { backgroundColor: theme['color-success-transparent-200'] }]}>
-                  <Text category="h9" status="success" bold>
+                  {/* BUG FIX (illegible green pill text): `status="success"`
+                      resolves to this app's palette's lightest green shade,
+                      almost invisible against this same pale green fill.
+                      `color-success-200` is the darker shade already used
+                      elsewhere for legible text-on-light-fill. */}
+                  <Text category="h9" bold style={{color: theme['color-success-200']}}>
                     {word}
                   </Text>
                 </View>
@@ -198,6 +312,13 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  modeToggle: {
+    marginBottom: 16,
+  },
+  modeButton: {
+    marginRight: 8,
+    borderRadius: 20,
   },
   jdInput: {
     borderRadius: 16,

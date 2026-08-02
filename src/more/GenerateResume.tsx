@@ -219,7 +219,7 @@ const GenerateResume = memo(() => {
           {t('more:resume_target_role', { defaultValue: 'Target Role' })}
         </Text>
         <Flex justify="flex-start" mb={20}>
-          <Input value={role} onChangeText={setRole} style={[styles.roleInput, globalStyle.flexOne]} />
+          <Input value={role} onChangeText={setRole} style={[styles.roleInput, globalStyle.flexOne]} textStyle={globalStyle.inputText} />
           <Button
             size="small"
             appearance="outline"
@@ -420,7 +420,13 @@ const GenerateResume = memo(() => {
                         name="plus-outline"
                         style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 4 }]}
                       />
-                      <Text category="h9" status="warning" bold>
+                      {/* BUG FIX (illegible orange pill text): `status=
+                          "warning"` resolves to this app's only warning
+                          shade (#FE9870, a light peach), almost invisible
+                          against this same peach-tinted fill. `color-
+                          warning-700` (added to appTheme.json) is a proper
+                          darkened burnt-orange with real contrast. */}
+                      <Text category="h9" bold style={{color: theme['color-warning-700']}}>
                         {skill}
                       </Text>
                     </TouchableOpacity>

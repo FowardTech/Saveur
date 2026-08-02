@@ -218,6 +218,7 @@ const SecuritySettings = memo(() => {
               maxLength={6}
               placeholder="000000"
               style={[globalStyle.inputField, {marginBottom: 12}]}
+              textStyle={globalStyle.inputText}
             />
             <Flex justify="space-between" itemsCenter>
               <Button appearance="ghost" status="basic" disabled={twoFABusy} onPress={onCancelEnable2FA}>

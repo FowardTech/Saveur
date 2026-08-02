@@ -713,7 +713,7 @@
                 "paddingVertical": 16,
                 "textMarginHorizontal": 12,
                 "textFontSize": 18,
-                "textFontWeight": "bold",
+                "textFontWeight": "normal",
                 "iconWidth": 24,
                 "iconHeight": 24,
                 "iconMarginHorizontal": 12
@@ -2683,7 +2683,7 @@
             "paddingHorizontal": 0,
             "textMarginHorizontal": 0,
             "textFontFamily": "text-font-family-medium",
-            "textFontWeight":"bold",
+            "textFontWeight":"normal",
             "iconWidth": 24,
             "iconHeight": 24,
             "iconMarginHorizontal": 16,
@@ -2692,7 +2692,7 @@
             "labelFontWeight": "text-heading-8-font-weight",
             "labelFontFamily": "text-heading-8-font-family",
             "captionFontSize": "text-heading-9-font-size",
-            "captionFontWeight": "bold",
+            "captionFontWeight": "normal",
             "captionFontFamily": "text-heading-9-font-family"
           },
           "variantGroups": {
@@ -2908,7 +2908,7 @@
                 "borderWidth": 0,
                 "paddingVertical": 3,
                 "textFontSize": "text-subtitle-2-font-size",
-                "textFontWeight": "bold"
+                "textFontWeight": "normal"
               },
               "medium": {
                 "minHeight": 40,
@@ -2916,7 +2916,7 @@
                 "borderWidth": 0,
                 "paddingVertical": 7,
                 "textFontSize": "text-heading-7-font-size",
-                "textFontWeight": "700",
+                "textFontWeight": "400",
                 "iconHeight": 24,
                 "iconWidth": 24,
                 "iconMarginHorizontal": 0
@@ -2927,7 +2927,7 @@
                 "borderWidth": 1,
                 "paddingVertical": 4,
                 "textFontSize": "text-heading-7-font-size",
-                "textFontWeight": "700",
+                "textFontWeight": "400",
                 "textMarginHorizontal": 8
               },
               "large": {
@@ -2936,7 +2936,7 @@
                 "borderWidth": 0,
                 "paddingVertical": 11,
                 "textFontSize": "text-subtitle-1-font-size",
-                "textFontWeight": "bold"
+                "textFontWeight": "normal"
               }
             }
           }
@@ -2954,7 +2954,7 @@
             "labelFontWeight": "text-heading-8-font-weight",
             "labelFontFamily": "text-heading-8-font-family",
             "captionFontSize": "text-heading-9-font-size",
-            "captionFontWeight": "bold",
+            "captionFontWeight": "normal",
             "captionFontFamily": "text-heading-9-font-family"
           },
           "variantGroups": {
@@ -3213,7 +3213,7 @@
             "labelFontWeight": "text-heading-8-font-weight",
             "labelFontFamily": "text-heading-8-font-family",
             "captionFontSize": "text-heading-9-font-size",
-            "captionFontWeight": "bold",
+            "captionFontWeight": "normal",
             "captionFontFamily": "text-heading-9-font-family"
           },
           "variantGroups": {
@@ -3453,7 +3453,7 @@
                 "borderWidth": 0,
                 "paddingVertical": 0,
                 "textFontSize": 24,
-                "textFontWeight": "700"
+                "textFontWeight": "400"
               },
               "arena": {
                 "minHeight": 144,
@@ -4110,7 +4110,7 @@
             "labelFontWeight": "text-heading-8-font-weight",
             "labelFontFamily": "text-heading-8-font-family",
             "captionFontSize": "text-heading-9-font-size",
-            "captionFontWeight": "bold",
+            "captionFontWeight": "normal",
             "captionFontFamily": "text-heading-9-font-family",
             "popoverMaxHeight": 220,
             "popoverBorderRadius": "border-radius",
@@ -5239,7 +5239,7 @@
           "mapping": {
             "textMarginVertical": 2,
             "textFontSize": 14,
-            "textFontWeight": "bold",
+            "textFontWeight": "normal",
             "textFontFamily": "text-font-family",
             "textColor": "text-hint-color",
             "iconWidth": 24,
@@ -6174,10 +6174,10 @@
         "variantGroups": {
           "alignment": {
             "start": {
-              "default": false
+              "default": true
             },
             "center": {
-              "default": true
+              "default": false
             }
           }
         },

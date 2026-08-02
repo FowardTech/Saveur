@@ -26,6 +26,22 @@ interface SwiperCardProps {
   // number, just its default/removed status.
   editLabel?: string;
   deleteLabel?: string;
+  // BUG FIX ("payment method card has an extra card extension behind it —
+  // looks like an extra card behind the outer card"): the Swipeable's
+  // renderRightActions panel (the red Delete / yellow Default action
+  // blocks below) is laid out as a real sibling row alongside `children`,
+  // translated off-screen until the user swipes — nothing was ever
+  // clipping it to the card's own rounded shape, so those solid-colored
+  // action blocks peeked out from behind the rounded corners at rest,
+  // reading as a second card sitting behind the real one. Can't just add
+  // `overflow: 'hidden'` to the outer TouchableOpacity (`containerStyle`
+  // below) — that's also the view casting this card's shadow, and
+  // `overflow: 'hidden'` clips a view's own shadow on iOS too (same
+  // shadow-vs-clip conflict already documented throughout this app's
+  // other "two-layer split" cards). This prop lets the clip-only inner
+  // wrapper match whatever radius the caller's `containerStyle` already
+  // uses, so the clip and the shadow's rounding line up.
+  borderRadius?: number;
 }
 
 const SwiperCard = ({
@@ -37,6 +53,7 @@ const SwiperCard = ({
   children,
   editLabel,
   deleteLabel,
+  borderRadius = 12,
 }: SwiperCardProps) => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['payment', 'common']);
@@ -101,15 +118,19 @@ const SwiperCard = ({
       style={containerStyle}
       onPress={isOpen ? _close : _open}
       activeOpacity={0.54}>
-      <Swipeable
-        id={`${id}`}
-        ref={refSwipeable}
-        friction={2}
-        enableTrackpadTwoFingerGesture
-        rightThreshold={50}
-        renderRightActions={renderRightActions}>
-        {children}
-      </Swipeable>
+      {/* Clip-only layer, separate from the shadow-casting TouchableOpacity
+          above — see this component's `borderRadius` prop comment. */}
+      <View style={{borderRadius, overflow: 'hidden'}}>
+        <Swipeable
+          id={`${id}`}
+          ref={refSwipeable}
+          friction={2}
+          enableTrackpadTwoFingerGesture
+          rightThreshold={50}
+          renderRightActions={renderRightActions}>
+          {children}
+        </Swipeable>
+      </View>
     </TouchableOpacity>
   );
 };

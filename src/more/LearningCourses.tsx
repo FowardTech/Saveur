@@ -496,6 +496,7 @@ const LearningCourses = memo(() => {
                   value={curriculumGoal}
                   onChangeText={setCurriculumGoal}
                   style={[styles.customInput, globalStyle.flexOne]}
+                  textStyle={globalStyle.inputText}
                 />
                 <CtaButton
                   size="small"
@@ -575,6 +576,7 @@ const LearningCourses = memo(() => {
               value={customTopic}
               onChangeText={text => { setCustomTopic(text); setTopicCheck(null); }}
               style={[styles.customInput, globalStyle.flexOne]}
+              textStyle={globalStyle.inputText}
             />
             <CtaButton
               size="small"

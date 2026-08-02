@@ -21,11 +21,23 @@ interface Props {
 // the way the reference uses purple specifically for "Be Seen First" and
 // nothing else — `info` (blue) is the general-purpose one ("New", plain
 // informational tags).
+// BUG FIX (illegible pill text — "green pills using a light green is making
+// the text almost not visible, also the orange text"): `success`/`warning`
+// used to pair their PALEST palette shade (-100, the brightest/lightest
+// tone) as the TEXT color on top of an already-pale tinted background
+// (-transparent-200), which is close to no contrast at all. `color-success-
+// 200` (#0EAD69) is the same darker green already used elsewhere in the app
+// for legible text-on-light-fill (see light.json's `text-completed-color`).
+// There was no darker warning shade defined anywhere in the palette at all
+// (`color-warning-100` was the only one, #FE9870 — a light peach, exactly
+// the illegible orange reported) — added `color-warning-700` (#B45309, a
+// proper darkened burnt-orange keeping the same hue) to
+// constants/theme/appTheme.json for this.
 const VARIANT_TOKENS: Record<StatusBadgeVariant, {bg: string; text: string}> = {
   accent: {bg: 'color-accent-purple-bg', text: 'color-accent-purple'},
   info: {bg: 'color-badge-info-bg', text: 'color-badge-info-text'},
-  success: {bg: 'color-success-transparent-200', text: 'color-success-100'},
-  warning: {bg: 'color-warning-transparent-200', text: 'color-warning-100'},
+  success: {bg: 'color-success-transparent-200', text: 'color-success-200'},
+  warning: {bg: 'color-warning-transparent-200', text: 'color-warning-700'},
   danger: {bg: 'color-danger-transparent-200', text: 'color-danger-100'},
 };
 

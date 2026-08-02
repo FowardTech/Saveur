@@ -18,11 +18,15 @@
   "salary_negotiation_title": "Симулятор переговоров о зарплате",
   "suggested_topics": "Предлагаемые темы",
   "attach_resume_files": "Прикрепить резюме / файлы",
+  "attachment_note": "📎 Прикреплено: {{fileName}}",
+  "chat_input_placeholder": "Введите сообщение...",
   "coach_unavailable_body": "Не удалось связаться с вашим AI-коучем. Попробуйте ещё раз.",
   "coach_unavailable_title": "Коуч недоступен",
   "learn_more_about_topic": "Узнать больше о {{topic}}",
   "mode_text": "Текст",
   "mode_voice": "Голос",
+  "photo_fallback_name": "Фото.jpg",
+  "selected_file_fallback": "Выбранный файл",
   "start_video_practice": "Начать видеотренировку",
   "view_my_progress": "Посмотреть мой прогресс"
 }

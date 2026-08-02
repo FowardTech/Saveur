@@ -44,7 +44,14 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
 
   return (
     <Container style={styles.container}>
-      <TopNavigation title={title ?? 'Pro feature'} accessoryLeft={<NavigationAction />} />
+      <TopNavigation
+        title={
+          <Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">
+            {title ?? 'Pro feature'}
+          </Text>
+        }
+        accessoryLeft={<NavigationAction />}
+      />
       <Content padder contentContainerStyle={[styles.content, {paddingBottom: bottom + 24}]}>
         {/* `justify` wasn't passed here before — Flex.tsx defaults it to
             'space-between' when omitted (see that component), which on a

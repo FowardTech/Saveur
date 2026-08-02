@@ -177,6 +177,7 @@ const PaymentMethod = memo(() => {
               key={item.id}
               id={item.id}
               containerStyle={styles.swiperContainer}
+              borderRadius={12}
               widthAction={75}
               editLabel={t('payment:set_default', {defaultValue: 'Default'})}
               deleteLabel={t('common:delete', {defaultValue: 'Delete'})}

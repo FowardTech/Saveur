@@ -168,6 +168,7 @@ const CareerRoadmap = memo(() => {
               value={targetRole}
               onChangeText={setTargetRole}
               style={[styles.input, { marginBottom: 16 }]}
+              textStyle={globalStyle.inputText}
             />
             <Text category="h10" status="placeholder" mb={6}>
               {t('more:roadmap_current_role_label', { defaultValue: 'Your current role (optional)' })}
@@ -177,6 +178,7 @@ const CareerRoadmap = memo(() => {
               value={currentRole}
               onChangeText={setCurrentRole}
               style={styles.input}
+              textStyle={globalStyle.inputText}
             />
             <CtaButton
               style={[globalStyle.shadowBtn, { marginTop: 20 }]}

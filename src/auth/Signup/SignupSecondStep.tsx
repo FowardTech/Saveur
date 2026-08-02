@@ -104,7 +104,10 @@ const SignupSecondStep = memo(() => {
       <TopNavigation accessoryLeft={<NavigationAction />} />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text mt={16}>{t('auth:heading_signup_2')}</Text>
-        <Text mt={8} mb={24} category="h2" bold style={{fontWeight: '800'}}>
+        {/* BUG FIX (custom fonts not rendering on Android): see Text.tsx's
+            comment — an explicit numeric fontWeight fighting a weight-named
+            custom fontFamily breaks Android's font file lookup. Removed. */}
+        <Text mt={8} mb={24} category="h2" bold>
           {t('auth:title_signup_2')}
         </Text>
 

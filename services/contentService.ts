@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from './apiClient';
+import i18n from 'i18next';
 
 // ---------------------------------------------------------------------------
 // contentService — admin-editable legal/policy content (privacy policy,
@@ -35,10 +36,16 @@ function fromWire(wire: LegalContentWire): LegalContent {
   };
 }
 
-const cacheKey = (slug: string) => `legalContent:${slug}`;
+// Cache key includes the language — see getLegalContent's BUG FIX comment
+// below on why this now sends `language` at all. Without the language in
+// the key, switching languages while offline (or before the first online
+// fetch in the new language completes) could otherwise serve back a stale
+// cached copy in the PREVIOUS language instead of a genuine (even if
+// English-fallback) result.
+const cacheKey = (slug: string, lang: string) => `legalContent:${slug}:${lang}`;
 
-const readCache = async (slug: string): Promise<LegalContent | null> => {
-  const raw = await AsyncStorage.getItem(cacheKey(slug));
+const readCache = async (slug: string, lang: string): Promise<LegalContent | null> => {
+  const raw = await AsyncStorage.getItem(cacheKey(slug, lang));
   if (!raw) return null;
   try {
     return JSON.parse(raw) as LegalContent;
@@ -47,8 +54,8 @@ const readCache = async (slug: string): Promise<LegalContent | null> => {
   }
 };
 
-const writeCache = async (slug: string, content: LegalContent): Promise<LegalContent> => {
-  await AsyncStorage.setItem(cacheKey(slug), JSON.stringify(content));
+const writeCache = async (slug: string, lang: string, content: LegalContent): Promise<LegalContent> => {
+  await AsyncStorage.setItem(cacheKey(slug, lang), JSON.stringify(content));
   return content;
 };
 
@@ -58,13 +65,23 @@ const writeCache = async (slug: string, content: LegalContent): Promise<LegalCon
  * network. The backend itself always returns something (a genuine default
  * if no admin override has been published yet), so this should rarely need
  * the cache in practice.
+ *
+ * BUG FIX (product report: "privacy & terms screen" body text stuck in
+ * English regardless of language) — this previously never told the backend
+ * what language to respond in at all, so GET /content/legal/{slug} always
+ * returned the single admin-authored English copy no matter the user's
+ * selected language. Now sends the current i18next language exactly like
+ * every other language-aware service call in this app (see e.g.
+ * services/coachService.ts, careerOsService.ts) — the backend translates
+ * and caches the result server-side (see app/api/content.py).
  */
 export async function getLegalContent(slug: LegalSlug): Promise<LegalContent> {
+  const lang = i18n.language || 'en';
   try {
-    const {data} = await apiClient.get<LegalContentWire>(`/api/v1/content/legal/${slug}`);
-    return writeCache(slug, fromWire(data));
+    const {data} = await apiClient.get<LegalContentWire>(`/api/v1/content/legal/${slug}`, {params: {language: lang}});
+    return writeCache(slug, lang, fromWire(data));
   } catch {
-    const cached = await readCache(slug);
+    const cached = await readCache(slug, lang);
     if (cached) return cached;
     return {slug, title: '', bodyMd: '', updatedAt: null};
   }

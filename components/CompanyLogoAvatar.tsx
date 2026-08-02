@@ -76,8 +76,17 @@ const CompanyLogoAvatar = memo(({logoUrl, companyName, size = 'medium', shape = 
         },
         style,
       ]}>
+      {/* BUG FIX (custom fonts not rendering on Android): the initial's
+          <Text> used to set `fontWeight: 'bold'` in style without the
+          `bold` prop, so Text.tsx rendered the family as
+          PlusJakartaSans-Regular while this local override asked Android
+          for a BOLD style — it looked for a nonexistent
+          "PlusJakartaSans-Regular_bold.ttf" and fell back to the system
+          font. Using the `bold` prop instead selects the real
+          PlusJakartaSans-Bold.ttf file by name, which Android can
+          actually find. */}
       {initial ? (
-        <Text category={FONT_CATEGORY[size]} style={{fontWeight: 'bold', color: theme['text-control-color'] ?? '#fff'}}>
+        <Text category={FONT_CATEGORY[size]} bold style={{color: theme['text-control-color'] ?? '#fff'}}>
           {initial}
         </Text>
       ) : (

@@ -166,6 +166,7 @@ const ApplicationsTab = memo(() => {
           value={query}
           onChangeText={setQuery}
           style={styles.searchInput}
+          textStyle={globalStyle.inputText}
           accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
         />
       ) : null}

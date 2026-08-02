@@ -146,6 +146,7 @@ const CoverLetterGenerator = memo(() => {
           value={company}
           onChangeText={setCompany}
           style={styles.input}
+          textStyle={globalStyle.inputText}
         />
 
         <Text category="h10" status="placeholder" mt={16} mb={6}>
@@ -156,6 +157,7 @@ const CoverLetterGenerator = memo(() => {
           value={role}
           onChangeText={setRole}
           style={styles.input}
+          textStyle={globalStyle.inputText}
         />
 
         <Text category="h10" status="placeholder" mt={16} mb={6}>
@@ -166,6 +168,7 @@ const CoverLetterGenerator = memo(() => {
           value={hiringManager}
           onChangeText={setHiringManager}
           style={styles.input}
+          textStyle={globalStyle.inputText}
         />
 
         <CtaButton

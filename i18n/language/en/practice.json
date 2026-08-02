@@ -7,6 +7,7 @@
   "interview_replay": "Interview Replay",
   "interviewer": "Interviewer",
   "long_pauses": "Long pauses",
+  "no_flagged_moments": "No flagged moments in this session — nothing stood out as a notable dip or a standout stretch.",
   "replay_load_failed": "Couldn't load this session's replay.",
   "replay_no_video_camera": "The camera wasn't ready in time to record this session.",
   "replay_no_video_generic": "This session's video couldn't be saved.",

@@ -341,6 +341,7 @@ const JobAlerts = memo(() => {
                 </TouchableOpacity>
               )}
               style={styles.prefsInput}
+              textStyle={globalStyle.inputText}
             />
             <View style={styles.chipsWrap}>
               {desiredRoles.map(role => (
@@ -371,6 +372,7 @@ const JobAlerts = memo(() => {
                 </TouchableOpacity>
               )}
               style={styles.prefsInput}
+              textStyle={globalStyle.inputText}
             />
             <View style={styles.chipsWrap}>
               {preferredCountries.map(country => (

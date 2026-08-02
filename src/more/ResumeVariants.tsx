@@ -202,18 +202,21 @@ const ResumeVariants = memo(() => {
               value={label}
               onChangeText={setLabel}
               style={[styles.input, { marginBottom: 12 }]}
+              textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
               value={targetRole}
               onChangeText={setTargetRole}
               style={[styles.input, { marginBottom: 12 }]}
+              textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
               value={targetCompany}
               onChangeText={setTargetCompany}
               style={[styles.input, { marginBottom: 20 }]}
+              textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!label.trim() || !targetRole.trim() || isCreating} onPress={onCreate}>
               {isCreating ? () => <Spinner size="small" status="control" /> : t('more:generate', { defaultValue: 'Generate' })}

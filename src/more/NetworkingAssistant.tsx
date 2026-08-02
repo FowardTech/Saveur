@@ -177,25 +177,28 @@ const NetworkingAssistant = memo(() => {
               value={form.name}
               onChangeText={name => setForm(prev => ({ ...prev, name }))}
               style={styles.formInput}
+              textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:contact_company', { defaultValue: 'Company' })}
               value={form.company}
               onChangeText={company => setForm(prev => ({ ...prev, company }))}
               style={styles.formInput}
+              textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:contact_role', { defaultValue: 'Role' })}
               value={form.role}
               onChangeText={role => setForm(prev => ({ ...prev, role }))}
               style={styles.formInput}
+              textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:contact_note', { defaultValue: 'Note (how you met, follow-up plan…)' })}
               value={form.note}
               onChangeText={note => setForm(prev => ({ ...prev, note }))}
               multiline
-              textStyle={{ minHeight: 56, textAlignVertical: 'top' }}
+              textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
               style={styles.formInput}
             />
             <Flex justify="flex-start" mt={4}>
@@ -278,7 +281,7 @@ const NetworkingAssistant = memo(() => {
                   value={messageContext}
                   onChangeText={setMessageContext}
                   multiline
-                  textStyle={{ minHeight: 56, textAlignVertical: 'top' }}
+                  textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
                   style={styles.formInput}
                 />
                 <Flex justify="flex-start" mb={12} style={{ flexWrap: 'wrap' }}>

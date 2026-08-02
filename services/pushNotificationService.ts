@@ -374,6 +374,25 @@ export function setupForegroundPushHandler(): () => void {
     title = title ?? remoteMessage.notification?.title ?? undefined;
     body = body ?? remoteMessage.notification?.body ?? undefined;
 
+    // App-icon badge count (product report: "Saveur's app icon doesn't show
+    // a notification badge count like other apps do"). iOS already gets
+    // this for free from the push's `aps.badge` field even in this
+    // foreground case — APNs applies it independently of whether a banner
+    // is shown. Android has no such mechanism at all, and this
+    // onMessage-only-fires-in-foreground handler is one of only two places
+    // (see index.js's background handler for the other) where client code
+    // actually runs to set it via notifee. Applied unconditionally
+    // (regardless of whether there's a title/body to show below) since the
+    // backend stamps badge_count on every push send_to_user/broadcast make,
+    // not just ones with a visible notification.
+    const badgeRaw = data.badge_count;
+    const badgeCount = badgeRaw !== undefined ? Number(badgeRaw) : NaN;
+    if (Number.isFinite(badgeCount)) {
+      notifee.setBadgeCount(badgeCount).catch(err => {
+        console.warn('[push] setBadgeCount (foreground) failed', err);
+      });
+    }
+
     if (!title && !body) {
       // A data-only push with no notification block and no recognized
       // type — nothing human-readable to show; log it instead of

@@ -265,7 +265,15 @@ const CourseSession = memo(() => {
     const nextLevel = COURSE_LEVELS[nextLevelIdx];
     return (
       <Container style={styles.container}>
-        <TopNavigation title={topic} accessoryLeft={<NavigationAction onPress={goBack} />} />
+        <TopNavigation
+          // `topic` is free-text the user typed (see this file's top
+          // comment — "works for ANY topic, not a fixed catalog"), so it
+          // can easily run longer than a canned screen title.
+          // numberOfLines={1} keeps it from wrapping into/behind the back
+          // button (components/NavigationAction.tsx).
+          title={<Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">{topic}</Text>}
+          accessoryLeft={<NavigationAction onPress={goBack} />}
+        />
         <Content padder contentContainerStyle={styles.content}>
           <Flex vertical itemsCenter justify="center" style={{ flex: 1, paddingTop: 60 }}>
             <Icon pack="eva" name="award-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
@@ -321,7 +329,10 @@ const CourseSession = memo(() => {
 
   return (
     <Container style={styles.container}>
-      <TopNavigation title={topic} accessoryLeft={<NavigationAction onPress={goBack} />} />
+      <TopNavigation
+        title={<Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">{topic}</Text>}
+        accessoryLeft={<NavigationAction onPress={goBack} />}
+      />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Flex justify="space-between" itemsCenter mb={16}>
           <Text category="h9" bold status="placeholder">
@@ -425,6 +436,7 @@ const CourseSession = memo(() => {
                   onChangeText={setAnswer}
                   multiline
                   style={styles.answerInput}
+                  textStyle={globalStyle.inputText}
                 />
                 <Button
                   size="small"

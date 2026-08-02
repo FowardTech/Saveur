@@ -28,9 +28,12 @@ import { RootStackParamList } from "navigation/types";
 // on next open. Bundles both Privacy Policy and Terms of Service behind a
 // simple tab switcher rather than requiring two separate menu entries/routes,
 // since MoreSrc.tsx only ever had the one "Privacy of Policy" entry point.
-const TABS: { key: LegalSlug; label: string }[] = [
-  { key: "privacy_policy", label: "Privacy Policy" },
-  { key: "terms_of_service", label: "Terms of Service" },
+// BUG FIX (product report: "privacy & terms screen" still showing English
+// regardless of language) — these tab labels were plain string literals
+// rendered directly at {tab.label} with no t() call at all.
+const TABS: { key: LegalSlug; labelKey: string; labelDefault: string }[] = [
+  { key: "privacy_policy", labelKey: "auth:privacy_policy", labelDefault: "Privacy Policy" },
+  { key: "terms_of_service", labelKey: "common:terms_of_service", labelDefault: "Terms of Service" },
 ];
 
 // Very small markdown-lite renderer — this content is admin-authored plain
@@ -117,11 +120,11 @@ const PolicyScreen = () => {
       const result = await contentService.getLegalContent(slug);
       setContent(prev => ({ ...prev, [slug]: result }));
     } catch (e: any) {
-      setLoadError(e?.message ?? "Could not load this content.");
+      setLoadError(e?.message ?? t("common:could_not_load_content", { defaultValue: "Could not load this content." }));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [t]);
 
   React.useEffect(() => {
     if (!content[activeTab]) {
@@ -151,7 +154,7 @@ const PolicyScreen = () => {
               ]}
               onPress={() => setActiveTab(tab.key)}>
               <Text category="h9" bold status={active ? "link" : "placeholder"}>
-                {tab.label}
+                {t(tab.labelKey, { defaultValue: tab.labelDefault })}
               </Text>
             </Flex>
           );
@@ -168,7 +171,7 @@ const PolicyScreen = () => {
               {loadError}
             </Text>
             <Button size="small" onPress={() => load(activeTab)}>
-              Try again
+              {t("common:try_again", { defaultValue: "Try again" })}
             </Button>
           </Flex>
         ) : current ? (

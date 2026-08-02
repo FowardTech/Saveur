@@ -256,6 +256,7 @@ const ScheduleInterview = memo(() => {
           value={role}
           onChangeText={setRole}
           style={styles.companySearchInput}
+          textStyle={globalStyle.inputText}
         />
 
         <Text category="h8" bold status="placeholder" mt={16} mb={16}>
@@ -292,6 +293,7 @@ const ScheduleInterview = memo(() => {
           value={companySearch}
           onChangeText={setCompanySearch}
           style={styles.companySearchInput}
+          textStyle={globalStyle.inputText}
           accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
         />
         <View style={styles.chipsWrap}>

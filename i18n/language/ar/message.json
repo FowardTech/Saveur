@@ -18,11 +18,15 @@
   "salary_negotiation_title": "محاكي التفاوض على الراتب",
   "suggested_topics": "مواضيع مقترحة",
   "attach_resume_files": "إرفاق السيرة الذاتية / الملفات",
+  "attachment_note": "📎 تم إرفاق: {{fileName}}",
+  "chat_input_placeholder": "اكتب رسالة...",
   "coach_unavailable_body": "تعذر الوصول إلى مدربك الذكي. حاول مرة أخرى.",
   "coach_unavailable_title": "المدرب غير متاح",
   "learn_more_about_topic": "معرفة المزيد عن {{topic}}",
   "mode_text": "نص",
   "mode_voice": "صوت",
+  "photo_fallback_name": "صورة.jpg",
+  "selected_file_fallback": "الملف المحدد",
   "start_video_practice": "بدء تدريب بالفيديو",
   "view_my_progress": "عرض تقدمي"
 }

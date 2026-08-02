@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Platform} from 'react-native';
 import RNBlobUtil from 'react-native-blob-util';
 import auth from '@react-native-firebase/auth';
+import i18n from 'i18next';
 import {BillingPlanProps, EKeyAsyncStorage, PaymentHistoryItemProps, SavedPaymentMethodProps, SubscriptionStatusProps} from 'constants/Types';
 import {API_BASE_URL} from 'constants/env';
 import apiClient from './apiClient';
@@ -177,10 +178,19 @@ const readSubscriptionCache = async (): Promise<SubscriptionStatusProps | null> 
  * signed-in session (e.g. a pre-signup paywall preview). Falls back to the
  * last-known cached list so the paywall isn't just a blank screen on a flaky
  * connection.
+ *
+ * BUG FIX (product report: "subscription/payment screens" stuck in English
+ * regardless of language) — this never told the backend what language to
+ * respond in, so plan name/description/features always came back as plain
+ * admin-authored English. The backend now translates those fields when
+ * `language` is non-English (see app/api/billing.py's plans()) — same
+ * pattern as every other language-aware service call in this app.
  */
 export async function getPlans(): Promise<BillingPlanProps[]> {
   try {
-    const {data} = await apiClient.get<BillingPlanWire[]>('/api/v1/billing/plans');
+    const {data} = await apiClient.get<BillingPlanWire[]>('/api/v1/billing/plans', {
+      params: {language: i18n.language || 'en'},
+    });
     const plans = data.map(fromPlanWire);
     await AsyncStorage.setItem(EKeyAsyncStorage.billingPlans, JSON.stringify(plans));
     return plans;

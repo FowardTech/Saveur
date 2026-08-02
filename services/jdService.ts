@@ -36,6 +36,11 @@ export interface JDAnalysisResult {
   missingSkills: string[];
   keywordSuggestions: string[];
 }
+interface JDExtractUrlWire {
+  jd_text?: string;
+  error?: string;
+  message?: string;
+}
 
 interface JDAnalyzeWire {
   keywords?: string[];
@@ -93,4 +98,28 @@ export async function analyzeJobDescription(text: string): Promise<JDAnalysisRes
     missingSkills: match.missingSkills.length ? match.missingSkills : analysis.mustHaves,
     keywordSuggestions: analysis.keywords,
   };
+}
+
+/**
+ * POST /api/v1/jd/extract-url — lets the user paste a job posting URL
+ * instead of the full text (JDAnalyzer.tsx's "Paste URL" tab). The backend
+ * fetches the page and asks the model to pull out just the job description
+ * text; the result is plain jd_text in the exact same shape a user pasting
+ * by hand would produce, so callers should just feed the returned string
+ * straight into analyzeJobDescription above — no separate URL-specific
+ * analysis path needed downstream of this call.
+ *
+ * Backend returns a 4xx with {error, message} for an unreachable page, an
+ * empty page, or a page that clearly isn't a job posting — apiClient's own
+ * response interceptor already normalizes that into `.message` on the
+ * rejected error (see apiClient.ts), so this deliberately doesn't catch:
+ * the screen's existing catch-and-Alert.alert handling already shows
+ * whatever backend message comes through, same as analyzeJD/matchJD above.
+ */
+export async function extractJDFromUrl(url: string): Promise<string> {
+  const {data} = await apiClient.post<JDExtractUrlWire>('/api/v1/jd/extract-url', {
+    url: url.trim(),
+    language: currentLanguage(),
+  });
+  return (data.jd_text ?? '').trim();
 }

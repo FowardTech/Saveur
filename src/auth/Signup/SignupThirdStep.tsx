@@ -260,7 +260,13 @@ const SignupThirdStep = memo(() => {
       <AnimatedAppearance>
         <Content padder avoidKeyboard contentContainerStyle={styles.content}>
           <Text mt={16}>{t('auth:heading_signup_3')}</Text>
-          <Text mt={8} mb={16} category="h2" bold style={{fontWeight: '800'}}>
+          {/* BUG FIX (custom fonts not rendering on Android): the inline
+              `fontWeight: '800'` override used to win over Text.tsx's own
+              (now-fixed) 'normal' weight, which broke the Android lookup for
+              the real PlusJakartaSans-Bold.ttf file `bold` already selects
+              — see Text.tsx's comment for the full mechanism. Removed; the
+              Bold font file itself is already the boldest cut available. */}
+          <Text mt={8} mb={16} category="h2" bold>
             {t('auth:title_signup_3')}
           </Text>
           <Text mt={8} mb={48}>

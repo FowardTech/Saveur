@@ -123,7 +123,7 @@ const EmotionalCoach = memo(() => {
           value={note}
           onChangeText={setNote}
           multiline
-          textStyle={{ minHeight: 60 }}
+          textStyle={[globalStyle.inputText, { minHeight: 60 }]}
           style={[styles.input, { marginTop: 20 }]}
         />
 

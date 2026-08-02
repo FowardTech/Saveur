@@ -18,11 +18,15 @@
   "salary_negotiation_title": "Gehaltsverhandlungs-Simulator",
   "suggested_topics": "Vorgeschlagene Themen",
   "attach_resume_files": "Lebenslauf / Dateien anhängen",
+  "attachment_note": "📎 Angehängt: {{fileName}}",
+  "chat_input_placeholder": "Nachricht eingeben...",
   "coach_unavailable_body": "Dein KI-Coach konnte nicht erreicht werden. Bitte versuche es erneut.",
   "coach_unavailable_title": "Coach nicht verfügbar",
   "learn_more_about_topic": "Mehr über {{topic}} erfahren",
   "mode_text": "Text",
   "mode_voice": "Sprache",
+  "photo_fallback_name": "Foto.jpg",
+  "selected_file_fallback": "Ausgewählte Datei",
   "start_video_practice": "Video-Übung starten",
   "view_my_progress": "Meinen Fortschritt ansehen"
 }

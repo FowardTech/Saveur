@@ -195,6 +195,7 @@ const ReferralProgram = memo(() => {
                 onChangeText={setRedeemCode}
                 autoCapitalize="characters"
                 style={[styles.redeemInput, globalStyle.flexOne]}
+                textStyle={globalStyle.inputText}
               />
               <Button
                 size="small"

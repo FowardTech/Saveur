@@ -226,15 +226,18 @@ const themedStyles = StyleService.create({
   container: {
     flex: 1,
   },
-  // `bold` on <Text> already asks for fontWeight 'bold' (700), which matches
-  // what the h2 category already maps to on its own (see mapping.json's
-  // text-heading-2-font-weight) — so it wasn't reading as any bolder. Nudging
-  // to 800 explicitly (this style is last in Text's merge order, so it wins)
-  // is the only further lever available without a dedicated bold font file
-  // (assets/fonts only ships GothamPro Regular + Medium, no Bold weight).
-  title: {
-    fontWeight: '800',
-  },
+  // BUG FIX (custom fonts not rendering on Android): this used to set
+  // `fontWeight: '800'` here to "nudge" the title bolder — since this style
+  // object is last in Text's merge order, it won, overriding Text.tsx's own
+  // (now-fixed) `fontWeight: 'normal'` back to a numeric weight. On Android,
+  // pairing ANY numeric/bold fontWeight with a bundled custom fontFamily
+  // (here `bold` already selects the real PlusJakartaSans-Bold.ttf file)
+  // makes the font resolver look for a nonexistent suffixed file
+  // ("PlusJakartaSans-Bold_bold.ttf") and silently fall back to the system
+  // font — so this "nudge" was actually the thing breaking the custom font
+  // on this screen. The real bold PlusJakartaSans-Bold.ttf file already
+  // provides all the weight available; there's no heavier cut to nudge to.
+  title: {},
   subtitle: {
     lineHeight: 20,
   },

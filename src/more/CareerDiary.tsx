@@ -157,7 +157,7 @@ const CareerDiary = memo(() => {
             value={text}
             onChangeText={setText}
             style={styles.textInput}
-            textStyle={styles.textInputInner}
+            textStyle={[globalStyle.inputText, styles.textInputInner]}
           />
           <Flex justify="flex-start" mt={12} mb={12}>
             {CATEGORY_KEYS.map(key => {
@@ -183,6 +183,7 @@ const CareerDiary = memo(() => {
             value={role}
             onChangeText={setRole}
             style={styles.roleInput}
+            textStyle={globalStyle.inputText}
           />
           <CtaButton
             disabled={!text.trim() || isSaving}

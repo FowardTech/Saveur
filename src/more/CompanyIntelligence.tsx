@@ -81,12 +81,14 @@ const CompanyIntelligence = memo(() => {
           value={company}
           onChangeText={setCompany}
           style={[styles.input, { marginBottom: 12 }]}
+          textStyle={globalStyle.inputText}
         />
         <Input
           placeholder={t('more:role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
           value={role}
           onChangeText={setRole}
           style={styles.input}
+          textStyle={globalStyle.inputText}
         />
         <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 20 }]}

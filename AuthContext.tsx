@@ -27,8 +27,29 @@ import {resetToMainAfterExternalSignIn} from 'navigation/navigationRef';
 // below (sign-in, sign-up, Google/Apple sign-in) — a no-op if it already
 // matches the current i18next language.
 function syncLanguageFromProfile(profile: UserProfileProps | null): void {
-  if (profile?.locale && isSupportedLanguageCode(profile.locale) && profile.locale !== i18n.language) {
-    i18n.changeLanguage(profile.locale).catch(() => {});
+  if (profile?.locale && isSupportedLanguageCode(profile.locale)) {
+    // BUG FIX ("after logout the app should keep the user's language, not
+    // fall back to English until they log back in"): this used to only ever
+    // call i18n.changeLanguage — i18next keeps `i18n.language` purely in
+    // memory (see i18n/config.ts's own comment: "i18next itself has no
+    // persistence of its own"), and the ONLY on-disk record of the user's
+    // language, EKeyAsyncStorage.preferredLocale, was solely written by the
+    // pre-signup onboarding picker and then immediately cleared once
+    // consumed (see reconcileLocale below) — normal sign-in never wrote it.
+    // So a signed-in user's language lived only in `profile.locale` +
+    // in-memory i18next state; the moment they signed out (profile -> null,
+    // nothing left to restore from) and the app was cold-started again
+    // (i18n/config.ts's bootstrap restore reads this same key), there was
+    // nothing there and it defaulted to English until they logged back in.
+    // Persisting the resolved language here every time keeps this key
+    // current regardless of sign-in state — signOut() doesn't clear it
+    // (authService.clearCache() only removes the cached profile), so a cold
+    // start while signed out now correctly restores the last language that
+    // was actually in effect instead of the onboarding-only default.
+    AsyncStorage.setItem(EKeyAsyncStorage.preferredLocale, profile.locale).catch(() => {});
+    if (profile.locale !== i18n.language) {
+      i18n.changeLanguage(profile.locale).catch(() => {});
+    }
   }
 }
 
@@ -65,7 +86,12 @@ async function reconcileLocale(profile: UserProfileProps | null): Promise<UserPr
         return updated;
       }
       await AsyncStorage.removeItem(EKeyAsyncStorage.preferredLocale);
-      return profile;
+      // Falls through to syncLanguageFromProfile below instead of an early
+      // return here — that's also what re-persists this same key with
+      // `profile.locale` right after clearing it (see that function's own
+      // comment), so the key ends up holding the correct value instead of
+      // sitting empty until some later, unrelated profile update happens to
+      // call syncLanguageFromProfile again.
     }
   } catch {
     // Best-effort — fall through to the normal pull-from-profile sync below

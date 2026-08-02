@@ -70,6 +70,20 @@ const SharedContentDetail = memo(() => {
 
   const content = share?.content ?? {};
   const hasVideo = share?.contentType === 'video' && !!content.video_url;
+  // BUG FIX ("Overall Score doesn't display in the Shared with You screen"):
+  // feedback.py's _feedback_payload can legitimately still be mid-generation
+  // when this is opened (interview feedback generation is slow — see
+  // feedback_job.py) — it reports `status: "pending"` and `overall_score: 0`
+  // in that case, same wire shape InterviewFeedback.tsx already knows to
+  // treat as "not ready yet" and keep polling for. This read-only recipient
+  // view had no equivalent check at all, so a share opened while generation
+  // was still running just silently rendered 0%/empty stars forever with no
+  // indication anything was wrong — it looked like a permanently broken
+  // score rather than a still-in-progress one. Treat a missing `status`
+  // field (older shares, predating this field) as ready so nothing existing
+  // regresses.
+  const isFeedbackPending =
+    (share?.contentType === 'feedback' || share?.contentType === 'video') && content.status === 'pending';
 
   return (
     <Container style={styles.container}>
@@ -125,20 +139,33 @@ const SharedContentDetail = memo(() => {
                   {[content.role, content.company].filter(Boolean).join(' · ') ||
                     getInterviewTypeLabel(content.interview_type, t)}
                 </Text>
-                <Flex justify="space-between" itemsCenter mt={12}>
-                  <Text category="h2" bold status="primary">
-                    {content.overall_score ?? 0}%
-                  </Text>
-                  <Text category="h9" status="placeholder">
-                    {t('find:overall_score', {defaultValue: 'Overall Score'})}
-                  </Text>
-                </Flex>
-                {/* Redesign v2 (full reskin, components/StarRating.tsx) —
-                    quick-glance read on this read-only viewer, same content
-                    the owner sees on InterviewFeedback.tsx as a progress
-                    ring instead. Additive next to the exact percentage
-                    above, not a replacement. */}
-                <StarRating value={percentToStars(content.overall_score ?? 0)} size={16} style={{marginTop: 10}} />
+                {isFeedbackPending ? (
+                  <Flex itemsCenter mt={12}>
+                    <Spinner size="small" style={{marginRight: 8}} />
+                    <Text category="h9-s" status="placeholder" style={{flex: 1}}>
+                      {t('more:shared_feedback_pending', {
+                        defaultValue: 'This feedback is still being generated — check back in a moment.',
+                      })}
+                    </Text>
+                  </Flex>
+                ) : (
+                  <>
+                    <Flex justify="space-between" itemsCenter mt={12}>
+                      <Text category="h2" bold status="primary">
+                        {content.overall_score ?? 0}%
+                      </Text>
+                      <Text category="h9" status="placeholder">
+                        {t('find:overall_score', {defaultValue: 'Overall Score'})}
+                      </Text>
+                    </Flex>
+                    {/* Redesign v2 (full reskin, components/StarRating.tsx) —
+                        quick-glance read on this read-only viewer, same content
+                        the owner sees on InterviewFeedback.tsx as a progress
+                        ring instead. Additive next to the exact percentage
+                        above, not a replacement. */}
+                    <StarRating value={percentToStars(content.overall_score ?? 0)} size={16} style={{marginTop: 10}} />
+                  </>
+                )}
               </Layout>
 
               {hasVideo ? (
@@ -174,6 +201,7 @@ const SharedContentDetail = memo(() => {
                 </Layout>
               ) : null}
 
+              {isFeedbackPending ? null : (
               <Layout level="2" style={styles.card}>
                 <Text category="h8" bold mb={12}>
                   {t('find:skill_breakdown', {defaultValue: 'Skill Breakdown'})}
@@ -198,8 +226,9 @@ const SharedContentDetail = memo(() => {
                   </Flex>
                 ))}
               </Layout>
+              )}
 
-              {content.summary ? (
+              {!isFeedbackPending && content.summary ? (
                 <Layout level="2" style={styles.card}>
                   <Text category="h8" bold mb={8}>
                     {t('more:summary', {defaultValue: 'Summary'})}
