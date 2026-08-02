@@ -70,6 +70,20 @@ export type RootStackParamList = {
     // point other than MockInterviewSetup) so the hard time-limit logic
     // always has a real number to enforce against.
     durationMin?: number;
+    // BUG FIX (product report: "voice/video interview starts in English,
+    // then later changes to the user's preferred language"): the real,
+    // correctly-language-instructed first question is already generated
+    // server-side by POST /interviews/sessions (interviewService.startSession
+    // returns it as `firstQuestion`) — but MockInterviewSetup used to just
+    // discard it, so LiveInterviewSession had no first question to show/
+    // speak until its very first 50-second adaptive-follow-up fetch
+    // resolved, and rendered its LOCAL, English-only static question bank
+    // (constants/Data.ts's DATA_INTERVIEW_QUESTION_BANK) in the meantime —
+    // that's the "starts in English" the user saw. Passing it through here
+    // lets the first question be the real, properly-translated one from
+    // the moment the screen mounts.
+    firstQuestion?: string;
+    firstQuestionId?: string;
   };
   CodingInterview: {
     sessionId?: string;

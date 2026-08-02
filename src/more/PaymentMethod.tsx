@@ -197,7 +197,7 @@ const PaymentMethod = memo(() => {
                 justify="flex-start"
                 border={12}
                 style={[
-                  {backgroundColor: 'transparent', borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
+                  {backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
                   item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined,
                 ]}>
                 {/* Bug report: this used to be a real colored card-brand

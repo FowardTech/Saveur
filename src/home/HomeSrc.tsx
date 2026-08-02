@@ -739,7 +739,7 @@ const HomeSrc = memo(() => {
           <View style={styles.checkInCardInner}>
             <LinearGradient
               pointerEvents="none"
-              colors={['#1df2d2ff','rgba(29, 160, 242, 0.1)']}
+              colors={['#f2b355ff','#f2b355ff']}
               start={{ x: 1, y: 0 }}
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
@@ -1116,7 +1116,8 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     marginTop: 16,
     borderRadius: 20,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-001',
+    
   },
   // Inner layer: `overflow:'hidden'` so the corner accent (see JSX comment)
   // clips to the card's rounded corners, `position:'relative'` so that

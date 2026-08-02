@@ -129,7 +129,8 @@ const LiveInterviewSession = memo(() => {
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common']);
 
-  const { sessionId, interviewType, mode, company, durationMin } = route.params ?? { sessionId: '' };
+  const { sessionId, interviewType, mode, company, durationMin, firstQuestion, firstQuestionId } =
+    route.params ?? { sessionId: '' };
   // Counts DOWN from the selected duration rather than up — see the
   // time-limit effect below, which is what actually enforces this (the
   // countdown display alone was never what was missing; nothing compared
@@ -258,10 +259,26 @@ const LiveInterviewSession = memo(() => {
   // Set once a real POST /next-question call succeeds — takes priority over
   // the local bank below. Reset to null whenever a call fails so the local
   // fallback (indexed by questionIndex) is what renders instead.
-  const [backendQuestionText, setBackendQuestionText] = React.useState<string | null>(null);
+  //
+  // BUG FIX (product report: "voice/video interview starts in English,
+  // then later changes to the user's preferred language"): this used to
+  // always start as `null`, so the very first question shown/spoken was
+  // whatever `questions[0]` (the LOCAL, English-only static bank below)
+  // held — even though a real, correctly-translated first question already
+  // came back from POST /interviews/sessions and was just sitting unused
+  // in route.params (see MockInterviewSetup.tsx and navigation/types.tsx's
+  // LiveInterviewSession params). Seeding these two from that param means
+  // the first question rendered/spoken is the real one from mount, not the
+  // English fallback — the "later changes to Spanish" the user saw was
+  // just the first real adaptive follow-up finally overwriting it.
+  const [backendQuestionText, setBackendQuestionText] = React.useState<string | null>(
+    firstQuestion ?? null,
+  );
   // Real question id from the backend, when we have one — needed for Text
   // mode's submitAnswer call below (POST .../answer takes a questionId).
-  const [backendQuestionId, setBackendQuestionId] = React.useState<string | null>(null);
+  const [backendQuestionId, setBackendQuestionId] = React.useState<string | null>(
+    firstQuestionId ?? null,
+  );
   const isFetchingQuestionRef = React.useRef(false);
 
   // Text mode only: what the user is currently typing, and whether their

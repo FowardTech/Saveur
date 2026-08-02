@@ -135,6 +135,7 @@ interface SessionWire {
   date?: number | string;
   first_question?: string;
   firstQuestion?: string;
+  question_id?: string | number;
 }
 
 function sessionIdFromWire(wire: SessionWire): string {
@@ -231,7 +232,7 @@ export async function getInterviewTypes(): Promise<Interview_Type_Enum[]> {
  */
 export async function startSession(
   config: StartSessionConfig,
-): Promise<{sessionId: string; firstQuestion?: string}> {
+): Promise<{sessionId: string; firstQuestion?: string; firstQuestionId?: string}> {
   const {data} = await apiClient.post<SessionWire>(
     '/api/v1/interviews/sessions',
     toStartSessionWire(config),
@@ -239,6 +240,7 @@ export async function startSession(
   return {
     sessionId: sessionIdFromWire(data),
     firstQuestion: data.first_question ?? data.firstQuestion,
+    firstQuestionId: data.question_id != null ? String(data.question_id) : undefined,
   };
 }
 

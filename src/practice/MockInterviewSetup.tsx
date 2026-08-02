@@ -161,7 +161,7 @@ const MockInterviewSetup = memo(() => {
         );
         return;
       }
-      const { sessionId } = await interviewService.startSession({
+      const { sessionId, firstQuestion, firstQuestionId } = await interviewService.startSession({
         interviewType,
         mode,
         difficulty,
@@ -172,7 +172,18 @@ const MockInterviewSetup = memo(() => {
       if (interviewType === Interview_Type_Enum.Coding) {
         navigate('CodingInterview', { sessionId, interviewType });
       } else {
-        navigate('LiveInterviewSession', { sessionId, interviewType, mode, company, durationMin });
+        // BUG FIX (product report: "voice/video interview starts in
+        // English, then later changes to the user's preferred language"):
+        // startSession already returns the real, properly-translated first
+        // question — this used to be silently discarded, so
+        // LiveInterviewSession had nothing to show/speak until its first
+        // adaptive follow-up fetch and fell back to its local, English-only
+        // static question bank in the meantime. Threading it through here
+        // is the actual fix — see navigation/types.tsx's own comment.
+        navigate('LiveInterviewSession', {
+          sessionId, interviewType, mode, company, durationMin,
+          firstQuestion, firstQuestionId,
+        });
       }
     } catch (e: any) {
       // llm_unavailable means the AI provider behind the interview (question
