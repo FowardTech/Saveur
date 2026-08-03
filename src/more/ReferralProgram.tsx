@@ -260,10 +260,21 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    // Was a hardcoded '#FFFFFF' fill with blue text — that's the opposite of
+    // what the comment above this card says ("share button keeps its solid
+    // brand-blue fill") and, more importantly, it's a hardcoded-white
+    // background sitting on this card's adaptive `Layout level="2"` surface
+    // (same dark-mode bug class as HomeSrc.tsx's checkInCard buttons before
+    // their fix): in dark mode the card goes dark navy but this button
+    // stayed stuck white. Restored to the solid brand-blue fill the comment
+    // already describes, which is correct in both themes since
+    // 'color-primary-500' isn't a theme-adaptive surface token — it's the
+    // same brand blue in light and dark (see MockInterviewSetup/FindScreen's
+    // hero cards for the identical pattern).
+    backgroundColor: 'color-primary-500',
   },
   heroShareButtonText: {
-    color: '#0063f8',
+    color: '#FFFFFF',
   },
   statBlock: {
     flex: 1,

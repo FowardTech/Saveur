@@ -766,6 +766,7 @@ const HomeSrc = memo(() => {
                 </Flex>
               ) : null}
             </View>
+            <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
             <TouchableOpacity
               activeOpacity={0.8}
               style={styles.checkInBadgesButton}
@@ -774,7 +775,6 @@ const HomeSrc = memo(() => {
                 {t('home:badges', { defaultValue: 'Badges' })}
               </Text>
             </TouchableOpacity>
-            <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
           </View>
           {streak?.checkedInToday ? (
             // Solid white pill + blue checkmark — was a translucent
