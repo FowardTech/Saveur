@@ -38,8 +38,8 @@ const cardShadow = Platform.select({
       width: 0,
       height: 6,
     },
-    shadowOpacity: 0.10,
-    shadowRadius: 16.0,
+    shadowOpacity: 0.3,
+    shadowRadius: 10.0,
   },
   android: {},
   default: {
