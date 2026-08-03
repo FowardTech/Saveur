@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "Scrivi la tua risposta…",
   "daily_challenge_submit": "Invia",
   "daily_challenge_skip": "Salta oggi",
-  "daily_challenge_start": "Accetta la sfida"
+  "daily_challenge_start": "Accetta la sfida",
+  "personalization_card_title": "Conosciti meglio",
+  "personalization_card_subtitle": "L'app ti conosce un po' meglio ogni settimana.",
+  "career_dna_row_subtitle": "Il tuo profilo di personalità e stile di lavoro creato dall'IA",
+  "dream_companies_row_subtitle": "Monitora le aziende per cui vuoi lavorare"
 }

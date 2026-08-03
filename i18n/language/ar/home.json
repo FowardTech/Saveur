@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "اكتب إجابتك…",
   "daily_challenge_submit": "إرسال",
   "daily_challenge_skip": "تخطي اليوم",
-  "daily_challenge_start": "خض التحدي"
+  "daily_challenge_start": "خض التحدي",
+  "personalization_card_title": "تعرّف على نفسك بشكل أفضل",
+  "personalization_card_subtitle": "يتعرّف عليك التطبيق أكثر قليلاً كل أسبوع.",
+  "career_dna_row_subtitle": "ملفك الشخصي لسمات الشخصية وأسلوب العمل الذي أنشأه الذكاء الاصطناعي",
+  "dream_companies_row_subtitle": "تتبّع الشركات التي ترغب في العمل بها"
 }

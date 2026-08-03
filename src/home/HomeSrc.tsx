@@ -15,6 +15,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import DailyChallengeCard from './DailyChallengeCard';
+import PersonalizationCard from './PersonalizationCard';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -33,7 +34,6 @@ import * as roadmapService from 'services/roadmapService';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
-import * as configService from 'services/configService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
@@ -107,7 +107,7 @@ const HomeSrc = memo(() => {
   // still renders full-bleed with zero letterboxing for the default image.
   const bannerHeight = Math.round(bannerWidth * (900 / 1600));
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['home', 'common', 'more']);
+  const { t } = useTranslation(['home', 'common']);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
@@ -653,33 +653,6 @@ const HomeSrc = memo(() => {
               below, immediately before the medal icon, instead of living in
               this scrollable nav row (see that JSX's own comment). Opens the
               same existing full-grid modal (components/BadgesModal.tsx). */}
-          {/* Career DNA / Dream Company Dashboard pills (product request
-              item) — these two new screens otherwise only live inside
-              "More", which buries them; adding them here gives the
-              personalization features a visible home-screen entry point.
-              Feature-flag gated same as everywhere else these features are
-              surfaced; no separate isPro check needed since both screens
-              already render ProLockGate internally for non-Pro users. */}
-          {configService.isFeatureEnabled('career_dna') ? (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
-              onPress={() => navigate('CareerDna')}>
-              <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
-                {t('more:career_dna', { defaultValue: 'Career DNA' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-          {configService.isFeatureEnabled('dream_company_dashboard') ? (
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
-              onPress={() => navigate('DreamCompanies')}>
-              <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
-                {t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
         </ScrollView>
         {homeBanner ? (
           // Redesign v2 follow-up (product bug report — "remove the white
@@ -913,6 +886,12 @@ const HomeSrc = memo(() => {
             feature flag is off or there's no challenge to show, so it's
             safe to always mount here unconditionally. */}
         <DailyChallengeCard />
+
+        {/* Career DNA + Dream Company Dashboard (product request item) —
+            one combined card (src/home/PersonalizationCard.tsx) rather than
+            two separate nav-row pills, per explicit follow-up. Renders
+            nothing if both underlying features are flagged off. */}
+        <PersonalizationCard />
 
         {/* Dropped the standalone "Ready to practice?" CTA banner (UI
             cleanup pass) — it pushed the same "go start an interview"

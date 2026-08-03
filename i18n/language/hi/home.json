@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "अपना उत्तर लिखें…",
   "daily_challenge_submit": "सबमिट करें",
   "daily_challenge_skip": "आज छोड़ें",
-  "daily_challenge_start": "चुनौती स्वीकार करें"
+  "daily_challenge_start": "चुनौती स्वीकार करें",
+  "personalization_card_title": "खुद को बेहतर जानें",
+  "personalization_card_subtitle": "यह ऐप हर हफ़्ते आपको थोड़ा और बेहतर जानता है.",
+  "career_dna_row_subtitle": "आपकी AI-निर्मित व्यक्तित्व और कार्यशैली प्रोफ़ाइल",
+  "dream_companies_row_subtitle": "उन कंपनियों को ट्रैक करें जिनमें आप काम करना चाहते हैं"
 }

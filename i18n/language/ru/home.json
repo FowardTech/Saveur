@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "Введите ваш ответ…",
   "daily_challenge_submit": "Отправить",
   "daily_challenge_skip": "Пропустить сегодня",
-  "daily_challenge_start": "Принять вызов"
+  "daily_challenge_start": "Принять вызов",
+  "personalization_card_title": "Узнайте себя лучше",
+  "personalization_card_subtitle": "Приложение узнаёт вас всё лучше с каждой неделей.",
+  "career_dna_row_subtitle": "Ваш профиль личности и стиля работы, созданный ИИ",
+  "dream_companies_row_subtitle": "Отслеживайте компании, в которых хотите работать"
 }

@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "回答を入力…",
   "daily_challenge_submit": "送信",
   "daily_challenge_skip": "今日はスキップ",
-  "daily_challenge_start": "チャレンジする"
+  "daily_challenge_start": "チャレンジする",
+  "personalization_card_title": "自分をもっと知る",
+  "personalization_card_subtitle": "このアプリは毎週少しずつあなたのことを理解していきます。",
+  "career_dna_row_subtitle": "AIが作成したあなたの性格・仕事スタイルのプロフィール",
+  "dream_companies_row_subtitle": "働きたい企業を追跡しましょう"
 }

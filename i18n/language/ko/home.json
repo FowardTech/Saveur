@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "답변을 입력하세요…",
   "daily_challenge_submit": "제출",
   "daily_challenge_skip": "오늘 건너뛰기",
-  "daily_challenge_start": "챌린지 시작하기"
+  "daily_challenge_start": "챌린지 시작하기",
+  "personalization_card_title": "나를 더 잘 알기",
+  "personalization_card_subtitle": "이 앱은 매주 당신을 조금씩 더 알아갑니다.",
+  "career_dna_row_subtitle": "AI가 만든 나의 성격 및 업무 스타일 프로필",
+  "dream_companies_row_subtitle": "일하고 싶은 회사를 추적하세요"
 }

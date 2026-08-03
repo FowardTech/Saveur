@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "Saisissez votre réponse…",
   "daily_challenge_submit": "Envoyer",
   "daily_challenge_skip": "Passer aujourd'hui",
-  "daily_challenge_start": "Relever le défi"
+  "daily_challenge_start": "Relever le défi",
+  "personalization_card_title": "Mieux vous connaître",
+  "personalization_card_subtitle": "L'application vous connaît un peu mieux chaque semaine.",
+  "career_dna_row_subtitle": "Votre profil de personnalité et de style de travail créé par l'IA",
+  "dream_companies_row_subtitle": "Suivez les entreprises pour lesquelles vous voulez travailler"
 }

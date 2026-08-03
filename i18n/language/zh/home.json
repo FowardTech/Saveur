@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "输入你的回答…",
   "daily_challenge_submit": "提交",
   "daily_challenge_skip": "跳过今天",
-  "daily_challenge_start": "接受挑战"
+  "daily_challenge_start": "接受挑战",
+  "personalization_card_title": "更了解你自己",
+  "personalization_card_subtitle": "这款应用每周都会更了解你一点。",
+  "career_dna_row_subtitle": "AI 为你构建的性格与工作风格档案",
+  "dream_companies_row_subtitle": "追踪你想加入的公司"
 }

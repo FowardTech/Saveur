@@ -85,5 +85,9 @@
   "daily_challenge_response_placeholder": "Gib deine Antwort ein…",
   "daily_challenge_submit": "Absenden",
   "daily_challenge_skip": "Heute überspringen",
-  "daily_challenge_start": "Herausforderung annehmen"
+  "daily_challenge_start": "Herausforderung annehmen",
+  "personalization_card_title": "Lerne dich besser kennen",
+  "personalization_card_subtitle": "Die App lernt dich jede Woche ein bisschen besser kennen.",
+  "career_dna_row_subtitle": "Dein von der KI erstelltes Persönlichkeits- und Arbeitsstilprofil",
+  "dream_companies_row_subtitle": "Verfolge die Unternehmen, für die du arbeiten möchtest"
 }

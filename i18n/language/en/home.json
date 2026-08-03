@@ -86,5 +86,9 @@
   "daily_challenge_response_placeholder": "Type your response…",
   "daily_challenge_submit": "Submit",
   "daily_challenge_skip": "Skip today",
-  "daily_challenge_start": "Take the challenge"
+  "daily_challenge_start": "Take the challenge",
+  "personalization_card_title": "Know Yourself Better",
+  "personalization_card_subtitle": "The app gets to know you a little more every week.",
+  "career_dna_row_subtitle": "Your AI-built personality & work-style profile",
+  "dream_companies_row_subtitle": "Track the companies you want to work for"
 }
