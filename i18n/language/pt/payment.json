@@ -1,4 +1,5 @@
 {
+  "load_cards_failed": "Não foi possível carregar seus cartões salvos.",
   "add_card_failed_title": "Não foi possível adicionar o cartão",
   "add_payment_method": "Adicionar método de pagamento",
   "default": "PADRÃO",

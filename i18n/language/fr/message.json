@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "Je ne sais pas encore comment répondre à cela.",
+  "negotiation_target_company": "Votre entreprise cible",
+  "negotiation_target_role": "Votre poste cible",
+  "negotiation_equity_none": "Aucune",
   "empty_description": "Démarrez un entretien simulé ou posez une question à votre coach IA pour obtenir des retours personnalisés et des conseils de carrière.",
   "empty_title": "Pas encore de conversations.",
   "placeholder_input": "Rechercher des sujets de coaching...",

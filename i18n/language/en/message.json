@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "I'm not sure how to answer that yet.",
+  "negotiation_target_company": "Your target company",
+  "negotiation_target_role": "Your target role",
+  "negotiation_equity_none": "None",
   "ai_coach_name": "AI Career Coach",
   "ai_coach_subtitle": "Ask me anything about your job search — I'm here to help.",
   "attach_resume_files": "Attach Resume / Files",

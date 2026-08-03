@@ -1,4 +1,5 @@
 {
+    "load_cards_failed": "Could not load your saved cards.",
     "add-new-credit-card": "Add New Credit Card",
     "card-number": "Card number",
     "select-card": "Select Card",

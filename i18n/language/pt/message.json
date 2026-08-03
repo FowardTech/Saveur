@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "Ainda não sei como responder a isso.",
+  "negotiation_target_company": "Sua empresa-alvo",
+  "negotiation_target_role": "Seu cargo-alvo",
+  "negotiation_equity_none": "Nenhuma",
   "ai_coach_name": "Coach de Carreira IA",
   "ai_coach_subtitle": "Pergunte-me qualquer coisa sobre sua busca de emprego — estou aqui para ajudar.",
   "salary_negotiation_description": "Pratique rebater uma proposta simulada em algumas rodadas.",

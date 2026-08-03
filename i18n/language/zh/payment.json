@@ -1,4 +1,5 @@
 {
+  "load_cards_failed": "无法加载您已保存的卡片。",
   "add-new-credit-card": "添加新信用卡",
   "card-number": "卡号",
   "select-card": "选择卡片",

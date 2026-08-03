@@ -1,4 +1,5 @@
 {
+  "load_cards_failed": "저장된 카드를 불러올 수 없습니다.",
   "add-new-credit-card": "새 신용카드 추가",
   "card-number": "카드 번호",
   "select-card": "카드 선택",

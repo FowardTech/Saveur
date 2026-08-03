@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "Ich bin mir noch nicht sicher, wie ich darauf antworten soll.",
+  "negotiation_target_company": "Dein Zielunternehmen",
+  "negotiation_target_role": "Deine Zielposition",
+  "negotiation_equity_none": "Keine",
   "empty_description": "Starte ein simuliertes Vorstellungsgespräch oder stelle deinem KI-Coach eine Frage für personalisiertes Feedback und Karrieretipps.",
   "empty_title": "Noch keine Unterhaltungen.",
   "placeholder_input": "Coaching-Themen suchen...",

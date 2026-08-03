@@ -1,4 +1,5 @@
 {
+  "load_cards_failed": "Deine gespeicherten Karten konnten nicht geladen werden.",
   "add-new-credit-card": "Neue Kreditkarte hinzufügen",
   "card-number": "Kartennummer",
   "select-card": "Karte auswählen",

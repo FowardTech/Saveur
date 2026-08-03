@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "我还不确定该如何回答这个问题。",
+  "negotiation_target_company": "您的目标公司",
+  "negotiation_target_role": "您的目标职位",
+  "negotiation_equity_none": "无",
   "empty_description": "开始一次模拟面试，或向您的 AI 教练提问，获取个性化反馈和职业建议。",
   "empty_title": "暂无对话。",
   "placeholder_input": "搜索辅导主题...",

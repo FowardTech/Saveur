@@ -1,4 +1,5 @@
 {
+  "load_cards_failed": "保存されたカードを読み込めませんでした。",
   "add-new-credit-card": "新しいクレジットカードを追加",
   "card-number": "カード番号",
   "select-card": "カードを選択",

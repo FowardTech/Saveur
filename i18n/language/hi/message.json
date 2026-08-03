@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "मुझे अभी तक यह नहीं पता कि इसका जवाब कैसे दूं।",
+  "negotiation_target_company": "आपकी लक्षित कंपनी",
+  "negotiation_target_role": "आपकी लक्षित भूमिका",
+  "negotiation_equity_none": "कोई नहीं",
   "empty_description": "एक मॉक इंटरव्यू शुरू करें या व्यक्तिगत फीडबैक और करियर सलाह पाने के लिए अपने AI कोच से एक सवाल पूछें।",
   "empty_title": "अभी तक कोई बातचीत नहीं है।",
   "placeholder_input": "कोचिंग विषय खोजें...",

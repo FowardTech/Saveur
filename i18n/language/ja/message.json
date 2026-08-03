@@ -1,4 +1,8 @@
 {
+  "coach_unsure_reply": "それについてはまだうまくお答えできません。",
+  "negotiation_target_company": "希望する企業",
+  "negotiation_target_role": "希望する職種",
+  "negotiation_equity_none": "なし",
   "empty_description": "模擬面接を開始するか、AIコーチに質問して、パーソナライズされたフィードバックとキャリアアドバイスを受け取りましょう。",
   "empty_title": "まだ会話がありません。",
   "placeholder_input": "コーチングトピックを検索...",

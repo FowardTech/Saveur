@@ -1,5 +1,6 @@
 {
-    "add-new-credit-card": "Agregar nueva tarjeta de crédito",
+    "load_cards_failed": "No se pudieron cargar tus tarjetas guardadas.",
+  "add-new-credit-card": "Agregar nueva tarjeta de crédito",
     "add_card_failed_title": "No se pudo agregar la tarjeta",
     "add_payment_method": "Agregar método de pago",
     "default": "PREDETERMINADA",

@@ -1,4 +1,5 @@
 {
+  "load_cards_failed": "Impossible de charger vos cartes enregistrées.",
   "add-new-credit-card": "Ajouter une nouvelle carte de crédit",
   "card-number": "Numéro de carte",
   "select-card": "Sélectionner une carte",
