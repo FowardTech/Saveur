@@ -730,16 +730,15 @@ const HomeSrc = memo(() => {
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
             />
-          {/* Redesign v6 (product follow-up — "the XP progress bar moved
-              down as the badge moved up, maybe they're both competing for
-              space, just reduce the size of the progress bar and move it to
-              the top"): the ring/XP row is now FIRST (was second, below the
-              Badges/medal row) -- shrinking the ring (100 -> 68) freed up
-              enough height that it no longer needs the Badges row's row to
-              anchor against; the two rows aren't competing for the same
-              vertical space anymore since the ring's own row is shorter
-              than the badge row is tall. Badges/medal row now sits right
-              below the (smaller) ring row instead of above it. */}
+          {/* Redesign v7 (product follow-up — "leave the XP progress bar at
+              the top there and now move the badge button to the top too so
+              that both the progress bar and the badge will be at the top"):
+              back to one merged row (ring, XP value/error, Badges button,
+              medal icon), same shape as the earlier v4 attempt -- but this
+              time the ring is the SMALLER v6 size (68, not 100), which is
+              what actually makes the Badges button/medal icon read as
+              sitting "at the top" alongside the ring instead of sunk
+              against a much taller element next to them. */}
           <View style={styles.checkInTopRow}>
             <CircularProgress
               progress={Math.min(100, (streakDays / 7) * 100)}
@@ -767,8 +766,6 @@ const HomeSrc = memo(() => {
                 </Flex>
               ) : null}
             </View>
-          </View>
-          <View style={styles.checkInHeaderRow}>
             <TouchableOpacity
               activeOpacity={0.8}
               style={styles.checkInBadgesButton}
@@ -1155,32 +1152,25 @@ const themedStyles = StyleService.create({
   },
   // Gamification cue (product request — "use this medal in the XP card
   // instead of the one there", the uploaded 3D gold medal/ribbon graphic —
-  // see assets/images/index.ts's `xpMedal` for the asset itself). Sits in
-  // normal flow inside checkInHeaderRow, right after the Badges button
-  // (not position:'absolute') — explicit width/height still needed since
-  // this is a real image with its own aspect ratio (~36:46, taller than
-  // wide because of the ribbon tails), not a square glyph.
+  // see assets/images/index.ts's `xpMedal` for the asset itself). Redesign
+  // v7: sits in normal flow inside checkInTopRow, right after the Badges
+  // button, at the end of the same row as the ring/XP text — explicit
+  // width/height still needed since this is a real image with its own
+  // aspect ratio (~36:46, taller than wide because of the ribbon tails),
+  // not a square glyph.
   checkInMedalIcon: {
     width: 28,
     height: 36,
   },
-  // Redesign v6 (product follow-up — "the XP progress bar moved down as
-  // the badge moved up... reduce the size of the progress bar and move it
-  // to the top"): this Badges/medal row now sits BELOW the (now smaller)
-  // ring/XP row instead of above it — putting the ring first and shrinking
-  // it (see checkInTopRow/checkInRing below) is what actually freed up the
-  // space the two rows were competing for; this row no longer needs to be
-  // "the very top" for the ring to have breathing room.
-  checkInHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-  },
   // Small outlined pill, sized down from checkInButton (h10 label, tighter
-  // padding) since it now shares a compact top-corner row with the medal
-  // icon rather than being the card's single primary action.
+  // padding). Redesign v7 (product follow-up — "leave the XP progress bar
+  // at the top there and now move the badge button to the top too so that
+  // both... will be at the top"): shares checkInTopRow with the ring/XP
+  // text now (not its own row below/above it) — the smaller v6 ring size
+  // is what makes this read as sitting at the same top level as the ring,
+  // rather than sunk against a much taller element.
   checkInBadgesButton: {
+    marginLeft: 8,
     marginRight: 8,
     borderRadius: 999,
     paddingVertical: 6,
@@ -1227,8 +1217,8 @@ const themedStyles = StyleService.create({
     tintColor: '#0063f8',
   },
   // alignSelf: 'flex-end' — its own row, hugging only its own content and
-  // right-aligned (below the ring+XP row and the checkInHeaderRow above
-  // it). No minWidth, so it's exactly as wide as its icon/spinner +
+  // right-aligned (below the merged ring/XP/Badges/medal row above it). No
+  // minWidth, so it's exactly as wide as its icon/spinner +
   // numberOfLines=1 label need, never more.
   checkInButton: {
     alignSelf: 'flex-end',
