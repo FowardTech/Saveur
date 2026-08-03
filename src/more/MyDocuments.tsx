@@ -204,7 +204,6 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which

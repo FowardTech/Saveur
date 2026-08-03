@@ -577,7 +577,6 @@ const themedStyles = StyleService.create({
   // instead.
   hintCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
@@ -585,13 +584,11 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
     padding: 14,
     marginBottom: 16,
   },
   prefsCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 20,
   },
@@ -618,7 +615,6 @@ const themedStyles = StyleService.create({
   },
   alertCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     // No border by default — was `borderWidth: 1` with no matching

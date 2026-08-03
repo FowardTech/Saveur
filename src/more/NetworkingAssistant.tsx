@@ -359,7 +359,6 @@ const themedStyles = StyleService.create({
   // instead.
   formCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 20,
   },
@@ -369,7 +368,6 @@ const themedStyles = StyleService.create({
   },
   contactCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
   },
@@ -388,7 +386,6 @@ const themedStyles = StyleService.create({
   },
   generatedMessageBox: {
     ...globalStyle.card,
-    borderRadius: 12,
     padding: 12,
   },
 });

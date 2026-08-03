@@ -224,7 +224,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     width: '30%',
     aspectRatio: 1,
-    borderRadius: 16,
+    borderRadius: 20,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
     // needs an opaque fill to render correctly on Android (was
     // 'transparent' for the earlier border-only direction).
@@ -245,7 +245,7 @@ const themedStyles = StyleService.create({
   typeCard: {
     ...globalStyle.card,
     width: '48%',
-    borderRadius: 16,
+    borderRadius: 20,
     // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
     // renders correctly on Android (was 'transparent').
     backgroundColor: 'background-basic-color-2',

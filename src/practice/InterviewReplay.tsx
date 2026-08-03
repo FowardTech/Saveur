@@ -410,7 +410,6 @@ const themedStyles = StyleService.create({
   statCard: {
     ...globalStyle.card,
     flex: 1,
-    borderRadius: 16,
     paddingVertical: 14,
     marginHorizontal: 4,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which

@@ -270,7 +270,6 @@ const themedStyles = StyleService.create({
   },
   composerCard: {
     ...globalStyle.card,
-    borderRadius: 20,
     padding: 20,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
     // needs an opaque fill on Android — dropped the 'transparent' override
@@ -295,7 +294,6 @@ const themedStyles = StyleService.create({
   },
   entryCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 14,
     marginBottom: 10,
     // Same as composerCard above — renders via <Layout level="2" .../>.

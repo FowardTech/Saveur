@@ -299,13 +299,11 @@ const themedStyles = StyleService.create({
   },
   offerCard: {
     ...globalStyle.card,
-    borderRadius: 20,
     padding: 20,
   },
   // Flat solid-blue hero card (gradient fill removed).
   heroOfferCard: {
     ...globalStyle.card,
-    borderRadius: 20,
     backgroundColor: 'color-primary-500',
   },
   offerCardInner: {
@@ -361,7 +359,6 @@ const themedStyles = StyleService.create({
   },
   approachCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
   },

@@ -288,7 +288,6 @@ const themedStyles = StyleService.create({
   },
   row: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 12,
     marginBottom: 12,
     // `card` carries a real shadow, which needs an opaque fill to render

@@ -161,7 +161,6 @@ const themedStyles = StyleService.create({
   input: { ...globalStyle.inputField },
   card: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which

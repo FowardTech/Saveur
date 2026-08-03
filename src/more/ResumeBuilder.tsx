@@ -482,7 +482,6 @@ const themedStyles = StyleService.create({
   importCard: {
     ...globalStyle.card,
     width: '30%',
-    borderRadius: 16,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
     // needs an opaque fill to render correctly on Android (was
     // 'transparent') — this renders on a plain TouchableOpacity (no
@@ -511,7 +510,6 @@ const themedStyles = StyleService.create({
   },
   bulletCard: {
     ...globalStyle.card,
-    borderRadius: 12,
     padding: 16,
   },
   pickerBackdrop: {

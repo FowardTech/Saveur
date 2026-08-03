@@ -415,7 +415,6 @@ const themedStyles = StyleService.create({
   resultBox: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 12,
     padding: 16,
   },
   testCaseRow: {
@@ -434,7 +433,6 @@ const themedStyles = StyleService.create({
   reviewBox: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 12,
     padding: 16,
   },
 });

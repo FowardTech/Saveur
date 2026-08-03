@@ -442,7 +442,6 @@ const themedStyles = StyleService.create({
   // instead.
   goalCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
   },
   goalChip: {
@@ -467,7 +466,6 @@ const themedStyles = StyleService.create({
   },
   heatMapCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     // Same as goalCard/statCard above — this Layout's own `level="2"`
     // background needs to be opaque for `card`'s Android elevation shadow

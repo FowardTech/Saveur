@@ -255,7 +255,6 @@ const themedStyles = StyleService.create({
   },
   card: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
@@ -264,7 +263,6 @@ const themedStyles = StyleService.create({
   },
   messageCard: {
     ...globalStyle.card,
-    borderRadius: 12,
     padding: 12,
     marginBottom: 16,
     // Same as `card` above — renders via <Layout level="2" .../>.

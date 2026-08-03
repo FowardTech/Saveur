@@ -1062,7 +1062,6 @@ const themedStyles = StyleService.create({
     // Was 14/14 -- every other card on this screen (briefingCard,
     // progressCard, statCard, etc.) uses borderRadius 16 /
     // padding 16; this was the one outlier. Task #66 visual polish pass.
-    borderRadius: 16,
     padding: 16,
     marginTop: 16,
     // Redesign v2 (full reskin): `card` carries a real soft shadow again

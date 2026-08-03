@@ -212,7 +212,6 @@ const themedStyles = StyleService.create({
   content: { paddingBottom: 80 },
   overallCard: {
     ...globalStyle.card,
-    borderRadius: 20,
     paddingVertical: 24,
     marginBottom: 16,
   },
@@ -225,7 +224,6 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexBasis: '46%',
     flexGrow: 1,
-    borderRadius: 16,
     paddingVertical: 16,
     margin: 4,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
@@ -234,7 +232,6 @@ const themedStyles = StyleService.create({
   },
   noteRow: {
     ...globalStyle.card,
-    borderRadius: 12,
     padding: 12,
     marginBottom: 8,
     // `card`'s shadow needs an opaque fill to render correctly on Android

@@ -312,7 +312,6 @@ const themedStyles = StyleService.create({
   input: { ...globalStyle.inputField },
   formCard: {
     ...globalStyle.card,
-    borderRadius: 20,
     padding: 20,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
     // needs an opaque fill on Android — dropped the 'transparent' override

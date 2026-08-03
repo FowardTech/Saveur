@@ -205,7 +205,6 @@ const themedStyles = StyleService.create({
   content: { paddingBottom: 60 },
   docCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 14,
     marginBottom: 12,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which

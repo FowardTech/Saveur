@@ -657,7 +657,6 @@ const themedStyles = StyleService.create({
   },
   previewCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 24,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
     // needs an opaque fill to render correctly on Android (was

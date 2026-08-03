@@ -262,7 +262,6 @@ const themedStyles = StyleService.create({
   // the pre-reskin 12.
   traitCard: {
     ...globalStyle.card,
-    borderRadius: 18,
     padding: 14,
     marginBottom: 12,
   },

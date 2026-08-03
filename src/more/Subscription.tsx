@@ -750,7 +750,6 @@ const themedStyles = StyleService.create({
   },
   planCard: {
     ...globalStyle.card,
-    borderRadius: 20,
     padding: 20,
     marginBottom: 16,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
@@ -781,7 +780,6 @@ const themedStyles = StyleService.create({
   // solid-blue ribbon would blend into this card's own blue fill.
   planCardHero: {
     ...globalStyle.card,
-    borderRadius: 20,
     marginBottom: 16,
     backgroundColor: 'color-primary-500',
   },

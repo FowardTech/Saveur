@@ -191,7 +191,6 @@ const themedStyles = StyleService.create({
   // card only), same shape as sectionCard below.
   summaryCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     marginBottom: 20,
   },
   summaryCardInner: {
@@ -208,7 +207,6 @@ const themedStyles = StyleService.create({
   statCard: {
     ...globalStyle.card,
     flex: 1,
-    borderRadius: 16,
     paddingVertical: 16,
     marginHorizontal: 4,
   },
@@ -218,7 +216,6 @@ const themedStyles = StyleService.create({
   },
   sectionCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
