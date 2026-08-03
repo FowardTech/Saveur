@@ -10,6 +10,7 @@ import {
   Bell,
   Book,
   BookOpen,
+  Box,
   Briefcase,
   Calendar,
   Check,
@@ -37,6 +38,7 @@ import {
   Grid,
   Headphones,
   Heart,
+  HelpCircle,
   Home,
   Inbox,
   Info,
@@ -48,6 +50,7 @@ import {
   MessageCircle,
   MessageSquare,
   Mic,
+  MinusCircle,
   Percent,
   PieChart,
   Pin,
@@ -56,10 +59,12 @@ import {
   PlusCircle,
   Radio,
   RefreshCw,
+  Rocket,
   Search,
   Settings2,
   Share2,
   Shield,
+  Smile,
   Star,
   Sun,
   Trash2,
@@ -127,6 +132,18 @@ const LucideEvaIconsPack: IconPack<any> = {
     'copy-outline': lucideIcon(Copy),
     'corner-up-left-outline': lucideIcon(CornerUpLeft),
     'credit-card-outline': lucideIcon(CreditCard),
+    // AI Interview Laboratory personas (product request item) — admin-
+    // editable icon field on app_config_service.py's "interview_personas"
+    // section; these 5 names were introduced with that feature and weren't
+    // in this pack yet, which crashed the persona picker in
+    // MockInterviewSetup.tsx the moment it rendered (same "Icon ... not
+    // registered in pack 'eva'" error PersonalizationCard.tsx's
+    // chevron-right-outline hit — see that fix's commit).
+    'cube-outline': lucideIcon(Box),
+    'minus-circle-outline': lucideIcon(MinusCircle),
+    'question-mark-circle-outline': lucideIcon(HelpCircle),
+    'rocket-outline': lucideIcon(Rocket),
+    'smiling-face-outline': lucideIcon(Smile),
     'download-outline': lucideIcon(Download),
     'edit-2-outline': lucideIcon(Edit2),
     'email-outline': lucideIcon(Mail),

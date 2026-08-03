@@ -53,7 +53,7 @@ const PersonalizationCard = memo(() => {
               {t('home:career_dna_row_subtitle', { defaultValue: 'Your AI-built personality & work-style profile' })}
             </Text>
           </View>
-          <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon18, { tintColor: theme['text-hint-color'] }]} />
+          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon18, { tintColor: theme['text-hint-color'] }]} />
         </TouchableOpacity>
       ) : null}
 
@@ -70,7 +70,7 @@ const PersonalizationCard = memo(() => {
               {t('home:dream_companies_row_subtitle', { defaultValue: 'Track the companies you want to work for' })}
             </Text>
           </View>
-          <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon18, { tintColor: theme['text-hint-color'] }]} />
+          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon18, { tintColor: theme['text-hint-color'] }]} />
         </TouchableOpacity>
       ) : null}
     </View>
