@@ -14,6 +14,7 @@ import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation
 import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
+import DailyChallengeCard from './DailyChallengeCard';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -876,6 +877,14 @@ const HomeSrc = memo(() => {
           </View>
         </View>
 
+        {/* Surprise Daily Challenge (product request item) — one
+            unpredictable practice challenge a day, own self-contained
+            component (src/home/DailyChallengeCard.tsx) rather than inline
+            here, since it owns its own fetch/submit/skip state and this
+            file is already large. Renders nothing (returns null) if the
+            feature flag is off or there's no challenge to show, so it's
+            safe to always mount here unconditionally. */}
+        <DailyChallengeCard />
 
         {/* Dropped the standalone "Ready to practice?" CTA banner (UI
             cleanup pass) — it pushed the same "go start an interview"

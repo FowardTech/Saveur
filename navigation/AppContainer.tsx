@@ -38,6 +38,8 @@ import GeneratedDocuments from 'src/more/GeneratedDocuments';
 import LinkedInOptimizer from 'src/more/LinkedInOptimizer';
 import EmotionalCoach from 'src/more/EmotionalCoach';
 import CompanyIntelligence from 'src/more/CompanyIntelligence';
+import DreamCompanies from 'src/more/DreamCompanies';
+import CareerDna from 'src/more/CareerDna';
 import InterviewReplay from 'src/practice/InterviewReplay';
 import StudentVerification from 'src/more/StudentVerification';
 import ChooseUsername from 'src/auth/Signup/ChooseUsername';
@@ -203,6 +205,8 @@ const AppContainer = () => {
         <Stack.Screen name="LinkedInOptimizer" component={LinkedInOptimizer} />
         <Stack.Screen name="EmotionalCoach" component={EmotionalCoach} />
         <Stack.Screen name="CompanyIntelligence" component={CompanyIntelligence} />
+        <Stack.Screen name="DreamCompanies" component={DreamCompanies} />
+        <Stack.Screen name="CareerDna" component={CareerDna} />
         <Stack.Screen name="InterviewReplay" component={InterviewReplay} />
         <Stack.Screen name="StudentVerification" component={StudentVerification} />
         <Stack.Screen name="ChooseUsername" component={ChooseUsername} />

@@ -229,6 +229,14 @@ export type RootStackParamList = {
   // real-world milestones toward it, tracked step by step. See
   // services/roadmapService.ts and src/more/CareerRoadmap.tsx.
   CareerRoadmap: undefined;
+  // Career DNA (product request item — merges what was pitched separately
+  // as "Career DNA" and "Career Genome") — a living behavioral profile the
+  // AI builds from real usage signals. See services/careerDnaService.ts.
+  CareerDna: undefined;
+  // Dream Company Dashboard (product request item) — a persisted, tracked
+  // list of target companies with cached research + prep progress. See
+  // services/dreamCompaniesService.ts.
+  DreamCompanies: undefined;
   // Practical Scenarios — hands-on, multi-step decision practice for
   // non-engineering career tracks (healthcare/sales/marketing/finance/
   // consulting/science). See services/practicalService.ts and
