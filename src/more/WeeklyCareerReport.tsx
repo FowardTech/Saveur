@@ -17,6 +17,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
+import { tileColorAt } from 'styles/tileColors';
 import * as careerReportService from 'services/careerReportService';
 import { WeeklyReport } from 'services/careerReportService';
 import { AuthContext } from '../../AuthContext';
@@ -109,26 +110,28 @@ const WeeklyCareerReport = memo(() => {
               // Pastel tile backgrounds (product request item, layout
               // reference: a light/clean fitness-app screenshot's tinted
               // stat tiles), same treatment/color family as MyProgress.tsx's
-              // 3 stat cards for consistency. NOT a gradient fill (that's
+              // 3 stat cards for consistency — both pull from the shared
+              // styles/tileColors.ts palette (index 0/1/2) so they're
+              // guaranteed to match. NOT a gradient fill (that's
               // still reserved for the homescreen XP card only, per the
               // explicit direction on summaryCard above) — flat solid
               // pastel tokens, a different thing.
               <View style={styles.statsRow}>
-                <View style={[styles.statCard, { backgroundColor: theme['color-badge-info-bg'] }]}>
-                  <Text category="h3" bold center style={{ color: theme['color-badge-info-text'] }}>{stats.sessionsCompleted}</Text>
-                  <Text category="h10" bold center mt={4} style={{ color: theme['color-badge-info-text'] }}>
+                <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(0).bg] }]}>
+                  <Text category="h3" bold center style={{ color: theme[tileColorAt(0).text] }}>{stats.sessionsCompleted}</Text>
+                  <Text category="h10" bold center mt={4} style={{ color: theme[tileColorAt(0).text] }}>
                     {t('home:sessions_this_week', { defaultValue: 'Sessions This Week' })}
                   </Text>
                 </View>
-                <View style={[styles.statCard, { backgroundColor: theme['color-tile-mint-bg'] }]}>
-                  <Text category="h3" bold center style={{ color: theme['color-tile-mint-text'] }}>{stats.avgInterviewScore ?? '—'}{stats.avgInterviewScore != null ? '%' : ''}</Text>
-                  <Text category="h10" bold center mt={4} style={{ color: theme['color-tile-mint-text'] }}>
+                <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(1).bg] }]}>
+                  <Text category="h3" bold center style={{ color: theme[tileColorAt(1).text] }}>{stats.avgInterviewScore ?? '—'}{stats.avgInterviewScore != null ? '%' : ''}</Text>
+                  <Text category="h10" bold center mt={4} style={{ color: theme[tileColorAt(1).text] }}>
                     {t('home:average_score', { defaultValue: 'Average Score' })}
                   </Text>
                 </View>
-                <View style={[styles.statCard, { backgroundColor: theme['color-tile-orange-bg'] }]}>
-                  <Text category="h3" bold center style={{ color: theme['color-tile-orange-text'] }}>{stats.currentStreak}</Text>
-                  <Text category="h10" bold center mt={4} style={{ color: theme['color-tile-orange-text'] }}>
+                <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(2).bg] }]}>
+                  <Text category="h3" bold center style={{ color: theme[tileColorAt(2).text] }}>{stats.currentStreak}</Text>
+                  <Text category="h10" bold center mt={4} style={{ color: theme[tileColorAt(2).text] }}>
                     {t('home:day_streak', { defaultValue: 'Day Streak' })}
                   </Text>
                 </View>

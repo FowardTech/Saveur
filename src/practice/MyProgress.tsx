@@ -9,7 +9,6 @@ import {
   Layout,
   Button,
 } from '@ui-kitten/components';
-import { BarChart } from 'react-native-chart-kit';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
@@ -20,9 +19,9 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import CircularProgress from 'components/CircularProgress';
+import WeeklyBarChart from 'components/WeeklyBarChart';
 import { globalStyle } from 'styles/globalStyle';
-import { chartConfig } from 'utils/chartConfig';
-import useLayout from 'hooks/useLayout';
+import { tileColorAt } from 'styles/tileColors';
 import dayjs from 'utils/dayjs';
 import { RootStackParamList } from 'navigation/types';
 import { MockInterviewSessionProps } from 'constants/Types';
@@ -49,7 +48,6 @@ import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 // dashboard.
 const MyProgress = memo(() => {
   const theme = useTheme();
-  const { width } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const { t } = useTranslation(['find', 'common']);
@@ -118,6 +116,10 @@ const MyProgress = memo(() => {
     ? Math.round(scored.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) / scored.length)
     : null;
   const weeklyPractice = React.useMemo(() => interviewService.computeWeeklyPractice(completed), [completed]);
+  // Mon-first index of today (computeWeeklyPractice's own days array is
+  // built Monday-first, same convention as WeekStrip.tsx on Home) — which
+  // bar the weekly chart below renders solid instead of pastel.
+  const todayWeekIndex = (new Date().getDay() + 6) % 7;
   const roadmapPercent = roadmap && roadmap.totalCount > 0
     ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
     : 0;
@@ -274,54 +276,55 @@ const MyProgress = memo(() => {
                 numbers as before, just each on its own tinted background
                 instead of a neutral white card, so the row reads as a
                 distinct "stat" visually the way the reference does rather
-                than three identical white boxes. Colors pulled from
-                constants/theme/appTheme.json's tile tokens, chosen to keep
-                the SAME color family each ring already used (blue=sessions,
+                than three identical white boxes. Colors pulled from the
+                shared styles/tileColors.ts palette (index 0/2/1) so this
+                matches every other screen's tiles exactly, keeping the SAME
+                color family each ring already used (blue=sessions,
                 orange=streak, mint=score) so nothing about what a color
                 "means" here changed, only that it now tints the card too. */}
             <Flex justify="space-between" style={{ marginTop: 20 }}>
-              <View style={[styles.statCard, { backgroundColor: theme['color-badge-info-bg'] }]}>
+              <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(0).bg] }]}>
                 <CircularProgress
                   progress={Math.min(100, (completed.length / 10) * 100)}
                   size={56}
                   strokeWidth={5}
                   trackColor="rgba(255,255,255,0.6)"
-                  color={theme['color-badge-info-text']}>
-                  <Text category="h7" bold style={{ color: theme['color-badge-info-text'] }}>
+                  color={theme[tileColorAt(0).text]}>
+                  <Text category="h7" bold style={{ color: theme[tileColorAt(0).text] }}>
                     {completed.length}
                   </Text>
                 </CircularProgress>
-                <Text category="h10" bold center mt={8} style={{ color: theme['color-badge-info-text'] }}>
+                <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(0).text] }}>
                   {t('find:sessions_completed', { defaultValue: 'Sessions completed' })}
                 </Text>
               </View>
-              <View style={[styles.statCard, { backgroundColor: theme['color-tile-orange-bg'] }]}>
+              <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(2).bg] }]}>
                 <CircularProgress
                   progress={Math.min(100, ((streak?.streakDays ?? 0) / 7) * 100)}
                   size={56}
                   strokeWidth={5}
                   trackColor="rgba(255,255,255,0.6)"
-                  color={theme['color-tile-orange-text']}>
-                  <Text category="h7" bold style={{ color: theme['color-tile-orange-text'] }}>
+                  color={theme[tileColorAt(2).text]}>
+                  <Text category="h7" bold style={{ color: theme[tileColorAt(2).text] }}>
                     {streak?.streakDays ?? 0}
                   </Text>
                 </CircularProgress>
-                <Text category="h10" bold center mt={8} style={{ color: theme['color-tile-orange-text'] }}>
+                <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(2).text] }}>
                   {t('find:day_streak', { defaultValue: 'Day streak' })}
                 </Text>
               </View>
-              <View style={[styles.statCard, { marginRight: 0, backgroundColor: theme['color-tile-mint-bg'] }]}>
+              <View style={[styles.statCard, { marginRight: 0, backgroundColor: theme[tileColorAt(1).bg] }]}>
                 <CircularProgress
                   progress={avgScore ?? 0}
                   size={56}
                   strokeWidth={5}
                   trackColor="rgba(255,255,255,0.6)"
-                  color={theme['color-tile-mint-text']}>
-                  <Text category="h7" bold style={{ color: theme['color-tile-mint-text'] }}>
+                  color={theme[tileColorAt(1).text]}>
+                  <Text category="h7" bold style={{ color: theme[tileColorAt(1).text] }}>
                     {avgScore ?? '—'}
                   </Text>
                 </CircularProgress>
-                <Text category="h10" bold center mt={8} style={{ color: theme['color-tile-mint-text'] }}>
+                <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(1).text] }}>
                   {t('find:average_score', { defaultValue: 'Average score' })}
                 </Text>
               </View>
@@ -330,21 +333,20 @@ const MyProgress = memo(() => {
             <Text category="h6" bold mt={32} mb={16}>
               {t('find:this_week', { defaultValue: 'This week' })}
             </Text>
-            <BarChart
-              data={{
-                labels: weeklyPractice.map(d => d.day),
-                datasets: [{ data: weeklyPractice.map(d => d.sessions) }],
-              }}
-              width={width - 48}
-              height={180}
-              fromZero
-              showValuesOnTopOfBars
-              withInnerLines={false}
-              chartConfig={chartConfig}
-              yAxisLabel=""
-              yAxisSuffix=""
-              style={styles.chart}
-            />
+            {/* Colorful per-bar chart (product request item, explicit
+                layout reference: a light/clean fitness-app screenshot's
+                "Activity this week" chart) — replaces the old single-flat-
+                color react-native-chart-kit bar chart, which couldn't
+                produce a different color per bar no matter how it was
+                configured (see components/WeeklyBarChart.tsx's own
+                comment). Today's bar renders solid instead of pastel, same
+                "one bar stands out" treatment the reference uses. */}
+            <Layout level="2" style={styles.chartCard}>
+              <WeeklyBarChart
+                data={weeklyPractice.map(d => ({ day: d.day, value: d.sessions }))}
+                highlightIndex={todayWeekIndex}
+              />
+            </Layout>
 
             {heatMap && heatMap.length > 0 ? (
               <>
@@ -461,8 +463,9 @@ const themedStyles = StyleService.create({
     marginRight: 12,
     alignItems: 'center',
   },
-  chart: {
-    borderRadius: 16,
+  chartCard: {
+    ...globalStyle.card,
+    padding: 16,
   },
   heatMapCard: {
     ...globalStyle.card,

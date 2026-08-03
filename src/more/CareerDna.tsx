@@ -18,6 +18,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import { globalStyle } from 'styles/globalStyle';
+import { tileColorAt } from 'styles/tileColors';
 import * as careerDnaService from 'services/careerDnaService';
 import { CareerDnaProfile } from 'services/careerDnaService';
 import { AuthContext } from '../../AuthContext';
@@ -197,8 +198,8 @@ const CareerDna = memo(() => {
             ) : null}
 
             {traits?.career_risks?.length ? (
-              <View style={[styles.traitCard, { backgroundColor: theme['color-tile-rose-bg'] }]}>
-                <Text category="h9" bold style={{ color: theme['color-tile-rose-text'] }} mb={8}>
+              <View style={[styles.traitCard, { backgroundColor: theme[tileColorAt(3).bg] }]}>
+                <Text category="h9" bold style={{ color: theme[tileColorAt(3).text] }} mb={8}>
                   {t('more:career_dna_career_risks', { defaultValue: 'Career risks if patterns continue' })}
                 </Text>
                 {traits.career_risks.map((s, i) => (
