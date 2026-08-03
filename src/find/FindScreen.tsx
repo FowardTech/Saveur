@@ -29,6 +29,18 @@ import { AuthContext } from '../../AuthContext';
 // jump straight into a category, or open the full setup wizard (mode /
 // difficulty / timed). TODO: interview-type cards below are static; wire to
 // real content packs & personalized recommendations later.
+// Pastel tile rotation (product request item, layout reference: light/clean
+// fitness-app screenshots' colorful grid tiles) — same 4-color family used
+// for stat tiles elsewhere (MyProgress.tsx, WeeklyCareerReport.tsx), reused
+// here for the Tools/Interview Types grids so this screen doesn't stay a
+// wall of identical neutral-gray cards while everywhere else got color.
+const TILE_COLORS = [
+  { bg: 'color-badge-info-bg', text: 'color-badge-info-text' },
+  { bg: 'color-tile-mint-bg', text: 'color-tile-mint-text' },
+  { bg: 'color-tile-orange-bg', text: 'color-tile-orange-text' },
+  { bg: 'color-tile-rose-bg', text: 'color-tile-rose-text' },
+] as const;
+
 const FindScreen = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
@@ -148,49 +160,55 @@ const FindScreen = memo(() => {
           {t('find:tools')}
         </Text>
         <Flex justify="space-between" wrap>
-          {TOOLS.map((tool, i) => (
-            <TouchableOpacity
-              key={i}
-              activeOpacity={0.7}
-              onPress={tool.onPress}
-              disabled={tool.loading}
-              style={styles.toolCard}>
-              {tool.loading ? (
-                <Spinner size="small" />
-              ) : (
-                <Icon
-                  pack="eva"
-                  name={tool.icon}
-                  style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
-                />
-              )}
-              <Text category="h9" center mt={8} bold numberOfLines={2}>
-                {tool.title}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {TOOLS.map((tool, i) => {
+            const tile = TILE_COLORS[i % TILE_COLORS.length];
+            return (
+              <TouchableOpacity
+                key={i}
+                activeOpacity={0.7}
+                onPress={tool.onPress}
+                disabled={tool.loading}
+                style={[styles.toolCard, { backgroundColor: theme[tile.bg] }]}>
+                {tool.loading ? (
+                  <Spinner size="small" />
+                ) : (
+                  <Icon
+                    pack="eva"
+                    name={tool.icon}
+                    style={[globalStyle.icon24, { tintColor: theme[tile.text] }]}
+                  />
+                )}
+                <Text category="h9" center mt={8} bold numberOfLines={2} style={{ color: theme[tile.text] }}>
+                  {tool.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </Flex>
 
         <Text category="h6" bold mt={40} mb={16}>
           {t('find:interview_types')}
         </Text>
         <View style={styles.typesGrid}>
-          {DATA_INTERVIEW_TYPES.map((item, i) => (
-            <TouchableOpacity
-              key={i}
-              activeOpacity={0.7}
-              onPress={() => onStartSetup(item.type)}
-              style={styles.typeCard}>
-              <Icon
-                pack="eva"
-                name={item.icon}
-                style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
-              />
-              <Text category="h9" mt={12} bold numberOfLines={2}>
-                {getInterviewTypeLabel(item.type, t)}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {DATA_INTERVIEW_TYPES.map((item, i) => {
+            const tile = TILE_COLORS[i % TILE_COLORS.length];
+            return (
+              <TouchableOpacity
+                key={i}
+                activeOpacity={0.7}
+                onPress={() => onStartSetup(item.type)}
+                style={[styles.typeCard, { backgroundColor: theme[tile.bg] }]}>
+                <Icon
+                  pack="eva"
+                  name={item.icon}
+                  style={[globalStyle.icon24, { tintColor: theme[tile.text] }]}
+                />
+                <Text category="h9" mt={12} bold numberOfLines={2} style={{ color: theme[tile.text] }}>
+                  {getInterviewTypeLabel(item.type, t)}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </Content>
     </Container>
