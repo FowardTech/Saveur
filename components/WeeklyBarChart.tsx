@@ -35,7 +35,15 @@ const WeeklyBarChart = memo(({ data, highlightIndex, height = 140 }: WeeklyBarCh
   const maxValue = Math.max(1, ...data.map(d => d.value));
 
   return (
-    <View style={[styles.row, { height: height + 36 }]}>
+    // Product bug report ("the bar values are extending out of the box") —
+    // this row is bottom-anchored (`alignItems: 'flex-end'`) so every
+    // column's own intrinsic height (value label + track + day label) is
+    // measured from the BOTTOM up; the old `height + 36` reserved slot was
+    // a few px shorter than that real intrinsic height, so the value label
+    // at the very top of each column got pushed above this row's own box
+    // and clipped by the card around it. `+ 56` leaves real headroom for
+    // the value label's actual line-height instead of a tight estimate.
+    <View style={[styles.row, { height: height + 56 }]}>
       {data.map((entry, i) => {
         const tile = tileColorAt(i);
         const isHighlighted = highlightIndex === i;

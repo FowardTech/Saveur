@@ -692,17 +692,27 @@ const HomeSrc = memo(() => {
           // in dark mode, they should be well designed to blend well with
           // the dark mode"). Now a real code-drawn card using the ad's own
           // title/body text (already fetched, previously unused whenever no
-          // image was set) — same recipe as the "Start a Mock Interview"
-          // hero on the Practice tab (src/find/FindScreen.tsx): solid brand
-          // blue fill in light mode, theme-aware dark-navy surface + a
-          // faint blue corner wash in dark mode, so it reads as "branded
-          // blue" without ever being a flat saturated blue block on a near-
-          // black screen.
+          // image was set).
+          //
+          // The whole card is now ALWAYS a LinearGradient (not a plain View
+          // that conditionally swaps to one in light mode) — one single
+          // code path for both themes rather than two branches that could
+          // silently drift apart again, per the follow-up bug report that
+          // dark mode "was forgotten." Light mode gets a real two-stop blue
+          // gradient (product request — "make the 2 blue background cards
+          // a gradient in light mode"); dark mode passes the SAME color
+          // twice (a gradient of one color IS a flat fill), landing on
+          // 'background-basic-color-2', the dark-navy surface every other
+          // dark-mode card on this screen already uses.
           <TouchableOpacity
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: bannerWidth }]}
             onPress={onOpenHomeBanner}>
-            <View style={[styles.homeBannerFallback, isDarkMode && { backgroundColor: theme['background-basic-color-2'] }]}>
+            <LinearGradient
+              colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : ['#1DA1F2', '#0063f8']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.homeBannerFallback}>
               <LinearGradient
                 pointerEvents="none"
                 colors={isDarkMode ? ['rgba(0, 99, 248, 0.22)', 'rgba(29, 161, 242, 0.04)'] : ['transparent', 'transparent']}
@@ -734,7 +744,7 @@ const HomeSrc = memo(() => {
                 name="arrowRight"
                 style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
               />
-            </View>
+            </LinearGradient>
           </TouchableOpacity>
         ) : null}
         {/* Day Streak / Sessions This Week / Average Score stat cards
@@ -1140,8 +1150,9 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
   },
   // Code-drawn fallback banner (see the JSX comment where this renders) —
-  // solid brand blue by default; dark mode overrides to
-  // 'background-basic-color-2' inline, same recipe as checkInCard above.
+  // this View itself carries no backgroundColor: it's rendered AS a
+  // LinearGradient in the JSX now, whose `colors` prop supplies the fill
+  // for both themes.
   homeBannerFallback: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1149,7 +1160,6 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
-    backgroundColor: 'color-primary-500',
   },
   homeBannerAccent: {
     position: 'absolute',

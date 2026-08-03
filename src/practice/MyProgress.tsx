@@ -466,6 +466,11 @@ const themedStyles = StyleService.create({
   chartCard: {
     ...globalStyle.card,
     padding: 16,
+    // Product bug report ("the bar values are extending out of the box") —
+    // extra top padding on top of WeeklyBarChart's own internal headroom
+    // fix, so the tallest bar's value label always has clear room above it
+    // no matter the device's font-scale settings.
+    paddingTop: 24,
   },
   heatMapCard: {
     ...globalStyle.card,
