@@ -29,6 +29,9 @@ import { MockInterviewSessionProps } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as gamificationService from 'services/gamificationService';
 import * as roadmapService from 'services/roadmapService';
+import * as feedbackService from 'services/feedbackService';
+import { HeatMapEntry } from 'services/feedbackService';
+import * as configService from 'services/configService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { GamificationStreakProps } from 'constants/Types';
 import { AuthContext } from '../../AuthContext';
@@ -66,6 +69,12 @@ const MyProgress = memo(() => {
   // (see backend's career_roadmap_service.ensure_auto_roadmap), so this is
   // reliably populated rather than a Pro-only dead end.
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
+  // Interview Heat Map (product request item) — cross-session average per
+  // skill dimension, distinct from InterviewFeedback.tsx's existing
+  // single-session ring breakdown. Best-effort/fail-open (.catch(() =>
+  // null)) like streak above — a user with zero scored sessions yet just
+  // sees the section stay hidden rather than blocking this whole screen.
+  const [heatMap, setHeatMap] = React.useState<HeatMapEntry[] | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
@@ -73,14 +82,18 @@ const MyProgress = memo(() => {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const [historyResult, streakResult, roadmapResult] = await Promise.all([
+      const [historyResult, streakResult, roadmapResult, heatMapResult] = await Promise.all([
         interviewService.getPracticeHistory(),
         gamificationService.getStreak().catch(() => null),
         roadmapService.getSavedRoadmap(),
+        configService.isFeatureEnabled('interview_heat_map')
+          ? feedbackService.getHeatMap().then(r => (r.sessionCount > 0 ? r.dimensions : null)).catch(() => null)
+          : Promise.resolve(null),
       ]);
       setHistory(historyResult);
       setStreak(streakResult);
       setRoadmap(roadmapResult);
+      setHeatMap(heatMapResult);
     } catch (error: any) {
       setLoadError(error?.message ?? t('find:could_not_load_progress', { defaultValue: 'Could not load your progress.' }));
     } finally {
@@ -330,6 +343,43 @@ const MyProgress = memo(() => {
               style={styles.chart}
             />
 
+            {heatMap && heatMap.length > 0 ? (
+              <>
+                <Text category="h6" bold mt={32} mb={4}>
+                  {t('find:skill_heat_map_title', { defaultValue: 'Skill Heat Map' })}
+                </Text>
+                <Text category="h9-s" status="placeholder" mb={16}>
+                  {t('find:skill_heat_map_description', {
+                    defaultValue: 'Your average across every scored interview — see what to work on next.',
+                  })}
+                </Text>
+                <Layout level="2" style={styles.heatMapCard}>
+                  {heatMap.map(entry => (
+                    <View key={entry.key} style={styles.heatMapRow}>
+                      <Flex justify="space-between" mb={6}>
+                        <Text category="h9" bold>{entry.label}</Text>
+                        <Text category="h9" bold status="link">{entry.score}%</Text>
+                      </Flex>
+                      <View style={styles.heatMapTrack}>
+                        <View
+                          style={[
+                            styles.heatMapFill,
+                            {
+                              width: `${Math.max(0, Math.min(100, entry.score))}%`,
+                              backgroundColor:
+                                entry.score >= 80 ? theme['color-success-500']
+                                : entry.score >= 60 ? theme['color-warning-500']
+                                : theme['color-danger-500'],
+                            },
+                          ]}
+                        />
+                      </View>
+                    </View>
+                  ))}
+                </Layout>
+              </>
+            ) : null}
+
             <Text category="h6" bold mt={16} mb={16}>
               {t('find:recent_sessions', { defaultValue: 'Recent sessions' })}
             </Text>
@@ -409,6 +459,27 @@ const themedStyles = StyleService.create({
   },
   chart: {
     borderRadius: 16,
+  },
+  heatMapCard: {
+    ...globalStyle.card,
+    borderRadius: 16,
+    padding: 16,
+    // Same as goalCard/statCard above — this Layout's own `level="2"`
+    // background needs to be opaque for `card`'s Android elevation shadow
+    // to compute a correctly-rounded silhouette.
+  },
+  heatMapRow: {
+    marginBottom: 14,
+  },
+  heatMapTrack: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: 'background-basic-color-3',
+    overflow: 'hidden',
+  },
+  heatMapFill: {
+    height: 10,
+    borderRadius: 5,
   },
   // Redesign v2 (full reskin): the linear progressTrack/progressFill pair
   // that used to render "progress toward your goal" was replaced by a

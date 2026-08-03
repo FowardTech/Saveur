@@ -46,6 +46,7 @@ export interface FeatureFlags {
   career_dna: boolean;
   dream_company_dashboard: boolean;
   daily_challenge: boolean;
+  interview_heat_map: boolean;
 }
 
 export interface ReleaseConfig {
@@ -207,6 +208,7 @@ const DEFAULT_CONFIG: AppConfig = {
     career_dna: true,
     dream_company_dashboard: true,
     daily_challenge: true,
+    interview_heat_map: true,
   },
   release: {
     ios_min_version: '',

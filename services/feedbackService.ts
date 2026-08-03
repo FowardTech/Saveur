@@ -54,8 +54,8 @@ const SKILL_KEYS = [
 ] as const;
 type SkillKey = (typeof SKILL_KEYS)[number];
 
-function skillLabel(key: SkillKey): string {
-  const defaults: Record<SkillKey, string> = {
+function skillLabel(key: SkillKey | 'storytelling'): string {
+  const defaults: Record<SkillKey | 'storytelling', string> = {
     confidence: 'Confidence',
     communication: 'Communication',
     technical: 'Technical Skill',
@@ -63,6 +63,12 @@ function skillLabel(key: SkillKey): string {
     problem_solving: 'Problem Solving',
     creativity: 'Creativity',
     critical_thinking: 'Critical Thinking',
+    // Interview Heat Map (product request item) — synthetic 8th dimension,
+    // averaged server-side from the 4 STAR scores (see feedback.py's
+    // /heatmap). STAR itself IS a structured-storytelling framework, so
+    // this reads as a genuine skill rather than a duplicate of the STAR
+    // Breakdown section elsewhere.
+    storytelling: 'Storytelling',
   };
   return i18n.t(`find:skill_${key}`, { defaultValue: defaults[key] });
 }
@@ -244,6 +250,41 @@ export async function regenerateFeedback(sessionId: string): Promise<FeedbackRep
     {language: currentLanguage()},
   );
   return fromFeedbackWire(data);
+}
+
+// Interview Heat Map (product request item) — cross-session average per
+// skill dimension (see feedback.py's /heatmap), for My Progress's aggregate
+// bar view, distinct from InterviewFeedback.tsx's existing single-session
+// ring breakdown.
+export interface HeatMapEntry {
+  key: string;
+  label: string;
+  score: number;
+}
+
+export interface HeatMapReport {
+  sessionCount: number;
+  dimensions: HeatMapEntry[];
+}
+
+interface HeatMapDimensionWire {
+  key?: string;
+  score?: number;
+}
+
+interface HeatMapWire {
+  session_count?: number;
+  dimensions?: HeatMapDimensionWire[];
+}
+
+export async function getHeatMap(): Promise<HeatMapReport> {
+  const {data} = await apiClient.get<HeatMapWire>('/api/v1/feedback/heatmap');
+  const dimensions = (data.dimensions ?? []).map(d => ({
+    key: d.key ?? '',
+    label: skillLabel((d.key ?? '') as SkillKey | 'storytelling'),
+    score: typeof d.score === 'number' ? Math.round(d.score) : 0,
+  }));
+  return {sessionCount: data.session_count ?? 0, dimensions};
 }
 
 // ---- Camera analysis (Video-mode sessions only) ----------------------------
