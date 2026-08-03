@@ -365,7 +365,15 @@ const LearningCourses = memo(() => {
         {curriculumLoaded ? (
           <Layout level="2" style={styles.customCard}>
             <Flex justify="space-between" itemsCenter mb={4}>
-              <Text category="h7" bold>
+              {/* flexShrink so a longer translation (e.g. Spanish
+                  "Generador de plan de estudios con IA") wraps/shrinks
+                  instead of overflowing past the card's edge into the
+                  "Start over" button next to it — Flex is a plain
+                  flexDirection:row View with no flex applied to children by
+                  default, so without this the title rendered at its full
+                  natural width and spilled outside the card. Same fix
+                  pattern as JobAlerts.tsx's title/action row. */}
+              <Text category="h7" bold style={{ flexShrink: 1, marginRight: 8 }}>
                 {t('more:curriculum_builder_title', { defaultValue: 'AI Curriculum Builder' })}
               </Text>
               {curriculum ? (

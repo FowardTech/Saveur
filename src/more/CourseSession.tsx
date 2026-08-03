@@ -197,6 +197,23 @@ const CourseSession = memo(() => {
     return () => speechService.stopSpeaking();
   }, []);
 
+  // Explicit stop-then-navigate for every "back" exit — the mount-cleanup
+  // above only fires once this screen actually unmounts, which React
+  // Navigation doesn't do until its transition finishes, and even then
+  // stopSpeaking() alone used to only stop audio that had ALREADY started
+  // playing. Between those two gaps, a still-in-flight speak() call (mid
+  // ElevenLabs fetch or mid on-device engine init right as "back" was
+  // tapped) could finish a moment later and start talking well after the
+  // user was already back on the previous screen (product report: "the AI
+  // keeps talking even after going back"). Calling stopSpeaking() here,
+  // synchronously and immediately on tap, closes both gaps — combined with
+  // speechService.ts's own cancellation-token fix for the "starts late"
+  // half of that race.
+  const onBack = () => {
+    speechService.stopSpeaking();
+    goBack();
+  };
+
   const onToggleMode = (next: LessonMode) => {
     if (next === mode) return;
     speechService.stopSpeaking();
@@ -272,7 +289,7 @@ const CourseSession = memo(() => {
           // numberOfLines={1} keeps it from wrapping into/behind the back
           // button (components/NavigationAction.tsx).
           title={<Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">{topic}</Text>}
-          accessoryLeft={<NavigationAction onPress={goBack} />}
+          accessoryLeft={<NavigationAction onPress={onBack} />}
         />
         <Content padder contentContainerStyle={styles.content}>
           <Flex vertical itemsCenter justify="center" style={{ flex: 1, paddingTop: 60 }}>
@@ -318,7 +335,7 @@ const CourseSession = memo(() => {
                 })}
               </Text>
             ) : null}
-            <CtaButton style={{ marginTop: 32, width: '100%' }} onPress={goBack}>
+            <CtaButton style={{ marginTop: 32, width: '100%' }} onPress={onBack}>
               {t('more:course_back_to_courses', { defaultValue: 'Back to Courses' })}
             </CtaButton>
           </Flex>

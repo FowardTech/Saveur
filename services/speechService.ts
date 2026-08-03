@@ -96,6 +96,28 @@ function ensureTtsConfigured(): Promise<void> {
   return ttsReady;
 }
 
+// Monotonic cancellation token. stopSpeaking() (and every new speak() call)
+// bumps this; each speak() call captures the value at its own start and
+// checks it again right before actually starting audio playback. Fixes a
+// real race that isn't about UI ordering: stopSpeaking() can only stop
+// audio that has ALREADY started — it does nothing to a speak() call that's
+// still mid-network-fetch (ElevenLabs) or mid-engine-init when the cancel
+// happens. Left unguarded, that call simply finishes a moment later and
+// starts playing anyway, even though the screen has already been backed out
+// of, or a newer speak() call (next module/next coach reply) has already
+// superseded it. That's the actual cause behind two separate-looking product
+// reports: "the AI keeps talking after I tap back" (stopSpeaking() from the
+// screen's unmount/blur cleanup fired too early to catch a still-in-flight
+// call) and "voice sometimes starts speaking out of sync with the text"
+// (a stale call from the PREVIOUS module/reply finishing late and playing
+// over newly-shown content). Every call site that can actually start audio
+// (Sound.startPlayer, Tts.speak) now checks isStale() immediately before
+// doing so and silently no-ops if a stop or a newer speak() happened since.
+let speechToken = 0;
+function isStale(token: number): boolean {
+  return token !== speechToken;
+}
+
 interface TtsSpeakWire {
   audio_url: string;
 }
@@ -163,8 +185,12 @@ export async function fetchElevenLabsAudioUrl(text: string, language: string): P
  * playback error — so speak() below can catch that and fall back to
  * on-device TTS instead of the interview going silent.
  */
-async function speakRemote(text: string, language: string): Promise<void> {
+async function speakRemote(text: string, language: string, token: number): Promise<void> {
   const {data} = await apiClient.post<TtsSpeakWire>('/api/v1/tts/speak', {text, language});
+  // Superseded (a stop or a newer speak() call) while this request was in
+  // flight — never start playing audio for a call nobody's waiting on
+  // anymore. See the speechToken comment above for the full race this fixes.
+  if (isStale(token)) return;
   if (!data?.audio_url) {
     throw new Error('TTS backend did not return an audio_url.');
   }
@@ -174,6 +200,7 @@ async function speakRemote(text: string, language: string): Promise<void> {
   if (user) {
     headers.Authorization = `Bearer ${await user.getIdToken()}`;
   }
+  if (isStale(token)) return; // re-check — the token await above can also race past a cancel
 
   return new Promise<void>((resolve, reject) => {
     let settled = false;
@@ -207,8 +234,9 @@ async function speakRemote(text: string, language: string): Promise<void> {
  * correct-language) instead of an English voice reading Spanish text
  * phonetically.
  */
-async function speakOnDevice(text: string, sttLocale: string, preserveRecordingSession = false): Promise<void> {
+async function speakOnDevice(text: string, sttLocale: string, token: number, preserveRecordingSession = false): Promise<void> {
   await ensureTtsConfigured();
+  if (isStale(token)) return; // superseded while the engine was initializing
   try {
     await Tts.setDefaultLanguage(sttLocale);
   } catch {
@@ -249,6 +277,7 @@ async function speakOnDevice(text: string, sttLocale: string, preserveRecordingS
   if (!preserveRecordingSession) {
     await Tts.setDucking?.(true)?.catch(() => {});
   }
+  if (isStale(token)) return; // re-check right before actually speaking
   return new Promise<void>(resolve => {
     let settled = false;
     const finish = () => {
@@ -312,18 +341,30 @@ export async function speak(
     preserveRecordingSession?: boolean;
   },
 ): Promise<void> {
+  // Captured now, before any awaiting — this call becomes THE current one,
+  // automatically superseding (via isStale()) whatever speak() call, if any,
+  // is still in flight from before (e.g. a previous module's/reply's speech
+  // that hadn't started playing yet). See the speechToken comment above.
+  const token = ++speechToken;
   if (options?.preserveRecordingSession) {
-    await speakOnDevice(text, getSttLocale(language), true);
+    await speakOnDevice(text, getSttLocale(language), token, true);
     return;
   }
   try {
-    await speakRemote(text, language);
+    await speakRemote(text, language, token);
   } catch {
-    await speakOnDevice(text, getSttLocale(language));
+    if (!isStale(token)) {
+      await speakOnDevice(text, getSttLocale(language), token);
+    }
   }
 }
 
 export function stopSpeaking(): void {
+  // Invalidate any speak() call currently in flight — even one still stuck
+  // mid-network-fetch or mid-engine-init that hasn't started playing
+  // anything yet — so it no-ops instead of starting audio late. See the
+  // speechToken comment above for the full race this fixes.
+  speechToken += 1;
   // Best-effort stop of whichever path is currently playing — safe to call
   // both even though only one is ever actually active, since a no-op stop
   // on the idle one is harmless.
