@@ -87,7 +87,7 @@ export default AdPopupModal;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#047857',
+    backgroundColor: '#0063f8',
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 32,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   ctaButtonText: {
-    color: '#047857',
+    color: '#0063f8',
   },
   dismissText: {
     color: 'rgba(255,255,255,0.75)',

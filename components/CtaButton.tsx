@@ -9,18 +9,18 @@ import { globalStyle } from 'styles/globalStyle';
 // ZipRecruiter-reference direction; that flatness is now replaced by this
 // softer look.
 //
-// COLOR HISTORY: this was the app's brand blue (#0063f8) for a long time —
-// an earlier attempt at a mint-green fill was explicitly reverted ("i did
-// not ask you to change the color of buttons to green, revert back to the
-// blue color they were before"). It's mint/emerald again now (#047857) as
-// of the wellness-app-inspired full visual reskin (product request item,
-// explicit reference: 3 light/clean fitness-app screenshots) — this time
-// the color change IS the ask, not incidental, and it's applied consistently
-// everywhere (constants/theme/appTheme.json's whole color-primary-* scale,
-// not just this one button) rather than a one-off swap. Since every primary
-// button app-wide now renders through this one component, this file is the
-// single place that color/shadow lives — no other file needs touching to
-// adjust it.
+// COLOR HISTORY: this is Saveur's established brand blue (#0063f8) — a
+// mint-green fill was tried TWICE now (once standalone, once as part of a
+// full wellness-app-inspired reskin) and reverted BOTH times per explicit
+// follow-up ("i did not ask you to change the color of buttons to green,
+// revert back to the blue color they were before" / "dont forget to still
+// maintain the default blue color"). The wellness-app reskin's SHAPE
+// changes (rounder radius, softer shadow) stayed; only the color reverted
+// — see constants/theme/appTheme.json's color-primary-* scale, which is
+// the single place this and every other primary-colored element in the app
+// reads from. Since every primary button app-wide now renders through this
+// one component, this file is the single place that color/shadow lives —
+// no other file needs touching to adjust it.
 //
 // A thin wrapper around UI Kitten's own Button rather than a fully custom
 // component, so every prop that already works on <Button> (accessoryLeft/

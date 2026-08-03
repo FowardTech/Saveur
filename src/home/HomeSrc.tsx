@@ -62,7 +62,7 @@ const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: string; text: string } => {
   switch (rank) {
     case 1:
-      return { bg: '#047857', text: '#FFFFFF' };
+      return { bg: '#0063f8', text: '#FFFFFF' };
     case 2:
       return { bg: theme['background-basic-color-3'], text: theme['background-basic-color-6'] };
     case 3:
@@ -746,8 +746,8 @@ const HomeSrc = memo(() => {
               progress={Math.min(100, (streakDays / 7) * 100)}
               size={68}
               strokeWidth={7}
-              trackColor="#0478573f"
-              color="#047857"
+              trackColor="#0063f83f"
+              color="#0063f8"
               style={styles.checkInRing}>
               <Text category="h6" bold style={styles.checkInRingText}>
                 {streakDays}
@@ -815,10 +815,10 @@ const HomeSrc = memo(() => {
             the "Your Progress" pill above, so keeping it here too was pure
             repetition rather than something Home uniquely needed. */}
         <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-          <Text category="h7" bold style={{color: '#047857'}}>
+          <Text category="h7" bold style={{color: '#0063f8'}}>
             {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
           </Text>
-          <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{color: '#047857'}}>
+          <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{color: '#0063f8'}}>
             {t('home:schedule_new', { defaultValue: '+ Schedule' })}
           </Text>
         </Flex>
@@ -1199,7 +1199,7 @@ const themedStyles = StyleService.create({
     // as a pill on its own against the card, no fill needed in either theme.
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#047857',
+    borderColor: '#0063f8',
   },
   checkInTopRow: {
     flexDirection: 'row',
@@ -1212,12 +1212,12 @@ const themedStyles = StyleService.create({
     marginRight: 12,
   },
   checkInRingText: {
-    color: '#047857',
+    color: '#0063f8',
   },
   // checkInLabel (the standalone "XP" caption above the "39 XP" value) was
   // removed as part of the row-width fix above — no reader left.
   checkInValue: {
-    color: '#047857',
+    color: '#0063f8',
   },
   checkInError: {
     color: '#FFE3E3',
@@ -1234,7 +1234,7 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
   },
   checkedInIcon: {
-    tintColor: '#047857',
+    tintColor: '#0063f8',
   },
   // alignSelf: 'flex-end' — its own row, hugging only its own content and
   // right-aligned (below the merged ring/XP/Badges/medal row above it). No
@@ -1254,13 +1254,13 @@ const themedStyles = StyleService.create({
     // checkedInPill]) the "Checked in" completed-state pill.
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#047857'
+    borderColor: '#0063f8'
   },
   checkInButtonDisabled: {
     opacity: 0.6,
   },
   checkInButtonText: {
-    color: '#047857',
+    color: '#0063f8',
   },
   // Leaderboard preview card (see the JSX comment above where this is
   // used) — same bordered/transparent-fill treatment as every other card

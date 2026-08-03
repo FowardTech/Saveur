@@ -792,7 +792,7 @@ const themedStyles = StyleService.create({
     backgroundColor: '#FFFFFF',
   },
   popularRibbonHeroText: {
-    color: '#047857',
+    color: '#0063f8',
   },
   heroText: {
     color: '#FFFFFF',
@@ -812,6 +812,6 @@ const themedStyles = StyleService.create({
     opacity: 0.6,
   },
   heroSubscribeButtonText: {
-    color: '#047857',
+    color: '#0063f8',
   },
 });

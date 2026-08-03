@@ -122,20 +122,22 @@ export const globalStyle = StyleSheet.create({
   // re-enabled and re-tuned rather than restoring the old heavier glow.
   // Android's `elevation` dropped per the same "remove Android shadows,
   // leave iOS alone" request as cardShadow above.
-  // Retinted from the old brand blue (rgba(0, 99, 248, ...)) to the new
-  // brand emerald (product request: full wellness-app-inspired reskin) —
-  // same shape/opacity, just matching CtaButton's new fill color so the
-  // glow reads as "this button" rather than a leftover blue halo.
+  // Briefly retinted to emerald during the wellness-app-inspired reskin
+  // pass, then reverted back to brand blue per explicit follow-up ("dont
+  // forget to still maintain the default blue color") — same "color stays
+  // blue even while everything else about the look changes" precedent as
+  // CtaButton.tsx's own color history comment. Shape/shadow softness from
+  // the reskin (radius, opacity, blur) all stay; only the tint reverted.
   shadowBtn: Platform.select({
     ios: {
-      shadowColor: 'rgba(4, 120, 87, 0.45)',
+      shadowColor: 'rgba(0, 99, 248, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,
     },
     android: {},
     default: {
-      shadowColor: 'rgba(4, 120, 87, 0.45)',
+      shadowColor: 'rgba(0, 99, 248, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,
