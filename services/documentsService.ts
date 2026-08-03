@@ -5,12 +5,12 @@ import apiClient from './apiClient';
 //
 // Generic S3-backed document storage — POST/GET/DELETE /api/v1/documents —
 // separate from the resume-specific upload already wired to
-// POST /api/v1/resume/upload in resumeService.ts's importSource(). No screen
-// in the app owns a generic "my documents" list/upload/delete UI today (a
-// grep across src/ for "document"/"Document" only turns up unrelated
-// copy — resume-export wording, policy-screen text, etc. — not a document
-// manager), so this file is exposed for whichever screen picks that up next;
-// nothing calls these functions yet.
+// POST /api/v1/resume/upload in resumeService.ts's importSource().
+// listDocuments()/uploadDocument() back the "choose from My Documents"
+// picker (see components/DocumentPickerModal.tsx, used by
+// ResumeBuilder.tsx's import cards and JDAnalyzer.tsx's "tailor an
+// existing resume" flow) and the standalone My Documents screen
+// (src/more/MyDocuments.tsx).
 //
 // Follows the same multipart-upload pattern as resumeService.importSource():
 // React Native's global FormData understands `{uri, type, name}` objects
@@ -39,6 +39,14 @@ export interface DocumentRecord {
   name?: string;
   sizeBytes?: number | null;
   mimeType?: string | null;
+  // Was stored server-side (every /documents/upload call sends a doc_type/
+  // kind) but never actually round-tripped back on GET /api/v1/documents —
+  // every consumer had to treat every row as an undifferentiated
+  // "document" with no way to tell a resume from a certificate/portfolio
+  // file apart. Now returned as `kind` (see app/api/documents.py's
+  // _to_wire) so screens like JDAnalyzer's "tailor an uploaded resume"
+  // picker can filter to resume-like files instead of showing everything.
+  kind?: string | null;
   createdAt?: number;
 }
 
@@ -49,6 +57,7 @@ interface DocumentWire {
   file_name?: string;
   size_bytes?: number;
   mime_type?: string;
+  kind?: string | null;
   created_at?: number | string;
   createdAt?: number | string;
 }
@@ -61,6 +70,7 @@ function fromWire(wire: DocumentWire): DocumentRecord {
     name: wire.name ?? wire.file_name,
     sizeBytes: wire.size_bytes ?? null,
     mimeType: wire.mime_type ?? null,
+    kind: wire.kind ?? null,
     createdAt:
       createdRaw != null
         ? typeof createdRaw === 'string'

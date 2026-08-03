@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
-import {ActivityIndicator, Alert, View} from 'react-native';
-import {TopNavigation, StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
+import {ActivityIndicator, Alert, TouchableOpacity, View} from 'react-native';
+import {TopNavigation, StyleService, useStyleSheet, useTheme, Icon, Spinner} from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {WebView, WebViewNavigation, WebViewMessageEvent} from 'react-native-webview';
 import {useTranslation} from 'react-i18next';
@@ -16,6 +16,9 @@ import {Application_Stage_Enum} from 'constants/Types';
 import {Images} from 'assets/images';
 import * as applicationsService from 'services/applicationsService';
 import * as jobAlertsService from 'services/jobAlertsService';
+import * as autofillProfileService from 'services/autofillProfileService';
+import {AutofillProfile} from 'services/autofillProfileService';
+import {buildAutofillScript, AutofillMessage} from 'utils/webviewAutofill';
 
 // Generic in-app WebView screen — currently used to open a job posting's
 // apply page from src/more/JobAlerts.tsx / JobAlertDetails.tsx (so tapping a
@@ -189,6 +192,14 @@ const WebViewScreen = memo(() => {
   // WebView with our own graceful empty state instead of leaving Workday's
   // (or any other ATS's) own broken-looking error page on screen.
   const [isDead, setIsDead] = React.useState(false);
+  // Product request item 2 ("auto fill the job application input field in
+  // the webview") — undefined = not fetched yet this screen visit, null =
+  // fetched but genuinely nothing usable (no profile/resume/documents at
+  // all). Kept in state (not a ref) since it's read from a render (the
+  // floating button's disabled/label state) as well as the fill handler.
+  const [autofillProfile, setAutofillProfile] = React.useState<AutofillProfile | null | undefined>(undefined);
+  const [isFillingApplication, setIsFillingApplication] = React.useState(false);
+  const webViewRef = React.useRef<WebView>(null);
 
   const injectedJavaScript = React.useMemo(
     () => (job ? buildInjectedJavaScript() : undefined),
@@ -237,6 +248,58 @@ const WebViewScreen = memo(() => {
       });
   }, [job, t]);
 
+  // Product request item 2 — "auto fill the job application input field in
+  // the webview when the user wants to apply for the job". Fetches the
+  // user's autofill profile (GET /api/v1/autofill/profile, cached in state
+  // for the rest of this screen visit) the first time it's tapped, then
+  // runs utils/webviewAutofill.ts's injection against whatever page is
+  // currently loaded. Fill-only — see that file's own comment for why this
+  // never clicks Submit/Apply itself.
+  const onFillApplication = React.useCallback(async () => {
+    if (isFillingApplication) return;
+    setIsFillingApplication(true);
+    try {
+      let profile = autofillProfile;
+      if (profile === undefined) {
+        profile = await autofillProfileService.getAutofillProfile();
+        setAutofillProfile(profile);
+      }
+      if (!profile) {
+        setIsFillingApplication(false);
+        Alert.alert(
+          t('more:autofill_no_data_title', {defaultValue: 'Nothing to fill yet'}),
+          t('more:autofill_no_data_body', {
+            defaultValue: 'Add your resume or fill out your profile in the app first, then come back here to autofill applications.',
+          }),
+        );
+        return;
+      }
+      webViewRef.current?.injectJavaScript(buildAutofillScript(profile));
+      // Safety net — the injected script always posts a message back (its
+      // own try/catch guarantees that), but in case the WebView somehow
+      // never delivers it (e.g. mid-navigation), don't leave the button
+      // stuck showing a spinner forever.
+      setTimeout(() => setIsFillingApplication(false), 5000);
+    } catch (e: any) {
+      setIsFillingApplication(false);
+      if (e?.status === 402 || e?.error === 'pro_required') {
+        Alert.alert(
+          t('more:autofill_pro_required_title', {defaultValue: 'Pro feature'}),
+          t('more:autofill_pro_required_body', {defaultValue: 'Autofill is a Pro feature.'}),
+          [
+            {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
+            {text: t('find:upgrade_to_pro', {defaultValue: 'Upgrade to Pro'}), onPress: () => navigation.navigate('Subscription')},
+          ],
+        );
+        return;
+      }
+      Alert.alert(
+        t('more:autofill_failed_title', {defaultValue: "Couldn't autofill this page"}),
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+      );
+    }
+  }, [isFillingApplication, autofillProfile, navigation, t]);
+
   const onMessage = React.useCallback((event: WebViewMessageEvent) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
@@ -249,11 +312,34 @@ const WebViewScreen = memo(() => {
         if (job?.id) {
           jobAlertsService.reportDeadJobAlert(job.id);
         }
+      } else if (data?.type === 'autofill_result' || data?.type === 'autofill_error') {
+        setIsFillingApplication(false);
+        const msg = data as AutofillMessage;
+        if (msg.type === 'autofill_error') {
+          Alert.alert(
+            t('more:autofill_failed_title', {defaultValue: "Couldn't autofill this page"}),
+            t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+          );
+        } else if (!msg.filledCount) {
+          Alert.alert(
+            t('more:autofill_no_match_title', {defaultValue: 'No matching fields found'}),
+            t('more:autofill_no_match_body', {
+              defaultValue: "We couldn't find any fields on this page that match your info. You may need to fill it in manually.",
+            }),
+          );
+        } else {
+          Alert.alert(
+            t('more:autofill_done_title', {defaultValue: 'Filled {{count}} fields', count: msg.filledCount}),
+            t('more:autofill_done_body', {
+              defaultValue: 'Double-check everything before you submit — autofill can get things wrong.',
+            }),
+          );
+        }
       }
     } catch {
       // Ignore malformed/unexpected messages from the page.
     }
-  }, [trackApplication, job?.id]);
+  }, [trackApplication, job?.id, t]);
 
   const onNavigationStateChange = React.useCallback((navState: WebViewNavigation) => {
     setIsLoading(navState.loading);
@@ -345,6 +431,7 @@ const WebViewScreen = memo(() => {
         ) : (
           <>
             <WebView
+              ref={webViewRef}
               source={{uri: url}}
               userAgent={DESKTOP_USER_AGENT}
               onLoadStart={() => setIsLoading(true)}
@@ -358,6 +445,30 @@ const WebViewScreen = memo(() => {
               <Flex vertical center style={styles.loadingOverlay}>
                 <ActivityIndicator size="large" color={theme['color-primary-500']} />
               </Flex>
+            ) : null}
+            {/* Product request item 2 ("auto fill the job application
+                input field in the webview when the user wants to apply") —
+                only shown on an actual job-application open (same `job`
+                gate the submission-tracking script above already uses),
+                floating so it doesn't compete with the page's own layout.
+                Fill-only, see utils/webviewAutofill.ts's module comment. */}
+            {job && !isLoading ? (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                disabled={isFillingApplication}
+                onPress={onFillApplication}
+                style={[styles.fillFab, globalStyle.shadowBtn]}>
+                {isFillingApplication ? (
+                  <Spinner size="small" status="control" />
+                ) : (
+                  <Icon pack="eva" name="edit-2-outline" style={[globalStyle.icon20, {tintColor: '#fff'}]} />
+                )}
+                <Text category="h9" bold status="control" ml={8}>
+                  {isFillingApplication
+                    ? t('more:autofill_filling', {defaultValue: 'Filling…'})
+                    : t('more:autofill_cta', {defaultValue: 'Fill application'})}
+                </Text>
+              </TouchableOpacity>
             ) : null}
           </>
         )}
@@ -387,5 +498,16 @@ const themedStyles = StyleService.create({
   deadState: {
     flex: 1,
     paddingHorizontal: 32,
+  },
+  fillFab: {
+    position: 'absolute',
+    right: 16,
+    bottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 24,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    backgroundColor: 'color-primary-500',
   },
 });

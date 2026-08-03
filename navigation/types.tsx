@@ -120,6 +120,15 @@ export type RootStackParamList = {
     role?: string;
     jdText?: string;
     docType?: 'resume' | 'cv';
+    // Product request (JDAnalyzer's "tailor an existing resume" choice) —
+    // mutually exclusive. `useStoredResume` means "tailor whatever
+    // structured resume I've already AI-generated" (GenerateResume fetches
+    // it itself via resumeService.getStoredResumeSections());
+    // `existingResumeDocumentId` means "tailor this SPECIFIC file from My
+    // Documents" (see services/resumeService.ts's generateResume). Neither
+    // set = build fresh, the original/default behavior.
+    useStoredResume?: boolean;
+    existingResumeDocumentId?: string;
   };
   // AI Cover Letter Generator — see services/coverLetterService.ts and
   // src/more/CoverLetterGenerator.tsx. Reachable from ResumeBuilder ("Generate

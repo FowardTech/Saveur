@@ -28,6 +28,9 @@ export interface ResumeGenerationInput {
   jdText?: string;
   jdAnalysisId?: string;
   existingResume?: ResumeSections | null;
+  // Tailor a specific "My Documents" file instead — mutually exclusive
+  // with existingResume (see resumeService.generateResume's own comment).
+  existingResumeDocumentId?: string | null;
 }
 
 /**
@@ -42,6 +45,7 @@ export async function generateResumeContent(
     jdText: input.jdText,
     jdAnalysisId: input.jdAnalysisId,
     existingResume: input.existingResume,
+    existingResumeDocumentId: input.existingResumeDocumentId,
   });
 }
 

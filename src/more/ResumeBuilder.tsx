@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, TouchableOpacity, Alert, Modal, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -9,7 +9,6 @@ import {
   Button,
   Layout,
   Input,
-  Spinner,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -21,12 +20,12 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import ProgressCard from 'src/find/Component/ProgressCard';
+import DocumentPickerModal from 'components/DocumentPickerModal';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { renderCenteredLabel } from 'utils/buttonLabel';
 import * as resumeService from 'services/resumeService';
 import { ImportedFileInfo, ResumeImportSourceKey, RewriteBulletResult } from 'services/resumeService';
-import * as documentsService from 'services/documentsService';
 import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
@@ -99,9 +98,6 @@ const ResumeBuilder = memo(() => {
   // picker, per user request: give a choice between the device and
   // documents already uploaded elsewhere in the app.
   const [documentPickerFor, setDocumentPickerFor] = React.useState<ResumeImportSourceKey | null>(null);
-  const [myDocuments, setMyDocuments] = React.useState<DocumentRecord[]>([]);
-  const [isLoadingMyDocuments, setIsLoadingMyDocuments] = React.useState(false);
-  const [myDocumentsError, setMyDocumentsError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     resumeService.getImportedSources().then(setImported).catch(() => {
@@ -155,17 +151,6 @@ const ResumeBuilder = memo(() => {
       ],
     );
   };
-
-  React.useEffect(() => {
-    if (!documentPickerFor) return;
-    setIsLoadingMyDocuments(true);
-    setMyDocumentsError(null);
-    documentsService
-      .listDocuments()
-      .then(setMyDocuments)
-      .catch((e: any) => setMyDocumentsError(e?.message ?? t('more:could_not_load_my_documents', { defaultValue: 'Could not load My Documents.' }).toString()))
-      .finally(() => setIsLoadingMyDocuments(false));
-  }, [documentPickerFor, t]);
 
   const onPickFromMyDocuments = (doc: DocumentRecord) => {
     const key = documentPickerFor;
@@ -397,62 +382,11 @@ const ResumeBuilder = memo(() => {
         ) : null}
       </Content>
 
-      <Modal
+      <DocumentPickerModal
         visible={!!documentPickerFor}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setDocumentPickerFor(null)}>
-        <View style={styles.pickerBackdrop}>
-          <View style={styles.pickerSheet}>
-            <Flex justify="space-between" itemsCenter mb={16}>
-              <Text category="h7" bold>
-                {t('more:choose_a_document', { defaultValue: 'Choose a document' })}
-              </Text>
-              <TouchableOpacity onPress={() => setDocumentPickerFor(null)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                {/* Same missing-tintColor gap as the picker-sheet fix above
-                    (line ~242) -- this close icon just never got the same
-                    treatment. Defaults to solid black with no tintColor,
-                    invisible against this sheet's dark background in dark
-                    mode. */}
-                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
-              </TouchableOpacity>
-            </Flex>
-            {isLoadingMyDocuments ? (
-              <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
-                <Spinner size="large" />
-              </Flex>
-            ) : myDocumentsError ? (
-              <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
-                <Text category="h9-s" status="danger" center>
-                  {myDocumentsError}
-                </Text>
-              </Flex>
-            ) : myDocuments.length === 0 ? (
-              <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 30 }}>
-                <Text category="h9-s" status="placeholder" center>
-                  {t('more:no_documents_choose_device', {
-                    defaultValue:
-                      'Nothing in My Documents yet — upload a file there first, or choose from your device instead.',
-                  })}
-                </Text>
-              </Flex>
-            ) : (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                {myDocuments.map(doc => (
-                  <TouchableOpacity key={doc.id} activeOpacity={0.7} onPress={() => onPickFromMyDocuments(doc)}>
-                    <Layout level="2" style={styles.pickerRow}>
-                      <Icon pack="assets" name="myPost" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                      <Text category="h9" ml={10} style={globalStyle.flexOne} numberOfLines={1}>
-                        {doc.name ?? t('more:untitled_file', { defaultValue: 'Untitled file' })}
-                      </Text>
-                    </Layout>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            )}
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setDocumentPickerFor(null)}
+        onSelect={onPickFromMyDocuments}
+      />
     </Container>
   );
 });
@@ -511,24 +445,5 @@ const themedStyles = StyleService.create({
   bulletCard: {
     ...globalStyle.card,
     padding: 16,
-  },
-  pickerBackdrop: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  pickerSheet: {
-    maxHeight: '70%',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    backgroundColor: 'background-basic-color-2',
-  },
-  pickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
   },
 });

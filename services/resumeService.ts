@@ -272,6 +272,36 @@ export async function getImportedSources(): Promise<Record<string, ImportedFileI
 }
 
 /**
+ * GET /api/v1/resume's `sections` field, converted to the same
+ * ResumeSections shape /resume/generate returns — used by JDAnalyzer's
+ * "tailor my [app-]generated resume" option (product request: "give the
+ * user option to build resume (tailor) using one of the uploaded
+ * documents or build a fresh one") so it can pass this back into
+ * generateResume()'s `existingResume` param. `getImportedSources()` above
+ * already fetches this same endpoint but only reads `.sources`; this is a
+ * separate call (not a shared cache) since the two are read at different
+ * points in different flows and a resume can change between them.
+ *
+ * Returns null when there's no real structured content yet (a user who's
+ * only ever uploaded a raw file and never used the AI generator/section
+ * editor) — same "has real content" bar the backend applies via
+ * resume_render_service.has_structured_content, mirrored here so the
+ * caller can offer/hide the "tailor my generated resume" option correctly
+ * without a second round trip.
+ */
+export async function getStoredResumeSections(): Promise<ResumeSections | null> {
+  const {data} = await apiClient.get<ResumeWire>('/api/v1/resume');
+  const wire = (data?.sections ?? {}) as ResumeSectionsWire;
+  const hasContent =
+    !!wire.contact?.name ||
+    !!wire.summary ||
+    (wire.experience?.length ?? 0) > 0 ||
+    (wire.education?.length ?? 0) > 0 ||
+    (wire.core_skills?.length ?? 0) > 0;
+  return hasContent ? fromSectionsWire(wire) : null;
+}
+
+/**
  * PATCH /api/v1/resume — update resume sections (summary, experience,
  * education, skills, …). Used by src/more/GenerateResume.tsx after AI
  * generation, and available for any future manual section editor.
@@ -294,12 +324,23 @@ export async function generateResume(input: {
   jdText?: string;
   jdAnalysisId?: string;
   existingResume?: ResumeSections | null;
+  // Tailor a SPECIFIC file from "My Documents" (product request — "if the
+  // user selects from already uploaded resume... it should tailor the
+  // already uploaded resume to that job description") rather than the
+  // client's own already-fetched sections. The backend downloads that
+  // exact document, extracts its text fresh, and uses it as the resume to
+  // tailor — see app/api/resume_gen.py's generate() for why this needs to
+  // be explicit rather than relying on "whichever resume is most recent".
+  // Mutually exclusive with existingResume; only sent when existingResume
+  // isn't given.
+  existingResumeDocumentId?: string | null;
 }): Promise<ResumeSections> {
   const {data} = await apiClient.post<ResumeSectionsWire>('/api/v1/resume/generate', {
     target_role: input.targetRole,
     jd_text: input.jdText,
     jd_analysis_id: input.jdAnalysisId,
     existing_resume: input.existingResume ? toSectionsWire(input.existingResume) : undefined,
+    existing_resume_document_id: input.existingResume ? undefined : input.existingResumeDocumentId ?? undefined,
     language: currentLanguage(),
   });
   return fromSectionsWire(data);

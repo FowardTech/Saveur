@@ -22,6 +22,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as resumeGenerationService from 'services/resumeGenerationService';
+import * as resumeService from 'services/resumeService';
 import {
   downloadDocumentFile,
   saveToAndroidDownloads,
@@ -111,9 +112,23 @@ const GenerateResume = memo(() => {
       setIsGenerating(true);
       setGenError(null);
       try {
+        // JDAnalyzer's "tailor an existing resume" choice (product request
+        // item 1) — mutually exclusive, see navigation/types.tsx's
+        // GenerateResume params comment. Neither set = build fresh, the
+        // original/default behavior, unchanged.
+        let existingResume: ResumeSections | null | undefined;
+        if (route.params?.useStoredResume) {
+          // Fetched here (not by JDAnalyzer before navigating) so a stale
+          // resume can't be carried across screens, and so this same
+          // "regenerate" path (buildContent also runs on the Regenerate
+          // button) always tailors against the CURRENT stored resume.
+          existingResume = await resumeService.getStoredResumeSections();
+        }
         const generated = await resumeGenerationService.generateResumeContent({
           role: targetRole,
           jdText: route.params?.jdText,
+          existingResume,
+          existingResumeDocumentId: existingResume ? undefined : route.params?.existingResumeDocumentId,
         });
         setContent(generated);
       } catch (e: any) {
@@ -122,7 +137,7 @@ const GenerateResume = memo(() => {
         setIsGenerating(false);
       }
     },
-    [route.params?.jdText],
+    [route.params?.jdText, route.params?.useStoredResume, route.params?.existingResumeDocumentId],
   );
 
   React.useEffect(() => {
@@ -234,7 +249,9 @@ const GenerateResume = memo(() => {
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
             <Spinner size="large" />
             <Text category="h9-s" status="placeholder" mt={12} center>
-              {docType === 'cv'
+              {route.params?.useStoredResume || route.params?.existingResumeDocumentId
+                ? t('more:resume_tailoring_existing', { defaultValue: 'Tailoring your existing resume to this job…' })
+                : docType === 'cv'
                 ? t('more:resume_drafting_cv', { defaultValue: 'Drafting your CV…' })
                 : t('more:resume_drafting_resume', { defaultValue: 'Drafting your resume…' })}
             </Text>

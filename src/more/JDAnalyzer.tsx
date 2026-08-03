@@ -17,11 +17,13 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import ProgressCard from 'src/find/Component/ProgressCard';
+import DocumentPickerModal from 'components/DocumentPickerModal';
 import { globalStyle } from 'styles/globalStyle';
 import { lightenColor } from 'utils/color';
 import { RootStackParamList } from 'navigation/types';
 import * as jdService from 'services/jdService';
 import { JDAnalysisResult } from 'services/jdService';
+import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
@@ -56,6 +58,11 @@ const JDAnalyzer = memo(() => {
   // during the URL-resolve step, before the normal analyze/match calls
   // (which is what isAnalyzing already covers) even start.
   const [isFetchingUrl, setIsFetchingUrl] = React.useState(false);
+  // "Tailor an existing resume" flow (product request item 1) — a
+  // document-picker sheet for the "pick a file from My Documents"
+  // sub-choice below. Reuses the exact same picker ResumeBuilder.tsx's
+  // import cards use (see components/DocumentPickerModal.tsx).
+  const [showDocumentPicker, setShowDocumentPicker] = React.useState(false);
 
   const switchMode = React.useCallback((mode: InputMode) => {
     setInputMode(mode);
@@ -110,6 +117,76 @@ const JDAnalyzer = memo(() => {
 
   const isBusy = isAnalyzing || isFetchingUrl;
   const canSubmit = inputMode === 'text' ? !!jd.trim() : !!jdUrl.trim();
+
+  // Product request item 1 — "give the user option to build resume
+  // (tailor) using one of the uploaded documents or build a fresh one".
+  // A plain Alert action-sheet, same idiom ResumeBuilder.tsx's own
+  // "Import from" choice already uses (device vs. My Documents) — no need
+  // for a bespoke modal for a one-off 2/3-way choice like this.
+  const buildFresh = () => {
+    if (!result) return;
+    navigate('GenerateResume', {
+      keywordSuggestions: result.keywordSuggestions,
+      missingSkills: result.missingSkills,
+      jdText: jd,
+    });
+  };
+
+  const tailorFromStoredResume = () => {
+    if (!result) return;
+    navigate('GenerateResume', {
+      keywordSuggestions: result.keywordSuggestions,
+      missingSkills: result.missingSkills,
+      jdText: jd,
+      useStoredResume: true,
+    });
+  };
+
+  const onPickedDocumentToTailor = (doc: DocumentRecord) => {
+    setShowDocumentPicker(false);
+    if (!result) return;
+    navigate('GenerateResume', {
+      keywordSuggestions: result.keywordSuggestions,
+      missingSkills: result.missingSkills,
+      jdText: jd,
+      existingResumeDocumentId: doc.id,
+    });
+  };
+
+  const onBuildResume = () => {
+    Alert.alert(
+      t('more:build_matching_resume_cta', { defaultValue: 'Build Resume' }),
+      t('more:build_resume_choice_description', {
+        defaultValue: 'Tailor a resume you already have to this job, or build a brand-new one from scratch.',
+      }),
+      [
+        { text: t('common:cancel', { defaultValue: 'Cancel' }).toString(), style: 'cancel' },
+        {
+          text: t('more:build_resume_fresh', { defaultValue: 'Build a fresh one' }).toString(),
+          onPress: buildFresh,
+        },
+        {
+          text: t('more:build_resume_tailor', { defaultValue: 'Tailor an existing resume' }).toString(),
+          onPress: () =>
+            Alert.alert(
+              t('more:build_resume_tailor', { defaultValue: 'Tailor an existing resume' }),
+              undefined,
+              [
+                { text: t('common:cancel', { defaultValue: 'Cancel' }).toString(), style: 'cancel' },
+                {
+                  text: t('more:tailor_my_generated_resume', { defaultValue: 'My generated resume' }).toString(),
+                  onPress: tailorFromStoredResume,
+                },
+                {
+                  text: t('more:choose_from_my_documents', { defaultValue: 'Choose from My Documents' }).toString(),
+                  onPress: () => setShowDocumentPicker(true),
+                },
+              ],
+            ),
+        },
+      ],
+    );
+  };
 
   if (!isPro) {
     return (
@@ -288,18 +365,19 @@ const JDAnalyzer = memo(() => {
               </Text>
               <CtaButton
                 children={t('more:build_matching_resume_cta', { defaultValue: 'Build Resume' })}
-                onPress={() =>
-                  navigate('GenerateResume', {
-                    keywordSuggestions: result.keywordSuggestions,
-                    missingSkills: result.missingSkills,
-                    jdText: jd,
-                  })
-                }
+                onPress={onBuildResume}
               />
             </Flex>
           </>
         ) : null}
       </Content>
+
+      <DocumentPickerModal
+        visible={showDocumentPicker}
+        onClose={() => setShowDocumentPicker(false)}
+        onSelect={onPickedDocumentToTailor}
+        title={t('more:build_resume_tailor', { defaultValue: 'Tailor an existing resume' }).toString()}
+      />
     </Container>
   );
 });
