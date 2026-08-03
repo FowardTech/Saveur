@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Image, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
 // The daily XP check-in card below has its own inverted white-pill button
@@ -104,12 +104,6 @@ const HomeSrc = memo(() => {
   // Content.tsx), so this is the actual rendered card width, not the full
   // screen width.
   const bannerWidth = width - 48;
-  // Moderately shorter than a full 16:9 banner, per explicit product
-  // direction — matches the bundled default image's own baked-in crop
-  // (assets/images/img_home_banner_ai_coach.jpg is 1920x900, not the
-  // original 1920x1080; see that asset's own history for why) so this
-  // still renders full-bleed with zero letterboxing for the default image.
-  const bannerHeight = Math.round(bannerWidth * (900 / 1600));
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
@@ -667,58 +661,48 @@ const HomeSrc = memo(() => {
               this scrollable nav row (see that JSX's own comment). Opens the
               same existing full-grid modal (components/BadgesModal.tsx). */}
         </ScrollView>
-        {homeBanner && homeBanner.imageUrl ? (
-          // Real admin-uploaded creative — a raster image we have no way to
-          // recolor per-theme, so this path is left exactly as before.
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={[styles.homeBannerCard, { width: bannerWidth, height: bannerHeight }]}
-            onPress={onOpenHomeBanner}>
-            <Image
-              source={{ uri: homeBanner.imageUrl }}
-              style={{ width: bannerWidth, height: bannerHeight }}
-              // "contain" (not "cover") per explicit product direction: the
-              // full banner image should always be visible, never cropped —
-              // cover would zoom/crop whenever an admin-uploaded image_url's
-              // aspect ratio doesn't exactly match 16:9.
-              resizeMode="contain"
-            />
-          </TouchableOpacity>
-        ) : homeBanner ? (
-          // No admin image set for this ad — used to fall back to a bundled
-          // static JPG (Images.homeBannerAiCoach) with a hardcoded blue
-          // design baked into the pixels, so it couldn't adapt to dark mode
-          // at all (product bug report: "the cards ... should not be blue
-          // in dark mode, they should be well designed to blend well with
-          // the dark mode"). Now a real code-drawn card using the ad's own
-          // title/body text (already fetched, previously unused whenever no
-          // image was set).
+        {homeBanner ? (
+          // Product bug report ("you did not touch the second [card]" /
+          // "the gradient is hiding some of the text, and it's ugly in
+          // dark mode") — two separate fixes:
           //
-          // The whole card is now ALWAYS a LinearGradient (not a plain View
-          // that conditionally swaps to one in light mode) — one single
-          // code path for both themes rather than two branches that could
-          // silently drift apart again, per the follow-up bug report that
-          // dark mode "was forgotten." Light mode gets a real two-stop blue
-          // gradient (product request — "make the 2 blue background cards
-          // a gradient in light mode"); dark mode passes the SAME color
-          // twice (a gradient of one color IS a flat fill), landing on
-          // 'background-basic-color-2', the dark-navy surface every other
-          // dark-mode card on this screen already uses.
+          // 1. This used to branch on homeBanner.imageUrl: a real
+          //    admin-uploaded raster image rendered as-is (no way to
+          //    recolor pixels per-theme), falling back to this code-drawn
+          //    card only when no image was set. Whenever an admin image
+          //    WAS set, this whole card was invisible to every fix made
+          //    here — which is almost certainly why "the second card"
+          //    looked untouched. Now always the code-drawn card, using the
+          //    ad's own title/body text either way, so this card's look is
+          //    no longer at the mercy of whether an admin happened to
+          //    attach an image.
+          // 2. The gradient itself was applied to a LinearGradient used
+          //    AS the padded, row-layout content container — a
+          //    LinearGradient with no explicit height doesn't reliably
+          //    grow to wrap its own children's real intrinsic size on
+          //    every layout pass (same bug class documented on
+          //    checkInCard's own history elsewhere on this screen), which
+          //    is how text ends up laid out past the gradient's measured
+          //    box and clipped. Fixed the same way checkInCard already
+          //    solves it: the gradient is now a decorative
+          //    StyleSheet.absoluteFillObject layer behind an ordinary View
+          //    that sizes normally. Also dropped the separate corner
+          //    "accent" wash (competing with the main fill for attention)
+          //    for one clean, richer two-stop gradient instead — light
+          //    mode uses the brand blue family with real contrast between
+          //    the stops (color-primary-200/700, not near-identical
+          //    shades), dark mode gets its own subtle two-tone dark-navy
+          //    gradient instead of a flat single shade.
           <TouchableOpacity
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: bannerWidth }]}
             onPress={onOpenHomeBanner}>
-            <LinearGradient
-              colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : ['#1DA1F2', '#0063f8']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.homeBannerFallback}>
+            <View style={styles.homeBannerFallback}>
               <LinearGradient
-                pointerEvents="none"
-                colors={isDarkMode ? ['rgba(0, 99, 248, 0.22)', 'rgba(29, 161, 242, 0.04)'] : ['transparent', 'transparent']}
-                start={{ x: 1, y: 0 }}
-                end={{ x: 0.15, y: 0.9 }}
-                style={styles.homeBannerAccent}
+                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-200'], theme['color-primary-700']]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
               />
               <View style={styles.homeBannerIconWrap}>
                 <Image source={Images.logoBadge} style={styles.homeBannerIcon} resizeMode="cover" />
@@ -735,7 +719,7 @@ const HomeSrc = memo(() => {
                   category="h10"
                   numberOfLines={2}
                   mt={2}
-                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.85)' }}>
+                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
                   {homeBanner.body}
                 </Text>
               </View>
@@ -744,7 +728,7 @@ const HomeSrc = memo(() => {
                 name="arrowRight"
                 style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
               />
-            </LinearGradient>
+            </View>
           </TouchableOpacity>
         ) : null}
         {/* Day Streak / Sessions This Week / Average Score stat cards
@@ -1135,24 +1119,23 @@ const themedStyles = StyleService.create({
   // split (see checkInCardOuter/Inner elsewhere on this screen) only
   // exists to give Android's elevation shadow an opaque silhouette to
   // render against — with no shadow at all on this card, that requirement
-  // goes away too, so this collapsed back to one view: just the rounded
-  // clip + the Image, genuinely transparent (no fill color standing in
-  // behind it, e.g. if an admin-uploaded image's aspect ratio doesn't
-  // exactly fill the card and lets a sliver of background show through).
+  // goes away too, so this stays one plain view: just the rounded clip,
+  // genuinely transparent itself (the real fill is the code-drawn
+  // gradient inside homeBannerFallback below — see that style's comment).
   homeBannerCard: {
-    // width/height are computed per-render from actual screen width (see
-    // bannerWidth/bannerHeight above the component's return statement) and
-    // applied inline, not here — a plain aspectRatio here previously
-    // rendered at the source image's raw pixel size instead of scaling to
-    // the card, see bannerWidth's own comment for the full explanation.
+    // width is computed per-render from actual screen width (see
+    // bannerWidth above the component's return statement) and applied
+    // inline, not here — see bannerWidth's own comment. No height here
+    // either (always the code-drawn card now, which sizes to its own
+    // content — see homeBannerFallback below).
     marginTop: 16,
     borderRadius: 24,
     overflow: 'hidden',
   },
-  // Code-drawn fallback banner (see the JSX comment where this renders) —
-  // this View itself carries no backgroundColor: it's rendered AS a
-  // LinearGradient in the JSX now, whose `colors` prop supplies the fill
-  // for both themes.
+  // Code-drawn banner (see the JSX comment where this renders) — a plain
+  // View, NOT a LinearGradient: the gradient is a decorative
+  // absoluteFillObject layer behind this box's normal-flow content
+  // instead, so this sizes correctly to wrap its real content height.
   homeBannerFallback: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1160,14 +1143,6 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
-  },
-  homeBannerAccent: {
-    position: 'absolute',
-    top: -70,
-    right: -70,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
   },
   homeBannerIconWrap: {
     borderRadius: 12,

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -68,33 +68,38 @@ const FindScreen = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('find:title')} />
       <Content contentContainerStyle={styles.content} padder>
-        {/* Product bug report ("the cards ... should not be blue in dark
-            mode, they should be well designed to blend well with the dark
-            mode") — was a flat solid-blue fill in BOTH themes, then a
-            theme-conditional plain View. Now the inner layer is ALWAYS a
-            LinearGradient (one code path for both themes, not two branches
-            that could drift apart again) — light mode gets a real two-stop
-            blue gradient (product request — "make the 2 blue background
-            cards a gradient in light mode"), dark mode passes the same
-            color twice (a gradient of one color is a flat fill), landing
-            on 'background-basic-color-2', the dark-navy surface every
-            other dark-mode card uses, plus a soft blue corner wash so the
-            brand color still reads. Outer `hero` keeps the shadow (a
-            LinearGradient can't cast a shadow AND clip its own content at
-            the same time, same reasoning as checkInCard elsewhere). */}
+        {/* Product bug report ("the gradient is very bad and ugly, it's
+            hiding some of the text") — root cause was using LinearGradient
+            itself as the padded, flex-direction:'column' content
+            container. A LinearGradient sized only by `flex`/no explicit
+            height doesn't reliably grow to wrap its own children's real
+            intrinsic height on every layout pass (the exact same class of
+            bug documented on HomeSrc.tsx's checkInCard history — "a
+            full-size LinearGradient... doesn't reliably grow to wrap its
+            own children's intrinsic height in every layout pass"), so the
+            subtitle/button text was getting laid out past the gradient's
+            measured box and clipped by `overflow:'hidden'`. Fixed the same
+            way checkInCard already solves it: the gradient is now a
+            `StyleSheet.absoluteFillObject` DECORATIVE layer sized by its
+            plain-View parent, with the real text content in an ordinary
+            View sibling that sizes normally. Also dropped the extra corner
+            "accent" wash (it was fighting the main fill for attention,
+            part of why it read as messy) in favor of one clean, richer
+            two-stop gradient — light mode uses the same brand blue family
+            (color-primary-200/700) but with more real contrast between the
+            stops so it reads as an intentional gradient rather than a
+            washed-out near-flat fill; dark mode gets its own subtle two-
+            tone dark-navy gradient (two adjacent background-basic-color
+            tokens) instead of a flat single shade, so it still looks
+            "designed" without ever being blue. */}
         <TouchableOpacity activeOpacity={0.9} onPress={() => onStartSetup()}>
           <View style={styles.hero}>
-            <LinearGradient
-              colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : ['#1DA1F2', '#0063f8']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroInner}>
+            <View style={styles.heroInner}>
               <LinearGradient
-                pointerEvents="none"
-                colors={isDarkMode ? ['rgba(0, 99, 248, 0.22)', 'rgba(29, 161, 242, 0.04)'] : ['transparent', 'transparent']}
-                start={{ x: 1, y: 0 }}
-                end={{ x: 0.15, y: 0.9 }}
-                style={styles.heroAccent}
+                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-200'], theme['color-primary-700']]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
               />
               <Text
                 category="h3"
@@ -106,7 +111,7 @@ const FindScreen = memo(() => {
               <Text
                 category="h8-s"
                 mb={16}
-                style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.85)' }}>
+                style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
                 {t('find:start_mock_interview_description')}
               </Text>
               <View style={styles.heroButton}>
@@ -122,7 +127,7 @@ const FindScreen = memo(() => {
                   style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : theme['text-control-color'] }]}
                 />
               </View>
-            </LinearGradient>
+            </View>
           </View>
         </TouchableOpacity>
 
@@ -204,30 +209,27 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
-  // Purely a shadow-casting shell now — the real fill lives on the inner
-  // LinearGradient (heroInner, in the JSX). Static backgroundColor here is
-  // just an opaque Android shadow fallback (see globalStyle.card's own
-  // comment on why that needs a real color); it's always fully covered by
-  // the inner gradient, so its exact value doesn't matter.
+  // Purely a shadow-casting shell — the real fill lives on heroInner's
+  // absolute-positioned LinearGradient (see the JSX comment). Static
+  // backgroundColor here is just an opaque Android shadow fallback (see
+  // globalStyle.card's own comment on why that needs a real color); it's
+  // always fully covered by the gradient, so its exact value doesn't
+  // matter.
   hero: {
     ...globalStyle.card,
     marginTop: 16,
     borderRadius: 24,
     backgroundColor: 'color-primary-500',
   },
+  // Plain View, NOT a LinearGradient — the gradient is a decorative
+  // absoluteFillObject layer behind this box's normal-flow text content
+  // instead (see the JSX comment for why that matters for correct
+  // sizing).
   heroInner: {
     borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
     padding: 24,
-  },
-  heroAccent: {
-    position: 'absolute',
-    top: -80,
-    right: -80,
-    width: 220,
-    height: 220,
-    borderRadius: 110,
   },
   heroButton: {
     flexDirection: 'row',
