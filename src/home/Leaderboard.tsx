@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {View, TouchableOpacity} from 'react-native';
+import {StyleSheet, View, TouchableOpacity} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -65,6 +65,17 @@ const MEDAL_GRADIENT: Record<1 | 2 | 3, [string, string]> = {
   1: ['#FFD86B', '#F5B301'],
   2: ['#E4E7EB', '#9AA0A6'],
   3: ['#E8A868', '#CD7F32'],
+};
+// Beautification pass (product request — "make it more beautiful and
+// consistent with the app designs") — the podium "steps" used to be a flat
+// single-color fill at a fixed opacity, which read as flat/dated next to
+// the gradient treatment now used everywhere else in the app (hero cards on
+// Find/Home/Coach). Same rgba pair per medal color as a top-to-bottom
+// gradient (glassier near the avatar, fading toward the base) instead.
+const PODIUM_BASE_GRADIENT: Record<1 | 2 | 3, [string, string]> = {
+  1: ['rgba(245, 179, 1, 0.32)', 'rgba(245, 179, 1, 0.10)'],
+  2: ['rgba(154, 160, 166, 0.32)', 'rgba(154, 160, 166, 0.10)'],
+  3: ['rgba(205, 127, 50, 0.32)', 'rgba(205, 127, 50, 0.10)'],
 };
 // Modernization pass (product request — "make the leaderboard look more
 // nicer and modern"): #1's ring is noticeably bigger than #2/#3 now (was a
@@ -168,12 +179,25 @@ const Leaderboard = memo(() => {
                       key={period.key}
                       activeOpacity={0.8}
                       onPress={() => setActivePeriod(period.key)}
-                      style={[styles.tabPill, active && {backgroundColor: theme['color-primary-100']}]}>
+                      style={[styles.tabPill, active && styles.tabPillActive]}>
+                      {/* Beautification pass — the active pill was a flat
+                          fill; same decorative absoluteFillObject gradient
+                          layer used on the app's hero cards instead, so the
+                          segmented control reads as the same design
+                          language as the rest of the app. */}
+                      {active ? (
+                        <LinearGradient
+                          colors={[theme['color-primary-200'], theme['color-primary-700']]}
+                          start={{x: 0, y: 0}}
+                          end={{x: 1, y: 1}}
+                          style={StyleSheet.absoluteFillObject}
+                        />
+                      ) : null}
                       <Text
                         category="h9-s"
                         bold
                         center
-                        style={{color: active ? theme['text-primary-color'] : theme['background-basic-color-6']}}>
+                        style={{color: active ? '#fff' : theme['background-basic-color-6']}}>
                         {t(period.labelKey, {defaultValue: period.defaultValue})}
                       </Text>
                     </TouchableOpacity>
@@ -244,7 +268,17 @@ const Leaderboard = memo(() => {
                       ) : (
                         <View style={styles.podiumEmptyFill} />
                       )}
-                      <View style={[styles.podiumBase, {height: PODIUM_BASE_HEIGHT[rank], backgroundColor: medal}]} />
+                      {/* Beautification pass — was a flat single-color fill
+                          at a fixed opacity; a top-to-bottom gradient per
+                          medal color instead (see PODIUM_BASE_GRADIENT)
+                          reads as a proper glassy "riser" rather than a
+                          plain tinted rectangle. */}
+                      <LinearGradient
+                        colors={PODIUM_BASE_GRADIENT[rank]}
+                        start={{x: 0, y: 0}}
+                        end={{x: 0, y: 1}}
+                        style={[styles.podiumBase, {height: PODIUM_BASE_HEIGHT[rank]}]}
+                      />
                     </View>
                   );
               })}
@@ -314,8 +348,8 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
   },
   // Daily/Weekly/Monthly segmented control (product follow-up, reference
-  // screenshot's own tab row) — a neutral gray track with a solid blue
-  // pill for whichever period is active, same segmented-control shape used
+  // screenshot's own tab row) — a neutral gray track with a gradient pill
+  // for whichever period is active, same segmented-control shape used
   // elsewhere in eva-based apps rather than underlined tabs.
   tabsRow: {
     flexDirection: 'row',
@@ -324,11 +358,23 @@ const themedStyles = StyleService.create({
     padding: 4,
     marginBottom: 28,
   },
+  // `overflow:'hidden'` + `position:'relative'` so the active pill's
+  // decorative gradient (an absoluteFillObject child — see the JSX) clips
+  // to the pill's own rounded corners instead of spilling square-cornered
+  // behind it.
   tabPill: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
     borderRadius: 999,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  // Beautification pass — a soft brand-blue-tinted shadow (same one every
+  // primary button in the app already uses) lifts the active pill just
+  // enough to read as "selected," instead of relying on color alone.
+  tabPillActive: {
+    ...globalStyle.shadowBtn,
   },
   // Top-3 "podium" (product follow-up, reference screenshot) — 3 columns,
   // 2nd/1st/3rd left-to-right (matches the reference's own arrangement),
@@ -399,15 +445,17 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   // The literal "podium step" block (product follow-up, reference
-  // screenshot) — height varies per rank (see PODIUM_BASE_HEIGHT), colored
-  // to match that rank's medal color, rounded only on top since it's meant
-  // to look like the top edge of a riser/step.
+  // screenshot) — height varies per rank (see PODIUM_BASE_HEIGHT), rounded
+  // only on top since it's meant to look like the top edge of a
+  // riser/step. Fill + alpha now come from the LinearGradient's own
+  // `colors` prop (PODIUM_BASE_GRADIENT — beautification pass, was a flat
+  // backgroundColor + `opacity` here), so no color/opacity left in this
+  // style — just shape.
   podiumBase: {
     width: '86%',
     marginTop: 10,
     borderTopLeftRadius: 10,
     borderTopRightRadius: 10,
-    opacity: 0.24,
   },
   // Ranks 4+ list card.
   listCard: {
