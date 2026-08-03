@@ -43,6 +43,7 @@ import BadgesModal from 'components/BadgesModal';
 import * as appRatingService from 'services/appRatingService';
 import useModal from 'hooks/useModal';
 import { Images } from 'assets/images';
+import ThemeContext from '../../ThemeContext';
 import { AuthContext } from '../../AuthContext';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
@@ -85,6 +86,8 @@ const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: stri
 const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
+  const { theme: appTheme } = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
   const { width } = useLayout();
   // Explicit pixel size for the Home banner card (see the JSX below) rather
   // than relying on style-only `width: '100%'` + `aspectRatio` on the
@@ -664,33 +667,74 @@ const HomeSrc = memo(() => {
               this scrollable nav row (see that JSX's own comment). Opens the
               same existing full-grid modal (components/BadgesModal.tsx). */}
         </ScrollView>
-        {homeBanner ? (
-          // Redesign v2 follow-up (product bug report — "remove the white
-          // background from the homebanner card"): back to one plain view
-          // (see homeBannerCard's own comment for why the shadow-driven
-          // two-layer split is gone) — just the rounded clip + Image.
+        {homeBanner && homeBanner.imageUrl ? (
+          // Real admin-uploaded creative — a raster image we have no way to
+          // recolor per-theme, so this path is left exactly as before.
           <TouchableOpacity
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: bannerWidth, height: bannerHeight }]}
             onPress={onOpenHomeBanner}>
             <Image
-              source={
-                homeBanner.imageUrl
-                  ? { uri: homeBanner.imageUrl }
-                  : Images.homeBannerAiCoach
-              }
+              source={{ uri: homeBanner.imageUrl }}
               style={{ width: bannerWidth, height: bannerHeight }}
               // "contain" (not "cover") per explicit product direction: the
               // full banner image should always be visible, never cropped —
               // cover would zoom/crop whenever an admin-uploaded image_url's
-              // aspect ratio doesn't exactly match 16:9. Since bannerHeight
-              // above is computed to exactly match the bundled default
-              // image's own 16:9 ratio, this produces identical (letterbox-
-              // free) results for that image, and degrades gracefully
-              // (letterboxed, not cropped) for a future admin image with a
-              // different ratio.
+              // aspect ratio doesn't exactly match 16:9.
               resizeMode="contain"
             />
+          </TouchableOpacity>
+        ) : homeBanner ? (
+          // No admin image set for this ad — used to fall back to a bundled
+          // static JPG (Images.homeBannerAiCoach) with a hardcoded blue
+          // design baked into the pixels, so it couldn't adapt to dark mode
+          // at all (product bug report: "the cards ... should not be blue
+          // in dark mode, they should be well designed to blend well with
+          // the dark mode"). Now a real code-drawn card using the ad's own
+          // title/body text (already fetched, previously unused whenever no
+          // image was set) — same recipe as the "Start a Mock Interview"
+          // hero on the Practice tab (src/find/FindScreen.tsx): solid brand
+          // blue fill in light mode, theme-aware dark-navy surface + a
+          // faint blue corner wash in dark mode, so it reads as "branded
+          // blue" without ever being a flat saturated blue block on a near-
+          // black screen.
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={[styles.homeBannerCard, { width: bannerWidth }]}
+            onPress={onOpenHomeBanner}>
+            <View style={[styles.homeBannerFallback, isDarkMode && { backgroundColor: theme['background-basic-color-2'] }]}>
+              <LinearGradient
+                pointerEvents="none"
+                colors={isDarkMode ? ['rgba(0, 99, 248, 0.22)', 'rgba(29, 161, 242, 0.04)'] : ['transparent', 'transparent']}
+                start={{ x: 1, y: 0 }}
+                end={{ x: 0.15, y: 0.9 }}
+                style={styles.homeBannerAccent}
+              />
+              <View style={styles.homeBannerIconWrap}>
+                <Image source={Images.logoBadge} style={styles.homeBannerIcon} resizeMode="cover" />
+              </View>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text
+                  category="h9"
+                  bold
+                  numberOfLines={1}
+                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
+                  {homeBanner.title}
+                </Text>
+                <Text
+                  category="h10"
+                  numberOfLines={2}
+                  mt={2}
+                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.85)' }}>
+                  {homeBanner.body}
+                </Text>
+              </View>
+              <Icon
+                pack="assets"
+                name="arrowRight"
+                style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
+              />
+            </View>
           </TouchableOpacity>
         ) : null}
         {/* Day Streak / Sessions This Week / Average Score stat cards
@@ -1094,6 +1138,34 @@ const themedStyles = StyleService.create({
     marginTop: 16,
     borderRadius: 24,
     overflow: 'hidden',
+  },
+  // Code-drawn fallback banner (see the JSX comment where this renders) —
+  // solid brand blue by default; dark mode overrides to
+  // 'background-basic-color-2' inline, same recipe as checkInCard above.
+  homeBannerFallback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 24,
+    overflow: 'hidden',
+    position: 'relative',
+    padding: 16,
+    backgroundColor: 'color-primary-500',
+  },
+  homeBannerAccent: {
+    position: 'absolute',
+    top: -70,
+    right: -70,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+  },
+  homeBannerIconWrap: {
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  homeBannerIcon: {
+    width: 44,
+    height: 44,
   },
   verifyBannerText: {
     marginHorizontal: 10,

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
 import {
@@ -16,7 +16,8 @@ import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import CtaButton from 'components/CtaButton';
-import { ONBOARDING_ART } from './illustrations';
+import { Images } from 'assets/images';
+import ThemeContext from '../../ThemeContext';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -40,6 +41,17 @@ const Onboarding = memo(() => {
   const theme = useTheme();
   const { t } = useTranslation(['intro', 'auth']);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  // Product request ("redesign onboarding like this reference — round
+  // glossy ball graphic, headline, subtext, Sign In/Sign Up — but use the
+  // Saveur logo instead of the ball, and make the background white instead
+  // of gray"). Container's default gray page level ('3' in light mode,
+  // see components/Container.tsx) exists so white cards pop against it
+  // elsewhere in the app, but this screen has no cards — just a full-bleed
+  // background behind the logo/copy — so it explicitly overrides to level
+  // '2' (light.json's true white) in light mode. Dark mode already renders
+  // level '1' by default, which is correct as-is, so it's left alone.
+  const { theme: appTheme } = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
 
   // Language must be set here, first — before signup even starts — per
   // explicit request: a top-right dropdown on the onboarding slides rather
@@ -66,11 +78,11 @@ const Onboarding = memo(() => {
     translationX.value = event.contentOffset.x;
   });
   const DATA = [
-    { id: 0, title: t('intro:title_1'), subtitle: t('intro:subtitle_1'), Art: ONBOARDING_ART[0] },
-    { id: 1, title: t('intro:title_2'), subtitle: t('intro:subtitle_2'), Art: ONBOARDING_ART[1] },
-    { id: 2, title: t('intro:title_3'), subtitle: t('intro:subtitle_3'), Art: ONBOARDING_ART[2] },
-    { id: 3, title: t('intro:title_4'), subtitle: t('intro:subtitle_4'), Art: ONBOARDING_ART[3] },
-    { id: 4, title: t('intro:title_5'), subtitle: t('intro:subtitle_5'), Art: ONBOARDING_ART[4] },
+    { id: 0, title: t('intro:title_1'), subtitle: t('intro:subtitle_1') },
+    { id: 1, title: t('intro:title_2'), subtitle: t('intro:subtitle_2') },
+    { id: 2, title: t('intro:title_3'), subtitle: t('intro:subtitle_3') },
+    { id: 3, title: t('intro:title_4'), subtitle: t('intro:subtitle_4') },
+    { id: 4, title: t('intro:title_5'), subtitle: t('intro:subtitle_5') },
   ];
 
   const onLogin = React.useCallback(
@@ -83,7 +95,7 @@ const Onboarding = memo(() => {
   );
   const onGetHere = React.useCallback(() => {}, []);
   return (
-    <Container style={styles.container}>
+    <Container style={styles.container} level={isDarkMode ? '1' : '2'}>
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => setShowLanguageMenu(true)}
@@ -179,7 +191,6 @@ const Onboarding = memo(() => {
                   width: width,
                 };
               });
-              const Art = i.Art;
               return (
                 <Animated.View key={index} style={style}>
                   <Text category="h2" bold mh={24} style={styles.title}>
@@ -189,7 +200,11 @@ const Onboarding = memo(() => {
                     {i.subtitle}
                   </Text>
                   <View style={styles.image}>
-                    <Art size={width * 0.72} />
+                    <Image
+                      source={Images.logoMark}
+                      resizeMode="contain"
+                      style={{ width: width * 0.55, height: width * 0.55 * (480 / 519) }}
+                    />
                   </View>
                 </Animated.View>
               );

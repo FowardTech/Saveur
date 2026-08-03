@@ -143,7 +143,7 @@ const JobPreferences = memo(() => {
                 key={role}
                 activeOpacity={0.7}
                 onPress={() => removeRole(role)}
-                style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-2'], borderColor: theme['background-basic-color-4']}]}>
                 <Text category="h9" bold>
                   {role}
                 </Text>
@@ -185,7 +185,7 @@ const JobPreferences = memo(() => {
                 key={country}
                 activeOpacity={0.7}
                 onPress={() => toggleCountry(country)}
-                style={[styles.chip, {backgroundColor: theme['color-primary-500']}]}>
+                style={[styles.chip, {backgroundColor: theme['color-primary-500'], borderColor: theme['color-primary-600']}]}>
                 <Text category="h9" status="control" bold>
                   {countryLabel(country)}
                 </Text>
@@ -281,12 +281,19 @@ const themedStyles = StyleService.create({
     flexWrap: 'wrap',
     marginBottom: 8,
   },
+  // Product request (reference screenshot: pill-shaped tags with a visible
+  // border) — borderRadius:99 already made these pills, but with no border
+  // they only read as a filled shape, not the bordered-pill "form field"
+  // look the reference uses. borderWidth/borderColor are added per-usage
+  // below (role chips vs. country chips use different fills, so need
+  // different border tones to still read against each).
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 99,
+    borderWidth: 1,
     marginRight: 8,
     marginBottom: 8,
   },

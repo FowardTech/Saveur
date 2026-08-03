@@ -148,7 +148,7 @@ const SignupSecondStep = memo(() => {
                 key={role}
                 activeOpacity={0.7}
                 onPress={() => removeRole(role)}
-                style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-2'], borderColor: theme['background-basic-color-4']}]}>
                 <Text category="h9" bold>
                   {role}
                 </Text>
@@ -186,7 +186,7 @@ const SignupSecondStep = memo(() => {
                 key={country}
                 activeOpacity={0.7}
                 onPress={() => toggleCountry(country)}
-                style={[styles.chip, {backgroundColor: theme['color-primary-500']}]}>
+                style={[styles.chip, {backgroundColor: theme['color-primary-500'], borderColor: theme['color-primary-600']}]}>
                 <Text category="h9" status="control" bold>
                   {countryLabel(country)}
                 </Text>
@@ -295,12 +295,15 @@ const themedStyles = StyleService.create({
     flexWrap: 'wrap',
     marginBottom: 8,
   },
+  // Pill-shaped tags with a visible border (reference screenshot) — see
+  // JobPreferences.tsx's identical `chip` style for the same reasoning.
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 99,
+    borderWidth: 1,
     marginRight: 8,
     marginBottom: 8,
   },

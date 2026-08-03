@@ -10,6 +10,7 @@ import {
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -131,26 +132,55 @@ const FindScreen = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('find:title')} />
       <Content contentContainerStyle={styles.content} padder>
-        {/* Flat solid-blue hero card (gradient fill removed — reserved for
-            the homescreen XP card only). Text/icon stay white/control,
-            still readable on the flat blue fill. */}
+        {/* Product bug report ("the cards ... should not be blue in dark
+            mode, they should be well designed to blend well with the dark
+            mode") — was a flat solid-blue fill in BOTH themes. Now the same
+            recipe as Home's checkInCard/homeBannerFallback: theme-aware
+            surface (solid brand blue in light mode, 'background-basic-
+            color-2' dark-navy surface in dark mode) with a soft blue
+            gradient wash in the corner so the brand color still reads
+            without ever being a flat saturated block on a near-black
+            screen. Outer/inner split so the accent + overflow:'hidden'
+            clip to the rounded corners without also clipping the card's
+            shadow (a View can't cast a shadow and clip its own content at
+            the same time — see checkInCard's own comment for the same
+            reasoning). */}
         <TouchableOpacity activeOpacity={0.9} onPress={() => onStartSetup()}>
-          <View style={[styles.hero, styles.heroInner]}>
-            <Text category="h3" status="control" bold mb={8}>
-              {t('find:start_mock_interview')}
-            </Text>
-            <Text category="h8-s" status="control" mb={16}>
-              {t('find:start_mock_interview_description')}
-            </Text>
-            <View style={styles.heroButton}>
-              <Text style={{color: "#fff"}} category="h8" status="link" bold>
-                {t('find:choose_type_mode')}
-              </Text>
-              <Icon
-                pack="assets"
-                name="arrowRight"
-                style={[globalStyle.icon16, { tintColor: theme['text-control-color'] }]}
+          <View style={[styles.hero, isDarkMode && { backgroundColor: theme['background-basic-color-2'] }]}>
+            <View style={styles.heroInner}>
+              <LinearGradient
+                pointerEvents="none"
+                colors={isDarkMode ? ['rgba(0, 99, 248, 0.22)', 'rgba(29, 161, 242, 0.04)'] : ['transparent', 'transparent']}
+                start={{ x: 1, y: 0 }}
+                end={{ x: 0.15, y: 0.9 }}
+                style={styles.heroAccent}
               />
+              <Text
+                category="h3"
+                bold
+                mb={8}
+                style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
+                {t('find:start_mock_interview')}
+              </Text>
+              <Text
+                category="h8-s"
+                mb={16}
+                style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.85)' }}>
+                {t('find:start_mock_interview_description')}
+              </Text>
+              <View style={styles.heroButton}>
+                <Text
+                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}
+                  category="h8"
+                  bold>
+                  {t('find:choose_type_mode')}
+                </Text>
+                <Icon
+                  pack="assets"
+                  name="arrowRight"
+                  style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : theme['text-control-color'] }]}
+                />
+              </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -227,7 +257,8 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
-  // Flat solid-blue hero card (gradient fill removed).
+  // Solid brand blue in light mode; dark mode overrides to
+  // 'background-basic-color-2' inline (see JSX comment above).
   hero: {
     ...globalStyle.card,
     marginTop: 16,
@@ -235,7 +266,18 @@ const themedStyles = StyleService.create({
     backgroundColor: 'color-primary-500',
   },
   heroInner: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    position: 'relative',
     padding: 24,
+  },
+  heroAccent: {
+    position: 'absolute',
+    top: -80,
+    right: -80,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
   },
   heroButton: {
     flexDirection: 'row',
