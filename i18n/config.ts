@@ -498,6 +498,16 @@ i18n.use(initReactI18next).init({
 
 i18n.on('languageChanged', lng => {
   dayjs.locale(lng);
+  // BUG FIX (product report: FAQ/About screens stuck in English after a
+  // mid-session language switch): admin-authored content (see
+  // services/configService.ts's loadAppConfig) was only ever fetched once
+  // at App.tsx startup. Re-fetch it in the new language every time i18next's
+  // language actually changes — dynamic import avoids configService (which
+  // is imported by many screens) being pulled into this file's module graph
+  // at top-level import time.
+  import('services/configService')
+    .then(m => m.loadAppConfig())
+    .catch(() => {});
 });
 
 // Restore a language picked on the onboarding carousel's top-right dropdown

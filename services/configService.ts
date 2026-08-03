@@ -192,6 +192,30 @@ export const APP_VERSION: string = require('../package.json').version ?? '0.0.0'
 
 let cached: AppConfig = DEFAULT_CONFIG;
 
+// Tiny pub/sub so screens that read getCachedConfig() synchronously in their
+// render body (FaqScreen, AboutScreen) can re-render themselves once a
+// fresh fetch lands — otherwise a language switch mid-session (see
+// i18n/config.ts's 'languageChanged' listener, which now calls
+// loadAppConfig() below) would update `cached` correctly but any already-
+// mounted screen would keep showing the stale snapshot it read at mount
+// time until it happened to re-render for some unrelated reason.
+const subscribers = new Set<() => void>();
+
+export function subscribe(cb: () => void): () => void {
+  subscribers.add(cb);
+  return () => subscribers.delete(cb);
+}
+
+function notifySubscribers(): void {
+  subscribers.forEach(cb => {
+    try {
+      cb();
+    } catch {
+      // a subscriber throwing shouldn't break the others
+    }
+  });
+}
+
 /** Parses "1.2.3" -> [1,2,3]; missing/garbage segments treated as 0. */
 function parseVersion(v: string): number[] {
   return (v || '')
@@ -253,11 +277,12 @@ export async function loadAppConfig(): Promise<AppConfig> {
     // told the backend what language to respond in, so the "faq"/"about"
     // sections always came back as the single admin-authored English copy.
     // The backend now translates those two sections when `language` is
-    // non-English (see app/api/content.py's get_public_config) — same
-    // one-fetch-at-launch tradeoff every other cold-start config value in
-    // this module already accepts (see this file's own header comment), so
-    // a language switched mid-session picks this up on the next app launch
-    // rather than instantly, consistent with how the rest of this cache works.
+    // non-English (see app/api/content.py's get_public_config). Originally
+    // this only ever ran once at app launch, so a language switch mid-
+    // session left FAQ/About stuck in whatever language was active at last
+    // cold start — i18n/config.ts's 'languageChanged' listener now also
+    // calls loadAppConfig() so a mid-session switch re-fetches immediately
+    // instead of waiting for the next app launch.
     const {data} = await apiClient.get<Partial<AppConfig>>('/api/v1/content/config', {
       params: {language: i18n.language || 'en'},
     });
@@ -276,5 +301,6 @@ export async function loadAppConfig(): Promise<AppConfig> {
     // Network/backend unavailable — proceed with whatever's cached (or
     // DEFAULT_CONFIG on a true first-ever launch). Fails open by design.
   }
+  notifySubscribers();
   return cached;
 }

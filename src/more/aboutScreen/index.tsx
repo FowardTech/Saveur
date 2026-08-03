@@ -20,6 +20,11 @@ const AboutScreen = () => {
   const theme = useTheme();
   const {t} = useTranslation(["common", "auth"]);
   const styles = useStyleSheet(themedStyles);
+  const [, forceRerender] = React.useReducer(x => x + 1, 0);
+  // Re-render if the cached config refreshes while this screen is mounted
+  // (e.g. the user switches language via Settings from a screen stacked on
+  // top of this one) — see configService.ts's subscribe/notifySubscribers.
+  React.useEffect(() => configService.subscribe(forceRerender), []);
   const about = configService.getCachedConfig().about;
   const version = configService.APP_VERSION;
 

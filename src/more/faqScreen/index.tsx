@@ -22,6 +22,11 @@ const FaqScreen = () => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(["common", "auth"]);
+  const [, forceRerender] = React.useReducer(x => x + 1, 0);
+  // Re-render if the cached config refreshes while this screen is mounted
+  // (e.g. the user switches language via Settings from a screen stacked on
+  // top of this one) — see configService.ts's subscribe/notifySubscribers.
+  React.useEffect(() => configService.subscribe(forceRerender), []);
   const items = configService.getCachedConfig().faq.items;
   const [openIndex, setOpenIndex] = React.useState<number | null>(0);
 
