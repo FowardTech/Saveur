@@ -1177,15 +1177,11 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    // BUG FIX (product report: "the badge button and the check-in pill are
-    // looking so bad in dark mode. They cannot be white background in dark
-    // mode") — was a hardcoded '#FFFFFF', identical to checkInButton's own
-    // pre-existing bug. 'background-basic-color-3' IS defined per-theme
-    // (light.json: light gray, dark.json: "#2A2A42" — lighter than this
-    // card's own 'background-basic-color-2' fill, so the pill still reads
-    // as a raised chip against the card in both themes) instead of pure
-    // white in dark mode.
-    backgroundColor: 'background-basic-color-3',
+    // Product follow-up ("remove the gray background... they both should
+    // be transparent") — 'background-basic-color-3' (the previous dark-mode
+    // fix) read as an unwanted gray fill; just the blue outline/text reads
+    // as a pill on its own against the card, no fill needed in either theme.
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#0063f8',
   },
@@ -1236,14 +1232,11 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    // BUG FIX (product report: "the badge button and the check-in pill are
-    // looking so bad in dark mode. They cannot be white background in dark
-    // mode") — was a hardcoded '#FFFFFF', same fix/reasoning as
-    // checkInBadgesButton just above: 'background-basic-color-3' adapts
-    // per theme instead of staying pure white in dark mode. Covers both
-    // the live "Check In" button and (via [checkInButton, checkedInPill])
-    // the "Checked in" completed-state pill.
-    backgroundColor: 'background-basic-color-3',
+    // Product follow-up ("remove the gray background... they both should
+    // be transparent") — same fix as checkInBadgesButton just above.
+    // Covers both the live "Check In" button and (via [checkInButton,
+    // checkedInPill]) the "Checked in" completed-state pill.
+    backgroundColor: 'transparent',
     borderWidth: 1,
     borderColor: '#0063f8'
   },
