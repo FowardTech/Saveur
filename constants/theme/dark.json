@@ -8,6 +8,18 @@
   "background-basic-color-6": "#F5F5FA",
   "background-basic-color-7": "#123C2C",
   "background-basic-color-8": "#2C2C55",
+  "background-tint-primary": "#16273F",
+  "background-tint-orange": "#3A2A1C",
+  "background-tint-mint": "#123625",
+  "background-tint-rose": "#3A1F2A",
+  "color-badge-info-bg": "#1B2A44",
+  "color-badge-info-text": "#7EB6FF",
+  "color-tile-orange-bg": "#3A2A1C",
+  "color-tile-orange-text": "#FFB870",
+  "color-tile-mint-bg": "#123625",
+  "color-tile-mint-text": "#6EE7B7",
+  "color-tile-rose-bg": "#3A1F2A",
+  "color-tile-rose-text": "#FF9DC0",
   "text-basic-color": "#F5F5FA",
   "icon-basic-color": "#F5F5FA",
   "text-primary-color": "#FFFFFF",
@@ -23,6 +35,5 @@
   "text-completed-color": "#0EAD69",
   "text-twitter-color": "#53D0EC",
   "border-card-default": "#3A3A57",
-  "color-accent-purple-bg": "#2A2140",
-  "color-badge-info-bg": "#16233D"
+  "color-accent-purple-bg": "#2A2140"
 }

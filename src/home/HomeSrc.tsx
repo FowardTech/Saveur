@@ -1129,15 +1129,22 @@ const themedStyles = StyleService.create({
   upcomingCard: {
     ...globalStyle.card,
     padding: 16,
-    // Was a plain neutral 'background-basic-color-2' fill (opaque, for
-    // `card`'s Android shadow — see the removed comment history). Product
-    // follow-up ("still looking bare compared to the 3 screenshots"): a
-    // soft brand-blue tint instead of plain gray, matching the reference
-    // apps' habit of tinting almost every card with SOME color rather than
-    // leaving most of the screen neutral white/gray. Still fully opaque
-    // (a real hex, not an alpha-blended token) so Android's shadow still
+    // BUG FIX (product report, screenshot of dark mode: "the upcoming
+    // session is making the UI look terrible in dark mode") — the previous
+    // fill was a LITERAL hex (#EAF3FF), a good soft-blue tint in LIGHT mode
+    // only; with no light/dark switch of its own, dark mode rendered the
+    // exact same bright near-white card, a jarring pale block against the
+    // rest of the dark screen. 'color-badge-info-bg' is a real theme token
+    // (constants/theme/appTheme.json for light, dark.json for dark) with a
+    // proper value for each mode, so this now reads as a subtle blue TINT
+    // in both themes instead of a flat white block in one of them. Same
+    // root cause fixed for every other pastel stat-tile background this
+    // reskin introduced (MyProgress.tsx, WeeklyCareerReport.tsx,
+    // CareerDna.tsx) — all of them were reading appTheme.json's flat,
+    // theme-blind hex values with no dark.json override until this pass.
+    // Still fully opaque either way, so `card`'s Android shadow still
     // renders correctly.
-    backgroundColor: '#EAF3FF',
+    backgroundColor: 'color-badge-info-bg',
   },
   // Flat solid-blue card (gradient removed — see the JSX comment above for
   // why) — outer layer just casts the shadow (no overflow:'hidden' here;
