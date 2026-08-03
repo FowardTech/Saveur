@@ -79,5 +79,11 @@
   "xp_label": "XP",
   "you": "आप",
   "your_progress": "आपकी प्रगति",
-  "your_progress_subtitle": "इस सप्ताह {{sessions}} सत्र · {{score}}% औसत स्कोर"
+  "your_progress_subtitle": "इस सप्ताह {{sessions}} सत्र · {{score}}% औसत स्कोर",
+  "daily_challenge_title": "आज की सरप्राइज़ चुनौती",
+  "daily_challenge_completed": "+{{xp}} XP अर्जित",
+  "daily_challenge_response_placeholder": "अपना उत्तर लिखें…",
+  "daily_challenge_submit": "सबमिट करें",
+  "daily_challenge_skip": "आज छोड़ें",
+  "daily_challenge_start": "चुनौती स्वीकार करें"
 }

@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} शब्द/मिनट",
   "write_a_review": "समीक्षा लिखें",
   "years_or_experience": "अनुभव के वर्ष",
-  "your_career_goal": "आपका करियर लक्ष्य"
+  "your_career_goal": "आपका करियर लक्ष्य",
+  "interviewer_personality": "साक्षात्कारकर्ता व्यक्तित्व",
+  "interviewer_personality_description": "एक विशिष्ट साक्षात्कारकर्ता शैली के सामने अभ्यास करें — AI इंटरव्यू लैब.",
+  "skill_heat_map_title": "स्किल हीट मैप",
+  "skill_heat_map_description": "हर स्कोर की गई इंटरव्यू में आपका औसत — देखें आगे किस पर काम करना है.",
+  "skill_storytelling": "कहानी कहने की कला"
 }

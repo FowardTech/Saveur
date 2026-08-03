@@ -79,5 +79,11 @@
   "xp_label": "经验值",
   "you": "您",
   "your_progress": "您的进度",
-  "your_progress_subtitle": "本周 {{sessions}} 次练习 · 平均得分 {{score}}%"
+  "your_progress_subtitle": "本周 {{sessions}} 次练习 · 平均得分 {{score}}%",
+  "daily_challenge_title": "今日惊喜挑战",
+  "daily_challenge_completed": "获得 +{{xp}} XP",
+  "daily_challenge_response_placeholder": "输入你的回答…",
+  "daily_challenge_submit": "提交",
+  "daily_challenge_skip": "跳过今天",
+  "daily_challenge_start": "接受挑战"
 }

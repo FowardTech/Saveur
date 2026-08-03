@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} WPM",
   "write_a_review": "レビューを書く",
   "years_or_experience": "経験年数",
-  "your_career_goal": "あなたのキャリア目標"
+  "your_career_goal": "あなたのキャリア目標",
+  "interviewer_personality": "面接官のパーソナリティ",
+  "interviewer_personality_description": "特定の面接官スタイルを相手に練習しましょう — AI面接ラボ。",
+  "skill_heat_map_title": "スキルヒートマップ",
+  "skill_heat_map_description": "採点済みのすべての面接の平均値 — 次に取り組むべきことがわかります。",
+  "skill_storytelling": "ストーリーテリング"
 }

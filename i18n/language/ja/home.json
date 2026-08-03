@@ -79,5 +79,11 @@
   "xp_label": "経験値",
   "you": "あなた",
   "your_progress": "あなたの進捗",
-  "your_progress_subtitle": "今週 {{sessions}} セッション ・平均スコア {{score}}%"
+  "your_progress_subtitle": "今週 {{sessions}} セッション ・平均スコア {{score}}%",
+  "daily_challenge_title": "今日のサプライズチャレンジ",
+  "daily_challenge_completed": "+{{xp}} XP 獲得",
+  "daily_challenge_response_placeholder": "回答を入力…",
+  "daily_challenge_submit": "送信",
+  "daily_challenge_skip": "今日はスキップ",
+  "daily_challenge_start": "チャレンジする"
 }

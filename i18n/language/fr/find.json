@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} mots/min",
   "write_a_review": "Rédiger un avis",
   "years_or_experience": "Années d'expérience",
-  "your_career_goal": "Votre objectif de carrière"
+  "your_career_goal": "Votre objectif de carrière",
+  "interviewer_personality": "Personnalité de l'intervieweur",
+  "interviewer_personality_description": "Entraînez-vous face à un style d'intervieweur spécifique — le Laboratoire d'entretien IA.",
+  "skill_heat_map_title": "Carte de chaleur des compétences",
+  "skill_heat_map_description": "Votre moyenne sur tous les entretiens notés — découvrez sur quoi travailler ensuite.",
+  "skill_storytelling": "Art de raconter"
 }

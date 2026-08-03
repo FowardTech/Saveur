@@ -80,5 +80,11 @@
   "xp_label": "XP",
   "you": "You",
   "your_progress": "Your Progress",
-  "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score"
+  "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score",
+  "daily_challenge_title": "Today's Surprise Challenge",
+  "daily_challenge_completed": "+{{xp}} XP earned",
+  "daily_challenge_response_placeholder": "Type your response…",
+  "daily_challenge_submit": "Submit",
+  "daily_challenge_skip": "Skip today",
+  "daily_challenge_start": "Take the challenge"
 }

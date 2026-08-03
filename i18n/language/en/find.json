@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} wpm",
   "write_a_review": "Write a Review",
   "years_or_experience": "Years or Experience",
-  "your_career_goal": "Your career goal"
+  "your_career_goal": "Your career goal",
+  "interviewer_personality": "Interviewer Personality",
+  "interviewer_personality_description": "Practice against a specific interviewer style — the AI Interview Laboratory.",
+  "skill_heat_map_title": "Skill Heat Map",
+  "skill_heat_map_description": "Your average across every scored interview — see what to work on next.",
+  "skill_storytelling": "Storytelling"
 }

@@ -79,5 +79,11 @@
   "xp_label": "Опыт",
   "you": "Вы",
   "your_progress": "Ваш прогресс",
-  "your_progress_subtitle": "{{sessions}} сессий на этой неделе · средний балл {{score}}%"
+  "your_progress_subtitle": "{{sessions}} сессий на этой неделе · средний балл {{score}}%",
+  "daily_challenge_title": "Сегодняшнее сюрприз-задание",
+  "daily_challenge_completed": "+{{xp}} XP получено",
+  "daily_challenge_response_placeholder": "Введите ваш ответ…",
+  "daily_challenge_submit": "Отправить",
+  "daily_challenge_skip": "Пропустить сегодня",
+  "daily_challenge_start": "Принять вызов"
 }

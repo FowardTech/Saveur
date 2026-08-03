@@ -79,5 +79,11 @@
   "xp_label": "نقاط الخبرة",
   "you": "أنت",
   "your_progress": "تقدمك",
-  "your_progress_subtitle": "{{sessions}} جلسات هذا الأسبوع · متوسط الدرجات {{score}}%"
+  "your_progress_subtitle": "{{sessions}} جلسات هذا الأسبوع · متوسط الدرجات {{score}}%",
+  "daily_challenge_title": "تحدي اليوم المفاجئ",
+  "daily_challenge_completed": "+{{xp}} نقطة خبرة مكتسبة",
+  "daily_challenge_response_placeholder": "اكتب إجابتك…",
+  "daily_challenge_submit": "إرسال",
+  "daily_challenge_skip": "تخطي اليوم",
+  "daily_challenge_start": "خض التحدي"
 }

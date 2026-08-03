@@ -79,5 +79,11 @@
   "xp_label": "XP",
   "you": "Você",
   "your_progress": "Seu Progresso",
-  "your_progress_subtitle": "{{sessions}} sessões esta semana · {{score}}% de pontuação média"
+  "your_progress_subtitle": "{{sessions}} sessões esta semana · {{score}}% de pontuação média",
+  "daily_challenge_title": "O desafio surpresa de hoje",
+  "daily_challenge_completed": "+{{xp}} XP ganhos",
+  "daily_challenge_response_placeholder": "Digite sua resposta…",
+  "daily_challenge_submit": "Enviar",
+  "daily_challenge_skip": "Pular hoje",
+  "daily_challenge_start": "Aceitar o desafio"
 }

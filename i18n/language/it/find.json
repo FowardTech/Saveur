@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} ppm",
   "write_a_review": "Scrivi una recensione",
   "years_or_experience": "Anni di esperienza",
-  "your_career_goal": "Il tuo obiettivo di carriera"
+  "your_career_goal": "Il tuo obiettivo di carriera",
+  "interviewer_personality": "Personalità dell'intervistatore",
+  "interviewer_personality_description": "Esercitati con uno stile specifico di intervistatore — il Laboratorio di colloqui IA.",
+  "skill_heat_map_title": "Mappa di calore delle competenze",
+  "skill_heat_map_description": "La tua media su tutti i colloqui valutati — scopri su cosa lavorare.",
+  "skill_storytelling": "Narrazione"
 }

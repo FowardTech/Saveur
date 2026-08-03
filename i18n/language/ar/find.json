@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} كلمة/دقيقة",
   "write_a_review": "كتابة تقييم",
   "years_or_experience": "سنوات الخبرة",
-  "your_career_goal": "هدفك المهني"
+  "your_career_goal": "هدفك المهني",
+  "interviewer_personality": "شخصية القائم بالمقابلة",
+  "interviewer_personality_description": "تدرب أمام أسلوب محدد للقائم بالمقابلة — مختبر المقابلات بالذكاء الاصطناعي.",
+  "skill_heat_map_title": "خريطة حرارية للمهارات",
+  "skill_heat_map_description": "متوسطك عبر كل مقابلة تم تقييمها — تعرّف على ما يجب تحسينه لاحقًا.",
+  "skill_storytelling": "سرد القصص"
 }

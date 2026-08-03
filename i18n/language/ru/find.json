@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} слов/мин",
   "write_a_review": "Написать отзыв",
   "years_or_experience": "Лет опыта",
-  "your_career_goal": "Ваша карьерная цель"
+  "your_career_goal": "Ваша карьерная цель",
+  "interviewer_personality": "Личность интервьюера",
+  "interviewer_personality_description": "Тренируйтесь с определённым стилем интервьюера — ИИ-лаборатория собеседований.",
+  "skill_heat_map_title": "Тепловая карта навыков",
+  "skill_heat_map_description": "Ваш средний результат по всем оценённым интервью — узнайте, над чем работать дальше.",
+  "skill_storytelling": "Сторителлинг"
 }

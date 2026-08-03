@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} ppm",
   "write_a_review": "Escrever uma avaliação",
   "years_or_experience": "Anos de experiência",
-  "your_career_goal": "Seu objetivo de carreira"
+  "your_career_goal": "Seu objetivo de carreira",
+  "interviewer_personality": "Personalidade do entrevistador",
+  "interviewer_personality_description": "Pratique contra um estilo específico de entrevistador — o Laboratório de Entrevistas com IA.",
+  "skill_heat_map_title": "Mapa de calor de habilidades",
+  "skill_heat_map_description": "Sua média em todas as entrevistas avaliadas — veja no que trabalhar em seguida.",
+  "skill_storytelling": "Narrativa"
 }

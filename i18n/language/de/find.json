@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} WPM",
   "write_a_review": "Eine Bewertung schreiben",
   "years_or_experience": "Jahre Erfahrung",
-  "your_career_goal": "Dein Karriereziel"
+  "your_career_goal": "Dein Karriereziel",
+  "interviewer_personality": "Interviewer-Persönlichkeit",
+  "interviewer_personality_description": "Übe gegen einen bestimmten Interviewstil — das KI-Interviewlabor.",
+  "skill_heat_map_title": "Fähigkeiten-Heatmap",
+  "skill_heat_map_description": "Dein Durchschnitt über alle bewerteten Interviews — sieh, woran du als Nächstes arbeiten solltest.",
+  "skill_storytelling": "Geschichtenerzählen"
 }

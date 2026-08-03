@@ -305,5 +305,10 @@
   "wpm_value": "분당 {{count}}단어",
   "write_a_review": "리뷰 작성",
   "years_or_experience": "경력 연수",
-  "your_career_goal": "내 커리어 목표"
+  "your_career_goal": "내 커리어 목표",
+  "interviewer_personality": "면접관 성격",
+  "interviewer_personality_description": "특정 면접관 스타일을 상대로 연습하세요 — AI 인터뷰 랩.",
+  "skill_heat_map_title": "역량 히트맵",
+  "skill_heat_map_description": "채점된 모든 인터뷰의 평균 — 다음에 무엇을 개선할지 확인하세요.",
+  "skill_storytelling": "스토리텔링"
 }

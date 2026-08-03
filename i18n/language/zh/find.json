@@ -305,5 +305,10 @@
   "wpm_value": "{{count}} 词/分钟",
   "write_a_review": "撰写评价",
   "years_or_experience": "经验年限",
-  "your_career_goal": "您的职业目标"
+  "your_career_goal": "您的职业目标",
+  "interviewer_personality": "面试官人格",
+  "interviewer_personality_description": "针对特定面试官风格进行练习——AI 面试实验室。",
+  "skill_heat_map_title": "技能热力图",
+  "skill_heat_map_description": "你在所有已评分面试中的平均表现——看看接下来该提升什么。",
+  "skill_storytelling": "叙事能力"
 }
