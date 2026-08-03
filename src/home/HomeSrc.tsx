@@ -735,9 +735,21 @@ const HomeSrc = memo(() => {
             design (see its own comment), which would be invisible here. */}
         <View style={styles.checkInCard}>
           <View style={styles.checkInCardInner}>
+            {/* Product follow-up ("still looking bare compared to the 3
+                screenshots" — wellness-app-inspired reskin): this accent
+                had been quietly neutered to a transparent-to-transparent
+                gradient at some point (probably testing/an intermediate
+                edit), so the card rendered as a plain white/gray box with
+                only a thin blue ring — nowhere near the bold, saturated
+                color-blocking every one of the 3 reference screenshots
+                actually uses. Real blue gradient wash again, and bigger
+                (280 vs the old 170) so it reads as genuine color, not a
+                whisper in the corner — still fixed-size + absolutely
+                positioned, so it still can't reintroduce the old clipping
+                bug this component's own history warns about. */}
             <LinearGradient
               pointerEvents="none"
-              colors={['transparent','transparent']}
+              colors={['rgba(0, 99, 248, 0.30)', 'rgba(29, 161, 242, 0.05)']}
               start={{ x: 1, y: 0 }}
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
@@ -754,10 +766,11 @@ const HomeSrc = memo(() => {
           <View style={styles.checkInTopRow}>
             <CircularProgress
               progress={Math.min(100, (streakDays / 7) * 100)}
-              size={68}
-              strokeWidth={7}
-              trackColor="#0063f83f"
-              color="#0063f8"
+              size={72}
+              strokeWidth={8}
+              trackColor="#0063f81f"
+              gradientFrom="#1DA1F2"
+              gradientTo="#0063f8"
               style={styles.checkInRing}>
               <Text category="h6" bold style={styles.checkInRingText}>
                 {streakDays}
@@ -1080,7 +1093,7 @@ const themedStyles = StyleService.create({
     // rendered at the source image's raw pixel size instead of scaling to
     // the card, see bannerWidth's own comment for the full explanation.
     marginTop: 16,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   verifyBannerText: {
@@ -1117,11 +1130,15 @@ const themedStyles = StyleService.create({
   upcomingCard: {
     ...globalStyle.card,
     padding: 16,
-    // Redesign v2 (full reskin): opaque fill again (was 'transparent',
-    // which also silently overrode this Flex's own `level="2"` background —
-    // see Flex.tsx, style always wins over the level prop) so `card`'s
-    // real shadow renders correctly.
-    backgroundColor: 'background-basic-color-2',
+    // Was a plain neutral 'background-basic-color-2' fill (opaque, for
+    // `card`'s Android shadow — see the removed comment history). Product
+    // follow-up ("still looking bare compared to the 3 screenshots"): a
+    // soft brand-blue tint instead of plain gray, matching the reference
+    // apps' habit of tinting almost every card with SOME color rather than
+    // leaving most of the screen neutral white/gray. Still fully opaque
+    // (a real hex, not an alpha-blended token) so Android's shadow still
+    // renders correctly.
+    backgroundColor: '#EAF3FF',
   },
   // Flat solid-blue card (gradient removed — see the JSX comment above for
   // why) — outer layer just casts the shadow (no overflow:'hidden' here;
@@ -1130,7 +1147,7 @@ const themedStyles = StyleService.create({
   checkInCard: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 20,
+    borderRadius: 24,
     // BUG FIX (product report: "make the XP card and its content look nice
     // in dark mode its looking so bad") — 'color-primary-000' is a fixed
     // "#FFFFFF" in constants/theme/appTheme.json with no dark-mode override
@@ -1156,7 +1173,7 @@ const themedStyles = StyleService.create({
   // button/pill itself (no more minWidth, numberOfLines=1 labels — see
   // checkInButton below) rather than changing the row shape.
   checkInCardInner: {
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
@@ -1170,11 +1187,11 @@ const themedStyles = StyleService.create({
   // wedge reads as a soft directional wash rather than a hard-edged circle.
   checkInCardAccent: {
     position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 170,
-    height: 170,
-    borderRadius: 85,
+    top: -100,
+    right: -100,
+    width: 280,
+    height: 280,
+    borderRadius: 140,
   },
   // Gamification cue (product request — "use this medal in the XP card
   // instead of the one there", the uploaded 3D gold medal/ribbon graphic —
