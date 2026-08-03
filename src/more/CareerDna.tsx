@@ -182,25 +182,29 @@ const CareerDna = memo(() => {
             ) : null}
 
             {traits?.blind_spots?.length ? (
-              <Layout level="2" style={styles.traitCard}>
+              // Soft amber tile (product request item, layout reference:
+              // colored pastel tiles rather than plain white cards) — same
+              // "warning" meaning as before, just tinted instead of a
+              // neutral card with a colored heading.
+              <View style={[styles.traitCard, { backgroundColor: 'rgba(254, 152, 112, 0.15)' }]}>
                 <Text category="h9" bold status="warning" mb={8}>
                   {t('more:career_dna_blind_spots', { defaultValue: 'Blind spots to watch' })}
                 </Text>
                 {traits.blind_spots.map((s, i) => (
                   <Text key={i} category="h9-s" mb={4}>{'• '}{s}</Text>
                 ))}
-              </Layout>
+              </View>
             ) : null}
 
             {traits?.career_risks?.length ? (
-              <Layout level="2" style={styles.traitCard}>
-                <Text category="h9" bold status="danger" mb={8}>
+              <View style={[styles.traitCard, { backgroundColor: theme['color-tile-rose-bg'] }]}>
+                <Text category="h9" bold style={{ color: theme['color-tile-rose-text'] }} mb={8}>
                   {t('more:career_dna_career_risks', { defaultValue: 'Career risks if patterns continue' })}
                 </Text>
                 {traits.career_risks.map((s, i) => (
                   <Text key={i} category="h9-s" mb={4}>{'• '}{s}</Text>
                 ))}
-              </Layout>
+              </View>
             ) : null}
 
             <CtaButton
@@ -245,15 +249,20 @@ export default CareerDna;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
+  // Radius inherited from globalStyle.card (24, app-wide "big rounded
+  // card" token) — no local override, unlike before the wellness-app-
+  // inspired reskin pass (was pinned to 16 here specifically).
   narrativeCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
   },
+  // Slightly smaller than the full 24 (these are small individual trait
+  // rows, not the main narrative card) but still noticeably rounder than
+  // the pre-reskin 12.
   traitCard: {
     ...globalStyle.card,
-    borderRadius: 12,
+    borderRadius: 18,
     padding: 14,
     marginBottom: 12,
   },

@@ -290,15 +290,14 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   input: { ...globalStyle.inputField },
+  // Radius inherited from globalStyle.card (24) — no local override.
   addCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 24,
   },
   companyCard: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
   },

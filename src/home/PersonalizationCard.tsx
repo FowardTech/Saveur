@@ -80,9 +80,9 @@ const PersonalizationCard = memo(() => {
 export default PersonalizationCard;
 
 const themedStyles = StyleService.create({
+  // Radius inherited from globalStyle.card (24) — no local override.
   card: {
     ...globalStyle.card,
-    borderRadius: 16,
     padding: 16,
     marginTop: 24,
     backgroundColor: 'background-basic-color-2',
