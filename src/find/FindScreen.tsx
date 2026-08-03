@@ -24,29 +24,28 @@ import * as configService from 'services/configService';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
+import ThemeContext from '../../ThemeContext';
+import { tileColorAt } from 'styles/tileColors';
 
 // "Practice" tab — the entry point for AI mock interviews. Lets a candidate
 // jump straight into a category, or open the full setup wizard (mode /
 // difficulty / timed). TODO: interview-type cards below are static; wire to
 // real content packs & personalized recommendations later.
-// Pastel tile rotation (product request item, layout reference: light/clean
-// fitness-app screenshots' colorful grid tiles) — same 4-color family used
-// for stat tiles elsewhere (MyProgress.tsx, WeeklyCareerReport.tsx), reused
-// here for the Tools/Interview Types grids so this screen doesn't stay a
-// wall of identical neutral-gray cards while everywhere else got color.
-const TILE_COLORS = [
-  { bg: 'color-badge-info-bg', text: 'color-badge-info-text' },
-  { bg: 'color-tile-mint-bg', text: 'color-tile-mint-text' },
-  { bg: 'color-tile-orange-bg', text: 'color-tile-orange-text' },
-  { bg: 'color-tile-rose-bg', text: 'color-tile-rose-text' },
-] as const;
-
 const FindScreen = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common', 'more']);
   const { subscription } = React.useContext(AuthContext);
+  // Product follow-up ("leave the cards in this screen white background as
+  // they are before but you can give them different colors in the dark
+  // mode") — the Tools/Interview Types grids below stay plain white in
+  // light mode (unchanged from before the reskin) but pick up the same
+  // rotating pastel palette every other screen's stat tiles use once dark
+  // mode is on, so this screen isn't a wall of identical dark-navy cards
+  // while everywhere else in dark mode has color variety.
+  const { theme: appTheme } = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
 
   const onStartSetup = (interviewType?: Interview_Type_Enum) => {
     navigate('MockInterviewSetup', { interviewType });
@@ -161,24 +160,26 @@ const FindScreen = memo(() => {
         </Text>
         <Flex justify="space-between" wrap>
           {TOOLS.map((tool, i) => {
-            const tile = TILE_COLORS[i % TILE_COLORS.length];
+            const tile = tileColorAt(i);
+            const bg = isDarkMode ? theme[tile.bg] : theme['background-basic-color-2'];
+            const fg = isDarkMode ? theme[tile.text] : theme['text-basic-color'];
             return (
               <TouchableOpacity
                 key={i}
                 activeOpacity={0.7}
                 onPress={tool.onPress}
                 disabled={tool.loading}
-                style={[styles.toolCard, { backgroundColor: theme[tile.bg] }]}>
+                style={[styles.toolCard, { backgroundColor: bg }]}>
                 {tool.loading ? (
                   <Spinner size="small" />
                 ) : (
                   <Icon
                     pack="eva"
                     name={tool.icon}
-                    style={[globalStyle.icon24, { tintColor: theme[tile.text] }]}
+                    style={[globalStyle.icon24, { tintColor: fg }]}
                   />
                 )}
-                <Text category="h9" center mt={8} bold numberOfLines={2} style={{ color: theme[tile.text] }}>
+                <Text category="h9" center mt={8} bold numberOfLines={2} style={{ color: fg }}>
                   {tool.title}
                 </Text>
               </TouchableOpacity>
@@ -191,19 +192,21 @@ const FindScreen = memo(() => {
         </Text>
         <View style={styles.typesGrid}>
           {DATA_INTERVIEW_TYPES.map((item, i) => {
-            const tile = TILE_COLORS[i % TILE_COLORS.length];
+            const tile = tileColorAt(i);
+            const bg = isDarkMode ? theme[tile.bg] : theme['background-basic-color-2'];
+            const fg = isDarkMode ? theme[tile.text] : theme['text-basic-color'];
             return (
               <TouchableOpacity
                 key={i}
                 activeOpacity={0.7}
                 onPress={() => onStartSetup(item.type)}
-                style={[styles.typeCard, { backgroundColor: theme[tile.bg] }]}>
+                style={[styles.typeCard, { backgroundColor: bg }]}>
                 <Icon
                   pack="eva"
                   name={item.icon}
-                  style={[globalStyle.icon24, { tintColor: theme[tile.text] }]}
+                  style={[globalStyle.icon24, { tintColor: fg }]}
                 />
-                <Text category="h9" mt={12} bold numberOfLines={2} style={{ color: theme[tile.text] }}>
+                <Text category="h9" mt={12} bold numberOfLines={2} style={{ color: fg }}>
                   {getInterviewTypeLabel(item.type, t)}
                 </Text>
               </TouchableOpacity>
