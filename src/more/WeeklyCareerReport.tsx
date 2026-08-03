@@ -106,25 +106,32 @@ const WeeklyCareerReport = memo(() => {
             ) : null}
 
             {stats ? (
+              // Pastel tile backgrounds (product request item, layout
+              // reference: a light/clean fitness-app screenshot's tinted
+              // stat tiles), same treatment/color family as MyProgress.tsx's
+              // 3 stat cards for consistency. NOT a gradient fill (that's
+              // still reserved for the homescreen XP card only, per the
+              // explicit direction on summaryCard above) — flat solid
+              // pastel tokens, a different thing.
               <View style={styles.statsRow}>
-                <Layout level="2" style={styles.statCard}>
-                  <Text category="h3" bold center>{stats.sessionsCompleted}</Text>
-                  <Text category="h10" status="placeholder" center mt={4}>
+                <View style={[styles.statCard, { backgroundColor: theme['color-badge-info-bg'] }]}>
+                  <Text category="h3" bold center style={{ color: theme['color-badge-info-text'] }}>{stats.sessionsCompleted}</Text>
+                  <Text category="h10" bold center mt={4} style={{ color: theme['color-badge-info-text'] }}>
                     {t('home:sessions_this_week', { defaultValue: 'Sessions This Week' })}
                   </Text>
-                </Layout>
-                <Layout level="2" style={styles.statCard}>
-                  <Text category="h3" bold center>{stats.avgInterviewScore ?? '—'}{stats.avgInterviewScore != null ? '%' : ''}</Text>
-                  <Text category="h10" status="placeholder" center mt={4}>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: theme['color-tile-mint-bg'] }]}>
+                  <Text category="h3" bold center style={{ color: theme['color-tile-mint-text'] }}>{stats.avgInterviewScore ?? '—'}{stats.avgInterviewScore != null ? '%' : ''}</Text>
+                  <Text category="h10" bold center mt={4} style={{ color: theme['color-tile-mint-text'] }}>
                     {t('home:average_score', { defaultValue: 'Average Score' })}
                   </Text>
-                </Layout>
-                <Layout level="2" style={styles.statCard}>
-                  <Text category="h3" bold center>{stats.currentStreak}</Text>
-                  <Text category="h10" status="placeholder" center mt={4}>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: theme['color-tile-orange-bg'] }]}>
+                  <Text category="h3" bold center style={{ color: theme['color-tile-orange-text'] }}>{stats.currentStreak}</Text>
+                  <Text category="h10" bold center mt={4} style={{ color: theme['color-tile-orange-text'] }}>
                     {t('home:day_streak', { defaultValue: 'Day Streak' })}
                   </Text>
-                </Layout>
+                </View>
               </View>
             ) : null}
 
