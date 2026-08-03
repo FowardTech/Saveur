@@ -94,7 +94,19 @@ const MessagesScreen = memo(() => {
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.heroAvatar}>
-            <BrandWordmark markOnly size={56} />
+            {/* Product request — strip the logo's baked-in white/gray
+                badge background and render just the "S" shape as a white
+                line mark so it blends into the gradient instead of
+                floating on its own light badge (see BrandWordmark's
+                markColor prop comment). Same isDarkMode text-color pattern
+                already used for this card's title/subtitle/arrow so the
+                mark stays visually consistent with the rest of the card
+                in both themes. */}
+            <BrandWordmark
+              markOnly
+              size={56}
+              markColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
+            />
           </View>
           <View style={globalStyle.flexOne}>
             <Text

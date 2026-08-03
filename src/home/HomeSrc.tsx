@@ -704,8 +704,20 @@ const HomeSrc = memo(() => {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
               />
+              {/* Product request — strip the logo's baked-in white/gray
+                  badge background and render just the "S" shape as a
+                  white line mark so it blends into the gradient instead
+                  of floating on its own light badge: Images.logoMark
+                  (same mark, background chroma-keyed to transparent — see
+                  assets/images/index.ts) tinted with the same isDarkMode
+                  color already used for this card's title/subtitle/arrow. */}
               <View style={styles.homeBannerIconWrap}>
-                <Image source={Images.logoBadge} style={styles.homeBannerIcon} resizeMode="cover" />
+                <Image
+                  source={Images.logoMark}
+                  style={styles.homeBannerIcon}
+                  resizeMode="contain"
+                  tintColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
+                />
               </View>
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text
@@ -1144,10 +1156,11 @@ const themedStyles = StyleService.create({
     position: 'relative',
     padding: 16,
   },
-  homeBannerIconWrap: {
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
+  // borderRadius/overflow used to clip Images.logoBadge's own hard square
+  // edge — no longer needed now that this renders Images.logoMark (a
+  // transparent-background line mark, no edge to clip), kept as a plain
+  // spacing hook.
+  homeBannerIconWrap: {},
   homeBannerIcon: {
     width: 44,
     height: 44,
