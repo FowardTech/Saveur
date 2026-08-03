@@ -645,26 +645,12 @@ const HomeSrc = memo(() => {
               {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
             </Text>
           </TouchableOpacity>
-          {/* Badges pill added here (product follow-up, decluttering pass —
-              "remove too much things and place them in a different page if
-              necessary") — opens the existing full-grid modal
-              (components/BadgesModal.tsx) instead of a stacked preview row
-              on the dashboard. Leaderboard's own pill was added in that
-              same pass but has since been removed again: per a later
-              follow-up ("bring back the leaderboard to the homescreen and
-              make it look more nice"), the live leaderboard preview card is
-              back further down this screen with its own "View all" link
-              into src/home/Leaderboard.tsx — keeping the pill too would
-              have meant two entry points to the same screen on one
-              dashboard. */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
-            onPress={() => setIsBadgesModalVisible(true)}>
-            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
-              {t('home:badges', { defaultValue: 'Badges' })}
-            </Text>
-          </TouchableOpacity>
+          {/* Badges pill REMOVED from here (product correction — "the badge
+              button... place it before the medal icon in the XP card so
+              that its more visible to users") — moved into the checkInCard
+              below, immediately before the medal icon, instead of living in
+              this scrollable nav row (see that JSX's own comment). Opens the
+              same existing full-grid modal (components/BadgesModal.tsx). */}
         </ScrollView>
         {homeBanner ? (
           // Redesign v2 follow-up (product bug report — "remove the white
@@ -744,49 +730,25 @@ const HomeSrc = memo(() => {
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
             />
-          {/* Redesign v3 (product request — "remove the badge button from
-              the top and place it before the medal icon... so users can
-              click it from there"): the check-in pill/button used to sit in
-              its own row BELOW the ring+XP row, right-aligned; the medal
-              icon sat independently absolute-positioned in the card's top
-              corner the whole time. Both now share one row at the very top
-              of the card instead — pill/button first (start of the row),
-              medal icon right after it (still in the same top-right
-              corner visually, just in normal flow now instead of
-              position:'absolute') — so the actionable control is the first
-              thing in the card, immediately next to the medal it's tied to. */}
+          {/* Redesign v3 (product CORRECTION — the "badge button" in the
+              earlier request meant the "Badges" pill from the scrollable nav
+              row above (opens BadgesModal), NOT the check-in pill this used
+              to hold. That pill/medal restructuring is reverted below: the
+              check-in pill/button is back in its own row under the ring+XP
+              row, and the medal icon is back to marking the card's top-right
+              corner. The actual "Badges" pill has been removed from the nav
+              row above and now lives here instead, immediately before the
+              medal icon, so it's more visible and inside the card it's
+              actually about. */}
           <View style={styles.checkInHeaderRow}>
-            {streak?.checkedInToday ? (
-              // Solid white pill + blue checkmark — was a translucent
-              // white-on-white-ish fill (too low contrast to read clearly
-              // against the gradient), now matches checkInButton's own solid
-              // white pill exactly (just a checkmark + label instead of an
-              // actionable label — this is a completed state, not a live
-              // action).
-              <View style={[styles.checkInButton, styles.checkedInPill]}>
-                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
-                <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
-                  {t('home:checked_in_today', { defaultValue: 'Checked in' })}
-                </Text>
-              </View>
-            ) : (
-              <TouchableOpacity
-                activeOpacity={0.85}
-                disabled={checkingIn || streakLoading || !!streakError}
-                onPress={onCheckIn}
-                style={[
-                  styles.checkInButton,
-                  (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
-                ]}>
-                {checkingIn ? (
-                  <Spinner size="tiny" status="primary" />
-                ) : (
-                  <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
-                    {t('home:check_in', { defaultValue: 'Check In' })}
-                  </Text>
-                )}
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              style={styles.checkInBadgesButton}
+              onPress={() => setIsBadgesModalVisible(true)}>
+              <Text category="h10" bold style={styles.checkInButtonText} numberOfLines={1}>
+                {t('home:badges', { defaultValue: 'Badges' })}
+              </Text>
+            </TouchableOpacity>
             <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
           </View>
           <View style={styles.checkInTopRow}>
@@ -817,6 +779,37 @@ const HomeSrc = memo(() => {
               ) : null}
             </View>
           </View>
+          {streak?.checkedInToday ? (
+            // Solid white pill + blue checkmark — was a translucent
+            // white-on-white-ish fill (too low contrast to read clearly
+            // against the gradient), now matches checkInButton's own solid
+            // white pill exactly (just a checkmark + label instead of an
+            // actionable label — this is a completed state, not a live
+            // action).
+            <View style={[styles.checkInButton, styles.checkedInPill]}>
+              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
+              <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
+                {t('home:checked_in_today', { defaultValue: 'Checked in' })}
+              </Text>
+            </View>
+          ) : (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              disabled={checkingIn || streakLoading || !!streakError}
+              onPress={onCheckIn}
+              style={[
+                styles.checkInButton,
+                (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
+              ]}>
+              {checkingIn ? (
+                <Spinner size="tiny" status="primary" />
+              ) : (
+                <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
+                  {t('home:check_in', { defaultValue: 'Check In' })}
+                </Text>
+              )}
+            </TouchableOpacity>
+          )}
         {/* Weekly Practice chart removed from here (decluttering pass) — it
             was a plain duplicate of MyProgress.tsx's own "This week" chart
             (same computeWeeklyPractice data), reachable one tap away via
@@ -1164,25 +1157,39 @@ const themedStyles = StyleService.create({
   // instead of the one there", the uploaded 3D gold medal/ribbon graphic —
   // see assets/images/index.ts's `xpMedal` for the asset itself).
   // Redesign v3: now sits in normal flow inside checkInHeaderRow, right
-  // after the check-in button/pill (was position:'absolute', independent
-  // of the button's own position) — explicit width/height still needed
-  // since this is a real image with its own aspect ratio (~36:46, taller
-  // than wide because of the ribbon tails), not a square glyph.
+  // after the Badges button (was position:'absolute') — explicit
+  // width/height still needed since this is a real image with its own
+  // aspect ratio (~36:46, taller than wide because of the ribbon tails),
+  // not a square glyph.
   checkInMedalIcon: {
     width: 28,
     height: 36,
   },
-  // Redesign v3 (product request — "remove the badge button from the top
-  // and place it before the medal icon... so users can click it from
-  // there"): houses the check-in button/pill + medal icon as one row at
-  // the very top of the card, right-aligned as a pair (was two separate
-  // elements — a right-aligned row below the ring, and an
-  // absolute-positioned icon in the corner).
+  // Redesign v3 (product request — "the badge button... place it before
+  // the medal icon in the XP card so that its more visible to users and
+  // they can click it"): the "Badges" pill used to live in the scrollable
+  // nav row above this card (see that JSX's own comment); it's now here
+  // instead, immediately before the medal icon, both right-aligned at the
+  // very top of the card.
   checkInHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
     marginBottom: 14,
+  },
+  // Small outlined pill, sized down from checkInButton (h10 label, tighter
+  // padding) since it now shares a compact top-corner row with the medal
+  // icon rather than being the card's single primary action.
+  checkInBadgesButton: {
+    marginRight: 8,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#0063f8',
   },
   checkInTopRow: {
     flexDirection: 'row',
@@ -1216,12 +1223,13 @@ const themedStyles = StyleService.create({
   checkedInIcon: {
     tintColor: '#0063f8',
   },
-  // Now lives inside checkInHeaderRow (a real flex row, not its own
-  // full-width row) alongside the medal icon — no more alignSelf/marginTop
-  // needed to right-align it on its own line. No minWidth, so it's exactly
-  // as wide as its icon/spinner + numberOfLines=1 label need, never more.
+  // alignSelf: 'flex-end' — its own row, hugging only its own content and
+  // right-aligned (below the ring+XP row and the checkInHeaderRow above
+  // it). No minWidth, so it's exactly as wide as its icon/spinner +
+  // numberOfLines=1 label need, never more.
   checkInButton: {
-    marginRight: 10,
+    alignSelf: 'flex-end',
+    marginTop: 12,
     borderRadius: 999,
     paddingVertical: 10,
     paddingHorizontal: 16,
