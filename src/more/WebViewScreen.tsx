@@ -220,7 +220,13 @@ const WebViewScreen = memo(() => {
       .addApplication({
         company: job.company,
         role: job.role,
-        location: '',
+        // BUG FIX: was hardcoded to '' — the location was always known
+        // (route.params.job.location, carried over from the originating
+        // JobAlertProps by JobAlertDetails.tsx's onApply) but never
+        // actually sent, so every auto-tracked application showed a blank
+        // location regardless of what the real job listing said (mobile
+        // bug report: "the job is not showing location").
+        location: job.location ?? '',
         logo: Images.avatar1,
         appliedDate: Date.now(),
         stage: Application_Stage_Enum.Applied,

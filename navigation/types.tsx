@@ -299,6 +299,13 @@ export type RootStackParamList = {
       role: string;
       applyUrl: string;
       companyLogoUrl?: string;
+      // Bug report ("the job is not showing location") — carried over from
+      // the originating JobAlertProps.location so trackApplication() below
+      // can pass a real value on to POST /tracker/applications instead of
+      // the hardcoded empty string this used to send. Optional since not
+      // every JobAlert has a known location, and not every WebViewScreen
+      // call originates from one.
+      location?: string;
     };
   };
   Subscription:

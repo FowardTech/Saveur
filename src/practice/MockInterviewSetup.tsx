@@ -372,7 +372,9 @@ const MockInterviewSetup = memo(() => {
           onChangeText={setCompanySearch}
           style={styles.companySearchInput}
           textStyle={globalStyle.inputText}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
+          accessoryLeft={props => (
+            <Icon {...props} style={[props.style, styles.accessoryLeftSpacing]} pack="assets" name="search" />
+          )}
         />
         <View style={styles.chipsWrap}>
           {filteredCompanies.map((name, i) => {
@@ -565,6 +567,14 @@ const themedStyles = StyleService.create({
   companySearchInput: {
     ...globalStyle.inputField,
     marginBottom: 12,
+  },
+  // Same fix as ApplicationsTab.tsx's own searchInput (bug report: "the
+  // search icon is touching the edge of the input field") — see that
+  // file's comment. Only applies to the company-search Input above (the
+  // one with accessoryLeft); the plain Target Role Input reuses
+  // companySearchInput too but has no icon, so this is harmless there.
+  accessoryLeftSpacing: {
+    marginLeft: 14,
   },
   chip: {
     paddingVertical: 10,

@@ -16,6 +16,7 @@ import {useTranslation} from 'react-i18next';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
 import {Application_Stage_Enum, JobApplicationProps} from 'constants/Types';
+import {isRemoteLocation} from 'utils/jobLocation';
 
 export interface ApplicationItemProps {
   item: JobApplicationProps;
@@ -76,12 +77,30 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
           </View>
         </Flex>
         <Layout level={'2'} style={styles.bottom}>
-          <Flex justify="flex-start" itemsCenter mb={8}>
-            <Icon pack="assets" name="location16" style={styles.icon} />
-            <Text category="h8-s" ml={8}>
-              {item.location}
-            </Text>
-          </Flex>
+          {/* Bug report ("the job is not showing location") — root cause
+              was upstream (WebViewScreen.tsx's trackApplication() always
+              sent an empty location string), not this render, but a
+              blank/empty `item.location` should still not render an
+              icon next to nothing — hide the whole row instead, same as
+              `nextStep` below. Also now shows a "Remote" tag when the
+              location text itself says so (see utils/jobLocation.ts —
+              there's no separate structured remote flag anywhere in the
+              data model to read instead). */}
+          {item.location ? (
+            <Flex justify="flex-start" itemsCenter mb={8}>
+              <Icon pack="assets" name="location16" style={styles.icon} />
+              <Text category="h8-s" ml={8}>
+                {item.location}
+              </Text>
+              {isRemoteLocation(item.location) ? (
+                <View style={styles.remoteTag}>
+                  <Text category="h10" bold status="info">
+                    {t('request:remote_tag', {defaultValue: 'Remote'})}
+                  </Text>
+                </View>
+              ) : null}
+            </Flex>
+          ) : null}
           <Flex justify="flex-start" itemsCenter>
             <Icon pack="assets" name="calendar" style={styles.icon} />
             <Text category="h8-s" ml={8}>
@@ -139,6 +158,16 @@ const themedStyles = StyleService.create({
     width: 14,
     height: 14,
     tintColor: 'text-placeholder-color',
+  },
+  // "Remote" tag next to the location text — same small pill treatment
+  // as stageTag below, just a distinct info-blue tint so it doesn't read
+  // as another pipeline-stage badge.
+  remoteTag: {
+    marginLeft: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'color-primary-transparent-100',
   },
   stageTag: {
     paddingVertical: 6,

@@ -167,7 +167,9 @@ const ApplicationsTab = memo(() => {
           onChangeText={setQuery}
           style={styles.searchInput}
           textStyle={globalStyle.inputText}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
+          accessoryLeft={props => (
+            <Icon {...props} style={[props.style, styles.accessoryLeftSpacing]} pack="assets" name="search" />
+          )}
         />
       ) : null}
       {isFiltering && activeApplications.length === 0 && closedApplications.length === 0 ? (
@@ -221,5 +223,15 @@ const themedStyles = StyleService.create({
   searchInput: {
     ...globalStyle.inputField,
     marginBottom: 20,
+  },
+  // Bug report ("the search icon is touching the edge of the input
+  // field") — Eva's own Input theme mapping gives accessoryLeft a
+  // marginHorizontal via iconMarginHorizontal, but in practice it reads as
+  // flush against the border. Same explicit fix already used on
+  // JobPreferences.tsx/SignupSecondStep.tsx's own search inputs: layer an
+  // extra marginLeft on top of Eva's own icon style instead of replacing
+  // it.
+  accessoryLeftSpacing: {
+    marginLeft: 14,
   },
 });

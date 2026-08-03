@@ -81,6 +81,12 @@ const JobAlertDetails = memo(() => {
         role: job.title,
         applyUrl: job.applyUrl,
         companyLogoUrl: job.companyLogoUrl,
+        // Bug report ("the job is not showing location") — this was
+        // dropped here even though `job.location` (JobAlertProps) is
+        // right there, so WebViewScreen's trackApplication() never had a
+        // real value to send and always tracked the application with an
+        // empty location.
+        location: job.location,
       },
     });
   };

@@ -97,7 +97,9 @@ const PracticeHistoryTab = memo(() => {
           onChangeText={setQuery}
           style={styles.searchInput}
           textStyle={globalStyle.inputText}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="search" />}
+          accessoryLeft={props => (
+            <Icon {...props} style={[props.style, styles.accessoryLeftSpacing]} pack="assets" name="search" />
+          )}
         />
       ) : null}
       {isEmpty ? (
@@ -153,5 +155,11 @@ const themedStyles = StyleService.create({
   searchInput: {
     ...globalStyle.inputField,
     marginBottom: 20,
+  },
+  // Same fix as ApplicationsTab.tsx's own searchInput (bug report: "the
+  // search icon is touching the edge of the input field") — see that
+  // file's comment.
+  accessoryLeftSpacing: {
+    marginLeft: 14,
   },
 });
