@@ -134,7 +134,7 @@ const ApplicationDetails = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
-          title={<Text status={'primary'} center category="h3">{t('request:requestDetails')}</Text>}
+          title={<Text status={'primary'} center category="h6" bold>{t('request:requestDetails')}</Text>}
         />
         <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
           <Text category="h9-s" status="placeholder" center>{t('common:loading', {defaultValue: 'Loading…'})}</Text>
@@ -148,7 +148,7 @@ const ApplicationDetails = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
-          title={<Text status={'primary'} center category="h3">{t('request:requestDetails')}</Text>}
+          title={<Text status={'primary'} center category="h6" bold>{t('request:requestDetails')}</Text>}
         />
         <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
           <Text category="h9-s" status="danger" center mh={24}>
@@ -167,7 +167,7 @@ const ApplicationDetails = memo(() => {
       <TopNavigation
         accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
         title={
-          <Text status={'primary'} center category="h3">
+          <Text status={'primary'} center category="h6" bold>
             {t('request:requestDetails')}
           </Text>
         }
