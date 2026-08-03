@@ -1175,7 +1175,12 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginBottom: 14,
+    // Product request ("move the XP progress bar and the XP value up to
+    // cover the space above") — was 14, which left a visible gap between
+    // this row (Badges pill + medal icon) and the ring/XP row below it.
+    // Tightened so the ring/XP row sits right up against this one instead
+    // of floating lower in the card with dead space above it.
+    marginBottom: 2,
   },
   // Small outlined pill, sized down from checkInButton (h10 label, tighter
   // padding) since it now shares a compact top-corner row with the medal
