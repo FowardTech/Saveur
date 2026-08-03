@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -9,6 +9,7 @@ import {
 } from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -21,6 +22,7 @@ import * as coachService from 'services/coachService';
 import {SuggestedTopic} from 'services/coachService';
 import {AuthContext} from '../../AuthContext';
 import * as configService from 'services/configService';
+import ThemeContext from '../../ThemeContext';
 
 // "Coach" tab — the AI career coach is a single persistent contact, not a
 // caregiver-style inbox. Tapping the hero card or any suggested topic opens
@@ -34,6 +36,8 @@ const MessagesScreen = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['message', 'common']);
   const {profile} = React.useContext(AuthContext);
+  const {theme: appTheme} = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
 
   const onOpenChat = React.useCallback(() => {
     navigate('MessagesStack', {screen: 'Chat'});
@@ -60,19 +64,50 @@ const MessagesScreen = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('message:title').toString()} />
       <Content contentContainerStyle={styles.content} padder>
+        {/* Product bug report ("you did not touch the second [card]" — this
+            hero, the "AI Career Coach" card on the Coach tab, is a
+            different card than the ones already fixed on Home/Practice; it
+            had never been given a gradient or a dark-mode design at all,
+            just a flat `button-basic-color` fill. Same fix pattern as
+            those cards: the gradient is a decorative
+            StyleSheet.absoluteFillObject layer behind Flex's own normal-
+            flow row content (Flex already renders a plain TouchableOpacity,
+            so — unlike a LinearGradient used as the container itself —
+            this sizes/pads correctly with no clipping risk). Light mode
+            gets a real two-stop brand-blue gradient (color-primary-200/
+            700); dark mode gets its own two-tone dark-navy gradient
+            (background-basic-color-2/3) instead of inheriting the light
+            mode's blue. */}
         <Flex
           style={styles.hero}
           justify="flex-start"
           itemsCenter
           onPress={onOpenChat}>
+          <LinearGradient
+            colors={
+              isDarkMode
+                ? [theme['background-basic-color-2'], theme['background-basic-color-3']]
+                : [theme['color-primary-200'], theme['color-primary-700']]
+            }
+            start={{x: 0, y: 0}}
+            end={{x: 1, y: 1}}
+            style={StyleSheet.absoluteFillObject}
+          />
           <View style={styles.heroAvatar}>
             <BrandWordmark markOnly size={56} />
           </View>
           <View style={globalStyle.flexOne}>
-            <Text category="h6" status="control" bold>
+            <Text
+              category="h6"
+              bold
+              style={{color: isDarkMode ? theme['color-badge-info-text'] : '#fff'}}>
               {t('message:ai_coach_name', {defaultValue: 'AI Career Coach'})}
             </Text>
-            <Text category="h9-s" status="control" mt={4} numberOfLines={2}>
+            <Text
+              category="h9-s"
+              mt={4}
+              numberOfLines={2}
+              style={{color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)'}}>
               {t('message:ai_coach_subtitle', {
                 defaultValue: 'Ask me anything about your job search — I’m here to help.',
               })}
@@ -81,7 +116,7 @@ const MessagesScreen = memo(() => {
           <Icon
             pack="assets"
             name="arrowRight"
-            style={[globalStyle.icon16, {tintColor: theme['text-control-color']}]}
+            style={[globalStyle.icon16, {tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff'}]}
           />
         </Flex>
 
@@ -142,7 +177,13 @@ const themedStyles = StyleService.create({
     marginTop: 16,
     padding: 20,
     borderRadius: 24,
-    backgroundColor: 'button-basic-color',
+    overflow: 'hidden',
+    // Opaque Android shadow fallback only — always fully covered by the
+    // absolute-fill gradient rendered as this Flex's first child (see the
+    // JSX comment). Flex renders a plain TouchableOpacity/View, so the
+    // gradient sits behind its real normal-flow content instead of being
+    // the sizing container itself.
+    backgroundColor: 'color-primary-500',
     ...globalStyle.shadowBtn,
   },
   heroAvatar: {
