@@ -16,6 +16,7 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import DailyChallengeCard from './DailyChallengeCard';
 import PersonalizationCard from './PersonalizationCard';
+import WeekStrip from './WeekStrip';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -545,6 +546,15 @@ const HomeSrc = memo(() => {
         notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
+        {/* Day-of-week calendar strip (product request item, layout
+            reference: a light/clean fitness-app screenshot's "Mon..Sun"
+            week strip with today highlighted) — own self-contained
+            component (src/home/WeekStrip.tsx) rather than inline here,
+            same reasoning as DailyChallengeCard/PersonalizationCard. Only
+            marks TODAY specially (highlighted circle + a checked-in dot) —
+            this app has no per-date practice log to honestly mark other
+            days with, see that component's own comment. */}
+        <WeekStrip checkedInToday={!!streak?.checkedInToday} />
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}

@@ -89,5 +89,12 @@
   "personalization_card_title": "खुद को बेहतर जानें",
   "personalization_card_subtitle": "यह ऐप हर हफ़्ते आपको थोड़ा और बेहतर जानता है.",
   "career_dna_row_subtitle": "आपकी AI-निर्मित व्यक्तित्व और कार्यशैली प्रोफ़ाइल",
-  "dream_companies_row_subtitle": "उन कंपनियों को ट्रैक करें जिनमें आप काम करना चाहते हैं"
+  "dream_companies_row_subtitle": "उन कंपनियों को ट्रैक करें जिनमें आप काम करना चाहते हैं",
+  "day_short_mon": "सोम",
+  "day_short_tue": "मंगल",
+  "day_short_wed": "बुध",
+  "day_short_thu": "गुरु",
+  "day_short_fri": "शुक्र",
+  "day_short_sat": "शनि",
+  "day_short_sun": "रवि"
 }

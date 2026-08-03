@@ -89,5 +89,12 @@
   "personalization_card_title": "تعرّف على نفسك بشكل أفضل",
   "personalization_card_subtitle": "يتعرّف عليك التطبيق أكثر قليلاً كل أسبوع.",
   "career_dna_row_subtitle": "ملفك الشخصي لسمات الشخصية وأسلوب العمل الذي أنشأه الذكاء الاصطناعي",
-  "dream_companies_row_subtitle": "تتبّع الشركات التي ترغب في العمل بها"
+  "dream_companies_row_subtitle": "تتبّع الشركات التي ترغب في العمل بها",
+  "day_short_mon": "اثن",
+  "day_short_tue": "ثلا",
+  "day_short_wed": "أرب",
+  "day_short_thu": "خمي",
+  "day_short_fri": "جمع",
+  "day_short_sat": "سبت",
+  "day_short_sun": "أحد"
 }

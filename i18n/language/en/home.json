@@ -90,5 +90,12 @@
   "personalization_card_title": "Know Yourself Better",
   "personalization_card_subtitle": "The app gets to know you a little more every week.",
   "career_dna_row_subtitle": "Your AI-built personality & work-style profile",
-  "dream_companies_row_subtitle": "Track the companies you want to work for"
+  "dream_companies_row_subtitle": "Track the companies you want to work for",
+  "day_short_mon": "Mon",
+  "day_short_tue": "Tue",
+  "day_short_wed": "Wed",
+  "day_short_thu": "Thu",
+  "day_short_fri": "Fri",
+  "day_short_sat": "Sat",
+  "day_short_sun": "Sun"
 }

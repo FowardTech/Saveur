@@ -89,5 +89,12 @@
   "personalization_card_title": "自分をもっと知る",
   "personalization_card_subtitle": "このアプリは毎週少しずつあなたのことを理解していきます。",
   "career_dna_row_subtitle": "AIが作成したあなたの性格・仕事スタイルのプロフィール",
-  "dream_companies_row_subtitle": "働きたい企業を追跡しましょう"
+  "dream_companies_row_subtitle": "働きたい企業を追跡しましょう",
+  "day_short_mon": "月",
+  "day_short_tue": "火",
+  "day_short_wed": "水",
+  "day_short_thu": "木",
+  "day_short_fri": "金",
+  "day_short_sat": "土",
+  "day_short_sun": "日"
 }

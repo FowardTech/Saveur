@@ -89,5 +89,12 @@
   "personalization_card_title": "Conócete mejor",
   "personalization_card_subtitle": "La aplicación te conoce un poco más cada semana.",
   "career_dna_row_subtitle": "Tu perfil de personalidad y estilo de trabajo creado por IA",
-  "dream_companies_row_subtitle": "Haz seguimiento de las empresas para las que quieres trabajar"
+  "dream_companies_row_subtitle": "Haz seguimiento de las empresas para las que quieres trabajar",
+  "day_short_mon": "Lun",
+  "day_short_tue": "Mar",
+  "day_short_wed": "Mié",
+  "day_short_thu": "Jue",
+  "day_short_fri": "Vie",
+  "day_short_sat": "Sáb",
+  "day_short_sun": "Dom"
 }

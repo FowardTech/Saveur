@@ -89,5 +89,12 @@
   "personalization_card_title": "更了解你自己",
   "personalization_card_subtitle": "这款应用每周都会更了解你一点。",
   "career_dna_row_subtitle": "AI 为你构建的性格与工作风格档案",
-  "dream_companies_row_subtitle": "追踪你想加入的公司"
+  "dream_companies_row_subtitle": "追踪你想加入的公司",
+  "day_short_mon": "周一",
+  "day_short_tue": "周二",
+  "day_short_wed": "周三",
+  "day_short_thu": "周四",
+  "day_short_fri": "周五",
+  "day_short_sat": "周六",
+  "day_short_sun": "周日"
 }

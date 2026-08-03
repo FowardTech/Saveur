@@ -89,5 +89,12 @@
   "personalization_card_title": "나를 더 잘 알기",
   "personalization_card_subtitle": "이 앱은 매주 당신을 조금씩 더 알아갑니다.",
   "career_dna_row_subtitle": "AI가 만든 나의 성격 및 업무 스타일 프로필",
-  "dream_companies_row_subtitle": "일하고 싶은 회사를 추적하세요"
+  "dream_companies_row_subtitle": "일하고 싶은 회사를 추적하세요",
+  "day_short_mon": "월",
+  "day_short_tue": "화",
+  "day_short_wed": "수",
+  "day_short_thu": "목",
+  "day_short_fri": "금",
+  "day_short_sat": "토",
+  "day_short_sun": "일"
 }

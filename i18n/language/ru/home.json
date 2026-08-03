@@ -89,5 +89,12 @@
   "personalization_card_title": "Узнайте себя лучше",
   "personalization_card_subtitle": "Приложение узнаёт вас всё лучше с каждой неделей.",
   "career_dna_row_subtitle": "Ваш профиль личности и стиля работы, созданный ИИ",
-  "dream_companies_row_subtitle": "Отслеживайте компании, в которых хотите работать"
+  "dream_companies_row_subtitle": "Отслеживайте компании, в которых хотите работать",
+  "day_short_mon": "Пн",
+  "day_short_tue": "Вт",
+  "day_short_wed": "Ср",
+  "day_short_thu": "Чт",
+  "day_short_fri": "Пт",
+  "day_short_sat": "Сб",
+  "day_short_sun": "Вс"
 }
