@@ -1177,7 +1177,15 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    // BUG FIX (product report: "the badge button and the check-in pill are
+    // looking so bad in dark mode. They cannot be white background in dark
+    // mode") — was a hardcoded '#FFFFFF', identical to checkInButton's own
+    // pre-existing bug. 'background-basic-color-3' IS defined per-theme
+    // (light.json: light gray, dark.json: "#2A2A42" — lighter than this
+    // card's own 'background-basic-color-2' fill, so the pill still reads
+    // as a raised chip against the card in both themes) instead of pure
+    // white in dark mode.
+    backgroundColor: 'background-basic-color-3',
     borderWidth: 1,
     borderColor: '#0063f8',
   },
@@ -1228,7 +1236,14 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
+    // BUG FIX (product report: "the badge button and the check-in pill are
+    // looking so bad in dark mode. They cannot be white background in dark
+    // mode") — was a hardcoded '#FFFFFF', same fix/reasoning as
+    // checkInBadgesButton just above: 'background-basic-color-3' adapts
+    // per theme instead of staying pure white in dark mode. Covers both
+    // the live "Check In" button and (via [checkInButton, checkedInPill])
+    // the "Checked in" completed-state pill.
+    backgroundColor: 'background-basic-color-3',
     borderWidth: 1,
     borderColor: '#0063f8'
   },
