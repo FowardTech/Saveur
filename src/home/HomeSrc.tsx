@@ -744,7 +744,51 @@ const HomeSrc = memo(() => {
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
             />
+          {/* Redesign v3 (product request — "remove the badge button from
+              the top and place it before the medal icon... so users can
+              click it from there"): the check-in pill/button used to sit in
+              its own row BELOW the ring+XP row, right-aligned; the medal
+              icon sat independently absolute-positioned in the card's top
+              corner the whole time. Both now share one row at the very top
+              of the card instead — pill/button first (start of the row),
+              medal icon right after it (still in the same top-right
+              corner visually, just in normal flow now instead of
+              position:'absolute') — so the actionable control is the first
+              thing in the card, immediately next to the medal it's tied to. */}
+          <View style={styles.checkInHeaderRow}>
+            {streak?.checkedInToday ? (
+              // Solid white pill + blue checkmark — was a translucent
+              // white-on-white-ish fill (too low contrast to read clearly
+              // against the gradient), now matches checkInButton's own solid
+              // white pill exactly (just a checkmark + label instead of an
+              // actionable label — this is a completed state, not a live
+              // action).
+              <View style={[styles.checkInButton, styles.checkedInPill]}>
+                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
+                <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
+                  {t('home:checked_in_today', { defaultValue: 'Checked in' })}
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                disabled={checkingIn || streakLoading || !!streakError}
+                onPress={onCheckIn}
+                style={[
+                  styles.checkInButton,
+                  (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
+                ]}>
+                {checkingIn ? (
+                  <Spinner size="tiny" status="primary" />
+                ) : (
+                  <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
+                    {t('home:check_in', { defaultValue: 'Check In' })}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
             <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
+          </View>
           <View style={styles.checkInTopRow}>
             <CircularProgress
               progress={Math.min(100, (streakDays / 7) * 100)}
@@ -773,49 +817,6 @@ const HomeSrc = memo(() => {
               ) : null}
             </View>
           </View>
-          
-          {/* Redesign v2 follow-up (product bug report, twice now — content
-              kept getting clipped sharing a row with the ring+XP text,
-              even after removing the button's minWidth). Rather than keep
-              guessing at exact text/font pixel widths I can't verify
-              without a device, this is now structurally impossible to
-              overflow: its own row, `alignSelf: 'flex-end'` (not a
-              full-width stretched row, not sharing space with any
-              sibling), so the pill/button hugs only its own short content
-              and is right-aligned within whatever width is actually
-              available — it cannot be squeezed by anything else on
-              screen. */}
-          {streak?.checkedInToday ? (
-            // Solid white pill + blue checkmark — was a translucent
-            // white-on-white-ish fill (too low contrast to read clearly
-            // against the gradient), now matches checkInButton's own solid
-            // white pill exactly (just a checkmark + label instead of an
-            // actionable label — this is a completed state, not a live
-            // action).
-            <View style={[styles.checkInButton, styles.checkedInPill]}>
-              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
-              <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
-                {t('home:checked_in_today', { defaultValue: 'Checked in' })}
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              disabled={checkingIn || streakLoading || !!streakError}
-              onPress={onCheckIn}
-              style={[
-                styles.checkInButton,
-                (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
-              ]}>
-              {checkingIn ? (
-                <Spinner size="tiny" status="primary" />
-              ) : (
-                <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
-                  {t('home:check_in', { defaultValue: 'Check In' })}
-                </Text>
-              )}
-            </TouchableOpacity>
-          )}
         {/* Weekly Practice chart removed from here (decluttering pass) — it
             was a plain duplicate of MyProgress.tsx's own "This week" chart
             (same computeWeeklyPractice data), reachable one tap away via
@@ -1114,9 +1115,19 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     marginTop: 16,
     borderRadius: 20,
-    backgroundColor: 'color-primary-000',
-    
-    
+    // BUG FIX (product report: "make the XP card and its content look nice
+    // in dark mode its looking so bad") — 'color-primary-000' is a fixed
+    // "#FFFFFF" in constants/theme/appTheme.json with no dark-mode override
+    // anywhere (dark.json never redefines it), so this card stayed pure
+    // white even in dark mode, clashing hard against the dark surrounding
+    // screen. 'background-basic-color-2' IS defined per-theme (light.json:
+    // "$color-basic-100" -> the same "#FFFFFF", so light mode is visually
+    // unchanged; dark.json: "#1B1B2E", a dark navy that actually matches
+    // the rest of a dark-mode screen) — the ring/text/button colors below
+    // are all either already blue-on-light-surface (readable against a
+    // dark navy card too) or a solid white pill, so no other change is
+    // needed for this card to read correctly in both themes.
+    backgroundColor: 'background-basic-color-2',
   },
   // Inner layer: `overflow:'hidden'` so the corner accent (see JSX comment)
   // clips to the card's rounded corners, `position:'relative'` so that
@@ -1151,18 +1162,27 @@ const themedStyles = StyleService.create({
   },
   // Gamification cue (product request — "use this medal in the XP card
   // instead of the one there", the uploaded 3D gold medal/ribbon graphic —
-  // see assets/images/index.ts's `xpMedal` for the asset itself). Pinned
-  // to the same corner as the accent above, right above where the
-  // check-in pill sits. Explicit width/height (not just a bounding icon
-  // size) since this is a real image with its own aspect ratio (~36:46,
-  // taller than wide because of the ribbon tails), not a square glyph.
+  // see assets/images/index.ts's `xpMedal` for the asset itself).
+  // Redesign v3: now sits in normal flow inside checkInHeaderRow, right
+  // after the check-in button/pill (was position:'absolute', independent
+  // of the button's own position) — explicit width/height still needed
+  // since this is a real image with its own aspect ratio (~36:46, taller
+  // than wide because of the ribbon tails), not a square glyph.
   checkInMedalIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 14,
     width: 28,
     height: 36,
-    zIndex: 2,
+  },
+  // Redesign v3 (product request — "remove the badge button from the top
+  // and place it before the medal icon... so users can click it from
+  // there"): houses the check-in button/pill + medal icon as one row at
+  // the very top of the card, right-aligned as a pair (was two separate
+  // elements — a right-aligned row below the ring, and an
+  // absolute-positioned icon in the corner).
+  checkInHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    marginBottom: 14,
   },
   checkInTopRow: {
     flexDirection: 'row',
@@ -1196,13 +1216,12 @@ const themedStyles = StyleService.create({
   checkedInIcon: {
     tintColor: '#0063f8',
   },
-  // alignSelf: 'flex-end' — its own row, hugging only its own content and
-  // right-aligned (see the JSX comment above for why this replaced sharing
-  // a row with the ring+XP text). No minWidth, so it's exactly as wide as
-  // its icon/spinner + numberOfLines=1 label need, never more.
+  // Now lives inside checkInHeaderRow (a real flex row, not its own
+  // full-width row) alongside the medal icon — no more alignSelf/marginTop
+  // needed to right-align it on its own line. No minWidth, so it's exactly
+  // as wide as its icon/spinner + numberOfLines=1 label need, never more.
   checkInButton: {
-    alignSelf: 'flex-end',
-    marginTop: 12,
+    marginRight: 10,
     borderRadius: 999,
     paddingVertical: 10,
     paddingHorizontal: 16,
