@@ -730,16 +730,16 @@ const HomeSrc = memo(() => {
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
             />
-          {/* Redesign v3 (product CORRECTION — the "badge button" in the
-              earlier request meant the "Badges" pill from the scrollable nav
-              row above (opens BadgesModal), NOT the check-in pill this used
-              to hold. That pill/medal restructuring is reverted below: the
-              check-in pill/button is back in its own row under the ring+XP
-              row, and the medal icon is back to marking the card's top-right
-              corner. The actual "Badges" pill has been removed from the nav
-              row above and now lives here instead, immediately before the
-              medal icon, so it's more visible and inside the card it's
-              actually about. */}
+          {/* Redesign v5 (product follow-up — "now move the badge button to
+              the very top"): the Badges button (+ medal icon) is back in
+              its own row, above the ring/XP row -- the very first thing in
+              the card -- rather than sharing a row with the ring, where it
+              read as vertically "sunk" against the ring's full 100px
+              height. checkInHeaderRow's marginBottom stays tight (2, not
+              the original 14) so there's still no dead-space gap between
+              this row and the ring/XP row below it, per the still-standing
+              "move the XP progress bar... up to cover the space above"
+              request. */}
           <View style={styles.checkInHeaderRow}>
             <TouchableOpacity
               activeOpacity={0.8}
