@@ -63,6 +63,11 @@ export interface StartSessionConfig {
   // contract, only `duration_min`), kept only to derive a default
   // `durationMin` for callers that haven't been updated to pass it directly.
   timed?: boolean;
+  // AI Interview Laboratory (product request item) — which interviewer
+  // personality to generate questions in (see configService.ts's
+  // InterviewPersona catalog and MockInterviewSetup.tsx's picker). Omitted
+  // or "standard" means the original, no-persona behavior.
+  persona?: string;
 }
 
 const FALLBACK_DURATION_MIN = 30;
@@ -191,6 +196,7 @@ function toStartSessionWire(config: StartSessionConfig) {
     duration_min: durationMin,
     mode: MODE_TO_WIRE[config.mode],
     language: currentLanguage(),
+    persona: config.persona,
   };
 }
 

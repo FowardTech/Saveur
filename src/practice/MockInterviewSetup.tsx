@@ -22,6 +22,7 @@ import { RootStackParamList, MockInterviewSetupScreenNavigationProp } from 'navi
 import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
+import * as configService from 'services/configService';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
@@ -60,6 +61,21 @@ const MockInterviewSetup = memo(() => {
   );
   const [durationMin, setDurationMin] = React.useState(route.params?.durationMin ?? 30);
   const [isStarting, setIsStarting] = React.useState(false);
+  // AI Interview Laboratory (product request item) — "standard" (undefined
+  // on the wire) means the original, no-persona interviewer tone; picking
+  // one of the admin-configured personas below changes HOW the AI asks
+  // questions, never what topic/type is being interviewed on. The catalog
+  // itself (name/description/icon, already translated server-side for the
+  // user's language — see content.py's get_public_config) comes from the
+  // same app-launch config fetch every other feature flag/catalog in this
+  // app reads, so there's no extra network call just for this picker.
+  const [persona, setPersona] = React.useState<string | undefined>(undefined);
+  const enabledPersonas = React.useMemo(
+    () => configService.getCachedConfig().interview_personas.items.filter(p => p.enabled),
+    [],
+  );
+  const showPersonaPicker =
+    configService.isFeatureEnabled('interview_laboratory') && enabledPersonas.length > 0;
   // undefined/COMPANY_ANY both mean "no specific company" — kept as
   // undefined when threading through to the session config/navigation so
   // downstream screens only see a real company name or nothing.
@@ -168,6 +184,7 @@ const MockInterviewSetup = memo(() => {
         role,
         company,
         durationMin,
+        persona,
       });
       if (interviewType === Interview_Type_Enum.Coding) {
         navigate('CodingInterview', { sessionId, interviewType });
@@ -379,6 +396,46 @@ const MockInterviewSetup = memo(() => {
           })}
         </View>
 
+        {showPersonaPicker ? (
+          <>
+            <Text category="h8" bold status="placeholder" mt={32} mb={4}>
+              {t('find:interviewer_personality', { defaultValue: 'Interviewer Personality' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mb={16}>
+              {t('find:interviewer_personality_description', {
+                defaultValue: 'Practice against a specific interviewer style — the AI Interview Laboratory.',
+              })}
+            </Text>
+            <View style={styles.personaGrid}>
+              {enabledPersonas.map(p => {
+                const active = persona === p.id;
+                return (
+                  <TouchableOpacity
+                    key={p.id}
+                    activeOpacity={0.7}
+                    onPress={() => setPersona(active ? undefined : p.id)}
+                    style={[
+                      styles.personaCard,
+                      { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                    ]}>
+                    <Icon
+                      pack="eva"
+                      name={p.icon || 'person-outline'}
+                      style={[globalStyle.icon20, { tintColor: active ? theme['color-primary-500'] : theme['text-placeholder-color'] }]}
+                    />
+                    <Text category="h9" bold mt={6} status={active ? 'link' : 'basic'} center numberOfLines={2}>
+                      {p.name}
+                    </Text>
+                    <Text category="h10" status="placeholder" mt={2} center numberOfLines={2}>
+                      {p.description}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
+
         <Text category="h8" bold status="placeholder" mt={32} mb={4}>
           {t('find:session_length', { defaultValue: 'Session Length' })}
         </Text>
@@ -476,6 +533,21 @@ const themedStyles = StyleService.create({
     marginRight: '2%',
     marginBottom: 12,
     position: 'relative',
+  },
+  personaGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  personaCard: {
+    width: '48%',
+    borderWidth: 2,
+    borderRadius: 16,
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    marginBottom: 12,
+    backgroundColor: 'background-basic-color-1',
   },
   lockBadge: {
     position: 'absolute',

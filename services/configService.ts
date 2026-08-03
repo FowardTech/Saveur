@@ -42,6 +42,10 @@ export interface FeatureFlags {
   student_verification: boolean;
   career_roadmap: boolean;
   practical_scenarios: boolean;
+  interview_laboratory: boolean;
+  career_dna: boolean;
+  dream_company_dashboard: boolean;
+  daily_challenge: boolean;
 }
 
 export interface ReleaseConfig {
@@ -131,6 +135,38 @@ export interface StudentEligibilityConfig {
   discount_percent: number;
 }
 
+// AI Interview Laboratory — interviewer personality catalog (see
+// saveur-backend's app_config_service.py "interview_personas" section and
+// src/practice/MockInterviewSetup.tsx's persona picker). `style` ships here
+// too (see that section's own comment for why) but nothing on mobile reads
+// it — it's only ever used server-side when generating questions.
+export interface InterviewPersona {
+  id: string;
+  enabled: boolean;
+  name: string;
+  description: string;
+  icon: string;
+  style: string;
+}
+
+export interface InterviewPersonasConfig {
+  items: InterviewPersona[];
+}
+
+// Surprise Daily Challenge — challenge type labels (see saveur-backend's
+// "daily_challenge" section and src/home/DailyChallengeCard.tsx).
+export interface DailyChallengeType {
+  id: string;
+  enabled: boolean;
+  name: string;
+}
+
+export interface DailyChallengeConfig {
+  enabled: boolean;
+  xp_reward: number;
+  types: DailyChallengeType[];
+}
+
 export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
@@ -140,6 +176,8 @@ export interface AppConfig {
   about: AboutConfig;
   store: StoreConfig;
   student_eligibility: StudentEligibilityConfig;
+  interview_personas: InterviewPersonasConfig;
+  daily_challenge: DailyChallengeConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -165,6 +203,10 @@ const DEFAULT_CONFIG: AppConfig = {
     student_verification: true,
     career_roadmap: true,
     practical_scenarios: true,
+    interview_laboratory: true,
+    career_dna: true,
+    dream_company_dashboard: true,
+    daily_challenge: true,
   },
   release: {
     ios_min_version: '',
@@ -181,6 +223,8 @@ const DEFAULT_CONFIG: AppConfig = {
   about: {tagline: '', description: '', contact_email: '', website_url: ''},
   store: {ios_app_store_id: '', android_package_name: 'com.saveur.app', ios_app_store_url: ''},
   student_eligibility: {eligible_countries: [], discount_percent: 3},
+  interview_personas: {items: []},
+  daily_challenge: {enabled: true, xp_reward: 30, types: []},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -295,6 +339,8 @@ export async function loadAppConfig(): Promise<AppConfig> {
       about: {...DEFAULT_CONFIG.about, ...data.about},
       store: {...DEFAULT_CONFIG.store, ...data.store},
       student_eligibility: {...DEFAULT_CONFIG.student_eligibility, ...data.student_eligibility},
+      interview_personas: {...DEFAULT_CONFIG.interview_personas, ...data.interview_personas},
+      daily_challenge: {...DEFAULT_CONFIG.daily_challenge, ...data.daily_challenge},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {
