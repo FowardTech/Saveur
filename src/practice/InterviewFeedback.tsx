@@ -42,7 +42,7 @@ const scoreRingColors = (score: number, theme: Record<string, string>) => {
 };
 // Brand-blue gradient for the rings that don't carry threshold semantics
 // (Overall Score, Smiling) — same two stops GradientCard.tsx defaults to.
-const PRIMARY_RING_GRADIENT = { progressGradientFrom: '#1DA1F2', progressGradientTo: '#0063f8' };
+const PRIMARY_RING_GRADIENT = { progressGradientFrom: '#059669', progressGradientTo: '#047857' };
 
 // Post-interview feedback. The session has already been finalized by the
 // time this screen mounts (LiveInterviewSession/CodingInterview both call

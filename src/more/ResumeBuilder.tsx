@@ -328,8 +328,8 @@ const ResumeBuilder = memo(() => {
                 strokeWidth={10}
                 stokeColor={theme['background-basic-color-3']}
                 progressStokeColor={theme['color-primary-500']}
-                progressGradientFrom="#1DA1F2"
-                progressGradientTo="#0063f8"
+                progressGradientFrom="#059669"
+                progressGradientTo="#047857"
               />
             </Flex>
             <Text category="h6" bold mb={16}>

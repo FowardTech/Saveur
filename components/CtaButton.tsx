@@ -4,18 +4,23 @@ import { globalStyle } from 'styles/globalStyle';
 
 // Primary call-to-action button (full reskin, product request item —
 // "screenshot 3" reference: soft shadows, big rounded cards, colorful pill
-// nav). Fully rounded with a soft brand-blue-tinted lift (see
-// styles/globalStyle.ts's shadowBtn) — was completely flat for the earlier
+// nav). Fully rounded with a soft brand-tinted lift (see styles/
+// globalStyle.ts's shadowBtn) — was completely flat for the earlier
 // ZipRecruiter-reference direction; that flatness is now replaced by this
-// softer look. Keeps Saveur's own established brand blue fill + white
-// text — an earlier pass tried a mint-green fill to mirror a different
-// reference's "Quick Apply" color, but that was reverted per explicit
-// follow-up ("i did not ask you to change the color of buttons to green,
-// revert back to the blue color they were before") and the "not pink,
-// that's not our primary color" instruction for this reskin keeps it that
-// way. Since every primary button app-wide now renders through this one
-// component, this file is the single place that color/shadow lives — no
-// other file needs touching to adjust it.
+// softer look.
+//
+// COLOR HISTORY: this was the app's brand blue (#0063f8) for a long time —
+// an earlier attempt at a mint-green fill was explicitly reverted ("i did
+// not ask you to change the color of buttons to green, revert back to the
+// blue color they were before"). It's mint/emerald again now (#047857) as
+// of the wellness-app-inspired full visual reskin (product request item,
+// explicit reference: 3 light/clean fitness-app screenshots) — this time
+// the color change IS the ask, not incidental, and it's applied consistently
+// everywhere (constants/theme/appTheme.json's whole color-primary-* scale,
+// not just this one button) rather than a one-off swap. Since every primary
+// button app-wide now renders through this one component, this file is the
+// single place that color/shadow lives — no other file needs touching to
+// adjust it.
 //
 // A thin wrapper around UI Kitten's own Button rather than a fully custom
 // component, so every prop that already works on <Button> (accessoryLeft/
@@ -49,13 +54,14 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
       accessoryLeft={loading ? renderLoadingSpinner : accessoryLeft}
       style={[
         {
-          // Saveur's established brand blue -- NOT theme['color-primary-
-          // 500'], which resolves to Eva's own default blue (#3366FF) and
-          // would be a subtly different shade than what buttons actually
-          // looked like before this whole redesign pass started.
+          // theme['color-primary-100'] and theme['color-primary-500'] are
+          // now the SAME value (see appTheme.json) -- either resolves to
+          // the current brand emerald. Kept as -100 (not -500) purely for
+          // continuity with every other direct color-primary-100 reference
+          // already in the app (see that token's own comment history).
           backgroundColor: theme['color-primary-100'],
           borderColor: theme['color-primary-100'],
-          borderRadius: 16,
+          borderRadius: 20,
         },
         globalStyle.shadowBtn,
         style,

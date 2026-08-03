@@ -34,7 +34,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
   size = 64,
   strokeWidth = 8,
   trackColor = 'rgba(39, 39, 85, 0.08)',
-  color = '#0063f8',
+  color = '#047857',
   gradientFrom,
   gradientTo,
   children,

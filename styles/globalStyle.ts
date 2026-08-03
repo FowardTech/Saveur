@@ -107,8 +107,12 @@ export const globalStyle = StyleSheet.create({
   // re-picking its own radius/shadow. Doesn't set backgroundColor/padding
   // since those vary (Layout level="1"/"2" usually supplies the
   // background) — just the shape + lift.
+  // Bumped 20 -> 24 (product request: full wellness-app-inspired reskin,
+  // explicit reference screenshots of light, clean fitness/health apps with
+  // big, very rounded cards) — reads closer to those references' softer,
+  // friendlier card shape than the previous 20px radius.
   card: {
-    borderRadius: 20,
+    borderRadius: 24,
     ...cardShadow,
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient
@@ -118,16 +122,20 @@ export const globalStyle = StyleSheet.create({
   // re-enabled and re-tuned rather than restoring the old heavier glow.
   // Android's `elevation` dropped per the same "remove Android shadows,
   // leave iOS alone" request as cardShadow above.
+  // Retinted from the old brand blue (rgba(0, 99, 248, ...)) to the new
+  // brand emerald (product request: full wellness-app-inspired reskin) —
+  // same shape/opacity, just matching CtaButton's new fill color so the
+  // glow reads as "this button" rather than a leftover blue halo.
   shadowBtn: Platform.select({
     ios: {
-      shadowColor: 'rgba(0, 99, 248, 0.45)',
+      shadowColor: 'rgba(4, 120, 87, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,
     },
     android: {},
     default: {
-      shadowColor: 'rgba(0, 99, 248, 0.45)',
+      shadowColor: 'rgba(4, 120, 87, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,

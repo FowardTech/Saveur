@@ -52,7 +52,7 @@
     "text-paragraph-small-font-size": 14,
     "text-paragraph-small-font-weight": "400",
     "text-paragraph-small-font-family": "$text-font-family",
-    "border-radius": 8,
+    "border-radius": 12,
     "border-width": 1,
     "size-tiny": 24,
     "size-small": 32,

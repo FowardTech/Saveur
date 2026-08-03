@@ -210,8 +210,8 @@ const MyProgress = memo(() => {
                       size={72}
                       strokeWidth={7}
                       trackColor={theme['background-basic-color-3']}
-                      gradientFrom="#0063f8"
-                      gradientTo="#1DA1F2"
+                      gradientFrom="#047857"
+                      gradientTo="#059669"
                       style={{ marginRight: 16 }}>
                       <Text category="h8" bold status="primary">
                         {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
