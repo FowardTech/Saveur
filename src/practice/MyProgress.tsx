@@ -268,60 +268,63 @@ const MyProgress = memo(() => {
               )}
             </Layout>
 
-            {/* Redesign v2 (full reskin): each stat is now a small ring
-                instead of a plain number. Sessions/streak have no natural
-                0-100 ceiling, so they're framed against the same
-                milestones the badge-unlock logic elsewhere (HomeSrc.tsx)
-                already uses — 10 sessions / 7-day streak — purely as a
-                visual frame, not a claim that 10 or 7 is "the goal".
-                Average score is already a real 0-100 value, so its ring is
-                literal, not framed. */}
+            {/* Pastel stat tiles (product request item, layout reference: a
+                light/clean fitness-app screenshot's "Calories" (peach) /
+                "Sleep" (blue) side-by-side tinted tiles) — same 3 rings/
+                numbers as before, just each on its own tinted background
+                instead of a neutral white card, so the row reads as a
+                distinct "stat" visually the way the reference does rather
+                than three identical white boxes. Colors pulled from
+                constants/theme/appTheme.json's tile tokens, chosen to keep
+                the SAME color family each ring already used (blue=sessions,
+                orange=streak, mint=score) so nothing about what a color
+                "means" here changed, only that it now tints the card too. */}
             <Flex justify="space-between" style={{ marginTop: 20 }}>
-              <Layout level="2" style={styles.statCard}>
+              <View style={[styles.statCard, { backgroundColor: theme['color-badge-info-bg'] }]}>
                 <CircularProgress
                   progress={Math.min(100, (completed.length / 10) * 100)}
                   size={56}
                   strokeWidth={5}
-                  trackColor={theme['background-basic-color-3']}
-                  color={theme['color-primary-100']}>
-                  <Text category="h7" bold>
+                  trackColor="rgba(255,255,255,0.6)"
+                  color={theme['color-badge-info-text']}>
+                  <Text category="h7" bold style={{ color: theme['color-badge-info-text'] }}>
                     {completed.length}
                   </Text>
                 </CircularProgress>
-                <Text category="h10" status="placeholder" center mt={8}>
+                <Text category="h10" bold center mt={8} style={{ color: theme['color-badge-info-text'] }}>
                   {t('find:sessions_completed', { defaultValue: 'Sessions completed' })}
                 </Text>
-              </Layout>
-              <Layout level="2" style={styles.statCard}>
+              </View>
+              <View style={[styles.statCard, { backgroundColor: theme['color-tile-orange-bg'] }]}>
                 <CircularProgress
                   progress={Math.min(100, ((streak?.streakDays ?? 0) / 7) * 100)}
                   size={56}
                   strokeWidth={5}
-                  trackColor={theme['background-basic-color-3']}
-                  color={theme['color-warning-500']}>
-                  <Text category="h7" bold>
+                  trackColor="rgba(255,255,255,0.6)"
+                  color={theme['color-tile-orange-text']}>
+                  <Text category="h7" bold style={{ color: theme['color-tile-orange-text'] }}>
                     {streak?.streakDays ?? 0}
                   </Text>
                 </CircularProgress>
-                <Text category="h10" status="placeholder" center mt={8}>
+                <Text category="h10" bold center mt={8} style={{ color: theme['color-tile-orange-text'] }}>
                   {t('find:day_streak', { defaultValue: 'Day streak' })}
                 </Text>
-              </Layout>
-              <Layout level="2" style={[styles.statCard, { marginRight: 0 }]}>
+              </View>
+              <View style={[styles.statCard, { marginRight: 0, backgroundColor: theme['color-tile-mint-bg'] }]}>
                 <CircularProgress
                   progress={avgScore ?? 0}
                   size={56}
                   strokeWidth={5}
-                  trackColor={theme['background-basic-color-3']}
-                  color={theme['color-success-100']}>
-                  <Text category="h7" bold>
+                  trackColor="rgba(255,255,255,0.6)"
+                  color={theme['color-tile-mint-text']}>
+                  <Text category="h7" bold style={{ color: theme['color-tile-mint-text'] }}>
                     {avgScore ?? '—'}
                   </Text>
                 </CircularProgress>
-                <Text category="h10" status="placeholder" center mt={8}>
+                <Text category="h10" bold center mt={8} style={{ color: theme['color-tile-mint-text'] }}>
                   {t('find:average_score', { defaultValue: 'Average score' })}
                 </Text>
-              </Layout>
+              </View>
             </Flex>
 
             <Text category="h6" bold mt={32} mb={16}>
@@ -449,10 +452,12 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     marginBottom: 8,
   },
+  // Radius comes from globalStyle.card (24, app-wide "big rounded card"
+  // token) — no local override, unlike before the wellness-app-inspired
+  // reskin pass (was pinned to 16 here specifically).
   statCard: {
     ...globalStyle.card,
     flex: 1,
-    borderRadius: 16,
     padding: 16,
     marginRight: 12,
     alignItems: 'center',
