@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import apiClient from './apiClient';
 
 // ---------------------------------------------------------------------------
@@ -79,9 +80,39 @@ export async function getSessionReplay(sessionId: string | number): Promise<Sess
         }
       : null,
     annotations: (data.annotations ?? []).map(a => ({
-      tMs: a.t_ms ?? 0, type: (a.type as ReplayAnnotation['type']) ?? '', label: a.label ?? '',
+      tMs: a.t_ms ?? 0,
+      type: (a.type as ReplayAnnotation['type']) ?? '',
+      // BUG FIX (product report: flagged-moment text like "Eye contact
+      // dropped for a few seconds here" showing in English on an otherwise
+      // fully-translated feedback screen): the backend (app/api/feedback.py)
+      // sends `label` as a fixed, hardcoded-English template string per
+      // annotation `type` — it's not AI-generated commentary, just a
+      // constant per type, so there's nothing to localize server-side the
+      // way AI replies are. `type` itself ('confidence_dip' /
+      // 'strong_moment') IS a stable, translatable enum though, so derive
+      // the display label from that client-side instead of trusting the
+      // raw English `label` — same "prefer the stable code over the raw
+      // text" fix already applied to the STAR breakdown in
+      // feedbackService.ts. Falls back to the raw backend label for any
+      // future annotation `type` this client doesn't recognize yet, so a
+      // backend-only addition doesn't silently disappear.
+      label: annotationLabel(a.type, a.label),
     })),
   };
+}
+
+function annotationLabel(type: string | undefined, rawLabel: string | undefined): string {
+  if (type === 'confidence_dip') {
+    return i18n.t('find:annotation_confidence_dip', {
+      defaultValue: 'Eye contact dropped for a few seconds here',
+    });
+  }
+  if (type === 'strong_moment') {
+    return i18n.t('find:annotation_strong_moment', {
+      defaultValue: 'Strong eye contact and a genuine smile here',
+    });
+  }
+  return rawLabel ?? '';
 }
 
 export function formatMs(ms: number): string {

@@ -152,12 +152,12 @@ export async function getScenario(): Promise<{offer: SalaryOffer; approaches: Ne
     const hasRealOffer = !!o && !!(o.company || o.title) && baseSalary > 0;
     if (hasRealOffer && o) {
       const offer: SalaryOffer = {
-        company: o.company ?? 'Your target company',
-        title: o.title ?? 'Your target role',
+        company: o.company ?? i18n.t('message:negotiation_target_company', { defaultValue: 'Your target company' }),
+        title: o.title ?? i18n.t('message:negotiation_target_role', { defaultValue: 'Your target role' }),
         baseSalary,
         bonus: o.bonus ?? 0,
         signingBonus: o.signing_bonus ?? o.signingBonus ?? 0,
-        equity: o.equity ?? 'None',
+        equity: o.equity ?? i18n.t('message:negotiation_equity_none', { defaultValue: 'None' }),
       };
       const approaches: NegotiationApproach[] =
         data.approaches && data.approaches.length > 0

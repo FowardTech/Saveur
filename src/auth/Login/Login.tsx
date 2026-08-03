@@ -134,7 +134,7 @@ const Login = memo(() => {
       });
       Alert.alert(
         t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-        mapFirebaseAuthError(e, 'Google sign-in was cancelled or failed.'),
+        mapFirebaseAuthError(e, t('auth:google_signin_failed', {defaultValue: 'Google sign-in was cancelled or failed.'})),
       );
     } finally {
       setIsSocialSubmitting(false);
@@ -154,7 +154,7 @@ const Login = memo(() => {
     } catch (e: any) {
       Alert.alert(
         t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-        mapFirebaseAuthError(e, 'LinkedIn sign-in was cancelled or failed.'),
+        mapFirebaseAuthError(e, t('auth:linkedin_signin_failed', {defaultValue: 'LinkedIn sign-in was cancelled or failed.'})),
       );
     } finally {
       setIsSocialSubmitting(false);

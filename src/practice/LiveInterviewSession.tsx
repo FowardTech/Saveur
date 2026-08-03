@@ -902,7 +902,7 @@ const LiveInterviewSession = memo(() => {
               'Leaving now discards this session and you won’t get feedback. Tap "End Interview" instead to save your progress and see your results.',
           }),
       [
-        { text: t('common:cancel', { defaultValue: 'Keep going' }), style: 'cancel' },
+        { text: t('find:live_leave_keep_going', { defaultValue: 'Keep going' }), style: 'cancel' },
         {
           text: t('find:live_leave_discard', { defaultValue: 'Discard' }),
           style: 'destructive',

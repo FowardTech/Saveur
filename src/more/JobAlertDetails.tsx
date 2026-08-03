@@ -186,7 +186,7 @@ const JobAlertDetails = memo(() => {
               })
             : t('more:apply_takes_you_to', {
                 defaultValue: "Applying takes you to {{source}} to finish your application.",
-                source: job.source ?? "the employer's site",
+                source: job.source ?? t('more:the_employers_site', { defaultValue: "the employer's site" }),
               })}
         </Text>
 

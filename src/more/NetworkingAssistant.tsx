@@ -119,7 +119,12 @@ const NetworkingAssistant = memo(() => {
     setMessageContext(
       contact.note?.trim()
         ? contact.note
-        : `Reaching out to ${contact.name} at ${contact.company} about the ${contact.role} team.`,
+        : t('more:default_outreach_context', {
+            defaultValue: 'Reaching out to {{name}} at {{company}} about the {{role}} team.',
+            name: contact.name,
+            company: contact.company,
+            role: contact.role,
+          }),
     );
     setMessageTone('friendly');
     setGeneratedMessage(null);
@@ -142,7 +147,9 @@ const NetworkingAssistant = memo(() => {
       );
       setGeneratedMessage(message);
     } catch (e: any) {
-      setGenerateMessageError(e?.message ?? "Couldn't generate a message. Please try again.");
+      setGenerateMessageError(
+        e?.message ?? t('more:generate_message_failed', { defaultValue: "Couldn't generate a message. Please try again." }),
+      );
     } finally {
       setIsGeneratingMessage(false);
     }
@@ -151,8 +158,10 @@ const NetworkingAssistant = memo(() => {
   if (!isPro) {
     return (
       <ProLockGate
-        title="Networking Assistant"
-        description="Track contacts, log outreach, and get AI-drafted messages tailored to each one — Networking Assistant is a Pro feature."
+        title={t('more:networking_assistant_title', { defaultValue: 'Networking Assistant' })}
+        description={t('more:networking_assistant_pro_gate_description', {
+          defaultValue: 'Track contacts, log outreach, and get AI-drafted messages tailored to each one — Networking Assistant is a Pro feature.',
+        })}
       />
     );
   }

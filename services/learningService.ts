@@ -471,7 +471,7 @@ export async function generateModule(
   return {
     index: moduleIndex,
     title: moduleTitle,
-    body: bodyLines.join('\n\n') || reply || 'Content unavailable for this module — try regenerating.',
+    body: bodyLines.join('\n\n') || reply || i18n.t('more:course_module_unavailable', { defaultValue: 'Content unavailable for this module — try regenerating.' }),
     checkQuestion,
   };
 }
@@ -494,9 +494,9 @@ export async function getAnswerFeedback(
       `Their answer: "${answer}". In 2-3 sentences, tell them whether they've got it, and gently ` +
       `correct anything they got wrong or incomplete. Be encouraging but specific.`;
     const reply = await coachService.askOneOff(prompt);
-    return reply.trim() || "Thanks for answering — let's keep going.";
+    return reply.trim() || i18n.t('more:course_answer_ack', { defaultValue: "Thanks for answering — let's keep going." });
   } catch {
-    return "Thanks for answering — let's keep going.";
+    return i18n.t('more:course_answer_ack', { defaultValue: "Thanks for answering — let's keep going." });
   }
 }
 

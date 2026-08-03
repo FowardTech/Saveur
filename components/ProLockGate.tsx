@@ -1,6 +1,7 @@
 import React, {memo} from 'react';
 import {StyleService, useStyleSheet, useTheme, Icon, Button, TopNavigation} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -40,6 +41,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
   const styles = useStyleSheet(themedStyles);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const {bottom} = useLayout();
+  const {t} = useTranslation('common');
   const isPremiumVariant = variant === 'premium';
 
   return (
@@ -47,7 +49,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
       <TopNavigation
         title={
           <Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">
-            {title ?? 'Pro feature'}
+            {title ?? t('common:pro_feature_title', { defaultValue: 'Pro feature' })}
           </Text>
         }
         accessoryLeft={<NavigationAction />}
@@ -84,7 +86,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
             style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
           <Text category="h3" bold center mt={20}>
-            {isPremiumVariant ? 'This is a Pro Premium feature' : 'This is a Pro feature'}
+            {isPremiumVariant ? t('common:pro_premium_gate_heading', { defaultValue: 'This is a Pro Premium feature' }) : t('common:pro_gate_heading', { defaultValue: 'This is a Pro feature' })}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={12} maxWidth={320}>
             {description}
@@ -94,7 +96,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
-            {renderCenteredLabel(isPremiumVariant ? 'See Pro Premium plans' : 'See Pro plans', {stretch: false})}
+            {renderCenteredLabel(isPremiumVariant ? t('common:see_pro_premium_plans', { defaultValue: 'See Pro Premium plans' }) : t('common:see_pro_plans', { defaultValue: 'See Pro plans' }), {stretch: false})}
           </CtaButton>
         </Flex>
       </Content>

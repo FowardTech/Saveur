@@ -1,6 +1,7 @@
 import {Platform, PermissionsAndroid} from 'react-native';
 import messaging, {FirebaseMessagingTypes} from '@react-native-firebase/messaging';
 import notifee, {AndroidImportance, AndroidStyle, EventType} from '@notifee/react-native';
+import i18n from 'i18next';
 
 import {JobAlertProps} from 'constants/Types';
 import {
@@ -367,8 +368,8 @@ export function setupForegroundPushHandler(): () => void {
     if (data.type === 'job_alert') {
       const job = jobFromPushData(remoteMessage.data);
       if (job) {
-        title = `New role: ${job.title}`;
-        body = [job.company, job.location].filter(Boolean).join(' · ') || 'Tap to view';
+        title = i18n.t('common:push_new_role', { role: job.title, defaultValue: `New role: ${job.title}` });
+        body = [job.company, job.location].filter(Boolean).join(' · ') || i18n.t('common:push_tap_to_view', { defaultValue: 'Tap to view' });
       }
     }
     title = title ?? remoteMessage.notification?.title ?? undefined;

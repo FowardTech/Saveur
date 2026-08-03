@@ -108,7 +108,7 @@ function ModalRequest({
               <Text
                 category="para-m"
                 ml={4}
-                children={message ?? ` accepted your interview request.`}
+                children={message ?? t('common:accepted_interview_request', { defaultValue: ' accepted your interview request.' })}
               />
             </Text>
           </Flex>
@@ -141,7 +141,7 @@ function ModalRequest({
               }
             >
               <Text category="h7" status={"link"} center mt={16} mb={20}>
-                {detailsLabel ?? 'OK, Thanks!'}
+                {detailsLabel ?? t('common:ok_thanks', { defaultValue: 'OK, Thanks!' })}
               </Text>
             </TouchableOpacity>
           </View>

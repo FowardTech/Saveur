@@ -223,7 +223,7 @@ const SignupThirdStep = memo(() => {
         });
         Alert.alert(
           t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
-          mapFirebaseAuthError(e, 'Google sign-up was cancelled or failed.'),
+          mapFirebaseAuthError(e, t('auth:google_signup_failed', {defaultValue: 'Google sign-up was cancelled or failed.'})),
         );
       }
     } finally {
@@ -247,7 +247,7 @@ const SignupThirdStep = memo(() => {
       } else {
         Alert.alert(
           t('auth:sign_up_failed', {defaultValue: 'Sign up failed'}),
-          mapFirebaseAuthError(e, 'LinkedIn sign-up was cancelled or failed.'),
+          mapFirebaseAuthError(e, t('auth:linkedin_signup_failed', {defaultValue: 'LinkedIn sign-up was cancelled or failed.'})),
         );
       }
     } finally {

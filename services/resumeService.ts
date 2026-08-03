@@ -187,7 +187,7 @@ function fromWireSources(wire: ResumeWire | null | undefined): Record<string, Im
     if (!source?.source_key) continue;
     result[source.source_key] = {
       uri: source.parsed_preview_url ?? '',
-      name: source.file_name ?? 'Uploaded file',
+      name: source.file_name ?? i18n.t('more:uploaded_file_fallback', { defaultValue: 'Uploaded file' }),
       sizeBytes: source.size_bytes ?? null,
       mimeType: source.mime_type ?? null,
     };

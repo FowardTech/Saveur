@@ -238,7 +238,7 @@ const Leaderboard = memo(() => {
                             {entry.isCurrentUser ? ` (${t('home:you', {defaultValue: 'You'})})` : ''}
                           </Text>
                           <Text category="h10" status="placeholder" center>
-                            {entry.xp} XP
+                            {entry.xp} {t('home:xp_label', {defaultValue: 'XP'})}
                           </Text>
                         </>
                       ) : (
@@ -277,7 +277,7 @@ const Leaderboard = memo(() => {
                       {entry.isCurrentUser ? ` (${t('home:you', {defaultValue: 'You'})})` : ''}
                     </Text>
                     <Text category="h9-s" bold style={{color: theme['color-primary-500']}}>
-                      {entry.xp} XP
+                      {entry.xp} {t('home:xp_label', {defaultValue: 'XP'})}
                     </Text>
                   </View>
                 ))}

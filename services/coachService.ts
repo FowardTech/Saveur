@@ -159,7 +159,8 @@ export async function sendMessage(
         : undefined,
     });
     replyText =
-      data.reply ?? data.message ?? data.response ?? data.text ?? "I'm not sure how to answer that yet.";
+      data.reply ?? data.message ?? data.response ?? data.text ??
+      i18n.t('message:coach_unsure_reply', { defaultValue: "I'm not sure how to answer that yet." });
     suggestedCourseTopic = data.suggested_course || undefined;
   } catch (e) {
     // At least keep the user's own message in the in-memory cache before
@@ -239,7 +240,8 @@ export async function sendVoiceMessage(
         : undefined,
     });
     replyText =
-      data.reply ?? data.message ?? data.response ?? data.text ?? "I'm not sure how to answer that yet.";
+      data.reply ?? data.message ?? data.response ?? data.text ??
+      i18n.t('message:coach_unsure_reply', { defaultValue: "I'm not sure how to answer that yet." });
     suggestedCourseTopic = data.suggested_course || undefined;
   } catch (e) {
     cachedThread = [...cachedThread, userMessage];
@@ -389,12 +391,25 @@ export interface StarBreakdownResult {
 }
 
 const STAR_LETTERS: Array<StarBreakdownItemProps['letter']> = ['S', 'T', 'A', 'R'];
-const STAR_LABELS: Record<StarBreakdownItemProps['letter'], string> = {
+// Was a raw hardcoded-English Record (same bug just fixed in
+// feedbackService.ts's STAR breakdown) — resolved via i18n.t() at call
+// time instead so a future caller of getStarBreakdown() gets a translated
+// label, not English regardless of app language.
+const STAR_I18N_KEYS: Record<StarBreakdownItemProps['letter'], string> = {
+  S: 'situation',
+  T: 'task',
+  A: 'action',
+  R: 'result',
+};
+const STAR_DEFAULTS: Record<StarBreakdownItemProps['letter'], string> = {
   S: 'Situation',
   T: 'Task',
   A: 'Action',
   R: 'Result',
 };
+function starLabel(letter: StarBreakdownItemProps['letter']): string {
+  return i18n.t(`find:star_${STAR_I18N_KEYS[letter]}`, { defaultValue: STAR_DEFAULTS[letter] });
+}
 
 interface StarBreakdownItemWire {
   letter?: StarBreakdownItemProps['letter'];
@@ -432,12 +447,12 @@ export async function getStarBreakdown(
           const item = rawList.find(i => i.letter === letter) ?? {};
           return {
             letter,
-            label: item.label ?? STAR_LABELS[letter],
+            label: starLabel(letter),
             score: item.score ?? 0,
             note: item.note ?? item.feedback ?? '',
           };
         })
-      : STAR_LETTERS.map(letter => ({letter, label: STAR_LABELS[letter], score: 0, note: ''}));
+      : STAR_LETTERS.map(letter => ({letter, label: starLabel(letter), score: 0, note: ''}));
 
   return {breakdown, overallNote: data.overall_note ?? data.overallNote};
 }

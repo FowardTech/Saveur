@@ -409,7 +409,7 @@ export function useSpeechToText() {
       if (canAutoRestart()) {
         Voice.start(currentSttLocale()).catch(() => {});
       } else if (!wantsListeningRef.current) {
-        setError(e.error?.message ?? 'Speech recognition error');
+        setError(e.error?.message ?? i18n.t('find:speech_recognition_error', { defaultValue: 'Speech recognition error' }));
       }
       // else: still "wants listening" but the app is backgrounded — do
       // nothing (no restart storm against a reclaimed audio session, no
@@ -429,7 +429,7 @@ export function useSpeechToText() {
     setError(null);
     const hasPermission = await ensureMicPermissionAndroid();
     if (!hasPermission) {
-      setError('Microphone permission is required to speak your answer.');
+      setError(i18n.t('find:mic_permission_required', { defaultValue: 'Microphone permission is required to speak your answer.' }));
       return false;
     }
     wantsListeningRef.current = true;
@@ -440,7 +440,7 @@ export function useSpeechToText() {
     } catch (e: any) {
       wantsListeningRef.current = false;
       setIsListening(false);
-      setError(e?.message ?? 'Could not start speech recognition.');
+      setError(e?.message ?? i18n.t('find:speech_recognition_start_failed', { defaultValue: 'Could not start speech recognition.' }));
       return false;
     }
   }, []);

@@ -32,13 +32,25 @@ import { AuthContext } from "../AuthContext";
 // Module scope (not defined inline in the BottomTab.Screen component prop)
 // so it's a stable component reference across renders — same reasoning as
 // the other component-swap patterns in this file/session (e.g.
-// renderCheckoutSpinner in Subscription.tsx).
-const CoachProLockGate = () => (
-  <ProLockGate
-    title="AI Career Coach"
-    description="Chat with your AI coach, get personalized suggested topics, and practice salary negotiations — all on the Pro plan."
-  />
-);
+// renderCheckoutSpinner in Subscription.tsx). Used as a bare `component=`
+// on a BottomTab.Screen below (React Navigation renders it with its own
+// navigation/route props, not custom ones) — so unlike a normal inline
+// render, it can't just receive `t` as a prop from its call site. It needs
+// its own useTranslation() call instead.
+//
+// BUG FIX (full-app translation sweep): title/description used to be raw
+// hardcoded English string literals, never translated at all.
+const CoachProLockGate = () => {
+  const { t } = useTranslation(["common", "message"]);
+  return (
+    <ProLockGate
+      title={t('message:ai_coach_name', { defaultValue: 'AI Career Coach' })}
+      description={t('common:coach_prolock_description', {
+        defaultValue: 'Chat with your AI coach, get personalized suggested topics, and practice salary negotiations — all on the Pro plan.',
+      })}
+    />
+  );
+};
 
 interface ButtonTabProps {
   focused: boolean;
@@ -315,7 +327,7 @@ const MainBottomTab = memo(() => {
       <ModalRequest
         visible={visible}
         show={show}
-        name={feedbackNotif?.title ?? "Your AI Coach"}
+        name={feedbackNotif?.title ?? t('common:default_coach_name', { defaultValue: 'Your AI Coach' })}
         avatar={Images.logoBadge}
         isOnl={true}
         onDetails={onDismissFeedbackNotif}

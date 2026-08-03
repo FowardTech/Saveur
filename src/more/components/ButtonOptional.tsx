@@ -1,5 +1,6 @@
 import React from 'react';
 import {Alert, View} from 'react-native';
+import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import {
@@ -76,16 +77,20 @@ const ButtonOptional = ({
   badgeDot,
 }: ButtonOptionalProps) => {
   const theme = useTheme();
+  const {t} = useTranslation(['more', 'common']);
   const {navigate, goBack} =
     useNavigation<NavigationProp<MainBottomTabStackParamList>>();
 
   const onNavigate = React.useCallback(() => {
     if (navigateSrc === undefined) {
-      Alert.alert('Warning', 'This feature is not available yet');
+      Alert.alert(
+        t('common:warning', {defaultValue: 'Warning'}),
+        t('more:feature_not_available', {defaultValue: 'This feature is not available yet'}),
+      );
     } else {
       navigate('Profile', {screen: navigateSrc});
     }
-  }, [navigateSrc]);
+  }, [navigateSrc, t]);
   const styles = useStyleSheet(themedStyles);
   return (
     <Flex

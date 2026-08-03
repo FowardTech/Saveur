@@ -83,7 +83,7 @@ const SwiperCard = ({
           <AnimatedView
             style={[{transform: [{scale: scaleDelete}]}, styles.deleteAction]}>
             <Text category="h6" status={'primary'}>
-              {deleteLabel ?? t('common:delete')}
+              {deleteLabel ?? t('common:delete', { defaultValue: 'Delete' })}
             </Text>
           </AnimatedView>
         </TouchableOpacity>
@@ -94,7 +94,7 @@ const SwiperCard = ({
           <AnimatedView
             style={[{transform: [{scale: scaleEdit}]}, styles.editAction]}>
             <Text category="h6" status={'primary'}>
-              {editLabel ?? t('common:edit')}
+              {editLabel ?? t('common:edit', { defaultValue: 'Edit' })}
             </Text>
           </AnimatedView>
         </TouchableOpacity>

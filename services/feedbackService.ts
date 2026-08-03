@@ -32,29 +32,58 @@ function currentLanguage(): string {
 // actually been seen.
 // ---------------------------------------------------------------------------
 
-const SKILL_LABELS = [
-  'Confidence',
-  'Communication',
-  'Technical Skill',
-  'Leadership',
-  'Problem Solving',
-  'Creativity',
-  'Critical Thinking',
+// BUG FIX (product report: screenshot showing "Situation/Task/Action/Result"
+// and "Confidence/Communication/..." rendering in English on an otherwise
+// fully-French feedback screen): these used to be plain hardcoded English
+// strings used BOTH as the internal dictionary key AND as the literal
+// display label handed straight to the UI — so there was no way to
+// translate the display text without breaking the lookup. Split into a
+// stable internal SKILL_KEY (never shown to the user, never translated)
+// and a separate skillLabel()/starLabel() function that resolves the
+// user-facing text via i18n.t() at call time (not once at module load),
+// so it reflects whatever language is active when the feedback screen
+// actually renders.
+const SKILL_KEYS = [
+  'confidence',
+  'communication',
+  'technical',
+  'leadership',
+  'problem_solving',
+  'creativity',
+  'critical_thinking',
 ] as const;
+type SkillKey = (typeof SKILL_KEYS)[number];
+
+function skillLabel(key: SkillKey): string {
+  const defaults: Record<SkillKey, string> = {
+    confidence: 'Confidence',
+    communication: 'Communication',
+    technical: 'Technical Skill',
+    leadership: 'Leadership',
+    problem_solving: 'Problem Solving',
+    creativity: 'Creativity',
+    critical_thinking: 'Critical Thinking',
+  };
+  return i18n.t(`find:skill_${key}`, { defaultValue: defaults[key] });
+}
 
 const STAR_LETTERS: Array<StarBreakdownItemProps['letter']> = ['S', 'T', 'A', 'R'];
-const STAR_LABELS: Record<StarBreakdownItemProps['letter'], string> = {
-  S: 'Situation',
-  T: 'Task',
-  A: 'Action',
-  R: 'Result',
-};
 const STAR_LONG_KEYS: Record<StarBreakdownItemProps['letter'], string> = {
   S: 'situation',
   T: 'task',
   A: 'action',
   R: 'result',
 };
+
+function starLabel(letter: StarBreakdownItemProps['letter']): string {
+  const defaults: Record<StarBreakdownItemProps['letter'], string> = {
+    S: 'Situation',
+    T: 'Task',
+    A: 'Action',
+    R: 'Result',
+  };
+  return i18n.t(`find:star_${STAR_LONG_KEYS[letter]}`, { defaultValue: defaults[letter] });
+}
 
 export interface FeedbackReport {
   overallScore: number;
@@ -141,18 +170,18 @@ function pickScore(wire: FeedbackWire, key: keyof ScoresWire, altKey?: keyof Sco
 
 function fromFeedbackWire(rawWire: FeedbackWire): FeedbackReport {
   const wire = rawWire.data ?? rawWire.result ?? rawWire;
-  const scoreByLabel: Record<(typeof SKILL_LABELS)[number], number> = {
-    Confidence: pickScore(wire, 'confidence'),
-    Communication: pickScore(wire, 'communication'),
-    'Technical Skill': pickScore(wire, 'technical'),
-    Leadership: pickScore(wire, 'leadership'),
-    'Problem Solving': pickScore(wire, 'problem_solving', 'problemSolving'),
-    Creativity: pickScore(wire, 'creativity'),
-    'Critical Thinking': pickScore(wire, 'critical_thinking', 'criticalThinking'),
+  const scoreByKey: Record<SkillKey, number> = {
+    confidence: pickScore(wire, 'confidence'),
+    communication: pickScore(wire, 'communication'),
+    technical: pickScore(wire, 'technical'),
+    leadership: pickScore(wire, 'leadership'),
+    problem_solving: pickScore(wire, 'problem_solving', 'problemSolving'),
+    creativity: pickScore(wire, 'creativity'),
+    critical_thinking: pickScore(wire, 'critical_thinking', 'criticalThinking'),
   };
-  const skillScores: SkillScoreProps[] = SKILL_LABELS.map(label => ({
-    label,
-    score: scoreByLabel[label],
+  const skillScores: SkillScoreProps[] = SKILL_KEYS.map(key => ({
+    label: skillLabel(key),
+    score: scoreByKey[key],
   }));
 
   const rawStarList = wire.star_breakdown ?? wire.starBreakdown;
@@ -160,7 +189,13 @@ function fromFeedbackWire(rawWire: FeedbackWire): FeedbackReport {
   if (Array.isArray(rawStarList) && rawStarList.length > 0) {
     starBreakdown = rawStarList.map(item => ({
       letter: item.letter,
-      label: item.label ?? STAR_LABELS[item.letter],
+      // Was `item.label ?? STAR_LABELS[item.letter]` — if the backend ever
+      // sends its own `label` field (English, since the API contract
+      // doesn't localize it), that raw English took priority over the
+      // translated one. The letter (S/T/A/R) is a stable enum either way,
+      // so always deriving the display label from it client-side is both
+      // simpler and actually translatable.
+      label: starLabel(item.letter),
       score: item.score ?? 0,
       note: item.note ?? '',
     }));
@@ -170,7 +205,7 @@ function fromFeedbackWire(rawWire: FeedbackWire): FeedbackReport {
       const item = star[letter] ?? star[STAR_LONG_KEYS[letter] as keyof StarWire] ?? {};
       return {
         letter,
-        label: STAR_LABELS[letter],
+        label: starLabel(letter),
         score: item.score ?? 0,
         note: item.note ?? '',
       };

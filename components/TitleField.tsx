@@ -27,7 +27,7 @@ const TitleField = ({
       </Text>
       <Flex itemsCenter onPress={onPress}>
         <Text status={'info'} category="h8" bold mr={4}>
-          {t('common:see_all')}
+          {t('common:see_all', { defaultValue: 'See all' })}
         </Text>
         <Icon name="arrowRight" pack="assets" style={styles.icon} />
       </Flex>

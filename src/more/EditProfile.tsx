@@ -81,7 +81,7 @@ const EditProfile = memo(() => {
         setLeaderboardAvatarUri(previous);
         Alert.alert(
           t('more:leaderboard_avatar_update_failed', {defaultValue: "Couldn't update leaderboard avatar"}),
-          e?.message ?? 'Please try again in a moment.',
+          e?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
         );
       } finally {
         setIsSavingLeaderboardAvatar(false);
@@ -115,8 +115,8 @@ const EditProfile = memo(() => {
         } catch (e: any) {
           setAvatarUri(profile?.avatarUrl);
           Alert.alert(
-            "Couldn't update photo",
-            e?.message ?? 'Please try again in a moment.',
+            t('more:update_photo_failed', {defaultValue: "Couldn't update photo"}),
+            e?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
           );
         } finally {
           setIsUploadingPhoto(false);
@@ -169,7 +169,10 @@ const EditProfile = memo(() => {
       }
       goBack();
     } catch (e: any) {
-      Alert.alert("Couldn't save changes", e?.message ?? 'Please try again in a moment.');
+      Alert.alert(
+        t('more:save_changes_failed', {defaultValue: "Couldn't save changes"}),
+        e?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
+      );
     } finally {
       setIsSaving(false);
     }

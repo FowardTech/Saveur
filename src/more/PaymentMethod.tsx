@@ -55,7 +55,7 @@ const PaymentMethod = memo(() => {
       const list = await billingService.listPaymentMethods();
       setMethods(list);
     } catch (error: any) {
-      setLoadError(error?.message ?? 'Could not load your saved cards.');
+      setLoadError(error?.message ?? t('payment:load_cards_failed', { defaultValue: 'Could not load your saved cards.' }));
     } finally {
       setIsLoading(false);
     }

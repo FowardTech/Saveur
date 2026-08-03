@@ -1,5 +1,6 @@
 import {Platform} from 'react-native';
 import RNBlobUtil from 'react-native-blob-util';
+import i18n from 'i18next';
 
 // ---------------------------------------------------------------------------
 // Shared, validated download step for every "download my generated CV/
@@ -21,7 +22,9 @@ import RNBlobUtil from 'react-native-blob-util';
 
 export class DocumentUnavailableError extends Error {
   constructor(
-    message = "This document isn't available anymore. Please regenerate it and try again.",
+    message = i18n.t('common:document_unavailable', {
+      defaultValue: "This document isn't available anymore. Please regenerate it and try again.",
+    }),
   ) {
     super(message);
     this.name = 'DocumentUnavailableError';

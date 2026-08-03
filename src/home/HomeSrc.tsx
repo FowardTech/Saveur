@@ -739,7 +739,7 @@ const HomeSrc = memo(() => {
           <View style={styles.checkInCardInner}>
             <LinearGradient
               pointerEvents="none"
-              colors={['#f2b355ff','#f2b355ff']}
+              colors={['transparent','transparent']}
               start={{ x: 1, y: 0 }}
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
@@ -750,8 +750,8 @@ const HomeSrc = memo(() => {
               progress={Math.min(100, (streakDays / 7) * 100)}
               size={100}
               strokeWidth={10}
-              trackColor="rgba(255,255,255,0.28)"
-              color="#FFFFFF"
+              trackColor="#0063f83f"
+              color="#0063f8"
               style={styles.checkInRing}>
               <Text category="h4" bold style={styles.checkInRingText}>
                 {streakDays}
@@ -759,7 +759,7 @@ const HomeSrc = memo(() => {
             </CircularProgress>
             <View style={globalStyle.flexOne}>
               <Text category="h7" bold style={styles.checkInValue} numberOfLines={1}>
-                {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} XP`}
+                {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} ${t('home:xp_label', {defaultValue: 'XP'})}`}
               </Text>
               {streakError ? (
                 <Flex justify="flex-start" itemsCenter mt={6}>
@@ -773,6 +773,7 @@ const HomeSrc = memo(() => {
               ) : null}
             </View>
           </View>
+          
           {/* Redesign v2 follow-up (product bug report, twice now — content
               kept getting clipped sharing a row with the ring+XP text,
               even after removing the button's minWidth). Rather than keep
@@ -815,19 +816,16 @@ const HomeSrc = memo(() => {
               )}
             </TouchableOpacity>
           )}
-          </View>
-        </View>
-
         {/* Weekly Practice chart removed from here (decluttering pass) — it
             was a plain duplicate of MyProgress.tsx's own "This week" chart
             (same computeWeeklyPractice data), reachable one tap away via
             the "Your Progress" pill above, so keeping it here too was pure
             repetition rather than something Home uniquely needed. */}
         <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-          <Text category="h6" bold>
+          <Text category="h7" bold style={{color: '#0063f8'}}>
             {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
           </Text>
-          <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')}>
+          <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{color: '#0063f8'}}>
             {t('home:schedule_new', { defaultValue: '+ Schedule' })}
           </Text>
         </Flex>
@@ -884,6 +882,9 @@ const HomeSrc = memo(() => {
             <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
           </Flex>
         )}
+          </View>
+        </View>
+
 
         {/* Dropped the standalone "Ready to practice?" CTA banner (UI
             cleanup pass) — it pushed the same "go start an interview"
@@ -907,7 +908,7 @@ const HomeSrc = memo(() => {
             source of truth for "top N". */}
         <Flex justify="space-between" itemsCenter mt={24} mb={12}>
           <Text category="h7" bold>
-            {t('home:leaderboard', { defaultValue: 'Leaderboard' })} 🏆
+            {t('home:leaderboard', { defaultValue: 'Leaderboard' })} 
           </Text>
           {/* Was category="h10" (12px, not bold) — the thinnest text style
               in the app, mismatched against every other "link" affordance
@@ -947,16 +948,13 @@ const HomeSrc = memo(() => {
                     index > 0 && globalStyle.divider,
                     entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
                   ]}>
-                  <View style={[styles.leaderboardRank, { backgroundColor: medal.bg }]}>
+                  <View style={[styles.leaderboardRank]}>
                     {/* Trophy icon instead of the "1" for whoever's leading,
                         per explicit follow-up — every other rank keeps its
                         plain number badge. */}
                     {entry.rank === 1 ? (
-                      <Icon
-                        pack="eva"
-                        name="trophy"
-                        style={{ width: 16, height: 16, tintColor: medal.text }}
-                      />
+                      
+                      <Text>🏆</Text>
                     ) : (
                       <Text category="h9-s" bold style={{ color: medal.text }}>
                         {entry.rank}
@@ -984,7 +982,7 @@ const HomeSrc = memo(() => {
                     {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                   </Text>
                   <Text category="h10" status="placeholder">
-                    {entry.xp} XP
+                    {entry.xp} {t('home:xp_label', {defaultValue: 'XP'})}
                   </Text>
                 </View>
               );
@@ -1116,7 +1114,8 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     marginTop: 16,
     borderRadius: 20,
-    backgroundColor: 'color-primary-001',
+    backgroundColor: 'color-primary-000',
+    
     
   },
   // Inner layer: `overflow:'hidden'` so the corner accent (see JSX comment)
@@ -1173,12 +1172,12 @@ const themedStyles = StyleService.create({
     marginRight: 14,
   },
   checkInRingText: {
-    color: '#FFFFFF',
+    color: '#0063f8',
   },
   // checkInLabel (the standalone "XP" caption above the "39 XP" value) was
   // removed as part of the row-width fix above — no reader left.
   checkInValue: {
-    color: '#FFFFFF',
+    color: '#0063f8',
   },
   checkInError: {
     color: '#FFE3E3',
@@ -1210,6 +1209,8 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#0063f8'
   },
   checkInButtonDisabled: {
     opacity: 0.6,

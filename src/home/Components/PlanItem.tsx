@@ -8,6 +8,7 @@ import {
   Layout,
   Avatar,
 } from '@ui-kitten/components';
+import {useTranslation} from 'react-i18next';
 import {PlanProps, Onl_State_Types_Enum} from 'constants/Types';
 import {globalStyle} from 'styles/globalStyle';
 import ButtonFill from 'components/ButtonFill';
@@ -23,6 +24,7 @@ interface PlanItemProps {
 const PlanItem = ({item, style, onPress}: PlanItemProps) => {
   const styles = useStyleSheet(themedStyles);
   const {width} = useLayout();
+  const {t} = useTranslation(['home', 'common']);
 
   return (
     <View style={[styles.container, style]}>
@@ -39,7 +41,7 @@ const PlanItem = ({item, style, onPress}: PlanItemProps) => {
               {item.user?.name}
             </Text>
             <Flex>
-              <Text category="h8-s">Today</Text>
+              <Text category="h8-s">{t('home:today', {defaultValue: 'Today'})}</Text>
               <Layout style={styles.dot} />
               <Text category="h8-s">{item.meeting_time}</Text>
             </Flex>
