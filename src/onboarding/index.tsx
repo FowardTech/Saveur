@@ -203,7 +203,7 @@ const Onboarding = memo(() => {
                     <Image
                       source={Images.logoMark}
                       resizeMode="contain"
-                      style={{ width: width * 0.55, height: width * 0.55 * (480 / 519) }}
+                      style={{ width: width * 0.3, height: width * 0.55 * (480 / 519) }}
                     />
                   </View>
                 </Animated.View>
