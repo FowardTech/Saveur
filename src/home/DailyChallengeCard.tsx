@@ -31,6 +31,17 @@ const DailyChallengeCard = memo(() => {
   const [response, setResponse] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isSkipping, setIsSkipping] = React.useState(false);
+  // BUG FIX ("the content of this refused to translate" — the type badge,
+  // e.g. "Public Speaking", stayed English after a mid-session language
+  // switch): the type name below reads configService.getCachedConfig()
+  // directly in render, but this card never subscribed to config updates
+  // the way FaqScreen/AboutScreen already do — so it kept showing
+  // whatever snapshot it had at mount even after configService.ts's
+  // languageChanged listener finished re-fetching the translated catalog
+  // in the background. Same subscribe/forceRerender pattern as those two
+  // screens.
+  const [, forceRerender] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => configService.subscribe(forceRerender), []);
 
   const enabled = configService.isFeatureEnabled('daily_challenge');
 
