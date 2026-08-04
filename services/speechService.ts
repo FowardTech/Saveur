@@ -56,13 +56,30 @@ function currentSttLocale(): string {
   return getSttLocale(i18n.language);
 }
 
-// Rough spoken-word-rate estimate (~11 chars/sec) used to size the "give up
-// and resolve anyway" safety timeout for both the remote (ElevenLabs) and
-// on-device speech paths, instead of one fixed value that's too short for a
-// long question and too long for a short one. Floored at 8s so even a very
-// short question gets a reasonable grace period for network/engine startup.
+// BUG FIX (product report: "The AI career coach always breaks or intercept
+// while talking. It has not finish one sentence it will just flip to
+// another sentence without completing the first one") — this is a
+// LAST-RESORT "give up and resolve anyway" guard against the real
+// playback-end event never firing at all (a genuine native-bridge edge
+// case), not the normal way a speak() call is expected to end. The old
+// ~11 chars/sec (90ms/char, floor 8s) estimate was tight enough that a
+// slower, natural-paced coaching voice with real pauses between sentences
+// could still legitimately be playing when this fired — and the instant
+// this promise resolved, the caller (VoiceCoachView's sendTurn re-arming
+// the mic via Voice.start(), or LiveInterviewSession moving straight to
+// the next question's own speak() call) would switch the OS audio session
+// category or start a second native player, cutting off audio that was
+// still actually playing. That's what "cuts off mid-sentence and jumps to
+// the next one" actually was: not one clip glitching, but this timeout
+// resolving early and the next turn's mic/audio action stepping on the
+// tail of the previous one. Widened to 150ms/char (floor 15s) — closer to
+// a slow, expressive voice than a rushed reading-speed estimate — and see
+// speakRemote/speakOnDevice below for the second half of this fix (force-
+// stopping playback when this safety path is actually the one that fires,
+// so a genuinely-still-playing clip doesn't keep going in the background
+// afterward either).
 function safetyTimeoutMs(text: string): number {
-  return Math.max(8000, text.length * 90);
+  return Math.max(15000, text.length * 150);
 }
 
 // getInitStatus() resolves once the underlying engine is actually ready
@@ -218,7 +235,18 @@ async function speakRemote(text: string, language: string, token: number): Promi
       clearTimeout(safety);
       reject(error instanceof Error ? error : new Error('Remote TTS playback failed.'));
     };
-    const safety = setTimeout(finish, safetyTimeoutMs(text) + 5000); // + generation/network overhead
+    // This safety path firing means the real playback-end event never
+    // came within our (now generous) grace window — force-stop whatever
+    // nitro-sound still thinks is playing before resolving, rather than
+    // leaving it to keep playing in the background while the caller's
+    // very next action (re-arming the mic, or speaking the next line)
+    // races against it. See safetyTimeoutMs's doc comment for the full
+    // story on why that race was the actual "cuts off mid-sentence" bug.
+    const onSafetyTimeout = () => {
+      Sound.stopPlayer().catch(() => {});
+      finish();
+    };
+    const safety = setTimeout(onSafetyTimeout, safetyTimeoutMs(text) + 8000); // + generation/network overhead
     Sound.addPlaybackEndListener(finish);
     Sound.startPlayer(url, headers).catch(fail);
   });
@@ -294,7 +322,21 @@ async function speakOnDevice(text: string, sttLocale: string, token: number, pre
     // "'tts-error' is not a supported event type"). An engine failure that
     // never fires tts-finish/tts-cancel is still caught by the safety
     // timeout below instead.
-    const safety = setTimeout(finish, safetyTimeoutMs(text));
+    const onSafetyTimeout = () => {
+      // See speakRemote's identical comment — force-stop rather than
+      // leaving the engine to keep talking in the background while the
+      // caller's next action (re-arming the mic, next line) races it.
+      try {
+        const result: unknown = Tts.stop(false);
+        if (result && typeof (result as Promise<unknown>).catch === 'function') {
+          (result as Promise<unknown>).catch(() => {});
+        }
+      } catch {
+        // ignored — see stopSpeaking()'s comment on this native bridge quirk.
+      }
+      finish();
+    };
+    const safety = setTimeout(onSafetyTimeout, safetyTimeoutMs(text));
     Tts.addEventListener('tts-finish', finish);
     Tts.addEventListener('tts-cancel', finish);
     Tts.speak(text);
