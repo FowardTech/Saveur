@@ -454,6 +454,7 @@ const themedStyles = StyleService.create({
     position: 'absolute',
     left: 16,
     top: 14,
+    color: 'color-primary-100'
   },
   avatarPlaceholder: {
     width: 48,

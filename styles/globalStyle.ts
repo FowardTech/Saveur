@@ -190,6 +190,7 @@ export const globalStyle = StyleSheet.create({
     borderColor: 'rgba(39, 39, 85, 0.15)',
     backgroundColor: 'background-basic-color-2',
     borderRadius: 12,
+    
   },
   // Follow-up correction: paddingHorizontal/paddingVertical used to live on
   // `inputField` above, applied to the Input's OUTER container/border box —

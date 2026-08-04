@@ -327,6 +327,7 @@ const themedStyles = StyleService.create({
     position: 'absolute',
     left: 16,
     top: 14,
+    color: 'color-primary-100'
   },
   // Was `position: 'absolute', bottom: 0` — floating this row fixed at the
   // very bottom of the screen regardless of scroll position, which is what

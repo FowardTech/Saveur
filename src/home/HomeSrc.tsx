@@ -799,7 +799,8 @@ const HomeSrc = memo(() => {
                 bug this component's own history warns about. */}
             <LinearGradient
               pointerEvents="none"
-              colors={['rgba(0, 99, 248, 0.30)', 'rgba(29, 161, 242, 0.05)']}
+              colors={['transparent', 'transparent']}
+              // colors={['rgba(0, 99, 248, 0.30)', 'rgba(29, 161, 242, 0.05)']}
               start={{ x: 1, y: 0 }}
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
@@ -1214,7 +1215,10 @@ const themedStyles = StyleService.create({
     // theme-blind hex values with no dark.json override until this pass.
     // Still fully opaque either way, so `card`'s Android shadow still
     // renders correctly.
-    backgroundColor: 'color-badge-info-bg',
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor:'color-primary-transparent-200'
+    // backgroundColor: 'color-badge-info-bg',
   },
   // Flat solid-blue card (gradient removed — see the JSX comment above for
   // why) — outer layer just casts the shadow (no overflow:'hidden' here;

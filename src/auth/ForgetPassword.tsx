@@ -138,6 +138,7 @@ const themedStyles = StyleService.create({
     marginTop: 16,
   },
   email: {
+    ...globalStyle.inputField,
     borderBottomWidth: 2,
     marginBottom: 32,
   },
