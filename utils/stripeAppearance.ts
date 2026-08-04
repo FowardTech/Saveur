@@ -52,7 +52,7 @@ export const stripeAppearance: AppearanceParams = {
       dark: {background: '#0063f8', text: '#FFFFFF'},
     },
     shapes: {
-      borderRadius: 24,
+      borderRadius: 16,
     },
   },
 };

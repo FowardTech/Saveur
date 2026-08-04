@@ -1,24 +1,24 @@
-import React, {memo} from 'react';
-import {ActivityIndicator, Alert, TouchableOpacity, View} from 'react-native';
-import {TopNavigation, StyleService, useStyleSheet, useTheme, Icon, Spinner} from '@ui-kitten/components';
-import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
-import {WebView, WebViewNavigation, WebViewMessageEvent} from 'react-native-webview';
-import {useTranslation} from 'react-i18next';
+import React, { memo } from 'react';
+import { ActivityIndicator, Alert, TouchableOpacity, View } from 'react-native';
+import { TopNavigation, StyleService, useStyleSheet, useTheme, Icon, Spinner } from '@ui-kitten/components';
+import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { WebView, WebViewNavigation, WebViewMessageEvent } from 'react-native-webview';
+import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
 import Flex from 'components/Flex';
 import CtaButton from 'components/CtaButton';
-import {globalStyle} from 'styles/globalStyle';
-import {RootStackParamList} from 'navigation/types';
-import {Application_Stage_Enum} from 'constants/Types';
-import {Images} from 'assets/images';
+import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
+import { Application_Stage_Enum } from 'constants/Types';
+import { Images } from 'assets/images';
 import * as applicationsService from 'services/applicationsService';
 import * as jobAlertsService from 'services/jobAlertsService';
 import * as autofillProfileService from 'services/autofillProfileService';
-import {AutofillProfile} from 'services/autofillProfileService';
-import {buildAutofillScript, AutofillMessage} from 'utils/webviewAutofill';
+import { AutofillProfile } from 'services/autofillProfileService';
+import { buildAutofillScript, AutofillMessage } from 'utils/webviewAutofill';
 
 // Generic in-app WebView screen — currently used to open a job posting's
 // apply page from src/more/JobAlerts.tsx / JobAlertDetails.tsx (so tapping a
@@ -182,10 +182,10 @@ function urlLooksLikeSuccess(url: string): boolean {
 const WebViewScreen = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
-  const {t} = useTranslation(['more', 'common']);
+  const { t } = useTranslation(['more', 'common']);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'WebViewScreen'>>();
-  const {url, title, job} = route.params ?? {url: ''};
+  const { url, title, job } = route.params ?? { url: '' };
   const [isLoading, setIsLoading] = React.useState(true);
   // Set once the injected script confirms the loaded page is actually a
   // dead/expired posting (see DEAD_PAGE_MARKERS above) — replaces the
@@ -237,7 +237,7 @@ const WebViewScreen = memo(() => {
       .then(() => {
         trackedRef.current = true;
         Alert.alert(
-          t('more:application_tracked_title', {defaultValue: 'Added to your applications'}),
+          t('more:application_tracked_title', { defaultValue: 'Added to your applications' }),
           t('more:application_tracked_body', {
             defaultValue: 'We added {{role}} at {{company}} to your Application Tracker.',
             role: job.role,
@@ -273,7 +273,7 @@ const WebViewScreen = memo(() => {
       if (!profile) {
         setIsFillingApplication(false);
         Alert.alert(
-          t('more:autofill_no_data_title', {defaultValue: 'Nothing to fill yet'}),
+          t('more:autofill_no_data_title', { defaultValue: 'Nothing to fill yet' }),
           t('more:autofill_no_data_body', {
             defaultValue: 'Add your resume or fill out your profile in the app first, then come back here to autofill applications.',
           }),
@@ -290,18 +290,18 @@ const WebViewScreen = memo(() => {
       setIsFillingApplication(false);
       if (e?.status === 402 || e?.error === 'pro_required') {
         Alert.alert(
-          t('more:autofill_pro_required_title', {defaultValue: 'Pro feature'}),
-          t('more:autofill_pro_required_body', {defaultValue: 'Autofill is a Pro feature.'}),
+          t('more:autofill_pro_required_title', { defaultValue: 'Pro feature' }),
+          t('more:autofill_pro_required_body', { defaultValue: 'Autofill is a Pro feature.' }),
           [
-            {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
-            {text: t('find:upgrade_to_pro', {defaultValue: 'Upgrade to Pro'}), onPress: () => navigation.navigate('Subscription')},
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            { text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }), onPress: () => navigation.navigate('Subscription') },
           ],
         );
         return;
       }
       Alert.alert(
-        t('more:autofill_failed_title', {defaultValue: "Couldn't autofill this page"}),
-        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+        t('more:autofill_failed_title', { defaultValue: "Couldn't autofill this page" }),
+        e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
       );
     }
   }, [isFillingApplication, autofillProfile, navigation, t]);
@@ -323,19 +323,19 @@ const WebViewScreen = memo(() => {
         const msg = data as AutofillMessage;
         if (msg.type === 'autofill_error') {
           Alert.alert(
-            t('more:autofill_failed_title', {defaultValue: "Couldn't autofill this page"}),
-            t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+            t('more:autofill_failed_title', { defaultValue: "Couldn't autofill this page" }),
+            t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
           );
         } else if (!msg.filledCount) {
           Alert.alert(
-            t('more:autofill_no_match_title', {defaultValue: 'No matching fields found'}),
+            t('more:autofill_no_match_title', { defaultValue: 'No matching fields found' }),
             t('more:autofill_no_match_body', {
               defaultValue: "We couldn't find any fields on this page that match your info. You may need to fill it in manually.",
             }),
           );
         } else {
           Alert.alert(
-            t('more:autofill_done_title', {defaultValue: 'Filled {{count}} fields', count: msg.filledCount}),
+            t('more:autofill_done_title', { defaultValue: 'Filled {{count}} fields', count: msg.filledCount }),
             t('more:autofill_done_body', {
               defaultValue: 'Double-check everything before you submit — autofill can get things wrong.',
             }),
@@ -369,16 +369,16 @@ const WebViewScreen = memo(() => {
       const dwellMs = Date.now() - openedAtRef.current;
       if (dwellMs < FALLBACK_MIN_DWELL_MS || !navigatedAwayRef.current) return;
       Alert.alert(
-        t('more:did_you_apply_title', {defaultValue: 'Did you apply for this job?'}),
+        t('more:did_you_apply_title', { defaultValue: 'Did you apply for this job?' }),
         t('more:did_you_apply_body', {
           defaultValue: "We couldn't confirm automatically — mark {{role}} at {{company}} as applied?",
           role: job.role,
           company: job.company,
         }),
         [
-          {text: t('common:no', {defaultValue: 'No'}), style: 'cancel'},
+          { text: t('common:no', { defaultValue: 'No' }), style: 'cancel' },
           {
-            text: t('more:yes_mark_applied', {defaultValue: 'Yes, mark as applied'}),
+            text: t('more:yes_mark_applied', { defaultValue: 'Yes, mark as applied' }),
             onPress: () => trackApplication('manual_confirm'),
           },
         ],
@@ -420,10 +420,10 @@ const WebViewScreen = memo(() => {
             <Icon
               pack="eva"
               name="alert-circle-outline"
-              style={[globalStyle.icon40, {tintColor: theme['text-hint-color'], alignItems:'center', textAlign: 'center', jusifyContent:'center'}]}
+              style={[globalStyle.icon40, { tintColor: theme['text-hint-color'], alignItems: 'center', textAlign: 'center', jusifyContent: 'center' }]}
             />
             <Text category="h6" bold center mt={16}>
-              {t('more:job_posting_gone_title', {defaultValue: 'This posting is no longer available'})}
+              {t('more:job_posting_gone_title', { defaultValue: 'This posting is no longer available' })}
             </Text>
             <Text category="h9-s" status="placeholder" center mt={8} mb={24}>
               {t('more:job_posting_gone_body', {
@@ -431,14 +431,14 @@ const WebViewScreen = memo(() => {
               })}
             </Text>
             <CtaButton size="small" onPress={() => navigation.goBack()}>
-              {t('common:go_back', {defaultValue: 'Go back'}).toString()}
+              {t('common:go_back', { defaultValue: 'Go back' }).toString()}
             </CtaButton>
           </Flex>
         ) : (
           <>
             <WebView
               ref={webViewRef}
-              source={{uri: url}}
+              source={{ uri: url }}
               userAgent={DESKTOP_USER_AGENT}
               onLoadStart={() => setIsLoading(true)}
               onLoadEnd={() => setIsLoading(false)}
@@ -467,12 +467,12 @@ const WebViewScreen = memo(() => {
                 {isFillingApplication ? (
                   <Spinner size="small" status="control" />
                 ) : (
-                  <Icon pack="eva" name="edit-2-outline" style={[globalStyle.icon20, {tintColor: '#fff'}]} />
+                  <Icon pack="eva" name="edit-2-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
                 )}
                 <Text category="h9" bold status="control" ml={8}>
                   {isFillingApplication
-                    ? t('more:autofill_filling', {defaultValue: 'Filling…'})
-                    : t('more:autofill_cta', {defaultValue: 'Fill application'})}
+                    ? t('more:autofill_filling', { defaultValue: 'Filling…' })
+                    : t('more:autofill_cta', { defaultValue: 'Fill application' })}
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -511,7 +511,7 @@ const themedStyles = StyleService.create({
     bottom: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 18,
     backgroundColor: 'color-primary-500',

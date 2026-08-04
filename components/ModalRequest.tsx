@@ -68,7 +68,7 @@ function ModalRequest({
           style={{
             width: width - 80,
             height: 334 * (height / 812),
-            borderRadius: 24,
+            borderRadius: 16,
             overflow: "hidden",
             // Was a decorative Image (Images.modalBg — scattered pastel
             // polka-dot/confetti shapes) covering the whole card. Plain
@@ -127,7 +127,7 @@ function ModalRequest({
                 style={styles.btnHalf}
               >
                 <Text category="h7" status="basic" center mt={16} mb={20}>
-                  {cancelLabel ?? t('cancel', {defaultValue: 'Cancel'})}
+                  {cancelLabel ?? t('cancel', { defaultValue: 'Cancel' })}
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   modal: {
     flex: 1,
-    borderRadius: 24,
+    borderRadius: 16,
   },
   avatarView: {
     alignSelf: "center",

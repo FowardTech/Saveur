@@ -1,7 +1,7 @@
-import React, {memo} from 'react';
-import {Modal, Pressable, StyleSheet, View} from 'react-native';
-import {useTheme, Icon, Layout} from '@ui-kitten/components';
-import {useTranslation} from 'react-i18next';
+import React, { memo } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useTheme, Icon, Layout } from '@ui-kitten/components';
+import { useTranslation } from 'react-i18next';
 
 import Text from './Text';
 import Flex from './Flex';
@@ -88,10 +88,10 @@ interface AppTourProps {
   onClose(): void;
 }
 
-const AppTour = memo(({visible, onClose}: AppTourProps) => {
+const AppTour = memo(({ visible, onClose }: AppTourProps) => {
   const theme = useTheme();
-  const {width, height} = useLayout();
-  const {t} = useTranslation('more');
+  const { width, height } = useLayout();
+  const { t } = useTranslation('more');
   const [stepIndex, setStepIndex] = React.useState(0);
 
   // Reset to the first step every time the tour is (re)opened — matters for
@@ -123,7 +123,7 @@ const AppTour = memo(({visible, onClose}: AppTourProps) => {
             style={{
               width: width - 48,
               maxWidth: 420,
-              borderRadius: 24,
+              borderRadius: 16,
               padding: 28,
             }}
           >
@@ -132,25 +132,25 @@ const AppTour = memo(({visible, onClose}: AppTourProps) => {
                 category="h10"
                 status="placeholder"
                 onPress={onClose}
-                style={{padding: 4}}
+                style={{ padding: 4 }}
               >
-                {t('tour_skip', {defaultValue: 'Skip'})}
+                {t('tour_skip', { defaultValue: 'Skip' })}
               </Text>
             </Flex>
 
-            <View style={[styles.iconWrap, {backgroundColor: theme['background-basic-color-2']}]}>
+            <View style={[styles.iconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
               <Icon
                 pack="eva"
                 name={step.icon}
-                style={{width: 32, height: 32, tintColor: theme['text-basic-color']}}
+                style={{ width: 32, height: 32, tintColor: theme['text-basic-color'] }}
               />
             </View>
 
             <Text category="h6" bold center mt={20}>
-              {t(step.titleKey, {defaultValue: step.titleDefault})}
+              {t(step.titleKey, { defaultValue: step.titleDefault })}
             </Text>
             <Text category="h9-s" status="placeholder" center mt={10}>
-              {t(step.bodyKey, {defaultValue: step.bodyDefault})}
+              {t(step.bodyKey, { defaultValue: step.bodyDefault })}
             </Text>
 
             <Flex justify="center" itemsCenter mt={20} mb={4}>
@@ -174,20 +174,20 @@ const AppTour = memo(({visible, onClose}: AppTourProps) => {
                 category="h9"
                 status={stepIndex === 0 ? 'placeholder' : 'basic'}
                 onPress={stepIndex === 0 ? undefined : onBack}
-                style={{padding: 8, opacity: stepIndex === 0 ? 0.4 : 1}}
+                style={{ padding: 8, opacity: stepIndex === 0 ? 0.4 : 1 }}
               >
-                {t('tour_back', {defaultValue: 'Back'})}
+                {t('tour_back', { defaultValue: 'Back' })}
               </Text>
               <Text
                 category="h9"
                 bold
                 status="link"
                 onPress={onNext}
-                style={{padding: 8}}
+                style={{ padding: 8 }}
               >
                 {isLast
-                  ? t('tour_get_started', {defaultValue: 'Get started'})
-                  : t('tour_next', {defaultValue: 'Next'})}
+                  ? t('tour_get_started', { defaultValue: 'Get started' })
+                  : t('tour_next', { defaultValue: 'Next' })}
               </Text>
             </Flex>
           </Layout>

@@ -1,5 +1,5 @@
-import React, {memo} from 'react';
-import {StyleSheet, View, TouchableOpacity} from 'react-native';
+import React, { memo } from 'react';
+import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -9,7 +9,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import LinearGradient from 'react-native-linear-gradient';
-import {useTranslation} from 'react-i18next';
+import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -18,8 +18,8 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import UserAvatar from 'components/UserAvatar';
 import CircularProgress from 'components/CircularProgress';
-import {globalStyle} from 'styles/globalStyle';
-import {LeaderboardEntryProps} from 'constants/Types';
+import { globalStyle } from 'styles/globalStyle';
+import { LeaderboardEntryProps } from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
 import CtaButton from 'components/CtaButton';
 
@@ -39,9 +39,9 @@ import CtaButton from 'components/CtaButton';
 // always returning the same all-time User.xp ranking. Switching tabs
 // re-fetches for the newly selected period.
 const PERIODS = [
-  {key: 'daily', labelKey: 'home:leaderboard_daily', defaultValue: 'Daily'},
-  {key: 'weekly', labelKey: 'home:leaderboard_weekly', defaultValue: 'Weekly'},
-  {key: 'monthly', labelKey: 'home:leaderboard_monthly', defaultValue: 'Monthly'},
+  { key: 'daily', labelKey: 'home:leaderboard_daily', defaultValue: 'Daily' },
+  { key: 'weekly', labelKey: 'home:leaderboard_weekly', defaultValue: 'Weekly' },
+  { key: 'monthly', labelKey: 'home:leaderboard_monthly', defaultValue: 'Monthly' },
 ] as const;
 type Period = (typeof PERIODS)[number]['key'];
 
@@ -101,7 +101,7 @@ const PODIUM_ORDER: Array<1 | 2 | 3> = [2, 1, 3];
 const Leaderboard = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const {t} = useTranslation(['home', 'common']);
+  const { t } = useTranslation(['home', 'common']);
 
   const [leaderboard, setLeaderboard] = React.useState<LeaderboardEntryProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -116,7 +116,7 @@ const Leaderboard = memo(() => {
       setLeaderboard(data);
     } catch (error: any) {
       setLoadError(
-        error?.message ?? t('home:leaderboard_load_failed', {defaultValue: 'Could not load the leaderboard.'}),
+        error?.message ?? t('home:leaderboard_load_failed', { defaultValue: 'Could not load the leaderboard.' }),
       );
     } finally {
       setIsLoading(false);
@@ -141,7 +141,7 @@ const Leaderboard = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('home:leaderboard', {defaultValue: 'Leaderboard'})}
+        title={t('home:leaderboard', { defaultValue: 'Leaderboard' })}
         accessoryLeft={<NavigationAction />}
       />
       <Content padder contentContainerStyle={styles.content}>
@@ -155,12 +155,12 @@ const Leaderboard = memo(() => {
               {loadError}
             </Text>
             <CtaButton size="small" onPress={load}>
-              {t('common:try_again', {defaultValue: 'Try again'}).toString()}
+              {t('common:try_again', { defaultValue: 'Try again' }).toString()}
             </CtaButton>
           </Flex>
         ) : leaderboard.length === 0 ? (
           <Text category="h9-s" status="placeholder" center mv={16}>
-            {t('home:leaderboard_empty', {defaultValue: 'No leaderboard data yet.'})}
+            {t('home:leaderboard_empty', { defaultValue: 'No leaderboard data yet.' })}
           </Text>
         ) : (
           <>
@@ -188,8 +188,8 @@ const Leaderboard = memo(() => {
                       {active ? (
                         <LinearGradient
                           colors={[theme['color-primary-200'], theme['color-primary-700']]}
-                          start={{x: 0, y: 0}}
-                          end={{x: 1, y: 1}}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
                           style={StyleSheet.absoluteFillObject}
                         />
                       ) : null}
@@ -197,8 +197,8 @@ const Leaderboard = memo(() => {
                         category="h9-s"
                         bold
                         center
-                        style={{color: active ? '#fff' : theme['background-basic-color-6']}}>
-                        {t(period.labelKey, {defaultValue: period.defaultValue})}
+                        style={{ color: active ? '#fff' : theme['background-basic-color-6'] }}>
+                        {t(period.labelKey, { defaultValue: period.defaultValue })}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -224,7 +224,7 @@ const Leaderboard = memo(() => {
                               <Icon
                                 pack="eva"
                                 name="trophy"
-                                style={[globalStyle.icon20, {tintColor: medal}]}
+                                style={[globalStyle.icon20, { tintColor: medal }]}
                               />
                             </View>
                           ) : null}
@@ -249,20 +249,20 @@ const Leaderboard = memo(() => {
                           <View style={styles.podiumRankBadge}>
                             <LinearGradient
                               colors={MEDAL_GRADIENT[rank]}
-                              start={{x: 0, y: 0}}
-                              end={{x: 1, y: 1}}
+                              start={{ x: 0, y: 0 }}
+                              end={{ x: 1, y: 1 }}
                               style={styles.podiumRankBadgeFill}>
-                              <Text category="h10" bold style={{color: '#FFFFFF'}}>
+                              <Text category="h10" bold style={{ color: '#FFFFFF' }}>
                                 {rank}
                               </Text>
                             </LinearGradient>
                           </View>
                           <Text category="h9-s" bold center numberOfLines={1} mt={6} style={styles.podiumName}>
                             {entry.name}
-                            {entry.isCurrentUser ? ` (${t('home:you', {defaultValue: 'You'})})` : ''}
+                            {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                           </Text>
                           <Text category="h10" status="placeholder" center>
-                            {entry.xp} {t('home:xp_label', {defaultValue: 'XP'})}
+                            {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
                           </Text>
                         </>
                       ) : (
@@ -275,13 +275,13 @@ const Leaderboard = memo(() => {
                           plain tinted rectangle. */}
                       <LinearGradient
                         colors={PODIUM_BASE_GRADIENT[rank]}
-                        start={{x: 0, y: 0}}
-                        end={{x: 0, y: 1}}
-                        style={[styles.podiumBase, {height: PODIUM_BASE_HEIGHT[rank]}]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 0, y: 1 }}
+                        style={[styles.podiumBase, { height: PODIUM_BASE_HEIGHT[rank] }]}
                       />
                     </View>
                   );
-              })}
+                })}
               </View>
             </View>
 
@@ -293,7 +293,7 @@ const Leaderboard = memo(() => {
                     style={[
                       styles.row,
                       index > 0 && globalStyle.divider,
-                      entry.isCurrentUser && {backgroundColor: theme['color-primary-transparent-100']},
+                      entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
                     ]}>
                     {/* Modernization pass — a small circular chip instead
                         of bare number text, echoing the podium's own
@@ -308,10 +308,10 @@ const Leaderboard = memo(() => {
                     <UserAvatar uri={entry.avatarUrl} name={entry.name} size="small" style={styles.avatar} />
                     <Text category="h9" bold style={styles.name} numberOfLines={1}>
                       {entry.name}
-                      {entry.isCurrentUser ? ` (${t('home:you', {defaultValue: 'You'})})` : ''}
+                      {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                     </Text>
-                    <Text category="h9-s" bold style={{color: theme['color-primary-500']}}>
-                      {entry.xp} {t('home:xp_label', {defaultValue: 'XP'})}
+                    <Text category="h9-s" bold style={{ color: theme['color-primary-500'] }}>
+                      {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
                     </Text>
                   </View>
                 ))}
@@ -341,7 +341,7 @@ const themedStyles = StyleService.create({
   // directly on the page's own gray background.
   heroCard: {
     ...globalStyle.card,
-    borderRadius: 24,
+    borderRadius: 16,
     padding: 16,
     paddingTop: 20,
     marginTop: 12,

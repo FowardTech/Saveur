@@ -1,5 +1,5 @@
-import React, {memo} from 'react';
-import {StyleSheet, TouchableOpacity, View} from 'react-native';
+import React, { memo } from 'react';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -7,8 +7,8 @@ import {
   useTheme,
   Icon,
 } from '@ui-kitten/components';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
-import {useTranslation} from 'react-i18next';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
@@ -16,11 +16,11 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import BrandWordmark from 'components/BrandWordmark';
-import {globalStyle} from 'styles/globalStyle';
-import {RootStackParamList} from 'navigation/types';
+import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
 import * as coachService from 'services/coachService';
-import {SuggestedTopic} from 'services/coachService';
-import {AuthContext} from '../../AuthContext';
+import { SuggestedTopic } from 'services/coachService';
+import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
 import ThemeContext from '../../ThemeContext';
 
@@ -31,16 +31,16 @@ import ThemeContext from '../../ThemeContext';
 // to topics generated from the user's own signup goals/desiredRoles rather
 // than a fixed list, so this no longer shows the same 3 topics to everyone).
 const MessagesScreen = memo(() => {
-  const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const {t} = useTranslation(['message', 'common']);
-  const {profile} = React.useContext(AuthContext);
-  const {theme: appTheme} = React.useContext(ThemeContext);
+  const { t } = useTranslation(['message', 'common']);
+  const { profile } = React.useContext(AuthContext);
+  const { theme: appTheme } = React.useContext(ThemeContext);
   const isDarkMode = appTheme === 'dark';
 
   const onOpenChat = React.useCallback(() => {
-    navigate('MessagesStack', {screen: 'Chat'});
+    navigate('MessagesStack', { screen: 'Chat' });
   }, [navigate]);
 
   // Tapping a specific suggested topic used to open the exact same blank
@@ -49,15 +49,15 @@ const MessagesScreen = memo(() => {
   // opening question, auto-sent to the real coach backend (see
   // Chat.tsx's initialPrompt handling).
   const onOpenTopic = React.useCallback((prompt: string) => {
-    navigate('MessagesStack', {screen: 'Chat', params: {initialPrompt: prompt}});
+    navigate('MessagesStack', { screen: 'Chat', params: { initialPrompt: prompt } });
   }, [navigate]);
 
   const [topics, setTopics] = React.useState<SuggestedTopic[]>([]);
   React.useEffect(() => {
     coachService
-      .getSuggestedTopics({goals: profile?.goals, desiredRoles: profile?.desiredRoles})
+      .getSuggestedTopics({ goals: profile?.goals, desiredRoles: profile?.desiredRoles })
       .then(setTopics)
-      .catch(() => {});
+      .catch(() => { });
   }, [profile?.goals, profile?.desiredRoles]);
 
   return (
@@ -87,10 +87,10 @@ const MessagesScreen = memo(() => {
             colors={
               isDarkMode
                 ? [theme['background-basic-color-2'], theme['background-basic-color-3']]
-                : [theme['color-primary-200'], theme['color-primary-700']]
+                : [theme['color-primary-500'], theme['color-primary-500']]
             }
-            start={{x: 0, y: 0}}
-            end={{x: 1, y: 1}}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.heroAvatar}>
@@ -112,14 +112,14 @@ const MessagesScreen = memo(() => {
             <Text
               category="h6"
               bold
-              style={{color: isDarkMode ? theme['color-badge-info-text'] : '#fff'}}>
-              {t('message:ai_coach_name', {defaultValue: 'AI Career Coach'})}
+              style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
+              {t('message:ai_coach_name', { defaultValue: 'AI Career Coach' })}
             </Text>
             <Text
               category="h9-s"
               mt={4}
               numberOfLines={2}
-              style={{color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)'}}>
+              style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
               {t('message:ai_coach_subtitle', {
                 defaultValue: 'Ask me anything about your job search — I’m here to help.',
               })}
@@ -128,7 +128,7 @@ const MessagesScreen = memo(() => {
           <Icon
             pack="assets"
             name="arrowRight"
-            style={[globalStyle.icon16, {tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff'}]}
+            style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
           />
         </Flex>
 
@@ -140,7 +140,7 @@ const MessagesScreen = memo(() => {
             onPress={() => navigate('SalaryNegotiation')}>
             <View style={globalStyle.flexOne}>
               <Text category="h7" bold>
-                {t('message:salary_negotiation_title', {defaultValue: 'Salary Negotiation Simulator'})}
+                {t('message:salary_negotiation_title', { defaultValue: 'Salary Negotiation Simulator' })}
               </Text>
               <Text category="h9-s" status="placeholder" mt={4}>
                 {t('message:salary_negotiation_description', {
@@ -153,7 +153,7 @@ const MessagesScreen = memo(() => {
         )}
 
         <Text category="h6" bold mt={32} mb={16}>
-          {t('message:suggested_topics', {defaultValue: 'Suggested Topics'})}
+          {t('message:suggested_topics', { defaultValue: 'Suggested Topics' })}
         </Text>
         {/* Was rendered via MessagesItem (an inbox-row component expecting
             avatar/name/online-state/time fields that a suggested topic never
@@ -188,7 +188,7 @@ const themedStyles = StyleService.create({
   hero: {
     marginTop: 16,
     padding: 20,
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     // Opaque Android shadow fallback only — always fully covered by the
     // absolute-fill gradient rendered as this Flex's first child (see the

@@ -112,7 +112,7 @@ export const globalStyle = StyleSheet.create({
   // big, very rounded cards) — reads closer to those references' softer,
   // friendlier card shape than the previous 20px radius.
   card: {
-    borderRadius: 24,
+    borderRadius: 16,
     ...cardShadow,
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient

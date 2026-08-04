@@ -1,11 +1,11 @@
-import React, {memo} from 'react';
-import {Modal, TouchableOpacity, View} from 'react-native';
-import {Icon, Input, useTheme} from '@ui-kitten/components';
-import {useTranslation} from 'react-i18next';
+import React, { memo } from 'react';
+import { Modal, TouchableOpacity, View } from 'react-native';
+import { Icon, Input, useTheme } from '@ui-kitten/components';
+import { useTranslation } from 'react-i18next';
 
 import Text from './Text';
 import Flex from './Flex';
-import {globalStyle} from 'styles/globalStyle';
+import { globalStyle } from 'styles/globalStyle';
 import CtaButton from 'components/CtaButton';
 
 interface Props {
@@ -20,9 +20,9 @@ interface Props {
 // scale plus an optional free-text comment. Centered dialog rather than the
 // bottom-sheet pattern AvatarPickerModal/ResumeBuilder's document pickers
 // use — this is a single-focus prompt, not a list to scroll/pick from.
-const AppRatingModal = memo(({visible, onSubmit, onDismiss}: Props) => {
+const AppRatingModal = memo(({ visible, onSubmit, onDismiss }: Props) => {
   const theme = useTheme();
-  const {t} = useTranslation(['common']);
+  const { t } = useTranslation(['common']);
   const [score, setScore] = React.useState(0);
   const [comment, setComment] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -50,20 +50,20 @@ const AppRatingModal = memo(({visible, onSubmit, onDismiss}: Props) => {
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onDismiss}>
       <View style={styles.backdrop}>
-        <View style={[styles.card, {backgroundColor: theme['background-basic-color-1']}]}>
+        <View style={[styles.card, { backgroundColor: theme['background-basic-color-1'] }]}>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onDismiss}
-            hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Icon
               pack="eva"
               name="close-outline"
-              style={[globalStyle.icon24, {tintColor: theme['text-hint-color']}]}
+              style={[globalStyle.icon24, { tintColor: theme['text-hint-color'] }]}
             />
           </TouchableOpacity>
 
           <Text category="h6" bold center mb={8}>
-            {t('common:rating_modal_title', {defaultValue: 'How is Saveur helping you?'})}
+            {t('common:rating_modal_title', { defaultValue: 'How is Saveur helping you?' })}
           </Text>
           <Text category="h9-s" status="placeholder" center mb={20}>
             {t('common:rating_modal_subtitle', {
@@ -77,8 +77,8 @@ const AppRatingModal = memo(({visible, onSubmit, onDismiss}: Props) => {
               <TouchableOpacity
                 key={n}
                 onPress={() => setScore(n)}
-                hitSlop={{top: 8, bottom: 8, left: 4, right: 4}}
-                style={{marginHorizontal: 4}}>
+                hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+                style={{ marginHorizontal: 4 }}>
                 <Icon
                   pack="eva"
                   name={n <= score ? 'star' : 'star-outline'}
@@ -104,15 +104,15 @@ const AppRatingModal = memo(({visible, onSubmit, onDismiss}: Props) => {
           />
 
           <CtaButton
-            style={{marginTop: 20}}
+            style={{ marginTop: 20 }}
             disabled={score === 0 || isSubmitting}
             loading={isSubmitting}
             onPress={onPressSubmit}>
-            {t('common:rating_modal_submit', {defaultValue: 'Submit Rating'})}
+            {t('common:rating_modal_submit', { defaultValue: 'Submit Rating' })}
           </CtaButton>
-          <TouchableOpacity onPress={onDismiss} disabled={isSubmitting} style={{marginTop: 12}}>
+          <TouchableOpacity onPress={onDismiss} disabled={isSubmitting} style={{ marginTop: 12 }}>
             <Text category="h9-s" status="placeholder" center>
-              {t('common:rating_modal_later', {defaultValue: 'Maybe later'})}
+              {t('common:rating_modal_later', { defaultValue: 'Maybe later' })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -133,7 +133,7 @@ const styles = {
   },
   card: {
     width: '100%' as const,
-    borderRadius: 24,
+    borderRadius: 16,
     padding: 24,
   },
   closeButton: {

@@ -218,7 +218,7 @@ const themedStyles = StyleService.create({
     // `card`'s shadow needs an opaque fill to render correctly on Android
     // (was 'transparent') — this renders on a plain <Flex> with no
     // `level` prop, so the fill has to live here.
-    backgroundColor: 'background-basic-color-2',
+    // backgroundColor: 'background-basic-color-2',
   },
   searchInput: {
     ...globalStyle.inputField,

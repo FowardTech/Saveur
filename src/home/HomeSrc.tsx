@@ -699,7 +699,7 @@ const HomeSrc = memo(() => {
             onPress={onOpenHomeBanner}>
             <View style={styles.homeBannerFallback}>
               <LinearGradient
-                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-200'], theme['color-primary-700']]}
+                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-500'], theme['color-primary-500']]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -805,7 +805,7 @@ const HomeSrc = memo(() => {
               end={{ x: 0.15, y: 0.9 }}
               style={styles.checkInCardAccent}
             />
-          {/* Redesign v7 (product follow-up — "leave the XP progress bar at
+            {/* Redesign v7 (product follow-up — "leave the XP progress bar at
               the top there and now move the badge button to the top too so
               that both the progress bar and the badge will be at the top"):
               back to one merged row (ring, XP value/error, Badges button,
@@ -814,141 +814,141 @@ const HomeSrc = memo(() => {
               what actually makes the Badges button/medal icon read as
               sitting "at the top" alongside the ring instead of sunk
               against a much taller element next to them. */}
-          <View style={styles.checkInTopRow}>
-            <CircularProgress
-              progress={Math.min(100, (streakDays / 7) * 100)}
-              size={72}
-              strokeWidth={8}
-              trackColor="#0063f81f"
-              gradientFrom="#1DA1F2"
-              gradientTo="#0063f8"
-              style={styles.checkInRing}>
-              <Text category="h6" bold style={styles.checkInRingText}>
-                {streakDays}
-              </Text>
-            </CircularProgress>
-            <View style={globalStyle.flexOne}>
-              <Text category="h7" bold style={styles.checkInValue} numberOfLines={1}>
-                {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} ${t('home:xp_label', {defaultValue: 'XP'})}`}
-              </Text>
-              {streakError ? (
-                <Flex justify="flex-start" itemsCenter mt={6}>
-                  <Text category="h10" mr={12} style={styles.checkInError}>
-                    {streakError}
-                  </Text>
-                  <Text category="h10" bold style={styles.checkInRetry} onPress={loadStreak}>
-                    {t('common:try_again', { defaultValue: 'Try again' }).toString()}
-                  </Text>
-                </Flex>
-              ) : null}
-            </View>
-            <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
-            <TouchableOpacity
-              activeOpacity={0.8}
-              style={styles.checkInBadgesButton}
-              onPress={() => setIsBadgesModalVisible(true)}>
-              <Text category="h10" bold style={styles.checkInButtonText} numberOfLines={1}>
-                {t('home:badges', { defaultValue: 'Badges' })}
-              </Text>
-            </TouchableOpacity>
-          </View>
-          {streak?.checkedInToday ? (
-            // Solid white pill + blue checkmark — was a translucent
-            // white-on-white-ish fill (too low contrast to read clearly
-            // against the gradient), now matches checkInButton's own solid
-            // white pill exactly (just a checkmark + label instead of an
-            // actionable label — this is a completed state, not a live
-            // action).
-            <View style={[styles.checkInButton, styles.checkedInPill]}>
-              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
-              <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
-                {t('home:checked_in_today', { defaultValue: 'Checked in' })}
-              </Text>
-            </View>
-          ) : (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              disabled={checkingIn || streakLoading || !!streakError}
-              onPress={onCheckIn}
-              style={[
-                styles.checkInButton,
-                (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
-              ]}>
-              {checkingIn ? (
-                <Spinner size="tiny" status="primary" />
-              ) : (
-                <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
-                  {t('home:check_in', { defaultValue: 'Check In' })}
+            <View style={styles.checkInTopRow}>
+              <CircularProgress
+                progress={Math.min(100, (streakDays / 7) * 100)}
+                size={72}
+                strokeWidth={8}
+                trackColor="#0063f81f"
+                gradientFrom="#1DA1F2"
+                gradientTo="#0063f8"
+                style={styles.checkInRing}>
+                <Text category="h6" bold style={styles.checkInRingText}>
+                  {streakDays}
                 </Text>
-              )}
-            </TouchableOpacity>
-          )}
-        {/* Weekly Practice chart removed from here (decluttering pass) — it
+              </CircularProgress>
+              <View style={globalStyle.flexOne}>
+                <Text category="h7" bold style={styles.checkInValue} numberOfLines={1}>
+                  {streakLoading && !streak ? '—' : `${streak?.xp ?? 0} ${t('home:xp_label', { defaultValue: 'XP' })}`}
+                </Text>
+                {streakError ? (
+                  <Flex justify="flex-start" itemsCenter mt={6}>
+                    <Text category="h10" mr={12} style={styles.checkInError}>
+                      {streakError}
+                    </Text>
+                    <Text category="h10" bold style={styles.checkInRetry} onPress={loadStreak}>
+                      {t('common:try_again', { defaultValue: 'Try again' }).toString()}
+                    </Text>
+                  </Flex>
+                ) : null}
+              </View>
+              <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.checkInBadgesButton}
+                onPress={() => setIsBadgesModalVisible(true)}>
+                <Text category="h10" bold style={styles.checkInButtonText} numberOfLines={1}>
+                  {t('home:badges', { defaultValue: 'Badges' })}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            {streak?.checkedInToday ? (
+              // Solid white pill + blue checkmark — was a translucent
+              // white-on-white-ish fill (too low contrast to read clearly
+              // against the gradient), now matches checkInButton's own solid
+              // white pill exactly (just a checkmark + label instead of an
+              // actionable label — this is a completed state, not a live
+              // action).
+              <View style={[styles.checkInButton, styles.checkedInPill]}>
+                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
+                <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
+                  {t('home:checked_in_today', { defaultValue: 'Checked in' })}
+                </Text>
+              </View>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                disabled={checkingIn || streakLoading || !!streakError}
+                onPress={onCheckIn}
+                style={[
+                  styles.checkInButton,
+                  (checkingIn || streakLoading || !!streakError) && styles.checkInButtonDisabled,
+                ]}>
+                {checkingIn ? (
+                  <Spinner size="tiny" status="primary" />
+                ) : (
+                  <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
+                    {t('home:check_in', { defaultValue: 'Check In' })}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
+            {/* Weekly Practice chart removed from here (decluttering pass) — it
             was a plain duplicate of MyProgress.tsx's own "This week" chart
             (same computeWeeklyPractice data), reachable one tap away via
             the "Your Progress" pill above, so keeping it here too was pure
             repetition rather than something Home uniquely needed. */}
-        <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-          <Text category="h7" bold style={{color: '#0063f8'}}>
-            {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
-          </Text>
-          <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{color: '#0063f8'}}>
-            {t('home:schedule_new', { defaultValue: '+ Schedule' })}
-          </Text>
-        </Flex>
-        {nextSession ? (
-          <Flex
-            level="2"
-            style={styles.upcomingCard}
-            justify="flex-start"
-            itemsCenter
-            onPress={() =>
-              navigate('MockInterviewSetup', {
-                interviewType: nextSession.interviewType,
-                mode: nextSession.mode,
-                difficulty: nextSession.difficulty,
-                role: nextSession.role,
-                company: nextSession.company,
-                durationMin: nextSession.durationMin,
-              })
-            }>
-            <View style={globalStyle.flexOne}>
-              <Text category="h7" bold>
-                {getInterviewTypeLabel(nextSession.interviewType, t)}
+            <Flex justify="space-between" itemsCenter mt={32} mb={16}>
+              <Text category="h7" bold style={{ color: '#0063f8' }}>
+                {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
               </Text>
-              <Text category="h9-s" status="placeholder" mt={4}>
-                {new Date(nextSession.scheduledAt).toLocaleString(undefined, {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
+              <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{ color: '#0063f8' }}>
+                {t('home:schedule_new', { defaultValue: '+ Schedule' })}
               </Text>
-              <Text category="h9-s" status="placeholder" mt={2}>
-                {getPracticeModeLabel(nextSession.mode, t)} · {getDifficultyLabel(nextSession.difficulty, t)} ·{' '}
-                {nextSession.durationMin} {t('find:minutes_unit', {defaultValue: 'min'})}
-              </Text>
-            </View>
-            <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
-          </Flex>
-        ) : (
-          <Flex
-            level="2"
-            style={styles.upcomingCard}
-            justify="flex-start"
-            itemsCenter
-            onPress={() => navigate('ScheduleInterview')}>
-            <View style={globalStyle.flexOne}>
-              <Text category="h9-s" status="placeholder">
-                {t('home:no_upcoming_session', {
-                  defaultValue: 'Nothing scheduled yet — set a reminder for your next mock interview.',
-                })}
-              </Text>
-            </View>
-            <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-          </Flex>
-        )}
+            </Flex>
+            {nextSession ? (
+              <Flex
+                level="2"
+                style={styles.upcomingCard}
+                justify="flex-start"
+                itemsCenter
+                onPress={() =>
+                  navigate('MockInterviewSetup', {
+                    interviewType: nextSession.interviewType,
+                    mode: nextSession.mode,
+                    difficulty: nextSession.difficulty,
+                    role: nextSession.role,
+                    company: nextSession.company,
+                    durationMin: nextSession.durationMin,
+                  })
+                }>
+                <View style={globalStyle.flexOne}>
+                  <Text category="h7" bold>
+                    {getInterviewTypeLabel(nextSession.interviewType, t)}
+                  </Text>
+                  <Text category="h9-s" status="placeholder" mt={4}>
+                    {new Date(nextSession.scheduledAt).toLocaleString(undefined, {
+                      weekday: 'short',
+                      month: 'short',
+                      day: 'numeric',
+                      hour: 'numeric',
+                      minute: '2-digit',
+                    })}
+                  </Text>
+                  <Text category="h9-s" status="placeholder" mt={2}>
+                    {getPracticeModeLabel(nextSession.mode, t)} · {getDifficultyLabel(nextSession.difficulty, t)} ·{' '}
+                    {nextSession.durationMin} {t('find:minutes_unit', { defaultValue: 'min' })}
+                  </Text>
+                </View>
+                <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+              </Flex>
+            ) : (
+              <Flex
+                level="2"
+                style={styles.upcomingCard}
+                justify="flex-start"
+                itemsCenter
+                onPress={() => navigate('ScheduleInterview')}>
+                <View style={globalStyle.flexOne}>
+                  <Text category="h9-s" status="placeholder">
+                    {t('home:no_upcoming_session', {
+                      defaultValue: 'Nothing scheduled yet — set a reminder for your next mock interview.',
+                    })}
+                  </Text>
+                </View>
+                <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+              </Flex>
+            )}
           </View>
         </View>
 
@@ -989,7 +989,7 @@ const HomeSrc = memo(() => {
             source of truth for "top N". */}
         <Flex justify="space-between" itemsCenter mt={24} mb={12}>
           <Text category="h7" bold>
-            {t('home:leaderboard', { defaultValue: 'Leaderboard' })} 
+            {t('home:leaderboard', { defaultValue: 'Leaderboard' })}
           </Text>
           {/* Was category="h10" (12px, not bold) — the thinnest text style
               in the app, mismatched against every other "link" affordance
@@ -1034,7 +1034,7 @@ const HomeSrc = memo(() => {
                         per explicit follow-up — every other rank keeps its
                         plain number badge. */}
                     {entry.rank === 1 ? (
-                      
+
                       <Text>🏆</Text>
                     ) : (
                       <Text category="h9-s" bold style={{ color: medal.text }}>
@@ -1063,7 +1063,7 @@ const HomeSrc = memo(() => {
                     {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                   </Text>
                   <Text category="h10" status="placeholder">
-                    {entry.xp} {t('home:xp_label', {defaultValue: 'XP'})}
+                    {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
                   </Text>
                 </View>
               );
@@ -1142,7 +1142,7 @@ const themedStyles = StyleService.create({
     // either (always the code-drawn card now, which sizes to its own
     // content — see homeBannerFallback below).
     marginTop: 16,
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   // Code-drawn banner (see the JSX comment where this renders) — a plain
@@ -1152,7 +1152,7 @@ const themedStyles = StyleService.create({
   homeBannerFallback: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
@@ -1217,7 +1217,7 @@ const themedStyles = StyleService.create({
     // renders correctly.
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor:'color-primary-transparent-200'
+    borderColor: 'color-primary-transparent-200'
     // backgroundColor: 'color-badge-info-bg',
   },
   // Flat solid-blue card (gradient removed — see the JSX comment above for
@@ -1227,7 +1227,7 @@ const themedStyles = StyleService.create({
   checkInCard: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 24,
+    borderRadius: 16,
     // BUG FIX (product report: "make the XP card and its content look nice
     // in dark mode its looking so bad") — 'color-primary-000' is a fixed
     // "#FFFFFF" in constants/theme/appTheme.json with no dark-mode override
@@ -1253,7 +1253,7 @@ const themedStyles = StyleService.create({
   // button/pill itself (no more minWidth, numberOfLines=1 labels — see
   // checkInButton below) rather than changing the row shape.
   checkInCardInner: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,

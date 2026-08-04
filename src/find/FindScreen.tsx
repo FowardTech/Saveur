@@ -96,7 +96,7 @@ const FindScreen = memo(() => {
           <View style={styles.hero}>
             <View style={styles.heroInner}>
               <LinearGradient
-                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-200'], theme['color-primary-700']]}
+                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-500'], theme['color-primary-500']]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -218,7 +218,7 @@ const themedStyles = StyleService.create({
   hero: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 24,
+    borderRadius: 16,
     backgroundColor: 'color-primary-500',
   },
   // Plain View, NOT a LinearGradient — the gradient is a decorative
@@ -226,7 +226,7 @@ const themedStyles = StyleService.create({
   // instead (see the JSX comment for why that matters for correct
   // sizing).
   heroInner: {
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
     padding: 24,

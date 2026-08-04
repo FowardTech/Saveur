@@ -219,7 +219,7 @@ const LiveInterviewSession = memo(() => {
       // Fetch failed (offline, backend/ElevenLabs error, timeout) — same
       // safety net Video mode has always had: the on-device voice, not a
       // silent interview.
-      await speechService.speak(text, i18n.language, {preserveRecordingSession: true});
+      await speechService.speak(text, i18n.language, { preserveRecordingSession: true });
       return;
     }
     return new Promise<void>(resolve => {
@@ -616,8 +616,8 @@ const LiveInterviewSession = memo(() => {
         // button) rather than a real "End Interview" tap, so there's no
         // sessionId-scoped completion to attach a video to anyway. This
         // just releases the native recorder so it doesn't keep running.
-        videoAnalysis.stopVideoRecording().catch(() => {});
-        videoAnalysis.stopAnalysis().catch(() => {});
+        videoAnalysis.stopVideoRecording().catch(() => { });
+        videoAnalysis.stopAnalysis().catch(() => { });
       } else if (isVoiceMode) {
         speechService.stopSpeaking();
         speechToText.stop();
@@ -783,7 +783,7 @@ const LiveInterviewSession = memo(() => {
             // else, which is exactly why repeated "no video was recorded"
             // reports were impossible to diagnose past guessing.
             const reason = videoAnalysis.getRecordingError() ?? 'unknown: stopVideoRecording resolved null with no reason set';
-            interviewService.reportVideoError(sessionId, reason).catch(() => {});
+            interviewService.reportVideoError(sessionId, reason).catch(() => { });
             return;
           }
           setIsUploadingVideo(true);
@@ -803,7 +803,7 @@ const LiveInterviewSession = memo(() => {
             // all, and what the error looks like when it does.
             interviewService.reportVideoError(
               sessionId, `upload_failed (will retry): ${err instanceof Error ? err.message : String(err)}`,
-            ).catch(() => {});
+            ).catch(() => { });
           } finally {
             setIsUploadingVideo(false);
           }
@@ -856,10 +856,10 @@ const LiveInterviewSession = memo(() => {
           Alert.alert(
             t('find:live_sync_failed_title', { defaultValue: 'Could not sync interview' }),
             err?.message ??
-              t('find:live_sync_failed_message', {
-                defaultValue:
-                  'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.',
-              }),
+            t('find:live_sync_failed_message', {
+              defaultValue:
+                'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.',
+            }),
           );
         }
       }
@@ -894,13 +894,13 @@ const LiveInterviewSession = memo(() => {
       t('find:live_leave_title', { defaultValue: 'Leave this interview?' }),
       isVideoMode
         ? t('find:live_leave_video_message', {
-            defaultValue:
-              'Leaving now discards your recording and you won’t get feedback. Tap "End Interview" instead to save your video and see your results.',
-          })
+          defaultValue:
+            'Leaving now discards your recording and you won’t get feedback. Tap "End Interview" instead to save your video and see your results.',
+        })
         : t('find:live_leave_message', {
-            defaultValue:
-              'Leaving now discards this session and you won’t get feedback. Tap "End Interview" instead to save your progress and see your results.',
-          }),
+          defaultValue:
+            'Leaving now discards this session and you won’t get feedback. Tap "End Interview" instead to save your progress and see your results.',
+        }),
       [
         { text: t('find:live_leave_keep_going', { defaultValue: 'Keep going' }), style: 'cancel' },
         {
@@ -933,11 +933,11 @@ const LiveInterviewSession = memo(() => {
         accessoryRight={
           interviewType === Interview_Type_Enum.SystemDesign
             ? () => (
-                <TopNavigationAction
-                  icon={props => <Icon {...props} pack="eva" name="edit-2-outline" />}
-                  onPress={() => navigate('SystemDesignWhiteboard')}
-                />
-              )
+              <TopNavigationAction
+                icon={props => <Icon {...props} pack="eva" name="edit-2-outline" />}
+                onPress={() => navigate('SystemDesignWhiteboard')}
+              />
+            )
             : undefined
         }
       />
@@ -1167,8 +1167,8 @@ const LiveInterviewSession = memo(() => {
               {isAiSpeaking
                 ? t('find:live_ai_speaking', { defaultValue: 'AI is speaking…' })
                 : isMuted
-                ? t('find:live_muted', { defaultValue: 'Muted' })
-                : t('find:live_listening', { defaultValue: 'Listening…' })}
+                  ? t('find:live_muted', { defaultValue: 'Muted' })
+                  : t('find:live_listening', { defaultValue: 'Listening…' })}
             </Text>
             {company ? (
               <Text category="h10" center mt={12} bold status="link">
@@ -1356,14 +1356,14 @@ const styles = StyleSheet.create({
   submitAnswerBtn: {
     marginTop: 16,
     height: 48,
-    borderRadius: 24,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cameraWrap: {
     width: '100%',
     aspectRatio: 3 / 4,
-    borderRadius: 24,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#000',
   },

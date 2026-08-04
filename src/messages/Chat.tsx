@@ -428,8 +428,8 @@ const Chat = memo(() => {
           }}
         />
       ) : (
-      <>
-      {/* Was a KeyboardAwareScrollView (scrollEnabled={false}, used only for
+        <>
+          {/* Was a KeyboardAwareScrollView (scrollEnabled={false}, used only for
           its automatic keyboard-follow behavior, never for actual
           scrolling) — that's still a ScrollView, and GiftedChat renders its
           message list as a FlatList internally, so nesting them triggered
@@ -445,68 +445,68 @@ const Chat = memo(() => {
           pushing the UI upward... input field and other things not
           visible." A plain View has no scroll-container conflict and lets
           GiftedChat's internal handling do its job unopposed. */}
-      <View style={styles.container}>
-        <GiftedChat
-          user={{ _id: 1 }}
-          messages={messages}
-          onSend={onSend}
-          renderBubble={renderBubble}
-          renderAvatar={renderAvatar}
-          imageStyle={{}}
-          renderTime={() => null}
-          renderSend={renderSend}
-          renderCustomView={renderCustomView}
-          messagesContainerStyle={{ paddingBottom: 32 }}
-          renderInputToolbar={renderInputToolbar}
-          // gifted-chat's Composer has its own hardcoded default text color
-          // (dark gray/black) with no idea this app has a dark theme --
-          // without these it renders unreadable dark-on-dark text in the
-          // input pill. textInputStyle covers what's actually typed;
-          // placeholderTextColor covers the empty-state hint text.
-          textInputStyle={{ color: theme['text-basic-color'] }}
-          placeholderTextColor={theme['text-hint-color']}
-          // BUG FIX (product report: "Coach Text chat is not translating —
-          // renders in English even when the language is changed"): with no
-          // `placeholder` prop, gifted-chat's Composer falls back to its own
-          // hardcoded English default ("Type a message..."), which is the
-          // single most visible string on this screen (the empty input
-          // field) and was rendering in English regardless of app language.
-          placeholder={t("message:chat_input_placeholder", { defaultValue: "Type a message..." })}
-          showUserAvatar
-          alwaysShowSend
-          renderMessageImage={(props) => {
-            return (
-              <MessageImage
-                {...props}
-                containerStyle={{ width: 247, height: 160 }}
-                imageStyle={{ width: 247, height: 160 }}
-              />
-            );
-          }}
-        />
-        {showAction === true ? (
-          <Layout level={"3"}>
-            <Flex margin={32}>
-              <AttachItem
-                title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
-                icon={"attach"}
-                _onPress={onAttach}
-              />
-              <AttachItem
-                title={t("message:start_video_practice", { defaultValue: "Start Video Practice" })}
-                icon={"call"}
-                _onPress={onMakeCall}
-              />
-              <AttachItem
-                title={t("message:view_my_progress", { defaultValue: "View My Progress" })}
-                icon={"payment"}
-                _onPress={onViewProgress}
-              />
-            </Flex>
-          </Layout>
-        ) : null}
-      </View>
-      </>
+          <View style={styles.container}>
+            <GiftedChat
+              user={{ _id: 1 }}
+              messages={messages}
+              onSend={onSend}
+              renderBubble={renderBubble}
+              renderAvatar={renderAvatar}
+              imageStyle={{}}
+              renderTime={() => null}
+              renderSend={renderSend}
+              renderCustomView={renderCustomView}
+              messagesContainerStyle={{ paddingBottom: 32 }}
+              renderInputToolbar={renderInputToolbar}
+              // gifted-chat's Composer has its own hardcoded default text color
+              // (dark gray/black) with no idea this app has a dark theme --
+              // without these it renders unreadable dark-on-dark text in the
+              // input pill. textInputStyle covers what's actually typed;
+              // placeholderTextColor covers the empty-state hint text.
+              textInputStyle={{ color: theme['text-basic-color'] }}
+              placeholderTextColor={theme['text-hint-color']}
+              // BUG FIX (product report: "Coach Text chat is not translating —
+              // renders in English even when the language is changed"): with no
+              // `placeholder` prop, gifted-chat's Composer falls back to its own
+              // hardcoded English default ("Type a message..."), which is the
+              // single most visible string on this screen (the empty input
+              // field) and was rendering in English regardless of app language.
+              placeholder={t("message:chat_input_placeholder", { defaultValue: "Type a message..." })}
+              showUserAvatar
+              alwaysShowSend
+              renderMessageImage={(props) => {
+                return (
+                  <MessageImage
+                    {...props}
+                    containerStyle={{ width: 247, height: 160 }}
+                    imageStyle={{ width: 247, height: 160 }}
+                  />
+                );
+              }}
+            />
+            {showAction === true ? (
+              <Layout level={"3"}>
+                <Flex margin={32}>
+                  <AttachItem
+                    title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
+                    icon={"attach"}
+                    _onPress={onAttach}
+                  />
+                  <AttachItem
+                    title={t("message:start_video_practice", { defaultValue: "Start Video Practice" })}
+                    icon={"call"}
+                    _onPress={onMakeCall}
+                  />
+                  <AttachItem
+                    title={t("message:view_my_progress", { defaultValue: "View My Progress" })}
+                    icon={"payment"}
+                    _onPress={onViewProgress}
+                  />
+                </Flex>
+              </Layout>
+            ) : null}
+          </View>
+        </>
       )}
     </Container>
   );
@@ -542,13 +542,13 @@ const themedStyles = StyleService.create({
   },
   wrapperLeftStyle: {
     borderBottomLeftRadius: 4,
-    borderRadius: 24,
+    borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
   },
   wrapperRightStyle: {
     borderBottomRightRadius: 4,
-    borderRadius: 24,
+    borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8
   },
