@@ -60,6 +60,50 @@ const InterviewFeedback = memo(() => {
 
   const { sessionId, interviewType, videoAnalysis } = route.params ?? {};
 
+  // See the "Other Things We Noticed" block below for what these four
+  // signals are — computed once here (rather than duplicated inline for
+  // the length check and the render map) so both agree on exactly which
+  // lines are showing.
+  const focusSignalLines = React.useMemo(() => {
+    if (!videoAnalysis) return [];
+    const FOCUS_SIGNAL_NOISE_FLOOR_PCT = 5;
+    const lines: string[] = [];
+    if (videoAnalysis.faceNotVisiblePct >= FOCUS_SIGNAL_NOISE_FLOOR_PCT) {
+      lines.push(
+        t('find:focus_signal_face_not_visible', {
+          defaultValue: 'You were out of frame for about {{pct}}% of the interview — try to stay centered in the camera.',
+          pct: videoAnalysis.faceNotVisiblePct,
+        }),
+      );
+    }
+    if (videoAnalysis.multipleFacesPct >= FOCUS_SIGNAL_NOISE_FLOOR_PCT) {
+      lines.push(
+        t('find:focus_signal_multiple_faces', {
+          defaultValue: 'Someone else appeared in frame for about {{pct}}% of the interview.',
+          pct: videoAnalysis.multipleFacesPct,
+        }),
+      );
+    }
+    if (videoAnalysis.eyesClosedPct >= FOCUS_SIGNAL_NOISE_FLOOR_PCT) {
+      lines.push(
+        t('find:focus_signal_eyes_closed', {
+          defaultValue: "Your eyes looked closed for about {{pct}}% of the interview — try to keep engaging visually with the camera.",
+          pct: videoAnalysis.eyesClosedPct,
+        }),
+      );
+    }
+    if (videoAnalysis.excessiveMovementPct >= FOCUS_SIGNAL_NOISE_FLOOR_PCT) {
+      lines.push(
+        t('find:focus_signal_excessive_movement', {
+          defaultValue: 'You moved around a fair amount — sudden head movement showed up in about {{pct}}% of frames. A calmer posture can read as more composed.',
+          pct: videoAnalysis.excessiveMovementPct,
+        }),
+      );
+    }
+    return lines;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoAnalysis]);
+
   const [isLoading, setIsLoading] = React.useState(!!sessionId);
   const [error, setError] = React.useState<string | null>(null);
   const [isRegenerating, setIsRegenerating] = React.useState(false);
@@ -406,6 +450,32 @@ const InterviewFeedback = memo(() => {
                removed rather than shown with fake data. Eye Contact /
                Smiling / Confidence above are unaffected — pure ML Kit face
                detection, no microphone involved. */}
+
+            {/* BUG FIX (product report: "it's only flagging the eye
+               contact — it should flag any other things that it thinks
+               could make the user lose focus") — four more real,
+               ML-Kit-derived signals (see videoAnalysisService.ts's
+               onFacesDetected for exactly how each is computed; no
+               fabricated data). Unlike the rings above (where high is
+               good), a high percentage here is the thing worth knowing
+               about, so these render as plain constructive callouts
+               instead — and only the ones that actually happened, past a
+               small noise floor (a single blink or camera glitch
+               shouldn't read as a real pattern worth mentioning). */}
+            {focusSignalLines.length > 0 ? (
+              <>
+                <Text category="h6" bold mt={24} mb={12}>
+                  {t('find:focus_signals_title', { defaultValue: 'Other Things We Noticed' })}
+                </Text>
+                <View style={styles.focusSignalsCard}>
+                  {focusSignalLines.map((line, i) => (
+                    <Text category="h9" key={i} mb={i < focusSignalLines.length - 1 ? 8 : 0}>
+                      {line}
+                    </Text>
+                  ))}
+                </View>
+              </>
+            ) : null}
           </>
         ) : null}
 
@@ -454,6 +524,12 @@ const themedStyles = StyleService.create({
   skillCard: {
     width: '31%',
     marginBottom: 24,
+  },
+  focusSignalsCard: {
+    ...globalStyle.card,
+    padding: 16,
+    marginBottom: 8,
+    backgroundColor: 'background-basic-color-2',
   },
   starRow: {
     ...globalStyle.card,

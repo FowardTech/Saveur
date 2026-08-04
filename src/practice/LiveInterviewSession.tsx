@@ -54,6 +54,10 @@ const EMPTY_VIDEO_METRICS: VideoAnalysisMetrics = {
   speakingRateWpm: 0,
   silenceGapCount: 0,
   confidenceScore: 0,
+  faceNotVisiblePct: 0,
+  multipleFacesPct: 0,
+  eyesClosedPct: 0,
+  excessiveMovementPct: 0,
 };
 
 // Live mock-interview screen. Voice mode now has real audio: the AI's
@@ -1081,6 +1085,37 @@ const LiveInterviewSession = memo(() => {
                           : t('find:live_look_at_camera', { defaultValue: 'Look at camera' })}
                       </Text>
                     </View>
+                    {/* BUG FIX (product report: "it's only flagging the eye
+                        contact — it should flag any other things that it
+                        thinks could make the user lose focus") — a single
+                        conditional pill (not three permanent ones, which
+                        would clutter the preview) for whichever real,
+                        ML-Kit-derived focus-loss signal is most severe right
+                        now. Priority: no face at all > someone else in
+                        frame > eyes closed — excessive head-movement stays
+                        summary-only (see InterviewFeedback.tsx) rather than
+                        live, since a single frame-to-frame jump is too
+                        noisy to flag moment-to-moment without it just
+                        flickering constantly. */}
+                    {!videoAnalysis.liveMetrics.isFaceVisible ? (
+                      <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
+                        <Text category="h10" status="control" bold>
+                          {t('find:live_face_not_visible', { defaultValue: "😕 Can't see you" })}
+                        </Text>
+                      </View>
+                    ) : videoAnalysis.liveMetrics.hasMultipleFaces ? (
+                      <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
+                        <Text category="h10" status="control" bold>
+                          {t('find:live_multiple_faces', { defaultValue: '👥 Multiple faces' })}
+                        </Text>
+                      </View>
+                    ) : videoAnalysis.liveMetrics.isEyesClosed ? (
+                      <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
+                        <Text category="h10" status="control" bold>
+                          {t('find:live_eyes_closed', { defaultValue: '😴 Eyes closed' })}
+                        </Text>
+                      </View>
+                    ) : null}
                     {/* Was a live "Fillers: N" pill, driven by
                         videoAnalysisService's on-device speech recognizer —
                         removed along with that recognizer (see
@@ -1425,6 +1460,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginRight: 8,
     marginBottom: 8,
+  },
+  // Warmer, more attention-grabbing fill than the neutral pill above —
+  // this one only ever appears when something's actually wrong (see the
+  // conditional pill's own comment), so it should read as a real flag.
+  liveIndicatorPillWarning: {
+    backgroundColor: 'rgba(230,83,53,0.75)',
   },
   footer: {
     paddingHorizontal: 24,

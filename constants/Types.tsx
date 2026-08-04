@@ -650,6 +650,16 @@ export interface VideoAnalysisMetrics {
   speakingRateWpm: number;
   silenceGapCount: number;
   confidenceScore: number; // 0-100, derived formula — see CONFIDENCE_SCORE_FORMULA doc in services/videoAnalysisService.ts
+  // BUG FIX (product report: "it's only flagging the eye contact — it
+  // should flag any other things that it thinks could make the user lose
+  // focus") — four more genuinely-derived ML Kit face-detection signals
+  // (no fabricated data — see videoAnalysisService.ts's onFacesDetected
+  // for exactly what each one is computed from), all as % of sampled
+  // frames, same convention as eyeContactPct/smilePct above:
+  faceNotVisiblePct: number; // frames where no face was detected at all (out of frame / camera blocked)
+  multipleFacesPct: number; // frames where more than one face was detected (someone/something else in frame)
+  eyesClosedPct: number; // frames where both eyes' open-probability was low (drowsy, reading notes, distracted)
+  excessiveMovementPct: number; // frames with a large frame-to-frame head yaw/pitch jump (fidgeting/restlessness)
 }
 
 // ---- AI Interview Coach additions (coach chat) ----

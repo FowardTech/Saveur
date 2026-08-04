@@ -80,6 +80,29 @@ import {VideoAnalysisMetrics} from 'constants/Types';
 const EYE_CONTACT_YAW_THRESHOLD_DEG = 15;
 const EYE_CONTACT_PITCH_THRESHOLD_DEG = 15;
 const SMILE_PROBABILITY_THRESHOLD = 0.5;
+// BUG FIX (product report: "For the video mock interview, it's only
+// flagging the eye contact. It should flag any other things that it
+// thinks could make the user lose focus") — three more signals, all
+// derived from Face fields ML Kit already gives this hook with its
+// CURRENT detection options (classificationMode: 'all' → smilingProbability
+// AND leftEyeOpenProbability/rightEyeOpenProbability; bounds/yaw/pitch are
+// always present regardless of landmark/contour mode) — no fabricated
+// data, same standard this file already holds itself to (see
+// computeConfidenceScore's docstring on why fillerWordCount/speakingRateWpm/
+// silenceGapCount are zeroed rather than faked, and feedback.py's
+// posture_score/hand_movement comment on why those stayed unpopulated
+// instead of invented).
+//
+// Below this average of both eyes' open-probability, frames count as
+// "eyes closed" — drowsy, reading notes/phone, or otherwise not engaging
+// with the camera even though a face is still detected (so this catches
+// something isLookingAtCamera's yaw/pitch check alone does not).
+const EYES_CLOSED_OPEN_PROBABILITY_THRESHOLD = 0.4;
+// A frame-to-frame head yaw/pitch jump larger than this (degrees) counts
+// as "excessive movement" — restlessness/fidgeting, distinct from simply
+// not facing the camera (a user can hold still while looking away, or
+// move around a lot while still nominally facing forward on average).
+const HEAD_MOVEMENT_JITTER_THRESHOLD_DEG = 12;
 
 // How often (ms) the live UI indicator is allowed to re-render off the back
 // of face-detector callbacks, which can fire 15-30x/sec — without this,
@@ -146,6 +169,12 @@ function computeConfidenceScore(m: {eyeContactPct: number; smilePct: number}): n
 export interface LiveVideoMetrics {
   isLookingAtCamera: boolean;
   isSmiling: boolean;
+  // New focus-loss signals — see this file's EYES_CLOSED_OPEN_PROBABILITY_
+  // THRESHOLD/HEAD_MOVEMENT_JITTER_THRESHOLD_DEG comment above for what
+  // each is actually derived from.
+  isFaceVisible: boolean;
+  isEyesClosed: boolean;
+  hasMultipleFaces: boolean;
 }
 
 // One real, on-device face-detection sample, buffered for the consuming
@@ -164,6 +193,12 @@ export interface CameraFrameSample {
 const INITIAL_LIVE_METRICS: LiveVideoMetrics = {
   isLookingAtCamera: false,
   isSmiling: false,
+  // Defaults to true — no frame has been processed yet at mount, and
+  // starting from "can't see your face" would flash a false warning for
+  // an instant before the first real detection sample comes in.
+  isFaceVisible: true,
+  isEyesClosed: false,
+  hasMultipleFaces: false,
 };
 
 // Detection options passed straight through to
@@ -286,6 +321,18 @@ export function useVideoInterviewAnalysis() {
   const smilingFrameCountRef = React.useRef(0);
   const yawSumRef = React.useRef(0);
   const pitchSumRef = React.useRef(0);
+  // New focus-loss signal aggregation. sampledFrameCountRef counts EVERY
+  // callback (including frames with no face at all) — the only sensible
+  // denominator for faceNotVisiblePct/multipleFacesPct below, unlike
+  // frameCountRef above (frames-with-a-face only, what eyeContactPct/
+  // smilePct/eyesClosedPct/excessiveMovementPct are relative to).
+  const sampledFrameCountRef = React.useRef(0);
+  const noFaceFrameCountRef = React.useRef(0);
+  const multipleFacesFrameCountRef = React.useRef(0);
+  const eyesClosedFrameCountRef = React.useRef(0);
+  const excessiveMovementFrameCountRef = React.useRef(0);
+  const lastYawRef = React.useRef<number | null>(null);
+  const lastPitchRef = React.useRef<number | null>(null);
 
   // Buffer of real per-frame samples waiting to be streamed to the backend
   // (POST /camera-frame) — drained periodically by the consuming screen via
@@ -323,7 +370,28 @@ export function useVideoInterviewAnalysis() {
    */
   const onFacesDetected = React.useCallback(
     (faces: Face[]) => {
-      if (!isAnalyzingRef.current || faces.length === 0) return;
+      if (!isAnalyzingRef.current) return;
+      sampledFrameCountRef.current += 1;
+
+      if (faces.length === 0) {
+        // No face detected at all this frame — out of frame, camera
+        // blocked, or looked away far enough that ML Kit lost tracking
+        // entirely. This used to just `return` silently, which is why
+        // this specific way of losing focus was never flagged at all.
+        // Reset the jitter baseline too so coming back into frame doesn't
+        // register as one huge "jump" from wherever the head last was.
+        noFaceFrameCountRef.current += 1;
+        lastYawRef.current = null;
+        lastPitchRef.current = null;
+        refreshLiveMetrics({isFaceVisible: false, hasMultipleFaces: false});
+        return;
+      }
+      if (faces.length > 1) {
+        // Someone/something else entered frame — a real distraction
+        // signal that eye-contact/smile alone can't catch (the primary
+        // face can still be scored as "looking at camera" the whole time).
+        multipleFacesFrameCountRef.current += 1;
+      }
       // Only the most prominent face is scored — this feature assumes a
       // single interviewee in frame, consistent with the mock-interview UX.
       const face = faces[0];
@@ -338,6 +406,28 @@ export function useVideoInterviewAnalysis() {
 
       const smiling = face.smilingProbability > SMILE_PROBABILITY_THRESHOLD;
       if (smiling) smilingFrameCountRef.current += 1;
+
+      // Real ML Kit signal (classificationMode: 'all' already provides
+      // this) that was computed nowhere before despite being available —
+      // catches "drowsy / reading notes or phone / not engaging" even
+      // while still nominally facing the camera.
+      const avgEyeOpenProbability = (face.leftEyeOpenProbability + face.rightEyeOpenProbability) / 2;
+      const eyesClosed = avgEyeOpenProbability < EYES_CLOSED_OPEN_PROBABILITY_THRESHOLD;
+      if (eyesClosed) eyesClosedFrameCountRef.current += 1;
+
+      // Fidgeting/restlessness — a large frame-to-frame jump in head
+      // angle, distinct from simply not facing the camera on average.
+      if (lastYawRef.current != null && lastPitchRef.current != null) {
+        const jump = Math.max(
+          Math.abs(face.yawAngle - lastYawRef.current),
+          Math.abs(face.pitchAngle - lastPitchRef.current),
+        );
+        if (jump > HEAD_MOVEMENT_JITTER_THRESHOLD_DEG) {
+          excessiveMovementFrameCountRef.current += 1;
+        }
+      }
+      lastYawRef.current = face.yawAngle;
+      lastPitchRef.current = face.pitchAngle;
 
       const now = Date.now();
       if (now - lastBufferPushRef.current >= FRAME_BUFFER_SAMPLE_INTERVAL_MS) {
@@ -364,7 +454,13 @@ export function useVideoInterviewAnalysis() {
         });
       }
 
-      refreshLiveMetrics({isLookingAtCamera: looking, isSmiling: smiling});
+      refreshLiveMetrics({
+        isLookingAtCamera: looking,
+        isSmiling: smiling,
+        isFaceVisible: true,
+        isEyesClosed: eyesClosed,
+        hasMultipleFaces: faces.length > 1,
+      });
     },
     [refreshLiveMetrics],
   );
@@ -394,6 +490,13 @@ export function useVideoInterviewAnalysis() {
     smilingFrameCountRef.current = 0;
     yawSumRef.current = 0;
     pitchSumRef.current = 0;
+    sampledFrameCountRef.current = 0;
+    noFaceFrameCountRef.current = 0;
+    multipleFacesFrameCountRef.current = 0;
+    eyesClosedFrameCountRef.current = 0;
+    excessiveMovementFrameCountRef.current = 0;
+    lastYawRef.current = null;
+    lastPitchRef.current = null;
     frameBufferRef.current = [];
     lastBufferPushRef.current = 0;
     sessionStartRef.current = Date.now();
@@ -624,6 +727,20 @@ export function useVideoInterviewAnalysis() {
     const smilePct = frames > 0 ? Math.round((smilingFrameCountRef.current / frames) * 100) : 0;
     const avgHeadYaw = frames > 0 ? Math.round((yawSumRef.current / frames) * 10) / 10 : 0;
     const avgHeadPitch = frames > 0 ? Math.round((pitchSumRef.current / frames) * 10) / 10 : 0;
+    // Relative to frames-with-a-face (same denominator as eyeContactPct/
+    // smilePct above) — "how often were the eyes closed/head jumping
+    // around WHILE a face was actually visible", not diluted by stretches
+    // where no face was detected at all (that's faceNotVisiblePct below,
+    // a fundamentally different kind of frame).
+    const eyesClosedPct = frames > 0 ? Math.round((eyesClosedFrameCountRef.current / frames) * 100) : 0;
+    const excessiveMovementPct = frames > 0 ? Math.round((excessiveMovementFrameCountRef.current / frames) * 100) : 0;
+
+    // Relative to EVERY sampled frame (including no-face ones) — the only
+    // denominator that makes sense for "how often was there no face at
+    // all" or "how often was more than one face in frame".
+    const sampled = sampledFrameCountRef.current;
+    const faceNotVisiblePct = sampled > 0 ? Math.round((noFaceFrameCountRef.current / sampled) * 100) : 0;
+    const multipleFacesPct = sampled > 0 ? Math.round((multipleFacesFrameCountRef.current / sampled) * 100) : 0;
 
     const confidenceScore = computeConfidenceScore({eyeContactPct, smilePct});
 
@@ -646,6 +763,10 @@ export function useVideoInterviewAnalysis() {
       speakingRateWpm: 0,
       silenceGapCount: 0,
       confidenceScore,
+      faceNotVisiblePct,
+      multipleFacesPct,
+      eyesClosedPct,
+      excessiveMovementPct,
     };
   }, []);
 
