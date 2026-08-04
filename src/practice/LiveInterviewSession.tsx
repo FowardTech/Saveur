@@ -109,6 +109,34 @@ function pickAcknowledgment(): string {
   const pick = ACKNOWLEDGMENT_KEYS[Math.floor(Math.random() * ACKNOWLEDGMENT_KEYS.length)];
   return i18n.t(pick.key, { defaultValue: pick.defaultValue });
 }
+// BUG FIX (product report: "it's responding even when the user did not
+// speak" / "even when the user did not give an answer it just says thank
+// you for the response") — the auto-advance beat below used to always
+// play an ACKNOWLEDGMENT_KEYS line, regardless of whether the user
+// actually said anything. In Voice mode that's directly checkable (the
+// real transcript captured since the question started); in Video mode
+// there is NO checkable signal at all — the on-device speech recognizer
+// that used to run alongside the camera recording was removed entirely
+// (see videoAnalysisService.ts's header comment: it fought VisionCamera
+// for the same iOS AVAudioSession and corrupted the recording's audio
+// track), so this screen genuinely cannot know whether the user spoke
+// during a video-mode turn; the real transcript only exists later via
+// server-side transcription of the uploaded video. Rather than keep
+// falsely thanking the user for an answer that may not exist, Video mode
+// always uses this neutral transition (which doesn't assert anything was
+// heard), and Voice mode picks between the two based on whether a real
+// transcript was actually captured for that turn.
+const NEUTRAL_TRANSITION_KEYS = [
+  { key: 'find:live_transition_1', defaultValue: "Let's move to the next question." },
+  { key: 'find:live_transition_2', defaultValue: 'Okay, next question.' },
+  { key: 'find:live_transition_3', defaultValue: "Let's continue." },
+  { key: 'find:live_transition_4', defaultValue: 'Moving on.' },
+  { key: 'find:live_transition_5', defaultValue: "Let's keep going." },
+];
+function pickNeutralTransition(): string {
+  const pick = NEUTRAL_TRANSITION_KEYS[Math.floor(Math.random() * NEUTRAL_TRANSITION_KEYS.length)];
+  return i18n.t(pick.key, { defaultValue: pick.defaultValue });
+}
 // Played once, right before the session auto-ends because the user's
 // selected duration has elapsed — gives the interview a natural close
 // instead of just silently cutting off.
@@ -353,9 +381,15 @@ const LiveInterviewSession = memo(() => {
     // to eliminate.
     if (seconds >= durationSeconds) return;
     (async () => {
+      // See NEUTRAL_TRANSITION_KEYS's comment above — only Voice mode can
+      // ever confirm a real answer was given (Video mode has no live
+      // speech signal at all), so hasRealAnswer stays false there and the
+      // acknowledgment phrasing below is chosen accordingly.
+      let hasRealAnswer = false;
       if (isVoiceMode) {
         const finalTranscript = await speechToText.stop();
-        if (sessionId && finalTranscript.trim()) {
+        hasRealAnswer = !!finalTranscript.trim();
+        if (sessionId && hasRealAnswer) {
           interviewService
             .submitAnswer(sessionId, {
               questionId: backendQuestionId ?? `local_q${questionIndex}`,
@@ -365,13 +399,15 @@ const LiveInterviewSession = memo(() => {
         }
       }
       if (isVoiceMode || isVideoMode) {
-        // Speak a brief acknowledgment and WAIT for it to finish before
-        // moving on — this is the "AI responding to what you said" beat
-        // that was missing entirely before, and awaiting it (rather than
+        // Speak a brief acknowledgment (only when a real answer was
+        // actually captured) or a neutral transition (silent turn, or
+        // Video mode which can never confirm one way or the other), and
+        // WAIT for it to finish before moving on — this is the "AI
+        // responding to what you said" beat, and awaiting it (rather than
         // firing-and-forgetting) is what keeps it from being cut off.
         setIsAiSpeaking(true);
         try {
-          await speakSmart(pickAcknowledgment());
+          await speakSmart(hasRealAnswer ? pickAcknowledgment() : pickNeutralTransition());
         } catch {
           // best-effort — a TTS hiccup shouldn't block the interview
         }
