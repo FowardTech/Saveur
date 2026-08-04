@@ -415,16 +415,41 @@ export function useSpeechToText() {
   const [transcript, setTranscript] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const transcriptRef = React.useRef('');
+  // BUG FIX (product report: "The Voice to text is typing the users word
+  // multiple times") — react-native-voice's onSpeechResults delivers each
+  // *session's* full recognized-so-far text on every call, not just the
+  // newest words since the last call. This hook auto-restarts a fresh
+  // recognition session on every onSpeechEnd/"no speech detected" (below —
+  // needed since on-device recognizers time out after a few seconds of
+  // silence), and onSpeechResults can fire more than once before a session
+  // actually ends. The old code appended `best` onto transcriptRef on
+  // EVERY onSpeechResults call — so a session that reported "hello", then
+  // "hello world", then "hello world how are you" as it refined its
+  // hypothesis got all three appended in sequence, duplicating every
+  // earlier word each time. sessionTranscriptRef now holds only the
+  // CURRENT session's latest (replaced, not appended) text; it gets
+  // folded into transcriptRef exactly once, when the session actually
+  // ends (see commitSessionTranscript below), so cross-session
+  // accumulation still works but within-session duplication doesn't.
+  const sessionTranscriptRef = React.useRef('');
+
+  const commitSessionTranscript = React.useCallback(() => {
+    if (sessionTranscriptRef.current) {
+      transcriptRef.current = transcriptRef.current
+        ? `${transcriptRef.current} ${sessionTranscriptRef.current}`
+        : sessionTranscriptRef.current;
+      setTranscript(transcriptRef.current);
+      sessionTranscriptRef.current = '';
+    }
+  }, []);
   const wantsListeningRef = React.useRef(false);
 
   React.useEffect(() => {
     Voice.onSpeechResults = (e: SpeechResultsEvent) => {
       const best = e.value?.[0];
       if (best) {
-        transcriptRef.current = transcriptRef.current
-          ? `${transcriptRef.current} ${best}`
-          : best;
-        setTranscript(transcriptRef.current);
+        // Replace, don't append — see this hook's own doc comment above.
+        sessionTranscriptRef.current = best;
       }
     };
     // Auto-restart used to fire unconditionally on any "no speech
@@ -446,7 +471,10 @@ export function useSpeechToText() {
       // pauses between sentences — not a real failure, just the recognizer's
       // session ending. Restart it silently if we're still supposed to be
       // listening (and the app is actually in the foreground) rather than
-      // surfacing every pause as an error.
+      // surfacing every pause as an error. Either way the session that just
+      // ended may have recognized something before erroring out, so commit
+      // it first (see commitSessionTranscript's doc comment).
+      commitSessionTranscript();
       if (canAutoRestart()) {
         Voice.start(currentSttLocale()).catch(() => {});
       } else if (!wantsListeningRef.current) {
@@ -457,6 +485,7 @@ export function useSpeechToText() {
       // error the user can't see anyway while the phone is locked).
     };
     Voice.onSpeechEnd = () => {
+      commitSessionTranscript();
       if (canAutoRestart()) {
         Voice.start(currentSttLocale()).catch(() => {});
       }
@@ -494,11 +523,17 @@ export function useSpeechToText() {
     } catch {
       // Already stopped — fine.
     }
+    // Voice.stop() doesn't reliably fire onSpeechEnd before this await
+    // resolves on every platform — commit whatever the still-active
+    // session had recognized directly, rather than risking losing the
+    // last few words the user said right before the turn ended.
+    commitSessionTranscript();
     return transcriptRef.current;
-  }, []);
+  }, [commitSessionTranscript]);
 
   const reset = React.useCallback(() => {
     transcriptRef.current = '';
+    sessionTranscriptRef.current = '';
     setTranscript('');
   }, []);
 
