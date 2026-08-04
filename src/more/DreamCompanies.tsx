@@ -35,7 +35,12 @@ const DreamCompanies = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
-  const { isPro } = React.useContext(AuthContext);
+  // Product decision: Dream Company Dashboard moved from plain Pro to Pro
+  // Premium (Pro Yearly also qualifies — see AuthContext's
+  // isPremium/isPremiumTier, mirroring the backend's require_premium on
+  // this feature's endpoints), unlike the underlying Company Intelligence
+  // feature it builds on, which stays plain-Pro-gated.
+  const { isPremium } = React.useContext(AuthContext);
 
   const [companies, setCompanies] = React.useState<DreamCompany[] | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -117,12 +122,13 @@ const DreamCompanies = memo(() => {
     );
   };
 
-  if (!isPro) {
+  if (!isPremium) {
     return (
       <ProLockGate
+        variant="premium"
         title={t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' })}
-        description={t('more:dream_companies_pro_gate_description', {
-          defaultValue: 'Track your target companies with real research, matching job alerts, and prep progress — a Pro feature.',
+        description={t('more:dream_companies_premium_gate_description', {
+          defaultValue: 'Track your target companies with real research, matching job alerts, and prep progress — a Pro Premium feature.',
         })}
       />
     );

@@ -38,7 +38,11 @@ const CareerDna = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
-  const { isPro } = React.useContext(AuthContext);
+  // Product decision: Career DNA moved from plain Pro to Pro Premium (Pro
+  // Yearly also qualifies — see AuthContext's isPremium/isPremiumTier for
+  // the full tier breakdown, mirroring the backend's require_premium on
+  // this feature's endpoints).
+  const { isPremium } = React.useContext(AuthContext);
 
   const [profile, setProfile] = React.useState<CareerDnaProfile | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -73,12 +77,13 @@ const CareerDna = memo(() => {
     }
   };
 
-  if (!isPro) {
+  if (!isPremium) {
     return (
       <ProLockGate
+        variant="premium"
         title={t('more:career_dna', { defaultValue: 'Career DNA' })}
-        description={t('more:career_dna_pro_gate_description', {
-          defaultValue: 'A living profile the AI builds from your real activity — interviews, courses, progress — and refines every week. A Pro feature.',
+        description={t('more:career_dna_premium_gate_description', {
+          defaultValue: 'A living profile the AI builds from your real activity — interviews, courses, progress — and refines every week. A Pro Premium feature.',
         })}
       />
     );
