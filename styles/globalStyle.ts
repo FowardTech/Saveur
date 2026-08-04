@@ -302,8 +302,8 @@ export const globalStyle = StyleSheet.create({
     height: 16,
   },
   icon20: {
-    width: 20,
-    height: 20,
+    width: 25,
+    height: 25,
   },
   icon24: {
     width: 24,

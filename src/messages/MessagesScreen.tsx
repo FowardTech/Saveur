@@ -86,7 +86,7 @@ const MessagesScreen = memo(() => {
           <LinearGradient
             colors={
               isDarkMode
-                ? [theme['background-basic-color-2'], theme['background-basic-color-3']]
+                ? [theme['background-basic-color-2'], theme['background-basic-color-2']]
                 : [theme['color-primary-500'], theme['color-primary-500']]
             }
             start={{ x: 0, y: 0 }}
@@ -104,7 +104,7 @@ const MessagesScreen = memo(() => {
                 in both themes. */}
             <BrandWordmark
               markOnly
-              size={56}
+              size={40}
               markColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
             />
           </View>

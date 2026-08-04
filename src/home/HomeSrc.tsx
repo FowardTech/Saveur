@@ -551,6 +551,47 @@ const HomeSrc = memo(() => {
             marks TODAY specially (highlighted circle + a checked-in dot) —
             this app has no per-date practice log to honestly mark other
             days with, see that component's own comment. */}
+            <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.navPillsRow}>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            // Was background-basic-color-6 (the dark/near-black fill the
+            // other two pills' outline still keys off) — per explicit
+            // follow-up, this pill now uses the app's own established brand
+            // blue instead (same color-primary-100 token CtaButton.tsx
+            // uses), so it reads as "the" primary action of the row rather
+            // than a neutral dark chip.
+            style={[styles.navPill, { backgroundColor: theme['color-primary-100'] }]}
+            onPress={() => navigate('CareerRoadmap')}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['text-primary-color'] }}>
+              {t('home:career_roadmap_card_title_short', { defaultValue: 'Career Roadmap' })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-4'] }]}
+            onPress={() => navigate('MyProgress')}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
+              {t('home:your_progress', { defaultValue: 'Your Progress' })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-4'] }]}
+            onPress={() => navigate('WeeklyCareerReport')}>
+            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
+              {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
+            </Text>
+          </TouchableOpacity>
+          {/* Badges pill REMOVED from here (product correction — "the badge
+              button... place it before the medal icon in the XP card so
+              that its more visible to users") — moved into the checkInCard
+              below, immediately before the medal icon, instead of living in
+              this scrollable nav row (see that JSX's own comment). Opens the
+              same existing full-grid modal (components/BadgesModal.tsx). */}
+        </ScrollView>
         <WeekStrip checkedInToday={!!streak?.checkedInToday} />
         {isSignedIn && !emailVerified ? (
           <Flex
@@ -620,47 +661,7 @@ const HomeSrc = memo(() => {
             — see constants/theme/light.json vs dark.json — so it's near-
             black in light mode and correctly flips to near-white in dark
             mode instead of rendering true black-on-black. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.navPillsRow}>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            // Was background-basic-color-6 (the dark/near-black fill the
-            // other two pills' outline still keys off) — per explicit
-            // follow-up, this pill now uses the app's own established brand
-            // blue instead (same color-primary-100 token CtaButton.tsx
-            // uses), so it reads as "the" primary action of the row rather
-            // than a neutral dark chip.
-            style={[styles.navPill, { backgroundColor: theme['color-primary-100'] }]}
-            onPress={() => navigate('CareerRoadmap')}>
-            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['text-primary-color'] }}>
-              {t('home:career_roadmap_card_title_short', { defaultValue: 'Career Roadmap' })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
-            onPress={() => navigate('MyProgress')}>
-            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
-              {t('home:your_progress', { defaultValue: 'Your Progress' })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.navPillOutline, { borderColor: theme['background-basic-color-6'] }]}
-            onPress={() => navigate('WeeklyCareerReport')}>
-            <Text category="h9-s" bold numberOfLines={1} style={{ color: theme['background-basic-color-6'] }}>
-              {t('home:weekly_career_report_short', { defaultValue: 'Weekly Report' })}
-            </Text>
-          </TouchableOpacity>
-          {/* Badges pill REMOVED from here (product correction — "the badge
-              button... place it before the medal icon in the XP card so
-              that its more visible to users") — moved into the checkInCard
-              below, immediately before the medal icon, instead of living in
-              this scrollable nav row (see that JSX's own comment). Opens the
-              same existing full-grid modal (components/BadgesModal.tsx). */}
-        </ScrollView>
+        
         {homeBanner ? (
           // Product bug report ("you did not touch the second [card]" /
           // "the gradient is hiding some of the text, and it's ugly in
@@ -699,7 +700,7 @@ const HomeSrc = memo(() => {
             onPress={onOpenHomeBanner}>
             <View style={styles.homeBannerFallback}>
               <LinearGradient
-                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-500'], theme['color-primary-500']]}
+                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : [theme['color-primary-500'], theme['color-primary-500']]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
@@ -1163,8 +1164,8 @@ const themedStyles = StyleService.create({
   // spacing hook.
   homeBannerIconWrap: {},
   homeBannerIcon: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
   },
   verifyBannerText: {
     marginHorizontal: 10,

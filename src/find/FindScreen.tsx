@@ -96,18 +96,18 @@ const FindScreen = memo(() => {
           <View style={styles.hero}>
             <View style={styles.heroInner}>
               <LinearGradient
-                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-3']] : [theme['color-primary-500'], theme['color-primary-500']]}
+                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : [theme['color-primary-500'], theme['color-primary-500']]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
               />
-              <Text
+              {/* <Text
                 category="h3"
                 bold
                 mb={8}
                 style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
                 {t('find:start_mock_interview')}
-              </Text>
+              </Text> */}
               <Text
                 category="h8-s"
                 mb={16}
@@ -149,7 +149,7 @@ const FindScreen = memo(() => {
                 activeOpacity={0.7}
                 onPress={tool.onPress}
                 style={[styles.toolRow, { backgroundColor: bg }]}>
-                <View style={[styles.toolIconWrap, { backgroundColor: isDarkMode ? theme['background-basic-color-3'] : theme['background-basic-color-1'] }]}>
+                <View style={[styles.toolIconWrap, { backgroundColor: isDarkMode ? theme['transparent'] : theme['background-basic-color-1'] }]}>
                   <Icon
                     pack="eva"
                     name={tool.icon}
