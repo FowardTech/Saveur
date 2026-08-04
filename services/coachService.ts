@@ -40,13 +40,37 @@ function currentLanguage(): string {
 // every message when the in-session state is already known.
 // ---------------------------------------------------------------------------
 
-const GREETING_MESSAGE: CoachChatMessageProps = {
-  id: 'msg_greeting',
-  role: 'coach',
-  text:
-    "Hi, I'm your AI Career Coach. Ask me about interview nerves, salary negotiation, your resume, networking, or anything else on your job search — I'll do my best to point you in the right direction.",
-  createdAt: 0,
-};
+// BUG FIX (product report: "I want the AI coach to always introduce itself
+// for the first time the user is coming to the app — the AI should
+// introduce itself as Saveur") — this used to be a plain "AI Career Coach"
+// with no actual name. A function (not a static constant) so it re-reads
+// i18n.language fresh every time it's used, same reasoning as e.g.
+// pickAcknowledgment() in LiveInterviewSession.tsx — a static constant
+// would freeze in whatever language was active at module-import time and
+// never update on a later language switch.
+function buildGreetingMessage(): CoachChatMessageProps {
+  return {
+    id: 'msg_greeting',
+    role: 'coach',
+    text: i18n.t('message:coach_greeting', {
+      defaultValue:
+        "Hi, I'm Saveur, your AI career coach. Ask me about interview nerves, salary negotiation, your resume, networking, or anything else on your job search — I'll do my best to point you in the right direction.",
+    }),
+    createdAt: 0,
+  };
+}
+
+/**
+ * True only when this user has never actually exchanged a real message
+ * with the coach yet (the thread getChatHistory() returned was the
+ * client-side placeholder greeting, not real persisted history) — the
+ * signal VoiceCoachView uses to decide whether to speak its one-time
+ * self-introduction (see that file) rather than silently starting to
+ * listen every single time the screen opens.
+ */
+export function isFirstEverCoachVisit(history: CoachChatMessageProps[]): boolean {
+  return history.length === 1 && history[0].id === 'msg_greeting';
+}
 
 let cachedThread: CoachChatMessageProps[] = [];
 
@@ -79,14 +103,14 @@ export async function getChatHistory(): Promise<CoachChatMessageProps[]> {
   try {
     const {data} = await apiClient.get<{messages?: CoachMessageWire[]}>('/api/v1/coach/messages');
     const messages = (data.messages ?? []).map(fromWire);
-    cachedThread = messages.length > 0 ? messages : [GREETING_MESSAGE];
+    cachedThread = messages.length > 0 ? messages : [buildGreetingMessage()];
     return cachedThread;
   } catch {
     // Offline / request failed — show whatever this session already has
     // in memory (e.g. from an earlier successful load) rather than an
     // empty thread; falls back to just the greeting if nothing's cached
     // yet either.
-    if (cachedThread.length === 0) cachedThread = [GREETING_MESSAGE];
+    if (cachedThread.length === 0) cachedThread = [buildGreetingMessage()];
     return cachedThread;
   }
 }
@@ -307,7 +331,7 @@ export async function askOneOff(prompt: string, context?: CoachUserContext): Pro
  */
 export async function clearChatHistory(): Promise<void> {
   await apiClient.delete('/api/v1/coach/messages');
-  cachedThread = [GREETING_MESSAGE];
+  cachedThread = [buildGreetingMessage()];
 }
 
 /**

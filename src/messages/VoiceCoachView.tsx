@@ -164,7 +164,37 @@ const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }
   useFocusEffect(
     React.useCallback(() => {
       isActiveRef.current = true;
-      startListening();
+      (async () => {
+        // BUG FIX (product report: "I want the AI coach to always
+        // introduce itself for the first time the user is coming to the
+        // app... the AI should introduce itself as Saveur") — Text mode
+        // already shows this via coachService's greeting bubble; Voice
+        // mode never spoke anything at all until the user said something
+        // first. isFirstEverCoachVisit checks real persisted history (not
+        // a per-screen-visit flag), so this only ever speaks once total —
+        // it won't repeat on a later visit to Voice mode, including if the
+        // user's very first coach interaction happened in Text mode
+        // instead.
+        try {
+          const history = await coachService.getChatHistory();
+          if (isActiveRef.current && coachService.isFirstEverCoachVisit(history)) {
+            const intro = i18n.t('message:coach_voice_intro_line', {
+              defaultValue:
+                "Hi, I'm Saveur — your AI career coach. I'm listening whenever you're ready to talk.",
+            });
+            setLastCoachLine(intro);
+            setPhase('speaking');
+            try {
+              await speechService.speak(intro);
+            } catch {
+              // best-effort — a TTS hiccup shouldn't block the conversation
+            }
+          }
+        } catch {
+          // best-effort — a failed history fetch shouldn't block listening
+        }
+        if (isActiveRef.current) startListening();
+      })();
       return () => {
         isActiveRef.current = false;
         clearSilenceTimer();
