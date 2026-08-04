@@ -11,7 +11,7 @@ import {
   VideoAnalysisMetrics,
 } from 'constants/Types';
 import apiClient from './apiClient';
-import {notifyFirstInterviewCompleted} from 'utils/appRating';
+import {notifyInterviewCompleted} from 'utils/appRating';
 
 // `language` per the backend's contract — constants/languages.ts,
 // docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16 — so interview questions
@@ -348,10 +348,10 @@ export async function completeSession(
     asked_questions: askedQuestions,
   });
   // Centralized here rather than in each of LiveInterviewSession.tsx/
-  // CodingInterview.tsx (both call completeSession) — fires the App Store
-  // review prompt the very first time a session is ever completed, no-ops
-  // every time after. See utils/appRating.ts.
-  notifyFirstInterviewCompleted().catch(() => {});
+  // CodingInterview.tsx (both call completeSession) — counts toward the App
+  // Store review prompt's "5 completed interviews" trigger condition, and
+  // fires it once that count is reached. See utils/appRating.ts.
+  notifyInterviewCompleted().catch(() => {});
 }
 
 /**

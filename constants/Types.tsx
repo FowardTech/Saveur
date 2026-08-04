@@ -32,9 +32,14 @@ export enum EKeyAsyncStorage {
   // run is slow enough that it's easy to miss.
   codingLanguages = 'codingLanguages',
   // App Store / Play Store review prompt — see utils/appRating.ts.
+  // BUG FIX (product report: "Ratings is not working well" — trigger
+  // conditions changed from "first interview OR first course" to "5
+  // completed interviews OR 1 tracked job application OR 1 finished AI
+  // coach conversation") — hasCompletedFirstInterview/hasCompletedFirstCourse
+  // (the old single-completion flags) are replaced by a real running count;
+  // course completion is no longer one of the trigger conditions at all.
   hasPromptedAppReview = 'hasPromptedAppReview',
-  hasCompletedFirstInterview = 'hasCompletedFirstInterview',
-  hasCompletedFirstCourse = 'hasCompletedFirstCourse',
+  completedInterviewCount = 'completedInterviewCount',
   // Referral code captured from a saveur://referral deep link, held until
   // the next POST /users/me (sync) sends it as referred_by_code — see
   // services/referralService.ts.

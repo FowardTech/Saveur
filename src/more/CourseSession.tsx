@@ -25,7 +25,6 @@ import { CourseModule, CourseLevel, Certificate, COURSE_LEVELS } from 'services/
 import * as speechService from 'services/speechService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
-import { notifyFirstCourseCompleted } from 'utils/appRating';
 import { getCourseLevelLabel } from 'utils/learningLabels';
 import CtaButton from 'components/CtaButton';
 
@@ -242,7 +241,11 @@ const CourseSession = memo(() => {
     learningService.markModuleProgress(courseId, moduleIndex, true).catch(() => {});
     if (moduleIndex + 1 >= totalModules) {
       setIsComplete(true);
-      notifyFirstCourseCompleted().catch(() => {});
+      // Product decision: course completion is no longer one of the App
+      // Store review prompt's trigger conditions (see utils/appRating.ts's
+      // header comment) — the prompt now only fires off 5 completed
+      // interviews, 1 tracked job application, or 1 finished AI coach
+      // conversation.
       if (level === 'advanced') {
         learningService.issueCertificateIfEligible(topic).then(cert => {
           if (cert) setEarnedCertificate(cert);

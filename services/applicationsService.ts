@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Application_Stage_Enum, EKeyAsyncStorage, JobApplicationProps} from 'constants/Types';
 import {Images} from 'assets/images';
 import apiClient from './apiClient';
+import {notifyJobApplicationTracked} from 'utils/appRating';
 
 // ---------------------------------------------------------------------------
 // applicationsService — real backend implementation.
@@ -132,6 +133,9 @@ export async function addApplication(
   const created = fromWire(data);
   const cached = await readCache();
   await writeCache([created, ...cached]);
+  // App Store review prompt trigger condition: "applied to at least 1
+  // job" — see utils/appRating.ts's header comment for the full 3-way OR.
+  notifyJobApplicationTracked().catch(() => {});
   return created;
 }
 

@@ -4,11 +4,17 @@ import {EKeyAsyncStorage} from 'constants/Types';
 import * as configService from 'services/configService';
 
 // ---------------------------------------------------------------------------
-// App Store / Play Store review prompt — per explicit request, shown after
-// the user's first completed mock interview OR first completed course,
-// whichever happens first (only ever prompted once total — repeatedly
-// nagging for a rating is against both platforms' review guidelines and is
-// just bad UX).
+// App Store / Play Store review prompt.
+//
+// BUG FIX (product report: "Ratings is not working well. The rating should
+// pop up after a user have completed 5 interviews or has applied to at
+// least 1 job or has just finished a conversation with the AI coach") —
+// this used to fire after the user's first completed mock interview OR
+// first completed course, whichever happened first. That's replaced
+// entirely by the three conditions above (course completion is no longer
+// one of them at all). Whichever condition is met first still only ever
+// prompts once total — repeatedly nagging for a rating is against both
+// platforms' review guidelines and is just bad UX.
 //
 // ios_app_store_id / android_package_name are admin-configurable (product
 // request item) — see services/configService.ts's StoreConfig and
@@ -68,34 +74,46 @@ async function maybePromptForReview(): Promise<void> {
   }
 }
 
+// Trigger condition #1 (of 3 — see this file's header comment): 5
+// completed interviews, not just the first one.
+const INTERVIEWS_BEFORE_RATING_PROMPT = 5;
+
 /**
- * Call once, right when interviewService.completeSession() first succeeds
- * for this account (see that function) — no-ops on every completion after
- * the first.
+ * Call every time interviewService.completeSession() succeeds for this
+ * account (see that function) — increments a running count and prompts
+ * once the count reaches INTERVIEWS_BEFORE_RATING_PROMPT. maybePromptForReview
+ * itself still only ever shows the prompt once total, so this is a safe
+ * no-op on every call after whichever condition fires first.
  */
-export async function notifyFirstInterviewCompleted(): Promise<void> {
+export async function notifyInterviewCompleted(): Promise<void> {
   try {
-    const already = await AsyncStorage.getItem(EKeyAsyncStorage.hasCompletedFirstInterview);
-    if (already === 'true') return;
-    await AsyncStorage.setItem(EKeyAsyncStorage.hasCompletedFirstInterview, 'true');
-    await maybePromptForReview();
+    const raw = await AsyncStorage.getItem(EKeyAsyncStorage.completedInterviewCount);
+    const count = (parseInt(raw ?? '0', 10) || 0) + 1;
+    await AsyncStorage.setItem(EKeyAsyncStorage.completedInterviewCount, String(count));
+    if (count >= INTERVIEWS_BEFORE_RATING_PROMPT) {
+      await maybePromptForReview();
+    }
   } catch {
     // Swallow — see maybePromptForReview's doc comment.
   }
 }
 
 /**
- * Call once, right when a Learning Course is completed for the first time
- * (see src/more/CourseSession.tsx) — no-ops on every completion after the
- * first.
+ * Trigger condition #2: call once the user has successfully tracked a job
+ * application (see services/applicationsService.ts's addApplication) —
+ * fires on the very first one, no count needed.
  */
-export async function notifyFirstCourseCompleted(): Promise<void> {
-  try {
-    const already = await AsyncStorage.getItem(EKeyAsyncStorage.hasCompletedFirstCourse);
-    if (already === 'true') return;
-    await AsyncStorage.setItem(EKeyAsyncStorage.hasCompletedFirstCourse, 'true');
-    await maybePromptForReview();
-  } catch {
-    // Swallow — see maybePromptForReview's doc comment.
-  }
+export async function notifyJobApplicationTracked(): Promise<void> {
+  await maybePromptForReview();
+}
+
+/**
+ * Trigger condition #3: call once the user finishes a real back-and-forth
+ * with the AI career coach — see services/coachService.ts's sendMessage/
+ * sendVoiceMessage, called right after a real reply comes back (so a
+ * failed send never counts). Fires on the very first successful exchange,
+ * no count needed.
+ */
+export async function notifyCoachConversationExchanged(): Promise<void> {
+  await maybePromptForReview();
 }

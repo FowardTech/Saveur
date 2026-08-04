@@ -1,6 +1,7 @@
 import i18n from 'i18next';
 import {CoachChatMessageProps, StarBreakdownItemProps} from 'constants/Types';
 import apiClient from './apiClient';
+import {notifyCoachConversationExchanged} from 'utils/appRating';
 
 // `language` (ISO 639-1, e.g. "en"/"es" — constants/languages.ts) is sent on
 // every AI-generation call below per the backend's confirmed contract: field
@@ -186,6 +187,12 @@ export async function sendMessage(
   };
 
   cachedThread = [...cachedThread, userMessage, coachMessage];
+  // App Store review prompt trigger condition: "finished a conversation
+  // with the AI coach" — see utils/appRating.ts's header comment for the
+  // full 3-way OR. A real reply came back at this point (the try block
+  // above would have thrown otherwise), so this only fires on a genuine
+  // exchange, not a failed send.
+  notifyCoachConversationExchanged().catch(() => {});
   return {userMessage, coachMessage};
 }
 
@@ -257,6 +264,8 @@ export async function sendVoiceMessage(
   };
 
   cachedThread = [...cachedThread, userMessage, coachMessage];
+  // See sendMessage's identical comment above — same trigger, voice mode.
+  notifyCoachConversationExchanged().catch(() => {});
   return {userMessage, coachMessage};
 }
 
