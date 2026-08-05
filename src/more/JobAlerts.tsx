@@ -38,6 +38,7 @@ import {AuthContext} from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import {renderCenteredLabel} from 'utils/buttonLabel';
+import {isRemoteLocation} from 'utils/jobLocation';
 
 // "Like a Google Alert, but for jobs" — matches new postings found online
 // against profile.preferredCountries + profile.desiredRoles (see
@@ -63,6 +64,31 @@ const JobAlerts = memo(() => {
   // next page; undefined isn't used here so a plain falsy check is enough.
   const [nextCursor, setNextCursor] = React.useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = React.useState(false);
+
+  // Product request item: "Let's add search filters in the job settings
+  // preferences" — client-side, over whatever page(s) of alerts have
+  // already been fetched (no backend round-trip, so it narrows instantly
+  // as you type/toggle). Text search matches title/company/location;
+  // Remote only reuses the same isRemoteLocation heuristic already used
+  // on the Applications tab (job listings only ever carry a free-text
+  // location string — see that util's own comment — there's no
+  // structured remote flag anywhere in this data model to filter on
+  // instead).
+  const [searchQuery, setSearchQuery] = React.useState('');
+  const [remoteOnly, setRemoteOnly] = React.useState(false);
+  const filteredAlerts = React.useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return alerts.filter(alert => {
+      if (remoteOnly && !isRemoteLocation(alert.location)) return false;
+      if (!q) return true;
+      return (
+        alert.title?.toLowerCase().includes(q) ||
+        alert.company?.toLowerCase().includes(q) ||
+        alert.location?.toLowerCase().includes(q)
+      );
+    });
+  }, [alerts, searchQuery, remoteOnly]);
+  const isFiltering = searchQuery.trim().length > 0 || remoteOnly;
 
   const [isPrefsOpen, setIsPrefsOpen] = React.useState(false);
   const [roleDraft, setRoleDraft] = React.useState('');
@@ -324,6 +350,40 @@ const JobAlerts = memo(() => {
           </Text>
         </Layout>
 
+        {alerts.length > 0 ? (
+          <View style={styles.searchBar}>
+            <Input
+              placeholder={t('more:job_alerts_search_placeholder', {defaultValue: 'Search title, company, location'})}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              accessoryLeft={props => <Icon {...props} pack="eva" name="search-outline" />}
+              accessoryRight={
+                searchQuery
+                  ? props => (
+                      <TouchableOpacity onPress={() => setSearchQuery('')}>
+                        <Icon {...props} pack="eva" name="close-outline" />
+                      </TouchableOpacity>
+                    )
+                  : undefined
+              }
+              style={styles.prefsInput}
+              textStyle={globalStyle.inputText}
+            />
+            <TouchableOpacity
+              onPress={() => setRemoteOnly(prev => !prev)}
+              style={[
+                styles.remoteFilterChip,
+                {
+                  backgroundColor: remoteOnly ? theme['color-primary-500'] : theme['background-basic-color-3'],
+                },
+              ]}>
+              <Text category="h10" bold status={remoteOnly ? 'control' : 'basic'}>
+                {t('more:job_alerts_remote_only_filter', {defaultValue: 'Remote only'})}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         {isPrefsOpen ? (
           <Layout level="2" style={styles.prefsCard}>
             <Text category="h8" bold mb={4}>
@@ -449,8 +509,20 @@ const JobAlerts = memo(() => {
               defaultValue: "We'll show new postings here as they're found.",
             })}
           />
+        ) : filteredAlerts.length === 0 ? (
+          // Distinct from the "no alerts at all" empty state above — real
+          // alerts exist, they're just all filtered out by the current
+          // search/Remote only combination, so a "clear filters" hint is
+          // the useful next step rather than "we'll show postings here".
+          <EmptyState
+            icon="search-outline"
+            title={t('more:job_alerts_no_filter_matches_title', {defaultValue: 'No alerts match your filters'})}
+            body={t('more:job_alerts_no_filter_matches_body', {
+              defaultValue: 'Try a different search term, or turn off Remote only.',
+            })}
+          />
         ) : (
-          alerts.map(alert => (
+          filteredAlerts.map(alert => (
             <TouchableOpacity key={alert.id} activeOpacity={0.8} onPress={() => onOpenAlert(alert)}>
               <Layout
                 level="2"
@@ -595,6 +667,16 @@ const themedStyles = StyleService.create({
   prefsInput: {
     ...globalStyle.inputField,
     marginBottom: 8,
+  },
+  searchBar: {
+    marginBottom: 16,
+  },
+  remoteFilterChip: {
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 99,
+    marginTop: 4,
   },
   slider: {
     height: 32,
