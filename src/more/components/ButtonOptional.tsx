@@ -123,7 +123,10 @@ const ButtonOptional = ({
             <View style={styles.badgeDot} />
           ) : null}
         </View>
-        <Text ml={16} category="para-m">
+        {/* Product request: bold + a touch smaller than the previous
+            para-m default, matching the reference settings list's text
+            weight/size. */}
+        <Text ml={16} category="para-s" bold>
           {title}
         </Text>
       </Flex>
@@ -135,9 +138,12 @@ const ButtonOptional = ({
           checked={checked}
         />
       ) : (
+        // Product request: was arrowRight (a full arrow, shaft + head) —
+        // swapped for a plain chevron, the more conventional "opens a
+        // sub-screen" affordance for a settings list row.
         <Icon
           pack="assets"
-          name="arrowRight"
+          name="chevronRight"
           style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]}
         />
       )}

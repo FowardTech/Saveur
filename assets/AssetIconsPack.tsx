@@ -12,6 +12,7 @@ import {
   Calendar,
   Camera,
   Car,
+  ChevronRight,
   Circle,
   CircleDot,
   Clock,
@@ -94,6 +95,14 @@ const AssetIconsPack: IconPack<any> = {
   name: 'assets',
   icons: {
     back: lucideIcon(ArrowLeft),
+    // Product request: More/Settings list rows' trailing icon changed from a
+    // full arrow (arrowRight, below) to a plain chevron — thinner, no
+    // shaft/tail, the conventional "this row navigates deeper" affordance
+    // most settings lists use (matches the reference screenshot). arrowRight
+    // itself is left in place since other call sites still use it for
+    // "go/continue" actions, which are a different affordance than "this
+    // opens a sub-screen".
+    chevronRight: lucideIcon(ChevronRight),
     eyeOff: lucideIcon(EyeOff),
     eyeOn: lucideIcon(Eye),
     map: lucideIcon(Map),
