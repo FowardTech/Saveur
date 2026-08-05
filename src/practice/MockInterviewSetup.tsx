@@ -27,6 +27,8 @@ import { getSessionEntitlement } from 'services/entitlementsService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import PersonaDetailModal from 'components/PersonaDetailModal';
+import { InterviewPersona } from 'services/configService';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 
@@ -76,6 +78,12 @@ const MockInterviewSetup = memo(() => {
   );
   const showPersonaPicker =
     configService.isFeatureEnabled('interview_laboratory') && enabledPersonas.length > 0;
+  // Product request item: "A pop up with more detail on the interviewer
+  // personality when they click on it" — see PersonaDetailModal's own doc
+  // comment for the full story (it renders `style`, which was already
+  // being shipped to mobile in this same config payload but never shown
+  // anywhere before this).
+  const [detailPersona, setDetailPersona] = React.useState<InterviewPersona | null>(null);
   // undefined/COMPANY_ANY both mean "no specific company" — kept as
   // undefined when threading through to the session config/navigation so
   // downstream screens only see a real company name or nothing.
@@ -420,6 +428,20 @@ const MockInterviewSetup = memo(() => {
                       styles.personaCard,
                       { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
                     ]}>
+                    {/* Separate tap target from the card itself (which
+                        selects/deselects on tap) — opens PersonaDetailModal
+                        instead of toggling selection. hitSlop makes this
+                        comfortably tappable despite the small icon. */}
+                    <TouchableOpacity
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      onPress={() => setDetailPersona(p)}
+                      style={styles.personaInfoButton}>
+                      <Icon
+                        pack="eva"
+                        name="info-outline"
+                        style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]}
+                      />
+                    </TouchableOpacity>
                     <Icon
                       pack="eva"
                       name={p.icon || 'person-outline'}
@@ -476,6 +498,16 @@ const MockInterviewSetup = memo(() => {
           style={globalStyle.shadowBtn}
         />
       </Content>
+
+      <PersonaDetailModal
+        persona={detailPersona}
+        isSelected={!!detailPersona && persona === detailPersona.id}
+        onClose={() => setDetailPersona(null)}
+        onSelect={() => {
+          if (!detailPersona) return;
+          setPersona(persona === detailPersona.id ? undefined : detailPersona.id);
+        }}
+      />
     </Container>
   );
 });
@@ -549,6 +581,13 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 8,
     marginBottom: 12,
     backgroundColor: 'background-basic-color-1',
+    position: 'relative',
+  },
+  personaInfoButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    zIndex: 1,
   },
   lockBadge: {
     position: 'absolute',
