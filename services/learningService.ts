@@ -340,10 +340,17 @@ export async function generateSyllabus(
  * from here afterward instead of being regenerated fresh via AI, so module
  * titles stay the same course every time the learner opens or reviews it.
  */
+// BUG FIX (product report: "the lesson title was in a different language
+// and the main content was in english") — this was cached/looked-up by
+// course_id alone, so the first language a syllabus was generated in stuck
+// forever regardless of a later app-language switch. `language` is now
+// sent on both the read and write, same convention as currentLanguage()
+// elsewhere in this file (topic-check, coach advice) — see
+// app/api/learning.py's get_syllabus()/save_syllabus().
 export async function getSavedSyllabus(courseId: string): Promise<string[] | null> {
   try {
     const {data} = await apiClient.get<{titles?: string[] | null}>('/api/v1/learning/syllabus', {
-      params: {course_id: courseId},
+      params: {course_id: courseId, language: currentLanguage()},
     });
     return data.titles && data.titles.length ? data.titles : null;
   } catch {
@@ -353,14 +360,16 @@ export async function getSavedSyllabus(courseId: string): Promise<string[] | nul
 
 /**
  * POST /api/v1/learning/syllabus — saves a freshly AI-generated syllabus the
- * first time one is built for a (user, course) pair. The backend is
- * first-write-wins (see app/api/learning.py's save_syllabus), so calling
- * this redundantly is always safe — it just hands back whatever was already
- * saved instead of overwriting it.
+ * first time one is built for a (user, course, language) triple. The
+ * backend is first-write-wins (see app/api/learning.py's save_syllabus), so
+ * calling this redundantly is always safe — it just hands back whatever was
+ * already saved instead of overwriting it.
  */
 export async function saveSyllabus(courseId: string, titles: string[]): Promise<void> {
   try {
-    await apiClient.post('/api/v1/learning/syllabus', {course_id: courseId, titles});
+    await apiClient.post('/api/v1/learning/syllabus', {
+      course_id: courseId, titles, language: currentLanguage(),
+    });
   } catch {
     // best-effort — worst case the syllabus regenerates next visit
   }
@@ -375,6 +384,9 @@ export async function saveSyllabus(courseId: string, titles: string[]): Promise<
  * regenerated — including via the Previous button or re-opening a
  * completed course from LearningCourses.tsx.
  */
+// Same language-key fix as getSavedSyllabus/saveSyllabus above, one level
+// deeper (module body content instead of the title list) — see
+// app/api/learning.py's get_module_content()/save_module_content().
 export async function getSavedModuleContent(
   courseId: string,
   moduleIndex: number,
@@ -383,7 +395,7 @@ export async function getSavedModuleContent(
     const {data} = await apiClient.get<{content?: {
       title: string; body: string; check_question?: string | null; image_url?: string | null;
     } | null}>('/api/v1/learning/module-content', {
-      params: {course_id: courseId, module_index: moduleIndex},
+      params: {course_id: courseId, module_index: moduleIndex, language: currentLanguage()},
     });
     if (!data.content) return null;
     return {
@@ -419,6 +431,7 @@ export async function saveModuleContent(
       body: mod.body,
       check_question: mod.checkQuestion ?? null,
       image_url: imageUrl ?? null,
+      language: currentLanguage(),
     });
   } catch {
     // best-effort — worst case this module regenerates next visit
