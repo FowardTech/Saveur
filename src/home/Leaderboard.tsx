@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -8,7 +8,6 @@ import {
   Icon,
   Spinner,
 } from '@ui-kitten/components';
-import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -26,11 +25,20 @@ import CtaButton from 'components/CtaButton';
 // Redesign (product follow-up — a reference screenshot of a fitness/habit
 // app's leaderboard: Daily/Weekly/Monthly tabs, a top-3 "podium" with the
 // #1 spot elevated and crowned, then a ranked list below). Explicit
-// instruction: match THAT LAYOUT, not that app's pink/purple color scheme —
-// every accent color below stays this app's own established brand blue
-// (color-primary-100/500) plus gold/silver/bronze medal tones for rank,
-// same medal-color convention HomeSrc.tsx's own leaderboard preview already
-// uses.
+// instruction: match THAT LAYOUT, not that app's pink/purple color scheme.
+//
+// SIMPLIFICATION PASS (product report: "this leaderboard has too many
+// colors... the chart bars should just be the platform default blue
+// color... must be consistent and simple like the cards in the rest of the
+// app"): this used to give each podium rank its own gold/silver/bronze
+// gradient (ring, rank badge, and the podium "riser" bars themselves), plus
+// a gradient-filled active tab pill and a gold-tinted trophy badge — a lot
+// of one-off color next to the flat, single-accent white cards everywhere
+// else in this app. Every one of those per-rank colors is gone now: the
+// ring, rank badge, podium bars, active tab, and XP text all use the same
+// single flat brand blue (color-primary-500) that's already this app's one
+// accent color everywhere else, with only SIZE (not color) still marking
+// which rank is #1 vs #2/#3.
 //
 // The Daily/Weekly/Monthly tabs are now functional: GET
 // /api/v1/gamification/leaderboard?period=daily|weekly|monthly (see
@@ -45,38 +53,6 @@ const PERIODS = [
 ] as const;
 type Period = (typeof PERIODS)[number]['key'];
 
-// Podium rank -> medal color (gold/silver/bronze), same convention/values
-// as HomeSrc.tsx's rankMedalStyle — duplicated locally rather than shared
-// since the two screens use it slightly differently (a ring/base color
-// here vs a small badge fill there); kept the exact same hex/tokens so the
-// two screens still read as the same design language.
-const MEDAL_COLOR: Record<1 | 2 | 3, string> = {
-  1: '#F5B301',
-  2: '#9AA0A6',
-  3: '#CD7F32',
-};
-// Redesign v2 (full reskin, "screenshot 3" reference — gradient accents
-// instead of flat fills): a light-to-base two-stop gradient per medal
-// color, used for the podium avatar ring (CircularProgress, always drawn
-// at progress=100 — purely decorative here, not an actual progress value)
-// and the small rank badge fill. Same three base colors as MEDAL_COLOR
-// above, just with a lighter first stop instead of a flat fill.
-const MEDAL_GRADIENT: Record<1 | 2 | 3, [string, string]> = {
-  1: ['#FFD86B', '#F5B301'],
-  2: ['#E4E7EB', '#9AA0A6'],
-  3: ['#E8A868', '#CD7F32'],
-};
-// Beautification pass (product request — "make it more beautiful and
-// consistent with the app designs") — the podium "steps" used to be a flat
-// single-color fill at a fixed opacity, which read as flat/dated next to
-// the gradient treatment now used everywhere else in the app (hero cards on
-// Find/Home/Coach). Same rgba pair per medal color as a top-to-bottom
-// gradient (glassier near the avatar, fading toward the base) instead.
-const PODIUM_BASE_GRADIENT: Record<1 | 2 | 3, [string, string]> = {
-  1: ['rgba(245, 179, 1, 0.32)', 'rgba(245, 179, 1, 0.10)'],
-  2: ['rgba(154, 160, 166, 0.32)', 'rgba(154, 160, 166, 0.10)'],
-  3: ['rgba(205, 127, 50, 0.32)', 'rgba(205, 127, 50, 0.10)'],
-};
 // Modernization pass (product request — "make the leaderboard look more
 // nicer and modern"): #1's ring is noticeably bigger than #2/#3 now (was a
 // much subtler 60/52/52 split) so the hierarchy reads at a glance instead
@@ -179,20 +155,10 @@ const Leaderboard = memo(() => {
                       key={period.key}
                       activeOpacity={0.8}
                       onPress={() => setActivePeriod(period.key)}
-                      style={[styles.tabPill, active && styles.tabPillActive]}>
-                      {/* Beautification pass — the active pill was a flat
-                          fill; same decorative absoluteFillObject gradient
-                          layer used on the app's hero cards instead, so the
-                          segmented control reads as the same design
-                          language as the rest of the app. */}
-                      {active ? (
-                        <LinearGradient
-                          colors={[theme['color-primary-200'], theme['color-primary-700']]}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 1 }}
-                          style={StyleSheet.absoluteFillObject}
-                        />
-                      ) : null}
+                      style={[
+                        styles.tabPill,
+                        active && { backgroundColor: theme['color-primary-500'] },
+                      ]}>
                       <Text
                         category="h9-s"
                         bold
@@ -208,37 +174,37 @@ const Leaderboard = memo(() => {
               <View style={styles.podiumRow}>
                 {PODIUM_ORDER.map(rank => {
                   const entry = podiumEntry(rank);
-                  const medal = MEDAL_COLOR[rank];
                   return (
                     <View key={rank} style={[styles.podiumSpot, rank === 1 && styles.podiumSpotFirst]}>
                       {entry ? (
                         <>
                           {rank === 1 ? (
                             // Trophy badge (product request — "add a yellow
-                            // trophy svg there to show who is leading") — a
-                            // soft gold glow circle behind a filled trophy
-                            // glyph, same "colored glass" treatment used for
-                            // icon circles elsewhere in this app, instead of
-                            // a bare 24px icon floating on its own.
+                            // trophy svg there to show who is leading") —
+                            // simplified per follow-up ("too many colors"):
+                            // plain neutral icon circle (same
+                            // background-basic-color-2 treatment every other
+                            // icon-wrap in this app uses) with the icon
+                            // tinted the app's one accent blue, instead of a
+                            // gold-tinted glass circle.
                             <View style={styles.trophyBadge}>
                               <Icon
                                 pack="eva"
                                 name="trophy"
-                                style={[globalStyle.icon20, { tintColor: medal }]}
+                                style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
                               />
                             </View>
                           ) : null}
-                          {/* Redesign v2 (full reskin): gradient ring
-                              (components/CircularProgress.tsx at a fixed
-                              progress=100 — purely decorative here, not a
-                              real progress value) replacing the old flat
-                              solid-color border ring. */}
+                          {/* SIMPLIFICATION PASS: flat brand-blue stroke for
+                              every rank (was a distinct gold/silver/bronze
+                              gradient per rank) — only the ring SIZE still
+                              varies by rank (see PODIUM_RING_SIZE), not its
+                              color. */}
                           <CircularProgress
                             progress={100}
                             size={PODIUM_RING_SIZE[rank]}
                             strokeWidth={3}
-                            gradientFrom={MEDAL_GRADIENT[rank][0]}
-                            gradientTo={MEDAL_GRADIENT[rank][1]}
+                            color={theme['color-primary-500']}
                             style={styles.podiumAvatarRing}>
                             <UserAvatar
                               uri={entry.avatarUrl}
@@ -246,16 +212,10 @@ const Leaderboard = memo(() => {
                               size={rank === 1 ? 'large' : 'medium'}
                             />
                           </CircularProgress>
-                          <View style={styles.podiumRankBadge}>
-                            <LinearGradient
-                              colors={MEDAL_GRADIENT[rank]}
-                              start={{ x: 0, y: 0 }}
-                              end={{ x: 1, y: 1 }}
-                              style={styles.podiumRankBadgeFill}>
-                              <Text category="h10" bold style={{ color: '#FFFFFF' }}>
-                                {rank}
-                              </Text>
-                            </LinearGradient>
+                          <View style={[styles.podiumRankBadge, { backgroundColor: theme['color-primary-500'] }]}>
+                            <Text category="h10" bold style={{ color: '#FFFFFF' }}>
+                              {rank}
+                            </Text>
                           </View>
                           <Text category="h9-s" bold center numberOfLines={1} mt={6} style={styles.podiumName}>
                             {entry.name}
@@ -268,16 +228,17 @@ const Leaderboard = memo(() => {
                       ) : (
                         <View style={styles.podiumEmptyFill} />
                       )}
-                      {/* Beautification pass — was a flat single-color fill
-                          at a fixed opacity; a top-to-bottom gradient per
-                          medal color instead (see PODIUM_BASE_GRADIENT)
-                          reads as a proper glassy "riser" rather than a
-                          plain tinted rectangle. */}
-                      <LinearGradient
-                        colors={PODIUM_BASE_GRADIENT[rank]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 0, y: 1 }}
-                        style={[styles.podiumBase, { height: PODIUM_BASE_HEIGHT[rank] }]}
+                      {/* SIMPLIFICATION PASS ("the chart bars should just be
+                          the platform default blue color"): one flat
+                          brand-blue tint for every podium riser — was a
+                          separate gold/silver/bronze gradient per rank (see
+                          this file's header comment). Rank hierarchy still
+                          reads from height alone (PODIUM_BASE_HEIGHT). */}
+                      <View
+                        style={[
+                          styles.podiumBase,
+                          { height: PODIUM_BASE_HEIGHT[rank], backgroundColor: theme['color-primary-transparent-200'] },
+                        ]}
                       />
                     </View>
                   );
@@ -348,9 +309,9 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
   },
   // Daily/Weekly/Monthly segmented control (product follow-up, reference
-  // screenshot's own tab row) — a neutral gray track with a gradient pill
-  // for whichever period is active, same segmented-control shape used
-  // elsewhere in eva-based apps rather than underlined tabs.
+  // screenshot's own tab row) — a neutral gray track with a flat solid
+  // brand-blue pill for whichever period is active (was a two-stop
+  // gradient — see this file's header comment on the simplification pass).
   tabsRow: {
     flexDirection: 'row',
     backgroundColor: 'background-basic-color-3',
@@ -358,23 +319,11 @@ const themedStyles = StyleService.create({
     padding: 4,
     marginBottom: 28,
   },
-  // `overflow:'hidden'` + `position:'relative'` so the active pill's
-  // decorative gradient (an absoluteFillObject child — see the JSX) clips
-  // to the pill's own rounded corners instead of spilling square-cornered
-  // behind it.
   tabPill: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: 8,
     borderRadius: 999,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  // Beautification pass — a soft brand-blue-tinted shadow (same one every
-  // primary button in the app already uses) lifts the active pill just
-  // enough to read as "selected," instead of relying on color alone.
-  tabPillActive: {
-    ...globalStyle.shadowBtn,
   },
   // Top-3 "podium" (product follow-up, reference screenshot) — 3 columns,
   // 2nd/1st/3rd left-to-right (matches the reference's own arrangement),
@@ -397,10 +346,10 @@ const themedStyles = StyleService.create({
   // already do, kept as a hook in case future polish wants to nudge this
   // spot further.
   podiumSpotFirst: {},
-  // Trophy badge (see the JSX comment above where this is used) — soft
-  // gold-tinted glass circle behind the trophy glyph, same "colored glass"
-  // icon-circle treatment used elsewhere in the app (e.g.
-  // SharedWithMe.tsx's iconCircle) instead of a bare floating icon.
+  // Trophy badge (see the JSX comment above where this is used) — neutral
+  // gray icon circle (was gold-tinted — see this file's header comment on
+  // the simplification pass), same plain icon-wrap treatment used
+  // elsewhere in the app.
   trophyBadge: {
     width: 36,
     height: 36,
@@ -408,7 +357,7 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
-    backgroundColor: 'rgba(245, 179, 1, 0.16)',
+    backgroundColor: 'background-basic-color-3',
   },
   // Redesign v2 (full reskin): the ring itself is now drawn by
   // CircularProgress (see the JSX above) — this style is just a spacing
@@ -418,9 +367,8 @@ const themedStyles = StyleService.create({
   // Small circular rank badge overlapping the bottom edge of the avatar
   // ring (product follow-up, reference screenshot's own numbered badge) —
   // negative marginTop pulls it up to overlap instead of sitting as a
-  // separate row. Outer view clips the inner LinearGradient fill to the
-  // circle (overflow:'hidden' — a gradient can't self-clip to a
-  // borderRadius the way a solid backgroundColor implicitly does).
+  // separate row. Flat brand-blue fill now (backgroundColor set inline in
+  // the JSX) — was a per-rank gradient, see this file's header comment.
   podiumRankBadge: {
     width: 20,
     height: 20,
@@ -428,10 +376,6 @@ const themedStyles = StyleService.create({
     marginTop: -10,
     borderWidth: 2,
     borderColor: 'background-basic-color-1',
-    overflow: 'hidden',
-  },
-  podiumRankBadgeFill: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -447,10 +391,9 @@ const themedStyles = StyleService.create({
   // The literal "podium step" block (product follow-up, reference
   // screenshot) — height varies per rank (see PODIUM_BASE_HEIGHT), rounded
   // only on top since it's meant to look like the top edge of a
-  // riser/step. Fill + alpha now come from the LinearGradient's own
-  // `colors` prop (PODIUM_BASE_GRADIENT — beautification pass, was a flat
-  // backgroundColor + `opacity` here), so no color/opacity left in this
-  // style — just shape.
+  // riser/step. Fill (a flat brand-blue tint, backgroundColor set inline
+  // in the JSX) is the same for every rank now — see this file's header
+  // comment on the simplification pass.
   podiumBase: {
     width: '86%',
     marginTop: 10,
