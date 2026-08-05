@@ -20,6 +20,7 @@ import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import CircularProgress from 'components/CircularProgress';
 import WeeklyBarChart from 'components/WeeklyBarChart';
+import SegmentedTabBar from 'components/SegmentedTabBar';
 import { globalStyle } from 'styles/globalStyle';
 import { tileColorAt } from 'styles/tileColors';
 import dayjs from 'utils/dayjs';
@@ -75,6 +76,19 @@ const MyProgress = memo(() => {
   const [heatMap, setHeatMap] = React.useState<HeatMapEntry[] | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+
+  // Segmented top-tab bar (task #64, product reference — a fitness app's
+  // "Overview | Calories | Nutrients | Macros | Weight" tab row). This
+  // screen used to stack goal/progress/stats/chart/heat-map/history all in
+  // one long scroll; splitting it into tabs mirrors that reference's
+  // pattern of separate data views under one shared header instead of one
+  // ever-growing page. See components/SegmentedTabBar.tsx.
+  const TABS = [
+    t('find:progress_tab_overview', { defaultValue: 'Overview' }),
+    t('find:progress_tab_skills', { defaultValue: 'Skills' }),
+    t('find:progress_tab_history', { defaultValue: 'History' }),
+  ];
+  const [activeTab, setActiveTab] = React.useState(0);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -152,6 +166,9 @@ const MyProgress = memo(() => {
           </TouchableOpacity>
         }
       />
+      {!isLoading && !loadError ? (
+        <SegmentedTabBar tabs={TABS} activeIndex={activeTab} onChange={setActiveTab} />
+      ) : null}
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
           <EmptyState variant="loading" />
@@ -163,7 +180,7 @@ const MyProgress = memo(() => {
             actionLabel={t('common:try_again', { defaultValue: 'Try again' })}
             onAction={load}
           />
-        ) : (
+        ) : activeTab === 0 ? (
           <>
             <Layout level="2" style={styles.goalCard}>
               <Text category="h8" bold mb={8}>
@@ -347,45 +364,62 @@ const MyProgress = memo(() => {
                 highlightIndex={todayWeekIndex}
               />
             </Layout>
-
+          </>
+        ) : activeTab === 1 ? (
+          // Skills tab (task #64) — was always-inline directly under the
+          // weekly chart, gated on `heatMap && heatMap.length > 0` with no
+          // visible section at all otherwise. Now its own tab so it reads
+          // as a deliberate view to switch to, same as the reference's
+          // "Nutrients"/"Macros" tabs — including an explicit empty state
+          // when there's no scored session yet, rather than the section
+          // just silently not existing.
+          <>
+            <Text category="h6" bold mb={4}>
+              {t('find:skill_heat_map_title', { defaultValue: 'Skill Heat Map' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mb={16}>
+              {t('find:skill_heat_map_description', {
+                defaultValue: 'Your average across every scored interview — see what to work on next.',
+              })}
+            </Text>
             {heatMap && heatMap.length > 0 ? (
-              <>
-                <Text category="h6" bold mt={32} mb={4}>
-                  {t('find:skill_heat_map_title', { defaultValue: 'Skill Heat Map' })}
-                </Text>
-                <Text category="h9-s" status="placeholder" mb={16}>
-                  {t('find:skill_heat_map_description', {
-                    defaultValue: 'Your average across every scored interview — see what to work on next.',
-                  })}
-                </Text>
-                <Layout level="2" style={styles.heatMapCard}>
-                  {heatMap.map(entry => (
-                    <View key={entry.key} style={styles.heatMapRow}>
-                      <Flex justify="space-between" mb={6}>
-                        <Text category="h9" bold>{entry.label}</Text>
-                        <Text category="h9" bold status="link">{entry.score}%</Text>
-                      </Flex>
-                      <View style={styles.heatMapTrack}>
-                        <View
-                          style={[
-                            styles.heatMapFill,
-                            {
-                              width: `${Math.max(0, Math.min(100, entry.score))}%`,
-                              backgroundColor:
-                                entry.score >= 80 ? theme['color-success-500']
-                                : entry.score >= 60 ? theme['color-warning-500']
-                                : theme['color-danger-500'],
-                            },
-                          ]}
-                        />
-                      </View>
+              <Layout level="2" style={styles.heatMapCard}>
+                {heatMap.map(entry => (
+                  <View key={entry.key} style={styles.heatMapRow}>
+                    <Flex justify="space-between" mb={6}>
+                      <Text category="h9" bold>{entry.label}</Text>
+                      <Text category="h9" bold status="link">{entry.score}%</Text>
+                    </Flex>
+                    <View style={styles.heatMapTrack}>
+                      <View
+                        style={[
+                          styles.heatMapFill,
+                          {
+                            width: `${Math.max(0, Math.min(100, entry.score))}%`,
+                            backgroundColor:
+                              entry.score >= 80 ? theme['color-success-500']
+                              : entry.score >= 60 ? theme['color-warning-500']
+                              : theme['color-danger-500'],
+                          },
+                        ]}
+                      />
                     </View>
-                  ))}
-                </Layout>
-              </>
-            ) : null}
-
-            <Text category="h6" bold mt={16} mb={16}>
+                  </View>
+                ))}
+              </Layout>
+            ) : (
+              <EmptyState
+                icon="bar-chart-2-outline"
+                body={t('find:skill_heat_map_empty', {
+                  defaultValue: 'Complete a scored interview to see your skill breakdown here.',
+                })}
+                style={{ paddingVertical: 24 }}
+              />
+            )}
+          </>
+        ) : (
+          <>
+            <Text category="h6" bold mb={16}>
               {t('find:recent_sessions', { defaultValue: 'Recent sessions' })}
             </Text>
             {recent.length === 0 ? (
@@ -436,6 +470,11 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   content: {
+    // Small top gap (product reference — the segmented tab row above
+    // shouldn't sit flush against the first card) now that
+    // SegmentedTabBar renders directly above this ScrollView instead of
+    // this being the first thing under TopNavigation.
+    paddingTop: 16,
     paddingBottom: 60,
   },
   // Redesign v2 (full reskin): `card` carries a real shadow again, which
