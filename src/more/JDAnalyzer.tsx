@@ -271,6 +271,8 @@ const JDAnalyzer = memo(() => {
               placeholder={t('more:job_url_placeholder', {
                 defaultValue: 'e.g. https://jobs.lever.co/company/role',
               }).toString()}
+              style={globalStyle.inputField}
+              textStyle={globalStyle.inputText}
               value={jdUrl}
               onChangeText={setJdUrl}
               disabled={isFetchingUrl}
@@ -426,9 +428,12 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     borderRadius: 20,
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — border/background/radius now match the shared
+  // globalStyle.inputField convention used elsewhere (was missing a
+  // visible border and used a one-off radius of 16 instead of 12).
   jdInput: {
-    borderRadius: 16,
-    backgroundColor: 'background-basic-color-2',
+    ...globalStyle.inputField,
     // Fixed height (not minHeight) so pasting a long job description makes
     // the text scroll inside the box instead of pushing the box itself
     // (and everything below it, including the Analyze button) further down
@@ -441,6 +446,7 @@ const themedStyles = StyleService.create({
     overflow: 'hidden',
   },
   jdText: {
+    ...globalStyle.inputText,
     height: '100%',
     textAlignVertical: 'top',
     minHeight: 200,

@@ -268,14 +268,18 @@ const themedStyles = StyleService.create({
   searchWrap: {
     width: '100%',
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — was `...globalStyle.shadow` (a real box shadow), which both
+  // looked out of place next to every shadow-free Input elsewhere in the
+  // app (see globalStyle.card's own "remove box shadows app-wide" history)
+  // and used a different border-radius/fill convention than
+  // globalStyle.inputField. Now shares that same shared convention.
   search: {
-    ...globalStyle.shadow,
+    ...globalStyle.inputField,
     marginBottom: 16,
-    backgroundColor: 'background-basic-color-2',
   },
   searchText: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    ...globalStyle.inputText,
   },
   // Accessory icons (the "+" on the role field, the search glyph on the
   // country field) sit inside the same full-bleed row as the text — since

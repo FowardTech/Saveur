@@ -27,6 +27,7 @@ import {AuthStackParamList, RootStackParamList} from 'navigation/types';
 import {mapFirebaseAuthError} from 'utils/authErrors';
 import {AuthContext} from '../../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import {globalStyle} from 'styles/globalStyle';
 
 const SignupThirdStep = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
@@ -281,6 +282,7 @@ const SignupThirdStep = memo(() => {
                 label={t('auth:full_name').toString()}
                 status={errors.full_name ? 'warning' : 'basic'}
                 style={styles.input}
+                textStyle={globalStyle.inputText}
                 value={value}
                 onChangeText={onChange}
                 onTouchStart={handleSubmit(() => {})}
@@ -300,6 +302,7 @@ const SignupThirdStep = memo(() => {
                 label={t('auth:email').toString()}
                 status={errors.email ? 'warning' : 'basic'}
                 style={styles.input}
+                textStyle={globalStyle.inputText}
                 value={value}
                 onChangeText={onChange}
                 onTouchStart={handleSubmit(() => {})}
@@ -319,6 +322,7 @@ const SignupThirdStep = memo(() => {
                 label={t('auth:password').toString()}
                 status={errors.password ? 'warning' : 'basic'}
                 style={styles.input}
+                textStyle={globalStyle.inputText}
                 value={value}
                 onTouchStart={handleSubmit(() => {})}
                 onTouchEnd={handleSubmit(() => {})}
@@ -443,8 +447,12 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 48,
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — matches the shared boxed border+background+radius-12 look
+  // (globalStyle.inputField) used elsewhere in the app, instead of its own
+  // one-off bottom-underline style.
   input: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
     marginBottom: 24,
   },
   social: {

@@ -97,6 +97,7 @@ const NewPassword = memo(() => {
               label={t('auth:code').toString()}
               status={errors.code ? 'warning' : 'basic'}
               style={styles.code}
+              textStyle={globalStyle.inputText}
               value={value}
               onTouchStart={handleSubmit(() => {})}
               onTouchEnd={handleSubmit(() => {})}
@@ -116,6 +117,7 @@ const NewPassword = memo(() => {
               label={t('auth:password').toString()}
               status={errors.password ? 'warning' : 'basic'}
               style={styles.password}
+              textStyle={globalStyle.inputText}
               value={value}
               onTouchStart={handleSubmit(() => {})}
               onTouchEnd={handleSubmit(() => {})}
@@ -145,6 +147,7 @@ const NewPassword = memo(() => {
               label={t('auth:confirm_password').toString()}
               status={errors.confirmPassword ? 'warning' : 'basic'}
               style={styles.confirmPassword}
+              textStyle={globalStyle.inputText}
               value={value}
               onTouchStart={handleSubmit(() => {})}
               onTouchEnd={handleSubmit(() => {})}
@@ -176,16 +179,20 @@ const themedStyles = StyleService.create({
   content: {
     marginTop: 16,
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — matches the shared boxed border+background+radius-12 look
+  // (globalStyle.inputField) used elsewhere, instead of a one-off
+  // bottom-underline style.
   code: {
+    ...globalStyle.inputField,
     marginBottom: 24,
-    borderBottomWidth: 2,
   },
   password: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
     marginBottom: 24,
   },
   confirmPassword: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
     marginBottom: 32,
   },
 });

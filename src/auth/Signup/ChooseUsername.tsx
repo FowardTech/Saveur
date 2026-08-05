@@ -272,6 +272,7 @@ const ChooseUsername = memo(() => {
               autoCorrect={false}
               status={status?.tone === 'danger' ? 'warning' : status?.tone === 'success' ? 'success' : 'basic'}
               style={styles.input}
+              textStyle={globalStyle.inputText}
               accessoryRight={
                 checkState === 'checking'
                   ? () => <ActivityIndicator size="small" />
@@ -328,8 +329,12 @@ const themedStyles = StyleService.create({
     // explicit 'transparent' override so this Layout's own `level="2"`
     // background shows through instead.
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — matches the shared boxed border+background+radius-12 look
+  // (globalStyle.inputField) used elsewhere, instead of a one-off
+  // bottom-underline style.
   input: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
     marginBottom: 8,
   },
 });

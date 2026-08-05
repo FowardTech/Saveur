@@ -26,6 +26,7 @@ import * as ImagePicker from 'react-native-image-picker';
 import * as documentsService from 'services/documentsService';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {AuthContext} from '../../AuthContext';
+import {globalStyle} from 'styles/globalStyle';
 
 // Was entirely disconnected from the real account: hardcoded fake
 // defaultValues ("Edith Johnson" / a fake email+password) and a photo picker
@@ -224,6 +225,7 @@ const EditProfile = memo(() => {
               label={t('auth:full_name').toString()}
               status={errors.fullName ? 'warning' : 'basic'}
               style={styles.fullName}
+              textStyle={globalStyle.inputText}
               value={value}
               onChangeText={onChange}
               onBlur={onBlur}
@@ -234,6 +236,7 @@ const EditProfile = memo(() => {
         <Input
           label={t('auth:email').toString()}
           style={styles.email}
+          textStyle={globalStyle.inputText}
           value={profile?.email ?? ''}
           disabled
         />
@@ -245,6 +248,7 @@ const EditProfile = memo(() => {
               label={t('auth:phone-number').toString()}
               status={errors.phoneNumber ? 'warning' : 'basic'}
               style={styles.phoneNumber}
+              textStyle={globalStyle.inputText}
               value={value}
               onChangeText={onChange}
               onTouchStart={handleSubmit(() => {})}
@@ -263,6 +267,7 @@ const EditProfile = memo(() => {
               label={t('auth:home-address').toString()}
               status={errors.homeAddress ? 'warning' : 'basic'}
               style={styles.homeAddress}
+              textStyle={globalStyle.inputText}
               value={value}
               onChangeText={onChange}
               onTouchStart={handleSubmit(() => {})}
@@ -347,19 +352,23 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     backgroundColor: 'rgba(0,0,0,0.35)',
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — matches the shared boxed border+background+radius-12 look
+  // (globalStyle.inputField) used elsewhere, instead of a one-off
+  // bottom-underline style.
   fullName: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
   },
   email: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
     marginVertical: 24,
   },
   phoneNumber: {
     marginVertical: 24,
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
   },
   homeAddress: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
   },
   map: {
     tintColor: 'button-basic-color',

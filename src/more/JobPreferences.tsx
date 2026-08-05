@@ -261,14 +261,16 @@ const themedStyles = StyleService.create({
   searchWrap: {
     width: '100%',
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — was `...globalStyle.shadow` (a real box shadow, and a
+  // different border-radius/fill convention than every other Input in the
+  // app). Now shares the shared globalStyle.inputField/inputText look.
   search: {
-    ...globalStyle.shadow,
+    ...globalStyle.inputField,
     marginBottom: 16,
-    backgroundColor: 'background-basic-color-2',
   },
   searchText: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    ...globalStyle.inputText,
   },
   accessoryLeftSpacing: {
     marginLeft: 14,

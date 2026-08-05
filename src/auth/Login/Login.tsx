@@ -188,6 +188,7 @@ const Login = memo(() => {
               label={t('auth:email').toString()}
               status={errors.email ? 'warning' : 'basic'}
               style={styles.email}
+              textStyle={globalStyle.inputText}
               value={value}
               onChangeText={onChange}
               onTouchStart={handleSubmit(() => {})}
@@ -207,6 +208,7 @@ const Login = memo(() => {
               label={t('auth:password').toString()}
               status={errors.password ? 'warning' : 'basic'}
               style={styles.password}
+              textStyle={globalStyle.inputText}
               value={value}
               onTouchStart={handleSubmit(() => {})}
               onTouchEnd={handleSubmit(() => {})}
@@ -312,12 +314,19 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 24,
     zIndex: 10,
   },
+  // Product request ("make text inputs all through the app consistent in
+  // design") — was a bare underline (borderBottomWidth only, no fill/full
+  // border), a different convention from the boxed border+background+
+  // radius-12 look (globalStyle.inputField) used by most other Input
+  // fields across the app (search boxes, JD Analyzer, Job Preferences,
+  // etc.). Now shares that same convention instead of its own one-off
+  // underline style.
   email: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
     marginBottom: 24,
   },
   password: {
-    borderBottomWidth: 2,
+    ...globalStyle.inputField,
   },
   facebook: {
     marginBottom: 16,
