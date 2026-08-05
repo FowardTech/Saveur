@@ -915,7 +915,17 @@ const HomeSrc = memo(() => {
                   </Flex>
                 ) : null}
               </View>
-              <Image source={Images.xpMedal} style={styles.checkInMedalIcon} resizeMode="cover" />
+              {/* Product request: "The badge icon in the checkin Card
+                  should be changed to a black icon badge not a colored
+                  one" — was a colored 3D gold medal/ribbon image
+                  (Images.xpMedal); swapped for the same Award glyph used
+                  elsewhere in the app (assets/AssetIconsPack.tsx's
+                  `carePro` key), tinted plain black. */}
+              <Icon
+                pack="assets"
+                name="carePro"
+                style={[styles.checkInMedalIcon, { tintColor: '#000000' }]}
+              />
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={styles.checkInBadgesButton}
@@ -962,7 +972,11 @@ const HomeSrc = memo(() => {
             the "Your Progress" pill above, so keeping it here too was pure
             repetition rather than something Home uniquely needed. */}
             <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-              <Text category="h7" bold style={{ color: '#0063f8' }}>
+              {/* Product request: "the upcoming session text in the checkin
+                  Card in homescreen should [be] black not blue" — was
+                  '#0063f8' (the app's brand blue), now the theme's plain
+                  text color. */}
+              <Text category="h7" bold style={{ color: theme['text-basic-color'] }}>
                 {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
               </Text>
               <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{ color: '#0063f8' }}>
@@ -1390,7 +1404,10 @@ const themedStyles = StyleService.create({
     // as a pill on its own against the card, no fill needed in either theme.
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#0063f8',
+    // Product request: "Foe the checking pill and the badge button change
+    // the border color and text color to black" — was '#0063f8' (brand
+    // blue), matching checkInButton's identical change below.
+    borderColor: '#000000',
   },
   checkInTopRow: {
     flexDirection: 'row',
@@ -1424,8 +1441,10 @@ const themedStyles = StyleService.create({
   checkedInPill: {
     flexDirection: 'row',
   },
+  // Matches checkInButton's border/text black change above — this
+  // checkmark sits inside that same pill.
   checkedInIcon: {
-    tintColor: '#0063f8',
+    tintColor: '#000000',
   },
   // alignSelf: 'flex-end' — its own row, hugging only its own content and
   // right-aligned (below the merged ring/XP/Badges/medal row above it). No
@@ -1445,13 +1464,20 @@ const themedStyles = StyleService.create({
     // checkedInPill]) the "Checked in" completed-state pill.
     backgroundColor: 'transparent',
     borderWidth: 1,
-    borderColor: '#0063f8'
+    // Product request: "Foe the checking pill and the badge button change
+    // the border color and text color to black" — was '#0063f8' (brand
+    // blue). Covers both the live "Check In" pill and (via
+    // [checkInButton, checkedInPill]) the "Checked in" completed pill.
+    borderColor: '#000000',
   },
   checkInButtonDisabled: {
     opacity: 0.6,
   },
+  // Same request as checkInButton's border above — shared by the Check
+  // In/Checked In pill AND the Badges button (both render their label
+  // through this one style).
   checkInButtonText: {
-    color: '#0063f8',
+    color: '#000000',
   },
   // Leaderboard preview card (see the JSX comment above where this is
   // used) — same bordered/transparent-fill treatment as every other card

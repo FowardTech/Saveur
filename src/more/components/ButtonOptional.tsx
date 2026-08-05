@@ -154,7 +154,16 @@ const ButtonOptional = ({
 export default ButtonOptional;
 
 const themedStyles = StyleService.create({
-  container: {},
+  // Product request: "I want the settings items to have bottom border line"
+  // — each row previously had zero separator, relying purely on the mt={24}
+  // gap between rows. Same neutral hairline tone as globalStyle.divider's
+  // existing convention, plus a bit of bottom padding so the line doesn't
+  // sit flush against the row's own text/icon.
+  container: {
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128,128,128,0.15)',
+    paddingBottom: 16,
+  },
   // Same 20x20/count-badge shape as HeaderHome.tsx's bell badge (see that
   // file's own sizing comment) — a small colored circle sitting on the
   // icon's top-right corner, offset just enough to look like it's
