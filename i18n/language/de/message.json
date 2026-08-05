@@ -38,6 +38,7 @@
   "voice_initial_line": "Ich höre zu — sprich mit mir, wenn du bereit bist.",
   "voice_mic_error": "Das Mikrofon konnte nicht gestartet werden.",
   "voice_retry_line": "Entschuldigung, das habe ich nicht verstanden — kannst du das wiederholen?",
+  "voice_speak_failed": "Konnte das nicht laut vorlesen — die Textantwort oben ist weiterhin verfügbar.",
   "voice_status_listening": "Höre zu…",
   "voice_status_listening_prompt": "Ich höre zu — leg los",
   "voice_status_speaking": "Spricht…",

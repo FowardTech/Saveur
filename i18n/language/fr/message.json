@@ -38,6 +38,7 @@
   "voice_initial_line": "Je vous écoute — parlez-moi quand vous êtes prêt.",
   "voice_mic_error": "Impossible de démarrer le microphone.",
   "voice_retry_line": "Désolé, je n'ai pas compris — pouvez-vous répéter ?",
+  "voice_speak_failed": "Impossible de le lire à voix haute — la réponse textuelle reste affichée ci-dessus.",
   "voice_status_listening": "Écoute en cours…",
   "voice_status_listening_prompt": "Je vous écoute — allez-y",
   "voice_status_speaking": "En train de parler…",

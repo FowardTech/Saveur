@@ -38,6 +38,7 @@
   "voice_initial_line": "Ti ascolto — parlami quando sei pronto.",
   "voice_mic_error": "Impossibile avviare il microfono.",
   "voice_retry_line": "Scusa, non ho capito — puoi ripetere?",
+  "voice_speak_failed": "Impossibile riprodurlo ad alta voce — la risposta testuale è ancora visibile sopra.",
   "voice_status_listening": "In ascolto…",
   "voice_status_listening_prompt": "Ti ascolto — vai pure",
   "voice_status_speaking": "Sto parlando…",

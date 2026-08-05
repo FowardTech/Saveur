@@ -223,12 +223,42 @@ const VoiceCoachView = memo(({
       setLastCoachLine(replyText);
       setPhase('speaking');
       await stt.stop();
+      let spokeFailed = false;
       try {
         await speechService.speak(replyText);
       } catch {
-        // speak() already falls back internally.
+        // speak() already falls back to on-device TTS internally on a
+        // remote failure -- reaching this catch means BOTH the real voice
+        // AND the on-device fallback failed, i.e. genuinely nothing was
+        // ever spoken out loud (product report: "the AI coach isn't
+        // talking at all"). That used to be swallowed silently here, which
+        // is exactly why it looked like nothing happened at all in Voice
+        // mode -- lastCoachLine/displayLine above still updates with the
+        // reply text regardless, but Voice mode is meant to be hands-free,
+        // so a user not looking at the screen got no signal whatsoever
+        // that anything had gone wrong. Surfacing it here at least makes
+        // the failure visible (and gives us something concrete to go on
+        // if it's reported again) instead of it just looking broken.
+        spokeFailed = true;
+        if (isActiveRef.current) {
+          setErrorMsg(
+            i18n.t('message:voice_speak_failed', {
+              defaultValue: "Couldn't play that out loud — the text reply above is still there.",
+            }),
+          );
+        }
       }
       if (!isActiveRef.current) return;
+      if (spokeFailed) {
+        // startListening() clears errorMsg as its very first line (correct
+        // for a stale mic-start error) -- without this pause it would wipe
+        // the message this catch block JUST set before it had any chance
+        // to actually be seen, since the restart below fires immediately.
+        // The mic isn't blocked from re-arming by this, it's just given a
+        // moment to be readable first.
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        if (!isActiveRef.current) return;
+      }
       startListening();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -269,6 +299,7 @@ const VoiceCoachView = memo(({
         // it won't repeat on a later visit to Voice mode, including if the
         // user's very first coach interaction happened in Text mode
         // instead.
+        let introSpeakFailed = false;
         try {
           const history = await coachService.getChatHistory();
           if (isActiveRef.current && coachService.isFirstEverCoachVisit(history)) {
@@ -281,11 +312,29 @@ const VoiceCoachView = memo(({
             try {
               await speechService.speak(intro);
             } catch {
-              // best-effort — a TTS hiccup shouldn't block the conversation
+              // Both the remote voice and the on-device fallback failed --
+              // same "genuinely nothing was spoken" case as sendTurn's own
+              // speak() catch below, just for the very first greeting
+              // instead of a reply. See that one's comment for the full
+              // reasoning on why this is now surfaced instead of swallowed.
+              introSpeakFailed = true;
+              if (isActiveRef.current) {
+                setErrorMsg(
+                  i18n.t('message:voice_speak_failed', {
+                    defaultValue: "Couldn't play that out loud — the text reply above is still there.",
+                  }),
+                );
+              }
             }
           }
         } catch {
           // best-effort — a failed history fetch shouldn't block listening
+        }
+        if (introSpeakFailed) {
+          // Same reasoning as sendTurn's own pause -- startListening()
+          // clears errorMsg immediately, which would otherwise wipe this
+          // message before it was ever visible.
+          await new Promise(resolve => setTimeout(resolve, 2500));
         }
         if (isActiveRef.current) startListening();
       })();

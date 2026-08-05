@@ -38,6 +38,7 @@
   "voice_initial_line": "듣고 있어요 — 준비되면 말씀해 주세요.",
   "voice_mic_error": "마이크를 시작할 수 없습니다.",
   "voice_retry_line": "죄송해요, 못 들었어요 — 다시 말씀해 주시겠어요?",
+  "voice_speak_failed": "소리로 재생하지 못했습니다 — 위의 텍스트 답변은 그대로 남아 있습니다.",
   "voice_status_listening": "듣는 중…",
   "voice_status_listening_prompt": "듣고 있어요 — 말씀하세요",
   "voice_status_speaking": "말하는 중…",

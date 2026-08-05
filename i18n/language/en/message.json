@@ -38,6 +38,7 @@
   "voice_initial_line": "I'm listening — talk to me whenever you're ready.",
   "voice_mic_error": "Could not start the microphone.",
   "voice_retry_line": "Sorry, I didn't catch that — could you say it again?",
+  "voice_speak_failed": "Couldn't play that out loud — the text reply above is still there.",
   "voice_status_listening": "Listening…",
   "voice_status_listening_prompt": "I'm listening — go ahead",
   "voice_status_speaking": "Speaking…",

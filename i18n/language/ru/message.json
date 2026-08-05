@@ -38,6 +38,7 @@
   "voice_initial_line": "Я слушаю — говорите, когда будете готовы.",
   "voice_mic_error": "Не удалось запустить микрофон.",
   "voice_retry_line": "Извините, я не расслышал — повторите, пожалуйста?",
+  "voice_speak_failed": "Не удалось воспроизвести это вслух — текстовый ответ по-прежнему указан выше.",
   "voice_status_listening": "Слушаю…",
   "voice_status_listening_prompt": "Я слушаю — говорите",
   "voice_status_speaking": "Говорю…",

@@ -38,6 +38,7 @@
   "voice_initial_line": "मैं सुन रहा हूँ — जब आप तैयार हों तब मुझसे बात करें।",
   "voice_mic_error": "माइक्रोफ़ोन शुरू नहीं हो सका।",
   "voice_retry_line": "माफ़ कीजिए, मैं समझ नहीं पाया — क्या आप फिर से कह सकते हैं?",
+  "voice_speak_failed": "उसे ज़ोर से नहीं चलाया जा सका — ऊपर दिया गया टेक्स्ट जवाब अब भी मौजूद है।",
   "voice_status_listening": "सुन रहा हूँ…",
   "voice_status_listening_prompt": "मैं सुन रहा हूँ — बताइए",
   "voice_status_speaking": "बोल रहा हूँ…",

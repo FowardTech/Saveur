@@ -38,6 +38,7 @@
   "voice_initial_line": "Te escucho — habla conmigo cuando estés listo.",
   "voice_mic_error": "No se pudo iniciar el micrófono.",
   "voice_retry_line": "Lo siento, no entendí eso — ¿puedes repetirlo?",
+  "voice_speak_failed": "No se pudo reproducir eso en voz alta — la respuesta en texto sigue arriba.",
   "voice_status_listening": "Escuchando…",
   "voice_status_listening_prompt": "Te escucho — adelante",
   "voice_status_speaking": "Hablando…",
