@@ -13,6 +13,17 @@ interface TourStep {
   titleDefault: string;
   bodyKey: string;
   bodyDefault: string;
+  // Product request: "app tour should always show with the illustrated
+  // design" — was one flat neutral-gray icon circle for every step (see
+  // the superseded iconWrap style below), which read as a bare placeholder
+  // rather than a designed tour. Each step now gets its own accent color
+  // (drawn from tokens that already exist elsewhere in this app's theme —
+  // primary blue, the tile orange/mint/rose accents, danger/warning — so
+  // this doesn't invent a new one-off palette) applied as a soft tinted
+  // background behind a larger icon, which is what actually makes a plain
+  // icon read as "illustrated" rather than a bare glyph.
+  accent: string;
+  accentBg: string;
 }
 
 // A short, one-time "how this app works" walkthrough — new users land on a
@@ -38,6 +49,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Welcome to Saveur',
     bodyKey: 'tour_welcome_body',
     bodyDefault: "Your career coach, job search, and interview prep — all in one app. Here's a quick look at what you can do.",
+    accent: 'color-primary-500',
+    accentBg: 'color-primary-transparent-200',
   },
   {
     icon: 'briefcase-outline',
@@ -45,6 +58,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Daily job matches',
     bodyKey: 'tour_jobs_body',
     bodyDefault: 'Home shows job alerts matched to your desired roles and countries every day, plus a goal tip to keep you moving forward.',
+    accent: 'color-tile-orange-text',
+    accentBg: 'color-tile-orange-bg',
   },
   {
     icon: 'mic-outline',
@@ -52,6 +67,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Practice interviews',
     bodyKey: 'tour_practice_body',
     bodyDefault: 'Run realistic mock interviews (text or voice) in the Practice tab and get real AI feedback on your answers afterward.',
+    accent: 'color-tile-rose-text',
+    accentBg: 'color-tile-rose-bg',
   },
   {
     icon: 'message-circle-outline',
@@ -59,6 +76,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Talk to your AI Coach',
     bodyKey: 'tour_coach_body',
     bodyDefault: "The Coach tab is a real conversation — by text or live voice — that knows your goals, progress, and history so its advice actually fits you.",
+    accent: 'color-badge-info-text',
+    accentBg: 'color-badge-info-bg',
   },
   {
     icon: 'book-open-outline',
@@ -66,6 +85,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Learn a new skill',
     bodyKey: 'tour_courses_body',
     bodyDefault: 'Learning Courses (under More) builds a real Basic → Intermediate → Advanced course on any career path you pick, with a badge when you finish.',
+    accent: 'color-tile-mint-text',
+    accentBg: 'color-tile-mint-bg',
   },
   {
     icon: 'award-outline',
@@ -73,6 +94,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Streaks & leaderboard',
     bodyKey: 'tour_gamification_body',
     bodyDefault: "Practicing daily earns XP and builds a streak. You'll show up on the leaderboard under a fun generated username — never your real name.",
+    accent: 'color-success-500',
+    accentBg: 'color-success-transparent-200',
   },
   {
     icon: 'checkmark-square-2-outline',
@@ -80,6 +103,8 @@ const STEPS: TourStep[] = [
     titleDefault: 'Track your applications',
     bodyKey: 'tour_applications_body',
     bodyDefault: "Keep every job you've applied to in one place, with status updates, so nothing falls through the cracks.",
+    accent: 'color-primary-500',
+    accentBg: 'color-primary-transparent-200',
   },
 ];
 
@@ -138,12 +163,17 @@ const AppTour = memo(({ visible, onClose }: AppTourProps) => {
               </Text>
             </Flex>
 
-            <View style={[styles.iconWrap, { backgroundColor: theme['background-basic-color-2'] }]}>
-              <Icon
-                pack="eva"
-                name={step.icon}
-                style={{ width: 32, height: 32, tintColor: theme['text-basic-color'] }}
-              />
+            {/* Outer soft ring + inner solid-tinted circle -- two layered
+                circles read as a small illustration rather than a bare
+                icon-in-a-box, without needing an actual image asset. */}
+            <View style={[styles.iconWrapOuter, { backgroundColor: theme[step.accentBg] }]}>
+              <View style={[styles.iconWrap, { backgroundColor: theme[step.accentBg] }]}>
+                <Icon
+                  pack="eva"
+                  name={step.icon}
+                  style={{ width: 36, height: 36, tintColor: theme[step.accent] }}
+                />
+              </View>
             </View>
 
             <Text category="h6" bold center mt={20}>
@@ -206,14 +236,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  iconWrap: {
+  // Larger, lower-opacity outer ring behind the solid inner circle -- gives
+  // the icon a soft "glow" halo instead of a single flat chip, the same
+  // layered-circle trick behind most illustrated onboarding/tour designs.
+  iconWrapOuter: {
     alignSelf: 'center',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 8,
+    opacity: 0.5,
+  },
+  iconWrap: {
+    position: 'absolute',
+    // (96 outer - 72 inner) / 2 -- RN positions absolute children relative
+    // to the parent's top-left by default (no parent align/justify applied
+    // to absolutely-positioned children), so this has to be centered
+    // manually rather than inheriting iconWrapOuter's alignItems/
+    // justifyContent.
+    top: 12,
+    left: 12,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dot: {
     width: 6,
