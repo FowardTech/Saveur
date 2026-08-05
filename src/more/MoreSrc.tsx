@@ -573,17 +573,15 @@ const MoreSrc = memo(() => {
             onPress={onLogout}
             disabled={isSigningOut}
             style={[styles.logoutRow, {opacity: isSigningOut ? 0.6 : 1}]}>
-            {/* Was color-danger-100 (a reddish circle) + text-primary-color
-                glyph -- brought in line with every other row above: neutral
-                gray circle, black glyph. */}
-            <View style={[styles.logoutIconWrap, {backgroundColor: theme['background-basic-color-2']}]}>
-              <Icon
-                pack="eva"
-                name="log-out-outline"
-                style={{width: 20, height: 20, tintColor: theme['text-basic-color']}}
-              />
-            </View>
-            <Text ml={24} category="para-m">
+            {/* REDESIGN — dropped the gray circle wrap (logoutIconWrap) to
+                match every other row above, which switched to a plain
+                unwrapped icon glyph (see ButtonOptional.tsx). */}
+            <Icon
+              pack="eva"
+              name="log-out-outline"
+              style={{width: 22, height: 22, tintColor: theme['text-basic-color']}}
+            />
+            <Text ml={16} category="para-m">
               {isSigningOut
                 ? t('more:logging_out', {defaultValue: 'Logging out…'})
                 : t('more:logout', {defaultValue: 'Log out'})}
@@ -614,12 +612,5 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginTop: 24,
-  },
-  logoutIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

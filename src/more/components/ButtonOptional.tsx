@@ -11,7 +11,6 @@ import {
   useTheme,
 } from '@ui-kitten/components';
 import Flex from 'components/Flex';
-import ButtonFill from 'components/ButtonFill';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {MainBottomTabStackParamList} from 'navigation/types';
@@ -28,11 +27,19 @@ export interface ButtonOptionalProps {
     | 'MoreSrc';
   withToggle?: boolean;
   checked?: boolean;
-  // Passed straight through to ButtonFill's own `backgroundColor` override —
-  // see that component for why this exists (MoreSrc.tsx's icon rows).
+  // REDESIGN (product reference — a plain flat icon-list settings screen,
+  // no colored circle/chip behind each row's icon at all, matching the
+  // "iconBackgroundColor"/"iconBorderColor" era's opposite direction). This
+  // row used to render its icon inside ButtonFill's circular, shadowed
+  // squircle background — iconBackgroundColor/iconBorderColor controlled
+  // that circle's fill/ring color. The circle is gone entirely now (see the
+  // render below, a plain <Icon> with no wrapping container); these two
+  // props are kept in the type (and MoreSrc.tsx's DATA_DETAILS/
+  // DATA_APPLICATION entries still pass them) purely so that file didn't
+  // need a separate sweep to strip 30+ now-inert values — they're simply
+  // unused here now.
   iconBackgroundColor?: string;
-  // Passed straight through to ButtonFill's `iconColor` / `borderColor` —
-  // MoreSrc.tsx's "subtle blue background, dark blue border" icon rows.
+  // Still meaningful — the plain icon's own tint color.
   iconColor?: string;
   iconBorderColor?: string;
   // Small unread indicator on the icon's top-right corner (product request
@@ -65,14 +72,11 @@ export interface ButtonOptionalProps {
 const ButtonOptional = ({
   title,
   icon = 'back',
-  status,
   onPress,
   withToggle,
   checked,
   navigateSrc,
-  iconBackgroundColor,
   iconColor,
-  iconBorderColor,
   badgeCount,
   badgeDot,
 }: ButtonOptionalProps) => {
@@ -100,13 +104,14 @@ const ButtonOptional = ({
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
         <View>
-          <ButtonFill
-            icon={icon}
-            status={status}
-            size="medium"
-            backgroundColor={iconBackgroundColor}
-            iconColor={iconColor}
-            borderColor={iconBorderColor}
+          {/* REDESIGN — was ButtonFill (a 40x40 shadowed circle behind the
+              icon); now a plain, unwrapped icon glyph directly next to the
+              label, matching the reference settings-list look (flat icon +
+              text rows, no chip/background). */}
+          <Icon
+            pack="assets"
+            name={icon}
+            style={{width: 22, height: 22, tintColor: iconColor ?? theme['text-basic-color']}}
           />
           {badgeCount ? (
             <View style={styles.badgeCount}>
@@ -118,7 +123,7 @@ const ButtonOptional = ({
             <View style={styles.badgeDot} />
           ) : null}
         </View>
-        <Text ml={24} category="para-m">
+        <Text ml={16} category="para-m">
           {title}
         </Text>
       </Flex>
@@ -146,12 +151,15 @@ const themedStyles = StyleService.create({
   container: {},
   // Same 20x20/count-badge shape as HeaderHome.tsx's bell badge (see that
   // file's own sizing comment) — a small colored circle sitting on the
-  // icon square's top-right corner, offset just enough to look like it's
-  // "attached" to the icon rather than floating.
+  // icon's top-right corner, offset just enough to look like it's
+  // "attached" to the icon rather than floating. Offsets pushed out a
+  // little further than before (-4/-4 -> -6/-8) now that the icon itself
+  // shrank from a 40x40 circle to a plain 22x22 glyph — same relative
+  // "corner badge" look on the smaller icon instead of swallowing half of it.
   badgeCount: {
     position: 'absolute',
-    top: -4,
-    right: -4,
+    top: -6,
+    right: -8,
     minWidth: 18,
     height: 18,
     paddingHorizontal: 3,
@@ -165,8 +173,8 @@ const themedStyles = StyleService.create({
   // JobAlerts.tsx's unread-item dot.
   badgeDot: {
     position: 'absolute',
-    top: -1,
-    right: -1,
+    top: -2,
+    right: -3,
     width: 12,
     height: 12,
     borderRadius: 6,
