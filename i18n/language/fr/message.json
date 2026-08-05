@@ -37,6 +37,7 @@
   "voice_action_offer_new_job_course": "Voulez-vous que je vous emmène à un cours sur comment bien démarrer votre nouvel emploi ?",
   "voice_initial_line": "Je vous écoute — parlez-moi quand vous êtes prêt.",
   "voice_mic_error": "Impossible de démarrer le microphone.",
+  "voice_no_speech_nudge": "Toujours là ? Je ne capte rien — essayez de toucher la sphère ou vérifiez votre micro.",
   "voice_retry_line": "Désolé, je n'ai pas compris — pouvez-vous répéter ?",
   "voice_speak_failed": "Impossible de le lire à voix haute — la réponse textuelle reste affichée ci-dessus.",
   "voice_status_listening": "Écoute en cours…",

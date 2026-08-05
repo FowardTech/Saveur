@@ -37,6 +37,7 @@
   "voice_action_offer_new_job_course": "要我带你去学习如何开始新工作的课程吗?",
   "voice_initial_line": "我在听——准备好后随时可以和我说话。",
   "voice_mic_error": "无法启动麦克风。",
+  "voice_no_speech_nudge": "还在吗？我没有听到任何声音——试着点一下光球，或检查一下麦克风。",
   "voice_retry_line": "抱歉，我没听清——能再说一次吗？",
   "voice_speak_failed": "无法朗读出来——上方的文字回复仍然可见。",
   "voice_status_listening": "正在聆听…",

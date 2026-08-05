@@ -37,6 +37,7 @@
   "voice_action_offer_new_job_course": "Soll ich dich zu einem Kurs über den Start in deinen neuen Job bringen?",
   "voice_initial_line": "Ich höre zu — sprich mit mir, wenn du bereit bist.",
   "voice_mic_error": "Das Mikrofon konnte nicht gestartet werden.",
+  "voice_no_speech_nudge": "Bist du noch da? Ich empfange nichts — tippe auf die Kugel oder überprüfe dein Mikrofon.",
   "voice_retry_line": "Entschuldigung, das habe ich nicht verstanden — kannst du das wiederholen?",
   "voice_speak_failed": "Konnte das nicht laut vorlesen — die Textantwort oben ist weiterhin verfügbar.",
   "voice_status_listening": "Höre zu…",

@@ -37,6 +37,7 @@
   "voice_action_offer_new_job_course": "새 직장을 시작하는 방법에 대한 코스로 안내해 드릴까요?",
   "voice_initial_line": "듣고 있어요 — 준비되면 말씀해 주세요.",
   "voice_mic_error": "마이크를 시작할 수 없습니다.",
+  "voice_no_speech_nudge": "아직 계신가요? 아무 소리도 들리지 않아요 — 구슬을 탭하거나 마이크를 확인해 보세요.",
   "voice_retry_line": "죄송해요, 못 들었어요 — 다시 말씀해 주시겠어요?",
   "voice_speak_failed": "소리로 재생하지 못했습니다 — 위의 텍스트 답변은 그대로 남아 있습니다.",
   "voice_status_listening": "듣는 중…",

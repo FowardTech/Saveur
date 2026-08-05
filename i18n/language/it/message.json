@@ -37,6 +37,7 @@
   "voice_action_offer_new_job_course": "Vuoi che ti porti a un corso su come iniziare il tuo nuovo lavoro?",
   "voice_initial_line": "Ti ascolto — parlami quando sei pronto.",
   "voice_mic_error": "Impossibile avviare il microfono.",
+  "voice_no_speech_nudge": "Sei ancora lì? Non sto captando nulla — prova a toccare la sfera o controlla il microfono.",
   "voice_retry_line": "Scusa, non ho capito — puoi ripetere?",
   "voice_speak_failed": "Impossibile riprodurlo ad alta voce — la risposta testuale è ancora visibile sopra.",
   "voice_status_listening": "In ascolto…",

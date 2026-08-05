@@ -37,6 +37,7 @@
   "voice_action_offer_new_job_course": "新しい仕事を始めるためのコースにご案内しましょうか?",
   "voice_initial_line": "聞いています — 準備ができたら話しかけてください。",
   "voice_mic_error": "マイクを起動できませんでした。",
+  "voice_no_speech_nudge": "まだそこにいますか？何も聞き取れていません——オーブをタップするか、マイクを確認してください。",
   "voice_retry_line": "すみません、聞き取れませんでした。もう一度言っていただけますか？",
   "voice_speak_failed": "音声で再生できませんでした — 上のテキストの返信はそのまま残っています。",
   "voice_status_listening": "聞き取り中…",

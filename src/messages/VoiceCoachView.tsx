@@ -279,6 +279,38 @@ const VoiceCoachView = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stt.transcript, phase]);
 
+  // Diagnostic nudge (product report: "it shows I'm listening, I say
+  // something, and nothing happens" -- with no error shown, meaning
+  // stt.start() itself succeeded and the mic never reported a failure). The
+  // debounce effect above only ever fires sendTurn() once stt.transcript
+  // (state, not the live ref) has actually changed -- if the native speech
+  // recognizer genuinely never delivers a result back to onSpeechResults
+  // for this session (a real possibility if something upstream leaves the
+  // audio session unable to actually capture input despite Voice.start()
+  // reporting success -- see speechService.ts's useSpeechToText doc
+  // comments for the equivalent, already-documented issue on the OUTPUT
+  // side), stt.transcript just never changes and NOTHING in this screen
+  // ever tells the user that. This doesn't fix that underlying capture
+  // issue (a JS-only fix can't -- there's no signal to react to if the
+  // native side never calls back at all), but it stops the screen from
+  // silently sitting there forever with zero feedback: after a long stretch
+  // of "listening" with nothing ever recognized, nudge the user rather than
+  // leaving them wondering whether the app heard them at all.
+  React.useEffect(() => {
+    if (phase !== 'listening') return;
+    const timer = setTimeout(() => {
+      if (phaseRef.current === 'listening' && !stt.transcript.trim()) {
+        setErrorMsg(
+          i18n.t('message:voice_no_speech_nudge', {
+            defaultValue: "Still there? I'm not picking up anything — try tapping the orb, or check your mic.",
+          }),
+        );
+      }
+    }, 20000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
+
   const onInterrupt = () => {
     if (phase !== 'speaking') return;
     speechService.stopSpeaking();
