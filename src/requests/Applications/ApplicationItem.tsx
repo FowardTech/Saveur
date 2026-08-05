@@ -53,7 +53,13 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
         });
       }}
       activeOpacity={0.54}>
-      <Layout style={styles.container} level="1">
+      {/* BUG FIX (product report: "these cards have a subtle light green
+          color... please remove it and let it be white") — level="1"
+          resolves to background-basic-color-1 (#F6FAF8), a near-white
+          token with a slight green cast; level="2" resolves to
+          background-basic-color-2 (#FFFFFF), true white, matching the
+          page body underneath it. */}
+      <Layout style={styles.container} level="2">
         <Flex justify="flex-start" itemsCenter mv={16} mh={16}>
           <CompanyLogoAvatar
             logoUrl={item.companyLogoUrl}

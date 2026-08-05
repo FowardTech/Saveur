@@ -22,36 +22,21 @@ import {Platform, StyleSheet} from 'react-native';
 // CourseSession.tsx certCard) — that workaround is back in play now that
 // `card` uses elevation again.
 //
-// BUG FIX (product request: "remove the box shadow on all the cards and
-// buttons for the Android app. Leave the iOS the way it is"): Android's
-// `elevation` is the ONLY thing that produces a visible shadow there
-// (shadowColor/shadowOffset/shadowOpacity/shadowRadius are iOS-only and
-// Android silently ignores them) — so dropping `elevation` from the
-// android branch below removes the shadow on Android specifically while
-// leaving the ios branch, and therefore iOS's actual rendered shadow,
-// completely untouched. `default` (non-iOS/Android RN targets, not
-// applicable to this app in practice) is left as-is.
+// BUG FIX (product request follow-up: "remove box shadows from every card
+// in the app"): this used to carry a real soft shadow on iOS/default (and
+// had already had Android's `elevation` stripped per an earlier, narrower
+// "remove the box shadow on Android only" request — see this comment's own
+// git history). Now zeroed out on every platform branch, so every card app-
+// wide (`card`/`shadow`/`shadowFade`/`shadowFilter` below all share this
+// one object) renders with no shadow at all, iOS included. Kept as a named,
+// still-`Platform.select`-shaped constant (rather than deleted outright) so
+// nothing that spreads it breaks, and so a future "bring shadows back"
+// request has one single object to restore instead of re-deriving values
+// across every consuming file again.
 const cardShadow = Platform.select({
-  ios: {
-    shadowColor: 'rgba(31, 41, 84, 0.35)',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 10.0,
-  },
+  ios: {},
   android: {},
-  default: {
-    shadowColor: 'rgba(31, 41, 84, 0.35)',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.10,
-    shadowRadius: 16.0,
-    elevation: 4,
-  },
+  default: {},
 }) as object;
 
 export const globalStyle = StyleSheet.create({
@@ -114,17 +99,18 @@ export const globalStyle = StyleSheet.create({
   card: {
     borderRadius: 16,
     ...cardShadow,
-    // Product follow-up ("change the app body background from gray to
-    // white" — see Container.tsx's own comment): the page background and
-    // every card's fill (Layout level="2") are now the SAME white, so on
-    // Android — where cardShadow's own android branch is deliberately `{}`
-    // (elevation was stripped per an earlier "remove the box shadow on
-    // Android" request) — a card would otherwise have literally nothing
-    // visually separating it from the page. A subtle hairline border,
-    // Android-only, restores that separation without bringing back a gray
-    // page or an iOS-visible border (iOS already has its real shadow).
-    // Same neutral tone as globalStyle.divider's existing hairline color,
-    // for consistency with this app's other flat-line elements.
+    // Android has carried a subtle hairline border (not a shadow) here
+    // since an earlier "remove the box shadow on Android" request, back
+    // when Android had no elevation to fall back on for separating a card
+    // from the page. Now that cardShadow is `{}` on every platform (see
+    // its own comment above — "remove box shadows from every card in the
+    // app"), the page-vs-card separation on ALL platforms comes from
+    // Container.tsx's gray page (level="3") against each card's white
+    // fill (level="2") — real color contrast, not a shadow or border. This
+    // Android-only hairline is left in place as a small extra definition
+    // aid rather than removed outright (it's a border, not the box shadow
+    // the request was about), same neutral tone as globalStyle.divider's
+    // existing hairline color.
     ...Platform.select({
       android: {
         borderWidth: 1,

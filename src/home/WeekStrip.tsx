@@ -102,6 +102,18 @@ const themedStyles = StyleService.create({
     justifyContent: 'space-between',
     marginTop: 20,
     marginBottom: 8,
+    // Product request ("give the date container a white background") —
+    // this strip previously had no background at all, so it visually
+    // blended into whatever the page underneath it was rendering (a gray
+    // page, per Container.tsx). No shadow added, per the separate "remove
+    // box shadows from every card" request elsewhere in this pass — just a
+    // plain white fill + enough padding/radius to read as its own
+    // container, same white as every other card's fill (background-basic-
+    // color-2).
+    backgroundColor: 'background-basic-color-2',
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
   },
   cell: {
     alignItems: 'center',

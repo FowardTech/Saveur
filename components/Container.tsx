@@ -7,30 +7,26 @@ interface ContainerProps extends LayoutProps {
   useSafeArea?: boolean;
 }
 
-// REVERTED (explicit follow-up product request — "change the app body
-// background from gray to white"): light mode's body used to default to
-// level="3" (#F0F0F0, a real visible gray — see the git history on this
-// comment for the earlier "make the body gray so white cards are visible"
-// request that introduced it). Now defaults to level="2" (#FFFFFF, the
-// same pure white every card in this app is already built on) instead —
-// see globalStyle.ts's `card` style for how card-vs-page separation is
-// still preserved without a gray page: Android has no shadow to fall back
-// on (elevation was explicitly stripped from cardShadow per an earlier
-// "remove the box shadow on Android" request), so `card` now also carries
-// a subtle Android-only hairline border. iOS still gets its real soft
-// shadow, unaffected either way.
+// RE-REVERTED (explicit follow-up product request — "lets change the app
+// background body back to the gray color"): light mode's body briefly
+// defaulted to level="2" (#FFFFFF, pure white — see this comment's own git
+// history for that request). Back to level="3" (#F0F0F0, a real visible
+// gray) now, so white cards read as distinct raised surfaces against the
+// page again. Card shadows themselves have separately been zeroed out app-
+// wide per a follow-up request (see globalStyle.ts's `cardShadow`) — with
+// no page/card color contrast AND no shadow, cards would have been
+// indistinguishable from the page, which is the reason this reverts too.
 //
 // THEME-AWARE, not a single hardcoded level, because constants/theme/
 // {light,dark}.json number their background-basic-color-N scale in
-// opposite directions: light.json's level 2 (#FFFFFF) is the single
-// LIGHTEST/whitest tone, with level 1 (#F6FAF8) a hair softer and level 3+
-// (#F0F0F0, #E0E0E0...) trending genuinely grayer. dark.json instead runs
-// monotonically DARK-to-LIGHT (level 1 #12121F darkest/base → level 2
-// #1B1B2E → level 3 #2A2A42 → ...), the standard "higher elevation =
-// lighter" dark-theme convention — using level 2 there would make the
-// PAGE lighter than a level-2 card, inverting the elevation relationship
-// (cards would look sunken instead of raised). Level 1 is already correct
-// for dark mode and is untouched by this change.
+// opposite directions: light.json's level 3 (#F0F0F0) trends genuinely
+// grayer than level 1/2. dark.json instead runs monotonically DARK-to-
+// LIGHT (level 1 #12121F darkest/base → level 2 #1B1B2E → level 3 #2A2A42
+// → ...), the standard "higher elevation = lighter" dark-theme convention
+// — using level 3 there would make the PAGE lighter than a level-2 card,
+// inverting the elevation relationship (cards would look sunken instead of
+// raised). Level 1 is already correct for dark mode and is untouched by
+// this change.
 const Container: React.FC<ContainerProps> = ({
   children,
   style,
@@ -40,7 +36,7 @@ const Container: React.FC<ContainerProps> = ({
 }) => {
   const { top, bottom } = useLayout();
   const { theme: appTheme } = React.useContext(ThemeContext);
-  const resolvedLevel = level ?? (appTheme === "dark" ? "1" : "2");
+  const resolvedLevel = level ?? (appTheme === "dark" ? "1" : "3");
   return (
     <Layout
       level={resolvedLevel}

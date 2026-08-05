@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Platform, View, TouchableOpacity } from 'react-native';
+import { Alert, View, TouchableOpacity } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -539,24 +539,13 @@ const themedStyles = StyleService.create({
     // block instead. This was a plain TouchableOpacity with no fill at all
     // (just a borderColor), so it hit exactly that bug.
     backgroundColor: 'background-basic-color-1',
-    // Follow-up bug report ("the box shadow of the interview type is not
-    // looking nice, make it look moderate"): globalStyle.card's shared iOS
-    // shadow (shadowOpacity 0.3, shadowRadius 10, offset height 6) reads as
-    // a heavy drop shadow on these three small, already-bordered
-    // (borderWidth 2) side-by-side cards specifically — toned down locally
-    // here rather than in globalStyle.card itself, which ~60+ other files
-    // across the app share and were already deliberately tuned. Android
-    // still gets zero shadow either way (globalStyle.ts's cardShadow has no
-    // `elevation` in its android branch at all, per the earlier "remove box
-    // shadow on Android" request), so this override only affects iOS.
-    ...Platform.select({
-      ios: {
-        shadowOpacity: 0.12,
-        shadowRadius: 6.0,
-        shadowOffset: {width: 0, height: 3},
-      },
-      default: {},
-    }),
+    // Product request ("remove box shadows from every card in the app"):
+    // globalStyle.card's own shadow is now zeroed out everywhere (see
+    // globalStyle.ts), so the local iOS-only "make it moderate" tuning
+    // this used to carry (shadowOpacity/shadowRadius/shadowOffset) would
+    // have re-introduced a shadow globalStyle.card no longer has —
+    // removed rather than tuned further. The borderWidth 2 below still
+    // gives these three cards a visible edge with no shadow at all.
     width: '31%',
     borderWidth: 2,
     borderRadius: 20,
