@@ -540,6 +540,50 @@ export function useSpeechToText() {
   // instead, so the next report has the real native error text instead of
   // just "nothing happened."
   const recentErrorTimestampsRef = React.useRef<number[]>([]);
+  // BUG FIX (product report, seen even after the react-native-voice
+  // destroy() patch + a full rebuild: "Speech recognition error (Speech
+  // recognition already started!)") — a SECOND, separate race from the one
+  // that patch fixed. Sequence: sendTurn() awaits stt.stop() (sets
+  // wantsListeningRef=false, calls Voice.stop()), then awaits speak() (a
+  // multi-second TTS playback), then calls startListening() -> stt.start()
+  // (sets wantsListeningRef=true, calls Voice.start() for a brand new
+  // session). Voice.stop()'s own promise can resolve before the native side
+  // has actually fired onSpeechEnd/onSpeechError for the session being
+  // stopped (this hook's own stop() doc comment already noted this same
+  // unreliability). If that stale onSpeechEnd/onSpeechError arrives LATE --
+  // any time after the new start() above has already flipped
+  // wantsListeningRef back to true -- its auto-restart logic below sees
+  // "we want to be listening" and calls Voice.start() a SECOND time, while
+  // the just-started new session is already running underneath it. The
+  // native module has no per-call session identity to tell these two
+  // Voice.start() calls apart, so the second one fails outright with
+  // "already started" -- exactly the reported error, and exactly why nudge/
+  // no-error-shown was the symptom before this hook surfaced errors at all.
+  //
+  // Fix, two layers:
+  // 1) `lastVoiceStartAtRef` — every actual Voice.start() call (explicit,
+  //    via start() below, or an auto-restart from onSpeechError/onSpeechEnd)
+  //    goes through `guardedVoiceStart()`, which skips the call outright if
+  //    another one fired within the last 400ms. A genuine new turn is always
+  //    separated from the previous session's end by at least a full TTS
+  //    playback (well over a second) — nothing legitimate is ever this
+  //    close together, so this can only ever suppress a duplicate.
+  // 2) `sessionEndResolveRef` — stop() now actually WAITS (bounded to 800ms)
+  //    for a real onSpeechEnd/onSpeechError to fire before its own promise
+  //    resolves, instead of returning the instant Voice.stop()'s own promise
+  //    does. This closes the race at the source in the common case: by the
+  //    time stop() returns (and the caller goes on to speak() then
+  //    start()), the previous session's end has already been processed
+  //    while wantsListeningRef was still false, so its auto-restart branch
+  //    correctly no-ops instead of firing later against a newer session.
+  const lastVoiceStartAtRef = React.useRef(0);
+  const sessionEndResolveRef = React.useRef<(() => void) | null>(null);
+  const guardedVoiceStart = React.useCallback(() => {
+    const now = Date.now();
+    if (now - lastVoiceStartAtRef.current < 400) return;
+    lastVoiceStartAtRef.current = now;
+    Voice.start(currentSttLocale()).catch(() => {});
+  }, []);
 
   const commitSessionTranscript = React.useCallback(() => {
     if (sessionTranscriptRef.current) {
@@ -579,6 +623,17 @@ export function useSpeechToText() {
     // AppState handling does a clean stop/restart around the lock instead.
     const canAutoRestart = () => wantsListeningRef.current && AppState.currentState === 'active';
     Voice.onSpeechError = (e: SpeechErrorEvent) => {
+      // Unblock a pending stop() wait FIRST (see sessionEndResolveRef's doc
+      // comment above) — this must happen before the auto-restart logic
+      // below runs, since stop() sets wantsListeningRef=false synchronously
+      // and only THEN starts waiting for this callback; resolving late
+      // would let a stale error from an old session slip past stop()'s
+      // window and race a newer start() the same way this whole fix exists
+      // to prevent.
+      if (sessionEndResolveRef.current) {
+        sessionEndResolveRef.current();
+        sessionEndResolveRef.current = null;
+      }
       // "No speech detected" style errors fire constantly during normal
       // pauses between sentences — not a real failure, just the recognizer's
       // session ending. Restart it silently if we're still supposed to be
@@ -611,7 +666,7 @@ export function useSpeechToText() {
           // session that's demonstrably not working.
           return;
         }
-        Voice.start(currentSttLocale()).catch(() => {});
+        guardedVoiceStart();
       } else if (!wantsListeningRef.current) {
         setError(e.error?.message ?? i18n.t('find:speech_recognition_error', { defaultValue: 'Speech recognition error' }));
       }
@@ -620,9 +675,14 @@ export function useSpeechToText() {
       // error the user can't see anyway while the phone is locked).
     };
     Voice.onSpeechEnd = () => {
+      // Same "unblock stop()'s wait first" reasoning as onSpeechError above.
+      if (sessionEndResolveRef.current) {
+        sessionEndResolveRef.current();
+        sessionEndResolveRef.current = null;
+      }
       commitSessionTranscript();
       if (canAutoRestart()) {
-        Voice.start(currentSttLocale()).catch(() => {});
+        guardedVoiceStart();
       }
     };
     return () => {
@@ -662,6 +722,19 @@ export function useSpeechToText() {
     }
     wantsListeningRef.current = true;
     setIsListening(true);
+    // Same 400ms debounce as guardedVoiceStart (see its doc comment) — an
+    // auto-restart from a just-firing onSpeechError/onSpeechEnd could have
+    // called Voice.start() moments before this explicit call runs (e.g. the
+    // caller's own stop()->speak()->start() sequence overlapping with a
+    // trailing event from the session stop() just tore down). Recording the
+    // timestamp AND skipping the call the same way keeps both paths honoring
+    // one shared guard instead of two independent ones that could still
+    // race each other.
+    const now = Date.now();
+    if (now - lastVoiceStartAtRef.current < 400) {
+      return true;
+    }
+    lastVoiceStartAtRef.current = now;
     try {
       await Voice.start(currentSttLocale());
       return true;
@@ -681,6 +754,29 @@ export function useSpeechToText() {
     } catch {
       // Already stopped — fine.
     }
+    // BUG FIX (product report: "Speech recognition error (Speech
+    // recognition already started!)" even after a full rebuild) — see
+    // sessionEndResolveRef's doc comment above this hook for the full race.
+    // Voice.stop()'s own promise resolving is NOT the same as the native
+    // side having actually fired onSpeechEnd/onSpeechError for the session
+    // being stopped; that event can arrive later. Waiting here (bounded, so
+    // a native module that never fires it at all can't hang stop() forever)
+    // means the caller (e.g. VoiceCoachView's sendTurn: stop -> speak ->
+    // startListening) can't call start() again until this session is
+    // confirmed over, closing the window where a late event's auto-restart
+    // logic would otherwise fire Voice.start() a second time against an
+    // already-started newer session.
+    await new Promise<void>(resolve => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      sessionEndResolveRef.current = finish;
+      setTimeout(finish, 800);
+    });
+    sessionEndResolveRef.current = null;
     // Voice.stop() doesn't reliably fire onSpeechEnd before this await
     // resolves on every platform — commit whatever the still-active
     // session had recognized directly, rather than risking losing the
