@@ -37,6 +37,7 @@ import AttachItem from "./Components/AttachItem";
 import BrandWordmark from "components/BrandWordmark";
 import Text from "components/Text";
 import { CoachChatMessageProps, Practice_Mode_Enum } from "constants/Types";
+import { NEW_JOB_COURSE_TITLE, NEW_JOB_COURSE_MODULES } from "constants/Data";
 import * as coachService from "services/coachService";
 import * as resumeService from "services/resumeService";
 import { ImportedFileInfo } from "services/resumeService";
@@ -367,12 +368,20 @@ const Chat = memo(() => {
 
   // Product request item: "the AI coach can ask the user if they want the
   // coach to navigate to the specific screen... and the app will navigate
-  // automatically" — see app/api/coach.py's SUGGESTED_ACTION marker.
-  // Mock Interviews and the Daily Challenge (a Home-tab card, no dedicated
-  // route of its own) are the two real destinations the backend can name.
-  const onRunSuggestedAction = React.useCallback((action: 'mock_interview' | 'daily_challenge') => {
+  // automatically" — see app/api/coach.py's SUGGESTED_ACTION marker. Mock
+  // Interviews, the Daily Challenge (a Home-tab card, no dedicated route of
+  // its own), and — new-job/first-job coaching track product request item —
+  // the "Starting Your New Job" Learning Course are the three real
+  // destinations the backend can name.
+  const onRunSuggestedAction = React.useCallback((action: 'mock_interview' | 'daily_challenge' | 'new_job_course') => {
     if (action === 'mock_interview') {
       navigate('MockInterviewSetup', {});
+    } else if (action === 'new_job_course') {
+      navigate('CourseSession', {
+        topic: NEW_JOB_COURSE_TITLE,
+        totalModules: NEW_JOB_COURSE_MODULES,
+        level: 'basic',
+      });
     } else {
       // Daily Challenge lives as a card on the Home tab, not a dedicated
       // route — same "jump to Home tab" navigation MoreSrc.tsx and
@@ -402,12 +411,14 @@ const Chat = memo(() => {
         </TouchableOpacity>
       );
     }
-    const action: 'mock_interview' | 'daily_challenge' | undefined = props?.currentMessage?.suggestedAction;
+    const action: 'mock_interview' | 'daily_challenge' | 'new_job_course' | undefined = props?.currentMessage?.suggestedAction;
     if (action) {
       const label = action === 'mock_interview'
         ? t('message:suggested_action_mock_interview', { defaultValue: 'Start a mock interview' })
+        : action === 'new_job_course'
+        ? t('message:suggested_action_new_job_course', { defaultValue: 'Get ready for your new job' })
         : t('message:suggested_action_daily_challenge', { defaultValue: "Try today's Daily Challenge" });
-      const icon = action === 'mock_interview' ? 'mic-outline' : 'flash-outline';
+      const icon = action === 'mock_interview' ? 'mic-outline' : action === 'new_job_course' ? 'briefcase-outline' : 'flash-outline';
       return (
         <TouchableOpacity
           activeOpacity={0.7}

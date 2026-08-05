@@ -1248,10 +1248,23 @@ export interface CourseProps {
   title: string;
   description: string;
   durationMin: number;
-  category: 'Behavioral' | 'Technical' | 'Salary Negotiation' | 'Resume' | 'System Design' | 'Networking';
+  category: 'Behavioral' | 'Technical' | 'Salary Negotiation' | 'Resume' | 'System Design' | 'Networking' | 'Onboarding';
   totalModules: number;
   completedModules: number;
 }
+
+// Product request item (new-job/first-job coaching track): "coach users
+// through starting a new/first job - workplace norms, relating to
+// coworkers, general onboarding-to-the-job guidance." Exported as its own
+// constant (not just inlined into DATA_COURSES below) so
+// src/messages/Chat.tsx's SUGGESTED_ACTION: new_job_course handler (see
+// app/api/coach.py's ACTION_REFERRAL_INSTRUCTION) can jump straight into
+// this exact course — same title, so it's the same course_id
+// (learningService.courseIdFor) and shares progress whether the learner
+// starts it from the coach chip or from this catalog card.
+export const NEW_JOB_COURSE_TITLE = 'Starting Your New Job';
+export const NEW_JOB_COURSE_MODULES = 5;
+
 export const DATA_COURSES: CourseProps[] = [
   {
     id: 'course_star',
@@ -1314,6 +1327,15 @@ export const DATA_COURSES: CourseProps[] = [
     durationMin: 40,
     category: 'Behavioral',
     totalModules: 5,
+    completedModules: 0,
+  },
+  {
+    id: 'course_new_job_onboarding',
+    title: NEW_JOB_COURSE_TITLE,
+    description: 'Workplace norms, relating to coworkers, and thriving in your first 90 days on the job.',
+    durationMin: 35,
+    category: 'Onboarding',
+    totalModules: NEW_JOB_COURSE_MODULES,
     completedModules: 0,
   },
 ];

@@ -72,6 +72,7 @@ const COURSE_CATEGORY_KEYS: Record<string, string> = {
   Resume: 'more:course_category_resume',
   'System Design': 'more:course_category_system_design',
   Networking: 'more:course_category_networking',
+  Onboarding: 'more:course_category_onboarding',
 };
 
 export function getCourseCategoryLabel(category: string | undefined, t: TFunc): string {
@@ -91,6 +92,7 @@ const COURSE_TITLE_KEYS: Record<string, string> = {
   course_algo_patterns: 'more:course_algo_patterns_title',
   course_networking: 'more:course_networking_title',
   course_executive_presence: 'more:course_executive_presence_title',
+  course_new_job_onboarding: 'more:course_new_job_onboarding_title',
 };
 
 const COURSE_DESCRIPTION_KEYS: Record<string, string> = {
@@ -101,6 +103,7 @@ const COURSE_DESCRIPTION_KEYS: Record<string, string> = {
   course_algo_patterns: 'more:course_algo_patterns_description',
   course_networking: 'more:course_networking_description',
   course_executive_presence: 'more:course_executive_presence_description',
+  course_new_job_onboarding: 'more:course_new_job_onboarding_description',
 };
 
 export function getCourseTitleLabel(id: string, fallback: string, t: TFunc): string {

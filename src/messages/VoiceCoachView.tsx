@@ -59,7 +59,7 @@ import * as speechService from 'services/speechService';
 const SILENCE_DEBOUNCE_MS = 1300;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
-type SuggestedAction = 'mock_interview' | 'daily_challenge';
+type SuggestedAction = 'mock_interview' | 'daily_challenge' | 'new_job_course';
 
 const ORB_SIZE = 176;
 const HALO_SIZE = ORB_SIZE * 1.5;
@@ -204,9 +204,13 @@ const VoiceCoachView = memo(({
       if (suggestedAction) {
         const offerKey = suggestedAction === 'mock_interview'
           ? 'message:voice_action_offer_mock_interview'
+          : suggestedAction === 'new_job_course'
+          ? 'message:voice_action_offer_new_job_course'
           : 'message:voice_action_offer_daily_challenge';
         const offerDefault = suggestedAction === 'mock_interview'
           ? 'Want me to start a mock interview for you now?'
+          : suggestedAction === 'new_job_course'
+          ? 'Want me to take you to a course on starting your new job?'
           : "Want me to take you to today's Daily Challenge?";
         replyText = `${replyText} ${i18n.t(offerKey, { defaultValue: offerDefault })}`;
         pendingActionRef.current = suggestedAction;
