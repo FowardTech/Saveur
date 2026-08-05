@@ -137,6 +137,21 @@ const VoiceCoachView = memo(({
     }
   };
 
+  // Surfaces speechService's new rapid-error-loop detector (see
+  // useSpeechToText's onSpeechError in services/speechService.ts): that
+  // fires stt.error asynchronously, mid-session, well after startListening()
+  // already read stt.error once and moved on -- without this effect,
+  // nothing in this screen would ever notice a session that started fine
+  // but then failed every restart in a tight loop. This is the diagnostic
+  // for the "mock interview's mic works, the coach's doesn't at all" report:
+  // if this ever shows a real native error/code instead of the generic
+  // no-speech nudge, that's the concrete signal that was missing before.
+  React.useEffect(() => {
+    if (stt.error && isActiveRef.current) {
+      setErrorMsg(stt.error);
+    }
+  }, [stt.error]);
+
   const startListening = React.useCallback(async () => {
     setErrorMsg(null);
     stt.reset();

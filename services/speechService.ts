@@ -521,6 +521,25 @@ export function useSpeechToText() {
   // ends (see commitSessionTranscript below), so cross-session
   // accumulation still works but within-session duplication doesn't.
   const sessionTranscriptRef = React.useRef('');
+  // DIAGNOSTIC + SELF-HEALING (product report: "AI coach isn't picking up
+  // anything at all" -- confirmed via the no-speech nudge that Voice.start()
+  // reports success but no transcript ever arrives, on a device where this
+  // exact same hook works fine in Mock Interview). onSpeechError's existing
+  // auto-restart logic below treats EVERY error as the normal "brief pause
+  // between sentences" case and silently retries forever whenever
+  // wantsListeningRef is true -- which was the right call for the common
+  // case, but it also means a genuinely broken recognition session (one
+  // that errors out immediately on every single restart, before the user
+  // ever gets a chance to say anything) retries silently forever too, with
+  // the real native error code/message never reaching setError() or this
+  // app's own logs. That's indistinguishable from "just isn't hearing me"
+  // from the outside. This tracks recent error timestamps -- normal
+  // between-sentence pauses are seconds apart; a genuine broken-session
+  // loop fires near-instantly on every restart -- and if it sees a tight
+  // burst, stops the silent retry loop and surfaces the actual error
+  // instead, so the next report has the real native error text instead of
+  // just "nothing happened."
+  const recentErrorTimestampsRef = React.useRef<number[]>([]);
 
   const commitSessionTranscript = React.useCallback(() => {
     if (sessionTranscriptRef.current) {
@@ -539,6 +558,10 @@ export function useSpeechToText() {
       if (best) {
         // Replace, don't append — see this hook's own doc comment above.
         sessionTranscriptRef.current = best;
+        // A real result came back -- whatever error streak was building
+        // (recentErrorTimestampsRef, see onSpeechError below) is now stale;
+        // the session is demonstrably working.
+        recentErrorTimestampsRef.current = [];
       }
     };
     // Auto-restart used to fire unconditionally on any "no speech
@@ -565,6 +588,29 @@ export function useSpeechToText() {
       // it first (see commitSessionTranscript's doc comment).
       commitSessionTranscript();
       if (canAutoRestart()) {
+        // See recentErrorTimestampsRef's doc comment above: a genuine
+        // broken-session loop errors out almost instantly on every restart,
+        // unlike the multi-second gaps a normal "waiting for the user to
+        // speak" pause produces. 4 errors inside 3 seconds is well outside
+        // any plausible normal pause pattern.
+        const now = Date.now();
+        const recent = recentErrorTimestampsRef.current.filter(t => now - t < 3000);
+        recent.push(now);
+        recentErrorTimestampsRef.current = recent;
+        if (recent.length >= 4) {
+          recentErrorTimestampsRef.current = [];
+          setError(
+            `${i18n.t('find:speech_recognition_error', { defaultValue: 'Speech recognition error' })}${
+              e.error?.message ? ` (${e.error.message})` : e.error?.code ? ` (code ${e.error.code})` : ''
+            }`,
+          );
+          // Deliberately stop retrying here rather than looping forever —
+          // wantsListeningRef stays true (the caller can still explicitly
+          // stop()/start() again, e.g. via VoiceCoachView's onInterrupt/tap-
+          // to-retry), but this hook won't keep silently re-triggering a
+          // session that's demonstrably not working.
+          return;
+        }
         Voice.start(currentSttLocale()).catch(() => {});
       } else if (!wantsListeningRef.current) {
         setError(e.error?.message ?? i18n.t('find:speech_recognition_error', { defaultValue: 'Speech recognition error' }));
