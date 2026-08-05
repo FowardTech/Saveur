@@ -70,6 +70,17 @@ const CourseSession = memo(() => {
   const [isComplete, setIsComplete] = React.useState(false);
   const [earnedCertificate, setEarnedCertificate] = React.useState<Certificate | null>(null);
 
+  // Product request (item #63 of the redesign batch): "Learning Course: add
+  // a 'Get Started' intro screen" — this screen used to drop a learner
+  // straight into Module 1's content (or a loading spinner for it) the
+  // instant they tapped Start, with zero framing of what the course
+  // actually covers first. Defaults true; the resume-progress effect below
+  // flips it false immediately for anyone who already has completed
+  // modules on this course, so returners go straight back into their
+  // in-progress lesson exactly like before — only a genuinely fresh course
+  // start shows this.
+  const [showIntro, setShowIntro] = React.useState(true);
+
   const [answer, setAnswer] = React.useState('');
   const [feedback, setFeedback] = React.useState<string | null>(null);
   const [isCheckingAnswer, setIsCheckingAnswer] = React.useState(false);
@@ -91,6 +102,9 @@ const CourseSession = memo(() => {
       const resumeIndex = Math.min(progress.lastModuleIndex, Math.max(totalModules - 1, 0));
       if (progress.completedModules > 0 && resumeIndex > 0) {
         setModuleIndex(resumeIndex);
+      }
+      if (progress.completedModules > 0) {
+        setShowIntro(false);
       }
       setHasResumed(true);
     }).catch(() => setHasResumed(true));
@@ -366,6 +380,58 @@ const CourseSession = memo(() => {
     );
   }
 
+  if (hasResumed && showIntro) {
+    return (
+      <Container style={styles.container}>
+        <TopNavigation
+          title={<Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">{topic}</Text>}
+          accessoryLeft={<NavigationAction onPress={onBack} />}
+        />
+        <Content padder contentContainerStyle={styles.content}>
+          <Flex vertical itemsCenter style={{ paddingTop: 24 }}>
+            <View style={[styles.introIconWrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+              <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]} />
+            </View>
+            <Text category="h4" bold center mt={20}>{topic}</Text>
+            <Text category="h9-s" status="placeholder" center mt={8}>
+              {t('more:course_intro_subtitle', {
+                defaultValue: '{{level}} · {{count}} modules',
+                level: getCourseLevelLabel(level, t),
+                count: totalModules,
+              })}
+            </Text>
+
+            {syllabus ? (
+              <View style={styles.introSyllabus}>
+                {syllabus.map((title, i) => (
+                  <Flex key={i} justify="flex-start" itemsCenter style={styles.introSyllabusRow}>
+                    <View style={styles.introSyllabusIndex}>
+                      <Text category="h10" bold status="placeholder">{i + 1}</Text>
+                    </View>
+                    <Text category="h9" style={{ flex: 1, marginLeft: 12 }} numberOfLines={2}>
+                      {title}
+                    </Text>
+                  </Flex>
+                ))}
+              </View>
+            ) : (
+              <Flex center style={{ paddingVertical: 32 }}>
+                <Spinner size="small" />
+              </Flex>
+            )}
+
+            <CtaButton
+              style={{ marginTop: 8, width: '100%' }}
+              disabled={!syllabus}
+              onPress={() => setShowIntro(false)}>
+              {t('more:course_get_started', { defaultValue: 'Get Started' })}
+            </CtaButton>
+          </Flex>
+        </Content>
+      </Container>
+    );
+  }
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -559,6 +625,32 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  // "Get Started" intro screen (see the JSX above).
+  introIconWrap: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  introSyllabus: {
+    width: '100%',
+    marginTop: 28,
+    marginBottom: 28,
+  },
+  introSyllabusRow: {
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'background-basic-color-3',
+  },
+  introSyllabusIndex: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'background-basic-color-3',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   modePill: {
     paddingVertical: 6,
