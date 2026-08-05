@@ -1,5 +1,5 @@
 import React, { memo, useMemo } from 'react';
-import { View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, useTheme } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 
@@ -13,16 +13,24 @@ export interface WeekStripProps {
    * doesn't have a per-date practice log to draw on, so the strip
    * deliberately doesn't fabricate checkmarks for past days. */
   checkedInToday?: boolean;
+  /** Product request item: "tapping any date/day should open a bottom
+   * sheet listing all career-related activities the user completed that
+   * day" — see HomeSrc.tsx's DayActivityModal wiring. Optional so this
+   * component still renders as a plain status strip (its original role)
+   * anywhere a caller doesn't pass a handler. */
+  onDayPress?: (date: Date) => void;
 }
 
 // Day-of-week calendar strip (product request item — visual reference: a
 // light, clean fitness/wellness app screenshot showing "Mon Tue Wed Thu Fri
-// Sat Sun" with today's cell highlighted). Purely a "here's where we are in
-// the week" affordance, same role it plays in the reference — this app has
-// no per-day calendar/scheduling meaning to attach to other cells (that's
-// what src/home's Upcoming Session section already covers), so tapping a
-// day does nothing; it's a status strip, not a picker.
-const WeekStrip = memo(({ checkedInToday }: WeekStripProps) => {
+// Sat Sun" with today's cell highlighted). Tapping a cell opens that day's
+// activity feed (see onDayPress above) — this used to be purely a "here's
+// where we are in the week" status display with no tap behavior at all,
+// per a since-superseded comment claiming "this app has no per-day
+// calendar/scheduling meaning to attach to other cells"; the Career Diary,
+// Daily Challenge, Daily Check-in, mock interviews, etc. all DO have
+// real per-day data now, which is exactly what DayActivityModal surfaces.
+const WeekStrip = memo(({ checkedInToday, onDayPress }: WeekStripProps) => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation('home');
@@ -47,14 +55,19 @@ const WeekStrip = memo(({ checkedInToday }: WeekStripProps) => {
     return labels.map((label, i) => {
       const date = new Date(monday);
       date.setDate(monday.getDate() + i);
-      return { label, dateNum: date.getDate(), isToday: i === todayMonFirst };
+      return { label, date, dateNum: date.getDate(), isToday: i === todayMonFirst };
     });
   }, [t]);
 
   return (
     <View style={styles.row}>
       {days.map(d => (
-        <View key={d.label} style={styles.cell}>
+        <TouchableOpacity
+          key={d.label}
+          style={styles.cell}
+          activeOpacity={onDayPress ? 0.6 : 1}
+          disabled={!onDayPress}
+          onPress={() => onDayPress?.(d.date)}>
           <Text category="h10" status="placeholder" style={styles.dayLabel}>
             {d.label}
           </Text>
@@ -75,7 +88,7 @@ const WeekStrip = memo(({ checkedInToday }: WeekStripProps) => {
           {d.isToday && checkedInToday ? (
             <View style={[styles.checkDot, { backgroundColor: theme['text-completed-color'] }]} />
           ) : null}
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );

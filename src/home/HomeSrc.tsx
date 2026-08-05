@@ -41,6 +41,7 @@ import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
 import BadgesModal from 'components/BadgesModal';
 import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInSheet';
+import DayActivityModal from 'components/DayActivityModal';
 import * as appRatingService from 'services/appRatingService';
 import * as dailyCheckinService from 'services/dailyCheckinService';
 import useModal from 'hooks/useModal';
@@ -232,6 +233,14 @@ const HomeSrc = memo(() => {
     }
     setCheckinSheet(null);
   }, [checkinSheet]);
+
+  // Tap-a-calendar-day activity feed (product request item): WeekStrip's
+  // onDayPress above hands back the real Date the user tapped;
+  // DayActivityModal fetches+renders that day's activity on open.
+  const [selectedActivityDay, setSelectedActivityDay] = React.useState<Date | null>(null);
+  const onPressCalendarDay = React.useCallback((date: Date) => {
+    setSelectedActivityDay(date);
+  }, []);
 
   const onDismissCheckin = React.useCallback(() => {
     // Only the morning goal prompt has a "don't ask again today" local
@@ -655,7 +664,7 @@ const HomeSrc = memo(() => {
               this scrollable nav row (see that JSX's own comment). Opens the
               same existing full-grid modal (components/BadgesModal.tsx). */}
         </ScrollView>
-        <WeekStrip checkedInToday={!!streak?.checkedInToday} />
+        <WeekStrip checkedInToday={!!streak?.checkedInToday} onDayPress={onPressCalendarDay} />
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -1159,6 +1168,11 @@ const HomeSrc = memo(() => {
         mode={checkinSheet ?? 'goal'}
         onSubmit={onSubmitCheckin}
         onDismiss={onDismissCheckin}
+      />
+      <DayActivityModal
+        visible={selectedActivityDay !== null}
+        date={selectedActivityDay}
+        onClose={() => setSelectedActivityDay(null)}
       />
       <BadgesModal
         visible={isBadgesModalVisible}
