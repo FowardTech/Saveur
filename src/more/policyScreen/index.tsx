@@ -6,13 +6,13 @@ import {
   StyleService,
   TopNavigation,
   useStyleSheet,
-  useTheme,
   Spinner,
   Button,
 } from "@ui-kitten/components";
 import Content from "components/Content";
 import Text from "components/Text";
 import Flex from "components/Flex";
+import SegmentedTabBar from "components/SegmentedTabBar";
 import { useTranslation } from "react-i18next";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import NavigationAction from "components/NavigationAction";
@@ -93,7 +93,6 @@ function renderMarkdownLite(bodyMd: string, styles: any) {
 
 const PolicyScreen = () => {
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   const { t } = useTranslation(["common", "auth"]);
   // Optional deep-link into a specific tab (see navigation/types.tsx's
   // PolicyScreen param doc) — the signup/login Terms & Privacy acceptance
@@ -141,25 +140,19 @@ const PolicyScreen = () => {
         accessoryLeft={() => <NavigationAction />}
         title={t("auth:privacy_policy")}
       />
-      <View style={styles.tabRow}>
-        {TABS.map(tab => {
-          const active = tab.key === activeTab;
-          return (
-            <Flex
-              key={tab.key}
-              center
-              style={[
-                styles.tabBtn,
-                { borderBottomColor: active ? theme["color-primary-500"] : "transparent" },
-              ]}
-              onPress={() => setActiveTab(tab.key)}>
-              <Text category="h9" bold status={active ? "link" : "placeholder"}>
-                {t(tab.labelKey, { defaultValue: tab.labelDefault })}
-              </Text>
-            </Flex>
-          );
-        })}
-      </View>
+      {/* Task #64 (restyle all tab screens to the reference segmented-tab
+          look) — this used to be its own bespoke two-button row (bottom
+          border indicator, bold+link active / placeholder inactive text),
+          which already coincidentally matched the reference's shape
+          closely; swapped for the actual shared component
+          (components/SegmentedTabBar.tsx) so every tab bar in the app is
+          now pixel-for-pixel the same widget instead of independently
+          hand-rolled per screen. */}
+      <SegmentedTabBar
+        tabs={TABS.map(tab => t(tab.labelKey, { defaultValue: tab.labelDefault }))}
+        activeIndex={TABS.findIndex(tab => tab.key === activeTab)}
+        onChange={i => setActiveTab(TABS[i].key)}
+      />
       <Content contentContainerStyle={styles.content}>
         {isLoading && !current ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
@@ -186,16 +179,6 @@ export default PolicyScreen;
 const themedStyles = StyleService.create({
   content: {
     padding: 24,
-  },
-  tabRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: "background-basic-color-3",
-  },
-  tabBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderBottomWidth: 2,
   },
   paragraph: {
     lineHeight: 22,
