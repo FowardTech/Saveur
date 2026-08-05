@@ -49,7 +49,17 @@ const AppRatingModal = memo(({ visible, onSubmit, onDismiss }: Props) => {
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme['background-basic-color-1'] }]}>
           <View style={styles.iconWrap}>
-            <Image source={Images.logoMark} resizeMode="contain" style={styles.icon} />
+            {/* BUG FIX (product report: "the S shaped design is not
+                visible"): Images.logoMark's "S" artwork is drawn in the
+                app's own brand blue on a transparent background (see
+                assets/images/index.ts) — rendered with no tint here, it was
+                the exact same blue as this circle's own backgroundColor
+                right behind it, so the mark was blending straight into its
+                own badge. Every other place this mark sits on a colored
+                background (HomeSrc.tsx's home banner, BrandWordmark.tsx's
+                markColor prop) already tints it white for this reason; this
+                was the one spot that forgot to. */}
+            <Image source={Images.logoMark} resizeMode="contain" tintColor="#fff" style={styles.icon} />
           </View>
 
           <Text category="h7" bold center mt={16}>
