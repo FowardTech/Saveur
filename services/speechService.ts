@@ -735,6 +735,27 @@ export function useSpeechToText() {
       return true;
     }
     lastVoiceStartAtRef.current = now;
+    // BUG FIX (product report: coach mic shows "listening" with no error,
+    // but never actually picks up speech -- "this used to work fine, what
+    // went wrong"). The native module (@dev-amirzubair/react-native-voice,
+    // ios/Voice/Voice.mm's setupAudioSession) switches the AVAudioSession
+    // to .playAndRecord and activates it synchronously as part of every
+    // start() call. On iOS, re-activating the audio session in a new
+    // category IMMEDIATELY after another session (TTS playback, which just
+    // finished a moment ago via speak() -- see sendTurn/startListening's
+    // stop() -> speak() -> start() sequence in VoiceCoachView) can succeed
+    // at the API level (no error, Voice.start() resolves fine, the UI
+    // correctly shows "listening") while the underlying audio hardware is
+    // still mid-teardown from the PREVIOUS session and the input tap never
+    // actually delivers buffers -- a well-documented AVAudioSession
+    // category-switch race, not something a JS-level try/catch can detect
+    // (there's no error to catch; the session genuinely just doesn't
+    // capture). A short settle delay between the previous audio session
+    // ending and the new one activating is the standard mitigation. 300ms
+    // is imperceptible as a pause but gives iOS's audio hardware time to
+    // fully release the prior session first.
+    await new Promise(resolve => setTimeout(resolve, 300));
+    if (!wantsListeningRef.current) return false; // stop() was called during the settle delay
     try {
       await Voice.start(currentSttLocale());
       return true;
