@@ -114,6 +114,24 @@ export const globalStyle = StyleSheet.create({
   card: {
     borderRadius: 16,
     ...cardShadow,
+    // Product follow-up ("change the app body background from gray to
+    // white" — see Container.tsx's own comment): the page background and
+    // every card's fill (Layout level="2") are now the SAME white, so on
+    // Android — where cardShadow's own android branch is deliberately `{}`
+    // (elevation was stripped per an earlier "remove the box shadow on
+    // Android" request) — a card would otherwise have literally nothing
+    // visually separating it from the page. A subtle hairline border,
+    // Android-only, restores that separation without bringing back a gray
+    // page or an iOS-visible border (iOS already has its real shadow).
+    // Same neutral tone as globalStyle.divider's existing hairline color,
+    // for consistency with this app's other flat-line elements.
+    ...Platform.select({
+      android: {
+        borderWidth: 1,
+        borderColor: 'rgba(128,128,128,0.15)',
+      },
+      default: {},
+    }),
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient
   // lift as cards now, tinted toward the brand blue instead of the
