@@ -56,6 +56,7 @@ const ME_USER = { _id: 1 };
 // structure keyed by message id.
 interface CoachIMessage extends IMessage {
   suggestedCourseTopic?: string;
+  suggestedAction?: 'mock_interview' | 'daily_challenge';
 }
 
 // Same module/tier length "Learn Anything" custom topics use — see
@@ -72,6 +73,7 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
   createdAt: msg.createdAt,
   user: msg.role === "user" ? ME_USER : COACH_USER,
   suggestedCourseTopic: msg.suggestedCourseTopic,
+  suggestedAction: msg.suggestedAction,
 });
 
 // Real AI coach chat — see services/coachService.ts, backed by
@@ -363,27 +365,69 @@ const Chat = memo(() => {
     navigate('CourseSession', { topic, totalModules: COACH_SUGGESTED_COURSE_MODULES, level: 'basic' });
   }, [navigate]);
 
+  // Product request item: "the AI coach can ask the user if they want the
+  // coach to navigate to the specific screen... and the app will navigate
+  // automatically" — see app/api/coach.py's SUGGESTED_ACTION marker.
+  // Mock Interviews and the Daily Challenge (a Home-tab card, no dedicated
+  // route of its own) are the two real destinations the backend can name.
+  const onRunSuggestedAction = React.useCallback((action: 'mock_interview' | 'daily_challenge') => {
+    if (action === 'mock_interview') {
+      navigate('MockInterviewSetup', {});
+    } else {
+      // Daily Challenge lives as a card on the Home tab, not a dedicated
+      // route — same "jump to Home tab" navigation MoreSrc.tsx and
+      // navigationRef.ts already use elsewhere in the app.
+      navigate('MainBottomTab', { screen: 'Home' });
+    }
+  }, [navigate]);
+
   const renderCustomView = React.useCallback((props: any) => {
     const topic: string | undefined = props?.currentMessage?.suggestedCourseTopic;
-    if (!topic) return null;
-    return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        style={[styles.suggestedCourseChip, { backgroundColor: theme['color-primary-transparent-200'] }]}
-        onPress={() => onStartSuggestedCourse(topic)}
-      >
-        <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-        <Text
-          category="h10"
-          bold
-          style={{ color: theme['color-primary-500'], marginLeft: 6 }}
-          numberOfLines={1}
+    if (topic) {
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[styles.suggestedCourseChip, { backgroundColor: theme['color-primary-transparent-200'] }]}
+          onPress={() => onStartSuggestedCourse(topic)}
         >
-          {t("message:learn_more_about_topic", { defaultValue: "Learn more about {{topic}}", topic })}
-        </Text>
-      </TouchableOpacity>
-    );
-  }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse, t]);
+          <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
+          <Text
+            category="h10"
+            bold
+            style={{ color: theme['color-primary-500'], marginLeft: 6 }}
+            numberOfLines={1}
+          >
+            {t("message:learn_more_about_topic", { defaultValue: "Learn more about {{topic}}", topic })}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    const action: 'mock_interview' | 'daily_challenge' | undefined = props?.currentMessage?.suggestedAction;
+    if (action) {
+      const label = action === 'mock_interview'
+        ? t('message:suggested_action_mock_interview', { defaultValue: 'Start a mock interview' })
+        : t('message:suggested_action_daily_challenge', { defaultValue: "Try today's Daily Challenge" });
+      const icon = action === 'mock_interview' ? 'mic-outline' : 'flash-outline';
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[styles.suggestedCourseChip, { backgroundColor: theme['color-primary-transparent-200'] }]}
+          onPress={() => onRunSuggestedAction(action)}
+        >
+          <Icon pack="eva" name={icon} style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
+          <Text
+            category="h10"
+            bold
+            style={{ color: theme['color-primary-500'], marginLeft: 6 }}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+        </TouchableOpacity>
+      );
+    }
+    return null;
+  }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse, onRunSuggestedAction, t]);
 
   // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
   // (no logo.png asset needed). Returns null for the current user's own
@@ -426,6 +470,7 @@ const Chat = memo(() => {
             desiredRoles: profile?.desiredRoles,
             preferredCountries: profile?.preferredCountries,
           }}
+          onSuggestedAction={onRunSuggestedAction}
         />
       ) : (
         <>

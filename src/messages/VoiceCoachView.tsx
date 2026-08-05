@@ -59,11 +59,54 @@ import * as speechService from 'services/speechService';
 const SILENCE_DEBOUNCE_MS = 1300;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
+type SuggestedAction = 'mock_interview' | 'daily_challenge';
 
 const ORB_SIZE = 176;
 const HALO_SIZE = ORB_SIZE * 1.5;
 
-const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }) => {
+// Product request item: "the AI coach can ask the user if they want the
+// coach to navigate to the specific screen for them... and the app will
+// navigate automatically to that screen" — Text mode gets a tappable chip
+// (see Chat.tsx's renderCustomView), but there's nothing to tap in Voice
+// mode, so the coach instead asks out loud and this listens for a plain
+// yes on the very next turn. Deliberately just a handful of common
+// affirmatives per supported locale rather than a full NLU intent check —
+// this only ever fires right after the coach itself asked a yes/no
+// question, so the false-positive surface is small, and anything that
+// doesn't match one of these is treated as "no" (i.e. falls through to a
+// normal coaching turn instead of leaving the user stuck).
+const AFFIRMATIVE_WORDS: Record<string, string[]> = {
+  en: ['yes', 'yeah', 'yep', 'sure', 'ok', 'okay', 'please', 'go ahead', 'take me there', "let's do it"],
+  es: ['si', 'sí', 'claro', 'vale', 'dale', 'por favor'],
+  fr: ['oui', "d'accord", 'ok', 'vas-y', "s'il te plait", "s'il vous plait"],
+  de: ['ja', 'klar', 'gerne', 'okay', 'ok'],
+  it: ['si', 'sì', 'certo', 'va bene', 'ok', 'okay'],
+  pt: ['sim', 'claro', 'vamos', 'ok', 'okay', 'por favor'],
+  ru: ['да', 'конечно', 'давай', 'хорошо'],
+  zh: ['是', '好', '好的', '可以', '去吧'],
+  ja: ['はい', 'うん', 'お願いします', 'いいよ'],
+  ko: ['네', '예', '좋아', '그래'],
+  ar: ['نعم', 'اكيد', 'حسنا', 'تمام'],
+  hi: ['हाँ', 'ठीक है', 'हां', 'चलो'],
+};
+const isAffirmative = (text: string, language: string): boolean => {
+  const normalized = text.trim().toLowerCase();
+  if (!normalized) return false;
+  const lang = language?.split('-')[0] ?? 'en';
+  const words = AFFIRMATIVE_WORDS[lang] ?? AFFIRMATIVE_WORDS.en;
+  return words.some(w => normalized === w || normalized.includes(w));
+};
+
+const VoiceCoachView = memo(({
+  userContext,
+  onSuggestedAction,
+}: {
+  userContext?: CoachUserContext;
+  // Fired once the user affirms the coach's spoken offer — Chat.tsx passes
+  // down the same handler its "Learn more about X"-style chip uses in Text
+  // mode (onRunSuggestedAction), so both modes navigate identically.
+  onSuggestedAction?: (action: SuggestedAction) => void;
+}) => {
   const theme = useTheme();
   const { t } = useTranslation(['message']);
   const stt = speechService.useSpeechToText();
@@ -83,6 +126,9 @@ const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }
 
   const silenceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef = React.useRef(false);
+  // Set right after the coach speaks a "want me to take you there?" offer;
+  // checked (and always cleared) at the start of the very next turn.
+  const pendingActionRef = React.useRef<SuggestedAction | null>(null);
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -114,16 +160,56 @@ const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }
         setPhase('listening');
         return;
       }
+
+      // Resolve any pending "want me to take you there?" offer from the
+      // previous turn before treating this as a fresh coaching question —
+      // a plain yes here should navigate, not get sent to the LLM.
+      const pendingAction = pendingActionRef.current;
+      pendingActionRef.current = null;
+      if (pendingAction) {
+        if (isAffirmative(trimmed, i18n.language)) {
+          const confirmLine = i18n.t('message:voice_action_confirm_line', {
+            defaultValue: 'Great, taking you there now.',
+          });
+          setLastCoachLine(confirmLine);
+          setPhase('speaking');
+          await stt.stop();
+          try {
+            await speechService.speak(confirmLine);
+          } catch {
+            // best-effort
+          }
+          if (!isActiveRef.current) return;
+          onSuggestedAction?.(pendingAction);
+          return;
+        }
+        // Anything other than a clear yes falls through and is sent as a
+        // normal turn below — treated as "no, but here's what I actually
+        // wanted to say" rather than a dead end.
+      }
+
       setPhase('thinking');
       let replyText = '';
+      let suggestedAction: SuggestedAction | undefined;
       try {
         const result = await coachService.sendVoiceMessage(trimmed, userContext);
         replyText = result.coachMessage.text;
+        suggestedAction = result.coachMessage.suggestedAction;
       } catch (e: any) {
         replyText = i18n.t('message:voice_retry_line', {
           defaultValue: "Sorry, I didn't catch that — could you say it again?",
         });
         setErrorMsg(e?.message ?? null);
+      }
+      if (suggestedAction) {
+        const offerKey = suggestedAction === 'mock_interview'
+          ? 'message:voice_action_offer_mock_interview'
+          : 'message:voice_action_offer_daily_challenge';
+        const offerDefault = suggestedAction === 'mock_interview'
+          ? 'Want me to start a mock interview for you now?'
+          : "Want me to take you to today's Daily Challenge?";
+        replyText = `${replyText} ${i18n.t(offerKey, { defaultValue: offerDefault })}`;
+        pendingActionRef.current = suggestedAction;
       }
       if (!isActiveRef.current) return;
       setLastCoachLine(replyText);
@@ -138,7 +224,7 @@ const VoiceCoachView = memo(({ userContext }: { userContext?: CoachUserContext }
       startListening();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userContext],
+    [userContext, onSuggestedAction],
   );
 
   React.useEffect(() => {

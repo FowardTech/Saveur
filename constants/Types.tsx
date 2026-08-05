@@ -674,6 +674,13 @@ export interface CoachChatMessageProps {
   // Chat.tsx render a tappable "Learn more about X" chip straight into
   // LearningCourses instead of the user having to go find it themselves.
   suggestedCourseTopic?: string;
+  // Product request item: "the AI coach can ask the user if they want the
+  // coach to navigate to the specific screen... and the app will navigate
+  // automatically" — set only on a 'coach' message when the backend's
+  // reply recommends actually DOING something in the app right now (see
+  // coachService.ts's SUGGESTED_ACTION parsing). Mutually exclusive with
+  // suggestedCourseTopic (the backend only ever sends one or the other).
+  suggestedAction?: 'mock_interview' | 'daily_challenge';
 }
 
 // ---- AI Interview Coach additions (networking assistant) ----
