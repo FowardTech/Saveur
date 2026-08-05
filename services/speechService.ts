@@ -219,13 +219,40 @@ async function speakRemote(text: string, language: string, token: number): Promi
   }
   if (isStale(token)) return; // re-check — the token await above can also race past a cancel
 
+  // BUG FIX (product report: "AI coach not talking at all in Voice mode" —
+  // works everywhere else, e.g. mock interviews, only the coach is silent).
+  // speakOnDevice (below) has always re-asserted the iOS audio session
+  // category to .playback before every utterance, specifically because
+  // @dev-amirzubair/react-native-voice's Voice.start() leaves the session in
+  // .playAndRecord after listening for the user's spoken input, and that
+  // category doesn't cleanly hand off to a new player starting right after
+  // it — see speakOnDevice's comment for the full history (that one manifests
+  // as "routed to the earpiece", not silence, but it's the same underlying
+  // handoff). This path never had that reset at all: nitro-sound's
+  // startPlayer() does no session management of its own. Every other Voice
+  // mode screen in the app (mock interviews) also hits this handoff, but the
+  // AI coach's turn-taking is the tightest (mic stop -> speak -> mic restart,
+  // repeatedly, every single turn including the very first greeting) so it's
+  // the one place a stuck/failed session acquisition shows up as "never
+  // speaks, not even once" instead of an occasional glitch. Cheap and
+  // idempotent to call unconditionally here too.
+  try {
+    await ensureTtsConfigured();
+    await Tts.setDucking?.(true)?.catch(() => {});
+  } catch {
+    // best-effort — a failed session reset shouldn't block trying to play
+  }
+  if (isStale(token)) return;
+
   return new Promise<void>((resolve, reject) => {
     let settled = false;
+    let started = false;
     const finish = () => {
       if (settled) return;
       settled = true;
       Sound.removePlaybackEndListener();
       clearTimeout(safety);
+      clearTimeout(startWatchdog);
       resolve();
     };
     const fail = (error: unknown) => {
@@ -233,6 +260,7 @@ async function speakRemote(text: string, language: string, token: number): Promi
       settled = true;
       Sound.removePlaybackEndListener();
       clearTimeout(safety);
+      clearTimeout(startWatchdog);
       reject(error instanceof Error ? error : new Error('Remote TTS playback failed.'));
     };
     // This safety path firing means the real playback-end event never
@@ -247,8 +275,27 @@ async function speakRemote(text: string, language: string, token: number): Promi
       finish();
     };
     const safety = setTimeout(onSafetyTimeout, safetyTimeoutMs(text) + 8000); // + generation/network overhead
+    // BUG FIX (same report as above): startPlayer's own promise normally
+    // settles almost instantly once native playback actually begins — it
+    // does NOT wait for playback to finish (that's what the playback-end
+    // listener above is for). If the native player can't acquire the audio
+    // session (the handoff race described above) it can end up neither
+    // resolving nor rejecting that promise at all, and previously the ONLY
+    // thing that would eventually notice was the full-utterance `safety`
+    // timeout above — 15-40+ seconds of dead silence for a typical coach
+    // reply before finish() ever ran, which looks exactly like "the coach
+    // isn't talking." This fires much sooner and, since it rejects instead
+    // of resolving, lets speak() below fall back to on-device TTS in ~4s
+    // instead of leaving the user staring at silence.
+    const startWatchdog = setTimeout(() => {
+      if (!started) fail(new Error('Remote TTS player did not start in time.'));
+    }, 4000);
     Sound.addPlaybackEndListener(finish);
-    Sound.startPlayer(url, headers).catch(fail);
+    Sound.startPlayer(url, headers)
+      .then(() => {
+        started = true;
+      })
+      .catch(fail);
   });
 }
 
