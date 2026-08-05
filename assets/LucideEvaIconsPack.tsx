@@ -9,6 +9,7 @@ import {
   BarChart2,
   Bell,
   Book,
+  Bookmark,
   BookOpen,
   Box,
   Briefcase,
@@ -50,6 +51,7 @@ import {
   MessageCircle,
   MessageSquare,
   Mic,
+  MicOff,
   MinusCircle,
   Percent,
   PieChart,
@@ -61,6 +63,7 @@ import {
   RefreshCw,
   Rocket,
   Search,
+  Send,
   Settings2,
   Share2,
   Shield,
@@ -112,6 +115,12 @@ const LucideEvaIconsPack: IconPack<any> = {
     'bar-chart-outline': lucideIcon(BarChart2),
     'bar-chart-2-outline': lucideIcon(BarChart2),
     'bell-outline': lucideIcon(Bell),
+    // Save Video feature (product request item) — bookmark toggle in
+    // components/InAppVideoPlayer.tsx + src/more/SavedVideos.tsx's empty
+    // state. Filled variant follows the same "outline vs solid" convention
+    // as star/trophy/award above (a saved bookmark reads better filled).
+    'bookmark-outline': lucideIcon(Bookmark),
+    bookmark: lucideIcon(Bookmark, true),
     'book-open-outline': lucideIcon(BookOpen),
     'book-outline': lucideIcon(Book),
     'briefcase-outline': lucideIcon(Briefcase),
@@ -166,6 +175,14 @@ const LucideEvaIconsPack: IconPack<any> = {
     'message-circle-outline': lucideIcon(MessageCircle),
     'message-square-outline': lucideIcon(MessageSquare),
     'mic-outline': lucideIcon(Mic),
+    // BUG FIX (real crash report, screenshot: "Icon 'mic-off-outline' is
+    // not registered in pack 'eva'") — components/DailyCheckInSheet.tsx's
+    // mic-mute toggle used this name but it was never added here, same
+    // "screen added after this pass" gap this file's own header comment
+    // warns about. Same Mic/MicOff pairing as video-outline/video-off-
+    // outline already use for Video/VideoOff below.
+    'mic-off-outline': lucideIcon(MicOff),
+    'paper-plane-outline': lucideIcon(Send),
     'people-outline': lucideIcon(Users),
     'percent-outline': lucideIcon(Percent),
     'person-outline': lucideIcon(User),
