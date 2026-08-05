@@ -37,6 +37,8 @@
   "checked_in_today": "已签到",
   "create_job_post": "发布招聘信息",
   "daily_challenge_completed": "获得 +{{xp}} XP",
+  "daily_challenge_load_failed": "无法加载今日挑战。",
+  "daily_challenge_none_today": "今天没有挑战——明天再来看看。",
   "daily_challenge_response_placeholder": "输入你的回答…",
   "daily_challenge_skip": "跳过今天",
   "daily_challenge_start": "接受挑战",

@@ -1,36 +1,42 @@
 import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon, Input, Spinner } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
 import * as configService from 'services/configService';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
-import CtaButton from 'components/CtaButton';
 
 // Surprise Daily Challenge (product request item) — one unexpected practice
 // challenge a day (elevator pitch, coding problem, salary negotiation,
 // leadership scenario, public speaking — see saveur-backend's
 // app_config_service.py "daily_challenge" section for the admin-editable
-// type pool). Self-contained: owns its own fetch/expand/submit/skip state
-// so HomeSrc.tsx just renders <DailyChallengeCard /> and never has to know
-// its internals. Renders null (not even a loading spinner) until there's
-// something real to show, and again if the feature is off — this card is a
-// bonus surface on an already-busy Home screen, not something worth a
-// loading-state flash for.
+// type pool). Self-contained: owns its own fetch state so HomeSrc.tsx just
+// renders <DailyChallengeCard /> and never has to know its internals.
+// Renders null (not even a loading spinner) until there's something real
+// to show, and again if the feature is off — this card is a bonus surface
+// on an already-busy Home screen, not something worth a loading-state
+// flash for.
+//
+// Product follow-up: "I want the 'Todays Surprise challenge' card to open
+// on a new screen instead of displaying the content in that same card" —
+// this used to expand in place (an <Input>, Submit/Skip row, all inline)
+// growing the Home screen's tallest card even taller. Now a plain preview
+// row/card — title, type badge, a one-line prompt teaser — that navigates
+// to DailyChallengeScreen.tsx on tap, which owns the actual respond/skip
+// flow (moved there essentially unchanged).
 const DailyChallengeCard = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [challenge, setChallenge] = React.useState<DailyChallenge | null>(null);
-  const [expanded, setExpanded] = React.useState(false);
-  const [response, setResponse] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isSkipping, setIsSkipping] = React.useState(false);
   // BUG FIX ("the content of this refused to translate" — the type badge,
   // e.g. "Public Speaking", stayed English after a mid-session language
   // switch): the type name below reads configService.getCachedConfig()
@@ -64,32 +70,11 @@ const DailyChallengeCard = memo(() => {
     configService.getCachedConfig().daily_challenge.types.find(tt => tt.id === challenge.challengeType)?.name
     ?? challenge.challengeType;
 
-  const onSubmit = async () => {
-    if (!response.trim() || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      setChallenge(await dailyChallengeService.submitChallengeResponse(response.trim()));
-    } catch {
-      // Best-effort — leave the input as-is so the user can retry.
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const onSkip = async () => {
-    if (isSkipping) return;
-    setIsSkipping(true);
-    try {
-      setChallenge(await dailyChallengeService.skipTodayChallenge());
-    } catch {
-      // Best-effort.
-    } finally {
-      setIsSkipping(false);
-    }
-  };
-
   return (
-    <View style={styles.card}>
+    <TouchableOpacity
+      activeOpacity={0.7}
+      style={styles.card}
+      onPress={() => navigate('DailyChallenge')}>
       <Flex justify="flex-start" itemsCenter mb={8}>
         <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
         <Text category="h9" bold ml={8} style={globalStyle.flexOne}>
@@ -100,53 +85,19 @@ const DailyChallengeCard = memo(() => {
         </View>
       </Flex>
 
-      <Text category="h9-s" numberOfLines={expanded ? undefined : 3}>
+      <Text category="h9-s" numberOfLines={2}>
         {challenge.promptText}
       </Text>
 
-      {challenge.completed ? (
-        <View style={styles.feedbackBox}>
-          <Flex justify="flex-start" itemsCenter mb={6}>
-            <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['color-success-500'] }]} />
-            <Text category="h10" bold status="success" ml={6}>
-              {t('home:daily_challenge_completed', { defaultValue: '+{{xp}} XP earned', xp: challenge.xpAwarded })}
-            </Text>
-          </Flex>
-          {challenge.aiFeedback ? <Text category="h10" status="placeholder">{challenge.aiFeedback}</Text> : null}
-        </View>
-      ) : expanded ? (
-        <View style={{ marginTop: 12 }}>
-          <Input
-            placeholder={t('home:daily_challenge_response_placeholder', { defaultValue: 'Type your response…' })}
-            value={response}
-            onChangeText={setResponse}
-            multiline
-            style={styles.responseInput}
-            textStyle={globalStyle.inputText}
-          />
-          <Flex justify="flex-start" mt={10}>
-            <CtaButton
-              size="small"
-              disabled={!response.trim() || isSubmitting}
-              onPress={onSubmit}
-              style={{ marginRight: 12 }}>
-              {isSubmitting ? <Spinner size="small" status="control" /> : t('home:daily_challenge_submit', { defaultValue: 'Submit' })}
-            </CtaButton>
-            <TouchableOpacity activeOpacity={0.7} disabled={isSkipping} onPress={onSkip}>
-              <Text category="h10" bold status="placeholder">
-                {isSkipping ? t('common:loading', { defaultValue: 'Loading…' }) : t('home:daily_challenge_skip', { defaultValue: 'Skip today' })}
-              </Text>
-            </TouchableOpacity>
-          </Flex>
-        </View>
-      ) : (
-        <TouchableOpacity activeOpacity={0.7} onPress={() => setExpanded(true)} style={{ marginTop: 10 }}>
-          <Text category="h10" bold status="link">
-            {t('home:daily_challenge_start', { defaultValue: 'Take the challenge' })}
-          </Text>
-        </TouchableOpacity>
-      )}
-    </View>
+      <Flex justify="space-between" itemsCenter mt={10}>
+        <Text category="h10" bold status="link">
+          {challenge.completed
+            ? t('home:daily_challenge_completed', { defaultValue: '+{{xp}} XP earned', xp: challenge.xpAwarded })
+            : t('home:daily_challenge_start', { defaultValue: 'Take the challenge' })}
+        </Text>
+        <Icon pack="assets" name="chevronRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+      </Flex>
+    </TouchableOpacity>
   );
 });
 
@@ -164,15 +115,5 @@ const themedStyles = StyleService.create({
     borderRadius: 999,
     paddingVertical: 4,
     paddingHorizontal: 10,
-  },
-  responseInput: {
-    ...globalStyle.inputField,
-    minHeight: 80,
-  },
-  feedbackBox: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: 'background-basic-color-3',
   },
 });

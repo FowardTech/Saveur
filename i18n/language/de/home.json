@@ -37,6 +37,8 @@
   "checked_in_today": "Eingecheckt",
   "create_job_post": "Stellenanzeige erstellen",
   "daily_challenge_completed": "+{{xp}} XP verdient",
+  "daily_challenge_load_failed": "Die heutige Herausforderung konnte nicht geladen werden.",
+  "daily_challenge_none_today": "Heute keine Herausforderung — schau morgen wieder vorbei.",
   "daily_challenge_response_placeholder": "Gib deine Antwort ein…",
   "daily_challenge_skip": "Heute überspringen",
   "daily_challenge_start": "Herausforderung annehmen",

@@ -37,6 +37,8 @@
   "checked_in_today": "تم تسجيل الحضور",
   "create_job_post": "إنشاء إعلان وظيفة",
   "daily_challenge_completed": "+{{xp}} نقطة خبرة مكتسبة",
+  "daily_challenge_load_failed": "تعذر تحميل تحدي اليوم.",
+  "daily_challenge_none_today": "لا يوجد تحدٍ اليوم — تحقق مرة أخرى غدًا.",
   "daily_challenge_response_placeholder": "اكتب إجابتك…",
   "daily_challenge_skip": "تخطي اليوم",
   "daily_challenge_start": "خض التحدي",

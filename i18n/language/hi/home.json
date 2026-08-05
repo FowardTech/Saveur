@@ -37,6 +37,8 @@
   "checked_in_today": "चेक इन कर लिया गया",
   "create_job_post": "नौकरी पोस्ट बनाएं",
   "daily_challenge_completed": "+{{xp}} XP अर्जित",
+  "daily_challenge_load_failed": "आज की चुनौती लोड नहीं हो सकी।",
+  "daily_challenge_none_today": "आज कोई चुनौती नहीं है — कल फिर देखें।",
   "daily_challenge_response_placeholder": "अपना उत्तर लिखें…",
   "daily_challenge_skip": "आज छोड़ें",
   "daily_challenge_start": "चुनौती स्वीकार करें",

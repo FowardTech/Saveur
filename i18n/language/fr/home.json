@@ -37,6 +37,8 @@
   "checked_in_today": "Pointage effectué",
   "create_job_post": "Créer une offre d'emploi",
   "daily_challenge_completed": "+{{xp}} XP gagnés",
+  "daily_challenge_load_failed": "Impossible de charger le défi du jour.",
+  "daily_challenge_none_today": "Aucun défi aujourd'hui — revenez demain.",
   "daily_challenge_response_placeholder": "Saisissez votre réponse…",
   "daily_challenge_skip": "Passer aujourd'hui",
   "daily_challenge_start": "Relever le défi",

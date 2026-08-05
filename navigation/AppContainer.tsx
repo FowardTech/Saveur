@@ -42,6 +42,7 @@ import EmotionalCoach from 'src/more/EmotionalCoach';
 import CompanyIntelligence from 'src/more/CompanyIntelligence';
 import DreamCompanies from 'src/more/DreamCompanies';
 import CareerDna from 'src/more/CareerDna';
+import DailyChallengeScreen from 'src/home/DailyChallengeScreen';
 import InterviewReplay from 'src/practice/InterviewReplay';
 import StudentVerification from 'src/more/StudentVerification';
 import ChooseUsername from 'src/auth/Signup/ChooseUsername';
@@ -211,6 +212,7 @@ const AppContainer = () => {
         <Stack.Screen name="CompanyIntelligence" component={CompanyIntelligence} />
         <Stack.Screen name="DreamCompanies" component={DreamCompanies} />
         <Stack.Screen name="CareerDna" component={CareerDna} />
+        <Stack.Screen name="DailyChallenge" component={DailyChallengeScreen} />
         <Stack.Screen name="InterviewReplay" component={InterviewReplay} />
         <Stack.Screen name="StudentVerification" component={StudentVerification} />
         <Stack.Screen name="ChooseUsername" component={ChooseUsername} />

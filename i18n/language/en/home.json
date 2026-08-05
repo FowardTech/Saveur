@@ -37,6 +37,8 @@
   "checked_in_today": "Checked in",
   "create_job_post": "Create a Job post",
   "daily_challenge_completed": "+{{xp}} XP earned",
+  "daily_challenge_load_failed": "Couldn't load today's challenge.",
+  "daily_challenge_none_today": "No challenge for today — check back tomorrow.",
   "daily_challenge_response_placeholder": "Type your response…",
   "daily_challenge_skip": "Skip today",
   "daily_challenge_start": "Take the challenge",

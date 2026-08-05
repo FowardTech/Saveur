@@ -37,6 +37,8 @@
   "checked_in_today": "Отметка выполнена",
   "create_job_post": "Создать вакансию",
   "daily_challenge_completed": "+{{xp}} XP получено",
+  "daily_challenge_load_failed": "Не удалось загрузить сегодняшнее задание.",
+  "daily_challenge_none_today": "Сегодня заданий нет — загляните завтра.",
   "daily_challenge_response_placeholder": "Введите ваш ответ…",
   "daily_challenge_skip": "Пропустить сегодня",
   "daily_challenge_start": "Принять вызов",

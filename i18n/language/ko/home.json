@@ -37,6 +37,8 @@
   "checked_in_today": "체크인 완료",
   "create_job_post": "채용 공고 작성",
   "daily_challenge_completed": "+{{xp}} XP 획득",
+  "daily_challenge_load_failed": "오늘의 챌린지를 불러올 수 없습니다.",
+  "daily_challenge_none_today": "오늘은 챌린지가 없습니다 — 내일 다시 확인해 주세요.",
   "daily_challenge_response_placeholder": "답변을 입력하세요…",
   "daily_challenge_skip": "오늘 건너뛰기",
   "daily_challenge_start": "챌린지 시작하기",

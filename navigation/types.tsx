@@ -262,6 +262,10 @@ export type RootStackParamList = {
   // list of target companies with cached research + prep progress. See
   // services/dreamCompaniesService.ts.
   DreamCompanies: undefined;
+  // Today's Surprise Challenge, own dedicated screen (product request item
+  // — "open on a new screen instead of displaying the content in that same
+  // card") — see src/home/DailyChallengeScreen.tsx / DailyChallengeCard.tsx.
+  DailyChallenge: undefined;
   // Practical Scenarios — hands-on, multi-step decision practice for
   // non-engineering career tracks (healthcare/sales/marketing/finance/
   // consulting/science). See services/practicalService.ts and

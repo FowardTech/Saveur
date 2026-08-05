@@ -37,6 +37,8 @@
   "checked_in_today": "チェックイン済み",
   "create_job_post": "求人を作成",
   "daily_challenge_completed": "+{{xp}} XP 獲得",
+  "daily_challenge_load_failed": "本日のチャレンジを読み込めませんでした。",
+  "daily_challenge_none_today": "本日のチャレンジはありません。明日また確認してください。",
   "daily_challenge_response_placeholder": "回答を入力…",
   "daily_challenge_skip": "今日はスキップ",
   "daily_challenge_start": "チャレンジする",

@@ -37,6 +37,8 @@
   "checked_in_today": "Asistencia registrada",
   "create_job_post": "Crear una publicación de empleo",
   "daily_challenge_completed": "+{{xp}} XP obtenidos",
+  "daily_challenge_load_failed": "No se pudo cargar el reto de hoy.",
+  "daily_challenge_none_today": "No hay reto para hoy — vuelve mañana.",
   "daily_challenge_response_placeholder": "Escribe tu respuesta…",
   "daily_challenge_skip": "Omitir hoy",
   "daily_challenge_start": "Aceptar el reto",
