@@ -626,7 +626,30 @@ export function useSpeechToText() {
       }
     };
     return () => {
-      Voice.destroy().then(Voice.removeAllListeners).catch(() => {});
+      // BUG FIX (product report: coach AND mock interview both went
+      // completely silent -- mic starts with no error, then never delivers
+      // another event of any kind, ever, on this exact device). Root cause
+      // was inside @dev-amirzubair/react-native-voice itself: Voice is a
+      // module-level singleton shared by every screen that uses speech
+      // recognition (this hook, LiveInterviewSession, DailyCheckInSheet).
+      // destroy()'s native callback is async, and its internal
+      // removeAllListeners() call used to fire unconditionally once that
+      // callback resolved -- if a NEW useSpeechToText() instance had
+      // already mounted and registered its OWN fresh listeners in the gap
+      // (e.g. switching screens/modes), this OLD instance's delayed
+      // cleanup would silently wipe out the NEW instance's listeners too,
+      // permanently killing its ability to ever receive a result/error/end
+      // event again. Patched at the source (see patches/@dev-amirzubair+
+      // react-native-voice+1.0.4.patch -- a generation counter so a stale
+      // destroy() callback can tell it's stale and skip clobbering newer
+      // listeners) rather than worked around here, since the same race
+      // existed inside destroy() itself regardless of what this cleanup
+      // did. This call site's own extra `.then(Voice.removeAllListeners)`
+      // was ADDING to the exact same danger (a second, completely
+      // unguarded wipe of whatever's in Voice._listeners at the time it
+      // fires) -- removed rather than patched, since destroy() already
+      // handles listener cleanup itself now.
+      Voice.destroy().catch(() => {});
     };
   }, []);
 

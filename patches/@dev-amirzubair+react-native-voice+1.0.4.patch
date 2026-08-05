@@ -1,0 +1,159 @@
+diff --git a/node_modules/@dev-amirzubair/react-native-voice/dist/index.js b/node_modules/@dev-amirzubair/react-native-voice/dist/index.js
+index a2e8fa6..0d43fe5 100644
+--- a/node_modules/@dev-amirzubair/react-native-voice/dist/index.js
++++ b/node_modules/@dev-amirzubair/react-native-voice/dist/index.js
+@@ -55,9 +55,11 @@ class RCTVoice {
+     _loaded;
+     _listeners;
+     _events;
++    _generation;
+     constructor() {
+         this._loaded = false;
+         this._listeners = [];
++        this._generation = 0;
+         this._events = {
+             onSpeechStart: () => { },
+             onSpeechRecognized: () => { },
+@@ -86,13 +88,32 @@ class RCTVoice {
+         if (!this._loaded && !this._listeners) {
+             return Promise.resolve();
+         }
++        // PATCH (patch-package, @dev-amirzubair/react-native-voice 1.0.4):
++        // destroySpeech's native callback is asynchronous. If a NEW consumer
++        // (a fresh useSpeechToText() hook instance mounting -- e.g. switching
++        // screens/modes) calls _setupListeners() in the gap before this
++        // callback fires, this used to unconditionally call
++        // this.removeAllListeners() here anyway, silently ripping out the
++        // brand new listeners the new instance had already registered. Since
++        // this is a module-level singleton (`export default new RCTVoice()`)
++        // shared by every screen that uses speech recognition, that race
++        // meant a session could start with no error at all, then never
++        // deliver another event (result, error, or end) for the rest of the
++        // app's lifetime -- indistinguishable from "the mic just isn't
++        // picking anything up." Snapshotting the generation counter (bumped
++        // on every _setupListeners() call below) and only clearing listeners
++        // if nothing newer has set up since this destroy() call was made
++        // closes that window.
++        const generationAtCall = this._generation;
+         return new Promise((resolve, reject) => {
+             Voice.destroySpeech((error) => {
+                 if (error) {
+                     reject(new Error(error));
+                 }
+                 else {
+-                    this.removeAllListeners();
++                    if (this._generation === generationAtCall) {
++                        this.removeAllListeners();
++                    }
+                     resolve();
+                 }
+             });
+@@ -102,13 +123,15 @@ class RCTVoice {
+         if (!this._loaded && !this._listeners) {
+             return Promise.resolve();
+         }
++        // PATCH (patch-package): same async-race fix as destroy() above.
++        const generationAtCall = this._generation;
+         return new Promise((resolve, reject) => {
+             Voice.destroyTranscription((error) => {
+                 if (error) {
+                     reject(new Error(error));
+                 }
+                 else {
+-                    if (this._listeners?.length > 0) {
++                    if (this._generation === generationAtCall && this._listeners?.length > 0) {
+                         this._listeners.forEach((listener) => listener.remove());
+                         this._listeners = JSON.parse(JSON.stringify([]));
+                     }
+@@ -302,6 +325,12 @@ class RCTVoice {
+         if (voiceEmitter === null) {
+             return;
+         }
++        // PATCH (patch-package): bump the generation counter every time this
++        // runs, so a stale destroy()/destroyTranscription() callback that
++        // fires AFTER a newer _setupListeners() call can tell it's stale
++        // (see destroy()'s own comment above) and skip clobbering the
++        // listeners this call is about to create.
++        this._generation++;
+         // Remove existing listeners before setting up new ones
+         if (this._listeners.length > 0) {
+             this._listeners.forEach(listener => {
+diff --git a/node_modules/@dev-amirzubair/react-native-voice/src/index.ts b/node_modules/@dev-amirzubair/react-native-voice/src/index.ts
+index b0aa5c6..a4a54f5 100644
+--- a/node_modules/@dev-amirzubair/react-native-voice/src/index.ts
++++ b/node_modules/@dev-amirzubair/react-native-voice/src/index.ts
+@@ -88,10 +88,12 @@ class RCTVoice {
+   private _loaded: boolean;
+   private _listeners: EventSubscription[];
+   private _events: Required<SpeechEvents> & Required<TranscriptionEvents>;
++  private _generation: number;
+ 
+   constructor() {
+     this._loaded = false;
+     this._listeners = [];
++    this._generation = 0;
+     this._events = {
+       onSpeechStart: () => {},
+       onSpeechRecognized: () => {},
+@@ -123,12 +125,30 @@ class RCTVoice {
+     if (!this._loaded && !this._listeners) {
+       return Promise.resolve();
+     }
++    // PATCH (patch-package, @dev-amirzubair/react-native-voice 1.0.4):
++    // destroySpeech's native callback is asynchronous. If a NEW consumer (a
++    // fresh useSpeechToText() hook instance mounting -- e.g. switching
++    // screens/modes) calls _setupListeners() in the gap before this callback
++    // fires, this used to unconditionally call this.removeAllListeners()
++    // here anyway, silently ripping out the brand new listeners the new
++    // instance had already registered. Since this is a module-level
++    // singleton (`export default new RCTVoice()`) shared by every screen
++    // that uses speech recognition, that race meant a session could start
++    // with no error at all, then never deliver another event (result,
++    // error, or end) for the rest of the app's lifetime -- indistinguishable
++    // from "the mic just isn't picking anything up." Snapshotting the
++    // generation counter (bumped on every _setupListeners() call below) and
++    // only clearing listeners if nothing newer has set up since this
++    // destroy() call was made closes that window.
++    const generationAtCall = this._generation;
+     return new Promise<void>((resolve, reject) => {
+       Voice.destroySpeech((error: string) => {
+         if (error) {
+           reject(new Error(error));
+         } else {
+-          this.removeAllListeners();
++          if (this._generation === generationAtCall) {
++            this.removeAllListeners();
++          }
+           resolve();
+         }
+       });
+@@ -138,12 +158,14 @@ class RCTVoice {
+     if (!this._loaded && !this._listeners) {
+       return Promise.resolve();
+     }
++    // PATCH (patch-package): same async-race fix as destroy() above.
++    const generationAtCall = this._generation;
+     return new Promise<void>((resolve, reject) => {
+       Voice.destroyTranscription((error: string) => {
+         if (error) {
+           reject(new Error(error));
+         } else {
+-          if (this._listeners?.length > 0) {
++          if (this._generation === generationAtCall && this._listeners?.length > 0) {
+             this._listeners.forEach((listener) => listener.remove());
+             this._listeners = JSON.parse(JSON.stringify([]));
+           }
+@@ -368,6 +390,13 @@ class RCTVoice {
+       return;
+     }
+ 
++    // PATCH (patch-package): bump the generation counter every time this
++    // runs, so a stale destroy()/destroyTranscription() callback that fires
++    // AFTER a newer _setupListeners() call can tell it's stale (see
++    // destroy()'s own comment above) and skip clobbering the listeners this
++    // call is about to create.
++    this._generation++;
++
+     // Remove existing listeners before setting up new ones
+     if (this._listeners.length > 0) {
+       this._listeners.forEach(listener => {
