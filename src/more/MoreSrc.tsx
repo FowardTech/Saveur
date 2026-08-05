@@ -196,12 +196,17 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('MyDocuments'),
     },
     {
-      title: t('more:career_goal', {defaultValue: 'Career Goal'}),
+      // Was a direct jump to the goal picker (ChangeCareType) — now opens
+      // the fuller Goals screen first (current goal + target roles/
+      // countries counts, weekly practice/application targets, streak
+      // progress), which itself links into ChangeCareType for actually
+      // changing the goal. See src/more/GoalsScreen.tsx.
+      title: t('more:goals', {defaultValue: 'Goals'}),
       icon: 'changeJob',
       status: 'neutral',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
-      onPress: () => navigate('ChangeCareType'),
+      onPress: () => navigate('GoalsScreen'),
     },
     {
       // "Change it later" for the roles/countries collected once at signup

@@ -102,6 +102,12 @@ export enum EKeyAsyncStorage {
   // pendingJobId above. Consumed (and cleared) by HomeSrc.tsx to open the
   // reflection sheet once the screen is actually mounted/focused.
   pendingDailyCheckinReflection = 'pendingDailyCheckinReflection',
+  // Goals screen (src/more/GoalsScreen.tsx) weekly targets -- e.g. "3 of 5
+  // practice sessions this week". Deliberately a plain local preference
+  // (not a backend model/endpoint) since it's just a personal target the
+  // learner sets for themselves to glance at, not something any other part
+  // of the product (admin dashboard, notifications, etc.) needs to read.
+  goalsWeeklyTargets = 'goalsWeeklyTargets',
 }
 export enum Animation_Types_Enum {
   SlideTop,

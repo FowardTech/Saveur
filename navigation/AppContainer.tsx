@@ -17,6 +17,7 @@ import AddMorePayment from 'src/more/AddMorePayment/AddMorePayment';
 import FaqScreen from 'src/more/faqScreen';
 import AboutScreen from 'src/more/aboutScreen';
 import ChangeCareType from 'src/more/ChangeCareType';
+import GoalsScreen from 'src/more/GoalsScreen';
 import JobPreferences from 'src/more/JobPreferences';
 import PolicyScreen from 'src/more/policyScreen';
 import MockInterviewSetup from 'src/practice/MockInterviewSetup';
@@ -183,6 +184,7 @@ const AppContainer = () => {
         <Stack.Screen name="MoreNavigator" component={MoreNavigator} />
         <Stack.Screen name="AddMorePayment" component={AddMorePayment} />
         <Stack.Screen name="ChangeCareType" component={ChangeCareType} />
+        <Stack.Screen name="GoalsScreen" component={GoalsScreen} />
         <Stack.Screen name="JobPreferences" component={JobPreferences} />
         <Stack.Screen name="MyProgress" component={MyProgress} />
         <Stack.Screen name="Leaderboard" component={Leaderboard} />

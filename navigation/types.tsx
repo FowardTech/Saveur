@@ -27,6 +27,11 @@ export type RootStackParamList = {
   // profile.preferredCountries — see src/more/JobPreferences.tsx.
   JobPreferences: undefined;
   MyProgress: undefined;
+  // Career-goal hub (product request — "Expand Goals screen with more
+  // features", reference: a fitness app's Goals screen with grouped
+  // sections, a headline card + stat row, secondary rows with chevrons, and
+  // a progress section) — see src/more/GoalsScreen.tsx.
+  GoalsScreen: undefined;
   // Full leaderboard — see src/home/Leaderboard.tsx. HomeSrc.tsx's dashboard
   // card shows only the top 4 with a "View all" link into this screen.
   Leaderboard: undefined;
