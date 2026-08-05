@@ -12,14 +12,15 @@ import * as configService from 'services/configService';
 
 // Personalization (product request item) — Career DNA and the Dream
 // Company Dashboard both otherwise only live inside "More", which buries
-// them. Per explicit follow-up ("Want career DNA and Dream company
-// dashboard to be in one card in the homescreen instead of being a
-// button"), these two live here as two rows inside ONE card rather than as
-// two separate nav-row pills (see HomeSrc.tsx's own comment history for the
-// pill version this replaced). Self-contained like DailyChallengeCard: owns
-// its own feature-flag checks and navigation, so HomeSrc.tsx just renders
-// <PersonalizationCard /> and never has to know its internals. Renders null
-// if BOTH features are off; renders just the one row if only one is on.
+// them. These used to render as two rows inside ONE shared card (per an
+// earlier follow-up), then split back into two independent cards per a
+// later explicit request ("Career DNA and Dream company Dashboard should
+// be different cards") — see HomeSrc.tsx's own comment history for the
+// full back-and-forth. Self-contained like DailyChallengeCard: owns its
+// own feature-flag checks and navigation, so HomeSrc.tsx just renders
+// <PersonalizationCard /> and never has to know its internals. Renders
+// null if BOTH features are off; renders just the one card if only one is
+// on.
 const PersonalizationCard = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
@@ -32,8 +33,8 @@ const PersonalizationCard = memo(() => {
   if (!careerDnaOn && !dreamCompaniesOn) return null;
 
   return (
-    <View style={styles.card}>
-      <Text category="h9" bold mb={2}>
+    <View>
+      <Text category="h9" bold mb={2} mt={24}>
         {t('home:personalization_card_title', { defaultValue: 'Know Yourself Better' })}
       </Text>
       <Text category="h10" status="placeholder" mb={12}>
@@ -43,7 +44,10 @@ const PersonalizationCard = memo(() => {
       </Text>
 
       {careerDnaOn ? (
-        <TouchableOpacity activeOpacity={0.7} onPress={() => navigate('CareerDna')} style={styles.row}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigate('CareerDna')}
+          style={[styles.card, styles.row, dreamCompaniesOn && styles.cardSpacing]}>
           <View style={[styles.iconCircle, { backgroundColor: theme['color-danger-transparent-200'] }]}>
             <Icon pack="eva" name="activity-outline" style={[globalStyle.icon18, { tintColor: theme['color-danger-500'] }]} />
           </View>
@@ -57,10 +61,8 @@ const PersonalizationCard = memo(() => {
         </TouchableOpacity>
       ) : null}
 
-      {careerDnaOn && dreamCompaniesOn ? <View style={styles.divider} /> : null}
-
       {dreamCompaniesOn ? (
-        <TouchableOpacity activeOpacity={0.7} onPress={() => navigate('DreamCompanies')} style={styles.row}>
+        <TouchableOpacity activeOpacity={0.7} onPress={() => navigate('DreamCompanies')} style={[styles.card, styles.row]}>
           <View style={[styles.iconCircle, { backgroundColor: theme['color-primary-transparent-200'] }]}>
             <Icon pack="eva" name="search-outline" style={[globalStyle.icon18, { tintColor: theme['color-primary-500'] }]} />
           </View>
@@ -80,17 +82,21 @@ const PersonalizationCard = memo(() => {
 export default PersonalizationCard;
 
 const themedStyles = StyleService.create({
-  // Radius inherited from globalStyle.card (24) — no local override.
+  // Product request: "Career DNA and Dream company Dashboard should be
+  // different cards" — each row now carries its own full card treatment
+  // (radius/shadow from globalStyle.card, own white fill) instead of both
+  // sharing one outer card with an inner divider.
   card: {
     ...globalStyle.card,
     padding: 16,
-    marginTop: 24,
     backgroundColor: 'background-basic-color-2',
+  },
+  cardSpacing: {
+    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
   },
   iconCircle: {
     width: 36,
@@ -99,10 +105,5 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: 'background-basic-color-3',
-    marginVertical: 4,
   },
 });

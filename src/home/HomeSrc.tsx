@@ -1087,12 +1087,14 @@ const HomeSrc = memo(() => {
             {t('common:view_all', { defaultValue: 'View all' })}
           </Text>
         </Flex>
-        <Layout level="1" style={styles.leaderboardCard}>
-          {leaderboardLoading ? (
+        {leaderboardLoading ? (
+          <Layout level="1" style={styles.leaderboardCard}>
             <Flex itemsCenter justify="center" style={styles.leaderboardStatus}>
               <Spinner size="small" />
             </Flex>
-          ) : leaderboardError ? (
+          </Layout>
+        ) : leaderboardError ? (
+          <Layout level="1" style={styles.leaderboardCard}>
             <Flex vertical itemsCenter justify="center" style={styles.leaderboardStatus}>
               <Text category="h10" status="danger" center mb={8}>
                 {leaderboardError}
@@ -1101,62 +1103,73 @@ const HomeSrc = memo(() => {
                 {t('common:try_again', { defaultValue: 'Try again' }).toString()}
               </Text>
             </Flex>
-          ) : leaderboard.length === 0 ? (
+          </Layout>
+        ) : leaderboard.length === 0 ? (
+          <Layout level="1" style={styles.leaderboardCard}>
             <Text category="h9-s" status="placeholder" center style={styles.leaderboardStatus}>
               {t('home:leaderboard_empty', { defaultValue: 'No leaderboard data yet.' })}
             </Text>
-          ) : (
-            leaderboard.slice(0, 4).map((entry, index) => {
-              const medal = rankMedalStyle(entry.rank, theme);
-              return (
-                <View
-                  key={entry.id}
-                  style={[
-                    styles.leaderboardRow,
-                    index > 0 && globalStyle.divider,
-                    entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
-                  ]}>
-                  <View style={[styles.leaderboardRank]}>
-                    {/* Trophy icon instead of the "1" for whoever's leading,
-                        per explicit follow-up — every other rank keeps its
-                        plain number badge. */}
-                    {entry.rank === 1 ? (
+          </Layout>
+        ) : (
+          // Product request: "The Leaderboard Card to display the top 3
+          // leaders in a 3 separate card form" — was every entry crammed
+          // into one shared card with inner dividers; each of the top 3 now
+          // gets its own full card (radius/shadow/white fill from
+          // globalStyle.card), matching the reference's separate stacked-
+          // row-card look. Trimmed the preview from top 4 to top 3 to match
+          // "top 3" exactly — the rest of the board is still one tap away
+          // via "View all" above.
+          leaderboard.slice(0, 3).map((entry, index) => {
+            const medal = rankMedalStyle(entry.rank, theme);
+            return (
+              <View
+                key={entry.id}
+                style={[
+                  styles.leaderboardCard,
+                  styles.leaderboardRow,
+                  index < 2 && styles.leaderboardCardSpacing,
+                  entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
+                ]}>
+                <View style={[styles.leaderboardRank]}>
+                  {/* Trophy icon instead of the "1" for whoever's leading,
+                      per explicit follow-up — every other rank keeps its
+                      plain number badge. */}
+                  {entry.rank === 1 ? (
 
-                      <Text>🏆</Text>
-                    ) : (
-                      <Text category="h9-s" bold style={{ color: medal.text }}>
-                        {entry.rank}
-                      </Text>
-                    )}
-                  </View>
-                  {/* Bumped tiny (24px) -> small (32px) -> medium (40px)
-                      across two follow-ups ("too small", then "increase it
-                      more again"), and shape switched to fully circular
-                      ("round") instead of the component's default rounded-
-                      square per explicit request — see UserAvatar.tsx's
-                      `shape` prop, scoped to this one call site so every
-                      other UserAvatar usage in the app (Edit Profile,
-                      Profile tab, More/Home headers, etc.) keeps its
-                      original look. */}
-                  <UserAvatar
-                    uri={entry.avatarUrl}
-                    name={entry.name}
-                    size="medium"
-                    shape="round"
-                    style={styles.leaderboardAvatar}
-                  />
-                  <Text category="h9-s" bold numberOfLines={1} style={globalStyle.flexOne}>
-                    {entry.name}
-                    {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
-                  </Text>
-                  <Text category="h10" status="placeholder">
-                    {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
-                  </Text>
+                    <Text>🏆</Text>
+                  ) : (
+                    <Text category="h9-s" bold style={{ color: medal.text }}>
+                      {entry.rank}
+                    </Text>
+                  )}
                 </View>
-              );
-            })
-          )}
-        </Layout>
+                {/* Bumped tiny (24px) -> small (32px) -> medium (40px)
+                    across two follow-ups ("too small", then "increase it
+                    more again"), and shape switched to fully circular
+                    ("round") instead of the component's default rounded-
+                    square per explicit request — see UserAvatar.tsx's
+                    `shape` prop, scoped to this one call site so every
+                    other UserAvatar usage in the app (Edit Profile,
+                    Profile tab, More/Home headers, etc.) keeps its
+                    original look. */}
+                <UserAvatar
+                  uri={entry.avatarUrl}
+                  name={entry.name}
+                  size="medium"
+                  shape="round"
+                  style={styles.leaderboardAvatar}
+                />
+                <Text category="h9-s" bold numberOfLines={1} style={globalStyle.flexOne}>
+                  {entry.name}
+                  {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
+                </Text>
+                <Text category="h10" status="placeholder">
+                  {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
+                </Text>
+              </View>
+            );
+          })
+        )}
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
@@ -1480,28 +1493,29 @@ const themedStyles = StyleService.create({
     color: '#000000',
   },
   // Leaderboard preview card (see the JSX comment above where this is
-  // used) — same bordered/transparent-fill treatment as every other card
-  // on this screen; padding is smaller than the others (8, not 16) since
-  // each row already carries its own vertical padding, and a second full
-  // 16px on top of that made the rows feel oddly far from the card edge.
+  // used) — product request: "top 3 leaders in a 3 separate card form",
+  // each entry now gets this full card treatment individually rather than
+  // all entries sharing one outer card.
   leaderboardCard: {
     ...globalStyle.card,
     marginTop: 8,
     padding: 12,
-    // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
-    // renders correctly (was 'transparent', overriding this Layout's own
-    // `level="1"` background — see the JSX usage below).
     backgroundColor: 'background-basic-color-2',
+  },
+  // Space between each of the 3 stacked leaderboard cards (applied to all
+  // but the last — see the JSX `index < 2 &&` check).
+  leaderboardCardSpacing: {
+    marginBottom: 12,
   },
   leaderboardStatus: {
     paddingVertical: 24,
   },
+  // Padding/radius now come from leaderboardCard above (merged onto the
+  // same View — see the JSX usage) rather than duplicated here, now that
+  // each row IS its own card instead of a bare row inside a shared one.
   leaderboardRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 12,
   },
   leaderboardRank: {
     width: 28,
