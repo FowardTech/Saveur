@@ -695,7 +695,7 @@ export interface CoachChatMessageProps {
   // reply recommends actually DOING something in the app right now (see
   // coachService.ts's SUGGESTED_ACTION parsing). Mutually exclusive with
   // suggestedCourseTopic (the backend only ever sends one or the other).
-  suggestedAction?: 'mock_interview' | 'daily_challenge' | 'new_job_course';
+  suggestedAction?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant';
 }
 
 // ---- AI Interview Coach additions (networking assistant) ----

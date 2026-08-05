@@ -57,7 +57,7 @@ const ME_USER = { _id: 1 };
 // structure keyed by message id.
 interface CoachIMessage extends IMessage {
   suggestedCourseTopic?: string;
-  suggestedAction?: 'mock_interview' | 'daily_challenge';
+  suggestedAction?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant';
 }
 
 // Same module/tier length "Learn Anything" custom topics use — see
@@ -370,10 +370,13 @@ const Chat = memo(() => {
   // coach to navigate to the specific screen... and the app will navigate
   // automatically" — see app/api/coach.py's SUGGESTED_ACTION marker. Mock
   // Interviews, the Daily Challenge (a Home-tab card, no dedicated route of
-  // its own), and — new-job/first-job coaching track product request item —
-  // the "Starting Your New Job" Learning Course are the three real
+  // its own), the "Starting Your New Job" Learning Course (new-job/first-job
+  // coaching track product request item), and — goal-aware coach nudge
+  // product request item, "share your thoughts on [a networking feature]...
+  // I want the AI coach to relate more with the user" — the Networking
+  // Assistant (src/more/NetworkingAssistant.tsx) are the four real
   // destinations the backend can name.
-  const onRunSuggestedAction = React.useCallback((action: 'mock_interview' | 'daily_challenge' | 'new_job_course') => {
+  const onRunSuggestedAction = React.useCallback((action: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant') => {
     if (action === 'mock_interview') {
       navigate('MockInterviewSetup', {});
     } else if (action === 'new_job_course') {
@@ -382,6 +385,8 @@ const Chat = memo(() => {
         totalModules: NEW_JOB_COURSE_MODULES,
         level: 'basic',
       });
+    } else if (action === 'networking_assistant') {
+      navigate('NetworkingAssistant');
     } else {
       // Daily Challenge lives as a card on the Home tab, not a dedicated
       // route — same "jump to Home tab" navigation MoreSrc.tsx and
@@ -411,14 +416,19 @@ const Chat = memo(() => {
         </TouchableOpacity>
       );
     }
-    const action: 'mock_interview' | 'daily_challenge' | 'new_job_course' | undefined = props?.currentMessage?.suggestedAction;
+    const action: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant' | undefined = props?.currentMessage?.suggestedAction;
     if (action) {
       const label = action === 'mock_interview'
         ? t('message:suggested_action_mock_interview', { defaultValue: 'Start a mock interview' })
         : action === 'new_job_course'
         ? t('message:suggested_action_new_job_course', { defaultValue: 'Get ready for your new job' })
+        : action === 'networking_assistant'
+        ? t('message:suggested_action_networking_assistant', { defaultValue: 'Draft a networking message' })
         : t('message:suggested_action_daily_challenge', { defaultValue: "Try today's Daily Challenge" });
-      const icon = action === 'mock_interview' ? 'mic-outline' : action === 'new_job_course' ? 'briefcase-outline' : 'flash-outline';
+      const icon = action === 'mock_interview' ? 'mic-outline'
+        : action === 'new_job_course' ? 'briefcase-outline'
+        : action === 'networking_assistant' ? 'people-outline'
+        : 'flash-outline';
       return (
         <TouchableOpacity
           activeOpacity={0.7}

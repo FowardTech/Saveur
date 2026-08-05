@@ -158,7 +158,7 @@ export async function sendMessage(
 
   let replyText: string;
   let suggestedCourseTopic: string | undefined;
-  let suggestedAction: 'mock_interview' | 'daily_challenge' | 'new_job_course' | undefined;
+  let suggestedAction: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant' | undefined;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
@@ -166,7 +166,7 @@ export async function sendMessage(
       text?: string;
       response?: string;
       suggested_course?: string | null;
-      suggested_action?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | null;
+      suggested_action?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant' | null;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
@@ -255,7 +255,7 @@ export async function sendVoiceMessage(
 
   let replyText: string;
   let suggestedCourseTopic: string | undefined;
-  let suggestedAction: 'mock_interview' | 'daily_challenge' | 'new_job_course' | undefined;
+  let suggestedAction: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant' | undefined;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
@@ -263,7 +263,7 @@ export async function sendVoiceMessage(
       text?: string;
       response?: string;
       suggested_course?: string | null;
-      suggested_action?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | null;
+      suggested_action?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant' | null;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
