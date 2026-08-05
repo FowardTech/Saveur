@@ -670,11 +670,18 @@ export async function getModuleVideos(
   moduleTitle: string,
 ): Promise<CourseVideo[]> {
   try {
+    // Product follow-up ("the video suggestions should be in the language
+    // the user has already set, not English, just because that's what a
+    // native Spanish speaker would actually want") — same currentLanguage()
+    // sent on every other AI-facing call in this file; the backend uses it
+    // to search for videos actually in that language rather than defaulting
+    // to English results regardless of locale.
     const {data} = await apiClient.post<{videos?: CourseVideoWire[]}>('/api/v1/learning/videos', {
       course_id: courseId,
       module_index: moduleIndex,
       topic,
       module_title: moduleTitle,
+      language: currentLanguage(),
     });
     return (data.videos ?? []).map(fromVideoWire);
   } catch {
