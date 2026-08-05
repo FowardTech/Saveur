@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Image, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -21,12 +21,13 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as learningService from 'services/learningService';
-import { CourseModule, CourseLevel, Certificate, COURSE_LEVELS } from 'services/learningService';
+import { CourseModule, CourseLevel, Certificate, COURSE_LEVELS, CourseVideo } from 'services/learningService';
 import * as speechService from 'services/speechService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import { getCourseLevelLabel } from 'utils/learningLabels';
 import CtaButton from 'components/CtaButton';
+import InAppVideoPlayer from 'components/InAppVideoPlayer';
 
 type LessonMode = 'voice' | 'text';
 
@@ -166,6 +167,24 @@ const CourseSession = memo(() => {
 
   const currentModule = moduleCache[moduleIndex];
   const currentImage = imageCache[moduleIndex];
+
+  // Recommended videos (product request item: "after each lesson/module,
+  // auto-suggest real matching videos... play inside a custom in-app
+  // player") — get-or-fetch per module, same cache-by-index shape as
+  // moduleCache/imageCache above. Guarded by the `!== undefined` check
+  // (rather than listing videosByModule itself as a dependency) so
+  // revisiting an already-fetched module via Previous/Next never re-runs
+  // the search, without needing a ref.
+  const [videosByModule, setVideosByModule] = React.useState<Record<number, CourseVideo[]>>({});
+  const [playerVideo, setPlayerVideo] = React.useState<CourseVideo | null>(null);
+  React.useEffect(() => {
+    if (!currentModule || videosByModule[moduleIndex] !== undefined) return;
+    learningService.getModuleVideos(courseId, moduleIndex, topic, currentModule.title).then(videos => {
+      setVideosByModule(prev => ({ ...prev, [moduleIndex]: videos }));
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentModule, moduleIndex, courseId, topic]);
+  const currentVideos = videosByModule[moduleIndex];
 
   // Voice mode — auto-narrate as soon as a module's content is ready.
   React.useEffect(() => {
@@ -476,6 +495,39 @@ const CourseSession = memo(() => {
               </View>
             ) : null}
 
+            {currentVideos && currentVideos.length > 0 ? (
+              <View style={{ marginTop: 24 }}>
+                <Text category="h8" bold mb={12}>
+                  {t('more:course_recommended_videos', { defaultValue: 'Recommended Videos' })}
+                </Text>
+                <FlatList
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  data={currentVideos}
+                  keyExtractor={v => v.videoId}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={styles.videoCard}
+                      activeOpacity={0.8}
+                      onPress={() => setPlayerVideo(item)}>
+                      <Image source={{ uri: item.thumbnailUrl }} style={styles.videoThumb} resizeMode="cover" />
+                      <View style={styles.videoPlayBadge}>
+                        <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon24, { tintColor: '#fff' }]} />
+                      </View>
+                      <Text category="h10" bold numberOfLines={2} mt={6}>
+                        {item.title}
+                      </Text>
+                      {item.channel ? (
+                        <Text category="h10" status="placeholder" numberOfLines={1}>
+                          {item.channel}
+                        </Text>
+                      ) : null}
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            ) : null}
+
             <Flex justify="space-between" itemsCenter mt={32}>
               <Button appearance="ghost" disabled={moduleIndex === 0} onPress={onPrevious}>
                 {t('more:course_previous', { defaultValue: 'Previous' })}
@@ -489,6 +541,11 @@ const CourseSession = memo(() => {
           </>
         ) : null}
       </Content>
+      <InAppVideoPlayer
+        visible={playerVideo !== null}
+        video={playerVideo}
+        onClose={() => setPlayerVideo(null)}
+      />
     </Container>
   );
 });
@@ -532,6 +589,21 @@ const themedStyles = StyleService.create({
     // the fill has to live here.
     backgroundColor: 'background-basic-color-2',
     marginTop: 8,
+  },
+  videoCard: {
+    width: 160,
+    marginRight: 12,
+  },
+  videoThumb: {
+    width: 160,
+    height: 90,
+    borderRadius: 10,
+    backgroundColor: 'background-basic-color-3',
+  },
+  videoPlayBadge: {
+    position: 'absolute',
+    top: 33,
+    left: 68,
   },
   answerInput: {
     ...globalStyle.inputField,

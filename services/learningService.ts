@@ -610,3 +610,74 @@ export async function generateVisual(prompt: string): Promise<string | null> {
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Learning course video recommendations (product request item): "after each
+// lesson/module, auto-suggest real matching videos... play inside a custom
+// in-app player." See Saveur-Backend's app/services/learning_video_service.py
+// for the real-web-search-backed discovery + anti-hallucination gate, and
+// that same file's docstring for why this is YouTube-only (a real ToS
+// constraint, not a scoping choice) and why the embed always carries a
+// small amount of required YouTube branding — components/
+// InAppVideoPlayer.tsx is what actually renders it, entirely inside the
+// app, never opening the YouTube app or an external browser.
+// ---------------------------------------------------------------------------
+
+export interface CourseVideo {
+  videoId: string;
+  title: string;
+  channel: string | null;
+  url: string;
+  embedUrl: string;
+  thumbnailUrl: string;
+  source: 'youtube';
+}
+
+interface CourseVideoWire {
+  video_id: string;
+  title: string;
+  channel: string | null;
+  url: string;
+  embed_url: string;
+  thumbnail_url: string;
+  source: string;
+}
+
+function fromVideoWire(w: CourseVideoWire): CourseVideo {
+  return {
+    videoId: w.video_id,
+    title: w.title,
+    channel: w.channel,
+    url: w.url,
+    embedUrl: w.embed_url,
+    thumbnailUrl: w.thumbnail_url,
+    source: 'youtube',
+  };
+}
+
+/**
+ * Get-or-fetch — the first call for a given (course, module) runs a real
+ * search server-side and caches it; every later call (reopening the
+ * module, reviewing a finished course) just returns the same cached list
+ * instantly. Returns [] on any failure rather than throwing, same
+ * "never block the lesson" tolerance generateVisual above has — a missing
+ * videos section is a much smaller loss than breaking the module itself.
+ */
+export async function getModuleVideos(
+  courseId: string,
+  moduleIndex: number,
+  topic: string,
+  moduleTitle: string,
+): Promise<CourseVideo[]> {
+  try {
+    const {data} = await apiClient.post<{videos?: CourseVideoWire[]}>('/api/v1/learning/videos', {
+      course_id: courseId,
+      module_index: moduleIndex,
+      topic,
+      module_title: moduleTitle,
+    });
+    return (data.videos ?? []).map(fromVideoWire);
+  } catch {
+    return [];
+  }
+}
