@@ -6,12 +6,19 @@ import { useTranslation } from 'react-i18next';
 
 import Text from './Text';
 import { globalStyle } from 'styles/globalStyle';
-import { CourseVideo } from 'services/learningService';
+import { CourseVideo, CourseVideoContext } from 'services/learningService';
+import * as learningService from 'services/learningService';
 
 interface Props {
   visible: boolean;
   video: CourseVideo | null;
   onClose: () => void;
+  // Which course/module this video was recommended under — forwarded to
+  // logVideoWatch/setVideoSaved so the AI coach can later reference "the
+  // video you watched on X" (see Saveur-Backend's coach.py
+  // _activity_snippet). Optional — omitted entirely for any future caller
+  // that plays a video with no course context.
+  context?: CourseVideoContext;
 }
 
 // Product request item: "Videos must play inside a custom in-app player (no
@@ -30,13 +37,39 @@ interface Props {
 // embed-URL parameters that minimize (but per YouTube's own docs, cannot
 // fully remove) the surrounding chrome, and the citation line below the
 // player is the explicit "cite source only" the product request asked for.
-const InAppVideoPlayer = memo(({ visible, video, onClose }: Props) => {
+const InAppVideoPlayer = memo(({ visible, video, onClose, context }: Props) => {
   const theme = useTheme();
   const { t } = useTranslation(['more', 'common']);
+  const [isSaved, setIsSaved] = React.useState(!!video?.isSaved);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // Product request item: "the AI career coach [should] know the content
+  // of every video the user watches" — logged the moment the player is
+  // actually shown for a given video (not just when it's rendered as a
+  // recommendation card), and again if the user reopens a different video
+  // without this component unmounting (videoId dependency, not just
+  // `visible`). Fire-and-forget — see logVideoWatch's own comment.
+  React.useEffect(() => {
+    setIsSaved(!!video?.isSaved);
+    if (visible && video) {
+      learningService.logVideoWatch(video, context);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, video?.videoId]);
 
   if (!video) return null;
 
   const embedSrc = `${video.embedUrl}?playsinline=1&autoplay=1&modestbranding=1&rel=0`;
+
+  const onToggleSave = async () => {
+    if (isSaving) return;
+    const next = !isSaved;
+    setIsSaved(next); // optimistic
+    setIsSaving(true);
+    const ok = await learningService.setVideoSaved(video, next, context);
+    if (!ok) setIsSaved(!next); // revert on failure
+    setIsSaving(false);
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -45,6 +78,22 @@ const InAppVideoPlayer = memo(({ visible, video, onClose }: Props) => {
           <Text category="h8" bold numberOfLines={1} style={{ flex: 1, marginRight: 12 }}>
             {video.title}
           </Text>
+          {/* Product request item: "implement the ability for users to
+              save a video too" — a bookmark toggle right in the player,
+              same place the close button already lives. */}
+          <TouchableOpacity
+            onPress={onToggleSave}
+            disabled={isSaving}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ marginRight: 16 }}
+            accessibilityLabel={t('more:save_video', { defaultValue: 'Save video' }).toString()}
+          >
+            <Icon
+              pack="eva"
+              name={isSaved ? 'bookmark' : 'bookmark-outline'}
+              style={[globalStyle.icon24, { tintColor: isSaved ? theme['color-primary-500'] : theme['text-basic-color'] }]}
+            />
+          </TouchableOpacity>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Icon
               pack="eva"

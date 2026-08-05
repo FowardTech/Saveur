@@ -631,6 +631,25 @@ export interface CourseVideo {
   embedUrl: string;
   thumbnailUrl: string;
   source: 'youtube';
+  // Only populated on rows coming back from getSavedVideos() below (product
+  // request item: "implement the ability for users to save a video") — the
+  // recommendation list from getModuleVideos never sets this, since a video
+  // just being recommended doesn't mean the user has saved it yet.
+  isSaved?: boolean;
+  topic?: string | null;
+  moduleTitle?: string | null;
+}
+
+// Course context a video was recommended under — passed alongside the video
+// itself to watch/save calls (not stored on CourseVideo directly) so the AI
+// coach can later reference "the video you watched on X" (see
+// Saveur-Backend's coach.py _activity_snippet). All optional: a video saved
+// from somewhere with no course context still saves fine, just without that
+// extra detail for the coach.
+export interface CourseVideoContext {
+  topic?: string;
+  moduleTitle?: string;
+  courseId?: string;
 }
 
 interface CourseVideoWire {
@@ -641,6 +660,9 @@ interface CourseVideoWire {
   embed_url: string;
   thumbnail_url: string;
   source: string;
+  is_saved?: boolean;
+  topic?: string | null;
+  module_title?: string | null;
 }
 
 function fromVideoWire(w: CourseVideoWire): CourseVideo {
@@ -652,6 +674,9 @@ function fromVideoWire(w: CourseVideoWire): CourseVideo {
     embedUrl: w.embed_url,
     thumbnailUrl: w.thumbnail_url,
     source: 'youtube',
+    isSaved: w.is_saved,
+    topic: w.topic,
+    moduleTitle: w.module_title,
   };
 }
 
@@ -683,6 +708,70 @@ export async function getModuleVideos(
       module_title: moduleTitle,
       language: currentLanguage(),
     });
+    return (data.videos ?? []).map(fromVideoWire);
+  } catch {
+    return [];
+  }
+}
+
+function videoRequestBody(video: CourseVideo, context?: CourseVideoContext) {
+  return {
+    video_id: video.videoId,
+    title: video.title,
+    channel: video.channel,
+    url: video.url,
+    embed_url: video.embedUrl,
+    thumbnail_url: video.thumbnailUrl,
+    source: video.source,
+    topic: context?.topic,
+    module_title: context?.moduleTitle,
+    course_id: context?.courseId,
+  };
+}
+
+/**
+ * Logs that this video was actually opened in the in-app player (product
+ * request item: "the AI career coach [should] know the content of every
+ * video the user watches") — see components/InAppVideoPlayer.tsx, which
+ * calls this the moment it's shown, not just when the recommendation card
+ * is rendered. Fire-and-forget: a failure here should never block or
+ * interrupt playback, same tolerance every other best-effort telemetry
+ * call in this app already has.
+ */
+export async function logVideoWatch(video: CourseVideo, context?: CourseVideoContext): Promise<void> {
+  try {
+    await apiClient.post('/api/v1/learning/videos/watch', videoRequestBody(video, context));
+  } catch {
+    // best-effort
+  }
+}
+
+/**
+ * Toggles the "Save Video" bookmark (product request item: "implement the
+ * ability for users to save a video too"). Returns whether the call
+ * actually succeeded so the UI can revert an optimistic toggle on failure.
+ */
+export async function setVideoSaved(
+  video: CourseVideo,
+  saved: boolean,
+  context?: CourseVideoContext,
+): Promise<boolean> {
+  try {
+    await apiClient.post('/api/v1/learning/videos/save', {
+      ...videoRequestBody(video, context),
+      saved,
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Every video this user has bookmarked, newest first — backs a "Saved
+ * Videos" list screen. */
+export async function getSavedVideos(): Promise<CourseVideo[]> {
+  try {
+    const {data} = await apiClient.get<{videos?: CourseVideoWire[]}>('/api/v1/learning/videos/saved');
     return (data.videos ?? []).map(fromVideoWire);
   } catch {
     return [];

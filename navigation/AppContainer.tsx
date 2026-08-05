@@ -32,6 +32,7 @@ import JDAnalyzer from 'src/more/JDAnalyzer';
 import GenerateResume from 'src/more/GenerateResume';
 import CoverLetterGenerator from 'src/more/CoverLetterGenerator';
 import JDCoverLetterGenerator from 'src/more/JDCoverLetterGenerator';
+import SavedVideos from 'src/more/SavedVideos';
 import WeeklyCareerReport from 'src/more/WeeklyCareerReport';
 import DailyIndustryNews from 'src/more/DailyIndustryNews';
 import ResumeVariants from 'src/more/ResumeVariants';
@@ -200,6 +201,7 @@ const AppContainer = () => {
         <Stack.Screen name="GenerateResume" component={GenerateResume} />
         <Stack.Screen name="CoverLetterGenerator" component={CoverLetterGenerator} />
         <Stack.Screen name="JDCoverLetterGenerator" component={JDCoverLetterGenerator} />
+        <Stack.Screen name="SavedVideos" component={SavedVideos} />
         <Stack.Screen name="WeeklyCareerReport" component={WeeklyCareerReport} />
         <Stack.Screen name="DailyIndustryNews" component={DailyIndustryNews} />
         <Stack.Screen name="ResumeVariants" component={ResumeVariants} />

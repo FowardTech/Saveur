@@ -545,6 +545,7 @@ const CourseSession = memo(() => {
         visible={playerVideo !== null}
         video={playerVideo}
         onClose={() => setPlayerVideo(null)}
+        context={{ topic, moduleTitle: currentModule?.title, courseId }}
       />
     </Container>
   );

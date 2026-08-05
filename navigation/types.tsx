@@ -149,6 +149,11 @@ export type RootStackParamList = {
   JDCoverLetterGenerator: {
     jdText: string;
   };
+  // Product request item: "implement the ability for users to save a
+  // video too" — see src/more/SavedVideos.tsx and
+  // components/InAppVideoPlayer.tsx's bookmark toggle. Reachable from the
+  // More menu.
+  SavedVideos: undefined;
   // AI Weekly Career Report — see services/careerReportService.ts and
   // src/more/WeeklyCareerReport.tsx. Reachable from the Home dashboard.
   WeeklyCareerReport: undefined;

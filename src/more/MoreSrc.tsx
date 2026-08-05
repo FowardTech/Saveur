@@ -234,6 +234,19 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('LearningCourses'),
     },
     {
+      // Product request item: "implement the ability for users to save a
+      // video too" — a sub-feature of Learning Courses (the bookmark
+      // toggle lives in InAppVideoPlayer.tsx), so reuses that same
+      // featureKey rather than needing its own admin-togglable flag.
+      title: t('more:saved_videos', {defaultValue: 'Saved Videos'}),
+      icon: 'bookmark',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      featureKey: 'learning_courses',
+      onPress: () => navigate('SavedVideos'),
+    },
+    {
       title: t('more:networking_assistant', {defaultValue: 'Networking Assistant'}),
       icon: 'share',
       status: 'green',
