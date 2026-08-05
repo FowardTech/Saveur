@@ -933,17 +933,12 @@ const HomeSrc = memo(() => {
                   </Flex>
                 ) : null}
               </View>
-              {/* Product request: "The badge icon in the checkin Card
-                  should be changed to a black icon badge not a colored
-                  one" — was a colored 3D gold medal/ribbon image
-                  (Images.xpMedal); swapped for the same Award glyph used
-                  elsewhere in the app (assets/AssetIconsPack.tsx's
-                  `carePro` key), tinted plain black. */}
-              <Icon
-                pack="assets"
-                name="carePro"
-                style={[styles.checkInMedalIcon, { tintColor: '#000000' }]}
-              />
+              {/* Product request: remove the medal/award icon that used to
+                  sit here, right beside the Badges button — the Badges
+                  button itself already opens the full badge grid
+                  (components/BadgesModal.tsx), so this was a second,
+                  redundant "badges" affordance crowding the same row for no
+                  extra information. */}
               <TouchableOpacity
                 activeOpacity={0.8}
                 style={styles.checkInBadgesButton}
@@ -1402,18 +1397,6 @@ const themedStyles = StyleService.create({
     height: 280,
     borderRadius: 140,
   },
-  // Gamification cue (product request — "use this medal in the XP card
-  // instead of the one there", the uploaded 3D gold medal/ribbon graphic —
-  // see assets/images/index.ts's `xpMedal` for the asset itself). Redesign
-  // v7: sits in normal flow inside checkInTopRow, right after the Badges
-  // button, at the end of the same row as the ring/XP text — explicit
-  // width/height still needed since this is a real image with its own
-  // aspect ratio (~36:46, taller than wide because of the ribbon tails),
-  // not a square glyph.
-  checkInMedalIcon: {
-    width: 28,
-    height: 36,
-  },
   // Small outlined pill, sized down from checkInButton (h10 label, tighter
   // padding). Redesign v7 (product follow-up — "leave the XP progress bar
   // at the top there and now move the badge button to the top too so that
@@ -1429,18 +1412,23 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    // Product request: black border/transparent fill (previous change,
-    // right above in history) read as invisible in dark mode — the card
-    // itself goes dark navy there, so a black-on-black outline disappears
-    // entirely. Fixed (non-theme-swapping) light gray for both border and
-    // fill instead: reads as a clear, deliberate pill against the white
-    // card in light mode AND against the dark navy card in dark mode,
-    // since light gray contrasts well against both. Paired with
-    // checkInButtonText's black label below for a consistent light-chip
-    // look in either theme.
-    backgroundColor: '#E5E7EB',
+    // BUG FIX (product report: "the badge button and the checkin pill are
+    // looking so bad in dark mode") — the previous fix here used a FIXED
+    // light gray (#E5E7EB/#D1D5DB) for both border and fill regardless of
+    // theme, paired with a fixed black label. That read fine against this
+    // card's white light-mode fill, but against the card's dark-navy
+    // dark-mode fill (see checkInCard's own comment) it rendered as a
+    // bright, out-of-place light-gray sticker with black text — exactly
+    // the kind of "doesn't belong in this theme" clash a hardcoded hex was
+    // always going to eventually cause. `background-basic-color-3`/
+    // `border-basic-color-3` are real per-theme tokens (light gray in
+    // light mode — same look as before there — a subtly lighter-than-card
+    // dark slate in dark mode instead of a jarring pale patch), paired
+    // with `text-basic-color` below so the label flips dark/light with the
+    // theme too instead of staying pinned to black.
+    backgroundColor: 'background-basic-color-3',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: 'border-basic-color-3',
   },
   checkInTopRow: {
     flexDirection: 'row',
@@ -1474,10 +1462,10 @@ const themedStyles = StyleService.create({
   checkedInPill: {
     flexDirection: 'row',
   },
-  // Matches checkInButton's border/text black change above — this
+  // Matches checkInButton's theme-adaptive text color below — this
   // checkmark sits inside that same pill.
   checkedInIcon: {
-    tintColor: '#000000',
+    tintColor: 'text-basic-color',
   },
   // alignSelf: 'flex-end' — its own row, hugging only its own content and
   // right-aligned (below the merged ring/XP/Badges/medal row above it). No
@@ -1491,22 +1479,23 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    // Same light-gray fix as checkInBadgesButton above (see its comment) —
-    // black border/transparent fill was invisible against the dark navy
-    // card in dark mode. Covers both the live "Check In" pill and (via
-    // [checkInButton, checkedInPill]) the "Checked in" completed pill.
-    backgroundColor: '#E5E7EB',
+    // Same theme-adaptive fix as checkInBadgesButton above (see its
+    // comment) — a fixed light gray read as a bright, out-of-place patch
+    // against this card's dark-navy dark-mode fill. Covers both the live
+    // "Check In" pill and (via [checkInButton, checkedInPill]) the
+    // "Checked in" completed pill.
+    backgroundColor: 'background-basic-color-3',
     borderWidth: 1,
-    borderColor: '#D1D5DB',
+    borderColor: 'border-basic-color-3',
   },
   checkInButtonDisabled: {
     opacity: 0.6,
   },
-  // Same request as checkInButton's border above — shared by the Check
-  // In/Checked In pill AND the Badges button (both render their label
-  // through this one style).
+  // Theme-adaptive label color (was a fixed black — see checkInButton's own
+  // comment) — shared by the Check In/Checked In pill AND the Badges
+  // button (both render their label through this one style).
   checkInButtonText: {
-    color: '#000000',
+    color: 'text-basic-color',
   },
   // Leaderboard preview card (see the JSX comment above where this is
   // used) — product request: "top 3 leaders in a 3 separate card form",
