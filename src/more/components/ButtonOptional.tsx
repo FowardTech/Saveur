@@ -100,7 +100,6 @@ const ButtonOptional = ({
     <Flex
       style={styles.container}
       itemsCenter
-      mt={24}
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
         <View>
@@ -154,15 +153,25 @@ const ButtonOptional = ({
 export default ButtonOptional;
 
 const themedStyles = StyleService.create({
-  // Product request: "I want the settings items to have bottom border line"
-  // — each row previously had zero separator, relying purely on the mt={24}
-  // gap between rows. Same neutral hairline tone as globalStyle.divider's
-  // existing convention, plus a bit of bottom padding so the line doesn't
-  // sit flush against the row's own text/icon.
+  // Product request: "the settings container should be full width and then
+  // give each settings item a white background" — was a flat, backgroundless
+  // row separated only by a bottom hairline (see the superseded comment this
+  // replaced) and the mt={24} gap on the Flex above. Now each row is its own
+  // full-width white (theme-adaptive 'background-basic-color-2' — the same
+  // card token used app-wide, e.g. HomeSrc.tsx's checkInCard/leaderboardCard,
+  // so this reads correctly in dark mode too, going navy instead of white)
+  // rounded card, stacked with a small marginTop gap instead of a border —
+  // the gap + background contrast against the page is what separates rows
+  // now, so the old hairline is gone (would look redundant/cluttered between
+  // two white cards). width:'100%' makes sure the card always spans the full
+  // content width rather than just hugging its icon+label content.
   container: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.15)',
-    paddingBottom: 16,
+    width: '100%',
+    backgroundColor: 'background-basic-color-2',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 10,
   },
   // Same 20x20/count-badge shape as HeaderHome.tsx's bell badge (see that
   // file's own sizing comment) — a small colored circle sitting on the

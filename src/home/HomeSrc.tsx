@@ -1411,16 +1411,18 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    // Product follow-up ("remove the gray background... they both should
-    // be transparent") — 'background-basic-color-3' (the previous dark-mode
-    // fix) read as an unwanted gray fill; just the blue outline/text reads
-    // as a pill on its own against the card, no fill needed in either theme.
-    backgroundColor: 'transparent',
+    // Product request: black border/transparent fill (previous change,
+    // right above in history) read as invisible in dark mode — the card
+    // itself goes dark navy there, so a black-on-black outline disappears
+    // entirely. Fixed (non-theme-swapping) light gray for both border and
+    // fill instead: reads as a clear, deliberate pill against the white
+    // card in light mode AND against the dark navy card in dark mode,
+    // since light gray contrasts well against both. Paired with
+    // checkInButtonText's black label below for a consistent light-chip
+    // look in either theme.
+    backgroundColor: '#E5E7EB',
     borderWidth: 1,
-    // Product request: "Foe the checking pill and the badge button change
-    // the border color and text color to black" — was '#0063f8' (brand
-    // blue), matching checkInButton's identical change below.
-    borderColor: '#000000',
+    borderColor: '#D1D5DB',
   },
   checkInTopRow: {
     flexDirection: 'row',
@@ -1471,17 +1473,13 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    // Product follow-up ("remove the gray background... they both should
-    // be transparent") — same fix as checkInBadgesButton just above.
-    // Covers both the live "Check In" button and (via [checkInButton,
-    // checkedInPill]) the "Checked in" completed-state pill.
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    // Product request: "Foe the checking pill and the badge button change
-    // the border color and text color to black" — was '#0063f8' (brand
-    // blue). Covers both the live "Check In" pill and (via
+    // Same light-gray fix as checkInBadgesButton above (see its comment) —
+    // black border/transparent fill was invisible against the dark navy
+    // card in dark mode. Covers both the live "Check In" pill and (via
     // [checkInButton, checkedInPill]) the "Checked in" completed pill.
-    borderColor: '#000000',
+    backgroundColor: '#E5E7EB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
   },
   checkInButtonDisabled: {
     opacity: 0.6,

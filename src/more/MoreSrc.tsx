@@ -572,7 +572,10 @@ const MoreSrc = memo(() => {
             activeOpacity={0.7}
             onPress={onLogout}
             disabled={isSigningOut}
-            style={[styles.logoutRow, {opacity: isSigningOut ? 0.6 : 1}]}>
+            style={[
+              styles.logoutRow,
+              {opacity: isSigningOut ? 0.6 : 1},
+            ]}>
             {/* REDESIGN — dropped the gray circle wrap (logoutIconWrap) to
                 match every other row above, which switched to a plain
                 unwrapped icon glyph (see ButtonOptional.tsx). */}
@@ -608,9 +611,17 @@ const themedStyles = StyleService.create({
     marginBottom: 48,
   },
   application: {},
+  // Matches ButtonOptional's own container style (see that file's comment)
+  // so the sign-out row reads as one more full-width white card in the
+  // same stack, not a leftover flat row underneath a list of cards.
   logoutRow: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
+    backgroundColor: 'background-basic-color-2',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginTop: 10,
   },
 });

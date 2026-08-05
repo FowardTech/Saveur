@@ -33,6 +33,9 @@
   "color-warning-default": "#FE9870",
   "text-success-color-100": "#00D65B",
   "text-completed-color": "#0EAD69",
+  "color-success-500": "#6EE7B7",
+  "color-success-600": "#4ADE9C",
+  "color-success-700": "#22C482",
   "text-twitter-color": "#53D0EC",
   "border-card-default": "#3A3A57",
   "color-accent-purple-bg": "#2A2140"
