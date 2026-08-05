@@ -29,13 +29,15 @@
                                     <accessibilityTraits key="traits" image="YES" notEnabled="YES"/>
                                 </accessibility>
                             </imageView>
-                            <!-- Same footer credit line as LaunchScreen.storyboard, same
-                                 color-basic-600 (#9393AA) tone, so the handoff between the two
-                                 storyboards is invisible to the user. -->
+                            <!-- Same footer credit line as LaunchScreen.storyboard, same white
+                                 (back to matching that file's restored blue background — see
+                                 the git history on this comment and on LaunchScreen.storyboard's
+                                 equivalent label), so the handoff between the two storyboards is
+                                 invisible to the user. -->
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Powered By Foward Technologies Inc." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="MN2-I3-ftu">
                                 <rect key="frame" x="0.0" y="626" width="375" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="0.576471" green="0.576471" blue="0.666667" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
@@ -58,7 +60,7 @@
     <resources>
         <image name="BootSplashLogo-32fdd7" width="100" height="92"/>
         <namedColor name="BootSplashBackground-32fdd7">
-            <color red="0.956862745098039" green="0.956862745098039" blue="0.956862745098039" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.000000000000000" green="0.388235294117647" blue="0.972549019607843" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>

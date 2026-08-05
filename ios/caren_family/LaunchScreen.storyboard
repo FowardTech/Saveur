@@ -43,25 +43,29 @@
                                     <constraint firstAttribute="height" constant="103" id="hRt-fc-9pQ"/>
                                 </constraints>
                             </imageView>
-                            <!-- Was white text (red="1" green="1" blue="1") — fine on the old
-                                 blue background, invisible once the background became light
-                                 gray. color-basic-600 (#9393AA, the app's own "placeholder"
-                                 gray token — see constants/theme/appTheme.json/light.json's
-                                 text-placeholder-color) keeps this readable but still
-                                 de-emphasized as a footer credit line. -->
+                            <!-- Product request ("I want the Saveur app icon to be the default
+                                 app blue background and the S shaped design in the middle to
+                                 be color white... the splashscreen will have to change back to
+                                 blue background") — back to white (red="1" green="1" blue="1"),
+                                 same as this file's own original color before the brief
+                                 light-gray/gray-text phase (see the git history on this
+                                 comment). White reads clearly against the restored blue
+                                 background below; the gray-basic-600 tone only existed to stay
+                                 readable against light gray. -->
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Powered By Foward Technologies Inc." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="MN2-I3-ftu">
                                 <rect key="frame" x="0.0" y="626" width="375" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
-                                <color key="textColor" red="0.576471" green="0.576471" blue="0.666667" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
-                        <!-- Was brand blue (#0063f8) — changed to the same very light gray
-                             baked into assets/images/applogo.png (#F4F4F4) so the new blue
-                             "S" mark (SplashLogo, regenerated from applogo.png) is actually
-                             visible instead of a blue-on-blue mark. See android/.../colors.xml's
+                        <!-- Product request — back to brand blue (#0063f8), same as this
+                             screen's own history before the brief "logo mark is blue, needs a
+                             light background" phase (see git history on this comment). The
+                             logo mark itself (SplashLogoV2) has been recolored white to read
+                             against this blue fill. See android/.../colors.xml's
                              splash_background for the equivalent Android change. -->
-                        <color key="backgroundColor" red="0.956863" green="0.956863" blue="0.956863" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="0.000000" green="0.388235" blue="0.972549" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="Bcu-3y-fUS" firstAttribute="bottom" secondItem="MN2-I3-ftu" secondAttribute="bottom" constant="20" id="OZV-Vh-mqD"/>
                             <constraint firstItem="Bcu-3y-fUS" firstAttribute="centerX" secondItem="GJd-Yh-RWb" secondAttribute="centerX" id="Q3B-4B-g5h"/>

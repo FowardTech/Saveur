@@ -5,11 +5,13 @@
          (near-black in dark mode, which is what showed up as a black splash
          on-device) instead of a deliberate brand color.
 
-         Changed from solid brand blue (#0063f8) to this very light gray
-         (product request: new logo is a blue mark meant to sit on a light
-         background — the exact #F4F4F4 baked into assets/images/applogo.png
-         itself, so the splash/icon background matches the source art
-         pixel-for-pixel with no visible seam) — a blue mark would have been
-         invisible against the old blue splash. -->
-    <color name="splash_background">#F4F4F4</color>
+         Was changed from flat brand blue (#0063f8) to a light gray (#F4F4F4)
+         when the logo mark was blue (a blue mark would have disappeared
+         against a blue splash). Product request ("I want the Saveur app
+         icon to be the default app blue background and the S shaped design
+         in the middle to be color white... the splashscreen will have to
+         change back to blue background") — back to brand blue now that the
+         mark itself has been recolored white (assets/bootsplash/logo*.png,
+         ic_launcher_foreground.png) to read against it. -->
+    <color name="splash_background">#0063f8</color>
 </resources>

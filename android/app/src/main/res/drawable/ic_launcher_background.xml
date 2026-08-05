@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Adaptive-icon background layer — very light gray (#F4F4F4), matching
-     the app's splash screen background (see values/colors.xml's
-     splash_background) so the launcher icon and splash feel like one
-     continuous brand mark. Changed from flat brand blue: the current logo
-     mark (ic_launcher_foreground) is itself blue, so it needs a light
-     background to read against instead of disappearing into a blue-on-blue
-     icon. -->
+<!-- Adaptive-icon background layer — product request ("I want the Saveur
+     app icon to be the default app blue background and the S shaped design
+     in the middle to be color white"): back to flat brand blue (#0063f8),
+     matching values/colors.xml's splash_background. ic_launcher_foreground
+     (the S mark) is now white so it reads clearly against this blue fill —
+     the previous light-gray background existed specifically because the
+     mark used to be blue too (blue-on-blue would have disappeared); now
+     that the mark itself is white, that's no longer a concern. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#F4F4F4" />
+    <solid android:color="#0063f8" />
 </shape>
