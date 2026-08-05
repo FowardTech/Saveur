@@ -1,5 +1,6 @@
 import i18n from 'i18next';
 import apiClient from './apiClient';
+import { ResumeSections } from './resumeGenerationService';
 
 function currentLanguage(): string {
   return i18n.language || 'en';
@@ -14,22 +15,60 @@ function currentLanguage(): string {
 // ---------------------------------------------------------------------------
 
 export interface CoverLetterInput {
-  company: string;
-  role: string;
+  // Both optional (product follow-up — JDAnalyzer's "Generate Cover
+  // Letter" card no longer makes the user retype the company/role/hiring
+  // manager the pasted JD already names; see JDCoverLetterGenerator.tsx).
+  // The backend requires at least one of company/role/jdText — CANNOT all
+  // be empty — and reads company/role out of jdText itself when they're
+  // left blank. CoverLetterGenerator.tsx's general-purpose flow still
+  // always supplies both explicitly, unaffected by this being optional.
+  company?: string;
+  role?: string;
   hiringManager?: string;
   jdText?: string;
+  // The exact resume to write the letter from — e.g. the one just tailored
+  // for this job by GenerateResume.tsx, still held in that screen's local
+  // state (tailored resumes were never persisted anywhere the server could
+  // find on its own — see JDCoverLetterGenerator.tsx's comment). Omitted =
+  // server falls back to the caller's stored primary resume, same as
+  // before this field existed.
+  resumeSections?: ResumeSections | null;
 }
 
-/** Throws on failure (network/provider error, or missing company/role) so the
- * screen can show a real error instead of silently producing nothing. */
+// Mirrors resumeService.ts's private toSectionsWire — kept here too since
+// that one isn't exported and this is the only other place a ResumeSections
+// object needs to go out over the wire in snake_case.
+function toWire(sections: ResumeSections): Record<string, unknown> {
+  return {
+    contact: sections.contact,
+    summary: sections.summary,
+    core_skills: sections.coreSkills,
+    certifications: sections.certifications,
+    experience: sections.experience.map(e => ({
+      title: e.title, company: e.company, location: e.location,
+      start: e.start, end: e.end, bullets: e.bullets,
+    })),
+    education: sections.education,
+    projects: sections.projects,
+    volunteer: sections.volunteer,
+    awards: sections.awards,
+    languages: sections.languages,
+    references: sections.references,
+    suggested_keywords: sections.suggestedKeywords,
+  };
+}
+
+/** Throws on failure (network/provider error, or missing company/role/JD) so
+ * the screen can show a real error instead of silently producing nothing. */
 export async function generateCoverLetter(input: CoverLetterInput): Promise<string> {
   const { data } = await apiClient.post<{ cover_letter?: string; error?: string; detail?: string }>(
     '/api/v1/resume/cover-letter',
     {
-      company: input.company,
-      role: input.role,
+      company: input.company || '',
+      role: input.role || '',
       hiring_manager: input.hiringManager || '',
       jd_text: input.jdText || '',
+      resume: input.resumeSections ? toWire(input.resumeSections) : undefined,
       language: currentLanguage(),
     },
   );

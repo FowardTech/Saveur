@@ -130,13 +130,24 @@ export type RootStackParamList = {
     useStoredResume?: boolean;
     existingResumeDocumentId?: string;
   };
-  // AI Cover Letter Generator — see services/coverLetterService.ts and
-  // src/more/CoverLetterGenerator.tsx. Reachable from ResumeBuilder ("Generate
-  // Cover Letter") and JDAnalyzer (tailored to the pasted JD, once analyzed).
+  // AI Cover Letter Generator (general-purpose) — see
+  // services/coverLetterService.ts and src/more/CoverLetterGenerator.tsx.
+  // Reachable from ResumeBuilder ("Generate Cover Letter") only — any
+  // company/role/hiring manager, typed in by hand. JDAnalyzer no longer
+  // routes here (see JDCoverLetterGenerator below).
   CoverLetterGenerator: {
     role?: string;
     company?: string;
     jdText?: string;
+  };
+  // JD Analyzer's "Generate Cover Letter" card (product request item — "the
+  // JD is already pasted, it should just generate the cover letter" rather
+  // than making the user retype company/role/hiring manager) — see
+  // src/more/JDCoverLetterGenerator.tsx. Generates immediately on mount
+  // from `jdText` alone; the backend infers company/role from it and the
+  // caller's own stored resume, no separate input form.
+  JDCoverLetterGenerator: {
+    jdText: string;
   };
   // AI Weekly Career Report — see services/careerReportService.ts and
   // src/more/WeeklyCareerReport.tsx. Reachable from the Home dashboard.

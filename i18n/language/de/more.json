@@ -314,6 +314,8 @@
   "import_option_transcript": "Notenübersicht",
   "jd_analyzer": "Stellenanzeigen-Analyse",
   "jd_analyzer_pro_gate_description": "Füge eine Stellenbeschreibung ein und sieh, wie gut dein Lebenslauf dazu passt, inklusive eines passenden, für dich erstellten Lebenslaufs — JD Analyzer ist eine Pro-Funktion.",
+  "jd_cover_letter_generating": "Dein Anschreiben für diesen Job wird verfasst…",
+  "jd_cover_letter_title": "Anschreiben",
   "jd_placeholder": "Füge hier die vollständige Stellenanzeige ein…",
   "jd_url_empty_result": "Versuche stattdessen, den Text der Stellenbeschreibung einzufügen.",
   "jd_url_fetch_failed": "Diese Stellenanzeige konnte nicht gelesen werden",

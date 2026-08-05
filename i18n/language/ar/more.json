@@ -314,6 +314,8 @@
   "import_option_transcript": "كشف الدرجات",
   "jd_analyzer": "محلل الوظائف",
   "jd_analyzer_pro_gate_description": "الصق وصف وظيفة وشاهد مدى تطابق سيرتك الذاتية معه، مع سيرة ذاتية مخصصة يتم إنشاؤها لك — محلل الوظائف ميزة للمشتركين في Pro.",
+  "jd_cover_letter_generating": "جارٍ كتابة خطاب التقديم الخاص بك لهذه الوظيفة…",
+  "jd_cover_letter_title": "خطاب التقديم",
   "jd_placeholder": "الصق إعلان الوظيفة الكامل هنا…",
   "jd_url_empty_result": "حاول لصق نص الوصف الوظيفي بدلاً من ذلك.",
   "jd_url_fetch_failed": "تعذر قراءة هذه الوظيفة",

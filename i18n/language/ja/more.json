@@ -314,6 +314,8 @@
   "import_option_transcript": "成績証明書",
   "jd_analyzer": "求人内容分析ツール",
   "jd_analyzer_pro_gate_description": "求人内容を貼り付けると、あなたの履歴書がどれだけマッチするかを確認でき、あなた専用の履歴書も作成されます — JDアナライザーはProの機能です。",
+  "jd_cover_letter_generating": "この求人用のカバーレターを作成しています…",
+  "jd_cover_letter_title": "カバーレター",
   "jd_placeholder": "求人内容全体をここに貼り付けてください…",
   "jd_url_empty_result": "代わりに求人情報のテキストを貼り付けてみてください。",
   "jd_url_fetch_failed": "その求人情報を読み込めませんでした",

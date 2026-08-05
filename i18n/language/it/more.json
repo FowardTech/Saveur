@@ -314,6 +314,8 @@
   "import_option_transcript": "Trascrizione accademica",
   "jd_analyzer": "Analizzatore di annunci di lavoro",
   "jd_analyzer_pro_gate_description": "Incolla una descrizione del lavoro e scopri come si posiziona il tuo curriculum, con un curriculum su misura generato per te — JD Analyzer è una funzione Pro.",
+  "jd_cover_letter_generating": "Stiamo scrivendo la tua lettera di presentazione per questo lavoro…",
+  "jd_cover_letter_title": "Lettera di presentazione",
   "jd_placeholder": "Incolla qui l'intero annuncio di lavoro…",
   "jd_url_empty_result": "Prova invece a incollare il testo dell'annuncio di lavoro.",
   "jd_url_fetch_failed": "Impossibile leggere questo annuncio di lavoro",

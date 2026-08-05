@@ -314,6 +314,8 @@
   "import_option_transcript": "成绩单",
   "jd_analyzer": "职位描述分析器",
   "jd_analyzer_pro_gate_description": "粘贴职位描述，查看你的简历匹配程度，并为你生成一份匹配的简历 — JD 分析器是 Pro 功能。",
+  "jd_cover_letter_generating": "正在为这份工作撰写求职信…",
+  "jd_cover_letter_title": "求职信",
   "jd_placeholder": "在此粘贴完整的招聘信息…",
   "jd_url_empty_result": "请尝试改为粘贴职位描述文本。",
   "jd_url_fetch_failed": "无法读取该职位信息",

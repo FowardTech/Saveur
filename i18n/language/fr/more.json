@@ -314,6 +314,8 @@
   "import_option_transcript": "Relevé de notes",
   "jd_analyzer": "Analyseur d'offres d'emploi",
   "jd_analyzer_pro_gate_description": "Collez une offre d'emploi pour voir comment votre CV se compare, avec un CV adapté généré pour vous — JD Analyzer est une fonctionnalité Pro.",
+  "jd_cover_letter_generating": "Rédaction de votre lettre de motivation pour cet emploi…",
+  "jd_cover_letter_title": "Lettre de motivation",
   "jd_placeholder": "Collez ici l'offre d'emploi complète…",
   "jd_url_empty_result": "Essayez plutôt de coller le texte de la description du poste.",
   "jd_url_fetch_failed": "Impossible de lire cette offre d’emploi",

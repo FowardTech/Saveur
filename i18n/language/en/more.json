@@ -314,6 +314,8 @@
   "import_option_transcript": "Transcript",
   "jd_analyzer": "JD Analyzer",
   "jd_analyzer_pro_gate_description": "Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Pro feature.",
+  "jd_cover_letter_generating": "Writing your cover letter for this job…",
+  "jd_cover_letter_title": "Cover Letter",
   "jd_placeholder": "Paste the full job posting here…",
   "jd_url_empty_result": "Try pasting the job description text instead.",
   "jd_url_fetch_failed": "Couldn't read that job posting",

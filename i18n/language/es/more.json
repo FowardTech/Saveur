@@ -314,6 +314,8 @@
   "import_option_transcript": "Expediente académico",
   "jd_analyzer": "Analizador de ofertas de empleo",
   "jd_analyzer_pro_gate_description": "Pega una descripción de trabajo y descubre cómo se compara tu currículum, con un currículum a medida generado para ti — JD Analyzer es una función Pro.",
+  "jd_cover_letter_generating": "Redactando tu carta de presentación para este empleo…",
+  "jd_cover_letter_title": "Carta de presentación",
   "jd_placeholder": "Pega aquí la publicación completa del empleo…",
   "jd_url_empty_result": "Intenta pegar el texto de la descripción del puesto en su lugar.",
   "jd_url_fetch_failed": "No se pudo leer esa publicación de empleo",

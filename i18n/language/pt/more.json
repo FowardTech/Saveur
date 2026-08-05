@@ -314,6 +314,8 @@
   "import_option_transcript": "Histórico escolar",
   "jd_analyzer": "Analisador de vagas",
   "jd_analyzer_pro_gate_description": "Cole uma descrição de vaga e veja como seu currículo se compara, com um currículo personalizado gerado para você — o JD Analyzer é um recurso Pro.",
+  "jd_cover_letter_generating": "Escrevendo sua carta de apresentação para esta vaga…",
+  "jd_cover_letter_title": "Carta de apresentação",
   "jd_placeholder": "Cole aqui a vaga completa…",
   "jd_url_empty_result": "Tente colar o texto da descrição da vaga em vez disso.",
   "jd_url_fetch_failed": "Não foi possível ler essa vaga",

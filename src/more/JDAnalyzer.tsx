@@ -153,17 +153,17 @@ const JDAnalyzer = memo(() => {
     });
   };
 
-  // Product request item: "Cover letter too can be generated in the JD to
-  // match the job description" — CoverLetterGenerator.tsx already accepts
-  // an optional jdText route param (used nowhere before this) and blends
-  // it into the cover-letter prompt server-side (POST /resume/cover-letter
-  // already accepts jd_text) — no backend change needed, just a way to
-  // reach it from here with this JD's text pre-attached. company/role stay
-  // as manual inputs on that screen (same as this screen never collected
-  // them either) rather than trying to guess them out of raw JD text.
+  // Product request item (follow-up): "the JD is already pasted, it should
+  // just generate the cover letter" instead of sending the user to a form
+  // asking for company/role/hiring manager — see
+  // src/more/JDCoverLetterGenerator.tsx, which generates immediately on
+  // mount from `jd` alone (the backend infers company/role straight out of
+  // the JD text and writes the letter from the caller's own resume). The
+  // general-purpose CoverLetterGenerator.tsx screen — manual company/role
+  // entry, reachable from ResumeBuilder — is intentionally untouched.
   const onGenerateCoverLetter = () => {
     if (!result) return;
-    navigate('CoverLetterGenerator', { jdText: jd });
+    navigate('JDCoverLetterGenerator', { jdText: jd });
   };
 
   const onBuildResume = () => {
