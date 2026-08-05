@@ -61,9 +61,29 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
     setText(combined);
   }, [stt.transcript, stt.isListening]);
 
+  // BUG FIX (product report: "speak to the mic and click submit, nothing
+  // happens"): speechService.useSpeechToText()'s stop() sets isListening
+  // to false BEFORE it commits the final recognized transcript (it has to
+  // await Voice.stop() first) — so by the time the final transcript
+  // actually lands in stt.transcript, the live-sync effect above has
+  // already bailed out on its `if (!stt.isListening) return` guard, and
+  // the last thing the user said right before stopping never reaches
+  // `text` at all. stop() already returns the fully-committed transcript
+  // directly (transcriptRef.current, not the possibly-stale state) for
+  // exactly this reason — using that return value instead of relying on
+  // the reactive effect is what actually fixes it.
+  const finalizeListening = async (): Promise<string> => {
+    const finalTranscript = await stt.stop();
+    const combined = textBeforeListeningRef.current
+      ? `${textBeforeListeningRef.current} ${finalTranscript}`.trim()
+      : finalTranscript.trim();
+    setText(combined);
+    return combined;
+  };
+
   const onToggleMic = async () => {
     if (stt.isListening) {
-      await stt.stop();
+      await finalizeListening();
       return;
     }
     textBeforeListeningRef.current = text;
@@ -72,9 +92,17 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
   };
 
   const onPressSubmit = async () => {
-    const trimmed = text.trim();
+    // Also fixes: tapping Submit immediately after speaking (no natural
+    // pause long enough for a mid-session commit) used to read `text`
+    // BEFORE stopping the mic at all — while still listening, `text` can
+    // genuinely still be '' (see useSpeechToText's own comment: the
+    // transcript state only updates at session-end/pause boundaries, not
+    // per word), so this silently no-op'd on `if (!trimmed) return`
+    // whenever a check-in was answered as one continuous sentence. Stop
+    // and finalize FIRST, then decide whether there's anything to submit.
+    const finalText = stt.isListening ? await finalizeListening() : text;
+    const trimmed = finalText.trim();
     if (!trimmed || isSubmitting) return;
-    if (stt.isListening) await stt.stop();
     setIsSubmitting(true);
     try {
       await onSubmit(trimmed);
@@ -163,7 +191,16 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
 
           <CtaButton
             style={{ marginTop: 20 }}
-            disabled={!text.trim() || isSubmitting}
+            // Was `!text.trim()` unconditionally — while actively
+            // listening, `text` can genuinely still be empty (see
+            // useSpeechToText's own comment: transcript state only
+            // updates at session-end/pause boundaries, not per word), so
+            // this disabled the button entirely for anyone who spoke one
+            // continuous sentence and tapped Submit without a mid-answer
+            // pause first — the tap never even reached onPressSubmit. The
+            // real emptiness check now happens inside onPressSubmit AFTER
+            // finalizing the mic, using the actual final transcript.
+            disabled={(!stt.isListening && !text.trim()) || isSubmitting}
             loading={isSubmitting}
             onPress={onPressSubmit}>
             {t('common:submit', { defaultValue: 'Submit' })}
