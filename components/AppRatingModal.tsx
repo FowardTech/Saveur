@@ -1,12 +1,11 @@
 import React, { memo } from 'react';
-import { Modal, TouchableOpacity, View } from 'react-native';
-import { Icon, Input, useTheme } from '@ui-kitten/components';
+import { Image, Modal, TouchableOpacity, View } from 'react-native';
+import { Icon, useTheme } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 
 import Text from './Text';
 import Flex from './Flex';
-import { globalStyle } from 'styles/globalStyle';
-import CtaButton from 'components/CtaButton';
+import { Images } from 'assets/images';
 
 interface Props {
   visible: boolean;
@@ -14,34 +13,32 @@ interface Props {
   onDismiss: () => void;
 }
 
-// Regular (product-configured, default every 30 days — see
-// Saveur-Backend's app_config_service.py's "app_rating" section) QA rating
-// prompt: "how is Saveur helping you achieve your goals" on a 1-5 star
-// scale plus an optional free-text comment. Centered dialog rather than the
-// bottom-sheet pattern AvatarPickerModal/ResumeBuilder's document pickers
-// use — this is a single-focus prompt, not a list to scroll/pick from.
+// Redesign (product reference — a minimal MyFitnessPal-style prompt: app
+// icon, "Enjoying <App>? Tap a star to rate it on the App Store", a plain
+// star row, one "Not Now" button): was a heavier dialog with its own
+// title/subtitle copy, a free-text comment box, and a separate "Submit
+// Rating" button below the stars (see the superseded version this
+// replaced). Tapping a star now submits immediately — the "tap a star"
+// copy above it IS the instruction, so a second confirmation step is
+// redundant. The comment box is gone entirely; this app doesn't route
+// through the native App Store review sheet (no live App Store listing
+// yet), so submitting still quietly records the score for the admin's QA
+// view (services/appRatingService.ts), just without asking for extra
+// typing first.
 const AppRatingModal = memo(({ visible, onSubmit, onDismiss }: Props) => {
   const theme = useTheme();
   const { t } = useTranslation(['common']);
-  const [score, setScore] = React.useState(0);
-  const [comment, setComment] = React.useState('');
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Reset local state each time the modal is (re)shown, not just on first
-  // mount — this component stays mounted (see HomeSrc.tsx) and is only
-  // toggled visible/invisible.
   React.useEffect(() => {
-    if (visible) {
-      setScore(0);
-      setComment('');
-    }
+    if (visible) setIsSubmitting(false);
   }, [visible]);
 
-  const onPressSubmit = async () => {
-    if (score === 0 || isSubmitting) return;
+  const onPressStar = async (score: number) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await onSubmit(score, comment);
+      await onSubmit(score);
     } finally {
       setIsSubmitting(false);
     }
@@ -51,68 +48,42 @@ const AppRatingModal = memo(({ visible, onSubmit, onDismiss }: Props) => {
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onDismiss}>
       <View style={styles.backdrop}>
         <View style={[styles.card, { backgroundColor: theme['background-basic-color-1'] }]}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={onDismiss}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Icon
-              pack="eva"
-              name="close-outline"
-              style={[globalStyle.icon24, { tintColor: theme['text-hint-color'] }]}
-            />
-          </TouchableOpacity>
+          <View style={styles.iconWrap}>
+            <Image source={Images.logoMark} resizeMode="contain" style={styles.icon} />
+          </View>
 
-          <Text category="h6" bold center mb={8}>
-            {t('common:rating_modal_title', { defaultValue: 'How is Saveur helping you?' })}
+          <Text category="h7" bold center mt={16}>
+            {t('common:rating_modal_title', { defaultValue: 'Enjoying Saveur?' })}
           </Text>
-          <Text category="h9-s" status="placeholder" center mb={20}>
+          <Text category="h9-s" status="placeholder" center mt={6} mb={20}>
             {t('common:rating_modal_subtitle', {
-              defaultValue:
-                "Rate how well Saveur is helping you reach your career goals. It only takes a second, and it genuinely shapes what we build next.",
+              defaultValue: 'Tap a star to rate it on the App Store.',
             })}
           </Text>
 
-          <Flex justify="center" mb={20}>
+          <Flex justify="center" mb={24}>
             {[1, 2, 3, 4, 5].map(n => (
               <TouchableOpacity
                 key={n}
-                onPress={() => setScore(n)}
+                disabled={isSubmitting}
+                onPress={() => onPressStar(n)}
                 hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
-                style={{ marginHorizontal: 4 }}>
+                style={{ marginHorizontal: 6, opacity: isSubmitting ? 0.5 : 1 }}>
                 <Icon
                   pack="eva"
-                  name={n <= score ? 'star' : 'star-outline'}
-                  style={{
-                    width: 32,
-                    height: 32,
-                    tintColor: n <= score ? theme['color-warning-500'] : theme['text-hint-color'],
-                  }}
+                  name="star-outline"
+                  style={{ width: 32, height: 32, tintColor: theme['color-primary-500'] }}
                 />
               </TouchableOpacity>
             ))}
           </Flex>
 
-          <Input
-            multiline
-            placeholder={t('common:rating_modal_comment_placeholder', {
-              defaultValue: 'Anything specific we should know? (optional)',
-            })}
-            value={comment}
-            onChangeText={setComment}
-            style={styles.commentInput}
-            textStyle={styles.commentInputInner}
-          />
-
-          <CtaButton
-            style={{ marginTop: 20 }}
-            disabled={score === 0 || isSubmitting}
-            loading={isSubmitting}
-            onPress={onPressSubmit}>
-            {t('common:rating_modal_submit', { defaultValue: 'Submit Rating' })}
-          </CtaButton>
-          <TouchableOpacity onPress={onDismiss} disabled={isSubmitting} style={{ marginTop: 12 }}>
-            <Text category="h9-s" status="placeholder" center>
-              {t('common:rating_modal_later', { defaultValue: 'Maybe later' })}
+          <TouchableOpacity
+            style={[styles.notNowButton, { backgroundColor: theme['background-basic-color-3'] }]}
+            disabled={isSubmitting}
+            onPress={onDismiss}>
+            <Text category="h9" bold center>
+              {t('common:rating_modal_later', { defaultValue: 'Not Now' })}
             </Text>
           </TouchableOpacity>
         </View>
@@ -133,19 +104,26 @@ const styles = {
   },
   card: {
     width: '100%' as const,
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
+    alignItems: 'center' as const,
   },
-  closeButton: {
-    alignSelf: 'flex-end' as const,
-    marginBottom: 4,
+  iconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    backgroundColor: '#0063f8',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
   },
-  commentInput: {
+  icon: {
+    width: 40,
+    height: 40,
+  },
+  notNowButton: {
+    width: '100%' as const,
     borderRadius: 12,
-    minHeight: 80,
-  },
-  commentInputInner: {
-    minHeight: 60,
-    textAlignVertical: 'top' as const,
+    paddingVertical: 14,
+    alignItems: 'center' as const,
   },
 };

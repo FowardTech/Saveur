@@ -40,6 +40,20 @@ export enum EKeyAsyncStorage {
   // course completion is no longer one of the trigger conditions at all.
   hasPromptedAppReview = 'hasPromptedAppReview',
   completedInterviewCount = 'completedInterviewCount',
+  // BUG FIX (product report: "the rating is not showing" — this milestone
+  // system used to call Linking.openURL straight to the App Store/Play
+  // Store the instant a milestone hit (see utils/appRating.ts), which is a
+  // silent permanent no-op on iOS until an admin configures a real App
+  // Store Connect id (this app isn't published yet) and, even once it is,
+  // is a jarring "leaves the app" redirect rather than the actual in-app
+  // rating modal (components/AppRatingModal.tsx) this app already has and
+  // that the product reference screenshot shows. utils/appRating.ts's 3
+  // milestone functions now just set this flag instead of opening a URL;
+  // HomeSrc.tsx's rating-prompt check (re-run on every Home focus, not
+  // just app-session mount) shows the real in-app modal as soon as it sees
+  // this flag OR the server's own periodic due-check, whichever comes
+  // first.
+  ratingPromptQueued = 'ratingPromptQueued',
   // Referral code captured from a saveur://referral deep link, held until
   // the next POST /users/me (sync) sends it as referred_by_code — see
   // services/referralService.ts.

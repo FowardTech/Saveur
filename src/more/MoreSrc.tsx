@@ -488,7 +488,7 @@ const MoreSrc = memo(() => {
           email={profile?.email ?? ''}
         />
         <View style={styles.details}>
-          <Text category="h6" bold>
+          <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:myDetails')}
           </Text>
           {DATA_DETAILS.map((item, i) => {
@@ -509,7 +509,7 @@ const MoreSrc = memo(() => {
           })}
         </View>
         <View style={styles.application}>
-          <Text category="h6" bold>
+          <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:application')}
           </Text>
           {DATA_APPLICATION.map((item, i) => {
@@ -607,20 +607,39 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
 
+  // Product follow-up correction: "the settings items should have full
+  // width from left to right covering the full width of the screen" —
+  // Content's `padder` puts a 24px horizontal margin around this whole
+  // screen (including the "My Details"/"Application" headings, which
+  // should stay inset), so the item rows inside these two wrappers need to
+  // bleed back out past that margin to actually reach the physical screen
+  // edges. marginHorizontal: -24 exactly cancels Content's padding for
+  // everything inside these two Views; ButtonOptional's own row/
+  // logoutRow below then use their own paddingHorizontal so the icon/text
+  // isn't flush against the true edge.
   details: {
+    marginHorizontal: -24,
     marginBottom: 48,
   },
-  application: {},
+  application: {
+    marginHorizontal: -24,
+  },
+  // The "My Details"/"Application" headings above the row list are direct
+  // children of the now-bled-out `details`/`application` Views, so without
+  // this they'd bleed out to the physical screen edge right along with the
+  // rows -- this puts that same 24px page inset back, just on the heading.
+  sectionHeading: {
+    paddingHorizontal: 24,
+  },
   // Matches ButtonOptional's own container style (see that file's comment)
-  // so the sign-out row reads as one more full-width white card in the
-  // same stack, not a leftover flat row underneath a list of cards.
+  // so the sign-out row reads as one more full-width row in the same
+  // stack, not a leftover flat row underneath the list above it.
   logoutRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 10,
   },

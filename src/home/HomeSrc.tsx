@@ -149,21 +149,37 @@ const HomeSrc = memo(() => {
 
   // Regular QA rating prompt (product request item: "a regular if not
   // weekly or monthly app rating that will pop up as modal... for quality
-  // assurance purposes") — due-ness is decided server-side (see
-  // services/appRatingService.ts's isRatingPromptDue, backed by
-  // Saveur-Backend's admin-configurable interval, default 30 days), so
-  // this only needs to ask once. Checked once on mount, not
-  // useFocusEffect like the AppTour check above — re-checking on every tab
-  // switch back to Home within the same session would be wasted calls (the
-  // due-check itself won't flip from true to false without a submit/
-  // dismiss in between) and risks the modal popping back up mid-session if
-  // some other flow re-focuses Home.
+  // assurance purposes", PLUS "the rating should pop up after a user have
+  // completed 5 interviews or has applied to at least 1 job or has just
+  // finished a conversation with the AI coach") — two independent signals
+  // decide whether to show this: the server's own periodic due-check
+  // (services/appRatingService.ts's isRatingPromptDue, admin-configurable
+  // interval, default 30 days) for the "regular" cadence, OR a local flag
+  // (EKeyAsyncStorage.ratingPromptQueued) that utils/appRating.ts's three
+  // milestone functions set the instant one of those three conditions
+  // fires, for the "right after a real accomplishment" cadence. BUG FIX
+  // (product report: "the rating is not showing"): was checked once on
+  // raw mount only — a milestone reached mid-session (e.g. finishing the
+  // 5th interview while already sitting on Home from earlier) would queue
+  // the local flag but nothing would ever re-read it. Re-checking via
+  // useFocusEffect (same pattern as the AppTour check above) means landing
+  // back on Home right after any of these actions actually shows it.
   const [showRatingPrompt, setShowRatingPrompt] = React.useState(false);
-  React.useEffect(() => {
-    appRatingService.isRatingPromptDue().then(due => {
-      if (due) setShowRatingPrompt(true);
-    });
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      if (showRatingPrompt) return; // already showing -- don't re-check mid-display
+      (async () => {
+        const queued = (await AsyncStorage.getItem(EKeyAsyncStorage.ratingPromptQueued)) === 'true';
+        if (queued) {
+          setShowRatingPrompt(true);
+          return;
+        }
+        const due = await appRatingService.isRatingPromptDue();
+        if (due) setShowRatingPrompt(true);
+      })();
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []),
+  );
   const onSubmitRating = React.useCallback(async (score: number, comment?: string) => {
     try {
       await appRatingService.submitRating(score, comment);
@@ -172,6 +188,7 @@ const HomeSrc = memo(() => {
       // just retry, rather than silently losing the rating they were
       // trying to send.
       setShowRatingPrompt(false);
+      AsyncStorage.removeItem(EKeyAsyncStorage.ratingPromptQueued).catch(() => {});
     } catch (e: any) {
       Alert.alert(
         t('common:rating_submit_failed_title', { defaultValue: "Couldn't send your rating" }),
@@ -182,6 +199,7 @@ const HomeSrc = memo(() => {
   const onDismissRating = React.useCallback(() => {
     setShowRatingPrompt(false);
     appRatingService.dismissRatingPrompt().catch(() => { });
+    AsyncStorage.removeItem(EKeyAsyncStorage.ratingPromptQueued).catch(() => {});
   }, []);
 
   // Daily career-goal check-in (product request item): on login, ask

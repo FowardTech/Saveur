@@ -1,74 +1,46 @@
-import {Linking, Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {EKeyAsyncStorage} from 'constants/Types';
-import * as configService from 'services/configService';
 
 // ---------------------------------------------------------------------------
-// App Store / Play Store review prompt.
+// In-app rating prompt milestone triggers.
 //
-// BUG FIX (product report: "Ratings is not working well. The rating should
-// pop up after a user have completed 5 interviews or has applied to at
-// least 1 job or has just finished a conversation with the AI coach") —
-// this used to fire after the user's first completed mock interview OR
-// first completed course, whichever happened first. That's replaced
-// entirely by the three conditions above (course completion is no longer
-// one of them at all). Whichever condition is met first still only ever
-// prompts once total — repeatedly nagging for a rating is against both
-// platforms' review guidelines and is just bad UX.
-//
-// ios_app_store_id / android_package_name are admin-configurable (product
-// request item) — see services/configService.ts's StoreConfig and
-// saveur-backend's app_config_service.py's "store" section. Used to be
-// hardcoded constants here, which meant the iOS review prompt could only
-// ever start working after someone edited this file and shipped a new app
-// release, once the App Store Connect listing existed. Now an admin pastes
-// the numeric Apple ID into the dashboard the moment the app goes live — no
-// release needed. Still a safe no-op on iOS until that id is set, same
-// fail-open behavior as before.
-//
-// Deliberately uses Linking to the store listing rather than the native
-// in-app review popup (SKStoreReviewController on iOS / Play In-App Review
-// API on Android, as wrapped by libraries like react-native-in-app-review).
-// This app is React Native's New Architecture only, and none of the
-// community wrappers for that native popup have a confirmed-compatible
-// release for New Architecture as of this writing — adding one blind, with
-// no way to actually build/test it from here, risked breaking the native
-// build over a UX nicety. Linking needs no native module at all and always
-// works, at the cost of leaving the app instead of showing a modal. Swap in
-// a native in-app-review library later once you've verified it builds
-// cleanly against this project's New Architecture setup.
+// Product request: "the rating should pop up after a user have completed 5
+// interviews or has applied to at least 1 job or has just finished a
+// conversation with the AI coach". This used to open the platform App
+// Store/Play Store review page directly via Linking the instant a milestone
+// hit — a silent permanent no-op on iOS until an admin configures a real
+// App Store Connect id in services/configService.ts's StoreConfig (this app
+// isn't published yet, so that id has never been set), and even once
+// published, a jarring "leaves the app" redirect rather than the polished
+// in-app modal (components/AppRatingModal.tsx) this app already has and
+// that the product reference design shows (a centered card: icon, "Enjoying
+// Saveur?", star row, "Not Now"). BUG FIX (product report: "the rating is
+// not showing"): these three functions now just queue a local flag instead
+// of calling Linking.openURL — HomeSrc.tsx's rating-prompt check (re-run on
+// every Home focus, not just once per app session) shows the real in-app
+// modal as soon as it sees this flag, independent of whatever the server's
+// own periodic due-check (services/appRatingService.ts) says. Whichever
+// condition is met first still only ever queues once total (hasPromptedAppReview
+// guards that) — repeatedly nagging for a rating is against both platforms'
+// review guidelines and is just bad UX.
 // ---------------------------------------------------------------------------
-
-function storeReviewUrl(): string | null {
-  const store = configService.getCachedConfig().store;
-  if (Platform.OS === 'ios') {
-    if (!store.ios_app_store_id) return null;
-    return `itms-apps://itunes.apple.com/app/id${store.ios_app_store_id}?action=write-review`;
-  }
-  return `market://details?id=${store.android_package_name || 'com.saveur.app'}`;
-}
 
 async function hasPromptedAlready(): Promise<boolean> {
   return (await AsyncStorage.getItem(EKeyAsyncStorage.hasPromptedAppReview)) === 'true';
 }
 
 /**
- * Opens the platform store's review page, but only the very first time this
- * is ever called for the account (subsequent calls, from either milestone,
- * are a no-op). Never throws — a failure here should never affect whatever
- * real feature flow triggered it.
+ * Queues the in-app rating modal to show next time HomeSrc checks (see its
+ * own comment), but only the very first time this is ever called for the
+ * account (subsequent calls, from either milestone, are a no-op). Never
+ * throws — a failure here should never affect whatever real feature flow
+ * triggered it.
  */
 async function maybePromptForReview(): Promise<void> {
   try {
     if (await hasPromptedAlready()) return;
-    const url = storeReviewUrl();
-    if (!url) return; // iOS: no App Store ID configured yet (app not published)
     await AsyncStorage.setItem(EKeyAsyncStorage.hasPromptedAppReview, 'true');
-    // Small delay so this doesn't collide with whatever success screen/toast
-    // is already appearing right as the milestone completes.
-    setTimeout(() => {
-      Linking.openURL(url).catch(() => {});
-    }, 800);
+    await AsyncStorage.setItem(EKeyAsyncStorage.ratingPromptQueued, 'true');
   } catch {
     // Swallow — see doc comment above.
   }

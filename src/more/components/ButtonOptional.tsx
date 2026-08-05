@@ -153,23 +153,22 @@ const ButtonOptional = ({
 export default ButtonOptional;
 
 const themedStyles = StyleService.create({
-  // Product request: "the settings container should be full width and then
-  // give each settings item a white background" — was a flat, backgroundless
-  // row separated only by a bottom hairline (see the superseded comment this
-  // replaced) and the mt={24} gap on the Flex above. Now each row is its own
-  // full-width white (theme-adaptive 'background-basic-color-2' — the same
-  // card token used app-wide, e.g. HomeSrc.tsx's checkInCard/leaderboardCard,
-  // so this reads correctly in dark mode too, going navy instead of white)
-  // rounded card, stacked with a small marginTop gap instead of a border —
-  // the gap + background contrast against the page is what separates rows
-  // now, so the old hairline is gone (would look redundant/cluttered between
-  // two white cards). width:'100%' makes sure the card always spans the full
-  // content width rather than just hugging its icon+label content.
+  // Product follow-up correction: "the settings items should have full
+  // width from left to right covering the full width of the screen and
+  // remove the border radius" — the first pass still respected the page's
+  // 24px side margin (Content's `padder`) and had rounded corners, reading
+  // as a rounded card floating on the page rather than a true edge-to-edge
+  // row. borderRadius is gone (square corners), and the actual edge-to-edge
+  // bleed past that 24px page margin is done by the parent `details`/
+  // `application` wrappers in MoreSrc.tsx (marginHorizontal: -24, see that
+  // file's comment) — width:'100%' here just means "fill whatever width
+  // that now-wider parent gives me", so this row ends up flush with the
+  // physical screen edges on both sides. paddingHorizontal keeps the
+  // icon/text from sitting flush against those edges themselves.
   container: {
     width: '100%',
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 10,
   },
