@@ -45,6 +45,13 @@ const GOALS = [
   { titleKey: "auth:goal_return_to_work", defaultValue: "Return to Work", icon: "log-in-outline" },
   { titleKey: "auth:goal_internship", defaultValue: "Internship / Grad Job", icon: "book-open-outline" },
   { titleKey: "auth:goal_executive", defaultValue: "Executive Move", icon: "star-outline" },
+  // Product request item: "We need to add more goal list to the goal
+  // section" — kept in sync with the same 4 additions in
+  // src/auth/Signup/SignupFirstStep.tsx (see that file's comment).
+  { titleKey: "auth:goal_start_business", defaultValue: "Start a Business", icon: "bulb-outline" },
+  { titleKey: "auth:goal_relocate", defaultValue: "Relocate / Work Abroad", icon: "globe-outline" },
+  { titleKey: "auth:goal_grow_network", defaultValue: "Grow My Network", icon: "people-outline" },
+  { titleKey: "auth:goal_explore_options", defaultValue: "Explore My Options", icon: "compass-outline" },
 ];
 
 const ChangeCareType = () => {

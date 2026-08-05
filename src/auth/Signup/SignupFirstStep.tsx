@@ -43,6 +43,16 @@ const SignupFirstStep = memo(() => {
       {id: 3, title: t('auth:goal_return_to_work', {defaultValue: 'Return to Work'}), icon: 'log-in-outline'},
       {id: 4, title: t('auth:goal_internship', {defaultValue: 'Internship / Grad Job'}), icon: 'book-open-outline'},
       {id: 5, title: t('auth:goal_executive', {defaultValue: 'Executive Move'}), icon: 'star-outline'},
+      // Product request item: "We need to add more goal list to the goal
+      // section" — this 6-option list (unchanged since this screen
+      // shipped) didn't cover several common real career goals. Kept in
+      // sync with the same 6+4 list in src/more/ChangeCareType/index.tsx
+      // (the "change it later" equivalent of this screen) — see that
+      // file's own comment.
+      {id: 6, title: t('auth:goal_start_business', {defaultValue: 'Start a Business'}), icon: 'bulb-outline'},
+      {id: 7, title: t('auth:goal_relocate', {defaultValue: 'Relocate / Work Abroad'}), icon: 'globe-outline'},
+      {id: 8, title: t('auth:goal_grow_network', {defaultValue: 'Grow My Network'}), icon: 'people-outline'},
+      {id: 9, title: t('auth:goal_explore_options', {defaultValue: 'Explore My Options'}), icon: 'compass-outline'},
     ],
     [t],
   );
