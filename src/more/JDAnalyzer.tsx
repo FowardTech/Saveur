@@ -153,6 +153,19 @@ const JDAnalyzer = memo(() => {
     });
   };
 
+  // Product request item: "Cover letter too can be generated in the JD to
+  // match the job description" — CoverLetterGenerator.tsx already accepts
+  // an optional jdText route param (used nowhere before this) and blends
+  // it into the cover-letter prompt server-side (POST /resume/cover-letter
+  // already accepts jd_text) — no backend change needed, just a way to
+  // reach it from here with this JD's text pre-attached. company/role stay
+  // as manual inputs on that screen (same as this screen never collected
+  // them either) rather than trying to guess them out of raw JD text.
+  const onGenerateCoverLetter = () => {
+    if (!result) return;
+    navigate('CoverLetterGenerator', { jdText: jd });
+  };
+
   const onBuildResume = () => {
     Alert.alert(
       t('more:build_matching_resume_cta', { defaultValue: 'Build Resume' }),
@@ -366,6 +379,21 @@ const JDAnalyzer = memo(() => {
               <CtaButton
                 children={t('more:build_matching_resume_cta', { defaultValue: 'Build Resume' })}
                 onPress={onBuildResume}
+              />
+            </Flex>
+
+            <Flex level="2" style={styles.buildResumeCard} vertical justify="flex-start" mt={16}>
+              <Text category="h7" bold mb={4}>
+                {t('more:build_matching_cover_letter_title', { defaultValue: 'Want a cover letter for this job?' })}
+              </Text>
+              <Text category="h9-s" status="placeholder" mb={16}>
+                {t('more:build_matching_cover_letter_description', {
+                  defaultValue: "We'll draft a cover letter tailored to this job description, ready to download.",
+                })}
+              </Text>
+              <CtaButton
+                children={t('more:build_matching_cover_letter_cta', { defaultValue: 'Generate Cover Letter' })}
+                onPress={onGenerateCoverLetter}
               />
             </Flex>
           </>
