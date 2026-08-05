@@ -16,7 +16,6 @@ import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import CtaButton from 'components/CtaButton';
-import { Images } from 'assets/images';
 import ThemeContext from '../../ThemeContext';
 import Animated, {
   Extrapolation,
@@ -77,12 +76,52 @@ const Onboarding = memo(() => {
   const scrollHandler = useAnimatedScrollHandler(event => {
     translationX.value = event.contentOffset.x;
   });
+  // Product request: "replace the Saveur logo with a very good human-like
+  // image representing what each slide is talking about" (reference: a
+  // full-bleed lifestyle photo behind the headline/subtext, like the
+  // attached "Your health. Your journey." example) — was Images.logoMark
+  // (the small "S" app icon) repeated identically on all 5 slides, which
+  // doesn't say anything about what each slide is describing. One
+  // real, freely-licensed (Pexels — free to use, no attribution required:
+  // pexels.com/license) lifestyle photo per slide instead, each chosen to
+  // match that slide's specific topic rather than a generic office/laptop
+  // shot: a coaching video call for "practice interviews", a confident
+  // professional for "instant feedback", someone happily checking their
+  // phone for "job alert", a person taking working notes for "resume
+  // scanners", and a student studying online for "learn one course at a
+  // time". No image-generation tool is available in this environment, so
+  // this is real stock photography rather than AI-generated art.
   const DATA = [
-    { id: 0, title: t('intro:title_1'), subtitle: t('intro:subtitle_1') },
-    { id: 1, title: t('intro:title_2'), subtitle: t('intro:subtitle_2') },
-    { id: 2, title: t('intro:title_3'), subtitle: t('intro:subtitle_3') },
-    { id: 3, title: t('intro:title_4'), subtitle: t('intro:subtitle_4') },
-    { id: 4, title: t('intro:title_5'), subtitle: t('intro:subtitle_5') },
+    {
+      id: 0,
+      title: t('intro:title_1'),
+      subtitle: t('intro:subtitle_1'),
+      image: 'https://images.pexels.com/photos/4226122/pexels-photo-4226122.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+    },
+    {
+      id: 1,
+      title: t('intro:title_2'),
+      subtitle: t('intro:subtitle_2'),
+      image: 'https://images.pexels.com/photos/3855619/pexels-photo-3855619.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+    },
+    {
+      id: 2,
+      title: t('intro:title_3'),
+      subtitle: t('intro:subtitle_3'),
+      image: 'https://images.pexels.com/photos/6697318/pexels-photo-6697318.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+    },
+    {
+      id: 3,
+      title: t('intro:title_4'),
+      subtitle: t('intro:subtitle_4'),
+      image: 'https://images.pexels.com/photos/7059/man-people-space-desk.jpg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+    },
+    {
+      id: 4,
+      title: t('intro:title_5'),
+      subtitle: t('intro:subtitle_5'),
+      image: 'https://images.pexels.com/photos/5905707/pexels-photo-5905707.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+    },
   ];
 
   const onLogin = React.useCallback(
@@ -199,11 +238,11 @@ const Onboarding = memo(() => {
                   <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
                     {i.subtitle}
                   </Text>
-                  <View style={styles.image}>
+                  <View style={[styles.image, { backgroundColor: theme['background-basic-color-3'] }]}>
                     <Image
-                      source={Images.logoMark}
-                      resizeMode="contain"
-                      style={{ width: width * 0.3, height: width * 0.55 * (480 / 519) }}
+                      source={{ uri: i.image }}
+                      resizeMode="cover"
+                      style={{ width: width * 0.78, height: width * 0.78 * 1.15, borderRadius: 24 }}
                     />
                   </View>
                 </Animated.View>
@@ -262,9 +301,11 @@ const themedStyles = StyleService.create({
     flexGrow: 1,
   },
   image: {
-    marginVertical: 32,
+    marginVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 24,
+    overflow: 'hidden',
   },
   login: {
     flex: 1,
