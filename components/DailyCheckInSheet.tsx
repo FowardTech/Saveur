@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Modal, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import { Icon, Input, useTheme } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 
@@ -128,7 +128,22 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onDismiss}>
-      <View style={styles.backdrop}>
+      {/* BUG FIX (product report: "the touch pad [keyboard] is blocking the
+          submit button"): this card is vertically centered with no keyboard
+          awareness at all — the moment the multiline Input actually gets
+          focus (tapping into it directly, or just from the cursor landing
+          there after voice-to-text fills it in) the on-screen keyboard
+          covers the bottom of the screen including the Submit button below
+          it, with nothing to push the card up out from under it.
+          KeyboardAvoidingView's 'padding' (iOS) / 'height' (Android)
+          behavior shrinks this view's available height by the keyboard's
+          height, and since the backdrop still centers its content within
+          whatever height it has, the whole card re-centers higher up,
+          clearing the keyboard instead of sitting underneath it. */}
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={[styles.card, { backgroundColor: theme['background-basic-color-1'] }]}>
           <TouchableOpacity
             style={styles.closeButton}
@@ -211,7 +226,7 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 });
