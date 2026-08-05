@@ -23,6 +23,7 @@ import {
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 import * as scheduledInterviewService from './scheduledInterviewService';
+import * as dailyCheckinService from './dailyCheckinService';
 
 // ---------------------------------------------------------------------------
 // Push notifications — the piece notificationService.ts's registerDeviceToken
@@ -202,6 +203,18 @@ function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Reco
   }
   if (data?.type === 'goal_tip') {
     navigateToGoalTipDetail();
+    return;
+  }
+  // Daily career-goal check-in evening reflection push (product request
+  // item: "How did your day goal go?" — see Saveur-Backend's
+  // daily_checkin_service.send_due_reflection_prompts). Nothing to parse
+  // out of `data` here (same shape as weekly_career_report/
+  // daily_industry_news above) — the reflection sheet itself lives on
+  // Home, not its own screen, so this sets the same deferred-until-Home
+  // pending flag jobShareService's pendingJobId uses, then navigates
+  // there; HomeSrc.tsx's useFocusEffect picks it up and opens the sheet.
+  if (data?.type === 'daily_checkin_reflection') {
+    dailyCheckinService.setPendingReflectionPrompt().finally(navigateToHome);
     return;
   }
   if (data?.type === 'content_shared' && data.share_id) {

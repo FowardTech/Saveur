@@ -73,6 +73,21 @@ export enum EKeyAsyncStorage {
   // without the user having to redo the interview. See interviewService.ts's
   // enqueuePendingVideoUpload/flushPendingVideoUploads.
   pendingVideoUploads = 'pendingVideoUploads',
+  // Daily career-goal check-in (product request item) — the server only
+  // ever tracks whether TODAY's morning goal/evening reflection have been
+  // ANSWERED (see services/dailyCheckinService.ts), not whether the popup
+  // was already shown-and-dismissed-without-answering. Without this,
+  // dismissing the popup would just show it again on every subsequent
+  // Home focus the same day. Stores today's ISO date string the moment the
+  // user dismisses either sheet without answering; cleared implicitly by
+  // the date simply no longer matching "today" tomorrow.
+  dailyCheckinGoalDismissedDay = 'dailyCheckinGoalDismissedDay',
+  // Set by the "How did your day go?" push notification's tap handler
+  // (see services/pushNotificationService.ts) before Home has necessarily
+  // regained focus yet — same deferred-until-Home-is-ready pattern as
+  // pendingJobId above. Consumed (and cleared) by HomeSrc.tsx to open the
+  // reflection sheet once the screen is actually mounted/focused.
+  pendingDailyCheckinReflection = 'pendingDailyCheckinReflection',
 }
 export enum Animation_Types_Enum {
   SlideTop,

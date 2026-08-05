@@ -40,7 +40,9 @@ import ModalRequest from 'components/ModalRequest';
 import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
 import BadgesModal from 'components/BadgesModal';
+import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInSheet';
 import * as appRatingService from 'services/appRatingService';
+import * as dailyCheckinService from 'services/dailyCheckinService';
 import useModal from 'hooks/useModal';
 import { Images } from 'assets/images';
 import ThemeContext from '../../ThemeContext';
@@ -180,6 +182,67 @@ const HomeSrc = memo(() => {
     setShowRatingPrompt(false);
     appRatingService.dismissRatingPrompt().catch(() => { });
   }, []);
+
+  // Daily career-goal check-in (product request item): on login, ask
+  // "what's your career goal for today?" — explicitly distinct from the
+  // one-time signup goal (profile.goals). Checked once on mount (same
+  // reasoning as the rating prompt above: due-ness can't flip back to true
+  // within the same session without an explicit submit/dismiss, so
+  // re-checking on every Home focus would be wasted work and risks the
+  // sheet popping back up mid-session). Skipped entirely if the user
+  // already answered today (server-side) OR already dismissed it once
+  // today without answering (local-only flag — see
+  // dailyCheckinService.wasGoalPromptDismissedToday's own comment).
+  const [checkinSheet, setCheckinSheet] = React.useState<DailyCheckInMode | null>(null);
+  React.useEffect(() => {
+    if (!isSignedIn) return;
+    (async () => {
+      try {
+        const [today, dismissed] = await Promise.all([
+          dailyCheckinService.getToday(),
+          dailyCheckinService.wasGoalPromptDismissedToday(),
+        ]);
+        if (!today.goalAnswered && !dismissed) setCheckinSheet('goal');
+      } catch {
+        // Non-critical — a failed fetch just means no popup this session,
+        // not a broken Home screen.
+      }
+    })();
+  }, [isSignedIn]);
+
+  // "How did your day go?" push tap (see pushNotificationService.ts) sets a
+  // pending flag rather than assuming Home is already mounted/focused —
+  // same deferred-until-Home pattern as the shared-job deep link below.
+  // Checked on every focus (not just mount, unlike the goal prompt above)
+  // since a user could tap the push while already sitting on Home, which
+  // wouldn't remount this component at all.
+  useFocusEffect(
+    React.useCallback(() => {
+      dailyCheckinService.consumePendingReflectionPrompt().then(pending => {
+        if (pending) setCheckinSheet('reflection');
+      });
+    }, []),
+  );
+
+  const onSubmitCheckin = React.useCallback(async (text: string) => {
+    if (checkinSheet === 'goal') {
+      await dailyCheckinService.submitGoal(text);
+    } else if (checkinSheet === 'reflection') {
+      await dailyCheckinService.submitReflection(text);
+    }
+    setCheckinSheet(null);
+  }, [checkinSheet]);
+
+  const onDismissCheckin = React.useCallback(() => {
+    // Only the morning goal prompt has a "don't ask again today" local
+    // flag — a dismissed reflection prompt should still be reachable by
+    // tapping the same push notification again (or just doesn't need
+    // re-prompting, since there's no follow-up push for it today).
+    if (checkinSheet === 'goal') {
+      dailyCheckinService.dismissGoalPromptForToday().catch(() => { });
+    }
+    setCheckinSheet(null);
+  }, [checkinSheet]);
 
   // "Share a job" deep-link landing (product request item) — a pending job
   // id captured by App.tsx's AppsFlyer listeners / saveur://job fallback
@@ -1091,6 +1154,12 @@ const HomeSrc = memo(() => {
       />
       <AppTour visible={showTour} onClose={onCloseTour} />
       <AppRatingModal visible={showRatingPrompt} onSubmit={onSubmitRating} onDismiss={onDismissRating} />
+      <DailyCheckInSheet
+        visible={checkinSheet !== null}
+        mode={checkinSheet ?? 'goal'}
+        onSubmit={onSubmitCheckin}
+        onDismiss={onDismissCheckin}
+      />
       <BadgesModal
         visible={isBadgesModalVisible}
         unlockedBadgeIds={unlockedBadgeIds}
