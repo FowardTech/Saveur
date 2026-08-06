@@ -37,7 +37,7 @@ import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
-import ModalRequest from 'components/ModalRequest';
+import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
 import BadgesModal from 'components/BadgesModal';
@@ -1230,18 +1230,22 @@ const HomeSrc = memo(() => {
           still-eligible ad was found (see the effect above); tapping its
           single action opens AdDetails.tsx with that ad's full write-up,
           matching "when users click on the advert it takes them to the
-          screen that gives them more detail." */}
-      <ModalRequest
+          screen that gives them more detail."
+          Product follow-up: "I want the pop up the ad to be a full length
+          ad not the one with a small card that just pop up on the middle...
+          because the ads are going to be images and mobile size banners" —
+          was rendering ModalRequest (a small centered card) here even though
+          a proper full-screen AdPopupModal already existed elsewhere in the
+          codebase, unused. Swapped to that component; its image fills the
+          whole screen with title/body/CTA overlaid on a bottom gradient. */}
+      <AdPopupModal
         visible={adVisible}
-        show={showAd}
-        hide={onDismissAd}
-        name={pendingAd?.title ?? ''}
-        avatar={Images.logoBadge}
-        isOnl={false}
-        message={pendingAd?.body}
-        onDetails={onOpenAd}
-        detailsLabel={t('common:view_details', { defaultValue: 'View Details' })}
-        showCancel
+        title={pendingAd?.title ?? ''}
+        body={pendingAd?.body}
+        imageUrl={pendingAd?.imageUrl}
+        ctaLabel={t('common:view_details', { defaultValue: 'View Details' })}
+        onCta={onOpenAd}
+        onDismiss={onDismissAd}
       />
       <AppTour visible={showTour} onClose={onCloseTour} />
       <AppRatingModal visible={showRatingPrompt} onSubmit={onSubmitRating} onDismiss={onDismissRating} />
