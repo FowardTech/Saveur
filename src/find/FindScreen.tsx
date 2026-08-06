@@ -92,7 +92,7 @@ const FindScreen = memo(() => {
             tone dark-navy gradient (two adjacent background-basic-color
             tokens) instead of a flat single shade, so it still looks
             "designed" without ever being blue. */}
-        <TouchableOpacity activeOpacity={0.9} onPress={() => onStartSetup()}>
+        {/* <TouchableOpacity activeOpacity={0.9} onPress={() => onStartSetup()}>
           <View style={styles.hero}>
             <View style={styles.heroInner}>
               <LinearGradient
@@ -101,13 +101,13 @@ const FindScreen = memo(() => {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
               />
-              {/* <Text
+              <Text
                 category="h3"
                 bold
                 mb={8}
                 style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
                 {t('find:start_mock_interview')}
-              </Text> */}
+              </Text>
               <Text
                 category="h8-s"
                 mb={16}
@@ -129,16 +129,16 @@ const FindScreen = memo(() => {
               </View>
             </View>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
-        <Text category="h6" bold mt={32} mb={16}>
+        {/* <Text category="h6" bold mt={32} mb={16}>
           {t('find:tools')}
-        </Text>
+        </Text> */}
         {/* Product request — drop the Coding Practice tile (still reachable
             from MockInterviewSetup's own Coding option) and restack the
             remaining tiles as full-width rows instead of a 3-wide square
             grid, per explicit reference. */}
-        <View>
+        <View style={{marginTop:10,}}>
           {TOOLS.map((tool, i) => {
             const tile = tileColorAt(i);
             const bg = isDarkMode ? theme[tile.bg] : theme['background-basic-color-2'];

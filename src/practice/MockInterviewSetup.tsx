@@ -76,8 +76,15 @@ const MockInterviewSetup = memo(() => {
     () => configService.getCachedConfig().interview_personas.items.filter(p => p.enabled),
     [],
   );
+  // Product correction: "The interviewer personality feature should be a
+  // pro premium plan not pro plan" — this used to only check the admin
+  // feature flag + catalog, with no subscription-tier gate at all (visible
+  // to free and Pro users alike). `isPremium` (this file already uses the
+  // same flag to lock Video practice mode below) restricts it to Pro
+  // Premium only, matching the plan-tier breakdown given for this app's
+  // Free/Pro/Pro Premium feature audit.
   const showPersonaPicker =
-    configService.isFeatureEnabled('interview_laboratory') && enabledPersonas.length > 0;
+    configService.isFeatureEnabled('interview_laboratory') && enabledPersonas.length > 0 && isPremium;
   // Product request item: "A pop up with more detail on the interviewer
   // personality when they click on it" — see PersonaDetailModal's own doc
   // comment for the full story (it renders `style`, which was already

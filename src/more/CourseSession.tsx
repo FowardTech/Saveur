@@ -447,9 +447,18 @@ const CourseSession = memo(() => {
                         {t('more:course_module_label', { defaultValue: 'Module {{n}}', n: i + 1 })}
                       </Text>
                     </View>
+                    {/* BUG FIX (crash: "Icon: 'chevron-right-outline' icon is
+                        not registered in pack 'eva'" — that name was never
+                        added to assets/LucideEvaIconsPack.tsx, only to
+                        AssetIconsPack.tsx under a different name; same class
+                        of bug this codebase already hit once before in
+                        PersonalizationCard.tsx, see LucideEvaIconsPack.tsx's
+                        own comment on that). Correct existing chevron is
+                        pack="assets" name="chevronRight", already used the
+                        same way in src/more/components/ButtonOptional.tsx. */}
                     <Icon
-                      pack="eva"
-                      name="chevron-right-outline"
+                      pack="assets"
+                      name="chevronRight"
                       style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]}
                     />
                   </Flex>
