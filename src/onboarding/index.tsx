@@ -358,8 +358,13 @@ const themedStyles = StyleService.create({
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
-    overflow: 'hidden',
+    // Report: "stop wrapping the illustrations in a box" — this never had
+    // a backgroundColor, but borderRadius + overflow:hidden still gave it
+    // a rounded clipping boundary, which combined with the image's own
+    // faint edge (even fully transparent PNGs get *some* anti-aliasing at
+    // their outer bounds) was enough to read as a "box" around the
+    // artwork. Neither is needed — the box is always sized to the image's
+    // own aspect ratio, so there's nothing to clip.
   },
   login: {
     flex: 1,

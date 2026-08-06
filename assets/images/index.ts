@@ -147,6 +147,30 @@ export const Images = {
   // image box was missing `alignSelf: 'center'`), not an artwork problem —
   // fixed there, see that file's own comment.
   //
+  // FIFTH PASS — same reference screenshot, re-shared with a closer look
+  // requested: "I need a human like illustration... the illustration you
+  // are giving me looks like cartoons", "stop wrapping the illustrations
+  // in a box", "use gradient designs like that". Three real changes to
+  // the design kit:
+  // 1) Proportions were still too "big head on a small body" (cartoon-
+  // mascot territory) — person2.py's person_full() now uses a taller
+  // torso and wider shoulders relative to head size.
+  // 2) Hands were plain circles — added hand_detail() (a palm + 4 fanned
+  // fingers + thumb, oriented to the arm's approach angle) and
+  // praying_hands() (a proper clasped/namaste gesture for the meditating
+  // "learning" character, replacing generic held-object hands), since
+  // finger detail is one of the biggest cartoon-vs-illustrated-human
+  // tells.
+  // 3) Every major fill (clothing, pants, cards) switched from a flat hex
+  // color to a soft diagonal light-to-dark gradient (components.py's new
+  // shade_gradient()/card_gradient(), built on top of the existing
+  // linear_gradient() helper) — matching the reference's shaded, not flat,
+  // illustration style.
+  // Also removed styles.image's borderRadius/overflow:hidden in
+  // src/onboarding/index.tsx (see that file) since even with no
+  // backgroundColor, a rounded clipping boundary was still reading as a
+  // "box" around the artwork.
+  //
   // Being original artwork, there's no license/attribution question here.
   onboardingInterview: require("./img_onboarding_interview.png"),
   onboardingFeedback: require("./img_onboarding_feedback.png"),
