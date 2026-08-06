@@ -685,15 +685,41 @@ export function useSpeechToText() {
   const wantsListeningRef = React.useRef(false);
 
   React.useEffect(() => {
-    // Liveness-only handlers (see the watchdog's own doc comment above) —
-    // onSpeechVolumeChanged in particular fires continuously while a
-    // session is actually capturing audio, regardless of whether the user
-    // is making any recognizable sound, so it's the most reliable "is this
-    // session still real" signal available from JS.
-    Voice.onSpeechStart = markAlive;
-    Voice.onSpeechVolumeChanged = markAlive;
+    // DIAGNOSTIC LOGGING (product report: even after the liveness watchdog
+    // above, voice turns still never reach the backend at all -- zero
+    // entries in the AI provider's own conversation log, not just a
+    // mid-session drop). That rules out the watchdog's own failure mode
+    // (a session that stops emitting ANY event) as the cause here, since
+    // onSpeechVolumeChanged firing continuously is exactly what a session
+    // stuck relaying SILENT audio buffers would also look like from JS --
+    // the native tap can be technically running (installTapOnBus's block
+    // still calls back, still fires onSpeechVolumeChanged) while capturing
+    // dead air, e.g. if the AVAudioEngine's input format was captured at a
+    // bad moment relative to an audio-session category switch (see
+    // start()'s own settle-delay comment below) -- a JS-only fix can't
+    // reliably distinguish "real silence because the user hasn't spoken
+    // yet" from "this session can't hear anything at all" without a lot
+    // more real-device evidence than is available from this environment.
+    // Logging every native event (throttled where it fires rapidly) so the
+    // next real-device test's Metro/Xcode/Android Studio console output
+    // shows exactly what's actually happening natively, instead of
+    // continuing to guess blind.
+    let volumeLogThrottle = 0;
+    Voice.onSpeechStart = () => {
+      markAlive();
+      console.warn('[speechService] onSpeechStart');
+    };
+    Voice.onSpeechVolumeChanged = (e: { value?: number }) => {
+      markAlive();
+      const now = Date.now();
+      if (now - volumeLogThrottle > 1000) {
+        volumeLogThrottle = now;
+        console.warn('[speechService] onSpeechVolumeChanged value=' + e?.value);
+      }
+    };
     Voice.onSpeechResults = (e: SpeechResultsEvent) => {
       markAlive();
+      console.warn('[speechService] onSpeechResults value=' + JSON.stringify(e?.value));
       const best = e.value?.[0];
       if (best) {
         // Replace, don't append — see this hook's own doc comment above.
@@ -722,6 +748,7 @@ export function useSpeechToText() {
       // An error is still a real, live event from the native session (as
       // opposed to dead silence) — counts as "alive" for the watchdog.
       markAlive();
+      console.warn('[speechService] onSpeechError code=' + e.error?.code + ' message=' + e.error?.message);
       // Unblock a pending stop() wait FIRST (see sessionEndResolveRef's doc
       // comment above) — this must happen before the auto-restart logic
       // below runs, since stop() sets wantsListeningRef=false synchronously
@@ -775,6 +802,7 @@ export function useSpeechToText() {
     };
     Voice.onSpeechEnd = () => {
       markAlive();
+      console.warn('[speechService] onSpeechEnd');
       // Same "unblock stop()'s wait first" reasoning as onSpeechError above.
       if (sessionEndResolveRef.current) {
         sessionEndResolveRef.current();
