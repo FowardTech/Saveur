@@ -174,18 +174,27 @@ export const Images = {
   // SIXTH PASS (current) — the product owner sourced and uploaded 5
   // finished illustrations directly ("Now i got the perfect ones"),
   // superseding the FOURTH/FIFTH-pass design-kit artwork described above.
-  // Each upload was a full hero composition (headline baked into the
-  // image as pixels, above the same phone-mockup + floating-card
-  // illustration this app's own reference called for). The baked headline
-  // was cropped out before use — it can't be localized via this app's
-  // `i18n`/SUPPORTED_LANGUAGES picker, and the font it was set in wasn't
-  // available when rasterizing the source files, so it also had visible
-  // text-overflow artifacts (e.g. "clarity & skills" clipped to "clarity &
-  // skil"). What ships is just the illustration — phone mockup, floating
-  // drop-shadowed cards, decorative sparkles, soft gradient backdrop —
-  // with src/onboarding/index.tsx's own translatable title/subtitle
-  // <Text> supplying the copy on top, same as every earlier pass. See
-  // that file's DATA comment for the full per-slide crop/aspect notes.
+  // A first attempt processed the uploaded SVGs through a local renderer,
+  // which lost fidelity (missing font caused headline overflow, and
+  // flattened each file's transparent background); the product owner then
+  // supplied the original full-resolution PNG exports directly ("Sorry
+  // this are the real illustrations use these ones") and this is what
+  // ships. Each source PNG was a full hero composition — headline (and on
+  // some slides a subtitle) baked into the image as pixels, above the same
+  // phone-mockup + floating-card illustration. That baked headline/
+  // subtitle was cropped out before use — it can't be localized via this
+  // app's `i18n`/SUPPORTED_LANGUAGES picker, and it duplicates this
+  // screen's own translatable title/subtitle text. Text baked *inside*
+  // the phone-mockup screen itself (e.g. "Hi, Alex!", "Overall Match") was
+  // kept, since that's illustrated fake-app-UI content rather than a
+  // competing copy of this screen's own copy. Each source file's real
+  // transparent background (alpha channel, not a flattened rectangle) was
+  // preserved. What ships is the illustration only — phone mockup,
+  // floating drop-shadowed cards, decorative sparkles, soft gradient
+  // backdrop — with src/onboarding/index.tsx's own translatable
+  // title/subtitle <Text> supplying the copy on top, same as every
+  // earlier pass. See that file's DATA comment for the full per-slide
+  // crop/aspect notes.
   onboardingInterview: require("./img_onboarding_interview.png"),
   onboardingFeedback: require("./img_onboarding_feedback.png"),
   onboardingJobAlert: require("./img_onboarding_job_alert.png"),
