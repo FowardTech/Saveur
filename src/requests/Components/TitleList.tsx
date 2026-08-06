@@ -5,7 +5,7 @@ import Text from 'components/Text';
 import Flex, {FlexProps} from 'components/Flex';
 import {useTranslation} from 'react-i18next';
 import {globalStyle} from 'styles/globalStyle';
-import {Icon} from '@ui-kitten/components';
+import {Icon, useTheme} from '@ui-kitten/components';
 
 interface TitleListProps extends FlexProps {
   current: boolean;
@@ -22,6 +22,7 @@ const TitleList = ({
   ...props
 }: TitleListProps) => {
   const {t} = useTranslation(['request', 'common']);
+  const theme = useTheme();
   return (
     <Flex style={[style]} {...props}>
       <Flex justify="flex-start" mb={24}>
@@ -37,7 +38,9 @@ const TitleList = ({
           <Text category="h8" status={'link'} mr={4} onPress={onSeeAll} bold>
             {t('common:seeAll')}
           </Text>
-          <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+          {/* BUG FIX: unstyled Lucide arrowRight defaults to near-black
+              (assets/lucideIcon.tsx) — invisible in dark mode. */}
+          <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
         </Flex>
       ) : null}
     </Flex>

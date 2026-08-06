@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
@@ -51,18 +52,41 @@ const DailyChallengeCard = memo(() => {
 
   const enabled = configService.isFeatureEnabled('daily_challenge');
 
-  React.useEffect(() => {
+  // SECOND BUG FIX (same report, still reproducing after the type-badge fix
+  // above): the badge was only half the problem. `challenge.promptText` —
+  // the actual challenge paragraph — comes from dailyChallengeService's own
+  // per-user `/daily-challenge/today` fetch below, which is a *different*
+  // request from the public config catalog configService subscribes to, so
+  // subscribing to configService never touched it. And unlike FAQ/About/
+  // configService, nothing here ever re-ran that fetch on a language
+  // switch — the effect's dependency array was just `[enabled]`, so it
+  // fired once at mount and then never again for the lifetime of the
+  // mounted card. dailyChallengeService.getTodayChallenge() has already
+  // sent `language: i18n.language` correctly this whole time (see that
+  // file's own earlier bug-fix comment) — the request was always asking
+  // for the right language, this card just never asked again after the
+  // user switched. Listening for i18next's own 'languageChanged' event
+  // directly (rather than configService's pub/sub, which is scoped to
+  // config-only content) and re-running the fetch closes that gap.
+  const fetchChallenge = React.useCallback(() => {
     if (!enabled) return;
-    let cancelled = false;
     dailyChallengeService.getTodayChallenge().then(c => {
-      if (!cancelled) setChallenge(c);
+      setChallenge(c);
     }).catch(() => {
       // Best-effort — a missing daily challenge just means the card stays hidden.
     });
-    return () => {
-      cancelled = true;
-    };
   }, [enabled]);
+
+  React.useEffect(() => {
+    fetchChallenge();
+  }, [fetchChallenge]);
+
+  React.useEffect(() => {
+    i18n.on('languageChanged', fetchChallenge);
+    return () => {
+      i18n.off('languageChanged', fetchChallenge);
+    };
+  }, [fetchChallenge]);
 
   if (!enabled || !challenge || challenge.skipped) return null;
 

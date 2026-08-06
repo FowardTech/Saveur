@@ -122,7 +122,11 @@ const CareerBriefingDetail = memo(() => {
                     ) : null}
                   </View>
                   {destination ? (
-                    <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+                    // BUG FIX: unstyled Lucide arrowRight defaults to
+                    // near-black (assets/lucideIcon.tsx) — invisible in
+                    // dark mode. Same fix as HomeSrc.tsx's upcoming-session
+                    // card.
+                    <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
                   ) : null}
                 </Flex>
               );

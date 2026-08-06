@@ -1052,7 +1052,15 @@ const HomeSrc = memo(() => {
                     {nextSession.durationMin} {t('find:minutes_unit', { defaultValue: 'min' })}
                   </Text>
                 </View>
-                <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+                {/* BUG FIX (report: "the arrow icon on the upcoming session is
+                    not visible in dark mode"): this Lucide-backed icon
+                    (assets/AssetIconsPack.tsx's arrowRight) defaults to a
+                    near-black '#1A1A1A' stroke when no tintColor is set
+                    (assets/lucideIcon.tsx) — invisible against this card's
+                    dark-mode surface. Explicit tintColor matching the
+                    trailing-chevron convention used elsewhere (e.g.
+                    DailyChallengeCard.tsx). */}
+                <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
               </Flex>
             ) : (
               <Flex

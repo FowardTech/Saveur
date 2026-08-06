@@ -148,7 +148,10 @@ const MessagesScreen = memo(() => {
                 })}
               </Text>
             </View>
-            <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+            {/* BUG FIX: this Lucide-backed icon defaults to near-black when
+                unstyled (see assets/lucideIcon.tsx) — invisible in dark
+                mode. Same fix as HomeSrc.tsx's "upcoming session" card. */}
+            <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
           </Flex>
         )}
 
@@ -168,7 +171,7 @@ const MessagesScreen = memo(() => {
             <Text category="h9" numberOfLines={2} style={globalStyle.flexOne}>
               {item.title}
             </Text>
-            <Icon pack="assets" name="arrowRight" style={globalStyle.icon16} />
+            <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
           </TouchableOpacity>
         ))}
       </Content>

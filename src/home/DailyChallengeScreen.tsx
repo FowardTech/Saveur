@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, useTheme, Icon, Input, Spinner, TopNavigation } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -48,6 +49,19 @@ const DailyChallengeScreen = memo(() => {
 
   React.useEffect(() => {
     load();
+  }, [load]);
+
+  // BUG FIX (same report as DailyChallengeCard.tsx's — "the content of
+  // this refused to translate"): this screen only ever loaded once at
+  // mount; if a user opened it and then switched language from Settings
+  // without leaving the screen, `promptText`/`aiFeedback` stayed in the
+  // old language. Re-run the same fetch whenever i18next's language
+  // actually changes.
+  React.useEffect(() => {
+    i18n.on('languageChanged', load);
+    return () => {
+      i18n.off('languageChanged', load);
+    };
   }, [load]);
 
   const typeName = challenge
