@@ -17,6 +17,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import InfoBox from 'components/InfoBox';
 import { globalStyle } from 'styles/globalStyle';
 import { tileColorAt } from 'styles/tileColors';
 import * as careerDnaService from 'services/careerDnaService';
@@ -109,6 +110,17 @@ const CareerDna = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder contentContainerStyle={styles.content}>
+        {/* Product request: "some features in the app users don't know
+            what they are for... supposed to have a small banner card
+            explaining what they are... a subtle light blue banner" —
+            shown in every state (loading/error/not-enough-data/real
+            profile) since it explains the feature itself, not the
+            current profile's contents. */}
+        <InfoBox icon="activity-outline" variant="info" style={{ marginBottom: 16 }}>
+          {t('more:career_dna_description', {
+            defaultValue: 'A living profile the AI builds and refines from your real activity — interviews, courses, and progress — so your coaching feels like it actually knows you.',
+          })}
+        </InfoBox>
         {isLoading ? (
           <EmptyState variant="loading" />
         ) : loadError ? (

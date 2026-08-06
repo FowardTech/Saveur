@@ -21,6 +21,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
+import InfoBox from 'components/InfoBox';
 import * as companyIntelService from 'services/companyIntelService';
 import { CompanyIntel } from 'services/companyIntelService';
 import { AuthContext } from '../../AuthContext';
@@ -76,6 +77,17 @@ const CompanyIntelligence = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        {/* Product request: "some features in the app users don't know
+            what they are for... supposed to have a small banner card
+            explaining what they are... a subtle light blue banner". This
+            screen previously had no explanatory copy at all — jumped
+            straight to the input fields with only the top nav's title as
+            context. */}
+        <InfoBox icon="search-outline" variant="info" style={{ marginBottom: 16 }}>
+          {t('more:company_intel_description', {
+            defaultValue: 'Get instant, AI-researched facts about any company — recent news, culture, and the interview questions you\'re likely to be asked — before you walk in.',
+          })}
+        </InfoBox>
         <Input
           placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
           value={company}

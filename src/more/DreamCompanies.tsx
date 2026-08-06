@@ -18,6 +18,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import InfoBox from 'components/InfoBox';
 import { globalStyle } from 'styles/globalStyle';
 import * as dreamCompaniesService from 'services/dreamCompaniesService';
 import { DreamCompany } from 'services/dreamCompaniesService';
@@ -141,11 +142,16 @@ const DreamCompanies = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        <Text category="h9-s" status="placeholder" mb={16}>
+        {/* Product request: "some features in the app users don't know
+            what they are for... supposed to have a small banner card
+            explaining what they are... a subtle light blue banner" —
+            replaces the old plain placeholder-gray description line with
+            the same explanatory copy, restyled as the requested banner. */}
+        <InfoBox icon="flag-outline" variant="info" style={{ marginBottom: 16 }}>
           {t('more:dream_companies_description', {
-            defaultValue: 'Track the companies you actually want to work for — open jobs, interview style, and how ready you are for each.',
+            defaultValue: 'Track the companies you actually want to work for — open jobs, interview style, and how ready you are for each — all kept fresh automatically.',
           })}
-        </Text>
+        </InfoBox>
 
         <Layout level="2" style={styles.addCard}>
           <Input

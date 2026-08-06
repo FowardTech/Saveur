@@ -10,7 +10,7 @@ interface Props {
   icon?: string;
   iconPack?: 'eva' | 'assets';
   children: React.ReactNode;
-  variant?: 'accent' | 'neutral';
+  variant?: 'accent' | 'neutral' | 'info';
   style?: any;
 }
 
@@ -22,10 +22,25 @@ interface Props {
 // context, not a one-word tag. `accent` (soft purple fill) matches the
 // reference's "Be Seen First" treatment; `neutral` (soft gray fill) is for
 // a plain informational note that isn't tied to any particular feature.
+// `info` (subtle light-blue fill, product request: "a small banner card
+// explaining what they are... should be a subtle light blue banner" —
+// used to introduce a feature the user may not understand yet, e.g.
+// Company Intelligence/Dream Company Dashboard/Career DNA) reuses the same
+// color-primary-transparent-100 tint this app already uses for other soft
+// blue accents (see LearningCourses.tsx's continueIconWrap), just applied
+// at banner scale instead of a small icon chip.
 const InfoBox = memo(({icon, iconPack = 'eva', children, variant = 'neutral', style}: Props) => {
   const theme = useTheme();
-  const bg = variant === 'accent' ? theme['color-accent-purple-bg'] : theme['background-basic-color-2'];
-  const iconColor = variant === 'accent' ? theme['color-accent-purple'] : theme['text-basic-color'];
+  const bg = variant === 'accent'
+    ? theme['color-accent-purple-bg']
+    : variant === 'info'
+    ? theme['color-primary-transparent-100']
+    : theme['background-basic-color-2'];
+  const iconColor = variant === 'accent'
+    ? theme['color-accent-purple']
+    : variant === 'info'
+    ? theme['color-primary-500']
+    : theme['text-basic-color'];
 
   return (
     <Flex
