@@ -745,6 +745,39 @@ export function useSpeechToText() {
         // (recentErrorTimestampsRef, see onSpeechError below) is now stale;
         // the session is demonstrably working.
         recentErrorTimestampsRef.current = [];
+        // ROOT-CAUSE BUG FIX (confirmed via real device console log, product
+        // report: "I keep talking yet no response... keeps showing Still
+        // there, I'm not picking up anything"). The log showed the real
+        // native pipeline working exactly as it should — onSpeechResults
+        // fired with the user's actual words ("Hello"), followed by a long
+        // stream of onSpeechVolumeChanged events proving the mic stayed
+        // live and capturing — but NO onSpeechEnd/onSpeechError ever
+        // followed. Until now, this callback only ever wrote to
+        // sessionTranscriptRef (a plain JS ref) — the reactive `transcript`
+        // STATE this hook exposes was only ever updated by
+        // commitSessionTranscript(), which is called exclusively from
+        // onSpeechEnd/onSpeechError/stop(), never from here. On iOS, a
+        // continuous recognition session does NOT necessarily end just
+        // because the user said one short phrase and paused waiting for a
+        // reply — SFSpeechRecognizer can keep the session open listening
+        // indefinitely with no further native event at all. VoiceCoachView's
+        // entire turn-taking model is built on watching `stt.transcript`
+        // (this state, via a [stt.transcript, phase] effect) to detect a
+        // pause and trigger sendTurn() — so a real, correctly-recognized
+        // "Hello" could sit in sessionTranscriptRef forever, completely
+        // invisible to that effect, and the coach would never respond even
+        // though it genuinely heard the user. (Mock Interview/DailyCheckIn
+        // don't hit this the same way: LiveInterviewSession calls
+        // speechToText.stop() explicitly on submit, which reads
+        // commitSessionTranscript()'s output directly rather than relying
+        // on this state updating live.) Fix: push a live view of the
+        // transcript (already-committed text + this session's latest
+        // replace-not-append guess) into state on every result, not just at
+        // session end. transcriptRef.current itself is untouched here (only
+        // commitSessionTranscript mutates it), so the later real commit on
+        // stop()/onSpeechEnd/onSpeechError still folds this in exactly
+        // once — no double-counting risk, same as before.
+        setTranscript(transcriptRef.current ? `${transcriptRef.current} ${best}` : best);
       }
     };
     // Auto-restart used to fire unconditionally on any "no speech
