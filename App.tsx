@@ -20,7 +20,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import AppContainer from 'navigation/AppContainer';
 import { AuthProvider } from './AuthContext';
 import { setupNotificationTapListeners, setupForegroundPushHandler } from 'services/pushNotificationService';
-import { maybeDetectLanguageFromLocation } from 'utils/locationLanguage';
+import LocationLanguageGate from 'components/LocationLanguageGate';
+import { EKeyAsyncStorage } from 'constants/Types';
 import * as referralService from 'services/referralService';
 import * as linkedinAuthService from 'services/linkedinAuthService';
 import * as jobShareService from 'services/jobShareService';
@@ -183,14 +184,21 @@ export default function App() {
     return unsubscribe;
   }, []);
 
-  // First-open, one-time location-permission-based language detection — see
-  // utils/locationLanguage.ts. Runs unconditionally at the app root (same
-  // reasoning as the push-notification listeners above: independent of
-  // sign-in state, since this should apply even to a brand-new user who
-  // hasn't signed up yet). No-ops after the very first attempt ever, and
-  // never overrides a language the user already picked.
+  // First-launch, blocking location-permission gate — see
+  // components/LocationLanguageGate.tsx for the full flow. `null` while the
+  // AsyncStorage flag is still being read (renders nothing for that brief
+  // instant, same as the BootSplash-covered window every other startup
+  // check here has); `false` shows the gate; `true` skips straight to the
+  // real app, which is every launch after the very first one.
+  const [locationGateSeen, setLocationGateSeen] = React.useState<boolean | null>(null);
   React.useEffect(() => {
-    maybeDetectLanguageFromLocation();
+    AsyncStorage.getItem(EKeyAsyncStorage.locationLanguageGateSeen).then(seen => {
+      setLocationGateSeen(!!seen);
+    });
+  }, []);
+  const onLocationGateDone = React.useCallback(() => {
+    AsyncStorage.setItem(EKeyAsyncStorage.locationLanguageGateSeen, '1').catch(() => {});
+    setLocationGateSeen(true);
   }, []);
 
   // Referral deep link capture — saveur://referral?code=XXXXXXX (the
@@ -289,6 +297,11 @@ export default function App() {
                   if (url) Linking.openURL(url).catch(() => {});
                 }}
               />
+            ) : locationGateSeen === null ? null : locationGateSeen === false ? (
+              // First launch only — see components/LocationLanguageGate.tsx.
+              // Every launch after this one has locationGateSeen === true
+              // and falls straight through to the real app below.
+              <LocationLanguageGate onDone={onLocationGateDone} />
             ) : (
               <AuthProvider>
                 <AppContainer />

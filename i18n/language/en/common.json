@@ -102,5 +102,9 @@
   "view_all": "View all",
   "view_details": "View Details",
   "yes": "Yes",
-  "remove": "Remove"
+  "remove": "Remove",
+  "location_gate_title": "Enable location for the best experience",
+  "location_gate_message": "Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.",
+  "location_gate_allow": "Allow Location Access",
+  "location_gate_skip": "Not now"
 }

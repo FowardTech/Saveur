@@ -11,20 +11,32 @@ import {isSupportedLanguageCode} from 'constants/languages';
 // spoken in that country or region. The language selection should still be
 // there."
 //
-// This runs ONCE ever, on the app's very first cold start (guarded by
-// AsyncStorage — see maybeDetectLanguageFromLocation below), and only if the
-// user hasn't already picked/cached a language some other way (the manual
-// selector — SignupFirstStep at signup, Settings -> Language any time after
-// — always takes precedence and is completely unaffected by this; this only
-// ever sets the STARTING point before that choice exists).
+// FOLLOW-UP (this pass): "immediately the user selects grants the user
+// location permission the content of the app should automatically change to
+// the language spoken in that region or country" + "the user must grant [it]
+// before continuing into the app" — this was previously fired silently and
+// non-blockingly from a useEffect in App.tsx, with no UI at all, which meant
+// there was no guaranteed moment where a grant/deny had actually resolved
+// before the rest of the app rendered. It's now driven by a real blocking
+// pre-app screen, components/LocationLanguageGate.tsx (rendered from App.tsx,
+// gated on EKeyAsyncStorage.locationLanguageGateSeen so it only ever shows
+// once, on the very first launch) which calls detectLanguageFromLocation()
+// below directly and does not move on until that promise settles either way.
+//
+// This only ever sets the STARTING language, before the user has picked/
+// cached one another way — the manual selector (SignupFirstStep at signup,
+// Settings -> Language any time after) always takes precedence and is
+// completely unaffected by this.
 //
 // Deliberately layered on top of the existing device-locale fallback
 // (i18n/language-detector.ts uses react-native-localize's OS locale when
-// nothing is cached) rather than replacing it: if the user denies location
-// permission, the request fails, or the reverse-geocode call fails (no
-// network on first launch, etc.), this silently no-ops and the existing
-// device-locale behavior is exactly what happens today — never a worse
-// experience than before, only a potentially better one.
+// nothing is cached) rather than replacing it: per explicit product
+// direction, if the user denies location permission, the request fails, or
+// the reverse-geocode call fails (no network on first launch, etc.), this
+// silently no-ops, the gate still lets the user into the app immediately
+// (never blocks forever on a denial), and the existing device-locale
+// behavior is exactly what happens today — never a worse experience than
+// before, only a potentially better one.
 //
 // Reverse geocoding uses BigDataCloud's free client-side reverse-geocode
 // endpoint (https://www.bigdatacloud.com/geocoding-apis/free-reverse-geocode-to-city-api)
@@ -34,8 +46,6 @@ import {isSupportedLanguageCode} from 'constants/languages';
 // Google's Geocoding API later if you'd rather standardize on one mapping
 // provider across the app.
 // ---------------------------------------------------------------------------
-
-const HAS_ATTEMPTED_KEY = 'hasAttemptedLocationLanguageDetection';
 
 // Country (ISO 3166-1 alpha-2, as returned by BigDataCloud) -> one of this
 // app's 12 supported language codes (constants/languages.ts). Not
@@ -74,10 +84,6 @@ const COUNTRY_TO_LANGUAGE: Record<string, string> = {
   // Russian
   RU: 'ru', BY: 'ru', KZ: 'ru', KG: 'ru',
 };
-
-async function hasAttempted(): Promise<boolean> {
-  return (await AsyncStorage.getItem(HAS_ATTEMPTED_KEY)) === 'true';
-}
 
 async function requestPermission(): Promise<boolean> {
   if (Platform.OS === 'ios') {
@@ -129,17 +135,24 @@ async function countryCodeFromCoords(latitude: number, longitude: number): Promi
 }
 
 /**
- * Call once, at app startup (see App.tsx). No-ops after the very first
- * successful-or-failed attempt ever, and no-ops if the user already has a
- * cached language preference (manual pick always wins).
+ * Requests location permission, reverse-geocodes the result, and switches
+ * the app's language to the one spoken in that country — called directly
+ * from components/LocationLanguageGate.tsx's "Allow Location Access" button,
+ * which awaits this before dismissing itself (that gate, not this function,
+ * is what enforces "only ever runs once, on first launch" via
+ * EKeyAsyncStorage.locationLanguageGateSeen).
+ *
+ * Always resolves, never rejects — a denied permission, a failed GPS fix, a
+ * failed reverse-geocode call, or an unrecognized/unmapped country all just
+ * no-op and fall through silently, leaving whatever language
+ * i18n/language-detector.ts already picked (the device's own OS locale) in
+ * place. The caller does not need to branch on success vs. failure.
  */
-export async function maybeDetectLanguageFromLocation(): Promise<void> {
+export async function detectLanguageFromLocation(): Promise<void> {
   try {
-    if (await hasAttempted()) return;
-    await AsyncStorage.setItem(HAS_ATTEMPTED_KEY, 'true');
-
-    // Respect an existing choice — this is only ever meant to set the
-    // STARTING language on a fresh install, never override a real pick.
+    // Respect an existing choice — this only ever sets the STARTING
+    // language on a fresh install, never overrides a real pick (e.g. a
+    // profile's own saved locale already restored by the time this runs).
     const alreadyCached = await AsyncStorage.getItem('lng');
     if (alreadyCached) return;
 
@@ -158,8 +171,8 @@ export async function maybeDetectLanguageFromLocation(): Promise<void> {
 
     await i18n.changeLanguage(language);
   } catch {
-    // Never let this affect app startup — the existing device-locale
-    // fallback (i18n/language-detector.ts) already ran by the time this
-    // executes, so a failure here just means that fallback stands.
+    // Never let this block the gate from dismissing — the existing device-
+    // locale fallback (i18n/language-detector.ts) already ran by the time
+    // this executes, so a failure here just means that fallback stands.
   }
 }

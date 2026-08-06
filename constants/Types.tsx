@@ -125,6 +125,15 @@ export enum EKeyAsyncStorage {
   // src/more/LearningCoursesOnboarding.tsx (shown once from
   // LearningCourses.tsx, same "shown once" pattern as appTourSeen above).
   learningCoursesOnboardingSeen = 'learningCoursesOnboardingSeen',
+  // Product request: "when the user installs the app for the first time and
+  // opens the app, one of the permissions the user must grant is the user
+  // location... before continuing into the app" — gates App.tsx's
+  // LocationLanguageGate (components/LocationLanguageGate.tsx) so it only
+  // ever blocks first launch, exactly once ever, regardless of whether the
+  // user granted or denied the permission (a denial falls back to the
+  // device's own system language via i18n/language-detector.ts and still
+  // lets them into the app — it never blocks forever).
+  locationLanguageGateSeen = 'locationLanguageGateSeen',
 }
 export enum Animation_Types_Enum {
   SlideTop,
