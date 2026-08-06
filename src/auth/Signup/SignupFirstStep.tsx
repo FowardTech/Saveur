@@ -57,7 +57,17 @@ const SignupFirstStep = memo(() => {
     [t],
   );
   const [isChoose, setChoose] = React.useState<number>();
-  const sizeBG = 120 * (width / 375);
+  // Product report ("This UI and its layout is bad the cards are arrange
+  // irregularly. Maybe you should make them grids of 3 or 4") applied here
+  // too, kept in sync with src/more/ChangeCareType/index.tsx's identical
+  // fix (same 10-item goal list, see that file's own comment for the full
+  // reasoning): was a 120px-scaled 2-column layout using a hand-rolled
+  // `marginLeft` parity trick instead of a real grid gap, which is what
+  // produced the uneven look. Now a flat 84x84 chip (matching
+  // ChangeCareType's own size-reduction pass, which this screen had missed)
+  // laid out in 3 fixed-width columns via `content`'s columnGap/rowGap
+  // below.
+  const sizeBG = 84;
   const onChoose = React.useCallback(
     (i: number) => () => {
       setChoose(i);
@@ -88,9 +98,12 @@ const SignupFirstStep = memo(() => {
               <TouchableOpacity
                 key={i}
                 style={{
-                  width: sizeBG + 28,
-                  marginLeft: (i + 1) % 2 === 0 ? 24 : 0,
-                  marginBottom: 24,
+                  // 3 fixed-width columns — see `content`'s columnGap/rowGap
+                  // below and this screen's own comment above sizeBG for
+                  // the full "irregular grid" fix. Content's `padder` prop
+                  // adds 24px horizontal padding each side (48 total),
+                  // matching ChangeCareType's identical formula.
+                  width: (width - 48 - 24 * 2) / 3,
                   alignItems: 'center',
                 }}
                 onPress={onChoose(i)}
@@ -108,7 +121,11 @@ const SignupFirstStep = memo(() => {
                     style={{
                       width: sizeBG,
                       height: sizeBG,
-                      borderRadius: sizeBG * 0.32,
+                      // App-wide card standardization (product request:
+                      // "all cards in this app has a border radius of 13 or
+                      // 14") — was a formula-derived squircle radius, same
+                      // fix as ChangeCareType/index.tsx's identical chip.
+                      borderRadius: 14,
                       backgroundColor:
                         isChoose === i
                           ? theme['color-primary-500']
@@ -119,8 +136,11 @@ const SignupFirstStep = memo(() => {
                       pack="eva"
                       name={item.icon}
                       style={{
-                        width: 48,
-                        height: 48,
+                        // Matches ChangeCareType/index.tsx's icon-size
+                        // reduction alongside the smaller 84x84 chip above
+                        // (was 48x48 on a 120px-scaled chip).
+                        width: 26,
+                        height: 26,
                         tintColor:
                           isChoose === i
                             ? theme['text-control-color']
@@ -155,6 +175,14 @@ const themedStyles = StyleService.create({
   content: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    // Product report: "the cards are arrange irregularly... make them
+    // grids of 3 or 4" — was `space-between` with a hand-rolled
+    // marginLeft parity trick standing in for real column gaps, which is
+    // what made a short last row look uneven. flex-start + explicit gaps
+    // (matching ChangeCareType/index.tsx's identical fix) lays every row
+    // out identically regardless of how many cards land in it.
+    justifyContent: 'flex-start',
+    rowGap: 24,
+    columnGap: 20,
   },
 });

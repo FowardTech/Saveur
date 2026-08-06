@@ -106,9 +106,20 @@ const ChangeCareType = () => {
             return (
               <Pressable
                 style={{
-                  // Matches wrapper's new columnGap (20) + its 24x2 padding
-                  // — see those styles' own comment on the size reduction.
-                  width: (width - 48 - 20) / 2,
+                  // Product report: "This UI and its layout is bad the
+                  // cards are arrange irregularly. Maybe you should make
+                  // them grids of 3 or 4" — was a 2-column layout using
+                  // `justifyContent: "space-between"` on the wrapper, which
+                  // stretches a short last row's single leftover card all
+                  // the way to one edge with a big empty gap next to it
+                  // (10 cards / 2 columns leaves exactly that on the final
+                  // row) — that's what actually read as "irregular", not
+                  // the card styling itself. 3 fixed-width columns (matches
+                  // wrapper's columnGap * 2 + its 24px*2 padding, now with
+                  // justifyContent: "flex-start" instead of space-between —
+                  // see wrapper's own comment) lays out cleanly regardless
+                  // of how many cards land in the last row.
+                  width: (width - 48 - 20 * 2) / 3,
                   justifyContent: "center",
                   alignItems: "center",
                 }}
@@ -218,7 +229,14 @@ const themedStyles = StyleService.create({
   wrapper: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between",
+    // Product report: "the cards are arrange irregularly... make them
+    // grids of 3 or 4" — `space-between` on a wrapping row spreads a
+    // short final row's leftover card(s) apart from wherever they'd
+    // naturally sit, which is what actually produced the "irregular"
+    // look (see the Pressable width's own comment above). `flex-start`
+    // plus explicit rowGap/columnGap lays every row out identically,
+    // whether it's full or not.
+    justifyContent: "flex-start",
     padding: 24,
     // Tightened alongside the smaller card size above so the grid doesn't
     // end up with disproportionately large gaps around now-smaller cards.
