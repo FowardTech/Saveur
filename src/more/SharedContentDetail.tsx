@@ -151,7 +151,14 @@ const SharedContentDetail = memo(() => {
                 ) : (
                   <>
                     <Flex justify="space-between" itemsCenter mt={12}>
-                      <Text category="h2" bold status="primary">
+                      {/* BUG FIX: status="primary" -> text-primary-color, a
+                          near-white token meant for text ON a colored
+                          surface (see components/CtaButton.tsx's own use of
+                          it), invisible here on this plain white card in
+                          light mode. Same root cause already fixed once in
+                          several other screens (see e.g.
+                          src/more/JobAlerts.tsx's own comment on this). */}
+                      <Text category="h2" bold style={{ color: theme['text-basic-color'] }}>
                         {content.overall_score ?? 0}%
                       </Text>
                       <Text category="h9" status="placeholder">
@@ -193,7 +200,7 @@ const SharedContentDetail = memo(() => {
                   {content.annotations.map((a: any, i: number) => (
                     <Flex key={i} justify="space-between" itemsCenter style={styles.annotationRow}>
                       <Text category="h9-s" style={{flex: 1}}>{a.label}</Text>
-                      <Text category="h10" status="primary" bold>
+                      <Text category="h10" bold style={{ color: theme['text-basic-color'] }}>
                         {formatMs ? formatMs(a.t_ms) : `${Math.round(a.t_ms / 1000)}s`}
                       </Text>
                     </Flex>

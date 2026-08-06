@@ -230,7 +230,14 @@ const RequestsInPast = memo(() => {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setIsFilterVisible(false)}>
-                <Text category="h8-s" status="primary" bold>
+                {/* BUG FIX: was status="primary" (text-primary-color, a
+                    near-white token meant for text on a colored surface —
+                    invisible here on this plain modal sheet in light mode).
+                    This is a real tappable confirm action, same as "Clear
+                    filter" above (status="danger", a real visible red) —
+                    status="link" is the correct, visible equivalent for a
+                    non-destructive action. */}
+                <Text category="h8-s" status="link" bold>
                   {t('common:done', {defaultValue: 'Done'})}
                 </Text>
               </TouchableOpacity>

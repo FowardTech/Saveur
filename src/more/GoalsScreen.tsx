@@ -192,7 +192,23 @@ const GoalsScreen = memo(() => {
                 onPress={() => navigate('JobPreferences')}
                 activeOpacity={0.7}>
                 <View style={styles.statCol}>
-                  <Text category="h7" bold status="primary">
+                  {/* BUG FIX: status="primary" resolves to
+                      constants/theme/mapping.json's `text-primary-color`,
+                      which is a near-white token meant for text drawn ON a
+                      primary-colored (blue) surface (e.g. a filled button —
+                      see components/CtaButton.tsx, which reads that exact
+                      token for its own white label). Used directly on a
+                      plain white card like this one, it was invisible in
+                      light mode — same root cause already found and fixed
+                      once before in src/more/JobAlerts.tsx, CareerBriefingDetail.tsx,
+                      CareerDiary.tsx, PaymentHistory.tsx, and both
+                      Practical Scenario screens (see their own "Was
+                      status='primary'" comments), just never swept through
+                      the rest of the app until now. text-basic-color reads
+                      correctly in both themes and matches the product rule
+                      that plain values (not pills/links) should be black,
+                      not blue. */}
+                  <Text category="h7" bold style={{ color: theme['text-basic-color'] }}>
                     {desiredRolesCount}
                   </Text>
                   <Text category="h10" status="placeholder" center mt={2}>
@@ -200,7 +216,7 @@ const GoalsScreen = memo(() => {
                   </Text>
                 </View>
                 <View style={[styles.statCol, styles.statColBorder]}>
-                  <Text category="h7" bold status="primary">
+                  <Text category="h7" bold style={{ color: theme['text-basic-color'] }}>
                     {countriesCount}
                   </Text>
                   <Text category="h10" status="placeholder" center mt={2}>
@@ -298,7 +314,11 @@ const GoalsScreen = memo(() => {
               <TouchableOpacity
                 style={{ marginTop: 14, alignSelf: 'flex-start' }}
                 onPress={() => navigate('LearningCourses')}>
-                <Text category="h10" bold status="primary">
+                {/* This one genuinely IS a link (navigates on tap, arrow
+                    affordance) — status="link" (text-link-color, a real
+                    visible blue in both themes) is the correct status here,
+                    not the near-white "primary" one. */}
+                <Text category="h10" bold status="link">
                   {t('more:goals_view_learning_courses', { defaultValue: 'Continue Learning Courses →' })}
                 </Text>
               </TouchableOpacity>
@@ -313,7 +333,7 @@ const GoalsScreen = memo(() => {
                   <Text category="h10" status="placeholder">
                     {t('more:goals_current_streak', { defaultValue: 'Current streak' })}
                   </Text>
-                  <Text category="h6" bold status="primary" mt={4}>
+                  <Text category="h6" bold style={{ color: theme['text-basic-color'] }} mt={4}>
                     {t('more:goals_days', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 })}
                   </Text>
                 </View>
@@ -321,7 +341,7 @@ const GoalsScreen = memo(() => {
                   <Text category="h10" status="placeholder">
                     {t('more:goals_longest_streak', { defaultValue: 'Longest streak' })}
                   </Text>
-                  <Text category="h6" bold status="primary" mt={4}>
+                  <Text category="h6" bold style={{ color: theme['text-basic-color'] }} mt={4}>
                     {t('more:goals_days', {
                       defaultValue: '{{count}} days',
                       count: streak?.longestStreak ?? streak?.streakDays ?? 0,
@@ -330,7 +350,7 @@ const GoalsScreen = memo(() => {
                 </View>
               </Flex>
               <TouchableOpacity style={{ marginTop: 16, alignSelf: 'flex-start' }} onPress={() => navigate('MyProgress')}>
-                <Text category="h10" bold status="primary">
+                <Text category="h10" bold status="link">
                   {t('more:goals_view_full_progress', { defaultValue: 'View full progress →' })}
                 </Text>
               </TouchableOpacity>

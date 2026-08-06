@@ -9,7 +9,6 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
-import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -44,6 +43,31 @@ import CtaButton from 'components/CtaButton';
 // compare against) renders as a flat "New" badge instead of a
 // percentage, since inventing a percentage from a zero baseline would be
 // misleading, not informative.
+//
+// FOLLOW-UP CORRECTION (product report: "The leader board is not looking
+// good at all. I dont want any color gradients at all... the text is in
+// white color... on a gray background in light mode, that does not make
+// sense"): two real problems, both fixed:
+// 1) The hero banner's blue LinearGradient is gone — flat, ungradiented
+//    fill now (same plain-card treatment the rest of this app's headers
+//    use), no gradient anywhere on this screen.
+// 2) The podium's "New" badge (and several unrelated screens — see
+//    src/more/GoalsScreen.tsx, SharedContentDetail.tsx, MyProgress.tsx,
+//    RequestsInPass.tsx, all fixed alongside this) were using
+//    `status="primary"`, which resolves to constants/theme/mapping.json's
+//    `text-primary-color` — a near-white token that's only actually
+//    correct for text drawn ON a primary (blue)-filled surface (see
+//    components/CtaButton.tsx, which legitimately reads that same token
+//    for its own white button label). Used as plain text directly on a
+//    light card, it's genuinely invisible in light mode — this was already
+//    independently discovered and patched in six OTHER files before this
+//    (see e.g. src/more/JobAlerts.tsx's own "Was status='primary'"
+//    comment), just never swept through the rest of the app until this
+//    report. Fixed at each call site with an explicit text-basic-color (for
+//    plain values) or status="link" (for the two that are actually
+//    tappable links) rather than touching the shared theme token itself —
+//    that token is still correct and load-bearing for CtaButton and every
+//    other genuinely-on-a-colored-surface use.
 const PERIODS = [
   { key: 'daily', labelKey: 'home:leaderboard_daily', defaultValue: 'Daily' },
   { key: 'weekly', labelKey: 'home:leaderboard_weekly', defaultValue: 'Weekly' },
@@ -74,9 +98,12 @@ const RANK_COLOR: Record<1 | 2 | 3, { card: string; pill: string; pillText: stri
 };
 
 function ChangeBadge({ changePct, t }: { changePct: number | null | undefined; t: (k: string, o?: any) => string }) {
+  const theme = useTheme();
   if (changePct == null) {
+    // Was status="primary" — see this file's header comment on why that
+    // rendered invisible white text here.
     return (
-      <Text category="h10" bold status="primary" center mt={6}>
+      <Text category="h10" bold center mt={6} style={{ color: theme['text-basic-color'] }}>
         {t('home:leaderboard_new', { defaultValue: 'New' })}
       </Text>
     );
@@ -178,16 +205,19 @@ const Leaderboard = memo(() => {
           </Text>
         ) : (
           <>
-            {/* Blue "trophy" hero banner (reference screenshot) — houses the
-                Daily/Weekly/Monthly tabs plus a large trophy badge, both on
-                a real blue gradient fill instead of sitting on the plain
-                page background. */}
-            <LinearGradient
-              colors={['#0063f8', '#1DA1F2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroCard}>
-              <View style={styles.tabsRow}>
+            {/* "Trophy" hero (reference screenshot) — houses the Daily/
+                Weekly/Monthly tabs plus a trophy badge. Flat card fill, no
+                gradient (see this file's header comment on the follow-up
+                correction) — same plain-card/segmented-tab treatment this
+                app already uses everywhere else (gray track, solid brand-
+                blue active pill), just with a trophy icon added below it. */}
+            <View
+              style={[
+                globalStyle.card,
+                styles.heroCard,
+                { backgroundColor: theme['background-basic-color-2'] },
+              ]}>
+              <View style={[styles.tabsRow, { backgroundColor: theme['background-basic-color-3'] }]}>
                 {PERIODS.map(period => {
                   const active = activePeriod === period.key;
                   return (
@@ -195,12 +225,12 @@ const Leaderboard = memo(() => {
                       key={period.key}
                       activeOpacity={0.8}
                       onPress={() => setActivePeriod(period.key)}
-                      style={[styles.tabPill, active && styles.tabPillActive]}>
+                      style={[styles.tabPill, active && { backgroundColor: theme['color-primary-500'] }]}>
                       <Text
                         category="h9-s"
                         bold
                         center
-                        style={{ color: active ? '#0063f8' : 'rgba(255,255,255,0.85)' }}>
+                        style={{ color: active ? '#FFFFFF' : theme['text-hint-color'] }}>
                         {t(period.labelKey, { defaultValue: period.defaultValue })}
                       </Text>
                     </TouchableOpacity>
@@ -208,9 +238,15 @@ const Leaderboard = memo(() => {
                 })}
               </View>
               <View style={styles.trophyWrap}>
-                <Icon pack="eva" name="trophy" style={styles.trophyIcon} />
+                <View style={[styles.trophyCircle, { backgroundColor: theme['background-basic-color-3'] }]}>
+                  <Icon
+                    pack="eva"
+                    name="trophy"
+                    style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]}
+                  />
+                </View>
               </View>
-            </LinearGradient>
+            </View>
 
             <View style={styles.podiumRow}>
               {PODIUM_ORDER.map(rank => {
@@ -310,19 +346,18 @@ const themedStyles = StyleService.create({
   status: {
     paddingVertical: 40,
   },
-  // Blue trophy hero (see the JSX comment above) — LinearGradient fill,
-  // rounded like every other card in the app, houses the period tabs and
-  // the big trophy badge.
+  // Trophy hero (see the JSX comment above) — flat card fill (no
+  // gradient, per the follow-up correction), rounded like every other
+  // card in the app, houses the period tabs and the trophy badge.
   heroCard: {
     borderRadius: 20,
     paddingTop: 16,
-    paddingBottom: 28,
+    paddingBottom: 20,
     paddingHorizontal: 16,
     marginTop: 12,
   },
   tabsRow: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 999,
     padding: 4,
   },
@@ -332,27 +367,33 @@ const themedStyles = StyleService.create({
     paddingVertical: 8,
     borderRadius: 999,
   },
-  tabPillActive: {
-    backgroundColor: '#FFFFFF',
-  },
   trophyWrap: {
     alignItems: 'center',
     marginTop: 20,
   },
-  trophyIcon: {
+  // Neutral icon-circle behind the trophy now that it's no longer sitting
+  // on a colored gradient fill to stand out against — same treatment as
+  // this app's other icon-in-circle badges (brand-blue icon on a light
+  // neutral disc).
+  trophyCircle: {
     width: 64,
     height: 64,
-    tintColor: '#FFD166',
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Top-3 podium — 3 separate tinted cards (2nd/1st/3rd left-to-right,
   // matching the reference's own arrangement), each sized taller for a
   // higher rank via PODIUM_CARD_HEIGHT, bottom-aligned so the shorter
   // #2/#3 cards read as literal podium steps next to the taller #1.
+  // Positive spacing now (was a negative overlap margin designed to tuck
+  // under the old gradient hero's rounded bottom edge — no longer needed
+  // now that the hero above is a normal flat card with regular spacing).
   podiumRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-between',
-    marginTop: -18,
+    marginTop: 16,
     paddingHorizontal: 4,
   },
   podiumEmptyFill: {

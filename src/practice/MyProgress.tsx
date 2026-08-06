@@ -232,7 +232,12 @@ const MyProgress = memo(() => {
                       gradientFrom="#0063f8"
                       gradientTo="#1DA1F2"
                       style={{ marginRight: 16 }}>
-                      <Text category="h8" bold status="primary">
+                      {/* BUG FIX: status="primary" -> near-white
+                          text-primary-color — CircularProgress's center is
+                          transparent (no fill), so this sat directly on the
+                          card's own white background in light mode,
+                          invisible. */}
+                      <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
                         {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
                       </Text>
                     </CircularProgress>
