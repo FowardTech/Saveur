@@ -115,5 +115,29 @@
             <data android:scheme="https" android:host="share.saveurnow.com" />
         </intent-filter>
       </activity>
+      <!-- BUG FIX (product report: "the icon for the push notification is
+           still showing the old one instead of the new icon"): this only
+           covers FOREGROUND pushes (see services/pushNotificationService.ts's
+           own notifee.displayNotification call, smallIcon: 'ic_stat_saveur').
+           A background/killed-state push with a real notification block is
+           displayed automatically by Firebase's own SDK with zero JS code
+           running, and without this meta-data it falls back to
+           @mipmap/ic_launcher (the full-color, fully-opaque app icon):
+           same "renders as a plain white block, not the S mark" problem
+           Android's always-silhouette status-bar rendering causes for any
+           opaque icon, regardless of which logo era it's from. Points at
+           the same proper white-on-transparent notification icon
+           (drawable-*dpi/ic_stat_saveur.png) so background/killed pushes
+           match foreground ones instead of silently falling back to a
+           different, wrong asset. Color matches this app's one brand blue
+           (see constants/theme/appTheme.json's color-primary-500):
+           Android tints a silhouette small-icon with this color on API 21+
+           instead of leaving it plain white. -->
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_icon"
+        android:resource="@drawable/ic_stat_saveur" />
+      <meta-data
+        android:name="com.google.firebase.messaging.default_notification_color"
+        android:resource="@color/notification_icon_color" />
     </application>
 </manifest>

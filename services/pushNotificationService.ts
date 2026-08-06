@@ -436,7 +436,28 @@ export function setupForegroundPushHandler(): () => void {
         android: {
           channelId: 'default',
           pressAction: {id: 'default'},
-          smallIcon: 'ic_launcher',
+          // BUG FIX (product report: "the icon for the push notification is
+          // still showing the old one instead of the new icon") — was
+          // 'ic_launcher', the full-color app icon (opaque blue square).
+          // Android's status bar always renders notification icons as a
+          // flat white silhouette derived from the image's ALPHA channel
+          // only, discarding color entirely — a fully-opaque square source
+          // like ic_launcher has no transparency to silhouette against, so
+          // it rendered as a plain solid white block, not the "S" mark, in
+          // EITHER the old or new logo era; this was never actually
+          // rendering any recognizable logo. 'ic_stat_saveur' (see
+          // android/app/src/main/res/drawable-*dpi/) is a proper
+          // white-on-transparent notification icon generated from the same
+          // "S" line-art used everywhere else brand-tinted (assets/images/
+          // logo_mark.png), sized per Android's notification-icon density
+          // guidelines — this is what a status-bar notification icon is
+          // actually supposed to look like.
+          smallIcon: 'ic_stat_saveur',
+          // Same brand-blue tint AndroidManifest.xml's
+          // default_notification_color meta-data applies to the
+          // background/killed-state path, so the silhouette icon reads as
+          // blue instead of plain white/gray on either path.
+          color: '#0063f8',
           ...(leaderAvatarUrl
             ? {
                 largeIcon: leaderAvatarUrl,

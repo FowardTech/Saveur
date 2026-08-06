@@ -14,4 +14,10 @@
          mark itself has been recolored white (assets/bootsplash/logo*.png,
          ic_launcher_foreground.png) to read against it. -->
     <color name="splash_background">#0063f8</color>
+    <!-- Tint applied to the white notification-icon silhouette
+         (drawable-*dpi/ic_stat_saveur.png) on API 21+ — see
+         AndroidManifest.xml's default_notification_icon/_color meta-data
+         and services/pushNotificationService.ts's matching smallIcon.
+         Same brand blue as splash_background above. -->
+    <color name="notification_icon_color">#0063f8</color>
 </resources>
