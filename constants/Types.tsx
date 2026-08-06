@@ -141,6 +141,11 @@ export enum EKeyAsyncStorage {
   // Admin request item: "I also want to see the country where users are
   // using the app from in the admin".
   detectedCountryCode = 'detectedCountryCode',
+  // Product request: "I also want an onboarding illustration for Job
+  // alerts the same way you did for the learning course" — see
+  // src/more/JobAlertsOnboarding.tsx (shown once from JobAlerts.tsx, same
+  // "shown once" pattern as learningCoursesOnboardingSeen above).
+  jobAlertsOnboardingSeen = 'jobAlertsOnboardingSeen',
 }
 export enum Animation_Types_Enum {
   SlideTop,

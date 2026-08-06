@@ -211,4 +211,14 @@ export const Images = {
   // again post-signup. Product-supplied full-bleed hero image, 1080x1920
   // (9:16, matches a full-screen phone banner with no cropping needed).
   learningOnboarding: require("./img_learning_onboarding.png"),
+  // Job Alerts' own first-time full-screen onboarding banner (product
+  // request: "I also want an onboarding illustration for Job alerts the
+  // same way you did for the learning course", pointing at this exact
+  // marketing image — "Saveur brings jobs to you / Based on your desired
+  // role"). Shown once via src/more/JobAlertsOnboarding.tsx, gated on
+  // EKeyAsyncStorage.jobAlertsOnboardingSeen. Product-supplied image was
+  // letterboxed with black pillarbox bars on a 2528x2528 canvas — cropped
+  // to just the real illustration content (1609x2528) so there's no black
+  // strip down either side when this renders full-bleed.
+  jobAlertsOnboarding: require("./img_job_alerts_onboarding.png"),
 };

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   TopNavigation,
   StyleService,
@@ -31,12 +32,14 @@ import EmptyState from 'components/EmptyState';
 import StatusBadge from 'components/StatusBadge';
 import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
-import {JobAlertProps} from 'constants/Types';
+import {EKeyAsyncStorage, JobAlertProps} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import * as jobAlertsService from 'services/jobAlertsService';
+import * as configService from 'services/configService';
 import {AuthContext} from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import JobAlertsOnboarding from './JobAlertsOnboarding';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import {isRemoteLocation} from 'utils/jobLocation';
 
@@ -54,6 +57,34 @@ const JobAlerts = memo(() => {
   const {t} = useTranslation(['more', 'common']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const {profile, updateProfile, isPremium} = React.useContext(AuthContext);
+
+  // Product request: "I also want an onboarding illustration for Job
+  // alerts the same way you did for the learning course" — same
+  // first-time full-screen banner pattern as LearningCourses.tsx's own
+  // showOnboarding (see that file's comment for the full rationale).
+  // `null` = not checked yet (render nothing this one frame, avoiding a
+  // flash of the real screen before the AsyncStorage read resolves);
+  // `true`/`false` once known. Checked here rather than gated behind
+  // isPremium below — this introduces the feature to every user, paid or
+  // not, same as the learning-course banner. Admin toggle (product
+  // request: "make all those new features configurable in the admin") —
+  // off skips straight to `false` regardless of the AsyncStorage flag,
+  // same as if every user had already seen it.
+  const onboardingBannerEnabled = configService.isFeatureEnabled('job_alerts_onboarding_banner');
+  const [showOnboarding, setShowOnboarding] = React.useState<boolean | null>(null);
+  React.useEffect(() => {
+    if (!onboardingBannerEnabled) {
+      setShowOnboarding(false);
+      return;
+    }
+    AsyncStorage.getItem(EKeyAsyncStorage.jobAlertsOnboardingSeen).then(seen => {
+      setShowOnboarding(!seen);
+    });
+  }, [onboardingBannerEnabled]);
+  const onGetStartedOnboarding = React.useCallback(() => {
+    setShowOnboarding(false);
+    AsyncStorage.setItem(EKeyAsyncStorage.jobAlertsOnboardingSeen, '1').catch(() => {});
+  }, []);
 
   const [alerts, setAlerts] = React.useState<JobAlertProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -283,6 +314,15 @@ const JobAlerts = memo(() => {
     // second-tap handoff to the real job/apply page.
     navigate('JobAlertDetails', {job: alert});
   };
+
+  if (showOnboarding === null) {
+    // AsyncStorage read still in flight — render nothing rather than a
+    // one-frame flash of either the real screen or the banner.
+    return <Container style={styles.container} />;
+  }
+  if (showOnboarding) {
+    return <JobAlertsOnboarding onGetStarted={onGetStartedOnboarding} />;
+  }
 
   if (!isPremium) {
     return (

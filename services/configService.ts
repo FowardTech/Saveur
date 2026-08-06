@@ -54,6 +54,7 @@ export interface FeatureFlags {
   location_language_gate: boolean;
   username_editing: boolean;
   learning_course_onboarding_banner: boolean;
+  job_alerts_onboarding_banner: boolean;
 }
 
 export interface ReleaseConfig {
