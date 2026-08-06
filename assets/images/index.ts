@@ -68,7 +68,22 @@ export const Images = {
   // alpha channel), @1x/@2x/@3x provided at 240/480/720px so it stays
   // crisp at this app's largest current orb size (200px, LiveInterviewSession.
   // tsx's ORB_SIZE) with headroom.
-  voiceOrb: require('./img_voice_orb.png'),
+  //
+  // SECOND replacement (product request: "replace the blue round ball...
+  // with the GIF image" — a rotating/animated version of the same glassy
+  // blue sphere concept). The user's original upload was an 800x800, 181-
+  // frame, 23MB GIF — far too large to bundle as a repeatedly-rendered UI
+  // element (app size + decode memory), so this is a re-encoded version
+  // (ffmpeg, palette-optimized, 360x360 @ 15fps @ 160 colors) at ~2.7MB —
+  // big enough to stay crisp at this orb's largest on-screen size (up to
+  // 200pt, i.e. 600px at @3x) without shipping 3 separate per-density GIF
+  // files (which would have roughly tripled total size for a soft gradient
+  // image that doesn't need pixel-perfect density matching to look good).
+  // See android/app/build.gradle's animated-gif Fresco dependency comment —
+  // Android's <Image> needs that native module to actually animate a GIF
+  // instead of freezing on its first frame; iOS animates GIFs via <Image>
+  // with no extra config needed.
+  voiceOrb: require('./orb_gradient.gif'),
   // Product-supplied replacement for the homescreen XP check-in card's
   // gamification badge (was the eva "award" icon, tinted gold) — a real
   // 3D-rendered gold medal/ribbon graphic. Genuinely transparent PNG

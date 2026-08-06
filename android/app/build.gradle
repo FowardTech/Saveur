@@ -146,6 +146,22 @@ dependencies {
         implementation jscFlavor
     }
 
+    // GIF support for RN's <Image> component (product request: "replace the
+    // blue round ball in the AI coach screen and the voice interview screen
+    // with the GIF image" — components/InAppVideoPlayer.tsx and
+    // src/messages/VoiceCoachView.tsx / src/practice/LiveInterviewSession.tsx
+    // now use an animated GIF, assets/images/orb_gradient.gif). RN's Image
+    // plays animated GIFs out of the box on iOS, but on Android it silently
+    // just renders the FIRST FRAME as a static image unless Fresco's
+    // animated-gif decoder module is explicitly added — it is NOT pulled in
+    // automatically by com.facebook.react:react-android above, even though
+    // that artifact does bundle Fresco itself for plain static images.
+    // Version pinned to exactly match this project's react-native (0.82.1)
+    // own internal Fresco version (node_modules/react-native/gradle/
+    // libs.versions.toml's `fresco` entry) to avoid a resolution conflict
+    // with whatever version react-android already depends on.
+    implementation("com.facebook.fresco:animated-gif:3.6.0")
+
     // Explicit Android SplashScreen API support — targetSdkVersion 36 means
     // the OS *mandatorily* shows its own system splash screen on API 31+
     // before MainActivity draws, auto-derived from the launcher icon if we
