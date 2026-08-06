@@ -271,7 +271,10 @@ const Leaderboard = memo(() => {
                       {entry.name}
                       {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                     </Text>
-                    <Text category="h9-s" bold style={{ color: theme['color-primary-500'] }}>
+                    {/* Product report ("All text in blue should now be
+                        black except the pills and link text") -- this XP
+                        value is plain row text, not a pill or a link. */}
+                    <Text category="h9-s" bold style={{ color: theme['text-basic-color'] }}>
                       {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
                     </Text>
                   </View>

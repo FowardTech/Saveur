@@ -1474,13 +1474,19 @@ const themedStyles = StyleService.create({
   checkInRing: {
     marginRight: 12,
   },
+  // Product report ("All text in blue should now be black except the pills
+  // and link text") -- this ring's streak-day count and the "39 XP" value
+  // next to it are plain text on this card (its own blue gradient accent is
+  // currently disabled -- see checkInCardAccent's colors={['transparent',
+  // 'transparent']} above), not a pill or a link, so plain text-basic-color
+  // now instead of the hardcoded brand blue.
   checkInRingText: {
-    color: '#0063f8',
+    color: 'text-basic-color',
   },
   // checkInLabel (the standalone "XP" caption above the "39 XP" value) was
   // removed as part of the row-width fix above — no reader left.
   checkInValue: {
-    color: '#0063f8',
+    color: 'text-basic-color',
   },
   checkInError: {
     color: '#FFE3E3',

@@ -105,10 +105,12 @@ const PracticalScenarioFeedback = memo(() => {
               {/* Was status="primary" -- resolves to text-primary-color,
                   a near-white token meant for text on a solid primary-color
                   button, not this plain Layout card. Made the score
-                  invisible in light mode. Using the actual brand blue
-                  directly instead, same fix as JobAlerts.tsx's daily-limit
-                  digit. */}
-              <Text category="h2" bold center style={{color: theme['color-primary-500']}}>{feedback.overall}</Text>
+                  invisible in light mode, so this used to render the actual
+                  brand blue directly instead. Product report ("All text in
+                  blue should now be black except the pills and link text")
+                  -- this headline number isn't a pill or a link, just plain
+                  text-basic-color reads fine against this plain card. */}
+              <Text category="h2" bold center style={{color: theme['text-basic-color']}}>{feedback.overall}</Text>
               {/* Redesign v2 (full reskin, components/StarRating.tsx) —
                   quick-glance read on the same overview card as the exact
                   number above, same idea as MyRatings.tsx's read-only star

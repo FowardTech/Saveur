@@ -457,11 +457,13 @@ const JobAlerts = memo(() => {
                   colored surface (e.g. a filled button), not plain text
                   directly on the card background. That's exactly right in
                   dark mode (white reads fine there) but made this digit
-                  invisible in light mode. Using the actual brand blue
-                  directly instead -- readable against the card background
-                  in both themes, and matches the slider's own accent color
-                  right below it. */}
-              <Text category="h8" bold style={{color: theme['color-primary-500']}}>
+                  invisible in light mode, so this used to render the actual
+                  brand blue directly instead. Product report ("All text in
+                  blue should now be black except the pills and link text")
+                  -- this isn't a pill or a link, just a plain settings
+                  value, so text-basic-color instead (still readable against
+                  the card background in both themes). */}
+              <Text category="h8" bold style={{color: theme['text-basic-color']}}>
                 {Math.round(dailyLimit)}
               </Text>
             </Flex>
