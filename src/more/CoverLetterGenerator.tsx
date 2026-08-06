@@ -103,6 +103,16 @@ const CoverLetterGenerator = memo(() => {
         );
       } else {
         await Share.share({ url: `file://${tempPath}`, title: filename });
+        // See GenerateResume.tsx's onDownload for why this alert exists —
+        // same "also saved to Generated Documents" confirmation, since iOS
+        // has no system notification for a share-sheet action the way
+        // Android's DownloadManager does.
+        Alert.alert(
+          t('more:resume_download_complete_title', { defaultValue: 'Download complete' }),
+          t('more:document_saved_to_app_message', {
+            defaultValue: 'This document was also saved to your Generated Documents — you can redownload or rename it anytime.',
+          }),
+        );
       }
     } catch (e: any) {
       Alert.alert(

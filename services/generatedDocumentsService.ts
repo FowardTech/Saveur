@@ -57,3 +57,12 @@ export async function deleteGeneratedDocument(id: number): Promise<void> {
     // best-effort — same pattern as resumeVariantsService.deleteVariant
   }
 }
+
+// Product request: "they should be able to rename the document" — throws on
+// failure (unlike the best-effort delete above) so GeneratedDocuments.tsx's
+// rename modal can tell the user it didn't actually save, instead of
+// silently closing on a name that never took.
+export async function renameGeneratedDocument(id: number, label: string): Promise<GeneratedDocument> {
+  const { data } = await apiClient.patch<WireDocument>(`/api/v1/resume/documents/${id}`, { label });
+  return mapDocument(data);
+}

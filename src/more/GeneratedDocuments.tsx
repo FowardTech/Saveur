@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Platform, Share, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Share, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -7,7 +7,9 @@ import {
   useTheme,
   Layout,
   Icon,
+  Input,
   Spinner,
+  Button,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 
@@ -16,6 +18,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import CtaButton from 'components/CtaButton';
 import { globalStyle } from 'styles/globalStyle';
 import * as generatedDocumentsService from 'services/generatedDocumentsService';
 import { GeneratedDocument, GeneratedDocumentKind } from 'services/generatedDocumentsService';
@@ -67,6 +70,13 @@ const GeneratedDocuments = memo(() => {
   const [documents, setDocuments] = React.useState<GeneratedDocument[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [downloadingId, setDownloadingId] = React.useState<number | null>(null);
+  // Rename (product request: "they should be able to rename the
+  // document") — same bottom-sheet Modal + Input pattern ResumeVariants.tsx
+  // uses for naming a new variant, reused here for editing an existing
+  // document's label.
+  const [renamingDoc, setRenamingDoc] = React.useState<GeneratedDocument | null>(null);
+  const [renameValue, setRenameValue] = React.useState('');
+  const [isSavingRename, setIsSavingRename] = React.useState(false);
 
   const load = React.useCallback(() => {
     setIsLoading(true);
@@ -115,6 +125,37 @@ const GeneratedDocuments = memo(() => {
       );
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const onOpenRename = (doc: GeneratedDocument) => {
+    setRenamingDoc(doc);
+    setRenameValue(doc.label);
+  };
+
+  const onCloseRename = () => {
+    if (isSavingRename) return;
+    setRenamingDoc(null);
+    setRenameValue('');
+  };
+
+  const onSaveRename = async () => {
+    if (!renamingDoc) return;
+    const label = renameValue.trim();
+    if (!label) return;
+    setIsSavingRename(true);
+    try {
+      const updated = await generatedDocumentsService.renameGeneratedDocument(renamingDoc.id, label);
+      setDocuments(prev => prev.map(d => (d.id === updated.id ? updated : d)));
+      setRenamingDoc(null);
+      setRenameValue('');
+    } catch {
+      Alert.alert(
+        t('more:rename_document_failed_title', { defaultValue: "Couldn't rename document" }),
+        t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+      );
+    } finally {
+      setIsSavingRename(false);
     }
   };
 
@@ -177,6 +218,11 @@ const GeneratedDocuments = memo(() => {
                   ) : (
                     <Flex itemsCenter>
                       <Icon
+                        pack="eva" name="edit-2-outline"
+                        style={[globalStyle.icon20, { tintColor: theme['text-basic-color'], marginRight: 16 }]}
+                        onPress={() => onOpenRename(doc)}
+                      />
+                      <Icon
                         pack="eva" name="download-outline"
                         style={[globalStyle.icon24, { tintColor: theme['text-basic-color'], marginRight: 16 }]}
                         onPress={() => onDownload(doc)}
@@ -194,6 +240,33 @@ const GeneratedDocuments = memo(() => {
           })
         )}
       </Content>
+
+      <Modal visible={!!renamingDoc} transparent animationType="slide" onRequestClose={onCloseRename}>
+        {/* Same KeyboardAvoidingView wrapper as ResumeVariants.tsx's own
+            naming sheet — a raw Modal bottom sheet doesn't move out of the
+            keyboard's way on its own. */}
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={styles.modalSheet}>
+            <Text category="h7" bold mb={16}>
+              {t('more:rename_document_title', { defaultValue: 'Rename document' })}
+            </Text>
+            <Input
+              placeholder={t('more:document_label_placeholder', { defaultValue: 'Document name' })}
+              value={renameValue}
+              onChangeText={setRenameValue}
+              autoFocus
+              style={[styles.input, { marginBottom: 20 }]}
+              textStyle={globalStyle.inputText}
+            />
+            <CtaButton disabled={!renameValue.trim() || isSavingRename} onPress={onSaveRename}>
+              {isSavingRename ? () => <Spinner size="small" status="control" /> : t('common:save', { defaultValue: 'Save' })}
+            </CtaButton>
+            <Button appearance="outline" style={{ marginTop: 12 }} onPress={onCloseRename} disabled={isSavingRename}>
+              {t('common:cancel', { defaultValue: 'Cancel' })}
+            </Button>
+          </Layout>
+        </KeyboardAvoidingView>
+      </Modal>
     </Container>
   );
 });
@@ -217,5 +290,18 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Rename modal — same bottom-sheet treatment as ResumeVariants.tsx's own
+  // naming sheet (see that file's own styles for the pattern this copies).
+  input: { ...globalStyle.inputField },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
   },
 });

@@ -208,6 +208,23 @@ const GenerateResume = memo(() => {
         // path, then sharing THAT local file (not the remote url) so
         // "Save to Files" in the share sheet writes actual file bytes.
         await Share.share({ url: `file://${tempPath}`, title: filename });
+        // Product request: "give them the options of saving (downloading)
+        // it on their device... or saving it in generated documents or in
+        // both places" — the export call above already recorded this in
+        // Generated Documents server-side (see
+        // Saveur-Backend/app/services/generated_document_service.py's
+        // record(), called unconditionally inside every export endpoint),
+        // independent of whatever the user does in the share sheet. The
+        // Android branch above surfaces that in its own "Download complete"
+        // alert; iOS has no equivalent system notification for a share
+        // sheet action, so this is the only place that fact is ever shown
+        // to an iOS user.
+        Alert.alert(
+          t('more:resume_download_complete_title', { defaultValue: 'Download complete' }),
+          t('more:document_saved_to_app_message', {
+            defaultValue: 'This document was also saved to your Generated Documents — you can redownload or rename it anytime.',
+          }),
+        );
       }
     } catch (e: any) {
       Alert.alert(
