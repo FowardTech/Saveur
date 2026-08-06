@@ -108,6 +108,17 @@ export enum EKeyAsyncStorage {
   // learner sets for themselves to glance at, not something any other part
   // of the product (admin dashboard, notifications, etc.) needs to read.
   goalsWeeklyTargets = 'goalsWeeklyTargets',
+  // BUG FIX (product report: "The rate should only appear once every week
+  // not everytime") — the server-side cooldown (User.last_rating_prompt_at,
+  // see app/api/ratings.py) only actually resets when the dismiss/submit
+  // POST successfully reaches the backend; HomeSrc.tsx's fire-and-forget
+  // dismiss call silently swallows failures, which could leave the server
+  // thinking the prompt was never shown and re-trigger it on the very next
+  // Home focus. This is a purely LOCAL backstop set the instant the modal
+  // is actually rendered (independent of whether the backend call later
+  // succeeds), so a real device can't get stuck re-showing it every focus
+  // no matter what the network does.
+  ratingPromptLastShownAt = 'ratingPromptLastShownAt',
 }
 export enum Animation_Types_Enum {
   SlideTop,

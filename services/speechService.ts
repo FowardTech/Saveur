@@ -832,6 +832,57 @@ export function useSpeechToText() {
       setError(i18n.t('find:mic_permission_required', { defaultValue: 'Microphone permission is required to speak your answer.' }));
       return false;
     }
+    // BUG FIX (product report: mic shows "listening" the whole time, but
+    // the backend's own conversation logs show NOTHING was ever
+    // transcribed -- not intermittently, every single time). Microphone
+    // access and iOS's separate Speech Recognition permission
+    // (NSSpeechRecognitionUsageDescription / SFSpeechRecognizer
+    // authorization) are TWO DIFFERENT OS permissions -- a user can grant
+    // the mic (so the OS's mic-in-use indicator lights up, which is all a
+    // user can see) while Speech Recognition itself is still
+    // notDetermined/denied/restricted. This hook never checked that
+    // separately before: `Voice.start()`'s underlying native `startSpeech:`
+    // DOES call `SFSpeechRecognizer requestAuthorization:` internally, but
+    // its own JS-facing callback resolves immediately regardless of the
+    // outcome (fire-and-forget), so `await Voice.start()` below was never a
+    // reliable signal either way -- a denial only ever showed up later, as
+    // an async onSpeechError, which this hook's own auto-restart logic
+    // (guardedVoiceStart) treats as a normal "pause between sentences" and
+    // silently retries forever unless 4 of them land within 3 seconds (see
+    // that logic's own doc comment) -- a single denied-permission error per
+    // turn, spaced out by TTS playback between turns, essentially never
+    // reaches that burst threshold. Net effect: a real permission problem
+    // silently spun forever with `isListening` staying true and no error
+    // ever shown -- exactly the reported symptom.
+    //
+    // `Voice.isAvailable()` wraps the SAME native `SFSpeechRecognizer
+    // requestAuthorization:` call, but its promise genuinely waits for the
+    // real authorization result before resolving (unlike startSpeech's
+    // callback) -- checking it explicitly, BEFORE flipping the UI to
+    // "listening", means a real denial is caught immediately with a clear,
+    // actionable message instead of an invisible infinite retry loop. Also
+    // gives a user stuck in `notDetermined` (e.g. the original prompt never
+    // properly surfaced) another real chance to be asked. iOS-only: Android
+    // already goes through ensureMicPermissionAndroid above and this
+    // library's Android side doesn't have a separate two-permission model.
+    if (Platform.OS === 'ios') {
+      try {
+        const available = await Voice.isAvailable();
+        if (!available) {
+          setError(
+            i18n.t('find:speech_recognition_not_authorized', {
+              defaultValue:
+                "Speech Recognition isn't allowed for Saveur. Enable it in Settings > Privacy & Security > Speech Recognition, then try again.",
+            }),
+          );
+          return false;
+        }
+      } catch {
+        // Couldn't determine availability -- fall through and let the
+        // normal Voice.start()/onSpeechError path handle it rather than
+        // blocking the user on this check itself failing.
+      }
+    }
     wantsListeningRef.current = true;
     setIsListening(true);
     // Same 400ms debounce as guardedVoiceStart (see its doc comment) — an

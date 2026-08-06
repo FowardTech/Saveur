@@ -165,17 +165,38 @@ const HomeSrc = memo(() => {
   // useFocusEffect (same pattern as the AppTour check above) means landing
   // back on Home right after any of these actions actually shows it.
   const [showRatingPrompt, setShowRatingPrompt] = React.useState(false);
+  // BUG FIX (product report: "the rate should only appear once every week
+  // not everytime") — `showRatingPrompt` was read inside a `[]`-deps
+  // useCallback, so the closure only ever saw its initial `false` value;
+  // the "already showing -- don't re-check" guard below was dead code, and
+  // every Home focus re-ran the check regardless of whether the modal was
+  // currently on screen. A ref always reads the current value.
+  const showRatingPromptRef = React.useRef(false);
+  React.useEffect(() => {
+    showRatingPromptRef.current = showRatingPrompt;
+  }, [showRatingPrompt]);
+  const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
   useFocusEffect(
     React.useCallback(() => {
-      if (showRatingPrompt) return; // already showing -- don't re-check mid-display
+      if (showRatingPromptRef.current) return; // already showing -- don't re-check mid-display
       (async () => {
+        // Local backstop (see EKeyAsyncStorage.ratingPromptLastShownAt's own
+        // comment) — checked BEFORE either trigger path below, so a
+        // silently-failed dismiss/submit POST from a previous showing can
+        // never cause this to re-fire on the very next focus.
+        const lastShownRaw = await AsyncStorage.getItem(EKeyAsyncStorage.ratingPromptLastShownAt);
+        if (lastShownRaw && Date.now() - Number(lastShownRaw) < WEEK_MS) return;
         const queued = (await AsyncStorage.getItem(EKeyAsyncStorage.ratingPromptQueued)) === 'true';
         if (queued) {
           setShowRatingPrompt(true);
+          AsyncStorage.setItem(EKeyAsyncStorage.ratingPromptLastShownAt, String(Date.now())).catch(() => {});
           return;
         }
         const due = await appRatingService.isRatingPromptDue();
-        if (due) setShowRatingPrompt(true);
+        if (due) {
+          setShowRatingPrompt(true);
+          AsyncStorage.setItem(EKeyAsyncStorage.ratingPromptLastShownAt, String(Date.now())).catch(() => {});
+        }
       })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
