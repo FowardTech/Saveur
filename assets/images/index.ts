@@ -114,37 +114,39 @@ export const Images = {
   // instead, one per slide topic, matching what the referenced sites
   // actually sell as "illustration packs."
   //
-  // Sourced from unDraw (undraw.co) — free for personal and commercial
-  // use, no attribution required (see undraw.co/license; the only
-  // restriction is not redistributing the raw set as its own pack, which
-  // doesn't apply here). Fetched via the MIT-licensed community mirror
-  // github.com/cuuupid/undraw-illustrations (raw.githubusercontent.com/
-  // wsrv.nl were both unreachable from this environment's sandboxed
-  // network, but `git clone` over the github.com domain itself worked),
-  // then each SVG's default accent color (#6c63ff, unDraw's stock purple)
-  // was recolored to this app's own brand blue (#0063f8) via a plain
-  // find/replace before rasterizing to PNG with cairosvg — RN's <Image>
-  // has no built-in SVG support and this project has no svg-transformer
-  // configured (see illustrations.tsx's now-superseded hand-drawn mascot
-  // set for the only other place this app touches react-native-svg, which
-  // renders SVG as React components instead, a different mechanism that
-  // doesn't apply to a downloaded third-party file).
+  // THIRD PASS — original artwork, not sourced online. The first two passes
+  // both used unDraw (free/no-attribution, undraw.co/license) — pass 1
+  // picked 5 topically-matching illustrations directly; pass 2 swapped the
+  // 2 that stood out as visual outliers (flat chart mockup / plain-white
+  // background) for 2 different unDraw pieces that already had the other
+  // 3 slides' soft-blob-background treatment. Both passes were rejected as
+  // not matching a reference screenshot the product owner shared: a phone-
+  // mockup hero with floating drop-shadowed cards, a warm gradient
+  // backdrop, and flat-but-colorful characters. Before designing from
+  // scratch, DrawKit, ManyPixels, Humaaans, Open Doodles, Storyset,
+  // Craftwork, and Iconscout were all evaluated as alternative *sources*
+  // for that exact look — DrawKit's site leaks direct S3 zip links per
+  // collection, but most "Free"-badged collections are actually served
+  // from its `drawkit-paid` bucket; ManyPixels/Storyset/Craftwork/
+  // Iconscout's asset CDNs are unreachable from this sandbox's network
+  // allowlist (confirmed via direct curl, not just this fetch tool);
+  // Humaaans/Open Doodles are reachable via npm but are a body-parts kit
+  // and a lifestyle-doodle set respectively, neither able to reproduce the
+  // reference's specific "hero + floating UI cards" composition.
   //
-  // onboardingFeedback and onboardingResumeScan were replaced in a second
-  // pass (report: illustrations "not premium/modern enough" — DrawKit,
-  // ManyPixels, Humaaans, and Open Doodles were all evaluated as
-  // alternatives first: DrawKit's own site leaks direct S3 zip links per
-  // collection, but cross-checking each one shows most "Free"-badged
-  // collections are actually served from its `drawkit-paid` bucket — only
-  // a couple of thematically-irrelevant packs, e.g. Economy & Finance,
-  // Education, are truly in `drawkit-free`; ManyPixels' CDN and Humaaans/
-  // Open Doodles' hosted assets were unreachable from this sandbox, and
-  // Open Doodles' lifestyle-doodle poses don't fit a career app anyway) —
-  // ultimately staying on unDraw but picking 2 different source pieces
-  // (voice_control, organize_resume) that already include the same soft
-  // blob-background + person treatment the other 3 slides have, instead of
-  // the original picks' flat chart-mockup/plain-white-background look that
-  // stood out as the inconsistent, "cheaper-looking" pair.
+  // So these 5 are hand-built SVG artwork instead: a small reusable
+  // "design kit" (Python, generating raw SVG — see svg_kit.py/components.py/
+  // palette.py in this session's scratch workspace, not checked into the
+  // repo) with a soft two-tone gradient background + 2 blurred color blobs
+  // per scene, a torso-up flat character (parametrized hair style/skin
+  // tone/outfit color so each of the 5 has a visually distinct "cast"),
+  // floating rounded cards with a soft blurred *colored* drop shadow
+  // (never flat black) and a slight rotation, and scattered sparkle/dot/
+  // plus/ring decorative accents — the same visual ingredients as the
+  // reference. Rasterized to PNG with cairosvg at 1200x1000 (all 5 share
+  // one canvas size/aspect, unlike the varied aspects of the two unDraw
+  // passes). Being original artwork, there's no license/attribution
+  // question at all here.
   onboardingInterview: require("./img_onboarding_interview.png"),
   onboardingFeedback: require("./img_onboarding_feedback.png"),
   onboardingJobAlert: require("./img_onboarding_job_alert.png"),

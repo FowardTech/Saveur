@@ -78,31 +78,28 @@ const Onboarding = memo(() => {
     translationX.value = event.contentOffset.x;
   });
   // Product request ("I want us to use the perfect illustrations... Just
-  // get free ones online that looks very good and modern" — icons8/
-  // iconscout/streamline referenced) — replaces the earlier real-photo
-  // approach (5 hotlinked Pexels stock photos) with proper flat-style
-  // illustrations, one per slide topic: a handshake/interview scene for
-  // "practice interviews", someone talking to a voice-assistant speaker for
-  // "instant feedback", a magnifying glass surfacing a candidate for "job
-  // alert", two people reviewing a resume against a results chart for
-  // "resume scanners", and someone studying at a desk for "learn one course
-  // at a time". See assets/images/index.ts's own comment on these 5 assets
-  // for sourcing/licensing (unDraw, free/no attribution) and why they're
-  // bundled PNGs rather than requiring a live network fetch the way the old
-  // Pexels URLs did.
-  //
-  // SECOND PASS (follow-up report: "not premium/modern enough... the type
-  // used in top 500 fortune apps"): the first pass's "feedback" slide (a
-  // flat browser-window mockup with pie/bar charts, no person, no
-  // background) and "resume scanner" slide (resume papers on a plain white
-  // background) were the two visual outliers — the other 3 slides all had a
-  // soft colored blob shape behind the subject plus a person for scale/
-  // personality, and the inconsistency between "has a blob + a person" vs.
-  // "flat chart on white" is what actually read as cheap, not the
-  // illustration style itself. Both were swapped for different unDraw
-  // pieces that already have that same blob-background + person treatment
-  // baked in (voice_control / organize_resume), so all 5 slides now share
-  // one consistent visual language instead of 3-good-2-off.
+  // get free ones online that looks very good and modern") went through two
+  // sourced-online passes (unDraw, both times) that the product owner
+  // rejected as not matching the polish of a reference screenshot they
+  // shared — a phone-mockup hero with floating drop-shadowed cards, a warm
+  // gradient backdrop, and flat-but-colorful characters, the "top 500
+  // fortune apps" look. Rather than keep hunting for a free pack that
+  // happens to match that exact reference (DrawKit, ManyPixels, Humaaans,
+  // Open Doodles, and the full 1,263-illustration unDraw catalog were all
+  // evaluated first — see assets/images/index.ts's comment for the full
+  // trail), these 5 are now fully original artwork, hand-built in code to
+  // match the reference's actual design system rather than approximate it:
+  // a warm two-tone gradient backdrop per slide, a torso-up flat character
+  // (unique hair/skin/outfit per slide for a varied "cast", same shape
+  // language throughout), 2 floating rounded cards with soft colored
+  // (never flat-black) blurred drop shadows and a slight rotation, plus a
+  // scattering of small decorative sparkle/dot/plus/ring accents — the same
+  // ingredients as the reference, composed fresh for this app's 5 actual
+  // topics: a video-call interview, headphones+mic AI feedback with a star
+  // rating, a phone job-alert notification, a resume with a checkmark seal,
+  // and an open book for "learn one course at a time". See
+  // assets/images/index.ts for how the source (a small Python SVG "design
+  // kit" this session wrote, then rasterized) is documented.
   const DATA = [
     // `aspect` (width / height, measured from each PNG's actual pixel
     // dimensions) — see the image container's own comment below for why
@@ -115,35 +112,35 @@ const Onboarding = memo(() => {
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
       image: Images.onboardingInterview,
-      aspect: 1200 / 840,
+      aspect: 1200 / 1000,
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
       image: Images.onboardingFeedback,
-      aspect: 1200 / 1025,
+      aspect: 1200 / 1000,
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
       image: Images.onboardingJobAlert,
-      aspect: 1200 / 910,
+      aspect: 1200 / 1000,
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
       image: Images.onboardingResumeScan,
-      aspect: 1200 / 886,
+      aspect: 1200 / 1000,
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
       image: Images.onboardingLearning,
-      aspect: 1200 / 894,
+      aspect: 1200 / 1000,
     },
   ];
 
