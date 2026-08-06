@@ -700,6 +700,8 @@
   "university_label": "University",
   "university_search_placeholder": "Search for your university…",
   "untitled_file": "Untitled file",
+  "learning_onboarding_get_started": "Get Started",
+  "learning_onboarding_skip": "Skip for now",
   "update_photo_failed": "Couldn't update photo",
   "update_username_failed": "Couldn't update username",
   "username_field_caption": "The only name other Saveur users see — on the Leaderboard and when sharing content.",

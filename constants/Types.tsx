@@ -119,6 +119,12 @@ export enum EKeyAsyncStorage {
   // succeeds), so a real device can't get stuck re-showing it every focus
   // no matter what the network does.
   ratingPromptLastShownAt = 'ratingPromptLastShownAt',
+  // Product request: "when user comes to the learning course screen for the
+  // first time, a full screen banner should appear first... its like an
+  // onboarding for the learning course feature" — see
+  // src/more/LearningCoursesOnboarding.tsx (shown once from
+  // LearningCourses.tsx, same "shown once" pattern as appTourSeen above).
+  learningCoursesOnboardingSeen = 'learningCoursesOnboardingSeen',
 }
 export enum Animation_Types_Enum {
   SlideTop,

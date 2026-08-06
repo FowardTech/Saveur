@@ -200,4 +200,15 @@ export const Images = {
   onboardingJobAlert: require("./img_onboarding_job_alert.png"),
   onboardingResumeScan: require("./img_onboarding_resume_scan.png"),
   onboardingLearning: require("./img_onboarding_learning.png"),
+  // Learning Courses' own first-time full-screen onboarding banner (product
+  // request: "when user comes to the learning course screen for the first
+  // time, a full screen banner should appear first... its like an
+  // onboarding for the learning course feature", explicitly pointing at
+  // this exact image to use). Shown once via
+  // src/more/LearningCoursesOnboarding.tsx, gated on
+  // EKeyAsyncStorage.learningCoursesOnboardingSeen — separate from the
+  // pre-signup onboarding carousel above, which this user never reaches
+  // again post-signup. Product-supplied full-bleed hero image, 1080x1920
+  // (9:16, matches a full-screen phone banner with no cropping needed).
+  learningOnboarding: require("./img_learning_onboarding.png"),
 };

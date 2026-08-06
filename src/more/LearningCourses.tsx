@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { ScrollView, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   TopNavigation,
   StyleService,
@@ -21,9 +22,11 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
+import { EKeyAsyncStorage } from 'constants/Types';
 import { DATA_COURSES } from 'constants/Data';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import LearningCoursesOnboarding from './LearningCoursesOnboarding';
 import * as learningService from 'services/learningService';
 import {
   CourseLevel, COURSE_LEVELS, MODULES_PER_LEVEL, CAREER_PATHS,
@@ -56,6 +59,24 @@ const LearningCourses = memo(() => {
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { navigate } = navigation;
   const { isPremium, profile } = React.useContext(AuthContext);
+
+  // Product request: "when user comes to the learning course screen for the
+  // first time, a full screen banner should appear first... its like an
+  // onboarding for the learning course feature". `null` = not checked yet
+  // (render nothing this one frame, avoiding a flash of the real screen
+  // before the AsyncStorage read resolves); `true`/`false` once known.
+  // Deliberately checked here rather than gated behind isPremium below —
+  // this introduces the feature to every user, paid or not.
+  const [showOnboarding, setShowOnboarding] = React.useState<boolean | null>(null);
+  React.useEffect(() => {
+    AsyncStorage.getItem(EKeyAsyncStorage.learningCoursesOnboardingSeen).then(seen => {
+      setShowOnboarding(!seen);
+    });
+  }, []);
+  const onGetStartedOnboarding = React.useCallback(() => {
+    setShowOnboarding(false);
+    AsyncStorage.setItem(EKeyAsyncStorage.learningCoursesOnboardingSeen, '1').catch(() => {});
+  }, []);
 
   // "Start a course" now asks for a career path first (required — a fixed
   // list, see learningService.CAREER_PATHS) and a specific topic under it
@@ -282,6 +303,15 @@ const LearningCourses = memo(() => {
   const onStart = (title: string, totalModules: number) => {
     navigate('CourseSession', { topic: title, totalModules: totalModules || CUSTOM_TOPIC_MODULES, level: 'basic' });
   };
+
+  if (showOnboarding === null) {
+    // AsyncStorage read still in flight — render nothing rather than a
+    // one-frame flash of either the real screen or the banner.
+    return <Container style={styles.container} />;
+  }
+  if (showOnboarding) {
+    return <LearningCoursesOnboarding onGetStarted={onGetStartedOnboarding} />;
+  }
 
   // Was fully free with no gate at all — per explicit request, Learning
   // Courses (catalog + "teach me anything") is now a Pro Premium feature
