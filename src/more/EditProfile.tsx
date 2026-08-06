@@ -1,9 +1,10 @@
 import React, {memo} from 'react';
-import {Alert, TouchableOpacity} from 'react-native';
+import {ActivityIndicator, Alert, TouchableOpacity} from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
+  useTheme,
   Input,
   Icon,
   Spinner,
@@ -24,6 +25,7 @@ import {RootStackParamList} from 'navigation/types';
 
 import * as ImagePicker from 'react-native-image-picker';
 import * as documentsService from 'services/documentsService';
+import * as authService from 'services/authService';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {AuthContext} from '../../AuthContext';
 import {globalStyle} from 'styles/globalStyle';
@@ -36,8 +38,9 @@ import {globalStyle} from 'styles/globalStyle';
 const EditProfile = memo(() => {
   const {goBack} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const {t} = useTranslation(['auth', 'more', 'common']);
-  const {profile, updateProfile} = React.useContext(AuthContext);
+  const {profile, updateProfile, refreshProfile} = React.useContext(AuthContext);
 
   // Optimistic local preview while the upload is in flight; falls back to
   // whatever's already persisted on the profile, then the static placeholder
@@ -57,6 +60,98 @@ const EditProfile = memo(() => {
   );
   const [isLeaderboardPickerVisible, setIsLeaderboardPickerVisible] = React.useState(false);
   const [isSavingLeaderboardAvatar, setIsSavingLeaderboardAvatar] = React.useState(false);
+
+  // Product request: "the user should be able to edit and update the auto
+  // generated username the app gives to them by themselves" — until now the
+  // only place to change it was ChooseUsername.tsx, a one-time signup step
+  // (post-signup users could never reach it again). Reuses that screen's
+  // exact validation UX (debounced live availability check via
+  // authService.checkUsernameAvailability, same three failure reasons,
+  // "Generate another" via authService.regenerateUsername) rather than
+  // inventing a second pattern, since authService/the backend already fully
+  // support editing a username at any time — PATCH /api/users/me already
+  // accepts `username`, this screen's own form/save flow just never offered
+  // it as a field.
+  const [username, setUsername] = React.useState(profile?.username ?? '');
+  React.useEffect(() => {
+    setUsername(profile?.username ?? '');
+  }, [profile?.username]);
+  const [isRegeneratingUsername, setIsRegeneratingUsername] = React.useState(false);
+  type UsernameCheckState = 'idle' | 'checking' | 'available' | 'invalid_format' | 'looks_like_name' | 'taken';
+  const [usernameCheckState, setUsernameCheckState] = React.useState<UsernameCheckState>('idle');
+
+  React.useEffect(() => {
+    const candidate = username.trim();
+    // No live check needed if it's just the untouched value already on the
+    // profile — only a *change* needs re-validating against the backend.
+    if (!candidate || candidate === profile?.username) {
+      setUsernameCheckState('idle');
+      return;
+    }
+    setUsernameCheckState('checking');
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const result = await authService.checkUsernameAvailability(candidate);
+        if (cancelled) return;
+        setUsernameCheckState(result.available ? 'available' : (result.reason as UsernameCheckState) ?? 'taken');
+      } catch {
+        if (!cancelled) setUsernameCheckState('idle');
+      }
+    }, 450);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [username, profile?.username]);
+
+  const usernameChanged = username.trim() !== (profile?.username ?? '');
+  const usernameBlocksSave = usernameChanged && usernameCheckState !== 'available';
+
+  const onRegenerateUsername = React.useCallback(async () => {
+    if (isRegeneratingUsername) return;
+    setIsRegeneratingUsername(true);
+    try {
+      const next = await authService.regenerateUsername();
+      setUsername(next);
+      await refreshProfile();
+    } catch (e: any) {
+      Alert.alert(
+        t('more:update_username_failed', {defaultValue: "Couldn't generate a new username"}),
+        e?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
+      );
+    } finally {
+      setIsRegeneratingUsername(false);
+    }
+  }, [isRegeneratingUsername, refreshProfile, t]);
+
+  const usernameStatusCopy = (): {text: string; tone: 'placeholder' | 'success' | 'danger'} | null => {
+    switch (usernameCheckState) {
+      case 'checking':
+        return {text: t('auth:username_checking', {defaultValue: 'Checking availability…'}), tone: 'placeholder'};
+      case 'available':
+        return {text: t('auth:username_available', {defaultValue: 'Username available'}), tone: 'success'};
+      case 'taken':
+        return {text: t('auth:username_taken', {defaultValue: 'That username has already been taken'}), tone: 'danger'};
+      case 'looks_like_name':
+        return {
+          text: t('auth:username_looks_like_name', {
+            defaultValue: "That looks too close to your real name — pick something more anonymous.",
+          }),
+          tone: 'danger',
+        };
+      case 'invalid_format':
+        return {
+          text: t('auth:username_invalid_format', {
+            defaultValue: '3-20 characters, starting with a letter — letters, numbers, and underscores only.',
+          }),
+          tone: 'danger',
+        };
+      default:
+        return null;
+    }
+  };
+  const usernameStatus = usernameStatusCopy();
 
   React.useEffect(() => {
     setAvatarUri(profile?.avatarUrl);
@@ -149,6 +244,17 @@ const EditProfile = memo(() => {
   });
 
   const _onSave = handleSubmit(async values => {
+    // Guard the whole save, not just skip the username field, if they've
+    // typed a new username that isn't confirmed available yet (still
+    // checking, taken, or invalid) — saving fullName/phone/address while
+    // silently dropping an unconfirmed username change would be confusing.
+    if (usernameBlocksSave) {
+      Alert.alert(
+        t('more:update_username_failed', {defaultValue: "Couldn't update username"}),
+        usernameStatus?.text ?? t('auth:username_checking', {defaultValue: 'Checking availability…'}),
+      );
+      return;
+    }
     setIsSaving(true);
     try {
       // name/phoneNumber/homeAddress are now all real, backend-supported
@@ -161,11 +267,12 @@ const EditProfile = memo(() => {
       if (values.fullName !== profile?.name) patch.fullName = values.fullName;
       if (values.phoneNumber !== (profile?.phoneNumber ?? '')) patch.phoneNumber = values.phoneNumber;
       if (values.homeAddress !== (profile?.homeAddress ?? '')) patch.homeAddress = values.homeAddress;
-      if (Object.keys(patch).length > 0) {
+      if (Object.keys(patch).length > 0 || usernameChanged) {
         await updateProfile({
           ...(patch.fullName !== undefined ? {name: patch.fullName} : {}),
           ...(patch.phoneNumber !== undefined ? {phoneNumber: patch.phoneNumber} : {}),
           ...(patch.homeAddress !== undefined ? {homeAddress: patch.homeAddress} : {}),
+          ...(usernameChanged ? {username: username.trim()} : {}),
         });
       }
       goBack();
@@ -188,7 +295,12 @@ const EditProfile = memo(() => {
           isSaving ? (
             <Spinner size="small" style={{marginRight: 16}} />
           ) : (
-            <Text category="h7" status={'link'} onPress={_onSave} bold mr={12}>
+            <Text
+              category="h7"
+              status={usernameCheckState === 'checking' ? 'placeholder' : 'link'}
+              onPress={usernameCheckState === 'checking' ? undefined : _onSave}
+              bold
+              mr={12}>
               {t('common:save')}
             </Text>
           )
@@ -240,6 +352,47 @@ const EditProfile = memo(() => {
           value={profile?.email ?? ''}
           disabled
         />
+        <Input
+          label={t('auth:choose_username_title', {defaultValue: 'Username'}).toString()}
+          caption={t('more:username_field_caption', {
+            defaultValue: 'The only name other Saveur users see — on the Leaderboard and when sharing content.',
+          })}
+          placeholder={t('auth:username_placeholder', {defaultValue: 'yourusername'}).toString()}
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+          autoCorrect={false}
+          status={usernameStatus?.tone === 'danger' ? 'warning' : usernameStatus?.tone === 'success' ? 'success' : 'basic'}
+          style={styles.username}
+          textStyle={globalStyle.inputText}
+          accessoryRight={() => (
+            <Flex itemsCenter>
+              {usernameCheckState === 'checking' ? (
+                <ActivityIndicator size="small" />
+              ) : usernameCheckState === 'available' ? (
+                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, {tintColor: theme['color-success-500']}]} />
+              ) : usernameCheckState === 'taken' || usernameCheckState === 'looks_like_name' || usernameCheckState === 'invalid_format' ? (
+                <Icon pack="eva" name="close-circle-outline" style={[globalStyle.icon20, {tintColor: theme['color-danger-500']}]} />
+              ) : null}
+              <TouchableOpacity
+                activeOpacity={0.7}
+                disabled={isRegeneratingUsername}
+                onPress={onRegenerateUsername}
+                style={{marginLeft: 12}}>
+                {isRegeneratingUsername ? (
+                  <ActivityIndicator size="small" />
+                ) : (
+                  <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon20, {tintColor: theme['text-hint-color']}]} />
+                )}
+              </TouchableOpacity>
+            </Flex>
+          )}
+        />
+        {usernameStatus ? (
+          <Text category="h10" status={usernameStatus.tone} mt={-16} mb={16}>
+            {usernameStatus.text}
+          </Text>
+        ) : null}
         <Controller
           control={control}
           name="phoneNumber"
@@ -362,6 +515,10 @@ const themedStyles = StyleService.create({
   email: {
     ...globalStyle.inputField,
     marginVertical: 24,
+  },
+  username: {
+    ...globalStyle.inputField,
+    marginBottom: 8,
   },
   phoneNumber: {
     marginVertical: 24,

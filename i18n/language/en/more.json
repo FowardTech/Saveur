@@ -701,6 +701,8 @@
   "university_search_placeholder": "Search for your university…",
   "untitled_file": "Untitled file",
   "update_photo_failed": "Couldn't update photo",
+  "update_username_failed": "Couldn't update username",
+  "username_field_caption": "The only name other Saveur users see — on the Leaderboard and when sharing content.",
   "upload_failed": "Upload failed",
   "uploaded": "Uploaded",
   "uploaded_file_fallback": "Uploaded file",
