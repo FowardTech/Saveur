@@ -177,12 +177,17 @@ const themedStyles = StyleService.create({
   // component's own icon already moved to (see the REDESIGN comment on the
   // Icon below) — rows are separated by the marginTop gap alone now, the
   // same way the icon row itself has no boxed chrome around it either.
+  // Product report: "Reduce the gaps between the items in the settings
+  // screen" — paddingVertical 14 -> 10 and marginTop 10 -> 2 (rows used to
+  // sit 24px apart edge-to-edge — 14 top pad + 10 marginTop + 14 bottom pad
+  // of the row above — now 22px, a noticeably tighter, denser list without
+  // rows touching or feeling cramped against each other).
   container: {
     width: '100%',
     backgroundColor: 'transparent',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    marginTop: 10,
+    paddingVertical: 10,
+    marginTop: 2,
   },
   // Same 20x20/count-badge shape as HeaderHome.tsx's bell badge (see that
   // file's own sizing comment) — a small colored circle sitting on the

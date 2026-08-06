@@ -642,13 +642,16 @@ const themedStyles = StyleService.create({
   // white tile in an otherwise flat list) so the sign-out row reads as one
   // more full-width row in the same stack, not a leftover flat row
   // underneath the list above it.
+  // Kept in sync with ButtonOptional.tsx's own container spacing (see that
+  // file's comment on the same "reduce the gaps" request) so the sign-out
+  // row's gap above it matches every row above it exactly.
   logoutRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'transparent',
     paddingHorizontal: 20,
-    paddingVertical: 14,
-    marginTop: 10,
+    paddingVertical: 10,
+    marginTop: 2,
   },
 });
