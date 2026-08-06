@@ -582,7 +582,95 @@ export function useSpeechToText() {
     const now = Date.now();
     if (now - lastVoiceStartAtRef.current < 400) return;
     lastVoiceStartAtRef.current = now;
+    // Bumping lastEventAtRef here too (not just on a real onSpeech* event)
+    // buys this fresh restart the same WATCHDOG_STALE_MS grace window a
+    // brand-new session gets in start() below, instead of racing against
+    // whatever stale timestamp was already sitting in lastEventAtRef from
+    // the session that just ended.
+    lastEventAtRef.current = now;
     Voice.start(currentSttLocale()).catch(() => {});
+  }, []);
+
+  // LIVENESS WATCHDOG (product report: "I keep talking and the AI has
+  // refused to respond" -- the screen still shows "listening" but nothing
+  // ever happens again for the rest of the session). Every fix above this
+  // point closes one SPECIFIC race that can silently kill a recognition
+  // session (a duplicate Voice.start() call, a stale destroy() clobbering a
+  // newer instance's listeners, an iOS audio-session category-switch race
+  // right after TTS playback -- see start()'s own 300ms-settle-delay
+  // comment below). Each is real, but there is no way to be certain from
+  // JS that every such race has been found: `guardedVoiceStart()` above
+  // also has NO failure handling at all (`.catch(() => {})`) -- if the
+  // native module rejects a restart for any reason not yet diagnosed, this
+  // hook has always had zero way to notice or recover, and the UI is left
+  // showing "listening" forever with truly nothing left listening.
+  //
+  // Rather than continuing to chase individual native races one at a time,
+  // this adds an independent, cause-agnostic safety net: `onSpeechVolumeChanged`
+  // fires continuously (multiple times a second, on both iOS and Android)
+  // for as long as a recognition session is ACTUALLY capturing audio --
+  // completely independent of whether the user is currently making any
+  // recognizable sound. A real, healthy session updates `lastEventAtRef`
+  // constantly. If `wantsListeningRef` is true (the UI still thinks it's
+  // listening) but NO event of any kind -- not even a volume tick -- has
+  // arrived in WATCHDOG_STALE_MS, the session is provably dead regardless
+  // of which native race caused it, and hardRestart() below tears it down
+  // and starts a completely fresh one. This is the same recovery a user
+  // backing out of the screen and re-entering would trigger manually
+  // (confirmed safe to do mid-hook-lifetime -- see hardRestart's own
+  // comment) -- just automatic, so a real conversation is never actually
+  // stuck for more than a few seconds even if the exact native trigger is
+  // never fully pinned down.
+  const lastEventAtRef = React.useRef(Date.now());
+  const markAlive = React.useCallback(() => {
+    lastEventAtRef.current = Date.now();
+  }, []);
+  const WATCHDOG_CHECK_INTERVAL_MS = 1500;
+  const WATCHDOG_STALE_MS = 5000;
+  const isHardRestartingRef = React.useRef(false);
+  const hardRestart = React.useCallback(async () => {
+    if (!wantsListeningRef.current || isHardRestartingRef.current) return;
+    isHardRestartingRef.current = true;
+    // Reset immediately (not after the restart completes) so a slow
+    // destroy()/start() round-trip doesn't let the next watchdog tick pile
+    // a second hardRestart() on top of this one.
+    lastEventAtRef.current = Date.now();
+    if (__DEV__) {
+      console.warn('[speechService] watchdog: no recognition activity for ' + WATCHDOG_STALE_MS + 'ms — forcing a hard restart');
+    }
+    try {
+      await Voice.stop();
+    } catch {
+      // Already stopped/never started — fine, destroy() below is a no-op too.
+    }
+    try {
+      // Full teardown, not just stop() -- see this hook's own destroy()
+      // patch comment (module-level singleton + generation counter makes
+      // this safe to call mid-lifetime, not just on unmount).
+      await Voice.destroy();
+    } catch {
+      // Ignore -- start() below is attempted regardless.
+    }
+    if (!wantsListeningRef.current) {
+      isHardRestartingRef.current = false;
+      return; // stop() was called for real while this was tearing down.
+    }
+    // Same settle delay as the explicit start() path below -- gives iOS's
+    // audio hardware a moment to fully release before re-activating.
+    await new Promise(resolve => setTimeout(resolve, 300));
+    if (!wantsListeningRef.current) {
+      isHardRestartingRef.current = false;
+      return;
+    }
+    lastVoiceStartAtRef.current = Date.now(); // intentionally bypass the 400ms shared guard
+    try {
+      await Voice.start(currentSttLocale());
+      lastEventAtRef.current = Date.now();
+    } catch {
+      // The next watchdog tick will try again in WATCHDOG_STALE_MS.
+    } finally {
+      isHardRestartingRef.current = false;
+    }
   }, []);
 
   const commitSessionTranscript = React.useCallback(() => {
@@ -597,7 +685,15 @@ export function useSpeechToText() {
   const wantsListeningRef = React.useRef(false);
 
   React.useEffect(() => {
+    // Liveness-only handlers (see the watchdog's own doc comment above) —
+    // onSpeechVolumeChanged in particular fires continuously while a
+    // session is actually capturing audio, regardless of whether the user
+    // is making any recognizable sound, so it's the most reliable "is this
+    // session still real" signal available from JS.
+    Voice.onSpeechStart = markAlive;
+    Voice.onSpeechVolumeChanged = markAlive;
     Voice.onSpeechResults = (e: SpeechResultsEvent) => {
+      markAlive();
       const best = e.value?.[0];
       if (best) {
         // Replace, don't append — see this hook's own doc comment above.
@@ -623,6 +719,9 @@ export function useSpeechToText() {
     // AppState handling does a clean stop/restart around the lock instead.
     const canAutoRestart = () => wantsListeningRef.current && AppState.currentState === 'active';
     Voice.onSpeechError = (e: SpeechErrorEvent) => {
+      // An error is still a real, live event from the native session (as
+      // opposed to dead silence) — counts as "alive" for the watchdog.
+      markAlive();
       // Unblock a pending stop() wait FIRST (see sessionEndResolveRef's doc
       // comment above) — this must happen before the auto-restart logic
       // below runs, since stop() sets wantsListeningRef=false synchronously
@@ -675,6 +774,7 @@ export function useSpeechToText() {
       // error the user can't see anyway while the phone is locked).
     };
     Voice.onSpeechEnd = () => {
+      markAlive();
       // Same "unblock stop()'s wait first" reasoning as onSpeechError above.
       if (sessionEndResolveRef.current) {
         sessionEndResolveRef.current();
@@ -685,7 +785,19 @@ export function useSpeechToText() {
         guardedVoiceStart();
       }
     };
+
+    // See the watchdog's own doc comment (above guardedVoiceStart) — this
+    // is the actual recovery mechanism, running for this hook instance's
+    // entire lifetime regardless of which screen is using it.
+    const watchdogTimer = setInterval(() => {
+      if (!wantsListeningRef.current) return;
+      if (Date.now() - lastEventAtRef.current > WATCHDOG_STALE_MS) {
+        hardRestart();
+      }
+    }, WATCHDOG_CHECK_INTERVAL_MS);
+
     return () => {
+      clearInterval(watchdogTimer);
       // BUG FIX (product report: coach AND mock interview both went
       // completely silent -- mic starts with no error, then never delivers
       // another event of any kind, ever, on this exact device). Root cause
@@ -758,6 +870,11 @@ export function useSpeechToText() {
     if (!wantsListeningRef.current) return false; // stop() was called during the settle delay
     try {
       await Voice.start(currentSttLocale());
+      // Reset the watchdog's clock on every fresh start -- otherwise a
+      // timestamp left over from BEFORE this settle delay/await chain could
+      // already be more than WATCHDOG_STALE_MS old by the time this session
+      // is barely underway, triggering an immediate, unnecessary hardRestart.
+      lastEventAtRef.current = Date.now();
       return true;
     } catch (e: any) {
       wantsListeningRef.current = false;
