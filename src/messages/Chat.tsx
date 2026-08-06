@@ -36,9 +36,9 @@ import { RootStackParamList, MessagesStackParamList } from "navigation/types";
 import AttachItem from "./Components/AttachItem";
 import BrandWordmark from "components/BrandWordmark";
 import Text from "components/Text";
-import { CoachChatMessageProps, Practice_Mode_Enum } from "constants/Types";
-import { NEW_JOB_COURSE_TITLE, NEW_JOB_COURSE_MODULES } from "constants/Data";
+import { CoachChatMessageProps, Practice_Mode_Enum, SuggestedActionId } from "constants/Types";
 import * as coachService from "services/coachService";
+import { ACTION_META, actionTitle, runSuggestedAction } from "services/suggestedActions";
 import * as resumeService from "services/resumeService";
 import { ImportedFileInfo } from "services/resumeService";
 import { AuthContext } from "../../AuthContext";
@@ -57,7 +57,7 @@ const ME_USER = { _id: 1 };
 // structure keyed by message id.
 interface CoachIMessage extends IMessage {
   suggestedCourseTopic?: string;
-  suggestedAction?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant';
+  suggestedAction?: SuggestedActionId;
 }
 
 // Same module/tier length "Learn Anything" custom topics use — see
@@ -368,31 +368,15 @@ const Chat = memo(() => {
 
   // Product request item: "the AI coach can ask the user if they want the
   // coach to navigate to the specific screen... and the app will navigate
-  // automatically" — see app/api/coach.py's SUGGESTED_ACTION marker. Mock
-  // Interviews, the Daily Challenge (a Home-tab card, no dedicated route of
-  // its own), the "Starting Your New Job" Learning Course (new-job/first-job
-  // coaching track product request item), and — goal-aware coach nudge
-  // product request item, "share your thoughts on [a networking feature]...
-  // I want the AI coach to relate more with the user" — the Networking
-  // Assistant (src/more/NetworkingAssistant.tsx) are the four real
-  // destinations the backend can name.
-  const onRunSuggestedAction = React.useCallback((action: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant') => {
-    if (action === 'mock_interview') {
-      navigate('MockInterviewSetup', {});
-    } else if (action === 'new_job_course') {
-      navigate('CourseSession', {
-        topic: NEW_JOB_COURSE_TITLE,
-        totalModules: NEW_JOB_COURSE_MODULES,
-        level: 'basic',
-      });
-    } else if (action === 'networking_assistant') {
-      navigate('NetworkingAssistant');
-    } else {
-      // Daily Challenge lives as a card on the Home tab, not a dedicated
-      // route — same "jump to Home tab" navigation MoreSrc.tsx and
-      // navigationRef.ts already use elsewhere in the app.
-      navigate('MainBottomTab', { screen: 'Home' });
-    }
+  // automatically", expanded per the later report "I want it take the user
+  // to any screen in the app... the AI coach has to be very accurate in
+  // this and must have access and able to navigate to every screen in the
+  // app automatically" — was a hardcoded if/else over exactly 4 ids;
+  // now delegates to the shared registry (services/suggestedActions.ts),
+  // which both this screen and VoiceCoachView.tsx call through, covering
+  // ~40 destinations instead of 4.
+  const onRunSuggestedAction = React.useCallback((action: SuggestedActionId) => {
+    runSuggestedAction(action, navigate).catch(() => {});
   }, [navigate]);
 
   const renderCustomView = React.useCallback((props: any) => {
@@ -416,19 +400,13 @@ const Chat = memo(() => {
         </TouchableOpacity>
       );
     }
-    const action: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant' | undefined = props?.currentMessage?.suggestedAction;
-    if (action) {
-      const label = action === 'mock_interview'
-        ? t('message:suggested_action_mock_interview', { defaultValue: 'Start a mock interview' })
-        : action === 'new_job_course'
-        ? t('message:suggested_action_new_job_course', { defaultValue: 'Get ready for your new job' })
-        : action === 'networking_assistant'
-        ? t('message:suggested_action_networking_assistant', { defaultValue: 'Draft a networking message' })
-        : t('message:suggested_action_daily_challenge', { defaultValue: "Try today's Daily Challenge" });
-      const icon = action === 'mock_interview' ? 'mic-outline'
-        : action === 'new_job_course' ? 'briefcase-outline'
-        : action === 'networking_assistant' ? 'people-outline'
-        : 'flash-outline';
+    const action: SuggestedActionId | undefined = props?.currentMessage?.suggestedAction;
+    if (action && ACTION_META[action]) {
+      const label = t('message:suggested_action_chip', {
+        defaultValue: 'Go to {{title}}',
+        title: actionTitle(action),
+      });
+      const icon = ACTION_META[action].icon;
       return (
         <TouchableOpacity
           activeOpacity={0.7}

@@ -726,8 +726,76 @@ export interface CoachChatMessageProps {
   // reply recommends actually DOING something in the app right now (see
   // coachService.ts's SUGGESTED_ACTION parsing). Mutually exclusive with
   // suggestedCourseTopic (the backend only ever sends one or the other).
-  suggestedAction?: 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant';
+  suggestedAction?: SuggestedActionId;
 }
+
+// Product request item: "The AI coach is redirecting but just to few
+// screen... I want it take the user to any screen in the app... the AI
+// coach has to be very accurate in this and must have access and able to
+// navigate to every screen in the app automatically" — this used to be a
+// closed set of exactly 4 ids ('mock_interview' | 'daily_challenge' |
+// 'new_job_course' | 'networking_assistant'), independently redeclared as
+// an inline union in THIS file, services/coachService.ts (x2), and
+// src/messages/VoiceCoachView.tsx's own local type alias — any addition had
+// to be kept in sync by hand in 4 places. Now a single source of truth,
+// expanded to cover every screen that's reachable with no required dynamic
+// id (a specific interview session id, application id, etc. — those can't
+// be generically "opened" by name, so they're deliberately left out).
+// Backend enum + prompt: Saveur-Backend/app/api/coach.py's
+// SUGGESTED_ACTION_RE / ACTION_REFERRAL_INSTRUCTION must be kept in sync
+// with this list by hand (Python can't import a TS type) — the ids below
+// are exactly what the backend is allowed to send back.
+// The actual per-id display label/icon/navigation-target table lives in
+// services/suggestedActions.ts (kept out of this file to avoid a
+// constants -> services import cycle, since that registry needs
+// learningService for the continue_learning special case).
+export type SuggestedActionId =
+  // Pre-existing 4 (unchanged ids, just now part of the shared list)
+  | 'mock_interview'
+  | 'daily_challenge'
+  | 'new_job_course'
+  | 'networking_assistant'
+  // Special-cased (async / multi-step) targets — see suggestedActions.ts
+  | 'continue_learning'
+  | 'application_tracker'
+  // Plain single-screen destinations, no required params
+  | 'career_goal'
+  | 'job_preferences'
+  | 'my_progress'
+  | 'goals_hub'
+  | 'leaderboard'
+  | 'faq'
+  | 'policy'
+  | 'about'
+  | 'resume_builder'
+  | 'my_documents'
+  | 'jd_analyzer'
+  | 'saved_videos'
+  | 'weekly_career_report'
+  | 'daily_industry_news'
+  | 'resume_variants'
+  | 'generated_documents'
+  | 'linkedin_optimizer'
+  | 'emotional_coach'
+  | 'company_intelligence'
+  | 'student_verification'
+  | 'salary_negotiation'
+  | 'system_design_whiteboard'
+  | 'learning_courses'
+  | 'career_diary'
+  | 'my_ratings'
+  | 'career_roadmap'
+  | 'career_dna'
+  | 'dream_companies'
+  | 'practical_scenarios'
+  | 'referral_program'
+  | 'security_settings'
+  | 'job_alerts'
+  | 'subscription'
+  | 'payment_history'
+  | 'shared_with_me'
+  | 'schedule_interview'
+  | 'cover_letter_generator';
 
 // ---- AI Interview Coach additions (networking assistant) ----
 export interface NetworkingContactProps {

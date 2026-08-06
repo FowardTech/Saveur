@@ -18,6 +18,8 @@ import { Images } from 'assets/images';
 import * as coachService from 'services/coachService';
 import { CoachUserContext } from 'services/coachService';
 import * as speechService from 'services/speechService';
+import { actionTitle } from 'services/suggestedActions';
+import { SuggestedActionId } from 'constants/Types';
 
 // Live, continuous voice conversation with the AI coach — replaces the
 // text-chat box as the default way to talk to the coach (see Chat.tsx's
@@ -59,7 +61,6 @@ import * as speechService from 'services/speechService';
 const SILENCE_DEBOUNCE_MS = 1300;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
-type SuggestedAction = 'mock_interview' | 'daily_challenge' | 'new_job_course' | 'networking_assistant';
 
 const ORB_SIZE = 176;
 const HALO_SIZE = ORB_SIZE * 1.5;
@@ -105,7 +106,7 @@ const VoiceCoachView = memo(({
   // Fired once the user affirms the coach's spoken offer — Chat.tsx passes
   // down the same handler its "Learn more about X"-style chip uses in Text
   // mode (onRunSuggestedAction), so both modes navigate identically.
-  onSuggestedAction?: (action: SuggestedAction) => void;
+  onSuggestedAction?: (action: SuggestedActionId) => void;
 }) => {
   const theme = useTheme();
   const { t } = useTranslation(['message']);
@@ -128,7 +129,7 @@ const VoiceCoachView = memo(({
   const isActiveRef = React.useRef(false);
   // Set right after the coach speaks a "want me to take you there?" offer;
   // checked (and always cleared) at the start of the very next turn.
-  const pendingActionRef = React.useRef<SuggestedAction | null>(null);
+  const pendingActionRef = React.useRef<SuggestedActionId | null>(null);
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -205,7 +206,7 @@ const VoiceCoachView = memo(({
 
       setPhase('thinking');
       let replyText = '';
-      let suggestedAction: SuggestedAction | undefined;
+      let suggestedAction: SuggestedActionId | undefined;
       try {
         const result = await coachService.sendVoiceMessage(trimmed, userContext);
         replyText = result.coachMessage.text;
@@ -217,21 +218,16 @@ const VoiceCoachView = memo(({
         setErrorMsg(e?.message ?? null);
       }
       if (suggestedAction) {
-        const offerKey = suggestedAction === 'mock_interview'
-          ? 'message:voice_action_offer_mock_interview'
-          : suggestedAction === 'new_job_course'
-          ? 'message:voice_action_offer_new_job_course'
-          : suggestedAction === 'networking_assistant'
-          ? 'message:voice_action_offer_networking_assistant'
-          : 'message:voice_action_offer_daily_challenge';
-        const offerDefault = suggestedAction === 'mock_interview'
-          ? 'Want me to start a mock interview for you now?'
-          : suggestedAction === 'new_job_course'
-          ? 'Want me to take you to a course on starting your new job?'
-          : suggestedAction === 'networking_assistant'
-          ? 'Want me to help you draft a networking message?'
-          : "Want me to take you to today's Daily Challenge?";
-        replyText = `${replyText} ${i18n.t(offerKey, { defaultValue: offerDefault })}`;
+        // Was a per-action hand-written full sentence (4 of them, hardcoded
+        // here) — now one generic template naming the destination via the
+        // shared registry's title, so a new action (see
+        // services/suggestedActions.ts) never needs a new sentence written
+        // here by hand.
+        const offer = i18n.t('message:voice_action_offer_generic', {
+          defaultValue: 'Want me to take you to {{title}}?',
+          title: actionTitle(suggestedAction),
+        });
+        replyText = `${replyText} ${offer}`;
         pendingActionRef.current = suggestedAction;
       }
       if (!isActiveRef.current) return;
