@@ -11,6 +11,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -20,11 +21,22 @@ import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import InfoBox from 'components/InfoBox';
 import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
 import * as dreamCompaniesService from 'services/dreamCompaniesService';
 import { DreamCompany } from 'services/dreamCompaniesService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
+
+// Product request item: "readiness score" — 3-tier color coding so a
+// glance at the badge tells you where a company stands without reading
+// the number: green once genuinely interview-ready, blue while there's
+// real but partial prep, gray when there's essentially nothing yet.
+function readinessTier(score: number): 'success' | 'link' | 'neutral' {
+  if (score >= 70) return 'success';
+  if (score >= 35) return 'link';
+  return 'neutral';
+}
 
 // Dream Company Dashboard (product request item) — a persisted, tracked
 // list of target companies, each with cached AI research (same generation
@@ -42,6 +54,7 @@ const DreamCompanies = memo(() => {
   // this feature's endpoints), unlike the underlying Company Intelligence
   // feature it builds on, which stays plain-Pro-gated.
   const { isPremium } = React.useContext(AuthContext);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [companies, setCompanies] = React.useState<DreamCompany[] | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -51,6 +64,7 @@ const DreamCompanies = memo(() => {
   const [isAdding, setIsAdding] = React.useState(false);
   const [expandedId, setExpandedId] = React.useState<number | null>(null);
   const [refreshingId, setRefreshingId] = React.useState<number | null>(null);
+  const [togglingPriorityId, setTogglingPriorityId] = React.useState<number | null>(null);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -99,6 +113,43 @@ const DreamCompanies = memo(() => {
     } finally {
       setRefreshingId(null);
     }
+  };
+
+  // Product request item: "Priority / 'Top choice' marking" — optimistic,
+  // same low-stakes-toggle pattern as JobAlerts.tsx's onTogglePin (flip
+  // locally, revert on a rare failure rather than blocking on the network
+  // for something this lightweight). Also re-sorts to match the backend's
+  // own top-choice-first ordering (list_companies) so a newly-starred
+  // company visibly jumps to the top instead of looking like nothing
+  // happened until the next full reload.
+  const onTogglePriority = async (company: DreamCompany) => {
+    if (togglingPriorityId) return;
+    setTogglingPriorityId(company.id);
+    const nextValue = !company.isTopChoice;
+    setCompanies(prev =>
+      (prev ?? [])
+        .map(c => (c.id === company.id ? { ...c, isTopChoice: nextValue } : c))
+        .sort((a, b) => Number(b.isTopChoice) - Number(a.isTopChoice)),
+    );
+    try {
+      await dreamCompaniesService.toggleDreamCompanyPriority(company.id, nextValue);
+    } catch {
+      setCompanies(prev =>
+        (prev ?? [])
+          .map(c => (c.id === company.id ? { ...c, isTopChoice: !nextValue } : c))
+          .sort((a, b) => Number(b.isTopChoice) - Number(a.isTopChoice)),
+      );
+    } finally {
+      setTogglingPriorityId(null);
+    }
+  };
+
+  const onPracticeInterview = (company: DreamCompany) => {
+    navigation.navigate('MockInterviewSetup', { company: company.company, role: company.targetRole ?? undefined });
+  };
+
+  const onGenerateCoverLetter = (company: DreamCompany) => {
+    navigation.navigate('CoverLetterGenerator', { company: company.company, role: company.targetRole ?? undefined });
   };
 
   const onRemove = (id: number) => {
@@ -192,18 +243,83 @@ const DreamCompanies = memo(() => {
             style={{ paddingVertical: 24 }}
           />
         ) : (
-          companies.map(c => {
+          <>
+            {/* Product request: "the dream company dashboard is called a
+                dashboard for a reason, so it's supposed to have a lot of
+                features in it" — a real dashboard-style summary rather
+                than jumping straight into a flat list, same 3-stat-column
+                treatment this app already uses for other summary headers.
+                All three numbers are the same readiness_score/prep data
+                each card below already renders, just rolled up. */}
+            <Layout level="2" style={styles.summaryCard}>
+              <Flex justify="space-between">
+                <Flex vertical itemsCenter style={globalStyle.flexOne}>
+                  <Text category="h5" bold>{companies.length}</Text>
+                  <Text category="h10" status="placeholder" center mt={2}>
+                    {t('more:dream_company_summary_tracked', { defaultValue: 'Tracked' })}
+                  </Text>
+                </Flex>
+                <View style={styles.summaryDivider} />
+                <Flex vertical itemsCenter style={globalStyle.flexOne}>
+                  <Text category="h5" bold>
+                    {Math.round(companies.reduce((sum, c) => sum + c.readinessScore, 0) / companies.length)}%
+                  </Text>
+                  <Text category="h10" status="placeholder" center mt={2}>
+                    {t('more:dream_company_summary_readiness', { defaultValue: 'Avg. readiness' })}
+                  </Text>
+                </Flex>
+                <View style={styles.summaryDivider} />
+                <Flex vertical itemsCenter style={globalStyle.flexOne}>
+                  <Text category="h5" bold>{companies.filter(c => c.readinessScore < 35).length}</Text>
+                  <Text category="h10" status="placeholder" center mt={2}>
+                    {t('more:dream_company_summary_needs_practice', { defaultValue: 'Need practice' })}
+                  </Text>
+                </Flex>
+              </Flex>
+            </Layout>
+
+            {companies.map(c => {
             const expanded = expandedId === c.id;
+            const tier = readinessTier(c.readinessScore);
             return (
-              <Layout key={c.id} level="2" style={styles.companyCard}>
+              <Layout
+                key={c.id}
+                level="2"
+                style={[
+                  styles.companyCard,
+                  // Same "stands out from the rest of the list" purple-
+                  // border treatment JobAlerts.tsx uses for an unread
+                  // alert — here for a top choice instead.
+                  c.isTopChoice && { borderColor: theme['color-accent-purple'], borderWidth: 1 },
+                ]}>
                 <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(expanded ? null : c.id)}>
                   <Flex justify="space-between" itemsCenter>
                     <View style={{ flex: 1 }}>
-                      <Text category="h7" bold numberOfLines={1}>{c.company}</Text>
+                      <Flex justify="flex-start" itemsCenter>
+                        <Text category="h7" bold numberOfLines={1} style={globalStyle.flexOne}>{c.company}</Text>
+                      </Flex>
                       {c.targetRole ? (
                         <Text category="h10" status="placeholder" mt={2}>{c.targetRole}</Text>
                       ) : null}
                     </View>
+                    {/* Product request item: "Priority / 'Top choice'
+                        marking" — nested TouchableOpacity inside the outer
+                        expand-toggle one, same pattern already proven in
+                        JobAlerts.tsx's bookmark-pin icon on each alert row. */}
+                    <TouchableOpacity
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      disabled={togglingPriorityId === c.id}
+                      onPress={() => onTogglePriority(c)}
+                      style={{ marginRight: 4 }}>
+                      <Icon
+                        pack="assets"
+                        name={c.isTopChoice ? 'bookmarkActive' : 'bookmark'}
+                        style={[
+                          globalStyle.icon20,
+                          { tintColor: c.isTopChoice ? theme['color-accent-purple'] : theme['text-placeholder-color'] },
+                        ]}
+                      />
+                    </TouchableOpacity>
                     <Icon
                       pack="eva"
                       name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
@@ -211,7 +327,36 @@ const DreamCompanies = memo(() => {
                     />
                   </Flex>
 
-                  <Flex justify="flex-start" itemsCenter mt={12}>
+                  <Flex justify="flex-start" itemsCenter wrap mt={12}>
+                    {/* Product request item: "readiness score" — see
+                        readinessTier's own comment for the 3-tier coloring. */}
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor:
+                            tier === 'success'
+                              ? theme['color-success-transparent-200']
+                              : tier === 'link'
+                              ? theme['color-primary-transparent-200']
+                              : theme['background-basic-color-3'],
+                        },
+                      ]}>
+                      <Text category="h10" bold status={tier === 'neutral' ? 'basic' : tier}>
+                        {t('more:dream_company_readiness', { defaultValue: '{{score}}% ready', score: c.readinessScore })}
+                      </Text>
+                    </View>
+                    {/* Product request item: "Job alert match highlight" —
+                        distinct from the plain open-jobs count badge below:
+                        this specifically means something NEW showed up
+                        since it was last checked. */}
+                    {c.hasNewJobAlert ? (
+                      <View style={[styles.badge, { backgroundColor: theme['color-accent-purple-bg'] }]}>
+                        <Text category="h10" bold style={{ color: theme['color-accent-purple'] }}>
+                          {t('more:dream_company_new_job_match', { defaultValue: 'New job match!' })}
+                        </Text>
+                      </View>
+                    ) : null}
                     {c.openJobsCount > 0 ? (
                       <View style={[styles.badge, { backgroundColor: theme['color-success-transparent-200'] }]}>
                         <Text category="h10" bold status="success">
@@ -239,11 +384,56 @@ const DreamCompanies = memo(() => {
                   </Flex>
                 </TouchableOpacity>
 
+                {/* Product request item: "Quick actions per company" —
+                    deliberately a sibling of the expand-toggle
+                    TouchableOpacity above (not nested inside it) so
+                    there's no touch-capture ambiguity, and deliberately
+                    ALWAYS visible (not gated on `expanded`) since the
+                    whole point is one tap straight into the next real
+                    action without first having to expand the card to
+                    find it. */}
+                <Flex justify="flex-start" wrap mt={12}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => onPracticeInterview(c)}
+                    style={[styles.quickActionPill, { backgroundColor: theme['color-primary-100'], marginRight: 8, marginBottom: 8 }]}>
+                    <Icon pack="eva" name="mic-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'], marginRight: 6 }]} />
+                    <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
+                      {t('more:dream_company_practice_cta', { defaultValue: 'Practice interview' })}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => onGenerateCoverLetter(c)}
+                    style={[styles.quickActionPill, { backgroundColor: theme['background-basic-color-3'], marginBottom: 8 }]}>
+                    <Icon pack="eva" name="file-text-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 6 }]} />
+                    <Text category="h10" bold>
+                      {t('more:dream_company_cover_letter_cta', { defaultValue: 'Generate cover letter' })}
+                    </Text>
+                  </TouchableOpacity>
+                </Flex>
+
                 {expanded ? (
                   <View style={{ marginTop: 16 }}>
                     {c.intel ? (
                       <>
                         <Text category="h9-s" mb={12}>{c.intel.overview}</Text>
+                        {c.intel.salaryRange ? (
+                          <View style={styles.expandedSubcard}>
+                            <Text category="h10" bold mb={4}>
+                              {t('more:salary_insights', { defaultValue: 'Salary Insights' })}
+                            </Text>
+                            <Text category="h10" status="placeholder">{c.intel.salaryRange}</Text>
+                          </View>
+                        ) : null}
+                        {c.intel.interviewProcess ? (
+                          <View style={styles.expandedSubcard}>
+                            <Text category="h10" bold mb={4}>
+                              {t('more:interview_process', { defaultValue: 'Interview Process' })}
+                            </Text>
+                            <Text category="h10" status="placeholder">{c.intel.interviewProcess}</Text>
+                          </View>
+                        ) : null}
                         {c.intel.likelyQuestions.length ? (
                           <>
                             <Text category="h9" bold mb={8}>
@@ -289,7 +479,8 @@ const DreamCompanies = memo(() => {
                 ) : null}
               </Layout>
             );
-          })
+            })}
+          </>
         )}
       </Content>
     </Container>
@@ -312,6 +503,22 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     padding: 16,
     marginBottom: 12,
+    // No border by default — same "only the highlighted state gets one"
+    // fix JobAlerts.tsx's alertCard already applies (a bare `borderWidth`
+    // with no color renders as a stray black hairline).
+  },
+  // Dashboard summary header (product request item) — 3 stat columns
+  // separated by thin dividers, same treatment as this app's other
+  // multi-stat summary cards.
+  summaryCard: {
+    ...globalStyle.card,
+    padding: 16,
+    marginBottom: 20,
+  },
+  summaryDivider: {
+    width: 1,
+    backgroundColor: 'border-basic-color-3',
+    marginHorizontal: 4,
   },
   badge: {
     borderRadius: 999,
@@ -322,5 +529,21 @@ const themedStyles = StyleService.create({
   },
   actionPill: {
     paddingVertical: 6,
+  },
+  // Quick action pills (product request item) — flat, no shadow (same
+  // reasoning as LearningCourses.tsx's weekActionPill: these sit inside an
+  // already-elevated card, a second shadow source here would look off).
+  quickActionPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+  },
+  expandedSubcard: {
+    backgroundColor: 'background-basic-color-3',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
   },
 });

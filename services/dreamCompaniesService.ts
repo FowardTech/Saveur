@@ -14,6 +14,11 @@ export interface DreamCompanyIntel {
   cultureNotes: string;
   likelyQuestions: string[];
   talkingPoints: string[];
+  // Same two fields Company Intelligence added (see
+  // services/companyIntelService.ts's CompanyIntel) — this is the exact
+  // same generation payload, just persisted here instead of discarded.
+  salaryRange: string;
+  interviewProcess: string;
   sources: string[];
 }
 
@@ -32,6 +37,12 @@ export interface DreamCompany {
   prepProgress: DreamCompanyPrepProgress;
   openJobsCount: number;
   researchStale: boolean;
+  // Product request items — see app/api/dream_companies.py's own comments
+  // for how each is computed (all pure arithmetic/queries over existing
+  // real-activity data, no new AI calls).
+  readinessScore: number;
+  isTopChoice: boolean;
+  hasNewJobAlert: boolean;
 }
 
 interface DreamCompanyIntelWire {
@@ -40,6 +51,8 @@ interface DreamCompanyIntelWire {
   culture_notes?: string;
   likely_questions?: string[];
   talking_points?: string[];
+  salary_range?: string;
+  interview_process?: string;
   sources?: string[];
 }
 
@@ -52,6 +65,9 @@ interface DreamCompanyWire {
   prep_progress?: {sessions_practiced?: number; avg_score?: number | null; application_tracked?: boolean};
   open_jobs_count?: number;
   research_stale?: boolean;
+  readiness_score?: number;
+  is_top_choice?: boolean;
+  has_new_job_alert?: boolean;
 }
 
 function intelFromWire(intel?: DreamCompanyIntelWire | null): DreamCompanyIntel | null {
@@ -62,6 +78,8 @@ function intelFromWire(intel?: DreamCompanyIntelWire | null): DreamCompanyIntel 
     cultureNotes: intel.culture_notes ?? '',
     likelyQuestions: intel.likely_questions ?? [],
     talkingPoints: intel.talking_points ?? [],
+    salaryRange: intel.salary_range ?? '',
+    interviewProcess: intel.interview_process ?? '',
     sources: intel.sources ?? [],
   };
 }
@@ -80,6 +98,9 @@ function fromWire(w: DreamCompanyWire): DreamCompany {
     },
     openJobsCount: w.open_jobs_count ?? 0,
     researchStale: !!w.research_stale,
+    readinessScore: w.readiness_score ?? 0,
+    isTopChoice: !!w.is_top_choice,
+    hasNewJobAlert: !!w.has_new_job_alert,
   };
 }
 
@@ -88,10 +109,46 @@ export async function listDreamCompanies(): Promise<DreamCompany[]> {
   return (data ?? []).map(fromWire);
 }
 
+/** Prefetched research to hand straight to the backend instead of paying
+ * for a second, redundant AI+web-search call — see CompanyIntelligence.tsx's
+ * "Save to Dream Company Dashboard" action, which already has this exact
+ * shape sitting in state from its own /company-intel/research call. */
+export interface PrefetchedDreamCompanyIntel {
+  company: string;
+  overview: string;
+  recentDevelopments: string[];
+  cultureNotes: string;
+  likelyQuestions: string[];
+  talkingPoints: string[];
+  salaryRange: string;
+  interviewProcess: string;
+  sources: string[];
+}
+
 /** Throws {error: "limit_reached" | "already_tracked", message?} on failure
  * so the screen can show a specific error. */
-export async function addDreamCompany(company: string, role?: string): Promise<DreamCompany> {
-  const {data} = await apiClient.post<DreamCompanyWire>('/api/v1/dream-companies', {company, role: role || ''});
+export async function addDreamCompany(
+  company: string,
+  role?: string,
+  prefetchedIntel?: PrefetchedDreamCompanyIntel,
+): Promise<DreamCompany> {
+  const {data} = await apiClient.post<DreamCompanyWire>('/api/v1/dream-companies', {
+    company,
+    role: role || '',
+    prefetched_intel: prefetchedIntel
+      ? {
+          company: prefetchedIntel.company,
+          overview: prefetchedIntel.overview,
+          recent_developments: prefetchedIntel.recentDevelopments,
+          culture_notes: prefetchedIntel.cultureNotes,
+          likely_questions: prefetchedIntel.likelyQuestions,
+          talking_points: prefetchedIntel.talkingPoints,
+          salary_range: prefetchedIntel.salaryRange,
+          interview_process: prefetchedIntel.interviewProcess,
+          sources: prefetchedIntel.sources,
+        }
+      : undefined,
+  });
   return fromWire(data);
 }
 
@@ -102,4 +159,13 @@ export async function refreshDreamCompany(id: number): Promise<DreamCompany> {
 
 export async function removeDreamCompany(id: number): Promise<void> {
   await apiClient.delete(`/api/v1/dream-companies/${id}`);
+}
+
+/** Body omitted = flip the current value server-side — see
+ * app/api/dream_companies.py's toggle_priority. */
+export async function toggleDreamCompanyPriority(id: number, isTopChoice?: boolean): Promise<DreamCompany> {
+  const {data} = await apiClient.post<DreamCompanyWire>(`/api/v1/dream-companies/${id}/priority`,
+    isTopChoice === undefined ? undefined : {is_top_choice: isTopChoice},
+  );
+  return fromWire(data);
 }

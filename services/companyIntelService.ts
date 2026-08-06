@@ -18,6 +18,14 @@ export interface CompanyIntel {
   cultureNotes: string;
   likelyQuestions: string[];
   talkingPoints: string[];
+  // Product request: "add more nice features in the company
+  // intelligence... salary & comp insights, interview process
+  // breakdown" — both generated in the same research call as everything
+  // above (see app/api/company_intel.py), not a separate lookup. Empty
+  // string is a valid, expected value (e.g. salaryRange when no role was
+  // given) — screens should treat it the same as any other empty section.
+  salaryRange: string;
+  interviewProcess: string;
   sources: string[];
 }
 
@@ -28,6 +36,8 @@ interface WireIntel {
   culture_notes?: string;
   likely_questions?: string[];
   talking_points?: string[];
+  salary_range?: string;
+  interview_process?: string;
   sources?: string[];
 }
 
@@ -43,6 +53,8 @@ export async function researchCompany(company: string, role?: string): Promise<C
     cultureNotes: data.culture_notes ?? '',
     likelyQuestions: data.likely_questions ?? [],
     talkingPoints: data.talking_points ?? [],
+    salaryRange: data.salary_range ?? '',
+    interviewProcess: data.interview_process ?? '',
     sources: data.sources ?? [],
   };
 }
