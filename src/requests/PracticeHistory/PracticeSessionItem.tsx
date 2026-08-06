@@ -48,7 +48,7 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.54}>
       <Layout style={styles.container} level="2">
-        <Flex justify="flex-start" itemsCenter mb={8}>
+        <Flex justify="flex-start" itemsCenter mb={6}>
           <Text category="h7" bold style={globalStyle.flexOne} numberOfLines={1}>
             {getInterviewTypeLabel(item.interviewType, t)}
           </Text>
@@ -70,11 +70,11 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
               : getSessionStatusLabel(item.status, t)}
           </Text>
         </Flex>
-        <Text category="h8-s" status="placeholder" mb={4}>
+        <Text category="h8-s" status="placeholder" mb={2}>
           {getPracticeModeLabel(item.mode, t)} · {getDifficultyLabel(item.difficulty, t)} · {item.durationMin}{' '}
           {t('find:minutes_unit', {defaultValue: 'min'})}
         </Text>
-        <Flex justify="flex-start" itemsCenter mt={4}>
+        <Flex justify="flex-start" itemsCenter mt={2}>
           <Icon pack="assets" name="calendar" style={styles.icon} />
           <Text category="h8-s" ml={8}>
             {dayjs(item.date).format('MMM DD, YYYY')}
@@ -87,11 +87,19 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
 
 export default PracticeSessionItem;
 
+// Product report: "The cards in this interview screen is too big, The gaps
+// between each cards are too much. Reduce the height" -- container's
+// marginBottom (the gap BETWEEN cards) and padding (the card's own height)
+// were both a flat 16; each row's own top/bottom spacing (mb={8}/mb={4}/
+// mt={4} above) was similarly loose. Tightened together so a full screen of
+// history reads as a compact list, not spaced-out standalone tiles -- same
+// direction as ApplicationItem.tsx's identical pass, see that file's own
+// comment.
 const themedStyles = StyleService.create({
   container: {
     ...globalStyle.card,
-    marginBottom: 16,
-    padding: 16,
+    marginBottom: 10,
+    padding: 12,
   },
   statusTag: {
     paddingVertical: 4,

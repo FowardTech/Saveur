@@ -4,6 +4,7 @@ import {View, TouchableOpacity} from 'react-native';
 import Text from 'components/Text';
 import {
   useStyleSheet,
+  useTheme,
   StyleService,
   Layout,
   Icon,
@@ -40,9 +41,38 @@ const getStageStatus = (stage: Application_Stage_Enum) => {
   }
 };
 
+// Product report ("make the applied pills look better") — the stage pill
+// used to be a flat background-basic-color-3 gray no matter the stage, with
+// only the TEXT color (via getStageStatus above) hinting at Applied/
+// Interviewing/Offer/Rejected. Same "tinted background, not just tinted
+// text" treatment PracticeSessionItem.tsx's statusTag already uses for its
+// own success/warning pill — a stage now reads at a glance from the pill's
+// color alone, not just from parsing the label text.
+// Falls back to the solid -100 tint if a -transparent-200 token isn't
+// resolved for a given status — same defensive pattern already used for
+// this exact "info" status elsewhere (src/home/Notification/
+// ApplicationItem.tsx's colorFor), since 'info' specifically isn't
+// overridden in this app's own light.json/dark.json (see PaymentHistory.tsx's
+// comment on that) and comes entirely from Eva's base theme merge.
+const getStageBg = (stage: Application_Stage_Enum, theme: Record<string, string>) => {
+  switch (getStageStatus(stage)) {
+    case 'info':
+      return theme['color-info-transparent-200'] ?? theme['color-info-100'];
+    case 'warning':
+      return theme['color-warning-transparent-200'] ?? theme['color-warning-100'];
+    case 'success':
+      return theme['color-success-transparent-200'] ?? theme['color-success-100'];
+    case 'danger':
+      return theme['color-danger-transparent-200'] ?? theme['color-danger-100'];
+    default:
+      return theme['background-basic-color-3'];
+  }
+};
+
 const ApplicationItem = ({item}: ApplicationItemProps) => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const {t} = useTranslation(['request', 'common']);
   return (
     <TouchableOpacity
@@ -60,7 +90,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
           background-basic-color-2 (#FFFFFF), true white, matching the
           page body underneath it. */}
       <Layout style={styles.container} level="2">
-        <Flex justify="flex-start" itemsCenter mv={16} mh={16}>
+        <Flex justify="flex-start" itemsCenter mv={12} mh={12}>
           <CompanyLogoAvatar
             logoUrl={item.companyLogoUrl}
             companyName={item.company}
@@ -72,11 +102,11 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
             <Text category="h7" ml={16} maxWidth={220} bold numberOfLines={1}>
               {item.role}
             </Text>
-            <Text category="h8-s" ml={16} status="placeholder" mt={4} numberOfLines={1}>
+            <Text category="h8-s" ml={16} status="placeholder" mt={2} numberOfLines={1}>
               {item.company}
             </Text>
           </View>
-          <View style={styles.stageTag}>
+          <View style={[styles.stageTag, {backgroundColor: getStageBg(item.stage, theme)}]}>
             <Text category="h9" status={getStageStatus(item.stage) as any} bold>
               {item.stage}
             </Text>
@@ -93,7 +123,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
               there's no separate structured remote flag anywhere in the
               data model to read instead). */}
           {item.location ? (
-            <Flex justify="flex-start" itemsCenter mb={8}>
+            <Flex justify="flex-start" itemsCenter mb={6}>
               <Icon pack="assets" name="location16" style={styles.icon} />
               <Text category="h8-s" ml={8}>
                 {item.location}
@@ -123,7 +153,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
             </Text>
           </Flex>
           {item.nextStep ? (
-            <Text category="h8" status="link" mt={12} bold>
+            <Text category="h8" status="link" mt={8} bold>
               {item.nextStep}
             </Text>
           ) : null}
@@ -135,10 +165,17 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
 
 export default ApplicationItem;
 
+// Product report: "The cards in this interview screen is too big, The gaps
+// between each cards are too much. Reduce the height... The application
+// tracker screen is not looking perfect." — container's marginBottom (gap
+// BETWEEN cards) and every inner row's spacing were all on the loose side;
+// tightened together (same direction as PracticeSessionItem.tsx's identical
+// pass, see that file's own comment) so a full tracker list reads as a
+// compact, scannable list instead of oversized standalone tiles.
 const themedStyles = StyleService.create({
   container: {
     ...globalStyle.card,
-    marginBottom: 24,
+    marginBottom: 12,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which
     // needs an opaque fill on Android — dropped the 'transparent' override
     // so this Layout's own `level="1"` background shows through instead.
@@ -147,8 +184,8 @@ const themedStyles = StyleService.create({
     marginRight: 4,
   },
   bottom: {
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderTopWidth: 1,
     borderColor: 'background-basic-color-3',
     borderBottomLeftRadius: 16,
@@ -175,10 +212,12 @@ const themedStyles = StyleService.create({
     borderRadius: 8,
     backgroundColor: 'color-primary-transparent-100',
   },
+  // backgroundColor is now set inline per-stage (see getStageBg above) —
+  // was a flat background-basic-color-3 gray for every stage, so this base
+  // style only carries the shape now.
   stageTag: {
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: 'background-basic-color-3',
   },
 });
