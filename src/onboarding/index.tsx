@@ -146,6 +146,13 @@ const Onboarding = memo(() => {
   // learning are close to square-ish landscape, feedback is closer to
   // portrait) because each source composition is a different shape, not a
   // bug.
+  //
+  // interview's asset was swapped once more in this same pass: this
+  // screen's rough rectangular crop (of the SVG-derived, then PNG-derived,
+  // source) was replaced with a tighter crop the product owner supplied
+  // directly, trimmed to the illustration's own content bounds rather than
+  // an eyeballed rectangle — same content (no headline, transparent
+  // background), just a cleaner edge.
   const DATA = [
     // `aspect` (width / height, measured from each PNG's actual pixel
     // dimensions) — see the image container's own comment below for why
@@ -158,7 +165,7 @@ const Onboarding = memo(() => {
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
       image: Images.onboardingInterview,
-      aspect: 1600 / 1013,
+      aspect: 1600 / 1537,
     },
     {
       id: 1,
