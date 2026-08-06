@@ -636,14 +636,17 @@ const themedStyles = StyleService.create({
   sectionHeading: {
     paddingHorizontal: 24,
   },
-  // Matches ButtonOptional's own container style (see that file's comment)
-  // so the sign-out row reads as one more full-width row in the same
-  // stack, not a leftover flat row underneath the list above it.
+  // Matches ButtonOptional's own container style (see that file's comment,
+  // including its "remove the white background and border line" fix — kept
+  // in sync here so the sign-out row doesn't stand out as the one leftover
+  // white tile in an otherwise flat list) so the sign-out row reads as one
+  // more full-width row in the same stack, not a leftover flat row
+  // underneath the list above it.
   logoutRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 10,

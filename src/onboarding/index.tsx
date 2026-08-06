@@ -33,6 +33,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, getLanguageLabel } from 'constants/languages';
 import { EKeyAsyncStorage } from 'constants/Types';
+import { Images } from 'assets/images';
 
 const Onboarding = memo(() => {
   const { width, top } = useLayout();
@@ -76,51 +77,49 @@ const Onboarding = memo(() => {
   const scrollHandler = useAnimatedScrollHandler(event => {
     translationX.value = event.contentOffset.x;
   });
-  // Product request: "replace the Saveur logo with a very good human-like
-  // image representing what each slide is talking about" (reference: a
-  // full-bleed lifestyle photo behind the headline/subtext, like the
-  // attached "Your health. Your journey." example) — was Images.logoMark
-  // (the small "S" app icon) repeated identically on all 5 slides, which
-  // doesn't say anything about what each slide is describing. One
-  // real, freely-licensed (Pexels — free to use, no attribution required:
-  // pexels.com/license) lifestyle photo per slide instead, each chosen to
-  // match that slide's specific topic rather than a generic office/laptop
-  // shot: a coaching video call for "practice interviews", a confident
-  // professional for "instant feedback", someone happily checking their
-  // phone for "job alert", a person taking working notes for "resume
-  // scanners", and a student studying online for "learn one course at a
-  // time". No image-generation tool is available in this environment, so
-  // this is real stock photography rather than AI-generated art.
+  // Product request ("I want us to use the perfect illustrations... Just
+  // get free ones online that looks very good and modern" — icons8/
+  // iconscout/streamline referenced) — replaces the earlier real-photo
+  // approach (5 hotlinked Pexels stock photos) with proper flat-style
+  // illustrations, one per slide topic: a handshake/interview scene for
+  // "practice interviews", a charts/analytics dashboard for "instant
+  // feedback", a magnifying glass surfacing a candidate for "job alert",
+  // resumes getting a green approval check for "resume scanners", and
+  // someone studying at a desk for "learn one course at a time". See
+  // assets/images/index.ts's own comment on these 5 assets for sourcing/
+  // licensing (unDraw, free/no attribution) and why they're bundled PNGs
+  // rather than requiring a live network fetch the way the old Pexels URLs
+  // did.
   const DATA = [
     {
       id: 0,
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
-      image: 'https://images.pexels.com/photos/4226122/pexels-photo-4226122.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+      image: Images.onboardingInterview,
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
-      image: 'https://images.pexels.com/photos/3855619/pexels-photo-3855619.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+      image: Images.onboardingFeedback,
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
-      image: 'https://images.pexels.com/photos/6697318/pexels-photo-6697318.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+      image: Images.onboardingJobAlert,
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
-      image: 'https://images.pexels.com/photos/7059/man-people-space-desk.jpg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+      image: Images.onboardingResumeScan,
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
-      image: 'https://images.pexels.com/photos/5905707/pexels-photo-5905707.jpeg?auto=compress&cs=tinysrgb&w=800&h=1000&fit=crop',
+      image: Images.onboardingLearning,
     },
   ];
 
@@ -238,11 +237,16 @@ const Onboarding = memo(() => {
                   <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
                     {i.subtitle}
                   </Text>
-                  <View style={[styles.image, { backgroundColor: theme['background-basic-color-3'] }]}>
+                  {/* Illustrations are landscape (~1.4:1, unlike the old
+                      portrait-cropped photos) and shouldn't be cropped the
+                      way a photo can be — resizeMode "contain" inside a
+                      shorter, wider frame instead of "cover" inside a tall
+                      one. */}
+                  <View style={[styles.image, { width: width * 0.86, height: width * 0.86 * 0.72, backgroundColor: theme['background-basic-color-3'] }]}>
                     <Image
-                      source={{ uri: i.image }}
-                      resizeMode="cover"
-                      style={{ width: width * 0.78, height: width * 0.78 * 1.15, borderRadius: 24 }}
+                      source={i.image}
+                      resizeMode="contain"
+                      style={{ width: '100%', height: '100%' }}
                     />
                   </View>
                 </Animated.View>

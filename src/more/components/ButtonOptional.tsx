@@ -165,9 +165,21 @@ const themedStyles = StyleService.create({
   // that now-wider parent gives me", so this row ends up flush with the
   // physical screen edges on both sides. paddingHorizontal keeps the
   // icon/text from sitting flush against those edges themselves.
+  //
+  // Product report: "Remove the white background and border line from the
+  // settings items" — was background-basic-color-2 (solid white, #FFFFFF),
+  // which against Container's own level="3" gray page body (#F0F0F0, see
+  // Container.tsx's comment) read as a distinct white card/tile per row —
+  // the flat white-rectangle edge against the gray page is what actually
+  // looked like an unwanted "border line" here, not a real borderWidth
+  // (there never was one). Transparent now, completing the "plain flat
+  // icon-list settings screen, no chip/background" redesign direction this
+  // component's own icon already moved to (see the REDESIGN comment on the
+  // Icon below) — rows are separated by the marginTop gap alone now, the
+  // same way the icon row itself has no boxed chrome around it either.
   container: {
     width: '100%',
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'transparent',
     paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 10,

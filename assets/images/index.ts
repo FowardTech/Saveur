@@ -105,4 +105,33 @@ export const Images = {
   specialNeeds: require("./img_special_needs.png"),
   tutoring: require("./img_tutoring.png"),
   seniorCare: require("./img_senior_care.png"),
+  // Onboarding carousel illustrations (product request: "In the onboarding
+  // screen I want us to use the perfect illustrations from there... Just
+  // get free ones online that looks very good and modern" — icons8/
+  // iconscout/streamline suggested as reference sites). Replaces the
+  // earlier real-photo approach (5 hotlinked Pexels URLs in
+  // src/onboarding/index.tsx) with proper flat-style illustrations
+  // instead, one per slide topic, matching what the referenced sites
+  // actually sell as "illustration packs."
+  //
+  // Sourced from unDraw (undraw.co) — free for personal and commercial
+  // use, no attribution required (see undraw.co/license; the only
+  // restriction is not redistributing the raw set as its own pack, which
+  // doesn't apply here). Fetched via the MIT-licensed community mirror
+  // github.com/cuuupid/undraw-illustrations (raw.githubusercontent.com/
+  // wsrv.nl were both unreachable from this environment's sandboxed
+  // network, but `git clone` over the github.com domain itself worked),
+  // then each SVG's default accent color (#6c63ff, unDraw's stock purple)
+  // was recolored to this app's own brand blue (#0063f8) via a plain
+  // find/replace before rasterizing to PNG with cairosvg — RN's <Image>
+  // has no built-in SVG support and this project has no svg-transformer
+  // configured (see illustrations.tsx's now-superseded hand-drawn mascot
+  // set for the only other place this app touches react-native-svg, which
+  // renders SVG as React components instead, a different mechanism that
+  // doesn't apply to a downloaded third-party file).
+  onboardingInterview: require("./img_onboarding_interview.png"),
+  onboardingFeedback: require("./img_onboarding_feedback.png"),
+  onboardingJobAlert: require("./img_onboarding_job_alert.png"),
+  onboardingResumeScan: require("./img_onboarding_resume_scan.png"),
+  onboardingLearning: require("./img_onboarding_learning.png"),
 };
