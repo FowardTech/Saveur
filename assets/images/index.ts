@@ -171,7 +171,21 @@ export const Images = {
   // backgroundColor, a rounded clipping boundary was still reading as a
   // "box" around the artwork.
   //
-  // Being original artwork, there's no license/attribution question here.
+  // SIXTH PASS (current) — the product owner sourced and uploaded 5
+  // finished illustrations directly ("Now i got the perfect ones"),
+  // superseding the FOURTH/FIFTH-pass design-kit artwork described above.
+  // Each upload was a full hero composition (headline baked into the
+  // image as pixels, above the same phone-mockup + floating-card
+  // illustration this app's own reference called for). The baked headline
+  // was cropped out before use — it can't be localized via this app's
+  // `i18n`/SUPPORTED_LANGUAGES picker, and the font it was set in wasn't
+  // available when rasterizing the source files, so it also had visible
+  // text-overflow artifacts (e.g. "clarity & skills" clipped to "clarity &
+  // skil"). What ships is just the illustration — phone mockup, floating
+  // drop-shadowed cards, decorative sparkles, soft gradient backdrop —
+  // with src/onboarding/index.tsx's own translatable title/subtitle
+  // <Text> supplying the copy on top, same as every earlier pass. See
+  // that file's DATA comment for the full per-slide crop/aspect notes.
   onboardingInterview: require("./img_onboarding_interview.png"),
   onboardingFeedback: require("./img_onboarding_feedback.png"),
   onboardingJobAlert: require("./img_onboarding_job_alert.png"),

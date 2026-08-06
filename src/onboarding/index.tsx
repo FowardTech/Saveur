@@ -111,6 +111,36 @@ const Onboarding = memo(() => {
   // touching the edge" was actually a separate, unrelated layout bug in
   // this file, not the artwork — see the `alignSelf: 'center'` fix and
   // comment on `styles.image` below.
+  //
+  // SIXTH PASS — the product owner found and uploaded 5 finished
+  // illustrations that already match the reference exactly (real human
+  // characters, gradient-shaded floating phone-mockup + drop-shadowed
+  // cards, warm gradient backdrop): "Now i got the perfect ones". These
+  // replace the hand-built design-kit artwork above, which is no longer
+  // used by this screen (kept for history in the comment, not deleted from
+  // git log).
+  //
+  // Each uploaded file was a full "hero" composition — headline text baked
+  // into the image as pixels, on top of the same phone/card illustration.
+  // That baked text couldn't be reused as-is for two real reasons, not
+  // just a style preference: (1) it isn't translatable, and this screen's
+  // whole reason for the top-right language picker is that onboarding
+  // copy has to switch with `i18n`'s SUPPORTED_LANGUAGES — baked pixel
+  // text can't; (2) the font the files were authored with isn't available
+  // in the rendering pipeline used to process them, so headlines rendered
+  // with visible substitute-font overflow (confirmed: "clarity & skills"
+  // clipped to "clarity & skil" even after widening the crop well past
+  // the text's own width). So each source file was cropped to keep only
+  // the illustration — phone mockup, floating cards, decorative sparkles,
+  // background gradient — and the headline pixels discarded; this screen's
+  // own `i.title`/`i.subtitle` <Text> above (translatable, real font)
+  // supplies the copy instead, exactly as it did for the design-kit
+  // artwork. `aspect` below is each cropped PNG's own measured ratio —
+  // interview/job_alert are short "phone-top + notification" compositions
+  // (padded slightly with the image's own flat background tone to avoid an
+  // overly thin sliver), feedback is a taller phone-top + two floating
+  // cards, and resume_scan/learning are full tall phone-mockup scenes, so
+  // the aspect ratios genuinely differ per slide rather than being a bug.
   const DATA = [
     // `aspect` (width / height, measured from each PNG's actual pixel
     // dimensions) — see the image container's own comment below for why
@@ -123,35 +153,35 @@ const Onboarding = memo(() => {
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
       image: Images.onboardingInterview,
-      aspect: 1200 / 1050,
+      aspect: 1600 / 800,
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
       image: Images.onboardingFeedback,
-      aspect: 1200 / 1050,
+      aspect: 1600 / 725,
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
       image: Images.onboardingJobAlert,
-      aspect: 1200 / 1050,
+      aspect: 1600 / 800,
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
       image: Images.onboardingResumeScan,
-      aspect: 1200 / 1050,
+      aspect: 1327 / 1600,
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
       image: Images.onboardingLearning,
-      aspect: 1200 / 1050,
+      aspect: 1600 / 1404,
     },
   ];
 
