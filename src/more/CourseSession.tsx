@@ -401,16 +401,57 @@ const CourseSession = memo(() => {
               })}
             </Text>
 
+            {/* Product feedback: "You did not design this page well... the
+                page that displays the curriculum of the lesson or module.
+                Its not looking good and professional." This list used to be
+                bare text rows floating directly on the page background,
+                separated only by a top hairline (which also drew a stray
+                line under the subtitle above row 1), with a plain gray
+                number circle and no other visual hierarchy. Now it's a real
+                card (globalStyle.card, same treatment every other list card
+                in the app uses) with a primary-tinted number badge, a
+                secondary "Module N" caption under each title, a trailing
+                chevron for scannability, and bottom (not top) dividers so
+                the last row sits flush with the card's own edge instead of
+                floating past it. */}
             {syllabus ? (
-              <View style={styles.introSyllabus}>
+              <View
+                style={[
+                  globalStyle.card,
+                  styles.introSyllabus,
+                  { backgroundColor: theme['background-basic-color-2'] },
+                ]}>
                 {syllabus.map((title, i) => (
-                  <Flex key={i} justify="flex-start" itemsCenter style={styles.introSyllabusRow}>
-                    <View style={styles.introSyllabusIndex}>
-                      <Text category="h10" bold status="placeholder">{i + 1}</Text>
+                  <Flex
+                    key={i}
+                    justify="flex-start"
+                    itemsCenter
+                    style={[
+                      styles.introSyllabusRow,
+                      i === syllabus.length - 1 && styles.introSyllabusRowLast,
+                    ]}>
+                    <View
+                      style={[
+                        styles.introSyllabusIndex,
+                        { backgroundColor: theme['color-primary-transparent-200'] },
+                      ]}>
+                      <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
+                        {i + 1}
+                      </Text>
                     </View>
-                    <Text category="h9" style={{ flex: 1, marginLeft: 12 }} numberOfLines={2}>
-                      {title}
-                    </Text>
+                    <View style={styles.introSyllabusTextWrap}>
+                      <Text category="h9" bold numberOfLines={2}>
+                        {title}
+                      </Text>
+                      <Text category="h10-s" status="placeholder" mt={2}>
+                        {t('more:course_module_label', { defaultValue: 'Module {{n}}', n: i + 1 })}
+                      </Text>
+                    </View>
+                    <Icon
+                      pack="eva"
+                      name="chevron-right-outline"
+                      style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]}
+                    />
                   </Flex>
                 ))}
               </View>
@@ -638,17 +679,25 @@ const themedStyles = StyleService.create({
     width: '100%',
     marginTop: 28,
     marginBottom: 28,
+    paddingHorizontal: 16,
   },
   introSyllabusRow: {
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderTopColor: 'background-basic-color-3',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'background-basic-color-3',
+  },
+  introSyllabusRowLast: {
+    borderBottomWidth: 0,
+  },
+  introSyllabusTextWrap: {
+    flex: 1,
+    marginLeft: 12,
+    marginRight: 8,
   },
   introSyllabusIndex: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'background-basic-color-3',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
