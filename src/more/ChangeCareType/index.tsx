@@ -115,7 +115,7 @@ const ChangeCareType = () => {
                 key={i}
                 onPress={() => setActive(i)}
               >
-                <Layout key={i}>
+                <Layout key={i} style={styles.cardWrap}>
                   <View
                     style={[
                       styles.background,
@@ -204,6 +204,17 @@ const themedStyles = StyleService.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  // BUG FIX (product report: "remove the subtle light green color I am
+  // seeing there") — this and cardWrap below are plain <Layout>s with no
+  // explicit `level` prop, which Eva's own mapping.json defaults to
+  // level="1" (background-basic-color-1 -> constants/theme/appTheme.json's
+  // color-basic-200, "#F6FAF8" — a barely-there mint tint left over from an
+  // earlier reskin pass, see styles/globalStyle.ts's card-shadow history).
+  // Sitting on top of Container's actual level="3" page background
+  // (#F0F0F0, neutrally gray), that faint green shows through in every gap
+  // between/around the grid's cards. Same root cause + same fix
+  // (backgroundColor: 'transparent') as SharedWithMe.tsx's tabBarWrap — see
+  // that style's own comment for the first time this exact bug was caught.
   wrapper: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -213,6 +224,15 @@ const themedStyles = StyleService.create({
     // end up with disproportionately large gaps around now-smaller cards.
     rowGap: 24,
     columnGap: 20,
+    backgroundColor: "transparent",
+  },
+  // Wraps each card's colored chip + label — see wrapper's own comment
+  // above for why this needs to be explicitly transparent too (it's the
+  // direct parent of the rounded chip, so its greenish level-1 default
+  // showed through as a tint right at the chip's own corners, not just in
+  // the grid's outer gaps).
+  cardWrap: {
+    backgroundColor: "transparent",
   },
   saveBtn: {
     marginHorizontal: 24,
