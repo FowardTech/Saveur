@@ -22,7 +22,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList, InterviewFeedbackScreenNavigationProp } from 'navigation/types';
 import { SkillScoreProps, StarBreakdownItemProps } from 'constants/Types';
 import * as feedbackService from 'services/feedbackService';
-import {isFeedbackPending} from 'services/feedbackService';
+import {isFeedbackPending, FeedbackReport} from 'services/feedbackService';
 import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import ShareToUserModal from 'components/ShareToUserModal';
 import CtaButton from 'components/CtaButton';
@@ -136,6 +136,31 @@ const InterviewFeedback = memo(() => {
     };
   }, []);
 
+  // BUG FIX (product report: "the AI feedback progress bar is flickering,
+  // it just changes to 0% sometimes and then changes back") — fetchFeedback
+  // and pollFeedback used to call setOverallScore/setSkillScores/
+  // setStarBreakdown with whatever that tick's response contained, no
+  // matter what. While the backend is still scoring, a poll tick can land
+  // between the job clearing old fields and writing new ones and come back
+  // with a partial/zeroed payload even though `status` still says pending —
+  // that momentarily stomped an already-loaded real score with 0, and
+  // CircleSlider (the ring drawing the percentage) restarts its 3s fill
+  // animation on every value change, so each poll's real->0->real bounce
+  // was visibly a sawtooth flicker, not a one-off glitch. A genuinely final
+  // (non-pending) response is always authoritative and applied as-is, even
+  // if a session truly scored 0 — only in-flight polls are guarded against
+  // regressing to a worse value than what's already on screen.
+  const applyFeedbackResult = React.useCallback((result: FeedbackReport) => {
+    const pending = isFeedbackPending(result.status);
+    setOverallScore(prev => (!pending || result.overallScore > 0 ? result.overallScore : prev));
+    setSkillScores(prev =>
+      !pending || result.skillScores.some(s => s.score > 0) ? result.skillScores : prev,
+    );
+    setStarBreakdown(prev =>
+      !pending || result.starBreakdown.some(s => s.score > 0) ? result.starBreakdown : prev,
+    );
+  }, []);
+
   const fetchFeedback = React.useCallback(async () => {
     if (!sessionId) return;
     if (pollTimeoutRef.current) {
@@ -159,9 +184,10 @@ const InterviewFeedback = memo(() => {
       // withhold data that IS present was too aggressive; it's now only
       // used to decide whether to keep polling in the background for a
       // possibly-fresher result, never to hide what's already there.
-      setOverallScore(result.overallScore);
-      setSkillScores(result.skillScores);
-      setStarBreakdown(result.starBreakdown);
+      // (applyFeedbackResult still guards against a pending tick's partial/
+      // zeroed payload regressing an already-shown real score — see its own
+      // comment above.)
+      applyFeedbackResult(result);
       if (isFeedbackPending(result.status)) {
         setIsScoringPending(true);
         pollTimeoutRef.current = setTimeout(pollFeedback, POLL_INTERVAL_MS);
@@ -181,12 +207,10 @@ const InterviewFeedback = memo(() => {
     try {
       const result = await feedbackService.getSessionFeedback(sessionId);
       if (!isMountedRef.current) return;
-      // Same as fetchFeedback above — apply whatever came back regardless
-      // of status, so a background poll only ever adds/refreshes data, it
-      // never blanks out something already showing.
-      setOverallScore(result.overallScore);
-      setSkillScores(result.skillScores);
-      setStarBreakdown(result.starBreakdown);
+      // Same as fetchFeedback above — apply whatever came back, guarded by
+      // applyFeedbackResult so a background poll only ever adds/refreshes
+      // data, it never blanks out (or flickers) something already showing.
+      applyFeedbackResult(result);
       if (isFeedbackPending(result.status) && pollAttemptsRef.current < MAX_POLL_ATTEMPTS) {
         pollTimeoutRef.current = setTimeout(pollFeedback, POLL_INTERVAL_MS);
         return;
