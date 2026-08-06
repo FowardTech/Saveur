@@ -129,6 +129,22 @@ export const Images = {
   // set for the only other place this app touches react-native-svg, which
   // renders SVG as React components instead, a different mechanism that
   // doesn't apply to a downloaded third-party file).
+  //
+  // onboardingFeedback and onboardingResumeScan were replaced in a second
+  // pass (report: illustrations "not premium/modern enough" — DrawKit,
+  // ManyPixels, Humaaans, and Open Doodles were all evaluated as
+  // alternatives first: DrawKit's own site leaks direct S3 zip links per
+  // collection, but cross-checking each one shows most "Free"-badged
+  // collections are actually served from its `drawkit-paid` bucket — only
+  // a couple of thematically-irrelevant packs, e.g. Economy & Finance,
+  // Education, are truly in `drawkit-free`; ManyPixels' CDN and Humaaans/
+  // Open Doodles' hosted assets were unreachable from this sandbox, and
+  // Open Doodles' lifestyle-doodle poses don't fit a career app anyway) —
+  // ultimately staying on unDraw but picking 2 different source pieces
+  // (voice_control, organize_resume) that already include the same soft
+  // blob-background + person treatment the other 3 slides have, instead of
+  // the original picks' flat chart-mockup/plain-white-background look that
+  // stood out as the inconsistent, "cheaper-looking" pair.
   onboardingInterview: require("./img_onboarding_interview.png"),
   onboardingFeedback: require("./img_onboarding_feedback.png"),
   onboardingJobAlert: require("./img_onboarding_job_alert.png"),

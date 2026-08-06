@@ -82,14 +82,27 @@ const Onboarding = memo(() => {
   // iconscout/streamline referenced) — replaces the earlier real-photo
   // approach (5 hotlinked Pexels stock photos) with proper flat-style
   // illustrations, one per slide topic: a handshake/interview scene for
-  // "practice interviews", a charts/analytics dashboard for "instant
-  // feedback", a magnifying glass surfacing a candidate for "job alert",
-  // resumes getting a green approval check for "resume scanners", and
-  // someone studying at a desk for "learn one course at a time". See
-  // assets/images/index.ts's own comment on these 5 assets for sourcing/
-  // licensing (unDraw, free/no attribution) and why they're bundled PNGs
-  // rather than requiring a live network fetch the way the old Pexels URLs
-  // did.
+  // "practice interviews", someone talking to a voice-assistant speaker for
+  // "instant feedback", a magnifying glass surfacing a candidate for "job
+  // alert", two people reviewing a resume against a results chart for
+  // "resume scanners", and someone studying at a desk for "learn one course
+  // at a time". See assets/images/index.ts's own comment on these 5 assets
+  // for sourcing/licensing (unDraw, free/no attribution) and why they're
+  // bundled PNGs rather than requiring a live network fetch the way the old
+  // Pexels URLs did.
+  //
+  // SECOND PASS (follow-up report: "not premium/modern enough... the type
+  // used in top 500 fortune apps"): the first pass's "feedback" slide (a
+  // flat browser-window mockup with pie/bar charts, no person, no
+  // background) and "resume scanner" slide (resume papers on a plain white
+  // background) were the two visual outliers — the other 3 slides all had a
+  // soft colored blob shape behind the subject plus a person for scale/
+  // personality, and the inconsistency between "has a blob + a person" vs.
+  // "flat chart on white" is what actually read as cheap, not the
+  // illustration style itself. Both were swapped for different unDraw
+  // pieces that already have that same blob-background + person treatment
+  // baked in (voice_control / organize_resume), so all 5 slides now share
+  // one consistent visual language instead of 3-good-2-off.
   const DATA = [
     // `aspect` (width / height, measured from each PNG's actual pixel
     // dimensions) — see the image container's own comment below for why
@@ -109,7 +122,7 @@ const Onboarding = memo(() => {
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
       image: Images.onboardingFeedback,
-      aspect: 1200 / 1038,
+      aspect: 1200 / 1025,
     },
     {
       id: 2,
@@ -123,7 +136,7 @@ const Onboarding = memo(() => {
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
       image: Images.onboardingResumeScan,
-      aspect: 1200 / 1026,
+      aspect: 1200 / 886,
     },
     {
       id: 4,
