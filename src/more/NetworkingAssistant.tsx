@@ -95,7 +95,18 @@ const NetworkingAssistant = memo(() => {
       if (editingId != null) {
         await networkingService.updateContact(editingId, form);
       } else {
-        await networkingService.addContact({...form, lastContactedDate: Date.now()});
+        // BUG FIX (product report: "Mark contacted is not working") — a
+        // brand-new contact used to be stamped lastContactedDate: Date.now()
+        // at creation time, i.e. already "contacted" the moment it's added,
+        // even though nothing has actually happened yet. Combined with the
+        // day-only date display below, tapping "Mark contacted" later the
+        // same day as adding a contact updated the real timestamp (the
+        // underlying AsyncStorage write always worked) but showed no visible
+        // change at all — same date, same position in the list, no
+        // confirmation — which read exactly like a broken button. A new
+        // contact now genuinely starts as "Not yet contacted" so the first
+        // real tap has something to show.
+        await networkingService.addContact({...form, lastContactedDate: null});
       }
       await loadContacts();
       onCancelForm();
@@ -251,7 +262,16 @@ const NetworkingAssistant = memo(() => {
             ) : null}
             <Text category="h10" status="placeholder">
               {contact.lastContactedDate
-                ? `${t('more:last_contacted', { defaultValue: 'Last contacted' })}: ${new Date(contact.lastContactedDate).toLocaleDateString()}`
+                ? // BUG FIX (product report: "Mark contacted is not
+                  // working") — was toLocaleDateString() (day-only). Tapping
+                  // "Mark contacted" a second time the same day genuinely
+                  // updated the stored timestamp every time, but the
+                  // displayed text was byte-for-byte identical before and
+                  // after, with nothing else in the UI confirming the tap
+                  // did anything — indistinguishable from a broken button.
+                  // toLocaleString() includes the time, so a same-day re-tap
+                  // is now visibly reflected.
+                  `${t('more:last_contacted', { defaultValue: 'Last contacted' })}: ${new Date(contact.lastContactedDate).toLocaleString()}`
                 : t('more:never_contacted', { defaultValue: 'Not yet contacted' })}
             </Text>
             <Flex justify="space-between" itemsCenter mt={4}>

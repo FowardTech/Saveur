@@ -326,9 +326,15 @@ const VoiceCoachView = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  const onInterrupt = () => {
+  const onInterrupt = async () => {
     if (phase !== 'speaking') return;
-    speechService.stopSpeaking();
+    // BUG FIX (see speechService.stopSpeaking's own comment on this round's
+    // fresh "captures fine in Mock Interview, never in Coach" report) —
+    // stopSpeaking() is now a genuinely awaitable teardown instead of
+    // fire-and-forget; awaiting it here means startListening()'s own 700ms
+    // settle delay starts counting from a *confirmed* stop instead of
+    // racing an in-flight one on top of it.
+    await speechService.stopSpeaking();
     startListening();
   };
 

@@ -448,7 +448,22 @@ export async function speak(
   }
 }
 
-export function stopSpeaking(): void {
+// BUG FIX (product report, fresh comparison this round: "the AI voice is
+// capturing my voice in the mock interview but its not capturing my voice
+// in the AI career coach"). This used to be `void`-returning and fire off
+// `Sound.stopPlayer()` without awaiting it — every caller (VoiceCoachView's
+// onInterrupt, its focus-cleanup, its AppState-background handler) treated
+// "stopSpeaking() called" as "the previous audio session is torn down" and
+// moved straight on to starting the mic, when in reality that was only ever
+// true for the FAST synchronous parts (bumping speechToken, kicking off
+// Tts.stop()) — the actual native player teardown (Sound.stopPlayer()) was
+// still in flight, untracked. Now genuinely awaitable, so a caller that
+// awaits this before starting the mic is racing a *confirmed* stop instead
+// of a fire-and-forget one — the same category of fix as sessionEndResolveRef
+// below already applied to stt.stop() itself, just on the TTS-playback side
+// of the same stop->speak->start handoff this file has already fixed
+// several other races in (see start()'s settle-delay comment).
+export async function stopSpeaking(): Promise<void> {
   // Invalidate any speak() call currently in flight — even one still stuck
   // mid-network-fetch or mid-engine-init that hasn't started playing
   // anything yet — so it no-ops instead of starting audio late. See the
@@ -456,11 +471,12 @@ export function stopSpeaking(): void {
   speechToken += 1;
   // Best-effort stop of whichever path is currently playing — safe to call
   // both even though only one is ever actually active, since a no-op stop
-  // on the idle one is harmless.
+  // on the idle one is harmless. Awaited now (see this function's own
+  // comment above) rather than fired-and-forgotten.
   try {
-    Sound.stopPlayer().catch(() => {});
+    await Sound.stopPlayer();
   } catch {
-    // ignored
+    // ignored — already stopped, or nothing was playing
   }
   // iOS's native Tts.stop: is declared as `stop:(BOOL *)onWordBoundary` — a
   // pointer-to-BOOL, a non-standard signature that this app's bridge can't
@@ -655,9 +671,10 @@ export function useSpeechToText() {
       isHardRestartingRef.current = false;
       return; // stop() was called for real while this was tearing down.
     }
-    // Same settle delay as the explicit start() path below -- gives iOS's
-    // audio hardware a moment to fully release before re-activating.
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // Same settle delay as the explicit start() path below (bumped 300ms ->
+    // 700ms alongside it -- see that comment) -- gives iOS's audio hardware
+    // a moment to fully release before re-activating.
+    await new Promise(resolve => setTimeout(resolve, 700));
     if (!wantsListeningRef.current) {
       isHardRestartingRef.current = false;
       return;
@@ -942,10 +959,24 @@ export function useSpeechToText() {
     // category-switch race, not something a JS-level try/catch can detect
     // (there's no error to catch; the session genuinely just doesn't
     // capture). A short settle delay between the previous audio session
-    // ending and the new one activating is the standard mitigation. 300ms
-    // is imperceptible as a pause but gives iOS's audio hardware time to
-    // fully release the prior session first.
-    await new Promise(resolve => setTimeout(resolve, 300));
+    // ending and the new one activating is the standard mitigation.
+    //
+    // BUG FIX (fresh product report this round: "captures my voice fine in
+    // the mock interview but never in the AI career coach" — same code
+    // path, same settle delay, both screens). This was 300ms. Mock
+    // Interview's speak()->start() handoff and the Coach's are byte-for-byte
+    // the same sequence, but Coach's replies/greeting are often much
+    // shorter utterances than an interview question, and — now that
+    // stopSpeaking() (see its own comment) is a properly awaited async
+    // teardown instead of fire-and-forget — a short utterance leaves less
+    // real wall-clock time for iOS's audio hardware to have already settled
+    // by coincidence before this delay even starts counting, unlike a
+    // longer interview question which was inadvertently getting a bigger
+    // natural buffer from its own longer playback. 700ms is still
+    // imperceptible as a pause but gives a meaningfully bigger margin for
+    // the category-switch handoff to genuinely finish before Voice.start()
+    // tries to activate the new .playAndRecord session.
+    await new Promise(resolve => setTimeout(resolve, 700));
     if (!wantsListeningRef.current) return false; // stop() was called during the settle delay
     try {
       await Voice.start(currentSttLocale());
