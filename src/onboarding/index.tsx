@@ -91,35 +91,46 @@ const Onboarding = memo(() => {
   // rather than requiring a live network fetch the way the old Pexels URLs
   // did.
   const DATA = [
+    // `aspect` (width / height, measured from each PNG's actual pixel
+    // dimensions) — see the image container's own comment below for why
+    // this is needed: rendering resizeMode="contain" inside a fixed-aspect
+    // box that doesn't match the source image's real aspect ratio leaves
+    // uneven empty margin on two sides, which is what read as "not
+    // centered" (bug report: "the illustrations are not at the center").
     {
       id: 0,
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
       image: Images.onboardingInterview,
+      aspect: 1200 / 840,
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
       image: Images.onboardingFeedback,
+      aspect: 1200 / 1038,
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
       image: Images.onboardingJobAlert,
+      aspect: 1200 / 910,
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
       image: Images.onboardingResumeScan,
+      aspect: 1200 / 1026,
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
       image: Images.onboardingLearning,
+      aspect: 1200 / 894,
     },
   ];
 
@@ -237,12 +248,20 @@ const Onboarding = memo(() => {
                   <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
                     {i.subtitle}
                   </Text>
-                  {/* Illustrations are landscape (~1.4:1, unlike the old
-                      portrait-cropped photos) and shouldn't be cropped the
-                      way a photo can be — resizeMode "contain" inside a
-                      shorter, wider frame instead of "cover" inside a tall
-                      one. */}
-                  <View style={[styles.image, { width: width * 0.86, height: width * 0.86 * 0.72, backgroundColor: theme['background-basic-color-3'] }]}>
+                  {/* Bug reports: "Why are you placing the illustrations in
+                      a gray card and also the illustrations are not at the
+                      center." Both came from the same root cause — a fixed
+                      1:0.72 box didn't match any of these illustrations'
+                      own real aspect ratio (they range 1.16-1.43), so
+                      resizeMode="contain" left uneven empty margin on top/
+                      bottom vs. left/right per image, and that box's
+                      background-basic-color-3 fill showed through the gap
+                      as a visible gray card behind the artwork. Sizing the
+                      box to each image's own measured aspect ratio instead
+                      (DATA's `aspect`, no backgroundColor) means the image
+                      fills its box edge-to-edge with no letterboxing gap
+                      and nothing behind it to read as a "card". */}
+                  <View style={[styles.image, { width: width * 0.86, height: (width * 0.86) / i.aspect }]}>
                     <Image
                       source={i.image}
                       resizeMode="contain"
