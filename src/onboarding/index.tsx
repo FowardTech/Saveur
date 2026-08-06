@@ -82,24 +82,35 @@ const Onboarding = memo(() => {
   // sourced-online passes (unDraw, both times) that the product owner
   // rejected as not matching the polish of a reference screenshot they
   // shared — a phone-mockup hero with floating drop-shadowed cards, a warm
-  // gradient backdrop, and flat-but-colorful characters, the "top 500
-  // fortune apps" look. Rather than keep hunting for a free pack that
-  // happens to match that exact reference (DrawKit, ManyPixels, Humaaans,
-  // Open Doodles, and the full 1,263-illustration unDraw catalog were all
-  // evaluated first — see assets/images/index.ts's comment for the full
-  // trail), these 5 are now fully original artwork, hand-built in code to
-  // match the reference's actual design system rather than approximate it:
-  // a warm two-tone gradient backdrop per slide, a torso-up flat character
-  // (unique hair/skin/outfit per slide for a varied "cast", same shape
-  // language throughout), 2 floating rounded cards with soft colored
-  // (never flat-black) blurred drop shadows and a slight rotation, plus a
-  // scattering of small decorative sparkle/dot/plus/ring accents — the same
-  // ingredients as the reference, composed fresh for this app's 5 actual
-  // topics: a video-call interview, headphones+mic AI feedback with a star
-  // rating, a phone job-alert notification, a resume with a checkmark seal,
-  // and an open book for "learn one course at a time". See
-  // assets/images/index.ts for how the source (a small Python SVG "design
-  // kit" this session wrote, then rasterized) is documented.
+  // gradient backdrop, and flat-but-colorful characters. Rather than keep
+  // hunting for a free pack that happens to match that exact reference
+  // (DrawKit, ManyPixels, Humaaans, Open Doodles, and the full 1,263-
+  // illustration unDraw catalog were all evaluated first — see
+  // assets/images/index.ts's comment for the full trail), these 5 are
+  // original artwork, hand-built in code to match the reference's design
+  // system: floating rounded cards with soft colored (never flat-black)
+  // blurred drop shadows and a slight rotation, plus scattered decorative
+  // sparkle/dot/plus/ring accents.
+  //
+  // TWO FOLLOW-UP FIXES after the first custom-artwork pass:
+  // 1) "I need a human like illustration... the one you created is like a
+  // cartoon" — the first pass drew each character as a circle head sitting
+  // directly on a dome-shaped torso (no neck/shoulders/limbs), which reads
+  // as an avatar icon, not a person. Rebuilt as a properly-proportioned
+  // seated figure instead — real neck, hourglass torso (shoulders wider
+  // than waist), two-segment arms with visible hands, and crossed legs —
+  // matching the reference's actual human anatomy rather than a mascot.
+  // 2) "why are you always giving the illustrations a square background...
+  // they have to be transparent" — the canvas used to have an opaque
+  // corner-to-corner gradient fill; it's a transparent PNG now (only the
+  // two soft blurred color blobs paint anything, as real per-pixel alpha,
+  // so they blend into this screen's own background instead of showing a
+  // hard rectangle edge).
+  //
+  // "you are placing them at the left of the screen where they are
+  // touching the edge" was actually a separate, unrelated layout bug in
+  // this file, not the artwork — see the `alignSelf: 'center'` fix and
+  // comment on `styles.image` below.
   const DATA = [
     // `aspect` (width / height, measured from each PNG's actual pixel
     // dimensions) — see the image container's own comment below for why
@@ -112,35 +123,35 @@ const Onboarding = memo(() => {
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
       image: Images.onboardingInterview,
-      aspect: 1200 / 1000,
+      aspect: 1200 / 1050,
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
       image: Images.onboardingFeedback,
-      aspect: 1200 / 1000,
+      aspect: 1200 / 1050,
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
       image: Images.onboardingJobAlert,
-      aspect: 1200 / 1000,
+      aspect: 1200 / 1050,
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
       image: Images.onboardingResumeScan,
-      aspect: 1200 / 1000,
+      aspect: 1200 / 1050,
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
       image: Images.onboardingLearning,
-      aspect: 1200 / 1000,
+      aspect: 1200 / 1050,
     },
   ];
 
@@ -335,6 +346,16 @@ const themedStyles = StyleService.create({
   },
   image: {
     marginVertical: 24,
+    // BUG FIX (report: "you are placing them at the left of the screen
+    // where they are touching the edge"): this box is only 86% of the
+    // slide's width (`width * 0.86` at the call site), sitting inside a
+    // full-width Animated.View. Without an explicit alignSelf, a child
+    // with its own fixed width defaults to the flex-start edge — flush
+    // left, not centered — which is exactly what left that 14% margin
+    // entirely on the right and none on the left. alignItems/
+    // justifyContent below only ever centered the <Image> *inside* this
+    // box; they never centered the box itself within its parent.
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 24,
