@@ -25,6 +25,7 @@ import {
   Clock,
   Code2,
   Compass,
+  Contact,
   Copy,
   CornerUpLeft,
   CreditCard,
@@ -33,6 +34,7 @@ import {
   ExternalLink,
   FileText,
   Flag,
+  Folder,
   Gift,
   Globe,
   Globe2,
@@ -43,11 +45,13 @@ import {
   Home,
   Inbox,
   Info,
+  Layers,
   Lightbulb,
   Lock,
   LogIn,
   LogOut,
   Mail,
+  Map,
   MessageCircle,
   MessageSquare,
   Mic,
@@ -67,6 +71,7 @@ import {
   Settings2,
   Share2,
   Shield,
+  SlidersHorizontal,
   Smile,
   Star,
   Sun,
@@ -160,6 +165,10 @@ const LucideEvaIconsPack: IconPack<any> = {
     'file-text-outline': lucideIcon(FileText),
     'flag-outline': lucideIcon(Flag),
     'flash-outline': lucideIcon(Zap),
+    // BUG FIX (same class as map-outline/layers-outline/linkedin-outline
+    // above — services/suggestedActions.ts's my_documents action). Also
+    // real, already-in-production, found by the same sweep.
+    'folder-outline': lucideIcon(Folder),
     'gift-outline': lucideIcon(Gift),
     'globe-2-outline': lucideIcon(Globe2),
     'globe-outline': lucideIcon(Globe),
@@ -169,6 +178,22 @@ const LucideEvaIconsPack: IconPack<any> = {
     'home-outline': lucideIcon(Home),
     'inbox-outline': lucideIcon(Inbox),
     'info-outline': lucideIcon(Info),
+    // BUG FIX (found while building Career DNA's "actionable next steps" —
+    // these 3 were referenced by services/suggestedActions.ts's ACTION_META
+    // for career_roadmap/practical_scenarios/linkedin_optimizer but were
+    // never actually added here, the same "screen/feature added after this
+    // pass" gap this file's own header comment warns about. That table has
+    // been live since the AI Coach's SUGGESTED_ACTION feature shipped, so
+    // this was a real, already-in-production crash waiting for the coach to
+    // ever actually suggest one of these three specific actions — not
+    // something new to this feature, just newly discovered by it.
+    'map-outline': lucideIcon(Map),
+    'layers-outline': lucideIcon(Layers),
+    // lucide-react-native has no brand/logo icons (Linkedin was removed
+    // upstream over trademark concerns) — Contact (a business-card-style
+    // glyph) is the closest semantic fit for "a professional profile"
+    // available in this icon set.
+    'linkedin-outline': lucideIcon(Contact),
     'lock-outline': lucideIcon(Lock),
     'log-in-outline': lucideIcon(LogIn),
     'log-out-outline': lucideIcon(LogOut),
@@ -182,6 +207,9 @@ const LucideEvaIconsPack: IconPack<any> = {
     // warns about. Same Mic/MicOff pairing as video-outline/video-off-
     // outline already use for Video/VideoOff below.
     'mic-off-outline': lucideIcon(MicOff),
+    // BUG FIX (same class as map-outline/layers-outline/linkedin-outline
+    // above — services/suggestedActions.ts's job_preferences action).
+    'options-2-outline': lucideIcon(SlidersHorizontal),
     'paper-plane-outline': lucideIcon(Send),
     'people-outline': lucideIcon(Users),
     'percent-outline': lucideIcon(Percent),
