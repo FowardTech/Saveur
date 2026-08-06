@@ -20,6 +20,13 @@ interface Props {
   // _activity_snippet). Optional — omitted entirely for any future caller
   // that plays a video with no course context.
   context?: CourseVideoContext;
+  // Product request item: "the app should always know where i stopped in
+  // the video and then i can continue from where i stopped" — set by the
+  // Continue Learning home card (and by getSavedVideos's isSaved-style
+  // resume metadata generally, if a future caller wants it) when reopening
+  // a video that already has a saved position. Omitted/0 plays from the
+  // start, same as before this feature existed.
+  startSeconds?: number;
 }
 
 // Product request item: "Videos must play inside a custom in-app player (no
@@ -57,7 +64,16 @@ interface Props {
 // Native via `window.ReactNativeWebView.postMessage`, letting THIS
 // component render its own clean, on-brand "video unavailable" state
 // instead of ever showing YouTube's native error screen.
-function buildPlayerHtml(videoId: string, origin: string): string {
+// `startSeconds` (product request item: "the app should always know where
+// i stopped in the video and then i can continue from where i stopped") —
+// YouTube's IFrame API playerVars `start` param seeks playback to that
+// point the moment the video begins, so reopening a partially-watched
+// video via the Continue Learning card resumes instead of always
+// restarting at 0:00. Rounded down to a whole second (the API only accepts
+// integer seconds) and never applied for a value near the very end (see
+// the RN-side isFinite/threshold guard where this is called from) so a
+// just-finished video doesn't reopen one second before its own end card.
+function buildPlayerHtml(videoId: string, origin: string, startSeconds: number): string {
   return `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <style>html,body{margin:0;padding:0;background:#000;height:100%;overflow:hidden;}#player{position:absolute;top:0;left:0;width:100%;height:100%;}</style>
 </head><body>
@@ -70,15 +86,44 @@ function buildPlayerHtml(videoId: string, origin: string): string {
     if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(msg));
   }
   var player;
+  // Product request item: "the app should always know where i stopped in
+  // the video" — reports the current playback position on an interval
+  // while actually playing (not while paused/buffering, no point spamming
+  // the same number), plus one last report the moment playback pauses or
+  // ends so a quick open-then-close still saves a real position instead of
+  // only ever catching whatever the last 5s-aligned tick happened to be.
+  var reportTimer = null;
+  function reportTime() {
+    if (!player || typeof player.getCurrentTime !== 'function') return;
+    var current = player.getCurrentTime();
+    var duration = typeof player.getDuration === 'function' ? player.getDuration() : 0;
+    post({ type: 'time', seconds: current, duration: duration });
+  }
+  function startReporting() {
+    if (reportTimer) return;
+    reportTimer = setInterval(reportTime, 5000);
+  }
+  function stopReporting() {
+    if (reportTimer) { clearInterval(reportTimer); reportTimer = null; }
+  }
   window.onYouTubeIframeAPIReady = function () {
     player = new YT.Player('player', {
       videoId: ${JSON.stringify(videoId)},
       playerVars: {
         playsinline: 1, autoplay: 1, modestbranding: 1, rel: 0,
         origin: ${JSON.stringify(origin)},
+        start: ${JSON.stringify(Math.max(0, Math.floor(startSeconds)))},
       },
       events: {
         onReady: function (e) { post({ type: 'ready' }); e.target.playVideo(); },
+        onStateChange: function (e) {
+          // 1 = playing, 2 = paused, 0 = ended (YT.PlayerState).
+          if (e.data === 1) { startReporting(); }
+          else {
+            stopReporting();
+            if (e.data === 2 || e.data === 0) reportTime();
+          }
+        },
         // Error codes per YouTube's IFrame API docs: 2 invalid param,
         // 5 HTML5 player error, 100 video not found/removed/private,
         // 101/150 embedding disallowed by the video owner (the family
@@ -98,7 +143,7 @@ function buildPlayerHtml(videoId: string, origin: string): string {
 </body></html>`;
 }
 
-const InAppVideoPlayer = memo(({ visible, video, onClose, context }: Props) => {
+const InAppVideoPlayer = memo(({ visible, video, onClose, context, startSeconds }: Props) => {
   const theme = useTheme();
   const { t } = useTranslation(['more', 'common']);
   const [isSaved, setIsSaved] = React.useState(!!video?.isSaved);
@@ -122,12 +167,30 @@ const InAppVideoPlayer = memo(({ visible, video, onClose, context }: Props) => {
 
   if (!video) return null;
 
-  const playerHtml = buildPlayerHtml(video.videoId, API_BASE_URL);
+  // A saved position within a few seconds of the video's own end (or a
+  // negative/NaN value) isn't a meaningful resume point — start from 0
+  // rather than reopening a finished video one tick before its end card.
+  const resumeFrom =
+    startSeconds && Number.isFinite(startSeconds) && startSeconds > 0 ? startSeconds : 0;
+  const playerHtml = buildPlayerHtml(video.videoId, API_BASE_URL, resumeFrom);
 
   const onWebViewMessage = (event: WebViewMessageEvent) => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg?.type === 'error') setPlaybackError(true);
+      // Product request item: "the app should always know where i stopped
+      // in the video" — forwarded on to the backend (see
+      // learningService.updateVideoPosition), throttled at the source (the
+      // injected HTML only posts this every 5s while actually playing, plus
+      // once more on pause/end — see buildPlayerHtml's reportTime). No
+      // client-side debounce needed on top of that.
+      if (msg?.type === 'time' && typeof msg.seconds === 'number') {
+        learningService.updateVideoPosition(
+          video.videoId,
+          msg.seconds,
+          typeof msg.duration === 'number' && msg.duration > 0 ? msg.duration : undefined,
+        );
+      }
     } catch {
       // Ignore malformed/unexpected messages rather than crashing the player.
     }

@@ -213,6 +213,45 @@ export async function getAllProgress(): Promise<AllProgress> {
   }
 }
 
+export interface ContinueCourseSummary {
+  courseId: string;
+  /** The bare topic string, suitable for CourseSession's `topic` param
+   * (same value courseIdFor was built from). */
+  topic: string;
+  level: CourseLevel;
+  totalModules: number;
+  completedModules: number;
+}
+
+/**
+ * Shared "what course should a Continue button resume?" logic, factored out
+ * of LearningCourses.tsx's own continue-banner derivation (see that
+ * screen's `continueCourseId`/`continueTitle`/etc. — same rules, kept in
+ * sync here) so the new home-screen Continue Learning card doesn't have to
+ * re-implement the courseId parsing/title-casing itself. Deliberately does
+ * NOT do LearningCourses.tsx's optional DATA_COURSES catalog-title lookup
+ * (that's a cosmetic nicety for the full course list screen, not worth
+ * pulling static catalog data into this service module for) — the
+ * slug-derived title-cased topic is a perfectly reasonable label for a
+ * home-screen card either way. Returns null if there's no course that's
+ * genuinely in progress (nothing completed yet, or already fully done —
+ * same "not something to continue" reasoning as the banner).
+ */
+export function deriveContinueCourse(allProgress: AllProgress): ContinueCourseSummary | null {
+  const courseId = allProgress.mostRecentCourseId;
+  if (!courseId) return null;
+  const entry = allProgress.byCourse[courseId];
+  const level = (courseId.split('::')[1] as CourseLevel) || 'basic';
+  const totalModules = MODULES_PER_LEVEL[level];
+  if (!entry || entry.completedModules <= 0 || entry.completedModules >= totalModules) return null;
+  const topic = (courseId.split('::')[0] ?? '')
+    .split('-')
+    .filter(Boolean)
+    .map(w => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+  return {courseId, topic, level, totalModules, completedModules: entry.completedModules};
+}
+
 /**
  * POST /api/v1/learning/progress — marks a module completed as the learner
  * finishes it. Best-effort: a save hiccup shouldn't block moving on to the
@@ -651,6 +690,14 @@ export interface CourseVideo {
   isSaved?: boolean;
   topic?: string | null;
   moduleTitle?: string | null;
+  // Only populated on rows coming back from getContinueVideo() below
+  // (product request item: "the app should always know where i stopped in
+  // the video... continue from where i stopped") — the recommendation list
+  // from getModuleVideos never sets these, same reasoning as `isSaved`
+  // above only coming from getSavedVideos().
+  lastPositionSeconds?: number;
+  durationSeconds?: number | null;
+  courseId?: string | null;
 }
 
 // Course context a video was recommended under — passed alongside the video
@@ -676,6 +723,9 @@ interface CourseVideoWire {
   is_saved?: boolean;
   topic?: string | null;
   module_title?: string | null;
+  course_id?: string | null;
+  last_position_seconds?: number;
+  duration_seconds?: number | null;
 }
 
 function fromVideoWire(w: CourseVideoWire): CourseVideo {
@@ -690,6 +740,9 @@ function fromVideoWire(w: CourseVideoWire): CourseVideo {
     isSaved: w.is_saved,
     topic: w.topic,
     moduleTitle: w.module_title,
+    courseId: w.course_id,
+    lastPositionSeconds: w.last_position_seconds,
+    durationSeconds: w.duration_seconds,
   };
 }
 
@@ -788,5 +841,49 @@ export async function getSavedVideos(): Promise<CourseVideo[]> {
     return (data.videos ?? []).map(fromVideoWire);
   } catch {
     return [];
+  }
+}
+
+/**
+ * Reports the current playback position (product request item: "the app
+ * should always know where i stopped in the video and then i can continue
+ * from where i stopped in the video") — see components/
+ * InAppVideoPlayer.tsx, which calls this on a throttled interval while
+ * playing, not on every single player tick. Only needs the video id + a
+ * position (backend just updates an already-existing row from
+ * logVideoWatch's earlier call — see video_activity_service.update_position's
+ * own comment for why full metadata isn't required here). Fire-and-forget,
+ * same tolerance as logVideoWatch above: a dropped position report should
+ * never interrupt playback.
+ */
+export async function updateVideoPosition(
+  videoId: string,
+  positionSeconds: number,
+  durationSeconds?: number,
+): Promise<void> {
+  try {
+    await apiClient.post('/api/v1/learning/videos/position', {
+      video_id: videoId,
+      position_seconds: positionSeconds,
+      duration_seconds: durationSeconds,
+    });
+  } catch {
+    // best-effort
+  }
+}
+
+/**
+ * The single most recently watched, not-yet-finished video (or null) —
+ * backs the home screen's Continue Learning card (see
+ * deriveContinueCourse above for the course-module half of that same
+ * card). `lastPositionSeconds`/`durationSeconds` on the returned
+ * CourseVideo tell the card how far in to resume and how much is left.
+ */
+export async function getContinueVideo(): Promise<CourseVideo | null> {
+  try {
+    const {data} = await apiClient.get<{video?: CourseVideoWire | null}>('/api/v1/learning/videos/continue');
+    return data.video ? fromVideoWire(data.video) : null;
+  } catch {
+    return null;
   }
 }

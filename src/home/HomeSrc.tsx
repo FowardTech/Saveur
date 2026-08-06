@@ -16,6 +16,7 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import DailyChallengeCard from './DailyChallengeCard';
 import PersonalizationCard from './PersonalizationCard';
+import ContinueLearningCard from './ContinueLearningCard';
 import WeekStrip from './WeekStrip';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
@@ -1072,6 +1073,18 @@ const HomeSrc = memo(() => {
             )}
           </View>
         </View>
+
+        {/* Continue Learning (product request item): "place a card to show
+            the user about where they left over in the lesson or video
+            lesson they were watching so that they can continue from
+            there." Own self-contained component (src/home/
+            ContinueLearningCard.tsx), same "owns its own fetch state,
+            renders null when there's nothing to show" convention as
+            DailyChallengeCard/PersonalizationCard below. Placed first in
+            this stack of bonus cards since resuming exactly where a
+            learner left off is a direct, explicit ask — not a "nice extra"
+            like the surprise challenge or personalization dashboard. */}
+        <ContinueLearningCard />
 
         {/* Surprise Daily Challenge (product request item) — one
             unpredictable practice challenge a day, own self-contained
