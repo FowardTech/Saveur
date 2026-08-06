@@ -333,7 +333,7 @@ const themedStyles = StyleService.create({
     right: 20,
     width: 200,
     maxHeight: 320,
-    borderRadius: 16,
+    borderRadius: 14,
     paddingVertical: 8,
     ...globalStyle.shadowBtn,
   },

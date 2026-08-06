@@ -706,7 +706,7 @@ const themedStyles = StyleService.create({
   certCard: {
     marginTop: 24,
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: 'color-success-transparent-200',
   },
   certCardInner: {

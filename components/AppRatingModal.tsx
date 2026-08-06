@@ -114,7 +114,7 @@ const styles = {
   },
   card: {
     width: '100%' as const,
-    borderRadius: 20,
+    borderRadius: 14,
     padding: 24,
     alignItems: 'center' as const,
   },

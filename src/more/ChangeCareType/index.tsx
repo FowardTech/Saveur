@@ -106,7 +106,9 @@ const ChangeCareType = () => {
             return (
               <Pressable
                 style={{
-                  width: (width - 32 - 48) / 2,
+                  // Matches wrapper's new columnGap (20) + its 24x2 padding
+                  // — see those styles' own comment on the size reduction.
+                  width: (width - 48 - 20) / 2,
                   justifyContent: "center",
                   alignItems: "center",
                 }}
@@ -128,8 +130,15 @@ const ChangeCareType = () => {
                       pack="eva"
                       name={item.icon}
                       style={{
-                        width: 40,
-                        height: 40,
+                        // Product report: "reduce the size of this goal
+                        // cards and reduce the icons too they are just too
+                        // big" — was 40x40 on an 120x120 card; both shrunk
+                        // together (see `background` below) so the icon
+                        // still reads at roughly the same proportion of the
+                        // card, not just smaller inside unchanged empty
+                        // space.
+                        width: 26,
+                        height: 26,
                         tintColor: isActive
                           ? theme["text-control-color"]
                           : theme["text-placeholder-color"],
@@ -181,13 +190,17 @@ const themedStyles = StyleService.create({
     flexGrow: 1,
   },
   background: {
-    width: 120,
-    height: 120,
-    // Rounded corners used to come baked into the fill/fillActive PNGs
-    // (see the comment above onSave) — now that this is a plain themed
-    // View, the radius needs to be set explicitly to keep the same
-    // rounded-square "chip" shape.
-    borderRadius: 120 * 0.32,
+    // Product report: "reduce the size of this goal cards" — was a fixed
+    // 120x120. Shrunk to 84x84 (see the icon's own comment above for the
+    // matching icon-size reduction).
+    width: 84,
+    height: 84,
+    // App-wide card standardization (product request: "all cards in this
+    // app has a border radius of 13 or 14") — was a formula-derived
+    // squircle radius (120 * 0.32 = 38.4, a much rounder "chip" shape than
+    // the rest of the app's cards). Same flat 14 every other card in the
+    // app now uses (see styles/globalStyle.ts's `card`).
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -196,8 +209,10 @@ const themedStyles = StyleService.create({
     flexWrap: "wrap",
     justifyContent: "space-between",
     padding: 24,
-    rowGap: 40,
-    columnGap: 32,
+    // Tightened alongside the smaller card size above so the grid doesn't
+    // end up with disproportionately large gaps around now-smaller cards.
+    rowGap: 24,
+    columnGap: 20,
   },
   saveBtn: {
     marginHorizontal: 24,

@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
   },
   badgeCard: {
     width: '31%',
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: 'rgba(128,128,128,0.08)',
     alignItems: 'center',
     paddingVertical: 16,

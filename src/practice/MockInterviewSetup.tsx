@@ -548,7 +548,7 @@ const themedStyles = StyleService.create({
     // gives these three cards a visible edge with no shadow at all.
     width: '31%',
     borderWidth: 2,
-    borderRadius: 20,
+    borderRadius: 14,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,
@@ -564,7 +564,7 @@ const themedStyles = StyleService.create({
   personaCard: {
     width: '48%',
     borderWidth: 2,
-    borderRadius: 20,
+    borderRadius: 14,
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 8,

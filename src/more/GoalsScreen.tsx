@@ -432,7 +432,7 @@ const themedStyles = StyleService.create({
   },
   editCard: {
     width: '100%',
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 24,
   },
   editInput: {

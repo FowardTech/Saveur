@@ -96,8 +96,13 @@ export const globalStyle = StyleSheet.create({
   // explicit reference screenshots of light, clean fitness/health apps with
   // big, very rounded cards) — reads closer to those references' softer,
   // friendlier card shape than the previous 20px radius.
+  // STANDARDIZATION PASS (explicit product request: "make sure that all
+  // cards in this app has a border radius of 13 or 14") — 16 -> 14. Since
+  // this one object is spread by ~60+ card styles app-wide, this single
+  // change is what actually makes "every card" consistent, rather than
+  // hunting down each screen's own copy of the number.
   card: {
-    borderRadius: 16,
+    borderRadius: 14,
     ...cardShadow,
     // Android has carried a subtle hairline border (not a shadow) here
     // since an earlier "remove the box shadow on Android" request, back

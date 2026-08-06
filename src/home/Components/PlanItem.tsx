@@ -84,7 +84,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'text-placeholder-color',
   },
   content: {
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 16,
     ...globalStyle.shadow,
     flexDirection: 'row',

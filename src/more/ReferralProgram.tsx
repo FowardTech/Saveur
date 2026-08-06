@@ -292,7 +292,7 @@ const themedStyles = StyleService.create({
   },
   creditCard: {
     backgroundColor: 'color-success-transparent-200',
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 16,
     overflow: 'hidden',
   },

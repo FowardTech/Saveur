@@ -218,7 +218,7 @@ const themedStyles = StyleService.create({
   hero: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: 'color-primary-500',
   },
   // Plain View, NOT a LinearGradient — the gradient is a decorative
@@ -226,7 +226,7 @@ const themedStyles = StyleService.create({
   // instead (see the JSX comment for why that matters for correct
   // sizing).
   heroInner: {
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
     padding: 24,
@@ -242,7 +242,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 14,
     backgroundColor: 'background-basic-color-2',
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -267,7 +267,7 @@ const themedStyles = StyleService.create({
   typeCard: {
     ...globalStyle.card,
     width: '48%',
-    borderRadius: 20,
+    borderRadius: 14,
     // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
     // renders correctly on Android (was 'transparent').
     backgroundColor: 'background-basic-color-2',

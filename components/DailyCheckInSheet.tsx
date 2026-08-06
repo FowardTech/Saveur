@@ -243,7 +243,7 @@ const styles = {
   },
   card: {
     width: '100%' as const,
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 24,
   },
   closeButton: {

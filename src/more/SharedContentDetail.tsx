@@ -273,7 +273,7 @@ const themedStyles = StyleService.create({
   // homeBannerCardInner for the same split. Outer is `styles.card` +
   // padding:0 (see JSX); this inner carries the actual clip + Video.
   videoCardInner: {
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   video: {

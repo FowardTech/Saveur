@@ -668,7 +668,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-1',
     flex: 1,
     borderWidth: 2,
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 14,
     marginRight: 10,
   },

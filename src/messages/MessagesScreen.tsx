@@ -188,7 +188,7 @@ const themedStyles = StyleService.create({
   hero: {
     marginTop: 16,
     padding: 20,
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
     // Opaque Android shadow fallback only — always fully covered by the
     // absolute-fill gradient rendered as this Flex's first child (see the

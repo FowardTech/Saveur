@@ -148,7 +148,7 @@ const AppTour = memo(({ visible, onClose }: AppTourProps) => {
             style={{
               width: width - 48,
               maxWidth: 420,
-              borderRadius: 16,
+              borderRadius: 14,
               padding: 28,
             }}
           >

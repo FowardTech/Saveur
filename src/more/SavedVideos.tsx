@@ -136,7 +136,7 @@ const themedStyles = StyleService.create({
   },
   card: {
     flexDirection: 'row',
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 12,
     alignItems: 'center',
   },

@@ -68,7 +68,7 @@ function ModalRequest({
           style={{
             width: width - 80,
             height: 334 * (height / 812),
-            borderRadius: 16,
+            borderRadius: 14,
             overflow: "hidden",
             // Was a decorative Image (Images.modalBg — scattered pastel
             // polka-dot/confetti shapes) covering the whole card. Plain
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   },
   modal: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 14,
   },
   avatarView: {
     alignSelf: "center",

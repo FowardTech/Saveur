@@ -111,7 +111,7 @@ const themedStyles = StyleService.create({
     // container, same white as every other card's fill (background-basic-
     // color-2).
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 16,
+    borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 8,
   },

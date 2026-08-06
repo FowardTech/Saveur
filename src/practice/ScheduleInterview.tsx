@@ -380,7 +380,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-1',
     width: '31%',
     borderWidth: 2,
-    borderRadius: 16,
+    borderRadius: 14,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,

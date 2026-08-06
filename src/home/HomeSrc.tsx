@@ -1287,7 +1287,7 @@ const themedStyles = StyleService.create({
     // either (always the code-drawn card now, which sizes to its own
     // content — see homeBannerFallback below).
     marginTop: 16,
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   // Code-drawn banner (see the JSX comment where this renders) — a plain
@@ -1297,7 +1297,7 @@ const themedStyles = StyleService.create({
   homeBannerFallback: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
@@ -1372,7 +1372,7 @@ const themedStyles = StyleService.create({
   checkInCard: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 16,
+    borderRadius: 14,
     // BUG FIX (product report: "make the XP card and its content look nice
     // in dark mode its looking so bad") — 'color-primary-000' is a fixed
     // "#FFFFFF" in constants/theme/appTheme.json with no dark-mode override
@@ -1398,7 +1398,7 @@ const themedStyles = StyleService.create({
   // button/pill itself (no more minWidth, numberOfLines=1 labels — see
   // checkInButton below) rather than changing the row shape.
   checkInCardInner: {
-    borderRadius: 16,
+    borderRadius: 14,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,

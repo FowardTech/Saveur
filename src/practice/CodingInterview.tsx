@@ -384,7 +384,7 @@ const themedStyles = StyleService.create({
     marginBottom: 8,
   },
   editorWrap: {
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 8,
     minHeight: 220,
   },
@@ -399,7 +399,7 @@ const themedStyles = StyleService.create({
     textAlignVertical: 'top',
   },
   stdinWrap: {
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 8,
     minHeight: 60,
   },

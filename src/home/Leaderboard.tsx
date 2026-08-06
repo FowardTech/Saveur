@@ -302,7 +302,7 @@ const themedStyles = StyleService.create({
   // directly on the page's own gray background.
   heroCard: {
     ...globalStyle.card,
-    borderRadius: 16,
+    borderRadius: 14,
     padding: 16,
     paddingTop: 20,
     marginTop: 12,

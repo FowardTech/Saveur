@@ -224,7 +224,7 @@ const themedStyles = StyleService.create({
     flex: 1,
     marginHorizontal: 16,
     marginBottom: 24,
-    borderRadius: 16,
+    borderRadius: 14,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: 'background-basic-color-3',
