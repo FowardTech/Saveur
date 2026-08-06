@@ -47,6 +47,13 @@ export interface FeatureFlags {
   dream_company_dashboard: boolean;
   daily_challenge: boolean;
   interview_heat_map: boolean;
+  // Product request: "all those new features I asked you to implement
+  // newly I want all of them to be configurable in the admin" — see
+  // Saveur-Backend/app_config_service.py's DEFAULTS["feature_flags"] for
+  // the exact default/behavior of each when off.
+  location_language_gate: boolean;
+  username_editing: boolean;
+  learning_course_onboarding_banner: boolean;
 }
 
 export interface ReleaseConfig {

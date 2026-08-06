@@ -297,10 +297,18 @@ export default function App() {
                   if (url) Linking.openURL(url).catch(() => {});
                 }}
               />
-            ) : locationGateSeen === null ? null : locationGateSeen === false ? (
+            ) : locationGateSeen === null ? null : locationGateSeen === false &&
+              appConfig.feature_flags.location_language_gate !== false ? (
               // First launch only — see components/LocationLanguageGate.tsx.
               // Every launch after this one has locationGateSeen === true
-              // and falls straight through to the real app below.
+              // and falls straight through to the real app below. Admin
+              // toggle (product request: "make all those new features
+              // configurable in the admin") — while off, this condition is
+              // simply false and the app falls through to AuthProvider/
+              // AppContainer below without ever marking locationGateSeen
+              // true, so if the admin turns the flag back on, a user who
+              // was skipped while it was off still sees it once, same as
+              // any other first-launch user.
               <LocationLanguageGate onDone={onLocationGateDone} />
             ) : (
               <AuthProvider>

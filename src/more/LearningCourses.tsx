@@ -28,6 +28,7 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import LearningCoursesOnboarding from './LearningCoursesOnboarding';
 import * as learningService from 'services/learningService';
+import * as configService from 'services/configService';
 import {
   CourseLevel, COURSE_LEVELS, MODULES_PER_LEVEL, CAREER_PATHS,
   TopicCheckResult, CourseProgressSummary, Certificate, AllProgress,
@@ -67,12 +68,20 @@ const LearningCourses = memo(() => {
   // before the AsyncStorage read resolves); `true`/`false` once known.
   // Deliberately checked here rather than gated behind isPremium below —
   // this introduces the feature to every user, paid or not.
+  // Admin toggle (product request: "make all those new features
+  // configurable in the admin") — off skips straight to `false` regardless
+  // of the AsyncStorage flag, same as if every user had already seen it.
+  const onboardingBannerEnabled = configService.isFeatureEnabled('learning_course_onboarding_banner');
   const [showOnboarding, setShowOnboarding] = React.useState<boolean | null>(null);
   React.useEffect(() => {
+    if (!onboardingBannerEnabled) {
+      setShowOnboarding(false);
+      return;
+    }
     AsyncStorage.getItem(EKeyAsyncStorage.learningCoursesOnboardingSeen).then(seen => {
       setShowOnboarding(!seen);
     });
-  }, []);
+  }, [onboardingBannerEnabled]);
   const onGetStartedOnboarding = React.useCallback(() => {
     setShowOnboarding(false);
     AsyncStorage.setItem(EKeyAsyncStorage.learningCoursesOnboardingSeen, '1').catch(() => {});

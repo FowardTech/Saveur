@@ -26,6 +26,7 @@ import {RootStackParamList} from 'navigation/types';
 import * as ImagePicker from 'react-native-image-picker';
 import * as documentsService from 'services/documentsService';
 import * as authService from 'services/authService';
+import * as configService from 'services/configService';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {AuthContext} from '../../AuthContext';
 import {globalStyle} from 'styles/globalStyle';
@@ -72,6 +73,13 @@ const EditProfile = memo(() => {
   // support editing a username at any time — PATCH /api/users/me already
   // accepts `username`, this screen's own form/save flow just never offered
   // it as a field.
+  // Admin toggle (product request: "make all those new features
+  // configurable in the admin") — off hides the field and skips its
+  // effects/save-path entirely, same as if this whole feature had never
+  // shipped. Read once per mount rather than via a hook: this is a static
+  // remote-config value already cached at app startup (see
+  // services/configService.ts), not something that changes mid-session.
+  const usernameEditingEnabled = configService.isFeatureEnabled('username_editing');
   const [username, setUsername] = React.useState(profile?.username ?? '');
   React.useEffect(() => {
     setUsername(profile?.username ?? '');
@@ -84,7 +92,7 @@ const EditProfile = memo(() => {
     const candidate = username.trim();
     // No live check needed if it's just the untouched value already on the
     // profile — only a *change* needs re-validating against the backend.
-    if (!candidate || candidate === profile?.username) {
+    if (!usernameEditingEnabled || !candidate || candidate === profile?.username) {
       setUsernameCheckState('idle');
       return;
     }
@@ -103,9 +111,9 @@ const EditProfile = memo(() => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [username, profile?.username]);
+  }, [username, profile?.username, usernameEditingEnabled]);
 
-  const usernameChanged = username.trim() !== (profile?.username ?? '');
+  const usernameChanged = usernameEditingEnabled && username.trim() !== (profile?.username ?? '');
   const usernameBlocksSave = usernameChanged && usernameCheckState !== 'available';
 
   const onRegenerateUsername = React.useCallback(async () => {
@@ -352,46 +360,50 @@ const EditProfile = memo(() => {
           value={profile?.email ?? ''}
           disabled
         />
-        <Input
-          label={t('auth:choose_username_title', {defaultValue: 'Username'}).toString()}
-          caption={t('more:username_field_caption', {
-            defaultValue: 'The only name other Saveur users see — on the Leaderboard and when sharing content.',
-          })}
-          placeholder={t('auth:username_placeholder', {defaultValue: 'yourusername'}).toString()}
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-          status={usernameStatus?.tone === 'danger' ? 'warning' : usernameStatus?.tone === 'success' ? 'success' : 'basic'}
-          style={styles.username}
-          textStyle={globalStyle.inputText}
-          accessoryRight={() => (
-            <Flex itemsCenter>
-              {usernameCheckState === 'checking' ? (
-                <ActivityIndicator size="small" />
-              ) : usernameCheckState === 'available' ? (
-                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, {tintColor: theme['color-success-500']}]} />
-              ) : usernameCheckState === 'taken' || usernameCheckState === 'looks_like_name' || usernameCheckState === 'invalid_format' ? (
-                <Icon pack="eva" name="close-circle-outline" style={[globalStyle.icon20, {tintColor: theme['color-danger-500']}]} />
-              ) : null}
-              <TouchableOpacity
-                activeOpacity={0.7}
-                disabled={isRegeneratingUsername}
-                onPress={onRegenerateUsername}
-                style={{marginLeft: 12}}>
-                {isRegeneratingUsername ? (
-                  <ActivityIndicator size="small" />
-                ) : (
-                  <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon20, {tintColor: theme['text-hint-color']}]} />
-                )}
-              </TouchableOpacity>
-            </Flex>
-          )}
-        />
-        {usernameStatus ? (
-          <Text category="h10" status={usernameStatus.tone} mt={-16} mb={16}>
-            {usernameStatus.text}
-          </Text>
+        {usernameEditingEnabled ? (
+          <>
+            <Input
+              label={t('auth:choose_username_title', {defaultValue: 'Username'}).toString()}
+              caption={t('more:username_field_caption', {
+                defaultValue: 'The only name other Saveur users see — on the Leaderboard and when sharing content.',
+              })}
+              placeholder={t('auth:username_placeholder', {defaultValue: 'yourusername'}).toString()}
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              autoCorrect={false}
+              status={usernameStatus?.tone === 'danger' ? 'warning' : usernameStatus?.tone === 'success' ? 'success' : 'basic'}
+              style={styles.username}
+              textStyle={globalStyle.inputText}
+              accessoryRight={() => (
+                <Flex itemsCenter>
+                  {usernameCheckState === 'checking' ? (
+                    <ActivityIndicator size="small" />
+                  ) : usernameCheckState === 'available' ? (
+                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon20, {tintColor: theme['color-success-500']}]} />
+                  ) : usernameCheckState === 'taken' || usernameCheckState === 'looks_like_name' || usernameCheckState === 'invalid_format' ? (
+                    <Icon pack="eva" name="close-circle-outline" style={[globalStyle.icon20, {tintColor: theme['color-danger-500']}]} />
+                  ) : null}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    disabled={isRegeneratingUsername}
+                    onPress={onRegenerateUsername}
+                    style={{marginLeft: 12}}>
+                    {isRegeneratingUsername ? (
+                      <ActivityIndicator size="small" />
+                    ) : (
+                      <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon20, {tintColor: theme['text-hint-color']}]} />
+                    )}
+                  </TouchableOpacity>
+                </Flex>
+              )}
+            />
+            {usernameStatus ? (
+              <Text category="h10" status={usernameStatus.tone} mt={-16} mb={16}>
+                {usernameStatus.text}
+              </Text>
+            ) : null}
+          </>
         ) : null}
         <Controller
           control={control}
