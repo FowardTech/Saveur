@@ -3,6 +3,7 @@ import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import i18n from 'i18next';
 import {isSupportedLanguageCode} from 'constants/languages';
+import {EKeyAsyncStorage} from 'constants/Types';
 
 // ---------------------------------------------------------------------------
 // First-open location-based language detection — per explicit request:
@@ -164,6 +165,18 @@ export async function detectLanguageFromLocation(): Promise<void> {
 
     const country = await countryCodeFromCoords(coords.latitude, coords.longitude);
     if (!country) return;
+
+    // Admin request item: "I also want to see the country where users are
+    // using the app from in the admin" — cached locally regardless of
+    // whether `country` maps to a supported language below (an unmapped
+    // country is still worth showing in the admin), then read and sent up
+    // by authService.ts's provisionProfile() the next time this device
+    // signs in/up (POST /users/sync's new `country` field — see
+    // Saveur-Backend/app/api/users.py). Deliberately NOT sent from here
+    // directly: this gate runs before a user is necessarily signed in at
+    // all on a fresh install, so there's no authenticated request to make
+    // yet.
+    await AsyncStorage.setItem(EKeyAsyncStorage.detectedCountryCode, country).catch(() => {});
 
     const language = COUNTRY_TO_LANGUAGE[country];
     if (!language || !isSupportedLanguageCode(language)) return;

@@ -134,6 +134,13 @@ export enum EKeyAsyncStorage {
   // device's own system language via i18n/language-detector.ts and still
   // lets them into the app — it never blocks forever).
   locationLanguageGateSeen = 'locationLanguageGateSeen',
+  // The ISO country code the location gate resolved (see
+  // utils/locationLanguage.ts's detectLanguageFromLocation) — cached
+  // locally since that gate can run before sign-in, then read and sent up
+  // by authService.ts's provisionProfile() on the next sign-in/signup.
+  // Admin request item: "I also want to see the country where users are
+  // using the app from in the admin".
+  detectedCountryCode = 'detectedCountryCode',
 }
 export enum Animation_Types_Enum {
   SlideTop,

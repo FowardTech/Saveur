@@ -128,8 +128,19 @@ const writeCache = async (profile: UserProfileProps): Promise<UserProfileProps> 
  */
 export async function provisionProfile(): Promise<UserProfileProps> {
   const referredByCode = await referralService.getPendingCode();
+  // Admin request item: "I also want to see the country where users are
+  // using the app from in the admin" — LocationLanguageGate.tsx runs
+  // before sign-in on a fresh install, so it can't call this itself; it
+  // just caches whatever country it resolved (see utils/locationLanguage.ts)
+  // for this call, the next real authenticated request, to actually send.
+  // POST /api/users/me (-> Saveur-Backend's sync()) only ever SETS this
+  // once server-side, so resending the same cached value on every later
+  // sign-in is harmless, not something that needs its own clear-after-use
+  // step the way referredByCode has.
+  const detectedCountryCode = await AsyncStorage.getItem(EKeyAsyncStorage.detectedCountryCode);
   const {data} = await apiClient.post<UserProfileWire>('/api/users/me', {
     referred_by_code: referredByCode ?? undefined,
+    country: detectedCountryCode ?? undefined,
   });
   if (referredByCode) {
     referralService.clearPendingCode().catch(() => {});
