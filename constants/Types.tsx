@@ -850,6 +850,15 @@ export interface LeaderboardEntryProps {
   xp: number;
   rank: number;
   isCurrentUser?: boolean;
+  // Product request (reference screenshot: a green "+N%" under every
+  // leaderboard row) — this period's XP vs. the equivalent prior window
+  // (e.g. this week vs. last week), computed server-side. `null` for
+  // period="all" (no natural "previous window") and for a user with zero
+  // XP in BOTH windows (nothing to compare — see
+  // Saveur-Backend/app/api/gamification.py's leaderboard() for the exact
+  // rule, including why a from-zero spike renders as "New" instead of a
+  // literal, misleadingly huge percentage).
+  changePct?: number | null;
 }
 
 // ---- AI Interview Coach additions (real backend: in-app notifications) —

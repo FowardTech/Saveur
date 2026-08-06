@@ -9,6 +9,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -16,36 +17,33 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import UserAvatar from 'components/UserAvatar';
-import CircularProgress from 'components/CircularProgress';
 import { globalStyle } from 'styles/globalStyle';
 import { LeaderboardEntryProps } from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
 import CtaButton from 'components/CtaButton';
 
-// Redesign (product follow-up — a reference screenshot of a fitness/habit
-// app's leaderboard: Daily/Weekly/Monthly tabs, a top-3 "podium" with the
-// #1 spot elevated and crowned, then a ranked list below). Explicit
-// instruction: match THAT LAYOUT, not that app's pink/purple color scheme.
+// REDESIGN (product request, explicit reference screenshot: a colorful
+// podium with a blue "trophy" hero banner up top, a tinted card per
+// top-3 rank — mint green for #1, neutral for #2, coral/orange for #3 —
+// each with a white-ringed avatar, an overlapping numbered badge, a
+// star+score pill, and a green "+N%" change indicator, then a plain
+// ranked list below with the same star-pill/percent treatment per row).
+// This explicitly REVERSES the earlier "too many colors, must be flat
+// brand-blue everywhere" simplification pass described lower in this
+// file's history — reusing this app's own existing tinted-tile palette
+// (styles/tileColors.ts, the same mint/blue/orange/rose set already used
+// by MyProgress.tsx's stat tiles, WeeklyCareerReport.tsx, CareerDna.tsx,
+// FindScreen.tsx) rather than inventing new one-off colors, so this is
+// colorful in the way the reference wants while still drawing from a
+// palette the rest of the app already uses consistently.
 //
-// SIMPLIFICATION PASS (product report: "this leaderboard has too many
-// colors... the chart bars should just be the platform default blue
-// color... must be consistent and simple like the cards in the rest of the
-// app"): this used to give each podium rank its own gold/silver/bronze
-// gradient (ring, rank badge, and the podium "riser" bars themselves), plus
-// a gradient-filled active tab pill and a gold-tinted trophy badge — a lot
-// of one-off color next to the flat, single-accent white cards everywhere
-// else in this app. Every one of those per-rank colors is gone now: the
-// ring, rank badge, podium bars, active tab, and XP text all use the same
-// single flat brand blue (color-primary-500) that's already this app's one
-// accent color everywhere else, with only SIZE (not color) still marking
-// which rank is #1 vs #2/#3.
-//
-// The Daily/Weekly/Monthly tabs are now functional: GET
-// /api/v1/gamification/leaderboard?period=daily|weekly|monthly (see
-// services/gamificationService.ts) aggregates XP actually earned within
-// that calendar window from the backend's new XpEvent ledger, rather than
-// always returning the same all-time User.xp ranking. Switching tabs
-// re-fetches for the newly selected period.
+// `change_pct` (the green "+N%") is real, not decorative — see
+// Saveur-Backend/app/api/gamification.py's leaderboard(), which now also
+// returns each entry's XP change vs. the equivalent PRIOR calendar window
+// (e.g. this week vs. last week). `null` (no prior-window activity to
+// compare against) renders as a flat "New" badge instead of a
+// percentage, since inventing a percentage from a zero baseline would be
+// misleading, not informative.
 const PERIODS = [
   { key: 'daily', labelKey: 'home:leaderboard_daily', defaultValue: 'Daily' },
   { key: 'weekly', labelKey: 'home:leaderboard_weekly', defaultValue: 'Weekly' },
@@ -53,21 +51,61 @@ const PERIODS = [
 ] as const;
 type Period = (typeof PERIODS)[number]['key'];
 
-// Modernization pass (product request — "make the leaderboard look more
-// nicer and modern"): #1's ring is noticeably bigger than #2/#3 now (was a
-// much subtler 60/52/52 split) so the hierarchy reads at a glance instead
-// of needing the crown/trophy to do all the work.
-const PODIUM_RING_SIZE: Record<1 | 2 | 3, number> = {
-  1: 76,
-  2: 56,
-  3: 56,
-};
-const PODIUM_BASE_HEIGHT: Record<1 | 2 | 3, number> = {
-  1: 64,
-  2: 44,
-  3: 36,
-};
 const PODIUM_ORDER: Array<1 | 2 | 3> = [2, 1, 3];
+const PODIUM_CARD_HEIGHT: Record<1 | 2 | 3, number> = {
+  1: 230,
+  2: 196,
+  3: 196,
+};
+const PODIUM_AVATAR_SIZE: Record<1 | 2 | 3, 'large' | 'medium'> = {
+  1: 'large',
+  2: 'medium',
+  3: 'medium',
+};
+
+// Per-rank tint, pulled from styles/tileColors.ts's shared palette (see the
+// header comment above) instead of one-off hex values — index 1 (mint) for
+// #1, index 0 (blue) for #2, index 2 (orange) for #3, matching the
+// reference screenshot's own green/blue/orange arrangement.
+const RANK_COLOR: Record<1 | 2 | 3, { card: string; pill: string; pillText: string }> = {
+  1: { card: 'color-tile-mint-bg', pill: 'color-tile-mint-text', pillText: '#FFFFFF' },
+  2: { card: 'color-badge-info-bg', pill: 'color-badge-info-text', pillText: '#FFFFFF' },
+  3: { card: 'color-tile-orange-bg', pill: 'color-tile-orange-text', pillText: '#FFFFFF' },
+};
+
+function ChangeBadge({ changePct, t }: { changePct: number | null | undefined; t: (k: string, o?: any) => string }) {
+  if (changePct == null) {
+    return (
+      <Text category="h10" bold status="primary" center mt={6}>
+        {t('home:leaderboard_new', { defaultValue: 'New' })}
+      </Text>
+    );
+  }
+  const isUp = changePct >= 0;
+  return (
+    <Flex justify="center" itemsCenter mt={6}>
+      {/* No dedicated "down" arrow in this app's icon set (see
+          assets/LucideEvaIconsPack.tsx) — the same up-arrow rotated 180°
+          reads identically to a down arrow rather than adding a new icon
+          mapping just for the (rare — XP only ever goes up) negative
+          case. */}
+      <Icon
+        pack="eva"
+        name="arrow-upward-outline"
+        style={{
+          width: 12,
+          height: 12,
+          tintColor: isUp ? '#22C55E' : '#EF4444',
+          marginRight: 2,
+          transform: [{ rotate: isUp ? '0deg' : '180deg' }],
+        }}
+      />
+      <Text category="h10" bold style={{ color: isUp ? '#22C55E' : '#EF4444' }}>
+        {isUp ? '+' : ''}{changePct}%
+      </Text>
+    </Flex>
+  );
+}
 
 // Full leaderboard (GET /api/v1/gamification/leaderboard returns up to the
 // backend's own top-50 cap — see app/api/gamification.py's leaderboard()).
@@ -140,13 +178,15 @@ const Leaderboard = memo(() => {
           </Text>
         ) : (
           <>
-            {/* Modernization pass (product request — "make the leaderboard
-                look more nicer and modern"): the tabs + podium used to sit
-                directly on the page's own gray background, same weight as
-                empty space. Grounding both inside one card gives the whole
-                top section a clear visual boundary/lift, same shadow
-                language every other card in the app already uses. */}
-            <View style={styles.heroCard}>
+            {/* Blue "trophy" hero banner (reference screenshot) — houses the
+                Daily/Weekly/Monthly tabs plus a large trophy badge, both on
+                a real blue gradient fill instead of sitting on the plain
+                page background. */}
+            <LinearGradient
+              colors={['#0063f8', '#1DA1F2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.heroCard}>
               <View style={styles.tabsRow}>
                 {PERIODS.map(period => {
                   const active = activePeriod === period.key;
@@ -155,95 +195,67 @@ const Leaderboard = memo(() => {
                       key={period.key}
                       activeOpacity={0.8}
                       onPress={() => setActivePeriod(period.key)}
-                      style={[
-                        styles.tabPill,
-                        active && { backgroundColor: theme['color-primary-500'] },
-                      ]}>
+                      style={[styles.tabPill, active && styles.tabPillActive]}>
                       <Text
                         category="h9-s"
                         bold
                         center
-                        style={{ color: active ? '#fff' : theme['background-basic-color-6'] }}>
+                        style={{ color: active ? '#0063f8' : 'rgba(255,255,255,0.85)' }}>
                         {t(period.labelKey, { defaultValue: period.defaultValue })}
                       </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
+              <View style={styles.trophyWrap}>
+                <Icon pack="eva" name="trophy" style={styles.trophyIcon} />
+              </View>
+            </LinearGradient>
 
-              <View style={styles.podiumRow}>
-                {PODIUM_ORDER.map(rank => {
-                  const entry = podiumEntry(rank);
-                  return (
-                    <View key={rank} style={[styles.podiumSpot, rank === 1 && styles.podiumSpotFirst]}>
-                      {entry ? (
-                        <>
-                          {rank === 1 ? (
-                            // Trophy badge (product request — "add a yellow
-                            // trophy svg there to show who is leading") —
-                            // simplified per follow-up ("too many colors"):
-                            // plain neutral icon circle (same
-                            // background-basic-color-2 treatment every other
-                            // icon-wrap in this app uses) with the icon
-                            // tinted the app's one accent blue, instead of a
-                            // gold-tinted glass circle.
-                            <View style={styles.trophyBadge}>
-                              <Icon
-                                pack="eva"
-                                name="trophy"
-                                style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
-                              />
-                            </View>
-                          ) : null}
-                          {/* SIMPLIFICATION PASS: flat brand-blue stroke for
-                              every rank (was a distinct gold/silver/bronze
-                              gradient per rank) — only the ring SIZE still
-                              varies by rank (see PODIUM_RING_SIZE), not its
-                              color. */}
-                          <CircularProgress
-                            progress={100}
-                            size={PODIUM_RING_SIZE[rank]}
-                            strokeWidth={3}
-                            color={theme['color-primary-500']}
-                            style={styles.podiumAvatarRing}>
-                            <UserAvatar
-                              uri={entry.avatarUrl}
-                              name={entry.name}
-                              size={rank === 1 ? 'large' : 'medium'}
-                            />
-                          </CircularProgress>
-                          <View style={[styles.podiumRankBadge, { backgroundColor: theme['color-primary-500'] }]}>
-                            <Text category="h10" bold style={{ color: '#FFFFFF' }}>
-                              {rank}
-                            </Text>
-                          </View>
-                          <Text category="h9-s" bold center numberOfLines={1} mt={6} style={styles.podiumName}>
-                            {entry.name}
-                            {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
-                          </Text>
-                          <Text category="h10" status="placeholder" center>
-                            {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
-                          </Text>
-                        </>
-                      ) : (
-                        <View style={styles.podiumEmptyFill} />
-                      )}
-                      {/* SIMPLIFICATION PASS ("the chart bars should just be
-                          the platform default blue color"): one flat
-                          brand-blue tint for every podium riser — was a
-                          separate gold/silver/bronze gradient per rank (see
-                          this file's header comment). Rank hierarchy still
-                          reads from height alone (PODIUM_BASE_HEIGHT). */}
-                      <View
-                        style={[
-                          styles.podiumBase,
-                          { height: PODIUM_BASE_HEIGHT[rank], backgroundColor: theme['color-primary-transparent-200'] },
-                        ]}
+            <View style={styles.podiumRow}>
+              {PODIUM_ORDER.map(rank => {
+                const entry = podiumEntry(rank);
+                const colors = RANK_COLOR[rank];
+                if (!entry) {
+                  return <View key={rank} style={styles.podiumEmptyFill} />;
+                }
+                return (
+                  <View
+                    key={rank}
+                    style={[
+                      styles.podiumCard,
+                      {
+                        height: PODIUM_CARD_HEIGHT[rank],
+                        backgroundColor: theme[colors.card],
+                      },
+                    ]}>
+                    <View style={[styles.rankBadge, { backgroundColor: theme[colors.pill] }]}>
+                      <Text category="h10" bold style={{ color: colors.pillText }}>
+                        {rank}
+                      </Text>
+                    </View>
+                    <View style={styles.podiumAvatarRing}>
+                      <UserAvatar
+                        uri={entry.avatarUrl}
+                        name={entry.name}
+                        size={PODIUM_AVATAR_SIZE[rank]}
+                        shape="round"
                       />
                     </View>
-                  );
-                })}
-              </View>
+                    <Text category="h9-s" bold center numberOfLines={1} mt={10} style={styles.podiumName}>
+                      {entry.name}
+                      {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
+                    </Text>
+                    <View style={[styles.scorePill, { backgroundColor: theme[colors.pill] }]}>
+                      <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: colors.pillText }]} />
+                      <Text category="h10" bold ml={4} style={{ color: colors.pillText }}>
+                        {entry.xp}
+                      </Text>
+                    </View>
+                    <ChangeBadge changePct={entry.changePct} t={t} />
+                  </View>
+                );
+              })}
             </View>
 
             {rest.length > 0 ? (
@@ -256,27 +268,25 @@ const Leaderboard = memo(() => {
                       index > 0 && globalStyle.divider,
                       entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
                     ]}>
-                    {/* Modernization pass — a small circular chip instead
-                        of bare number text, echoing the podium's own
-                        numbered rank badge above so the ranked list reads
-                        as the same design language, not a separate plain
-                        list. */}
                     <View style={styles.rankChip}>
                       <Text category="h10" bold status="placeholder">
                         {entry.rank}
                       </Text>
                     </View>
-                    <UserAvatar uri={entry.avatarUrl} name={entry.name} size="small" style={styles.avatar} />
+                    <UserAvatar uri={entry.avatarUrl} name={entry.name} size="small" shape="round" style={styles.avatar} />
                     <Text category="h9" bold style={styles.name} numberOfLines={1}>
                       {entry.name}
                       {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                     </Text>
-                    {/* Product report ("All text in blue should now be
-                        black except the pills and link text") -- this XP
-                        value is plain row text, not a pill or a link. */}
-                    <Text category="h9-s" bold style={{ color: theme['text-basic-color'] }}>
-                      {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
-                    </Text>
+                    <View style={styles.rowRight}>
+                      <View style={[styles.rowPill, { backgroundColor: theme['background-basic-color-3'] }]}>
+                        <Icon pack="eva" name="star" style={{ width: 12, height: 12, tintColor: theme['text-hint-color'] }} />
+                        <Text category="h10" bold ml={4} style={{ color: theme['text-basic-color'] }}>
+                          {entry.xp}
+                        </Text>
+                      </View>
+                      <ChangeBadge changePct={entry.changePct} t={t} />
+                    </View>
                   </View>
                 ))}
               </View>
@@ -300,27 +310,21 @@ const themedStyles = StyleService.create({
   status: {
     paddingVertical: 40,
   },
-  // Modernization pass — see the JSX comment above where this is used.
-  // Grounds the tabs + podium in one card instead of both floating
-  // directly on the page's own gray background.
+  // Blue trophy hero (see the JSX comment above) — LinearGradient fill,
+  // rounded like every other card in the app, houses the period tabs and
+  // the big trophy badge.
   heroCard: {
-    ...globalStyle.card,
-    borderRadius: 14,
-    padding: 16,
-    paddingTop: 20,
+    borderRadius: 20,
+    paddingTop: 16,
+    paddingBottom: 28,
+    paddingHorizontal: 16,
     marginTop: 12,
-    backgroundColor: 'background-basic-color-2',
   },
-  // Daily/Weekly/Monthly segmented control (product follow-up, reference
-  // screenshot's own tab row) — a neutral gray track with a flat solid
-  // brand-blue pill for whichever period is active (was a two-stop
-  // gradient — see this file's header comment on the simplification pass).
   tabsRow: {
     flexDirection: 'row',
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'rgba(255,255,255,0.18)',
     borderRadius: 999,
     padding: 4,
-    marginBottom: 28,
   },
   tabPill: {
     flex: 1,
@@ -328,80 +332,73 @@ const themedStyles = StyleService.create({
     paddingVertical: 8,
     borderRadius: 999,
   },
-  // Top-3 "podium" (product follow-up, reference screenshot) — 3 columns,
-  // 2nd/1st/3rd left-to-right (matches the reference's own arrangement),
-  // aligned to the bottom so each spot's own colored "base" block (see
-  // podiumBase) reads as a literal podium step of increasing height for a
-  // higher rank.
+  tabPillActive: {
+    backgroundColor: '#FFFFFF',
+  },
+  trophyWrap: {
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  trophyIcon: {
+    width: 64,
+    height: 64,
+    tintColor: '#FFD166',
+  },
+  // Top-3 podium — 3 separate tinted cards (2nd/1st/3rd left-to-right,
+  // matching the reference's own arrangement), each sized taller for a
+  // higher rank via PODIUM_CARD_HEIGHT, bottom-aligned so the shorter
+  // #2/#3 cards read as literal podium steps next to the taller #1.
   podiumRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
+    marginTop: -18,
+    paddingHorizontal: 4,
   },
-  podiumSpot: {
-    flex: 1,
-    alignItems: 'center',
-    maxWidth: 130,
-  },
-  // #1's spot gets extra bottom margin pushed INTO the row (via a taller
-  // podiumBase, not this style) plus its own trophy badge above the avatar
-  // — no extra style needed here beyond what podiumBase/trophyBadge
-  // already do, kept as a hook in case future polish wants to nudge this
-  // spot further.
-  podiumSpotFirst: {},
-  // Trophy badge (see the JSX comment above where this is used) — neutral
-  // gray icon circle (was gold-tinted — see this file's header comment on
-  // the simplification pass), same plain icon-wrap treatment used
-  // elsewhere in the app.
-  trophyBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-    backgroundColor: 'background-basic-color-3',
-  },
-  // Redesign v2 (full reskin): the ring itself is now drawn by
-  // CircularProgress (see the JSX above) — this style is just a spacing
-  // hook, kept as a real (mostly empty) object so the call site doesn't
-  // need a conditional.
-  podiumAvatarRing: {},
-  // Small circular rank badge overlapping the bottom edge of the avatar
-  // ring (product follow-up, reference screenshot's own numbered badge) —
-  // negative marginTop pulls it up to overlap instead of sitting as a
-  // separate row. Flat brand-blue fill now (backgroundColor set inline in
-  // the JSX) — was a per-rank gradient, see this file's header comment.
-  podiumRankBadge: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    marginTop: -10,
-    borderWidth: 2,
-    borderColor: 'background-basic-color-1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  podiumName: {
-    maxWidth: 100,
-  },
-  // Filled when a podium spot has no real entry yet (fewer than 3 real
-  // leaderboard rows) — keeps the 3-column layout from collapsing lopsided
-  // while there's nothing to show in that spot.
   podiumEmptyFill: {
     flex: 1,
+    marginHorizontal: 4,
   },
-  // The literal "podium step" block (product follow-up, reference
-  // screenshot) — height varies per rank (see PODIUM_BASE_HEIGHT), rounded
-  // only on top since it's meant to look like the top edge of a
-  // riser/step. Fill (a flat brand-blue tint, backgroundColor set inline
-  // in the JSX) is the same for every rank now — see this file's header
-  // comment on the simplification pass.
-  podiumBase: {
-    width: '86%',
-    marginTop: 10,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+  podiumCard: {
+    ...globalStyle.card,
+    flex: 1,
+    marginHorizontal: 4,
+    borderRadius: 18,
+    alignItems: 'center',
+    paddingTop: 14,
+    paddingHorizontal: 8,
+  },
+  // Numbered rank badge, top-left corner of each podium card (reference
+  // screenshot's own overlapping badge treatment).
+  rankBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // White ring around each podium avatar (reference screenshot) — a plain
+  // padded border, not a progress arc, since there's no "progress" being
+  // shown here, just a decorative frame.
+  podiumAvatarRing: {
+    padding: 3,
+    borderRadius: 999,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  podiumName: {
+    maxWidth: '100%',
+  },
+  scorePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 999,
   },
   // Ranks 4+ list card.
   listCard: {
@@ -435,5 +432,15 @@ const themedStyles = StyleService.create({
   },
   name: {
     flex: 1,
+  },
+  rowRight: {
+    alignItems: 'flex-end',
+  },
+  rowPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 999,
   },
 });

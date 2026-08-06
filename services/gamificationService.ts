@@ -42,6 +42,7 @@ interface LeaderboardEntryWire {
   avatar_url?: string;
   xp: number;
   rank: number;
+  change_pct?: number | null;
 }
 
 function fromStreakWire(wire: StreakWire): GamificationStreakProps {
@@ -66,6 +67,7 @@ function fromLeaderboardWire(wire: LeaderboardEntryWire): LeaderboardEntryProps 
     xp: wire.xp ?? 0,
     rank: wire.rank,
     isCurrentUser: !!currentUid && wire.user_id === currentUid,
+    changePct: wire.change_pct ?? null,
   };
 }
 
