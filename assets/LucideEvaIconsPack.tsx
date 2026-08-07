@@ -76,6 +76,7 @@ import {
   Smile,
   Star,
   Sun,
+  Terminal,
   Trash2,
   TrendingUp,
   Trophy,
@@ -247,6 +248,18 @@ const LucideEvaIconsPack: IconPack<any> = {
     star: lucideIcon(Star, true),
     'sun-outline': lucideIcon(Sun),
     'swap-outline': lucideIcon(ArrowLeftRight),
+    // BUG FIX (crash report, screenshot: "Icon: 'terminal-outline' icon is
+    // not registered in pack 'eva'") — CodingInterview.tsx's Output section
+    // header (added when that screen was restructured) used this name but
+    // it was never added here, same "screen added after this pass" gap this
+    // file's own header comment warns about. A full audit of every eva icon
+    // name referenced anywhere in the app (JSX `<Icon name=...>` calls AND
+    // names passed through wrapper-component props like SectionHeader's
+    // `icon`) turned up this as the only genuinely-still-missing one; the
+    // other two crash reports already fixed this session ('minus-outline',
+    // 'chevron-right-outline') only still appear in this codebase inside
+    // their own bug-fix comments, not in any live code path.
+    'terminal-outline': lucideIcon(Terminal),
     'trash-2-outline': lucideIcon(Trash2),
     'trending-up-outline': lucideIcon(TrendingUp),
     // Filled — Leaderboard.tsx's #1 podium spot ("add a yellow trophy svg
