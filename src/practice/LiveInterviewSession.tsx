@@ -778,8 +778,33 @@ const LiveInterviewSession = memo(() => {
   const onEnd = async () => {
     if (isEnding) return;
     setIsEnding(true);
-    await stop();
-    speechService.stopSpeaking();
+    // BUG FIX (product report: "the end interview just keep saying ending
+    // interview and it refuses to let me close... it just freezes the
+    // screen") — everything from here down to the existing try/finally a
+    // little further below used to run with NO surrounding try/catch at
+    // all. withTimeout (see utils/withTimeout.ts) only ever protected
+    // against one of its wrapped promises HANGING, never against one of
+    // them REJECTING (a real native error, not just slowness) — a
+    // rejection propagated straight out of this function, which meant (a)
+    // the `finally { navigate(...) }` a bit further down never ran, and
+    // (b) `isEnding` (set true just above) never got reset anywhere in
+    // this file. onCloseAttempt (the X button) and the End Interview
+    // button both check `isEnding` before doing anything, so the combined
+    // effect was exactly "frozen, refuses to let me close" — no exception
+    // ever surfaced to the user, it just silently went nowhere. withTimeout
+    // itself is now fixed to swallow rejections too, not just hangs (see
+    // its own comment), but this outer try/catch is a second, independent
+    // safety net: no matter what unexpectedly throws in this whole
+    // teardown sequence, execution still falls through to the video-
+    // metrics/complete-session stage and its own guaranteed-to-run
+    // `finally { navigate(...) }`, so the user is never stuck on this
+    // screen again.
+    try {
+      await stop();
+      speechService.stopSpeaking();
+    } catch (err) {
+      console.warn('[LiveInterviewSession] pre-teardown step failed, continuing anyway', err);
+    }
     if (isVoiceMode) {
       // Was a bare `await` on a native-module bridge promise
       // (react-native-voice's Voice.stop()) with no timeout at all — this is
