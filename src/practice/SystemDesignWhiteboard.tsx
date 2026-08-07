@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, PanResponder, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Rect } from 'react-native-svg';
 import {
   TopNavigation,
@@ -24,27 +25,44 @@ import * as interviewService from 'services/interviewService';
 import * as codingService from 'services/codingService';
 
 // Freehand "sketch your system design" surface — built on react-native-svg
-// (already a project dependency) + PanResponder rather than pulling in a
-// new whiteboard/drawing native library, per this project's history of
-// native-dependency version pain (Reanimated/react-native-screens/
-// vision-camera all needed careful pinning — see CLAUDE history). Not a
-// full diagramming tool: freehand strokes + tap-to-place shape stamps
+// (already a project dependency) + react-native-gesture-handler rather than
+// pulling in a new whiteboard/drawing native library, per this project's
+// history of native-dependency version pain (Reanimated/react-native-
+// screens/vision-camera all needed careful pinning — see CLAUDE history).
+// Not a full diagramming tool: freehand strokes + tap-to-place shape stamps
 // (rectangle/circle/diamond/database/cloud-free "line"/arrow — the
-// standard boxes-and-arrows system-design vocabulary) is enough to sketch
-// a system design answer on camera/screen-share during a mock interview.
+// standard boxes-and-arrows system-design vocabulary), draggable after
+// placement, is enough to sketch a system design answer on camera/
+// screen-share during a mock interview.
 //
-// BUG FIX (product report: "when user try to draw it just cleans off") —
-// the empty-canvas placeholder ("Your sketch will appear here") used to
-// render as a Flex (see components/Flex.tsx — Flex's root is ALWAYS a
-// TouchableOpacity, even with no onPress) absolutely positioned directly
-// ON TOP of the canvas, exactly while elements.length === 0 — i.e. exactly
-// the moment a user's very first touch lands. That overlay's own Touchable
-// could claim the touch responder before it ever reached this file's
-// PanResponder underneath, so the very first stroke attempt silently did
-// nothing (no path recorded, canvas stayed on the empty placeholder — read
-// by the reporter as the canvas "cleaning off"). Fixed with
-// pointerEvents="none" on that overlay below, so it's purely decorative
-// and never competes for the touch responder.
+// BUG FIX (repeat product report, after FOUR earlier rounds of fixes to
+// this exact feature — a touch-stealing empty-state overlay, zero-length-
+// path commits, duplicate React keys, locationX/Y drift, an SVG
+// intercepting hit-testing — and drawing STILL registered nothing, plus
+// "dragging elements inside the whiteboard" never worked at all): every
+// one of those earlier fixes was a real, individually-correct fix to RN's
+// legacy `PanResponder` API — but this app runs React Native 0.82 on the
+// New Architecture (Fabric), where PanResponder's touch-event delivery is
+// well documented to be unreliable, especially for a fast-moving gesture
+// nested under a native SVG view: event coordinates can arrive stale,
+// batched, or simply stop updating mid-stroke. `react-native-gesture-
+// handler` (already a project dependency, already properly bootstrapped —
+// see App.tsx's GestureHandlerRootView) is the modern, Fabric-native
+// replacement Meta itself recommends for exactly this class of surface,
+// and unlike PanResponder it reports gesture coordinates already relative
+// to the view it's attached to — no more manual canvasOriginRef/.measure()
+// bookkeeping needed at all. Rewritten on Gesture.Pan()/GestureDetector
+// below. Dragging existing shapes is new: a "Move" tool (see activeTool
+// below) that, when active, renders one small draggable overlay per
+// stamped shape (DraggableShapeOverlay further down) — freehand strokes
+// and shape drags are mutually exclusive per touch, the same standard
+// "pen tool vs. select tool" split every real drawing/whiteboard app uses,
+// since a touch landing on an existing shape is otherwise ambiguous
+// between "start a new stroke here" and "grab this shape."
+//
+// The empty-canvas placeholder ("Your sketch will appear here") still
+// needs pointerEvents="none" so it stays purely decorative — see where it
+// renders below.
 type ElementType = 'path' | 'rectangle' | 'circle' | 'diamond' | 'database' | 'line' | 'arrow';
 interface CanvasElement {
   id: string;
@@ -71,6 +89,57 @@ const STROKE_COLOR = '#181b22';
 // every shape stamp below all read `activeColor` at creation time). Same
 // black default as before plus 4 common diagram-annotation colors.
 const COLOR_SWATCHES = ['#181b22', '#E53E3E', '#3182CE', '#38A169', '#805AD5'];
+
+// One invisible, draggable hit-target per stamped shape, rendered only
+// while the "Move" tool is active (see SystemDesignWhiteboard's activeTool
+// state and header comment). Kept as its OWN component — not an inline
+// `.map()` closure — specifically so `Gesture.Pan()` is created exactly
+// ONCE per shape (via useMemo, in this component's own instance) rather
+// than a fresh gesture object every render: React preserves this
+// component instance across re-renders via its `key={el.id}` at the call
+// site, so the memoized gesture (and the mid-drag gesture state RNGH
+// tracks against it) survives every `elements` update a drag itself
+// causes, instead of being torn down and rebuilt mid-gesture.
+const DraggableShapeOverlay: React.FC<{
+  bounds: { left: number; top: number; width: number; height: number };
+  onMove: (dx: number, dy: number) => void;
+}> = ({ bounds, onMove }) => {
+  // Ref so the memoized gesture below always calls the LATEST onMove
+  // closure (which closes over the current element id) without needing to
+  // recreate the gesture object itself on every render.
+  const onMoveRef = React.useRef(onMove);
+  onMoveRef.current = onMove;
+  const gesture = React.useMemo(
+    () =>
+      Gesture.Pan().onUpdate(e => {
+        onMoveRef.current(e.changeX, e.changeY);
+      }),
+    [],
+  );
+  return (
+    <GestureDetector gesture={gesture}>
+      <View
+        style={[
+          dragOverlayStyle,
+          { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height },
+        ]}
+      />
+    </GestureDetector>
+  );
+};
+
+const dragOverlayStyle = {
+  position: 'absolute' as const,
+  // A faint fill (rather than fully invisible) so it's obvious which
+  // shapes are grabbable while the Move tool is active — without this, a
+  // user has no visual cue that touching an empty-looking rectangle
+  // outline actually has a draggable hit area under it.
+  backgroundColor: 'rgba(0, 99, 248, 0.08)',
+  borderWidth: 1,
+  borderColor: 'rgba(0, 99, 248, 0.35)',
+  borderStyle: 'dashed' as const,
+  borderRadius: 6,
+};
 
 const SystemDesignWhiteboard = memo(() => {
   const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
@@ -123,81 +192,112 @@ const SystemDesignWhiteboard = memo(() => {
   const [canvasWidth, setCanvasWidth] = React.useState(0);
   const [canvasHeight, setCanvasHeight] = React.useState(CANVAS_HEIGHT);
   const canvasRef = React.useRef<View>(null);
-  // BUG FIX (repeat product report, after two earlier rounds already
-  // landed for different failure modes — touch-stealing overlay, then
-  // zero-length-path/duplicate-id commits — and the drawing STILL didn't
-  // appear at all): `locationX`/`locationY` on RN's touch events are a
-  // long-documented Android reliability problem — they're computed by the
-  // native layer relative to whichever view the OS decides is the current
-  // touch target, and can silently report stale/wrong coordinates (or
-  // coordinates relative to the wrong ancestor) once a gesture has been in
-  // progress for more than an instant, especially on Android and especially
-  // inside a nested touch-responder tree like this screen's. The
-  // symptom this produces is exactly what got reported: onPanResponderGrant
-  // still fires (so the first point of a stroke can register), but
-  // onPanResponderMove's locationX/Y readings drift or freeze, so the path
-  // string built from them draws nothing coherent (or nothing at all once
-  // the earlier fix started requiring a real line segment before
-  // committing). `pageX`/`pageY` (screen-absolute, always reliable) minus
-  // the canvas's own on-screen origin (captured once via a real native
-  // `.measure()` call, not derived from touch events at all) is the
-  // standard, well-established fix for RN PanResponder drawing surfaces —
-  // used by essentially every RN signature-pad/whiteboard library for
-  // exactly this reason.
-  const canvasOriginRef = React.useRef({ x: 0, y: 0 });
-  const pointFromEvent = (evt: any) => {
-    const { pageX, pageY } = evt.nativeEvent;
-    return {
-      x: pageX - canvasOriginRef.current.x,
-      y: pageY - canvasOriginRef.current.y,
-    };
+  // "Draw" (freehand strokes) vs "Move" (drag existing shapes) — see this
+  // file's header comment for why these are separate, mutually-exclusive
+  // tools rather than one gesture trying to guess intent.
+  const [activeTool, setActiveTool] = React.useState<'draw' | 'move'>('draw');
+
+  // Freehand drawing gesture (see header comment: rewritten from
+  // PanResponder onto react-native-gesture-handler). `e.x`/`e.y` on a Pan
+  // gesture are already relative to the View the GestureDetector below
+  // wraps — no manual pageX-minus-canvas-origin math needed at all, unlike
+  // PanResponder's raw touch events. `.enabled(activeTool === 'draw')`
+  // means a touch on the canvas while the Move tool is active does nothing
+  // here at all, leaving it free for DraggableShapeOverlay's own gesture
+  // below. Recreated (via useMemo) whenever activeTool flips so
+  // GestureDetector always holds the current enabled/disabled gesture —
+  // cheap, and gestures aren't meant to be mutated in place after creation.
+  const drawGesture = React.useMemo(
+    () =>
+      Gesture.Pan()
+        .enabled(activeTool === 'draw')
+        .minDistance(0)
+        .onBegin(e => {
+          activePathRef.current = `M${e.x.toFixed(1)} ${e.y.toFixed(1)}`;
+          setActivePathD(activePathRef.current);
+        })
+        .onUpdate(e => {
+          activePathRef.current += ` L${e.x.toFixed(1)} ${e.y.toFixed(1)}`;
+          setActivePathD(activePathRef.current);
+        })
+        .onEnd(() => {
+          // BUG FIX (repeat product report: drawings not staying on
+          // screen): onBegin always seeds activePathRef with a lone
+          // "M x y" move-to command, even for a stationary tap with no
+          // onUpdate ever firing. Only commit when the path actually
+          // contains a real "L" (line-to) segment, i.e. the finger
+          // genuinely moved — otherwise a plain tap would commit an
+          // invisible zero-length Path, which reads to the user as "I drew
+          // and it cleared off" (elements.length goes above 0, so the
+          // empty-state placeholder disappears with nothing to replace it).
+          if (activePathRef.current.includes('L')) {
+            setElements(prev => [
+              ...prev,
+              { id: nextElementId('path'), type: 'path', color: activeColorRef.current, d: activePathRef.current },
+            ]);
+          }
+          activePathRef.current = '';
+          setActivePathD(null);
+        })
+        .onFinalize(() => {
+          // Safety net for a gesture that gets CANCELLED rather than
+          // cleanly ending (e.g. an OS-level interruption) — onEnd already
+          // covers the normal path, this just guarantees activePathD never
+          // gets stuck showing a half-finished stroke.
+          activePathRef.current = '';
+          setActivePathD(null);
+        }),
+    [activeTool],
+  );
+
+  // Bounding box for one stamped shape, in the same canvas-local coordinate
+  // space its SVG element renders in — used both to position
+  // DraggableShapeOverlay's invisible hit-target and to know how big to
+  // make it. Freehand paths ('path') return a zero box and are filtered out
+  // of the draggable list below — an arbitrary stroke has no single
+  // rectangular "handle" to grab the way a stamped shape does.
+  const getShapeBounds = (el: CanvasElement) => {
+    if (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'database') {
+      return { left: el.x ?? 0, top: el.y ?? 0, width: el.width ?? 0, height: el.height ?? 0 };
+    }
+    if (el.type === 'circle') {
+      const r = el.r ?? 0;
+      return { left: (el.cx ?? 0) - r, top: (el.cy ?? 0) - r, width: r * 2, height: r * 2 };
+    }
+    if (el.type === 'line' || el.type === 'arrow') {
+      const x1 = el.x1 ?? 0, y1 = el.y1 ?? 0, x2 = el.x2 ?? 0, y2 = el.y2 ?? 0;
+      const pad = 16; // room for the arrowhead + an easier grab target on a thin line
+      return {
+        left: Math.min(x1, x2) - pad,
+        top: Math.min(y1, y2) - pad,
+        width: Math.abs(x2 - x1) + pad * 2,
+        height: Math.abs(y2 - y1) + pad * 2,
+      };
+    }
+    return { left: 0, top: 0, width: 0, height: 0 };
   };
 
-  const panResponder = React.useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      // BUG FIX hardening: without these, an ancestor could still steal the
-      // responder mid-stroke (e.g. a future ScrollView wrap, or Android's
-      // native swipe-back gesture treating a horizontal-ish stroke as a
-      // back gesture) and drop the in-progress path entirely. A drawing
-      // surface should never voluntarily give up the responder once a
-      // stroke has started.
-      onPanResponderTerminationRequest: () => false,
-      onShouldBlockNativeResponder: () => true,
-      onPanResponderGrant: evt => {
-        const { x, y } = pointFromEvent(evt);
-        activePathRef.current = `M${x.toFixed(1)} ${y.toFixed(1)}`;
-        setActivePathD(activePathRef.current);
-      },
-      onPanResponderMove: evt => {
-        const { x, y } = pointFromEvent(evt);
-        activePathRef.current += ` L${x.toFixed(1)} ${y.toFixed(1)}`;
-        setActivePathD(activePathRef.current);
-      },
-      onPanResponderRelease: () => {
-        // BUG FIX (repeat product report: drawings not staying on screen):
-        // onPanResponderGrant always seeds activePathRef with a lone "M x y"
-        // move-to command, even for a stationary tap with no
-        // onPanResponderMove ever firing. The old `if (activePathRef.current)`
-        // guard is truthy for that lone "M..." string too, so a plain tap
-        // committed a ZERO-LENGTH, invisible Path into `elements` — nothing
-        // draws, but elements.length becomes >0 so the "Your sketch will
-        // appear here" placeholder disappears with nothing replacing it.
-        // To the user this reads exactly as "I drew, and it cleared off."
-        // Only commit when the path actually contains a real "L" (line-to)
-        // segment, i.e. the finger genuinely moved.
-        if (activePathRef.current.includes('L')) {
-          setElements(prev => [
-            ...prev,
-            { id: nextElementId('path'), type: 'path', color: activeColorRef.current, d: activePathRef.current },
-          ]);
+  // Translates one element's stored coordinates by (dx, dy) — called from
+  // DraggableShapeOverlay's onUpdate with each frame's incremental delta
+  // (Pan gesture's changeX/changeY, not the cumulative translationX/Y, so
+  // this just adds rather than needing to remember a drag-start position).
+  const moveElement = (id: string, dx: number, dy: number) => {
+    setElements(prev =>
+      prev.map(el => {
+        if (el.id !== id) return el;
+        if (el.type === 'rectangle' || el.type === 'diamond' || el.type === 'database') {
+          return { ...el, x: (el.x ?? 0) + dx, y: (el.y ?? 0) + dy };
         }
-        activePathRef.current = '';
-        setActivePathD(null);
-      },
-    }),
-  ).current;
+        if (el.type === 'circle') {
+          return { ...el, cx: (el.cx ?? 0) + dx, cy: (el.cy ?? 0) + dy };
+        }
+        if (el.type === 'line' || el.type === 'arrow') {
+          return { ...el, x1: (el.x1 ?? 0) + dx, y1: (el.y1 ?? 0) + dy, x2: (el.x2 ?? 0) + dx, y2: (el.y2 ?? 0) + dy };
+        }
+        return el;
+      }),
+    );
+  };
 
   const onStampShape = (type: 'rectangle' | 'circle' | 'diamond' | 'database' | 'line' | 'arrow') => {
     const n = stampCountRef.current;
@@ -411,6 +511,45 @@ const SystemDesignWhiteboard = memo(() => {
           7 shape/action tools no longer fit a fixed space-around row
           without squeezing every label). */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.toolbar}>
+        {/* Draw / Move — see activeTool's own comment. Two mutually
+            exclusive tools (segmented-control style, same active/inactive
+            visual language as the color swatches below) rather than a
+            single ambiguous gesture. */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[styles.toolBtn, activeTool === 'draw' && styles.toolBtnActive]}
+          onPress={() => setActiveTool('draw')}>
+          <Icon pack="eva" name="edit-2-outline" style={[globalStyle.icon20, { tintColor: activeTool === 'draw' ? theme['color-primary-500'] : STROKE_COLOR }]} />
+          <Text category="h10" mt={4} style={activeTool === 'draw' ? { color: theme['color-primary-500'] } : undefined}>
+            {t('find:whiteboard_draw', { defaultValue: 'Draw' })}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          style={[styles.toolBtn, activeTool === 'move' && styles.toolBtnActive]}
+          onPress={() => setActiveTool('move')}
+          disabled={elements.filter(el => el.type !== 'path').length === 0}>
+          <Icon
+            pack="eva"
+            name="swap-outline"
+            style={[
+              globalStyle.icon20,
+              { tintColor: activeTool === 'move' ? theme['color-primary-500'] : elements.some(el => el.type !== 'path') ? STROKE_COLOR : theme['text-hint-color'] },
+            ]}
+          />
+          <Text
+            category="h10"
+            mt={4}
+            style={
+              activeTool === 'move'
+                ? { color: theme['color-primary-500'] }
+                : !elements.some(el => el.type !== 'path')
+                ? { color: theme['text-hint-color'] }
+                : undefined
+            }>
+            {t('find:whiteboard_move', { defaultValue: 'Move' })}
+          </Text>
+        </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={() => onStampShape('rectangle')}>
           <View style={[styles.rectSwatch, { borderColor: activeColor }]} />
           <Text category="h10" mt={4}>{t('find:whiteboard_rectangle', {defaultValue: 'Rectangle'})}</Text>
@@ -470,75 +609,79 @@ const SystemDesignWhiteboard = memo(() => {
       </Flex>
 
       <Text category="h9-s" status="placeholder" center mt={4} mb={12}>
-        {t('find:whiteboard_hint', {defaultValue: 'Draw freehand with your finger, or tap a shape above to drop it onto the canvas.'})}
+        {activeTool === 'move'
+          ? t('find:whiteboard_hint_move', { defaultValue: 'Drag a dashed shape to reposition it. Tap Draw to sketch again.' })
+          : t('find:whiteboard_hint', { defaultValue: 'Draw freehand with your finger, tap a shape above to drop it onto the canvas, or switch to Move to drag shapes around.' })}
       </Text>
 
-      <View
-        ref={canvasRef}
-        style={styles.canvas}
-        onLayout={e => {
-          setCanvasWidth(e.nativeEvent.layout.width);
-          setCanvasHeight(e.nativeEvent.layout.height || CANVAS_HEIGHT);
-          // Real native measurement of this view's on-screen position —
-          // see canvasOriginRef's own comment above for why this replaces
-          // locationX/locationY entirely rather than just supplementing it.
-          // measure() must run after layout, which onLayout guarantees.
-          canvasRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
-            canvasOriginRef.current = { x: pageX, y: pageY };
-          });
-        }}
-        {...panResponder.panHandlers}>
-        {/* BUG FIX (repeat product report, after three earlier rounds already
-            landed for other failure modes on this exact feature — the
-            touch-stealing empty-state overlay, zero-length-path commits,
-            locationX/Y drift — and drawing STILL registered nothing):
-            react-native-svg's <Svg> renders its own native view UNDER the
-            finger, and on Android in particular it can participate in touch
-            hit-testing/responder negotiation on its own rather than staying
-            purely decorative — several other RN whiteboard/signature-pad
-            implementations hit this exact same "PanResponder never fires
-            because the SVG underneath is intercepting first" issue.
-            `pointerEvents="none"` makes this element (and everything drawn
-            inside it) completely touch-transparent, guaranteeing every touch
-            passes straight through to the parent View's PanResponder below,
-            which is the only thing that should ever be deciding what a
-            stroke does. */}
-        <Svg pointerEvents="none" width={canvasWidth || '100%'} height={canvasHeight}>
-          {elements.map(el => {
-            if (el.type === 'path') {
-              return <Path key={el.id} d={el.d} stroke={el.color} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
-            }
-            if (el.type === 'rectangle') {
-              return <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height} rx={8} stroke={el.color} strokeWidth={2.5} fill="none" />;
-            }
-            if (el.type === 'circle') {
-              return <Circle key={el.id} cx={el.cx} cy={el.cy} r={el.r} stroke={el.color} strokeWidth={2.5} fill="none" />;
-            }
-            if (el.type === 'diamond') {
-              return renderDiamond(el);
-            }
-            if (el.type === 'database') {
-              return renderDatabase(el);
-            }
-            if (el.type === 'line') {
-              const { x1 = 0, y1 = 0, x2 = 0, y2 = 0, color } = el;
-              return <Line key={el.id} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={3} />;
-            }
-            return renderArrow(el);
-          })}
-          {activePathD ? <Path d={activePathD} stroke={activeColor} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null}
-        </Svg>
-        {elements.length === 0 && !activePathD ? (
-          // BUG FIX: pointerEvents="none" — see this file's top-of-component
-          // comment. Without this, this overlay (a Flex, which always
-          // renders a TouchableOpacity — see components/Flex.tsx) sat
-          // directly on top of the canvas and could swallow the very first
-          // touch meant for the PanResponder below.
-          <Flex vertical center pointerEvents="none" style={globalStyle.absoluteBg}>
-            <Text category="h9-s" status="placeholder">{t('find:whiteboard_empty', {defaultValue: 'Your sketch will appear here'})}</Text>
-          </Flex>
-        ) : null}
-      </View>
+      <GestureDetector gesture={drawGesture}>
+        <View
+          ref={canvasRef}
+          style={styles.canvas}
+          onLayout={e => {
+            setCanvasWidth(e.nativeEvent.layout.width);
+            setCanvasHeight(e.nativeEvent.layout.height || CANVAS_HEIGHT);
+          }}>
+          {/* SVG hit-testing: react-native-svg's <Svg> renders its own
+              native view under the finger and can participate in touch
+              hit-testing on its own — pointerEvents="none" keeps it purely
+              decorative so every touch passes straight to the
+              GestureDetector above (in Draw mode) or to a
+              DraggableShapeOverlay below (in Move mode), never to the SVG
+              itself. */}
+          <Svg pointerEvents="none" width={canvasWidth || '100%'} height={canvasHeight}>
+            {elements.map(el => {
+              if (el.type === 'path') {
+                return <Path key={el.id} d={el.d} stroke={el.color} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
+              }
+              if (el.type === 'rectangle') {
+                return <Rect key={el.id} x={el.x} y={el.y} width={el.width} height={el.height} rx={8} stroke={el.color} strokeWidth={2.5} fill="none" />;
+              }
+              if (el.type === 'circle') {
+                return <Circle key={el.id} cx={el.cx} cy={el.cy} r={el.r} stroke={el.color} strokeWidth={2.5} fill="none" />;
+              }
+              if (el.type === 'diamond') {
+                return renderDiamond(el);
+              }
+              if (el.type === 'database') {
+                return renderDatabase(el);
+              }
+              if (el.type === 'line') {
+                const { x1 = 0, y1 = 0, x2 = 0, y2 = 0, color } = el;
+                return <Line key={el.id} x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={3} />;
+              }
+              return renderArrow(el);
+            })}
+            {activePathD ? <Path d={activePathD} stroke={activeColor} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" /> : null}
+          </Svg>
+          {/* Draggable hit-targets — only exist in Move mode (see
+              activeTool), and only for shapes that HAVE a rectangular
+              bounding box to grab (freehand 'path' elements are excluded —
+              see getShapeBounds). Rendered as plain siblings of the Svg
+              above, NOT inside it, so they can be pointerEvents-interactive
+              (the Svg itself stays pointerEvents="none" always). */}
+          {activeTool === 'move'
+            ? elements
+                .filter(el => el.type !== 'path')
+                .map(el => (
+                  <DraggableShapeOverlay
+                    key={el.id}
+                    bounds={getShapeBounds(el)}
+                    onMove={(dx, dy) => moveElement(el.id, dx, dy)}
+                  />
+                ))
+            : null}
+          {elements.length === 0 && !activePathD ? (
+            // pointerEvents="none" — this overlay (a Flex, which always
+            // renders a TouchableOpacity — see components/Flex.tsx) would
+            // otherwise sit directly on top of the canvas and could swallow
+            // the very first touch meant for drawGesture above.
+            <Flex vertical center pointerEvents="none" style={globalStyle.absoluteBg}>
+              <Text category="h9-s" status="placeholder">{t('find:whiteboard_empty', {defaultValue: 'Your sketch will appear here'})}</Text>
+            </Flex>
+          ) : null}
+        </View>
+      </GestureDetector>
 
       {/* Product report: "the system design hands on practice should also
           have a AI code review too and result" — always available (not
@@ -657,6 +800,17 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     minWidth: 56,
     marginRight: 18,
+  },
+  // Draw/Move segmented-control active state (see the JSX comment at those
+  // two buttons) — a light tinted pill behind the icon+label, same
+  // "currently selected tool" affordance as colorSwatchActive below uses
+  // for the color palette.
+  toolBtnActive: {
+    backgroundColor: 'rgba(0, 99, 248, 0.1)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 10,
   },
   rectSwatch: {
     width: 22,
