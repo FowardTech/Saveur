@@ -79,6 +79,21 @@ const SystemDesignWhiteboard = memo(() => {
   activeColorRef.current = activeColor;
   const activePathRef = React.useRef('');
   const stampCountRef = React.useRef(0);
+  // BUG FIX (repeat product report: "the drawing drawn does not stay on the
+  // screen it just clears off", after an earlier fix for a DIFFERENT first-
+  // touch bug already landed): `id: \`path_${Date.now()}\`` etc. below only
+  // has millisecond resolution — two elements created in the same
+  // millisecond (a fast double-tap on a shape tool, or two strokes started
+  // back-to-back) got duplicate React `key`s, and React's reconciler does
+  // not guarantee both render correctly when siblings share a key — one can
+  // silently fail to mount/update even though both objects are genuinely
+  // present in `elements` state. A monotonic counter guarantees uniqueness
+  // regardless of timing.
+  const nextElementIdRef = React.useRef(0);
+  const nextElementId = (prefix: string) => {
+    nextElementIdRef.current += 1;
+    return `${prefix}_${nextElementIdRef.current}`;
+  };
   const [canvasWidth, setCanvasWidth] = React.useState(0);
 
   const panResponder = React.useRef(
@@ -104,10 +119,21 @@ const SystemDesignWhiteboard = memo(() => {
         setActivePathD(activePathRef.current);
       },
       onPanResponderRelease: () => {
-        if (activePathRef.current) {
+        // BUG FIX (repeat product report: drawings not staying on screen):
+        // onPanResponderGrant always seeds activePathRef with a lone "M x y"
+        // move-to command, even for a stationary tap with no
+        // onPanResponderMove ever firing. The old `if (activePathRef.current)`
+        // guard is truthy for that lone "M..." string too, so a plain tap
+        // committed a ZERO-LENGTH, invisible Path into `elements` — nothing
+        // draws, but elements.length becomes >0 so the "Your sketch will
+        // appear here" placeholder disappears with nothing replacing it.
+        // To the user this reads exactly as "I drew, and it cleared off."
+        // Only commit when the path actually contains a real "L" (line-to)
+        // segment, i.e. the finger genuinely moved.
+        if (activePathRef.current.includes('L')) {
           setElements(prev => [
             ...prev,
-            { id: `path_${Date.now()}`, type: 'path', color: activeColorRef.current, d: activePathRef.current },
+            { id: nextElementId('path'), type: 'path', color: activeColorRef.current, d: activePathRef.current },
           ]);
         }
         activePathRef.current = '';
@@ -126,37 +152,37 @@ const SystemDesignWhiteboard = memo(() => {
     if (type === 'rectangle') {
       setElements(prev => [
         ...prev,
-        { id: `rect_${Date.now()}`, type: 'rectangle', color, x: baseX, y: baseY, width: 120, height: 72 },
+        { id: nextElementId('rect'), type: 'rectangle', color, x: baseX, y: baseY, width: 120, height: 72 },
       ]);
     } else if (type === 'circle') {
       setElements(prev => [
         ...prev,
-        { id: `circle_${Date.now()}`, type: 'circle', color, cx: baseX + 50, cy: baseY + 50, r: 46 },
+        { id: nextElementId('circle'), type: 'circle', color, cx: baseX + 50, cy: baseY + 50, r: 46 },
       ]);
     } else if (type === 'diamond') {
       // Decision-node shape (product report: "add more tools too" — the
       // standard system-design/flowchart vocabulary beyond plain boxes).
       setElements(prev => [
         ...prev,
-        { id: `diamond_${Date.now()}`, type: 'diamond', color, x: baseX, y: baseY, width: 110, height: 80 },
+        { id: nextElementId('diamond'), type: 'diamond', color, x: baseX, y: baseY, width: 110, height: 80 },
       ]);
     } else if (type === 'database') {
       // Cylinder — the conventional "this box is a database" symbol.
       setElements(prev => [
         ...prev,
-        { id: `db_${Date.now()}`, type: 'database', color, x: baseX, y: baseY, width: 90, height: 76 },
+        { id: nextElementId('db'), type: 'database', color, x: baseX, y: baseY, width: 90, height: 76 },
       ]);
     } else if (type === 'line') {
       // Plain connector — same geometry as arrow but no arrowhead, for a
       // relationship that isn't directional.
       setElements(prev => [
         ...prev,
-        { id: `line_${Date.now()}`, type: 'line', color, x1: baseX, y1: baseY + 100, x2: baseX + 140, y2: baseY + 100 },
+        { id: nextElementId('line'), type: 'line', color, x1: baseX, y1: baseY + 100, x2: baseX + 140, y2: baseY + 100 },
       ]);
     } else {
       setElements(prev => [
         ...prev,
-        { id: `arrow_${Date.now()}`, type: 'arrow', color, x1: baseX, y1: baseY + 100, x2: baseX + 140, y2: baseY + 100 },
+        { id: nextElementId('arrow'), type: 'arrow', color, x1: baseX, y1: baseY + 100, x2: baseX + 140, y2: baseY + 100 },
       ]);
     }
   };
