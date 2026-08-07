@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { Alert, GestureResponderEvent, KeyboardAvoidingView, Modal, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Rect } from 'react-native-svg';
 import {
   TopNavigation,
@@ -25,40 +24,71 @@ import * as interviewService from 'services/interviewService';
 import * as codingService from 'services/codingService';
 
 // Freehand "sketch your system design" surface — built on react-native-svg
-// (already a project dependency) + react-native-gesture-handler rather than
-// pulling in a new whiteboard/drawing native library, per this project's
-// history of native-dependency version pain (Reanimated/react-native-
-// screens/vision-camera all needed careful pinning — see CLAUDE history).
-// Not a full diagramming tool: freehand strokes + tap-to-place shape stamps
-// (rectangle/circle/diamond/database/cloud-free "line"/arrow — the
-// standard boxes-and-arrows system-design vocabulary), draggable after
-// placement, is enough to sketch a system design answer on camera/
-// screen-share during a mock interview.
+// (already a project dependency) for rendering, and RN's own core Touch
+// Responder System (View's onStartShouldSetResponder/onResponderMove/etc.)
+// for input — not a third-party gesture library. Not a full diagramming
+// tool: freehand strokes + tap-to-place shape stamps (rectangle/circle/
+// diamond/database/cloud-free "line"/arrow — the standard boxes-and-arrows
+// system-design vocabulary), draggable after placement, is enough to sketch
+// a system design answer on camera/screen-share during a mock interview.
 //
-// BUG FIX (repeat product report, after FOUR earlier rounds of fixes to
+// BUG FIX (repeat product report, after FIVE earlier rounds of fixes to
 // this exact feature — a touch-stealing empty-state overlay, zero-length-
 // path commits, duplicate React keys, locationX/Y drift, an SVG
-// intercepting hit-testing — and drawing STILL registered nothing, plus
-// "dragging elements inside the whiteboard" never worked at all): every
-// one of those earlier fixes was a real, individually-correct fix to RN's
-// legacy `PanResponder` API — but this app runs React Native 0.82 on the
-// New Architecture (Fabric), where PanResponder's touch-event delivery is
-// well documented to be unreliable, especially for a fast-moving gesture
-// nested under a native SVG view: event coordinates can arrive stale,
-// batched, or simply stop updating mid-stroke. `react-native-gesture-
-// handler` (already a project dependency, already properly bootstrapped —
-// see App.tsx's GestureHandlerRootView) is the modern, Fabric-native
-// replacement Meta itself recommends for exactly this class of surface,
-// and unlike PanResponder it reports gesture coordinates already relative
-// to the view it's attached to — no more manual canvasOriginRef/.measure()
-// bookkeeping needed at all. Rewritten on Gesture.Pan()/GestureDetector
-// below. Dragging existing shapes is new: a "Move" tool (see activeTool
-// below) that, when active, renders one small draggable overlay per
-// stamped shape (DraggableShapeOverlay further down) — freehand strokes
-// and shape drags are mutually exclusive per touch, the same standard
-// "pen tool vs. select tool" split every real drawing/whiteboard app uses,
-// since a touch landing on an existing shape is otherwise ambiguous
-// between "start a new stroke here" and "grab this shape."
+// intercepting hit-testing, then a full rewrite onto react-native-gesture-
+// handler's Gesture.Pan()/GestureDetector — and drawing STILL registered
+// nothing/vanished instantly, dragging still didn't work): the
+// GestureDetector rewrite fixed the crash it was chasing (a "[Worklets]
+// Tried to synchronously call a non-worklet function `dispatchSetState` on
+// the UI thread" error — react-native-gesture-handler auto-runs its
+// callbacks as Reanimated UI-thread worklets whenever Reanimated is
+// installed, which it is), but even after adding `.runOnJS(true)` to force
+// those callbacks onto the JS thread, drawing/dragging still didn't
+// reliably work. Root cause, found by actually checking this project's
+// installed versions rather than assuming the library combination "just
+// works": react-native-reanimated is on v4.3.2, which is a brand-new major
+// version that split its whole worklet runtime out into a SEPARATE
+// `react-native-worklets` package (babel.config.js already had to be
+// updated to use `react-native-worklets/plugin` instead of the old
+// `react-native-reanimated/plugin` for this exact reason) — and this
+// project ALSO has a second, independent worklet system installed for
+// VisionCamera's frame processors (`react-native-worklets-core` — see
+// babel.config.js's own comment on the two plugins fighting over which
+// runtime "wins" for a given function, already a confirmed source of a
+// DIFFERENT crash elsewhere in this app). react-native-gesture-handler
+// 2.32's worklet integration was never built against this specific,
+// months-old split-worklets Reanimated 4 architecture, and `.runOnJS(true)`
+// evidently isn't fully honored against it in practice, regardless of what
+// the docs promise for the general case.
+//
+// Rather than keep guessing at gesture-handler/Reanimated configuration in
+// a dependency combination this fragile (and already documented elsewhere
+// in this codebase as fragile), this drops react-native-gesture-handler
+// and Reanimated from this screen ENTIRELY and goes back to RN's own core
+// Touch Responder System — the same primitive PanResponder itself is built
+// on, but used directly, with none of PanResponder's own extra state-
+// tracking layered on top (PanResponder, not the underlying responder
+// system itself, was the actual suspect in the earlier "unreliable on
+// Fabric" rounds — ScrollView/Touchable/Slider/etc. all still rely on this
+// same core responder system today and work fine on Fabric). Critically,
+// this has ZERO dependency on any worklet runtime — these handlers ALWAYS
+// run as plain functions on the JS thread, so there is no thread-boundary
+// closure/worklet-serialization risk for the ref/state mutations below,
+// and no exposure whatsoever to the Reanimated-4-vs-worklets-core version
+// fragility described above, now or in any future dependency bump.
+// Touch position uses pageX/pageY (screen-absolute) minus the canvas's own
+// measured on-screen origin (canvasOriginRef, captured on layout) rather
+// than locationX/locationY — the exact "locationX/Y drift" bug fixed once
+// already, reintroduced by avoiding it this time around too.
+//
+// Dragging existing shapes: a "Move" tool (see activeTool below) that,
+// when active, renders one small draggable overlay per stamped shape
+// (DraggableShapeOverlay further down, same responder-based approach) —
+// freehand strokes and shape drags are mutually exclusive per touch, the
+// same standard "pen tool vs. select tool" split every real drawing/
+// whiteboard app uses, since a touch landing on an existing shape is
+// otherwise ambiguous between "start a new stroke here" and "grab this
+// shape."
 //
 // The empty-canvas placeholder ("Your sketch will appear here") still
 // needs pointerEvents="none" so it stays purely decorative — see where it
@@ -92,51 +122,57 @@ const COLOR_SWATCHES = ['#181b22', '#E53E3E', '#3182CE', '#38A169', '#805AD5'];
 
 // One invisible, draggable hit-target per stamped shape, rendered only
 // while the "Move" tool is active (see SystemDesignWhiteboard's activeTool
-// state and header comment). Kept as its OWN component — not an inline
-// `.map()` closure — specifically so `Gesture.Pan()` is created exactly
-// ONCE per shape (via useMemo, in this component's own instance) rather
-// than a fresh gesture object every render: React preserves this
-// component instance across re-renders via its `key={el.id}` at the call
-// site, so the memoized gesture (and the mid-drag gesture state RNGH
-// tracks against it) survives every `elements` update a drag itself
-// causes, instead of being torn down and rebuilt mid-gesture.
+// state and header comment). Built on RN's core Touch Responder System
+// (see this file's header comment for why, not react-native-gesture-
+// handler/Reanimated) — these handlers are plain functions, always run on
+// the JS thread, and are recreated fresh every render (closing over the
+// latest `onMove`/bounds automatically), so no memoized gesture object or
+// ref-mirroring trick is needed here at all, unlike the old Gesture.Pan()
+// version.
 const DraggableShapeOverlay: React.FC<{
   bounds: { left: number; top: number; width: number; height: number };
   onMove: (dx: number, dy: number) => void;
 }> = ({ bounds, onMove }) => {
-  // Ref so the memoized gesture below always calls the LATEST onMove
-  // closure (which closes over the current element id) without needing to
-  // recreate the gesture object itself on every render.
-  const onMoveRef = React.useRef(onMove);
-  onMoveRef.current = onMove;
-  // BUG FIX (crash report: "[Worklets] Tried to synchronously call a
-  // non-worklet function `dispatchSetState` on the UI thread") — see
-  // drawGesture's identical `.runOnJS(true)` fix below for the full
-  // explanation. onMoveRef.current(...) here ultimately calls moveElement,
-  // which is a plain setElements(...) React state update — exactly the
-  // same "non-worklet function called from a UI-thread worklet" violation,
-  // just not yet hit by a real device with Reanimated actually enforcing
-  // it. `.runOnJS(true)` makes this callback run on the JS thread like
-  // every other event handler in this file, where a plain state setter is
-  // always safe to call directly.
-  const gesture = React.useMemo(
-    () =>
-      Gesture.Pan()
-        .runOnJS(true)
-        .onUpdate(e => {
-          onMoveRef.current(e.changeX, e.changeY);
-        }),
-    [],
-  );
+  // Tracks the previous touch point (screen-absolute pageX/pageY) so each
+  // onResponderMove can report an INCREMENTAL delta (matching what
+  // moveElement expects — see its own comment) rather than a
+  // cumulative-since-grant offset, without needing the gesture's own
+  // start position at all.
+  const lastTouchRef = React.useRef<{ x: number; y: number } | null>(null);
+
+  const onGrant = (e: GestureResponderEvent) => {
+    lastTouchRef.current = { x: e.nativeEvent.pageX, y: e.nativeEvent.pageY };
+  };
+  const onMoveTouch = (e: GestureResponderEvent) => {
+    if (!lastTouchRef.current) return;
+    const { pageX, pageY } = e.nativeEvent;
+    const dx = pageX - lastTouchRef.current.x;
+    const dy = pageY - lastTouchRef.current.y;
+    lastTouchRef.current = { x: pageX, y: pageY };
+    onMove(dx, dy);
+  };
+  const onRelease = () => {
+    lastTouchRef.current = null;
+  };
+
   return (
-    <GestureDetector gesture={gesture}>
-      <View
-        style={[
-          dragOverlayStyle,
-          { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height },
-        ]}
-      />
-    </GestureDetector>
+    <View
+      style={[
+        dragOverlayStyle,
+        { left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height },
+      ]}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => true}
+      // Once a drag has started on this shape, don't let anything else
+      // (another overlay, the canvas underneath) steal the responder
+      // mid-drag — a half-completed drag reads exactly like "dragging
+      // doesn't work."
+      onResponderTerminationRequest={() => false}
+      onResponderGrant={onGrant}
+      onResponderMove={onMoveTouch}
+      onResponderRelease={onRelease}
+      onResponderTerminate={onRelease}
+    />
   );
 };
 
@@ -230,83 +266,49 @@ const SystemDesignWhiteboard = memo(() => {
   // tools rather than one gesture trying to guess intent.
   const [activeTool, setActiveTool] = React.useState<'draw' | 'move'>('draw');
 
-  // Freehand drawing gesture (see header comment: rewritten from
-  // PanResponder onto react-native-gesture-handler). `e.x`/`e.y` on a Pan
-  // gesture are already relative to the View the GestureDetector below
-  // wraps — no manual pageX-minus-canvas-origin math needed at all, unlike
-  // PanResponder's raw touch events. `.enabled(activeTool === 'draw')`
-  // means a touch on the canvas while the Move tool is active does nothing
-  // here at all, leaving it free for DraggableShapeOverlay's own gesture
-  // below. Recreated (via useMemo) whenever activeTool flips so
-  // GestureDetector always holds the current enabled/disabled gesture —
-  // cheap, and gestures aren't meant to be mutated in place after creation.
-  // BUG FIX (crash report, screenshot: "[Worklets] Tried to synchronously
-  // call a non-worklet function `dispatchSetState` on the UI thread" —
-  // pointing straight at this gesture's onBegin/onUpdate, the
-  // setActivePathD calls specifically): react-native-gesture-handler's
-  // Gesture.Pan() callbacks (onBegin/onUpdate/onEnd/onFinalize) run as
-  // REANIMATED WORKLETS on the UI thread by default whenever Reanimated is
-  // installed (it is here — see App.tsx's GestureHandlerRootView and this
-  // file's own header comment on why RNGH was chosen over PanResponder in
-  // the first place). A worklet runs on a separate native thread with its
-  // own restricted JS runtime; it can't just call an arbitrary "normal" JS
-  // function like a React state setter (setActivePathD) or freely mutate a
-  // plain useRef the way this file does throughout (activePathRef.current
-  // = ...) — those only exist on the JS thread, and calling into them
-  // synchronously from the UI thread is exactly what Worklets' own runtime
-  // check caught and threw on here. None of this file's drawing logic
-  // (building up an SVG path string in a ref, committing it to state)
-  // needs UI-thread-level performance in the first place — it was never
-  // written with worklets/runOnJS/shared values in mind at all, just
-  // ordinary refs and setState the same as the old PanResponder version.
-  // `.runOnJS(true)` is RNGH's documented escape hatch for exactly this:
-  // it forces every callback on this gesture to run on the JS thread
-  // instead, where plain refs and state setters are always safe to touch
-  // directly, without needing to rewrite this file's logic around
-  // worklets/runOnJS calls at every single ref/state access.
-  const drawGesture = React.useMemo(
-    () =>
-      Gesture.Pan()
-        .runOnJS(true)
-        .enabled(activeTool === 'draw')
-        .minDistance(0)
-        .onBegin(e => {
-          activePathRef.current = `M${e.x.toFixed(1)} ${e.y.toFixed(1)}`;
-          setActivePathD(activePathRef.current);
-        })
-        .onUpdate(e => {
-          activePathRef.current += ` L${e.x.toFixed(1)} ${e.y.toFixed(1)}`;
-          setActivePathD(activePathRef.current);
-        })
-        .onEnd(() => {
-          // BUG FIX (repeat product report: drawings not staying on
-          // screen): onBegin always seeds activePathRef with a lone
-          // "M x y" move-to command, even for a stationary tap with no
-          // onUpdate ever firing. Only commit when the path actually
-          // contains a real "L" (line-to) segment, i.e. the finger
-          // genuinely moved — otherwise a plain tap would commit an
-          // invisible zero-length Path, which reads to the user as "I drew
-          // and it cleared off" (elements.length goes above 0, so the
-          // empty-state placeholder disappears with nothing to replace it).
-          if (activePathRef.current.includes('L')) {
-            setElements(prev => [
-              ...prev,
-              { id: nextElementId('path'), type: 'path', color: activeColorRef.current, d: activePathRef.current },
-            ]);
-          }
-          activePathRef.current = '';
-          setActivePathD(null);
-        })
-        .onFinalize(() => {
-          // Safety net for a gesture that gets CANCELLED rather than
-          // cleanly ending (e.g. an OS-level interruption) — onEnd already
-          // covers the normal path, this just guarantees activePathD never
-          // gets stuck showing a half-finished stroke.
-          activePathRef.current = '';
-          setActivePathD(null);
-        }),
-    [activeTool],
-  );
+  // Screen-absolute (pageX/pageY) origin of the canvas View, captured on
+  // layout — see this file's header comment for why touch position is
+  // computed from this rather than locationX/locationY.
+  const canvasOriginRef = React.useRef({ x: 0, y: 0 });
+
+  // Freehand drawing — built on RN's core Touch Responder System (see
+  // header comment for the full history/rationale). Plain functions,
+  // defined fresh every render, so they always close over the CURRENT
+  // activeTool/activeColor/etc. with no memoization or ref-mirroring
+  // needed — unlike the old Gesture.Pan() version, there's no separate
+  // gesture object whose "enabled" state has to be kept in sync.
+  const toCanvasLocal = (e: GestureResponderEvent) => ({
+    x: e.nativeEvent.pageX - canvasOriginRef.current.x,
+    y: e.nativeEvent.pageY - canvasOriginRef.current.y,
+  });
+  const onDrawGrant = (e: GestureResponderEvent) => {
+    const { x, y } = toCanvasLocal(e);
+    activePathRef.current = `M${x.toFixed(1)} ${y.toFixed(1)}`;
+    setActivePathD(activePathRef.current);
+  };
+  const onDrawMove = (e: GestureResponderEvent) => {
+    const { x, y } = toCanvasLocal(e);
+    activePathRef.current += ` L${x.toFixed(1)} ${y.toFixed(1)}`;
+    setActivePathD(activePathRef.current);
+  };
+  const onDrawEnd = () => {
+    // BUG FIX (repeat product report: drawings not staying on screen):
+    // onDrawGrant always seeds activePathRef with a lone "M x y" move-to
+    // command, even for a stationary tap with no onDrawMove ever firing.
+    // Only commit when the path actually contains a real "L" (line-to)
+    // segment, i.e. the finger genuinely moved — otherwise a plain tap
+    // would commit an invisible zero-length Path, which reads to the user
+    // as "I drew and it cleared off" (elements.length goes above 0, so the
+    // empty-state placeholder disappears with nothing to replace it).
+    if (activePathRef.current.includes('L')) {
+      setElements(prev => [
+        ...prev,
+        { id: nextElementId('path'), type: 'path', color: activeColorRef.current, d: activePathRef.current },
+      ]);
+    }
+    activePathRef.current = '';
+    setActivePathD(null);
+  };
 
   // Bounding box for one stamped shape, in the same canvas-local coordinate
   // space its SVG element renders in — used both to position
@@ -702,19 +704,50 @@ const SystemDesignWhiteboard = memo(() => {
           : t('find:whiteboard_hint', { defaultValue: 'Draw freehand with your finger, tap a shape above to drop it onto the canvas, or switch to Move to drag shapes around.' })}
       </Text>
 
-      <GestureDetector gesture={drawGesture}>
-        <View
-          ref={canvasRef}
-          style={styles.canvas}
-          onLayout={e => {
-            setCanvasWidth(e.nativeEvent.layout.width);
-            setCanvasHeight(e.nativeEvent.layout.height || CANVAS_HEIGHT);
-          }}>
+      <View
+        ref={canvasRef}
+        style={styles.canvas}
+        onLayout={e => {
+          setCanvasWidth(e.nativeEvent.layout.width);
+          setCanvasHeight(e.nativeEvent.layout.height || CANVAS_HEIGHT);
+          // Measure the canvas's screen-absolute origin AFTER this layout
+          // pass actually commits natively — see canvasOriginRef's own
+          // comment. Deferred one frame (rather than measuring
+          // synchronously inside onLayout) since on some Android/Fabric
+          // combinations the native view isn't guaranteed to be fully
+          // positioned yet at the exact moment onLayout fires.
+          requestAnimationFrame(() => {
+            canvasRef.current?.measure((_x, _y, _width, _height, pageX, pageY) => {
+              canvasOriginRef.current = { x: pageX, y: pageY };
+            });
+          });
+        }}
+        // Only claims touches in Draw mode — Move mode leaves the canvas
+        // itself out of the responder negotiation entirely, so a touch
+        // landing on a DraggableShapeOverlay below (which always claims
+        // its own touches) is never contested, and a touch landing on
+        // empty canvas while in Move mode correctly does nothing.
+        onStartShouldSetResponder={() => activeTool === 'draw'}
+        onMoveShouldSetResponder={() => activeTool === 'draw'}
+        onResponderTerminationRequest={() => false}
+        onResponderGrant={onDrawGrant}
+        onResponderMove={onDrawMove}
+        onResponderRelease={onDrawEnd}
+        // Safety net for a touch that gets CANCELLED rather than cleanly
+        // released (e.g. an OS-level interruption, an incoming call) —
+        // onResponderRelease already covers the normal path; this just
+        // guarantees activePathD never gets stuck showing a half-finished
+        // stroke, without committing that half-finished stroke as a real
+        // element.
+        onResponderTerminate={() => {
+          activePathRef.current = '';
+          setActivePathD(null);
+        }}>
           {/* SVG hit-testing: react-native-svg's <Svg> renders its own
               native view under the finger and can participate in touch
               hit-testing on its own — pointerEvents="none" keeps it purely
-              decorative so every touch passes straight to the
-              GestureDetector above (in Draw mode) or to a
+              decorative so every touch passes straight to the canvas
+              View's own responder handlers above (in Draw mode) or to a
               DraggableShapeOverlay below (in Move mode), never to the SVG
               itself. */}
           <Svg pointerEvents="none" width={canvasWidth || '100%'} height={canvasHeight}>
@@ -763,13 +796,13 @@ const SystemDesignWhiteboard = memo(() => {
             // pointerEvents="none" — this overlay (a Flex, which always
             // renders a TouchableOpacity — see components/Flex.tsx) would
             // otherwise sit directly on top of the canvas and could swallow
-            // the very first touch meant for drawGesture above.
+            // the very first touch meant for the canvas View's own
+            // responder handlers above.
             <Flex vertical center pointerEvents="none" style={globalStyle.absoluteBg}>
               <Text category="h9-s" status="placeholder">{t('find:whiteboard_empty', {defaultValue: 'Your sketch will appear here'})}</Text>
             </Flex>
           ) : null}
         </View>
-      </GestureDetector>
 
       {/* Product report: "the system design hands on practice should also
           have a AI code review too and result" — always available (not
