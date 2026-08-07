@@ -33,7 +33,7 @@
   "autofill_no_match_body": "Мы не нашли на этой странице полей, соответствующих вашим данным. Возможно, их нужно заполнить вручную.",
   "autofill_no_match_title": "Совпадающие поля не найдены",
   "autofill_pro_required_body": "Автозаполнение доступно только в Pro.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Функция Pro",
   "badge_tiers_code": "Базовый · Средний · Продвинутый — {{code}}",
   "before": "ДО",
   "biometric_confirm_prompt": "Подтвердите {{label}}, чтобы включить эту функцию",

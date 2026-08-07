@@ -33,7 +33,7 @@
   "autofill_no_match_body": "No encontramos campos en esta página que coincidan con tu información. Es posible que debas completarlos manualmente.",
   "autofill_no_match_title": "No se encontraron campos coincidentes",
   "autofill_pro_required_body": "El autocompletado es una función Pro.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Función Pro",
   "badge_tiers_code": "Básico · Intermedio · Avanzado — {{code}}",
   "before": "ANTES",
   "biometric_confirm_prompt": "Confirma {{label}} para activar esto",

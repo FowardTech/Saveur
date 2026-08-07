@@ -242,12 +242,19 @@ const DEFAULT_CONFIG: AppConfig = {
     ios_min_version: '',
     android_min_version: '',
     force_update: false,
-    update_title: 'Update required',
-    update_message: 'A new version of Saveur is available. Please update to continue.',
+    // Left blank on purpose -- App.tsx falls back to a live, reactive
+    // t('common:update_required_title'/'update_required_message') call at
+    // render time when these are empty. Hardcoding translated (or English)
+    // text here would run once at module-load time, before i18n has
+    // resolved the device/saved language, and would then always win over
+    // App.tsx's `|| t(...)` fallback since a non-empty string here is
+    // truthy -- silently making that fallback dead code again.
+    update_title: '',
+    update_message: '',
     update_url_ios: '',
     update_url_android: '',
   },
-  maintenance: {enabled: false, title: 'Down for maintenance', message: ''},
+  maintenance: {enabled: false, title: '', message: ''},
   appsflyer: {enabled: false, dev_key: '', ios_dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
   faq: {items: []},
   about: {tagline: '', description: '', contact_email: '', website_url: ''},

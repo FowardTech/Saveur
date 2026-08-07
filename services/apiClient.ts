@@ -1,5 +1,6 @@
 import axios, {AxiosError} from 'axios';
 import auth from '@react-native-firebase/auth';
+import i18n from 'i18next';
 
 import {API_BASE_URL} from 'constants/env';
 
@@ -90,9 +91,15 @@ apiClient.interceptors.response.use(
         error.response?.data?.message ??
         error.response?.data?.detail ??
         (error.code === 'ECONNABORTED'
-          ? 'That took too long — check your connection and try again.'
+          ? i18n.t('common:request_timeout_message', {
+              defaultValue: 'That took too long — check your connection and try again.',
+            })
+          : error.code === 'ERR_NETWORK'
+          ? i18n.t('common:network_error_message', {
+              defaultValue: 'No internet connection. Please check your connection and try again.',
+            })
           : error.message) ??
-        'Something went wrong. Please try again.',
+        i18n.t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
       code: error.response?.data?.code ?? error.code,
     };
     return Promise.reject(apiError);

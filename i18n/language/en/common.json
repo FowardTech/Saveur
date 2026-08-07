@@ -108,5 +108,12 @@
   "location_gate_allow": "Allow Location Access",
   "location_gate_skip": "Not now",
   "oops_title": "Oops!",
-  "generic_error_retry": "Something went wrong somewhere.\nWould you like to try again?"
+  "generic_error_retry": "Something went wrong somewhere.\nWould you like to try again?",
+  "request_timeout_message": "That took too long — check your connection and try again.",
+  "network_error_message": "No internet connection. Please check your connection and try again.",
+  "maintenance_title": "Down for maintenance",
+  "maintenance_message": "We're making some improvements. Please check back shortly.",
+  "update_required_title": "Update required",
+  "update_required_message": "Please update the app to continue.",
+  "update_now": "Update now"
 }

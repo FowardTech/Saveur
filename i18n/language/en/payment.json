@@ -26,5 +26,6 @@
   "expiration_required": "Expiration date is required.",
   "expiration_invalid": "This expiration date looks invalid.",
   "cvv_required": "Security code is required.",
-  "cvv_invalid": "This security code looks invalid."
+  "cvv_invalid": "This security code looks invalid.",
+  "sign_in_required_receipt": "You need to be signed in to download a receipt."
 }

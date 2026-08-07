@@ -31,6 +31,7 @@ import { flushPendingVideoUploads } from 'services/interviewService';
 import { AppConfig } from 'services/configService';
 import AppGateScreen from 'components/AppGateScreen';
 import BootSplash from 'react-native-bootsplash';
+import { useTranslation } from 'react-i18next';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -41,6 +42,7 @@ LogBox.ignoreLogs([
 LogBox.ignoreLogs(['Constants.installationId has been deprecated']);
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
 export default function App() {
+  const { t } = useTranslation();
   // Defaults to the device's own current appearance (Settings > Display,
   // which on iOS/Android can itself already be set to auto-switch by time of
   // day) rather than always starting on 'light' — matches what most apps do
@@ -283,15 +285,31 @@ export default function App() {
               // 2-outline` (a gear) is the closest real icon for this.
               <AppGateScreen
                 iconName="settings-2-outline"
-                title={maintenance.title || 'Down for maintenance'}
-                message={maintenance.message || "We're making some improvements. Please check back shortly."}
+                title={
+                  maintenance.title ||
+                  t('common:maintenance_title', {defaultValue: 'Down for maintenance'})
+                }
+                message={
+                  maintenance.message ||
+                  t('common:maintenance_message', {
+                    defaultValue: "We're making some improvements. Please check back shortly.",
+                  })
+                }
               />
             ) : blockedByUpdate ? (
               <AppGateScreen
                 iconName="arrow-upward-outline"
-                title={appConfig.release.update_title || 'Update required'}
-                message={appConfig.release.update_message || 'Please update the app to continue.'}
-                actionLabel="Update now"
+                title={
+                  appConfig.release.update_title ||
+                  t('common:update_required_title', {defaultValue: 'Update required'})
+                }
+                message={
+                  appConfig.release.update_message ||
+                  t('common:update_required_message', {
+                    defaultValue: 'Please update the app to continue.',
+                  })
+                }
+                actionLabel={t('common:update_now', {defaultValue: 'Update now'})}
                 onAction={() => {
                   const url = configService.getUpdateUrl(appConfig);
                   if (url) Linking.openURL(url).catch(() => {});

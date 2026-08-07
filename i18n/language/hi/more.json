@@ -33,7 +33,7 @@
   "autofill_no_match_body": "इस पेज पर हमें आपकी जानकारी से मेल खाने वाला कोई फ़ील्ड नहीं मिला। आपको इसे मैन्युअल रूप से भरना पड़ सकता है।",
   "autofill_no_match_title": "कोई मेल खाने वाला फ़ील्ड नहीं मिला",
   "autofill_pro_required_body": "ऑटोफिल एक Pro फीचर है।",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Pro फीचर",
   "badge_tiers_code": "बेसिक · इंटरमीडिएट · एडवांस्ड — {{code}}",
   "before": "पहले",
   "biometric_confirm_prompt": "इसे चालू करने के लिए {{label}} की पुष्टि करें",

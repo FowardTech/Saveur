@@ -33,7 +33,7 @@
   "autofill_no_match_body": "لم نتمكن من العثور على أي حقول في هذه الصفحة تطابق معلوماتك. قد تحتاج إلى ملئها يدويًا.",
   "autofill_no_match_title": "لم يتم العثور على حقول مطابقة",
   "autofill_pro_required_body": "الملء التلقائي ميزة حصرية لخطة Pro.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "ميزة Pro",
   "badge_tiers_code": "أساسي · متوسط · متقدم — {{code}}",
   "before": "قبل",
   "biometric_confirm_prompt": "أكّد باستخدام {{label}} لتفعيل هذا",

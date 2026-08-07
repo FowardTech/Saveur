@@ -523,7 +523,11 @@ export async function sendReceiptEmail(paymentId: number): Promise<{sentTo: stri
 export async function downloadReceiptPdf(payment: PaymentHistoryItemProps): Promise<{path: string; filename: string}> {
   const user = auth().currentUser;
   if (!user) {
-    throw new Error('You need to be signed in to download a receipt.');
+    throw new Error(
+      i18n.t('payment:sign_in_required_receipt', {
+        defaultValue: 'You need to be signed in to download a receipt.',
+      }),
+    );
   }
   const idToken = await user.getIdToken();
   const url = `${API_BASE_URL}/api/v1/billing/payments/${payment.id}/receipt.pdf`;

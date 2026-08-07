@@ -33,7 +33,7 @@
   "autofill_no_match_body": "Não encontramos campos nesta página que correspondam às suas informações. Talvez seja necessário preenchê-los manualmente.",
   "autofill_no_match_title": "Nenhum campo correspondente encontrado",
   "autofill_pro_required_body": "O preenchimento automático é um recurso Pro.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Recurso Pro",
   "badge_tiers_code": "Básico · Intermediário · Avançado — {{code}}",
   "before": "ANTES",
   "biometric_confirm_prompt": "Confirme {{label}} para ativar",

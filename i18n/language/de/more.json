@@ -33,7 +33,7 @@
   "autofill_no_match_body": "Wir konnten auf dieser Seite keine Felder finden, die zu deinen Angaben passen. Du musst sie eventuell manuell ausfüllen.",
   "autofill_no_match_title": "Keine passenden Felder gefunden",
   "autofill_pro_required_body": "Automatisches Ausfüllen ist eine Pro-Funktion.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Pro-Funktion",
   "badge_tiers_code": "Grundlagen · Mittelstufe · Fortgeschritten — {{code}}",
   "before": "VORHER",
   "biometric_confirm_prompt": "Bestätige {{label}}, um dies zu aktivieren",

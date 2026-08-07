@@ -33,7 +33,7 @@
   "autofill_no_match_body": "Nous n'avons trouvé aucun champ sur cette page correspondant à vos informations. Vous devrez peut-être les remplir manuellement.",
   "autofill_no_match_title": "Aucun champ correspondant trouvé",
   "autofill_pro_required_body": "Le remplissage automatique est une fonctionnalité Pro.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Fonctionnalité Pro",
   "badge_tiers_code": "Basique · Intermédiaire · Avancé — {{code}}",
   "before": "AVANT",
   "biometric_confirm_prompt": "Confirmez {{label}} pour activer cette option",

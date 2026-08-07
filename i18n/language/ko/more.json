@@ -33,7 +33,7 @@
   "autofill_no_match_body": "이 페이지에서 회원님의 정보와 일치하는 필드를 찾지 못했습니다. 직접 입력해야 할 수 있습니다.",
   "autofill_no_match_title": "일치하는 필드를 찾을 수 없습니다",
   "autofill_pro_required_body": "자동 입력은 Pro 기능입니다.",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Pro 기능",
   "badge_tiers_code": "기초 · 중급 · 고급 — {{code}}",
   "before": "이전",
   "biometric_confirm_prompt": "이 기능을 켜려면 {{label}}(으)로 확인하세요",

@@ -33,7 +33,7 @@
   "autofill_no_match_body": "このページにはお客様の情報と一致するフィールドが見つかりませんでした。手動で入力が必要な場合があります。",
   "autofill_no_match_title": "一致するフィールドが見つかりません",
   "autofill_pro_required_body": "自動入力はProの機能です。",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Pro機能",
   "badge_tiers_code": "初級・中級・上級 — {{code}}",
   "before": "変更前",
   "biometric_confirm_prompt": "オンにするには{{label}}で確認してください",

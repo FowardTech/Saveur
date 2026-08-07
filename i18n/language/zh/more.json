@@ -33,7 +33,7 @@
   "autofill_no_match_body": "我们在此页面上没有找到与你的信息匹配的字段，你可能需要手动填写。",
   "autofill_no_match_title": "未找到匹配的字段",
   "autofill_pro_required_body": "自动填写是Pro功能。",
-  "autofill_pro_required_title": "Pro feature",
+  "autofill_pro_required_title": "Pro功能",
   "badge_tiers_code": "初级 · 中级 · 高级 — {{code}}",
   "before": "之前",
   "biometric_confirm_prompt": "确认 {{label}} 以开启此功能",
