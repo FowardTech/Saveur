@@ -154,11 +154,32 @@ const SystemDesignWhiteboard = memo(() => {
   // undefined when reached the old way (the standalone sandbox icon), which
   // is still fully supported — every session-specific block below is
   // gated on `sessionId` being present.
-  const { sessionId, interviewType, durationMin } = route.params ?? {};
+  //
+  // endsAt/designPrompt (product report: "the count down timer... should
+  // continue counting down until the user finishes... and then the overall
+  // feedback of both the two interview should now be generated") — set
+  // instead of durationMin when this screen is reached as a mid-interview
+  // handoff from LiveInterviewSession.tsx rather than a fresh start: endsAt
+  // is an absolute deadline carried over from however much of the original
+  // selected duration was left, so the countdown genuinely continues rather
+  // than restarting at a full new duration; designPrompt is the AI
+  // interviewer's own handoff instruction, shown as a brief so the
+  // candidate knows what to sketch instead of landing on a blank canvas.
+  const { sessionId, interviewType, durationMin, endsAt, designPrompt } = route.params ?? {};
 
-  const [secondsLeft, setSecondsLeft] = React.useState<number | null>(
-    durationMin ? durationMin * 60 : null,
-  );
+  // endsAt is an absolute epoch-ms deadline (not "seconds remaining from
+  // mount"), so this recomputes from it on every tick below rather than
+  // just decrementing a locally-seeded counter — that keeps the countdown
+  // accurate even accounting for however long it took this screen to
+  // actually mount after LiveInterviewSession's navigate() call fired.
+  const computeSecondsLeft = React.useCallback((): number | null => {
+    if (endsAt) return Math.max(0, Math.round((endsAt - Date.now()) / 1000));
+    if (durationMin) return durationMin * 60;
+    return null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [endsAt, durationMin]);
+
+  const [secondsLeft, setSecondsLeft] = React.useState<number | null>(computeSecondsLeft);
   const hasAutoFinishedRef = React.useRef(false);
   const [isFinishing, setIsFinishing] = React.useState(false);
 
@@ -410,7 +431,12 @@ const SystemDesignWhiteboard = memo(() => {
       }
     } finally {
       setIsFinishing(false);
-      navigate('InterviewFeedback', { sessionId, interviewType });
+      // See isPracticeSandbox's own comment in navigation/types.tsx — only
+      // the pure no-interviewer sandbox (reached with no endsAt, e.g.
+      // FindScreen's Tools tile) sets this; a real-interview handoff from
+      // LiveInterviewSession always carries an endsAt, so it correctly gets
+      // InterviewFeedback's full Q&A layout instead of the simplified one.
+      navigate('InterviewFeedback', { sessionId, interviewType, isPracticeSandbox: !endsAt });
     }
   };
 
@@ -432,7 +458,16 @@ const SystemDesignWhiteboard = memo(() => {
       }
       return;
     }
-    const id = setTimeout(() => setSecondsLeft(s => (s === null ? null : s - 1)), 1000);
+    const id = setTimeout(() => {
+      setSecondsLeft(prev => {
+        if (prev === null) return null;
+        // See computeSecondsLeft's own comment — when we have a real
+        // endsAt deadline, recompute from it (self-correcting) rather than
+        // just decrementing, so this can never drift from the interview's
+        // actual remaining time.
+        return endsAt ? computeSecondsLeft() : prev - 1;
+      });
+    }, 1000);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [secondsLeft]);
@@ -507,6 +542,22 @@ const SystemDesignWhiteboard = memo(() => {
             : undefined
         }
       />
+      {/* Design-brief banner (product report: "the AI interviewer can ask
+          the user to create some design in the whiteboard as part of the
+          interview questions... the app should automatically navigate the
+          user to the system design whiteboard") — only present on a
+          mid-interview handoff from LiveInterviewSession.tsx (see
+          designPrompt's own comment above); the standalone sandbox entry
+          points (FindScreen's Tools tile, the old manual jump-to-whiteboard
+          icon) never set this, so this banner simply doesn't render there. */}
+      {designPrompt ? (
+        <View style={styles.designBrief}>
+          <Icon pack="eva" name="message-square-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+          <Text category="h9-s" ml={8} style={[globalStyle.flexOne, { color: theme['text-basic-color'] }]}>
+            {designPrompt}
+          </Text>
+        </View>
+      ) : null}
       {/* Horizontally scrollable (product report: "add more tools too" —
           7 shape/action tools no longer fit a fixed space-around row
           without squeezing every label). */}
@@ -795,6 +846,16 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
+  },
+  // Design-brief banner — see designPrompt's own comment above.
+  designBrief: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginHorizontal: 16,
+    marginTop: 4,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0, 99, 248, 0.08)',
   },
   toolBtn: {
     alignItems: 'center',

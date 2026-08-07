@@ -59,7 +59,7 @@ const InterviewFeedback = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
 
-  const { sessionId, interviewType, videoAnalysis, codingResult } = route.params ?? {};
+  const { sessionId, interviewType, videoAnalysis, codingResult, isPracticeSandbox } = route.params ?? {};
 
   // Product report: "the feedback interview for coding session should be
   // totally different from the normal interview feedback of the other type
@@ -69,8 +69,17 @@ const InterviewFeedback = memo(() => {
   // scoring this screen otherwise shows (Skill Breakdown, STAR Breakdown,
   // Video Analysis, View Replay) doesn't apply and would just read as a
   // wall of meaningless near-0 scores.
+  //
+  // System Design is now split (see isPracticeSandbox's own comment in
+  // navigation/types.tsx): the pure no-interviewer sandbox still has
+  // nothing to show here but a design review, so it keeps this simplified
+  // layout — but a REAL System Design interview now has an actual Q&A
+  // transcript (feedback_job.generate_system_design_combined scores it
+  // alongside any whiteboard portion), so it gets the full layout below
+  // just like every other real interview type.
   const isNonQaType =
-    interviewType === Interview_Type_Enum.Coding || interviewType === Interview_Type_Enum.SystemDesign;
+    interviewType === Interview_Type_Enum.Coding ||
+    (interviewType === Interview_Type_Enum.SystemDesign && !!isPracticeSandbox);
 
   // Product report: "The AI code review button should not be in the coding
   // session. It should be in the feedback screen because thats where the

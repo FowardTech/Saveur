@@ -123,6 +123,26 @@ export type RootStackParamList = {
       testsPassed?: number;
       testsTotal?: number;
     };
+    // Product report: "the system design practice is different from the
+    // system design interview so you need to separate that" +  "the overall
+    // feedback of both the two interview (theoretical and practical) should
+    // now be generated." interviewType alone can't tell InterviewFeedback
+    // whether a System Design session was the pure no-interviewer sandbox
+    // (FindScreen's Tools tile / the old manual jump-to-whiteboard icon —
+    // both map to the same Interview_Type_Enum.SystemDesign as the real
+    // interview) or a real AI-driven interview — only SystemDesignWhiteboard
+    // itself knows that (via whether it was handed an `endsAt`, see that
+    // route's own comment). Set true ONLY for the pure sandbox case, so
+    // InterviewFeedback's isNonQaType can keep showing its simplified
+    // "no Q&A" layout there, while a real System Design interview (whether
+    // it ever reached the whiteboard or not — see interviews.py's
+    // requires_whiteboard) gets the full Skill/STAR breakdown layout, since
+    // it now has a genuine Q&A transcript (plus, if handed off, a design
+    // portion) behind feedback_job.generate_system_design_combined's score.
+    // Coding is unaffected by this flag (isNonQaType stays unconditionally
+    // true for Coding until that type gets its own practice/interview split
+    // — a deferred follow-up).
+    isPracticeSandbox?: boolean;
   };
   ResumeBuilder: undefined;
   // Generic uploaded-file manager (POST/GET/DELETE /api/v1/documents, see
@@ -267,6 +287,25 @@ export type RootStackParamList = {
         sessionId?: string;
         interviewType?: Interview_Type_Enum;
         durationMin?: number;
+        // Product report: "the count down timer in the interview session
+        // that led to the system design whiteboard should continue
+        // counting down until the user finishes" — set (instead of/
+        // alongside durationMin) when this screen is reached as a
+        // mid-interview handoff from LiveInterviewSession.tsx, rather than
+        // a fresh start. An absolute epoch-ms deadline, not another
+        // duration-from-now, so the countdown genuinely continues instead
+        // of restarting at the whiteboard's own full length — see that
+        // screen's secondsLeft derivation, which prefers this over
+        // durationMin whenever both are present.
+        endsAt?: number;
+        // The AI interviewer's own handoff instruction (e.g. "Let's see
+        // this in practice — sketch out how you'd shard the database we
+        // just discussed"), shown as a design-brief banner so the
+        // candidate knows what to draw instead of landing on a blank
+        // canvas with no prompt (see this screen's onStartSystemDesignPractice
+        // sibling in FindScreen.tsx for the pure-sandbox case, which has
+        // no prompt at all and doesn't set this).
+        designPrompt?: string;
       }
     | undefined;
   LearningCourses: undefined;

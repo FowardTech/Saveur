@@ -184,6 +184,12 @@ const LiveInterviewSession = memo(() => {
   }, [interviewType, i18n.language]);
 
   const { isRecording, seconds, start, stop } = useFakeRecordingTimer();
+  // Read inside advanceQuestion's whiteboard-handoff branch below to
+  // compute a remaining-time endsAt without needing `seconds` in that
+  // callback's own dependency array (which would recreate it, and every
+  // effect that calls it, on every single tick).
+  const secondsRef = React.useRef(seconds);
+  secondsRef.current = seconds;
   const [isMuted, setIsMuted] = React.useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = React.useState(true);
 
@@ -347,11 +353,13 @@ const LiveInterviewSession = memo(() => {
     try {
       let nextText: string | null = null;
       let nextId: string | null = null;
+      let requiresWhiteboard = false;
       if (sessionId) {
         try {
           const next = await interviewService.getNextQuestion(sessionId);
           nextText = next.text;
           nextId = next.questionId ?? null;
+          requiresWhiteboard = !!next.requiresWhiteboard;
         } catch {
           // Offline, backend down — fall back to the local bank at whatever
           // index we're about to advance to.
@@ -359,13 +367,65 @@ const LiveInterviewSession = memo(() => {
           nextId = null;
         }
       }
+      // Product report: "the AI interviewer can ask the user to create some
+      // design in the whiteboard as part of the interview questions... the
+      // app should automatically navigate the user to the system design
+      // whiteboard and the count down timer... should continue counting
+      // down until the user finishes... and then the overall feedback of
+      // both the two interview (theoretical and practical) should now be
+      // generated." The backend (interviews.py's _generate_question)
+      // decides this deterministically, never the client — see
+      // requiresWhiteboard's own comment on NextQuestionResult. Once it
+      // fires, this screen's Q&A loop is done: hand off to the whiteboard
+      // with the SAME sessionId (so its own "Finish Interview" completes
+      // THIS session via the new combined feedback pipeline, not a
+      // separate one) and an absolute endsAt deadline derived from however
+      // much of the selected duration is actually left, so the countdown
+      // genuinely continues instead of the whiteboard starting a fresh
+      // full-length timer of its own.
+      if (requiresWhiteboard && sessionId) {
+        setBackendQuestionText(nextText);
+        setBackendQuestionId(nextId);
+        const remainingSec = Math.max(0, durationSeconds - secondsRef.current);
+        const endsAt = Date.now() + remainingSec * 1000;
+        if ((isVoiceMode || isVideoMode) && nextText) {
+          // Speak the handoff instruction itself before leaving — the
+          // candidate should hear "let's see this in practice, sketch..."
+          // the same way they heard every other question, not just be
+          // silently teleported to a blank-looking screen.
+          setIsAiSpeaking(true);
+          try {
+            await speakSmart(nextText);
+          } catch {
+            // best-effort — a TTS hiccup shouldn't block the handoff
+          }
+        }
+        // Freezes this screen's own countdown/recording loop (clears the
+        // interval useFakeRecordingTimer.start() set up) so it sits fully
+        // inert underneath the whiteboard rather than continuing to tick,
+        // auto-advance, or auto-end in the background — React Navigation's
+        // stack keeps this screen mounted under the pushed
+        // SystemDesignWhiteboard, it doesn't unmount it.
+        try {
+          await stop();
+        } catch {
+          // best-effort — still navigate even if teardown hiccups
+        }
+        navigate('SystemDesignWhiteboard', {
+          sessionId,
+          interviewType,
+          endsAt,
+          designPrompt: nextText ?? undefined,
+        });
+        return;
+      }
       setQuestionIndex(prev => prev + 1);
       setBackendQuestionText(nextText);
       setBackendQuestionId(nextId);
     } finally {
       isFetchingQuestionRef.current = false;
     }
-  }, [sessionId]);
+  }, [sessionId, durationSeconds, isVoiceMode, isVideoMode, speakSmart, navigate, interviewType, stop]);
 
   // Text mode advances on the user's own "Submit Answer" tap (see
   // onSubmitTextAnswer below), not on a listening timer — there's no

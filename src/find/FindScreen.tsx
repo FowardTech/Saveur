@@ -143,6 +143,14 @@ const FindScreen = memo(() => {
         mode: Practice_Mode_Enum.Text,
         difficulty: Difficulty_Enum.Intermediate,
         timed: true,
+        // Product report: "the system design practice is different from the
+        // system design interview so you need to separate that" — this
+        // Tools-tile shortcut is the pure sandbox (no AI interviewer, just
+        // this screen's own canvas), so it explicitly requests the
+        // "system_design_practice" backend type. MockInterviewSetup.tsx's
+        // System Design pick, by contrast, is now a real interview and
+        // never sets this.
+        practiceMode: true,
       });
       navigate('SystemDesignWhiteboard', { sessionId, interviewType: Interview_Type_Enum.SystemDesign });
     } catch (e: any) {

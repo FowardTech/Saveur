@@ -68,6 +68,19 @@ export interface StartSessionConfig {
   // InterviewPersona catalog and MockInterviewSetup.tsx's picker). Omitted
   // or "standard" means the original, no-persona behavior.
   persona?: string;
+  // Product report: "the system design practice is different from the
+  // system design interview so you need to separate that." When true, sends
+  // the backend's "<type>_practice" wire type instead of the plain type —
+  // the backend (interviews.py's VALID_TYPES) treats that as a pure
+  // no-interviewer sandbox: no first question is generated, and its
+  // feedback pipeline scores whatever design_notes/coding_result the
+  // candidate submits rather than a Q&A transcript. FindScreen.tsx's Tools
+  // tiles (System Design / Coding Practice) set this; MockInterviewSetup.tsx
+  // never does, since picking a type there now always means a real
+  // AI-driven interview. Currently only "system_design" has a backend
+  // "_practice" counterpart — see VALID_TYPES' own comment on why Coding's
+  // equivalent split is a deferred follow-up.
+  practiceMode?: boolean;
 }
 
 const FALLBACK_DURATION_MIN = 30;
@@ -188,8 +201,15 @@ function toStartSessionWire(config: StartSessionConfig) {
   const role = config.role?.trim() || `${config.interviewType} Candidate`;
   const durationMin =
     config.durationMin ?? (config.timed === false ? 15 : FALLBACK_DURATION_MIN);
+  // See StartSessionConfig.practiceMode's own comment. The backend
+  // normalizes hyphens to underscores itself before checking VALID_TYPES
+  // (interviews.py's create_session), so appending "_practice" here
+  // regardless of whether TYPE_TO_WIRE used a hyphen or underscore for this
+  // particular type still lands on the right entry either way.
+  const baseType = TYPE_TO_WIRE[config.interviewType];
+  const type = config.practiceMode ? `${baseType}_practice` : baseType;
   return {
-    type: TYPE_TO_WIRE[config.interviewType],
+    type,
     role,
     company: config.company,
     difficulty: DIFFICULTY_TO_WIRE[config.difficulty],
@@ -267,6 +287,17 @@ export async function getSessionDetail(sessionId: string): Promise<MockInterview
 export interface NextQuestionResult {
   questionId?: string;
   text: string;
+  // Product report: "the AI interviewer can ask the user to create some
+  // design in the whiteboard as part of the interview questions... the app
+  // should automatically navigate the user to the system design
+  // whiteboard." Set by the backend (interviews.py's _generate_question)
+  // for real "system_design" interviews once it's deterministically decided
+  // it's time for the hands-on segment — see that function's own comment
+  // for why this is a backend, not client, decision. `text` in that case is
+  // the interviewer's own handoff instruction (what to sketch), not a
+  // regular Q&A question. LiveInterviewSession.tsx is what watches for this
+  // and navigates.
+  requiresWhiteboard?: boolean;
 }
 
 /**
@@ -279,7 +310,12 @@ export interface NextQuestionResult {
  * fail mid-interview and the session must not get stuck with no question.
  */
 export async function getNextQuestion(sessionId: string): Promise<NextQuestionResult> {
-  const {data} = await apiClient.post<{question_id?: string; text?: string; question?: string}>(
+  const {data} = await apiClient.post<{
+    question_id?: string;
+    text?: string;
+    question?: string;
+    requires_whiteboard?: boolean;
+  }>(
     `/api/v1/interviews/sessions/${sessionId}/next-question`,
     {language: currentLanguage()},
   );
@@ -287,7 +323,7 @@ export async function getNextQuestion(sessionId: string): Promise<NextQuestionRe
   if (!text) {
     throw new Error('Backend returned an empty next question.');
   }
-  return {questionId: data.question_id, text};
+  return {questionId: data.question_id, text, requiresWhiteboard: !!data.requires_whiteboard};
 }
 
 export interface SubmitAnswerPayload {

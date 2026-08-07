@@ -205,17 +205,23 @@ const MockInterviewSetup = memo(() => {
       });
       if (interviewType === Interview_Type_Enum.Coding) {
         navigate('CodingInterview', { sessionId, interviewType, durationMin });
-      } else if (interviewType === Interview_Type_Enum.SystemDesign) {
-        // Product report: "the system design should also be added as part
-        // of the tools too" — previously SystemDesign fell into the same
-        // generic voice/text/video LiveInterviewSession branch as every
-        // other Q&A-style type, even though the app already has a purpose-
-        // built whiteboard tool for it (src/practice/SystemDesignWhiteboard.tsx,
-        // until now only reachable via a small, easy-to-miss icon inside
-        // the Coding Interview screen). Routes here instead, same
-        // sessionId/durationMin threading as Coding.
-        navigate('SystemDesignWhiteboard', { sessionId, interviewType, durationMin });
       } else {
+        // Product report: "the system design practice is different from the
+        // system design interview so you need to separate that" / "the AI
+        // interviewer can ask the user to create some design in the
+        // whiteboard as part of the interview questions." System Design
+        // picked here now goes through the SAME real Q&A interview flow as
+        // every other type (LiveInterviewSession) instead of jumping
+        // straight to the blank whiteboard with no interviewer — the
+        // backend (interviews.py's _generate_question) decides on its own,
+        // partway through the Q&A, when to hand the candidate off to the
+        // whiteboard, and LiveInterviewSession is what watches for that
+        // signal and navigates there itself, carrying the countdown timer
+        // with it (see that screen's requires_whiteboard handling). The old
+        // "jump straight to a blank whiteboard, no interviewer" behavior
+        // still exists — it's now FindScreen's Tools > System Design tile,
+        // which starts a "system_design_practice" session instead of
+        // "system_design".
         // BUG FIX (product report: "voice/video interview starts in
         // English, then later changes to the user's preferred language"):
         // startSession already returns the real, properly-translated first
@@ -283,12 +289,14 @@ const MockInterviewSetup = memo(() => {
 
         {/* Product report: "when user select coding as the type of
             interview then the interview modes (voice, text, video) cards
-            dont need to show" — neither Coding nor System Design is a
-            spoken/typed Q&A session (onStart above routes both straight to
-            their own dedicated screens, never to LiveInterviewSession),
-            so `mode` is entirely unused for them; showing the picker
-            anyway just invited a meaningless choice. */}
-        {interviewType !== Interview_Type_Enum.Coding && interviewType !== Interview_Type_Enum.SystemDesign ? (
+            dont need to show" — Coding routes straight to its own dedicated
+            screen (onStart above), never to LiveInterviewSession, so `mode`
+            is entirely unused for it; showing the picker anyway just
+            invited a meaningless choice. System Design USED to be lumped in
+            here too, but now goes through the real voice/text/video Q&A
+            flow like every other type (see onStart's comment), so it needs
+            this picker same as they do. */}
+        {interviewType !== Interview_Type_Enum.Coding ? (
           <>
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('find:choose_mode')}
