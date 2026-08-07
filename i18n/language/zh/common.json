@@ -96,5 +96,7 @@
   "view_all": "查看全部",
   "view_details": "查看详情",
   "yes": "是",
-  "remove": "移除"
+  "remove": "移除",
+  "oops_title": "哎呀！",
+  "generic_error_retry": "出了点问题。\n要重试吗？"
 }

@@ -17,5 +17,14 @@
   "set_default_failed_title": "Impossible de définir la carte par défaut",
   "card_holder": "Titulaire de la carte",
   "name_surname": "Nom Prénom",
-  "exp_date": "DATE D'EXP."
+  "exp_date": "DATE D'EXP.",
+  "cvv_label": "CVV",
+  "card_number_required": "Le numéro de carte est requis.",
+  "card_number_invalid": "Ce numéro de carte semble invalide.",
+  "cardholder_name_required": "Le nom du titulaire de la carte est requis.",
+  "cardholder_name_invalid": "Ce nom de titulaire semble invalide.",
+  "expiration_required": "La date d'expiration est requise.",
+  "expiration_invalid": "Cette date d'expiration semble invalide.",
+  "cvv_required": "Le code de sécurité est requis.",
+  "cvv_invalid": "Ce code de sécurité semble invalide."
 }

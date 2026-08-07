@@ -17,5 +17,14 @@
   "set_default_failed_title": "无法更新默认卡片",
   "card_holder": "持卡人",
   "name_surname": "姓名",
-  "exp_date": "有效期"
+  "exp_date": "有效期",
+  "cvv_label": "CVV",
+  "card_number_required": "请输入卡号。",
+  "card_number_invalid": "此卡号似乎无效。",
+  "cardholder_name_required": "请输入持卡人姓名。",
+  "cardholder_name_invalid": "此持卡人姓名似乎无效。",
+  "expiration_required": "请输入有效期。",
+  "expiration_invalid": "此有效期似乎无效。",
+  "cvv_required": "请输入安全码。",
+  "cvv_invalid": "此安全码似乎无效。"
 }

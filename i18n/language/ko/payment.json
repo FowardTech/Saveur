@@ -17,5 +17,14 @@
   "set_default_failed_title": "기본 카드를 변경할 수 없습니다",
   "card_holder": "카드 소유자",
   "name_surname": "성명",
-  "exp_date": "유효기간"
+  "exp_date": "유효기간",
+  "cvv_label": "CVV",
+  "card_number_required": "카드 번호는 필수입니다.",
+  "card_number_invalid": "이 카드 번호는 유효하지 않은 것 같습니다.",
+  "cardholder_name_required": "카드 소유자 이름은 필수입니다.",
+  "cardholder_name_invalid": "이 카드 소유자 이름은 유효하지 않은 것 같습니다.",
+  "expiration_required": "만료일은 필수입니다.",
+  "expiration_invalid": "이 만료일은 유효하지 않은 것 같습니다.",
+  "cvv_required": "보안 코드는 필수입니다.",
+  "cvv_invalid": "이 보안 코드는 유효하지 않은 것 같습니다."
 }

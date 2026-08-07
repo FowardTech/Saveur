@@ -106,5 +106,7 @@
   "location_gate_title": "Enable location for the best experience",
   "location_gate_message": "Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.",
   "location_gate_allow": "Allow Location Access",
-  "location_gate_skip": "Not now"
+  "location_gate_skip": "Not now",
+  "oops_title": "Oops!",
+  "generic_error_retry": "Something went wrong somewhere.\nWould you like to try again?"
 }

@@ -96,5 +96,7 @@
   "view_all": "전체 보기",
   "view_details": "세부 정보 보기",
   "yes": "예",
-  "remove": "제거"
+  "remove": "제거",
+  "oops_title": "이런!",
+  "generic_error_retry": "어딘가에서 문제가 발생했습니다.\n다시 시도하시겠어요?"
 }

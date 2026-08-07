@@ -17,5 +17,14 @@
   "set_default_failed_title": "تعذّر تحديث البطاقة الافتراضية",
   "card_holder": "حامل البطاقة",
   "name_surname": "الاسم واللقب",
-  "exp_date": "تاريخ الانتهاء"
+  "exp_date": "تاريخ الانتهاء",
+  "cvv_label": "CVV",
+  "card_number_required": "رقم البطاقة مطلوب.",
+  "card_number_invalid": "يبدو رقم البطاقة هذا غير صحيح.",
+  "cardholder_name_required": "اسم حامل البطاقة مطلوب.",
+  "cardholder_name_invalid": "يبدو اسم حامل البطاقة هذا غير صحيح.",
+  "expiration_required": "تاريخ الانتهاء مطلوب.",
+  "expiration_invalid": "يبدو تاريخ الانتهاء هذا غير صحيح.",
+  "cvv_required": "رمز الأمان مطلوب.",
+  "cvv_invalid": "يبدو رمز الأمان هذا غير صحيح."
 }

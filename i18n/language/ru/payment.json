@@ -17,5 +17,14 @@
   "set_default_failed_title": "Не удалось изменить карту по умолчанию",
   "card_holder": "Владелец карты",
   "name_surname": "Имя Фамилия",
-  "exp_date": "СРОК ДЕЙСТВИЯ"
+  "exp_date": "СРОК ДЕЙСТВИЯ",
+  "cvv_label": "CVV",
+  "card_number_required": "Требуется номер карты.",
+  "card_number_invalid": "Похоже, этот номер карты недействителен.",
+  "cardholder_name_required": "Требуется имя владельца карты.",
+  "cardholder_name_invalid": "Похоже, это имя владельца карты недействительно.",
+  "expiration_required": "Требуется срок действия карты.",
+  "expiration_invalid": "Похоже, этот срок действия недействителен.",
+  "cvv_required": "Требуется код безопасности.",
+  "cvv_invalid": "Похоже, этот код безопасности недействителен."
 }

@@ -17,5 +17,14 @@
   "set_default_failed_title": "Standardkarte konnte nicht aktualisiert werden",
   "card_holder": "Karteninhaber",
   "name_surname": "Vor- und Nachname",
-  "exp_date": "GÜLTIG BIS"
+  "exp_date": "GÜLTIG BIS",
+  "cvv_label": "CVV",
+  "card_number_required": "Kartennummer ist erforderlich.",
+  "card_number_invalid": "Diese Kartennummer scheint ungültig zu sein.",
+  "cardholder_name_required": "Name des Karteninhabers ist erforderlich.",
+  "cardholder_name_invalid": "Dieser Karteninhabername scheint ungültig zu sein.",
+  "expiration_required": "Ablaufdatum ist erforderlich.",
+  "expiration_invalid": "Dieses Ablaufdatum scheint ungültig zu sein.",
+  "cvv_required": "Sicherheitscode ist erforderlich.",
+  "cvv_invalid": "Dieser Sicherheitscode scheint ungültig zu sein."
 }

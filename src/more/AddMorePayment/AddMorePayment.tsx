@@ -62,7 +62,7 @@ const AddMorePayment = memo(() => {
           {formState.isValid && (
             <CtaButton
               style={[styles.button]}
-              children={'Save'}
+              children={t('common:save', {defaultValue: 'Save'})}
               onPress={handleSubmit(goBack)}
             />
           )}

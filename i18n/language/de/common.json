@@ -96,5 +96,7 @@
   "view_all": "Alle anzeigen",
   "view_details": "Details ansehen",
   "yes": "Ja",
-  "remove": "Entfernen"
+  "remove": "Entfernen",
+  "oops_title": "Hoppla!",
+  "generic_error_retry": "Irgendwo ist etwas schiefgelaufen.\nMöchtest du es erneut versuchen?"
 }

@@ -17,5 +17,14 @@
   "please-attach-card": "Adicione seu cartão para pagar pelo seu trabalho. Obrigado!",
   "card_holder": "Titular do cartão",
   "name_surname": "Nome e sobrenome",
-  "exp_date": "VALIDADE"
+  "exp_date": "VALIDADE",
+  "cvv_label": "CVV",
+  "card_number_required": "O número do cartão é obrigatório.",
+  "card_number_invalid": "Este número de cartão parece inválido.",
+  "cardholder_name_required": "O nome do titular do cartão é obrigatório.",
+  "cardholder_name_invalid": "Este nome do titular parece inválido.",
+  "expiration_required": "A data de validade é obrigatória.",
+  "expiration_invalid": "Esta data de validade parece inválida.",
+  "cvv_required": "O código de segurança é obrigatório.",
+  "cvv_invalid": "Este código de segurança parece inválido."
 }

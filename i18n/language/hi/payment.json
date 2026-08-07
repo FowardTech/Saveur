@@ -17,5 +17,14 @@
   "set_default_failed_title": "डिफ़ॉल्ट कार्ड अपडेट नहीं हो सका",
   "card_holder": "कार्डधारक",
   "name_surname": "नाम उपनाम",
-  "exp_date": "समाप्ति तिथि"
+  "exp_date": "समाप्ति तिथि",
+  "cvv_label": "CVV",
+  "card_number_required": "कार्ड नंबर आवश्यक है.",
+  "card_number_invalid": "यह कार्ड नंबर अमान्य लग रहा है.",
+  "cardholder_name_required": "कार्डधारक का नाम आवश्यक है.",
+  "cardholder_name_invalid": "यह कार्डधारक नाम अमान्य लग रहा है.",
+  "expiration_required": "समाप्ति तिथि आवश्यक है.",
+  "expiration_invalid": "यह समाप्ति तिथि अमान्य लग रही है.",
+  "cvv_required": "सुरक्षा कोड आवश्यक है.",
+  "cvv_invalid": "यह सुरक्षा कोड अमान्य लग रहा है."
 }

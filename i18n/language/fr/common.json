@@ -96,5 +96,7 @@
   "view_all": "Tout voir",
   "view_details": "Voir les détails",
   "yes": "Oui",
-  "remove": "Supprimer"
+  "remove": "Supprimer",
+  "oops_title": "Oups !",
+  "generic_error_retry": "Quelque chose s'est mal passé.\nVoulez-vous réessayer ?"
 }

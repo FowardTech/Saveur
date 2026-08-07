@@ -17,5 +17,14 @@
   "set_default_failed_title": "デフォルトカードを更新できませんでした",
   "card_holder": "カード名義人",
   "name_surname": "姓名",
-  "exp_date": "有効期限"
+  "exp_date": "有効期限",
+  "cvv_label": "CVV",
+  "card_number_required": "カード番号は必須です。",
+  "card_number_invalid": "このカード番号は無効のようです。",
+  "cardholder_name_required": "カード名義人の氏名は必須です。",
+  "cardholder_name_invalid": "このカード名義人名は無効のようです。",
+  "expiration_required": "有効期限は必須です。",
+  "expiration_invalid": "この有効期限は無効のようです。",
+  "cvv_required": "セキュリティコードは必須です。",
+  "cvv_invalid": "このセキュリティコードは無効のようです。"
 }

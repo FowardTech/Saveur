@@ -96,5 +96,7 @@
   "view_all": "すべて表示",
   "view_details": "詳細を見る",
   "yes": "はい",
-  "remove": "削除"
+  "remove": "削除",
+  "oops_title": "おっと！",
+  "generic_error_retry": "どこかで問題が発生しました。\nもう一度お試しになりますか？"
 }

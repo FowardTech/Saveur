@@ -1,6 +1,7 @@
 import React, {useRef, useState, useEffect} from 'react';
 import {Keyboard, Platform, ScrollView, StyleSheet, View} from 'react-native';
 import {useFormContext} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import cardValidator from 'card-validator';
 import FormTextField from './FormTextField';
 
@@ -28,6 +29,13 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
     overrides,
     requiresName = true,
   } = props;
+  // Product report: card-entry field labels, the CVV field, and every
+  // validation message here were hardcoded English literals, invisible to
+  // i18next entirely — they never changed with the app's language setting.
+  // Also fixes two copy-paste bugs found along the way: the cardholder-name
+  // and CVV validators were both showing "This expiration date looks
+  // invalid." / "This security date looks invalid." (wrong field names).
+  const {t} = useTranslation(['payment', 'common']);
   const {trigger, watch} = useFormContext();
   const cardNumber = watch('cardNumber');
   const {card} = cardValidator.number(cardNumber);
@@ -137,18 +145,18 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
               style={textFieldStyle}
               ref={cardNumberRef}
               name="cardNumber"
-              label={'Card Number'}
+              label={t('payment:card-number', {defaultValue: 'Card Number'})}
               keyboardType="number-pad"
               autoComplete="cc-number"
               maxLength={19}
               validationLength={isAmex ? 18 : 19}
               rules={{
-                required: 'Card number is required.',
+                required: t('payment:card_number_required', {defaultValue: 'Card number is required.'}),
                 validate: {
                   isValid: (value: string) => {
                     return (
                       cardValidator.number(value).isValid ||
-                      'This card number looks invalid.'
+                      t('payment:card_number_invalid', {defaultValue: 'This card number looks invalid.'})
                     );
                   },
                 },
@@ -164,14 +172,16 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
                 ref={holderNameRef}
                 name="holderName"
                 autoComplete="name"
-                label={'Cardholder Name'}
+                label={t('payment:card_holder', {defaultValue: 'Cardholder Name'})}
                 rules={{
-                  required: 'Cardholder name is required.',
+                  required: t('payment:cardholder_name_required', {defaultValue: 'Cardholder name is required.'}),
                   validate: {
                     isValid: (value: string) => {
                       return (
                         cardValidator.cardholderName(value).isValid ||
-                        'This expiration date looks invalid.'
+                        // BUG FIX: was showing an "expiration date" message
+                        // for a cardholder-name validation failure.
+                        t('payment:cardholder_name_invalid', {defaultValue: 'This cardholder name looks invalid.'})
                       );
                     },
                   },
@@ -191,18 +201,18 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
                 ]}
                 ref={expirationRef}
                 name="expiration"
-                label={'EXP DATE'}
+                label={t('payment:exp_date', {defaultValue: 'EXP DATE'})}
                 keyboardType="number-pad"
                 autoComplete="cc-exp"
                 maxLength={5}
                 validationLength={5}
                 rules={{
-                  required: 'Expiration date is required.',
+                  required: t('payment:expiration_required', {defaultValue: 'Expiration date is required.'}),
                   validate: {
                     isValid: (value: string) => {
                       return (
                         cardValidator.expirationDate(value).isValid ||
-                        'This expiration date looks invalid.'
+                        t('payment:expiration_invalid', {defaultValue: 'This expiration date looks invalid.'})
                       );
                     },
                   },
@@ -215,18 +225,19 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
                 style={textFieldStyle}
                 ref={cvvRef}
                 name="cvv"
-                label={'CVV'}
+                label={t('payment:cvv_label', {defaultValue: 'CVV'})}
                 keyboardType="number-pad"
                 autoComplete="cc-csc"
                 maxLength={cvvLength}
                 validationLength={cvvLength}
                 rules={{
-                  required: 'Security code is required.',
+                  required: t('payment:cvv_required', {defaultValue: 'Security code is required.'}),
                   validate: {
                     isValid: (value: string) => {
                       return (
                         cardValidator.cvv(value, cvvLength).isValid ||
-                        'This security date looks invalid.'
+                        // BUG FIX: was "security date" instead of "security code".
+                        t('payment:cvv_invalid', {defaultValue: 'This security code looks invalid.'})
                       );
                     },
                   },
@@ -247,7 +258,11 @@ const CreditCardForm: React.FC<LibraryProps> = props => {
               },
               overrides?.button,
             ]}
-            children={focusedField === CardFields.CVV ? 'Save' : 'Next'}
+            children={
+              focusedField === CardFields.CVV
+                ? t('common:save', {defaultValue: 'Save'})
+                : t('common:next', {defaultValue: 'Next'})
+            }
             onPress={goNext}
           />
         </Conditional>

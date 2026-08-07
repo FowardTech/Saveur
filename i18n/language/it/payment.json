@@ -17,5 +17,14 @@
   "set_default_failed_title": "Impossibile aggiornare la carta predefinita",
   "card_holder": "Titolare della carta",
   "name_surname": "Nome cognome",
-  "exp_date": "SCADENZA"
+  "exp_date": "SCADENZA",
+  "cvv_label": "CVV",
+  "card_number_required": "Il numero della carta è obbligatorio.",
+  "card_number_invalid": "Questo numero di carta sembra non valido.",
+  "cardholder_name_required": "Il nome del titolare della carta è obbligatorio.",
+  "cardholder_name_invalid": "Questo nome del titolare sembra non valido.",
+  "expiration_required": "La data di scadenza è obbligatoria.",
+  "expiration_invalid": "Questa data di scadenza sembra non valida.",
+  "cvv_required": "Il codice di sicurezza è obbligatorio.",
+  "cvv_invalid": "Questo codice di sicurezza sembra non valido."
 }
