@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
@@ -43,7 +44,6 @@ import InAppVideoPlayer from 'components/InAppVideoPlayer';
 // there's nothing to resume, same "don't show an empty card" convention
 // every other self-contained Home card in this file already follows.
 const ContinueLearningCard = memo(() => {
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
@@ -80,14 +80,32 @@ const ContinueLearningCard = memo(() => {
       : null;
 
   return (
+    // Product request: "give this continue lesson card a light pink and
+    // dark pink gradient color and then all the texts and icon white
+    // color." Same safe LinearGradient pattern used elsewhere in this app
+    // (see HomeSrc.tsx's homeBannerFallback/streak-ring comments) — the
+    // gradient is an absoluteFillObject layer BEHIND the real, normal-flow
+    // content rather than the content container itself, since a
+    // LinearGradient with no explicit height doesn't reliably grow to wrap
+    // its own children's intrinsic size on every layout pass and can clip
+    // content. `card`'s shadow is already zeroed out app-wide (see other
+    // cards' comments — "remove box shadows from every card in the app"),
+    // so adding overflow:'hidden' here to clip the gradient to the card's
+    // rounded corners costs nothing.
     <View style={styles.card}>
+      <LinearGradient
+        colors={['#FF9CD6', '#C2186B']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientFill}
+      />
       <Flex justify="flex-start" itemsCenter mb={12}>
         <Icon
           pack="eva"
           name="play-circle-outline"
-          style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
+          style={[globalStyle.icon20, { tintColor: '#FFFFFF' }]}
         />
-        <Text category="h9" bold ml={8}>
+        <Text category="h9" bold ml={8} style={styles.whiteText}>
           {t('home:continue_learning_title', { defaultValue: 'Continue Learning' })}
         </Text>
       </Flex>
@@ -104,10 +122,10 @@ const ContinueLearningCard = memo(() => {
             })
           }>
           <View style={globalStyle.flexOne}>
-            <Text category="h9-s" bold numberOfLines={1}>
+            <Text category="h9-s" bold numberOfLines={1} style={styles.whiteText}>
               {course.topic}
             </Text>
-            <Text category="h10" status="placeholder" mt={2}>
+            <Text category="h10" mt={2} style={styles.subtitleText}>
               {t('home:continue_course_subtitle', {
                 defaultValue: 'Module {{current}} of {{total}}',
                 current: Math.min(course.completedModules + 1, course.totalModules),
@@ -115,8 +133,8 @@ const ContinueLearningCard = memo(() => {
               })}
             </Text>
           </View>
-          <View style={[styles.continueBtn, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-            <Text category="h10" bold status="link">
+          <View style={styles.continueBtn}>
+            <Text category="h10" bold style={styles.whiteText}>
               {t('common:continue', { defaultValue: 'Continue' })}
             </Text>
           </View>
@@ -126,10 +144,10 @@ const ContinueLearningCard = memo(() => {
       {video && (
         <TouchableOpacity activeOpacity={0.7} style={styles.row} onPress={() => setPlayingVideo(video)}>
           <View style={globalStyle.flexOne}>
-            <Text category="h9-s" bold numberOfLines={1}>
+            <Text category="h9-s" bold numberOfLines={1} style={styles.whiteText}>
               {video.title}
             </Text>
-            <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
+            <Text category="h10" mt={2} numberOfLines={1} style={styles.subtitleText}>
               {videoProgressPct != null
                 ? t('home:continue_video_subtitle_pct', {
                     defaultValue: '{{pct}}% watched — video lesson',
@@ -138,8 +156,8 @@ const ContinueLearningCard = memo(() => {
                 : t('home:continue_video_subtitle', { defaultValue: 'Video lesson' })}
             </Text>
           </View>
-          <View style={[styles.continueBtn, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-            <Text category="h10" bold status="link">
+          <View style={styles.continueBtn}>
+            <Text category="h10" bold style={styles.whiteText}>
               {t('common:continue', { defaultValue: 'Continue' })}
             </Text>
           </View>
@@ -176,12 +194,36 @@ export default ContinueLearningCard;
 
 const themedStyles = StyleService.create({
   // Radius inherited from globalStyle.card (14) — no local override, same
-  // convention as DailyChallengeCard/PersonalizationCard.
+  // convention as DailyChallengeCard/PersonalizationCard. `overflow:hidden`
+  // clips the gradientFill layer below to these rounded corners — safe to
+  // add since this card carries no shadow (shadows are zeroed out
+  // app-wide, see other cards' own comments), so there's no shadow for
+  // overflow:hidden to clip off.
   card: {
     ...globalStyle.card,
     padding: 16,
     marginTop: 24,
-    backgroundColor: 'background-basic-color-2',
+    overflow: 'hidden',
+  },
+  // Pink gradient background (product request), positioned behind the
+  // real content instead of wrapping it directly — see the JSX comment
+  // above this component's return for why.
+  gradientFill: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  whiteText: {
+    color: '#FFFFFF',
+  },
+  // Slightly translucent white for subtitle/secondary text — keeps the
+  // same "less prominent than the title" hierarchy the placeholder status
+  // color gave it before, just recolored for the pink background instead
+  // of relying on a theme token that assumed a neutral card fill.
+  subtitleText: {
+    color: 'rgba(255, 255, 255, 0.8)',
   },
   row: {
     flexDirection: 'row',
@@ -190,7 +232,7 @@ const themedStyles = StyleService.create({
   },
   rowDivider: {
     borderBottomWidth: 1,
-    borderBottomColor: 'border-basic-color-3',
+    borderBottomColor: 'rgba(255, 255, 255, 0.25)',
     marginBottom: 4,
   },
   continueBtn: {
@@ -198,5 +240,6 @@ const themedStyles = StyleService.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     marginLeft: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
 });
