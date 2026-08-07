@@ -234,9 +234,22 @@ const HomeSrc = memo(() => {
   // already answered today (server-side) OR already dismissed it once
   // today without answering (local-only flag — see
   // dailyCheckinService.wasGoalPromptDismissedToday's own comment).
+  //
+  // BUG FIX (product report: "the 'what's your career goal for today'
+  // [prompt] should only appear once a day and that should be the starting
+  // of the day which is in the morning") — the once-a-day part already
+  // worked (goalAnswered/wasGoalPromptDismissedToday above), but there was
+  // no time-of-day gate at all: whatever time the user's FIRST Home visit
+  // of the day happened to land on (could be lunchtime, evening, whenever)
+  // is when this popped up, which doesn't read as "your goal for today" if
+  // it shows up after the day's mostly gone. Now only auto-shows before
+  // noon local time — a user who opens the app for the first time that day
+  // in the afternoon/evening just doesn't get asked, rather than getting
+  // asked late.
   const [checkinSheet, setCheckinSheet] = React.useState<DailyCheckInMode | null>(null);
   React.useEffect(() => {
     if (!isSignedIn) return;
+    if (new Date().getHours() >= 12) return;
     (async () => {
       try {
         const [today, dismissed] = await Promise.all([

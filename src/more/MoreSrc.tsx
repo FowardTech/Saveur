@@ -355,15 +355,20 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('EmotionalCoach'),
     },
     {
-      title: t('more:company_intelligence', {defaultValue: 'Company Intelligence'}),
-      icon: 'searchHistory',
-      status: 'warning',
-      iconBackgroundColor: ICON_BG,
-      iconColor: ICON_GLYPH,
-      featureKey: 'company_intelligence',
-      onPress: () => navigate('CompanyIntelligence'),
-    },
-    {
+      // Product report: "I think there are some of the features in the
+      // company intelligence that are also in the dream company dashboard
+      // (interview process, likely interview questions are in both)... its
+      // better to link the company intelligence from the dream company
+      // dashboard. So the company intelligence should be part of the dream
+      // company dashboard instead of it being in a separate feature." No
+      // longer its own row here — DreamCompanies.tsx now links to it
+      // directly (see that screen's "Just researching a company?" link),
+      // since the two screens show the exact same AI research (overview,
+      // salary, interview process, likely questions) and having both as
+      // top-level menu items made them look like duplicate features. The
+      // screen/route itself is unchanged (still useful standalone: look up
+      // a company without committing to track it), just reached from
+      // inside the dashboard now instead of the main menu.
       title: t('more:dream_companies', {defaultValue: 'Dream Company Dashboard'}),
       icon: 'searchHistory',
       status: 'primary',
@@ -485,7 +490,17 @@ const MoreSrc = memo(() => {
     },
   ];
   return (
-    <Container style={styles.container}>
+    // Product report: "I want the menu screen background to be completely
+    // white" — Container defaults to level="3" (light gray, #F0F0F0 — see
+    // Container.tsx's own comment on why: white cards need a gray backdrop
+    // to read as "raised" elsewhere in the app). Scoped to just this screen
+    // via an explicit level override rather than touching Container's
+    // default (that gray-vs-white call was already made deliberately, and
+    // reverted once before, for every OTHER screen) — level="2" resolves to
+    // color-basic-100 (#FFFFFF) in light mode. Dark mode is unaffected
+    // (Container's own default already uses level="1", its correct base
+    // surface, whenever the app theme is dark).
+    <Container style={styles.container} level={appTheme === 'dark' ? undefined : '2'}>
       <Content padder contentContainerStyle={styles.content}>
         <HeaderMoreOption
           name={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}

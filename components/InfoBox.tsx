@@ -42,24 +42,39 @@ const InfoBox = memo(({icon, iconPack = 'eva', children, variant = 'neutral', st
     ? theme['color-primary-500']
     : theme['text-basic-color'];
 
+  // Product report: "make the info banner look like a real info banner" —
+  // a borderless flat-tint rectangle with no other cue reads as just
+  // another card on the screen, not specifically an informational callout.
+  // A colored left accent stripe (the same convention a real "info/note"
+  // banner uses everywhere — docs sites, IDEs, form validation hints) makes
+  // the "this is a tip, not content" read immediate at a glance. Scoped to
+  // `info` only — `neutral`/`accent` are used elsewhere (JobAlerts.tsx) for
+  // a plainer soft-fill notice that wasn't part of this report, so left as
+  // they were. itemsCenter -> flex-start so the icon sits at the top of the
+  // text block instead of vertically centered against it (centered looked
+  // fine for one line, but drifted the icon oddly once the copy wraps to
+  // two).
   return (
     <Flex
-      itemsCenter
       justify="flex-start"
       style={[
         {
           backgroundColor: bg,
-          borderRadius: 14,
-          padding: 14,
+          borderRadius: 10,
+          padding: 12,
+        },
+        variant === 'info' && {
+          borderLeftWidth: 3,
+          borderLeftColor: iconColor,
         },
         style,
       ]}>
       {icon ? (
-        <View style={{marginRight: 10}}>
-          <Icon pack={iconPack} name={icon} style={[globalStyle.icon20, {tintColor: iconColor}]} />
+        <View style={{marginRight: 10, marginTop: 1}}>
+          <Icon pack={iconPack} name={icon} style={[globalStyle.icon16, {tintColor: iconColor}]} />
         </View>
       ) : null}
-      <Text category="h10" style={{flex: 1, color: iconColor}}>
+      <Text category="h10" numberOfLines={2} style={{flex: 1, color: iconColor}}>
         {children}
       </Text>
     </Flex>

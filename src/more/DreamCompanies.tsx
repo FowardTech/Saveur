@@ -197,10 +197,12 @@ const DreamCompanies = memo(() => {
             what they are for... supposed to have a small banner card
             explaining what they are... a subtle light blue banner" —
             replaces the old plain placeholder-gray description line with
-            the same explanatory copy, restyled as the requested banner. */}
+            the same explanatory copy, restyled as the requested banner.
+            Shortened to 2 lines (product report: "the text in the info
+            banner... too long") — see InfoBox.tsx's own numberOfLines={2}. */}
         <InfoBox icon="flag-outline" variant="info" style={{ marginBottom: 16 }}>
           {t('more:dream_companies_description', {
-            defaultValue: 'Track the companies you actually want to work for — open jobs, interview style, and how ready you are for each — all kept fresh automatically.',
+            defaultValue: 'Track target companies — jobs, interview prep, and your readiness for each.',
           })}
         </InfoBox>
 
@@ -224,6 +226,23 @@ const DreamCompanies = memo(() => {
               ? <Spinner size="small" status="control" />
               : t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
           </CtaButton>
+          {/* Product report: "link the company intelligence from the dream
+              company dashboard... instead of it being in a separate
+              feature" — Company Intelligence (src/more/CompanyIntelligence.tsx)
+              is the same AI research shown per-company below, just for a
+              one-off lookup before you've decided to track anywhere. No
+              longer its own row in the main menu (see MoreSrc.tsx); this is
+              now the only way in. */}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigation.navigate('CompanyIntelligence', {})}
+            style={{ marginTop: 12, alignSelf: 'center' }}>
+            <Text category="h10" bold status="link">
+              {t('more:dream_company_lookup_link', {
+                defaultValue: 'Just researching? Look up any company →',
+              })}
+            </Text>
+          </TouchableOpacity>
         </Layout>
 
         {isLoading ? (
@@ -396,7 +415,21 @@ const DreamCompanies = memo(() => {
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => onPracticeInterview(c)}
-                    style={[styles.quickActionPill, { backgroundColor: theme['color-primary-100'], marginRight: 8, marginBottom: 8 }]}>
+                    // BUG FIX (product report, screenshot: "the button text
+                    // in the blue button... is not visible") — this pill's
+                    // background was color-primary-100 with its icon/text
+                    // tinted color-primary-500; constants/theme/
+                    // appTheme.json defines BOTH as the exact same hex
+                    // (#0063f8, the flat brand blue), so the text was
+                    // rendering in the identical color as its own
+                    // background — same brand blue, zero contrast, not a
+                    // dark/light-mode issue. Swapped to the light,
+                    // ~8%-opacity primary tint the rest of this screen
+                    // already uses for "info" surfaces (InfoBox above,
+                    // the readiness badge's `link` tier) so
+                    // color-primary-500 text/icon actually shows up
+                    // against it.
+                    style={[styles.quickActionPill, { backgroundColor: theme['color-primary-transparent-200'], marginRight: 8, marginBottom: 8 }]}>
                     <Icon pack="eva" name="mic-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'], marginRight: 6 }]} />
                     <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
                       {t('more:dream_company_practice_cta', { defaultValue: 'Practice interview' })}

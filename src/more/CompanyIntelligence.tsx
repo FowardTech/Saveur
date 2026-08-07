@@ -140,7 +140,7 @@ const CompanyIntelligence = memo(() => {
             context. */}
         <InfoBox icon="search-outline" variant="info" style={{ marginBottom: 16 }}>
           {t('more:company_intel_description', {
-            defaultValue: 'Get instant, AI-researched facts about any company — recent news, culture, and the interview questions you\'re likely to be asked — before you walk in.',
+            defaultValue: 'AI-researched facts on any company — news, culture, and likely interview questions.',
           })}
         </InfoBox>
         <Input

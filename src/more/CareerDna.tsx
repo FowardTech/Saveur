@@ -171,7 +171,7 @@ const CareerDna = memo(() => {
             current profile's contents. */}
         <InfoBox icon="activity-outline" variant="info" style={{ marginBottom: 16 }}>
           {t('more:career_dna_description', {
-            defaultValue: 'A living profile the AI builds and refines from your real activity — interviews, courses, and progress — so your coaching feels like it actually knows you.',
+            defaultValue: 'Your AI-built profile from real activity — so coaching actually knows you.',
           })}
         </InfoBox>
         {isLoading ? (
