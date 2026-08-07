@@ -288,7 +288,17 @@ const SystemDesignWhiteboard = memo(() => {
     try {
       if (sessionId) {
         try {
-          await interviewService.completeSession(sessionId);
+          // BUG FIX (product report: "make sure the system design practice
+          // ... give an interview feedback and it must be correct
+          // feedbacks"): the backend has nothing else to grade a whiteboard
+          // session on (the drawing itself has no exportable text — see
+          // codingService.getSystemDesignFeedback's own comment) — passing
+          // whatever explanation the candidate already typed into the "Get
+          // AI Review" box (designNotes) is the only real signal available,
+          // same text that box's own on-demand review already uses. Sent
+          // even if empty; the backend leaves feedback blank rather than
+          // fabricating an assessment when there's genuinely nothing here.
+          await interviewService.completeSession(sessionId, undefined, undefined, { designNotes });
         } catch (e: any) {
           if (!opts?.timedOut) {
             Alert.alert(

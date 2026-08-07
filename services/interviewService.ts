@@ -338,14 +338,38 @@ export async function submitAnswer(
  * per-frame samples to POST /camera-frame throughout the session and fetches
  * /camera-summary separately once it ends (see that file), so the backend
  * already has the video signal by the time this fires.
+ *
+ * `extra` (product report: "make sure the system design practice and the
+ * coding practice give an interview feedback and it must be correct
+ * feedbacks") — the backend's Q&A-transcript-based scoring has nothing to
+ * grade for a Coding or System Design session (see
+ * Saveur-Backend's feedback_job.py's generate_coding/generate_system_design
+ * docstrings for the full explanation), so those two session types now send
+ * their own real submitted work here instead: CodingInterview.tsx sends
+ * `codingResult` (the actual code/problem/test outcome), and
+ * SystemDesignWhiteboard.tsx sends `designNotes` (the candidate's own
+ * explanation of their sketch). Omitted entirely for every other interview
+ * type, which still scores off the Q&A transcript as before.
  */
 export async function completeSession(
   sessionId: string,
   _videoMetrics?: VideoAnalysisMetrics,
   askedQuestions?: string[],
+  extra?: {
+    codingResult?: {
+      language?: string;
+      code?: string;
+      problemStatement?: string;
+      testsPassed?: number;
+      testsTotal?: number;
+    };
+    designNotes?: string;
+  },
 ): Promise<void> {
   await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/end`, {
     asked_questions: askedQuestions,
+    coding_result: extra?.codingResult,
+    design_notes: extra?.designNotes,
   });
   // Centralized here rather than in each of LiveInterviewSession.tsx/
   // CodingInterview.tsx (both call completeSession) — counts toward the App

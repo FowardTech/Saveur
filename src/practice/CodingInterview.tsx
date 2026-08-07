@@ -216,10 +216,22 @@ const CodingInterview = memo(() => {
   const onFinish = async (opts?: { timedOut?: boolean }) => {
     if (isFinishing) return;
     setIsFinishing(true);
+    // Built once and reused for both completeSession (so the backend has
+    // real work to grade — see that function's own comment) and the
+    // navigate() call below (unchanged — InterviewFeedback's non-QA branch
+    // already reads this straight from route params for its own local
+    // test-summary display).
+    const codingResult = {
+      language: language.id,
+      code,
+      problemStatement,
+      testsPassed: testResults ? testResults.filter(r => r.passed).length : undefined,
+      testsTotal: testResults ? testResults.length : undefined,
+    };
     try {
       if (sessionId) {
         try {
-          await interviewService.completeSession(sessionId);
+          await interviewService.completeSession(sessionId, undefined, undefined, { codingResult });
         } catch (e: any) {
           // Same pattern as LiveInterviewSession.tsx: the coding work itself
           // already happened locally, so don't strand the user on this
@@ -240,13 +252,7 @@ const CodingInterview = memo(() => {
       navigate('InterviewFeedback', {
         sessionId,
         interviewType,
-        codingResult: {
-          language: language.id,
-          code,
-          problemStatement,
-          testsPassed: testResults ? testResults.filter(r => r.passed).length : undefined,
-          testsTotal: testResults ? testResults.length : undefined,
-        },
+        codingResult,
       });
     }
   };
