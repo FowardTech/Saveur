@@ -13,6 +13,7 @@ import {
   BookOpen,
   Box,
   Briefcase,
+  Building2,
   Calendar,
   Check,
   CheckCircle2,
@@ -129,6 +130,14 @@ const LucideEvaIconsPack: IconPack<any> = {
     'book-open-outline': lucideIcon(BookOpen),
     'book-outline': lucideIcon(Book),
     'briefcase-outline': lucideIcon(Briefcase),
+    // Generic "company" fallback icon (product request: "for the dream
+    // company dashboard and company list and the mock interview setup
+    // screen, you can use a company icon if you cant find the actual
+    // company logo") — a plain office-building glyph reads as "a company"
+    // in a way briefcase-outline (already used elsewhere for the Job
+    // Alerts logo fallback specifically) doesn't quite fit for a
+    // company-identity context.
+    'building-outline': lucideIcon(Building2),
     'bulb-outline': lucideIcon(Lightbulb),
     'calendar-outline': lucideIcon(Calendar),
     'checkmark-circle-2-outline': lucideIcon(CheckCircle2),

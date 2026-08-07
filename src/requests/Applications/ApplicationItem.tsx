@@ -96,6 +96,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
             companyName={item.company}
             size="medium"
             shape="rounded"
+            fallbackIcon="briefcase-outline"
             style={styles.avatar}
           />
           <View style={globalStyle.flexOne}>

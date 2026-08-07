@@ -187,6 +187,7 @@ const ApplicationDetails = memo(() => {
             companyName={application.company}
             size="giant"
             shape="rounded"
+            fallbackIcon="briefcase-outline"
           />
           <View style={{marginLeft: 16, flexShrink: 1}}>
             <Text category="h3" bold numberOfLines={2}>

@@ -1,16 +1,34 @@
 import React, {memo, useState} from 'react';
 import {View, StyleProp, ViewStyle} from 'react-native';
-import {Avatar, Text, useTheme} from '@ui-kitten/components';
+import {Avatar, Icon, useTheme} from '@ui-kitten/components';
+import {globalStyle} from 'styles/globalStyle';
 
-// Company-logo counterpart to UserAvatar.tsx — same "real photo, or a clean
-// generated fallback, never a random stock photo" philosophy, but the logo
-// URL here (see services/jobAlertsService.ts / applicationsService.ts) is a
-// best-effort guess built server-side (Perplexity's reported company domain
-// when available, else a slugified-company-name-plus-.com heuristic, run
-// through Clearbit's logo API) rather than something the user or company
-// verified themselves — wrong guesses are expected and will 404. `onError`
-// below is what makes that degrade to the fallback instead of rendering a
+// Company-logo counterpart to UserAvatar.tsx — real logo when one resolves,
+// a clean icon fallback otherwise. The logo URL here (see
+// utils/companyLogo.ts / Saveur-Backend's company_logo_service.py) is a
+// best-effort guess (a verified domain when the caller has one, else a
+// slugified-company-name-plus-.com heuristic) run through a logo-lookup
+// service — wrong guesses are expected and will 404. `onError` below is
+// what makes that degrade to the icon fallback instead of rendering a
 // broken image.
+//
+// BUG FIX (product report: "I dont want initials" — explicitly across Job
+// Alerts, Dream Company Dashboard, the mock-interview company picker, and
+// Company List): this used to fall back to a generated colored-circle
+// initial (or a bare "?" with no company name at all) whenever the logo
+// URL was missing or 404'd. Replaced with a plain icon fallback instead —
+// `fallbackIcon` lets each call site pick the icon that fits its own
+// context (Job Alerts explicitly asked for a briefcase; every other
+// surface asked for "a company icon", i.e. the generic office-building
+// glyph — see assets/LucideEvaIconsPack.tsx's 'building-outline').
+//
+// Also: logo.clearbit.com (the service this used to point at) shut down
+// for good on Dec 8 2025 (HubSpot's own deprecation notice) — EVERY logo
+// lookup through it has been failing outright since, which is the real
+// reason logos looked completely broken for even extremely well-known
+// companies like Google/Amazon, not a flaw in the domain-guessing logic
+// itself. See utils/companyLogo.ts / company_logo_service.py's own
+// comments for the replacement service.
 type Size = 'tiny' | 'small' | 'medium' | 'large' | 'giant';
 
 const SIZE_PX: Record<Size, number> = {
@@ -21,12 +39,12 @@ const SIZE_PX: Record<Size, number> = {
   giant: 72,
 };
 
-const FONT_CATEGORY: Record<Size, 'h9' | 'h8' | 'h7' | 'h6' | 'h3'> = {
-  tiny: 'h9',
-  small: 'h8',
-  medium: 'h7',
-  large: 'h6',
-  giant: 'h3',
+const ICON_SIZE_PX: Record<Size, number> = {
+  tiny: 12,
+  small: 16,
+  medium: 18,
+  large: 22,
+  giant: 32,
 };
 
 interface Props {
@@ -35,67 +53,66 @@ interface Props {
   size?: Size;
   shape?: 'round' | 'rounded' | 'square';
   style?: StyleProp<ViewStyle>;
+  /** Icon shown when there's no logo URL, or it failed to load. Defaults to
+   * the generic company/building glyph — pass 'briefcase-outline' for a
+   * job-listing context (Job Alerts, Applications), which explicitly asked
+   * for that icon specifically. */
+  fallbackIcon?: 'building-outline' | 'briefcase-outline';
 }
 
-function getInitial(name?: string | null): string {
-  if (!name) return '';
-  const trimmed = name.trim();
-  return trimmed ? trimmed[0].toUpperCase() : '';
-}
+const CompanyLogoAvatar = memo(
+  ({logoUrl, companyName, size = 'medium', shape = 'rounded', style, fallbackIcon = 'building-outline'}: Props) => {
+    const theme = useTheme();
+    const [failed, setFailed] = useState(false);
 
-const CompanyLogoAvatar = memo(({logoUrl, companyName, size = 'medium', shape = 'rounded', style}: Props) => {
-  const theme = useTheme();
-  const [failed, setFailed] = useState(false);
+    if (logoUrl && !failed) {
+      return (
+        <Avatar
+          source={{uri: logoUrl}}
+          size={size}
+          shape={shape}
+          style={style}
+          onError={() => setFailed(true)}
+        />
+      );
+    }
 
-  if (logoUrl && !failed) {
+    const px = SIZE_PX[size];
+
     return (
-      <Avatar
-        source={{uri: logoUrl}}
-        size={size}
-        shape={shape}
-        style={style}
-        onError={() => setFailed(true)}
-      />
+      <View
+        // `companyName` is still accepted as a prop (several call sites
+        // pass it for accessibility/semantic purposes even though it no
+        // longer renders as visible text) — accessibilityLabel keeps that
+        // use meaningful rather than a silent no-op prop.
+        accessibilityLabel={companyName ?? undefined}
+        style={[
+          {
+            width: px,
+            height: px,
+            borderRadius: shape === 'round' ? px / 2 : px / 4,
+            backgroundColor: theme['background-basic-color-3'],
+            alignItems: 'center',
+            justifyContent: 'center',
+            overflow: 'hidden',
+          },
+          style,
+        ]}>
+        <Icon
+          pack="eva"
+          name={fallbackIcon}
+          style={[
+            globalStyle.icon20,
+            {
+              width: ICON_SIZE_PX[size],
+              height: ICON_SIZE_PX[size],
+              tintColor: theme['text-hint-color'],
+            },
+          ]}
+        />
+      </View>
     );
-  }
-
-  const px = SIZE_PX[size];
-  const initial = getInitial(companyName);
-
-  return (
-    <View
-      style={[
-        {
-          width: px,
-          height: px,
-          borderRadius: shape === 'round' ? px / 2 : px / 4,
-          backgroundColor: initial ? theme['color-primary-500'] : theme['background-basic-color-3'],
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        },
-        style,
-      ]}>
-      {/* BUG FIX (custom fonts not rendering on Android): the initial's
-          <Text> used to set `fontWeight: 'bold'` in style without the
-          `bold` prop, so Text.tsx rendered the family as
-          PlusJakartaSans-Regular while this local override asked Android
-          for a BOLD style — it looked for a nonexistent
-          "PlusJakartaSans-Regular_bold.ttf" and fell back to the system
-          font. Using the `bold` prop instead selects the real
-          PlusJakartaSans-Bold.ttf file by name, which Android can
-          actually find. */}
-      {initial ? (
-        <Text category={FONT_CATEGORY[size]} bold style={{color: theme['text-control-color'] ?? '#fff'}}>
-          {initial}
-        </Text>
-      ) : (
-        <Text category={FONT_CATEGORY[size]} style={{color: theme['text-hint-color']}}>
-          ?
-        </Text>
-      )}
-    </View>
-  );
-});
+  },
+);
 
 export default CompanyLogoAvatar;

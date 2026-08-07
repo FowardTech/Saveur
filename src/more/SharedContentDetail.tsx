@@ -118,7 +118,7 @@ const SharedContentDetail = memo(() => {
           {share.contentType === 'job' ? (
             <Layout level="2" style={styles.card}>
               <Flex justify="flex-start" mb={12}>
-                <CompanyLogoAvatar logoUrl={content.company_logo_url} companyName={content.company} />
+                <CompanyLogoAvatar logoUrl={content.company_logo_url} companyName={content.company} fallbackIcon="briefcase-outline" />
                 <Flex vertical style={{marginLeft: 12, flex: 1}}>
                   <Text category="h7" bold>{content.title}</Text>
                   <Text category="h9-s" status="placeholder" mt={2}>

@@ -585,6 +585,7 @@ const JobAlerts = memo(() => {
                     logoUrl={alert.companyLogoUrl}
                     companyName={alert.company}
                     size="small"
+                    fallbackIcon="briefcase-outline"
                     style={{marginRight: 10, marginTop: 2}}
                   />
                   <View style={globalStyle.flexOne}>
