@@ -1,5 +1,6 @@
 import React from 'react';
 import 'i18n/config';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Appearance, AppState, Linking, LogBox, StatusBar } from 'react-native';
 import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
@@ -242,25 +243,39 @@ export default function App() {
     });
   };
   return (
-    <SafeAreaProvider>
-      <ThemeContext.Provider value={{ theme, toggleTheme }}>
-        <IconRegistry icons={[LucideEvaIconsPack, AssetIconsPack]} />
-        <ApplicationProvider
-          {...eva}
-          theme={
-            theme === 'light'
-              ? { ...eva.light, ...customTheme, ...lightTheme }
-              : { ...eva.dark, ...customTheme, ...darkTheme }
-          }
-          /* @ts-ignore */
-          customMapping={customMapping}
-        >
-          <SafeAreaProvider>
-            <StatusBar
-              barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
-              translucent={true}
-              backgroundColor={'#00000000'}
-            />
+    // BUG FIX (product report: "the homescreen is freezing, anytime it loads
+    // and i try to scroll it just freezes and refuses to scroll" — every
+    // load, both platforms): react-native-gesture-handler v2 (see
+    // package.json) requires the whole app to be wrapped in
+    // GestureHandlerRootView, not just the top-of-entry-file import (see
+    // index.js's own comment on this same fix) — without it, v2's native
+    // gesture event dispatcher has nowhere to attach, so gesture-handler-
+    // driven components (including @react-navigation/stack's own swipe/slide
+    // screen transitions, used as this app's ROOT navigator in
+    // navigation/AppContainer.tsx, wrapping every screen including Home)
+    // don't hand touches off to ordinary scrollable content correctly. This
+    // was completely missing before. `style={{flex:1}}` per RNGH's own
+    // docs — it needs to actually fill the screen, not just wrap it.
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+          <IconRegistry icons={[LucideEvaIconsPack, AssetIconsPack]} />
+          <ApplicationProvider
+            {...eva}
+            theme={
+              theme === 'light'
+                ? { ...eva.light, ...customTheme, ...lightTheme }
+                : { ...eva.dark, ...customTheme, ...darkTheme }
+            }
+            /* @ts-ignore */
+            customMapping={customMapping}
+          >
+            <SafeAreaProvider>
+              <StatusBar
+                barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
+                translucent={true}
+                backgroundColor={'#00000000'}
+              />
             {/* No <StripeProvider> here on purpose. It was here initially
                 with an empty publishableKey (the real key only exists per-
                 request, from POST /billing/payment-sheet — see
@@ -334,8 +349,9 @@ export default function App() {
               </AuthProvider>
             )}
           </SafeAreaProvider>
-        </ApplicationProvider>
-      </ThemeContext.Provider>
-    </SafeAreaProvider>
+          </ApplicationProvider>
+        </ThemeContext.Provider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
