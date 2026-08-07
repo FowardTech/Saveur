@@ -2,7 +2,6 @@ import React from 'react';
 import { Modal, View, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
-import LinearGradient from 'react-native-linear-gradient';
 
 import Text from './Text';
 import { Images } from 'assets/images';
@@ -11,7 +10,7 @@ import { globalStyle } from 'styles/globalStyle';
 
 interface Props {
   visible: boolean;
-  title: string;
+  title?: string;
   body?: string;
   imageUrl?: string;
   ctaLabel?: string;
@@ -30,17 +29,32 @@ interface Props {
 // admin-supplied image (services/adsService.ts's imageUrl, expected to be
 // a full mobile-banner-shaped asset, portrait, matching the size/shape of
 // the product-supplied Learning Courses onboarding banner) fills the
-// entire screen edge-to-edge; title/body/CTA sit on a bottom gradient
-// scrim over the image itself, since an arbitrary admin-uploaded photo
-// can't be trusted to already have empty space there the way a purpose-
-// built illustration can.
+// entire screen edge-to-edge.
+//
+// BUG FIX (product report, screenshot of the popup with "AI Career Coach"
+// text overlaid at the bottom: "I said I dont want captions on any ads.
+// This is not a webapp or a website. Cant you see that the caption overlay
+// is making the ads banner look awful?") — a previous pass made title/body
+// individually OPTIONAL (only render if set), but per this report that
+// wasn't the actual ask: NO caption text should ever be drawn over the ad
+// image, period, regardless of whether the admin filled those fields in.
+// `title`/`body` props are kept (typed optional now, and still accepted
+// from callers) purely because AdDetails.tsx still shows them as the full
+// write-up on its own separate screen after tapping through — they're just
+// never rendered here, on the image itself, anymore. Along with them, the
+// tall bottom gradient scrim that existed ONLY to keep that text legible
+// over an arbitrary photo is gone too — replaced by a single compact CTA
+// pill that sits on its own small opaque background, the way a real native
+// mobile ad unit (App Store/Play Store featured banners, Instagram/
+// Facebook image ads) looks: an image, and one small tappable affordance,
+// nothing captioned over the artwork itself.
 //
 // BUG FIX: this component already existed with the "full height" redesign
 // described above, but was never actually wired into HomeSrc.tsx, which
 // kept rendering the OLDER small centered card (components/ModalRequest.tsx)
 // for the real ad popup — this file was dead code. HomeSrc.tsx now renders
 // this component instead (see that file's own comment at the swap site).
-const AdPopupModal: React.FC<Props> = ({ visible, title, body, imageUrl, ctaLabel, onCta, onDismiss }) => {
+const AdPopupModal: React.FC<Props> = ({ visible, imageUrl, ctaLabel, onCta, onDismiss }) => {
   const { t } = useTranslation('common');
   const { width, height, top, bottom } = useLayout();
   // BUG FIX (product report: "the pop up advert [is what's] freezing the
@@ -89,6 +103,23 @@ const AdPopupModal: React.FC<Props> = ({ visible, title, body, imageUrl, ctaLabe
           style={[styles.image, { width, height }]}
         />
 
+        {/* No caption, no gradient scrim — just the image and one small
+            tappable CTA pill sitting directly on it, its own opaque
+            background (not a fade over the artwork) providing all the
+            contrast it needs. Tapping anywhere else on the image also
+            opens the ad's detail screen, same destination as the pill, so
+            the whole banner reads as one tappable unit the way a real
+            native ad does — the pill is a visible affordance, not the only
+            hit area. Rendered BEFORE the close button and CTA pill below
+            (not after) so this full-bleed layer never sits on top of them
+            and steals their taps — React Native stacks siblings in JSX
+            order, later = on top. */}
+        <TouchableOpacity
+          activeOpacity={0.95}
+          onPress={onCta}
+          style={StyleSheet.absoluteFillObject}
+        />
+
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onDismiss}
@@ -97,56 +128,14 @@ const AdPopupModal: React.FC<Props> = ({ visible, title, body, imageUrl, ctaLabe
           <Icon pack="eva" name="close-outline" style={styles.closeIcon} />
         </TouchableOpacity>
 
-        {/* Bottom scrim — an arbitrary admin-uploaded photo has no
-            guaranteed empty region the way a purpose-built illustration
-            does, so title/body/CTA get a real dark gradient behind them for
-            legibility over any image.
-            BUG FIX (product report, screenshot: caption card not full
-            width, visible image showing through below the caption): the
-            box itself was already full-width and bottom-anchored (see
-            styles.scrim below — left:0/right:0/bottom:0), so that wasn't
-            actually the bug. The real issue was the gradient's own bottom
-            stop: rgba(0,0,0,0.78) is still 22% see-through, so a bright
-            admin-uploaded image remained faintly visible behind the caption
-            text/CTA/dismiss row instead of reading as a solid container --
-            exactly what looks like "a gap where the image shows through" in
-            a screenshot. Now goes fully opaque (1) at the very bottom and
-            stays solid, not fading, for the last third of the scrim (extra
-            color stop at 0.55), so the lowest portion — where the CTA
-            button and "No thanks" text sit — is a true solid card, while
-            the transition into the image higher up stays a soft gradient. */}
-        <LinearGradient
-          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,1)']}
-          locations={[0, 0.55, 1]}
-          style={[styles.scrim, { paddingBottom: bottom + 24, minHeight: Math.round(height * 0.32) }]}>
-          {/* BUG FIX (product report: "I dont want banner title, subtitle
-              and detail screen body to be mandatory... sometimes I might
-              not want a caption to show in the ads") — title used to
-              render unconditionally, same class of bug `body` right below
-              already avoided; an ad with no title left an empty (but still
-              space-taking, per h4's line-height) heading over the image. */}
-          {title ? (
-            <Text category="h4" bold style={styles.title}>
-              {title}
-            </Text>
-          ) : null}
-          {body ? (
-            <Text category="h9-s" mt={8} style={styles.body}>
-              {body}
-            </Text>
-          ) : null}
-
-          <TouchableOpacity activeOpacity={0.85} onPress={onCta} style={styles.ctaButton}>
-            <Text category="h8" bold center style={styles.ctaButtonText}>
-              {ctaLabel ?? t('view_details', { defaultValue: 'View Details' })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.7} onPress={onDismiss} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
-            <Text category="h9" bold center mt={16} style={styles.dismissText}>
-              {t('no_thanks', { defaultValue: 'No thanks' })}
-            </Text>
-          </TouchableOpacity>
-        </LinearGradient>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onCta}
+          style={[styles.ctaPill, { bottom: bottom + 20 }]}>
+          <Text category="h9" bold center style={styles.ctaPillText}>
+            {ctaLabel ?? t('view_details', { defaultValue: 'View Details' })}
+          </Text>
+        </TouchableOpacity>
       </View>
     </Modal>
   );
@@ -178,34 +167,21 @@ const styles = StyleSheet.create({
     height: 22,
     tintColor: '#FFFFFF',
   },
-  scrim: {
+  // Compact pill — replaces the old full-width bottom scrim (see the JSX
+  // comment above where this renders). Centered, own opaque white fill and
+  // shadow, sized to its own text rather than stretching edge-to-edge, so
+  // it reads as a small floating control over the artwork instead of a
+  // caption bar.
+  ctaPill: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 24,
-    paddingTop: 80,
-  },
-  title: {
-    color: '#FFFFFF',
-  },
-  body: {
-    color: 'rgba(255,255,255,0.85)',
-  },
-  ctaButton: {
-    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 28,
+    paddingVertical: 14,
     borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
     backgroundColor: '#FFFFFF',
-    marginTop: 24,
     ...globalStyle.shadowBtn,
   },
-  ctaButtonText: {
+  ctaPillText: {
     color: '#0063f8',
-  },
-  dismissText: {
-    color: 'rgba(255,255,255,0.75)',
   },
 });

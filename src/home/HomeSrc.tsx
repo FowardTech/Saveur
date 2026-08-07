@@ -894,14 +894,16 @@ const HomeSrc = memo(() => {
             style={[styles.homeBannerCard, { width: bannerWidth }]}
             onPress={onOpenHomeBanner}>
             {homeBanner.imageUrl && !homeBannerImageFailed ? (
-              // BUG FIX (product report, screenshot: a generic blue "AI
-              // Career Coach" gradient card instead of the real image
-              // uploaded in admin — see homeBannerImageFailed's own comment
-              // above for the fuller history). This is the actual banner
-              // feature: an admin-uploaded image, shown as-is, same
-              // full-bleed-image-with-legible-text approach as the popup ad
-              // (AdPopupModal.tsx) uses, just sized as a persistent inline
-              // card here instead of a full-screen takeover.
+              // BUG FIX (product report: "I said I dont want captions on
+              // any ads. This is not a webapp or a website. Cant you see
+              // that the caption overlay is making the ads banner look
+              // awful?") — this used to draw a title/body gradient scrim
+              // over the image, same as AdPopupModal.tsx did (see that
+              // component's own comment for the fuller history/reasoning).
+              // No caption is ever drawn over the artwork now — this is
+              // the real admin-uploaded image, shown as-is; tapping the
+              // card (already wired on the outer TouchableOpacity above)
+              // is the only affordance, matching a real native ad banner.
               <View style={styles.homeBannerImageWrap}>
                 <Image
                   source={{ uri: homeBanner.imageUrl }}
@@ -909,24 +911,6 @@ const HomeSrc = memo(() => {
                   resizeMode="cover"
                   onError={() => setHomeBannerImageFailed(true)}
                 />
-                {(homeBanner.title || homeBanner.body) ? (
-                  <LinearGradient
-                    colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.72)']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 0, y: 1 }}
-                    style={styles.homeBannerImageScrim}>
-                    {homeBanner.title ? (
-                      <Text category="h9" bold numberOfLines={1} style={styles.homeBannerImageTitle}>
-                        {homeBanner.title}
-                      </Text>
-                    ) : null}
-                    {homeBanner.body ? (
-                      <Text category="h10" numberOfLines={2} mt={2} style={styles.homeBannerImageBody}>
-                        {homeBanner.body}
-                      </Text>
-                    ) : null}
-                  </LinearGradient>
-                ) : null}
               </View>
             ) : (
               // No admin image (or it failed to load) — the code-drawn
@@ -1376,10 +1360,12 @@ const HomeSrc = memo(() => {
           a proper full-screen AdPopupModal already existed elsewhere in the
           codebase, unused. Swapped to that component; its image fills the
           whole screen with title/body/CTA overlaid on a bottom gradient. */}
+      {/* title/body intentionally not passed — AdPopupModal no longer
+          renders any caption over the ad image (product report: "I said I
+          dont want captions on any ads... the caption overlay is making
+          the ads banner look awful" — see that component's own comment). */}
       <AdPopupModal
         visible={adVisible}
-        title={pendingAd?.title ?? ''}
-        body={pendingAd?.body}
         imageUrl={pendingAd?.imageUrl}
         ctaLabel={t('common:view_details', { defaultValue: 'View Details' })}
         onCta={onOpenAd}
@@ -1464,21 +1450,6 @@ const themedStyles = StyleService.create({
   homeBannerImage: {
     width: '100%',
     height: '100%',
-  },
-  homeBannerImageScrim: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: 16,
-    paddingTop: 28,
-    paddingBottom: 12,
-  },
-  homeBannerImageTitle: {
-    color: '#FFFFFF',
-  },
-  homeBannerImageBody: {
-    color: 'rgba(255,255,255,0.9)',
   },
   // Code-drawn banner (see the JSX comment where this renders) — a plain
   // View, NOT a LinearGradient: the gradient is a decorative
