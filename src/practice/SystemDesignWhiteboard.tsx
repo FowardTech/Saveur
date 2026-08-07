@@ -238,7 +238,15 @@ const SystemDesignWhiteboard = memo(() => {
           <Text category="h10" mt={4}>{t('find:whiteboard_database', {defaultValue: 'Database'})}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={() => onStampShape('line')}>
-          <Icon pack="eva" name="minus-outline" style={[globalStyle.icon20, { tintColor: activeColor }]} />
+          {/* BUG FIX (crash report, screenshot: "Icon: 'minus-outline' icon
+              is not registered in pack 'eva'") — same class of bug as the
+              earlier "tools-outline" crash on the maintenance gate icon:
+              'minus-outline' isn't a real Eva Icons name, so this threw a
+              hard render error every time the whiteboard mounted. Drawn as
+              a plain View instead, matching the rectangle/circle/diamond
+              swatches right above it, rather than guessing at another Eva
+              icon name that might not exist either. */}
+          <View style={[styles.lineSwatch, { backgroundColor: activeColor }]} />
           <Text category="h10" mt={4}>{t('find:whiteboard_line', {defaultValue: 'Line'})}</Text>
         </TouchableOpacity>
         <TouchableOpacity activeOpacity={0.7} style={styles.toolBtn} onPress={() => onStampShape('arrow')}>
@@ -356,6 +364,13 @@ const themedStyles = StyleService.create({
     borderWidth: 2,
     borderColor: STROKE_COLOR,
     transform: [{ rotate: '45deg' }],
+  },
+  lineSwatch: {
+    width: 22,
+    height: 2.5,
+    borderRadius: 1.5,
+    backgroundColor: STROKE_COLOR,
+    transform: [{ rotate: '-20deg' }],
   },
   colorSwatch: {
     width: 26,

@@ -239,9 +239,14 @@ const Leaderboard = memo(() => {
               </View>
               <View style={styles.trophyWrap}>
                 <View style={[styles.trophyCircle, { backgroundColor: theme['background-basic-color-3'] }]}>
+                  {/* BUG FIX: 'trophy' isn't a real Eva Icons name (same
+                      class of crash as SystemDesignWhiteboard's
+                      'minus-outline' and App.tsx's 'tools-outline') --
+                      'award'/'award-outline' is the closest real icon in
+                      the pack for a leaderboard/ranking trophy concept. */}
                   <Icon
                     pack="eva"
-                    name="trophy"
+                    name="award-outline"
                     style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]}
                   />
                 </View>
