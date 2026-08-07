@@ -20,9 +20,10 @@ import NavigationAction from 'components/NavigationAction';
 import ProgressCard from 'src/find/Component/ProgressCard';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList, InterviewFeedbackScreenNavigationProp } from 'navigation/types';
-import { SkillScoreProps, StarBreakdownItemProps } from 'constants/Types';
+import { Interview_Type_Enum, SkillScoreProps, StarBreakdownItemProps } from 'constants/Types';
 import * as feedbackService from 'services/feedbackService';
 import {isFeedbackPending, FeedbackReport} from 'services/feedbackService';
+import * as codingService from 'services/codingService';
 import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import ShareToUserModal from 'components/ShareToUserModal';
 import CtaButton from 'components/CtaButton';
@@ -52,13 +53,48 @@ const PRIMARY_RING_GRADIENT = { progressGradientFrom: '#1DA1F2', progressGradien
 // render loading/error/retry states around that real network call, which the
 // old mock-backed version never needed since a mock couldn't fail.
 const InterviewFeedback = memo(() => {
-  const { navigate, goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<InterviewFeedbackScreenNavigationProp>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
 
-  const { sessionId, interviewType, videoAnalysis } = route.params ?? {};
+  const { sessionId, interviewType, videoAnalysis, codingResult } = route.params ?? {};
+
+  // Product report: "the feedback interview for coding session should be
+  // totally different from the normal interview feedback of the other type
+  // of interview... Things like Star breakdown, video replay should not be
+  // there because its coding session." Extended to System Design too, same
+  // reasoning — neither is a spoken/typed Q&A session, so the conversational
+  // scoring this screen otherwise shows (Skill Breakdown, STAR Breakdown,
+  // Video Analysis, View Replay) doesn't apply and would just read as a
+  // wall of meaningless near-0 scores.
+  const isNonQaType =
+    interviewType === Interview_Type_Enum.Coding || interviewType === Interview_Type_Enum.SystemDesign;
+
+  // Product report: "The AI code review button should not be in the coding
+  // session. It should be in the feedback screen because thats where the
+  // user will see the AI feedback." CodingInterview.tsx threads the final
+  // code/language/problem through `codingResult` (see navigation/types.tsx)
+  // so this exact same codingService.getCodeReview call — previously fired
+  // from that screen — can live here instead.
+  const [isReviewingCode, setIsReviewingCode] = React.useState(false);
+  const [codeReview, setCodeReview] = React.useState<{ complexityNote: string; feedback: string[] } | null>(null);
+  const onGetCodeReview = async () => {
+    if (!codingResult || isReviewingCode) return;
+    setIsReviewingCode(true);
+    try {
+      const result = await codingService.getCodeReview(codingResult.code, codingResult.language, codingResult.problemStatement);
+      setCodeReview(result);
+    } catch (e: any) {
+      Alert.alert(
+        t('find:review_failed', { defaultValue: 'Review failed' }),
+        e?.message ?? t('find:review_failed_body', { defaultValue: 'Could not get an AI code review. Please try again.' }),
+      );
+    } finally {
+      setIsReviewingCode(false);
+    }
+  };
 
   // See the "Other Things We Noticed" block below for what these four
   // signals are — computed once here (rather than duplicated inline for
@@ -126,6 +162,30 @@ const InterviewFeedback = memo(() => {
   const isMountedRef = React.useRef(true);
   const pollAttemptsRef = React.useRef(0);
   const pollTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  // BUG FIX (product report: "the progress bar moved but its showing 0% ...
+  // this is how it has been behaving and the value of this particular
+  // feedback is not 0%"): the previous applyFeedbackResult guard (below)
+  // only protects against an in-flight PENDING poll's zeroed payload
+  // stomping an already-loaded real score -- it can't do anything about a
+  // session that's genuinely stuck pending forever. Root cause: automatic
+  // scoring runs on a bare daemon thread (see feedback_job.generate_
+  // background) started right when the interview ends; if that thread gets
+  // orphaned (WSGI worker recycle/restart between the request that started
+  // it and the thread actually finishing -- a known risk of plain
+  // threading instead of a real task queue, called out in that file's own
+  // docstring) the InterviewFeedback row's `overall` column is left NULL
+  // forever, which the backend correctly keeps reporting as status
+  // "pending" (see feedback.py's _feedback_payload) -- so this screen would
+  // otherwise poll for ~60s, give up, and permanently show 0% until the
+  // user notices and manually taps "Regenerate Feedback". Regenerate runs
+  // feedback_job.generate() SYNCHRONOUSLY in the request instead (see
+  // feedback.py's regenerate() comment: "why this isn't queued through
+  // Redis/RQ anymore"), so it reliably completes where the orphaned
+  // background thread didn't. Auto-triggering that same synchronous call
+  // once, right when polling would otherwise give up, self-heals this
+  // exact case invisibly instead of leaving the user staring at a
+  // permanent, wrong 0%.
+  const hasAutoRegeneratedRef = React.useRef(false);
   const POLL_INTERVAL_MS = 3000;
   const MAX_POLL_ATTEMPTS = 20; // ~60s total before giving up and showing whatever came back
 
@@ -168,6 +228,7 @@ const InterviewFeedback = memo(() => {
       pollTimeoutRef.current = null;
     }
     pollAttemptsRef.current = 0;
+    hasAutoRegeneratedRef.current = false;
     setIsLoading(true);
     setIsScoringPending(false);
     setError(null);
@@ -215,6 +276,20 @@ const InterviewFeedback = memo(() => {
         pollTimeoutRef.current = setTimeout(pollFeedback, POLL_INTERVAL_MS);
         return;
       }
+      // See hasAutoRegeneratedRef's comment above onFetchFeedback — still
+      // pending after giving up almost always means the background
+      // generation thread got orphaned, not that scoring is genuinely slow.
+      // One synchronous regenerate call self-heals that silently instead of
+      // leaving the screen stuck on a permanent, wrong 0%.
+      if (isFeedbackPending(result.status) && !hasAutoRegeneratedRef.current) {
+        hasAutoRegeneratedRef.current = true;
+        try {
+          const regenerated = await feedbackService.regenerateFeedback(sessionId);
+          if (isMountedRef.current) applyFeedbackResult(regenerated);
+        } catch {
+          // Falls through to the manual "Regenerate Feedback" button below.
+        }
+      }
       setIsScoringPending(false);
     } catch {
       // A transient failure mid-poll shouldn't kill the whole screen — just
@@ -250,6 +325,17 @@ const InterviewFeedback = memo(() => {
 
   const onPracticeAgain = () => navigate('MockInterviewSetup', {});
   const onDone = () => navigate('MainBottomTab');
+  // BUG FIX (product report: "if i press the back button in the interview
+  // feedback screen it should take me back to the practice screen where i
+  // selected the type of the interview not taking me back to the interview
+  // screen"): the default `goBack` popped exactly one screen off the stack,
+  // which is always the just-finished LiveInterviewSession/CodingInterview/
+  // SystemDesignWhiteboard screen (already-ended, nothing useful to return
+  // to). MockInterviewSetup is already earlier in this same stack (that's
+  // how every path gets here), so navigating there instead pops back past
+  // the finished interview screen straight to setup — same destination as
+  // "Practice Again" below, just without starting a fresh session.
+  const onBackToPractice = () => navigate('MockInterviewSetup', {});
 
   // `status` isn't a confirmed field (see fetchFeedback's comment) — if a
   // response happens to match one of the PENDING_STATUSES strings for some
@@ -265,7 +351,7 @@ const InterviewFeedback = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           title={t('find:interview_feedback')}
-          accessoryLeft={<NavigationAction onPress={goBack} />}
+          accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
         />
         <Content padder contentContainerStyle={styles.content}>
           <Flex center vertical mt={60}>
@@ -287,7 +373,7 @@ const InterviewFeedback = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           title={t('find:interview_feedback')}
-          accessoryLeft={<NavigationAction onPress={goBack} />}
+          accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
         />
         <Content padder contentContainerStyle={styles.content}>
           <Flex center vertical mt={60}>
@@ -308,11 +394,112 @@ const InterviewFeedback = memo(() => {
     );
   }
 
+  // Product report: "the feedback interview for coding session should be
+  // totally different from the normal interview feedback" — see
+  // isNonQaType's own comment above. Entirely separate return, rather than
+  // threading conditionals through the full Q&A layout below, so neither
+  // layout risks accidentally leaking the other's sections.
+  if (isNonQaType) {
+    return (
+      <Container style={styles.container}>
+        <TopNavigation
+          title={t('find:interview_feedback')}
+          accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
+          accessoryRight={
+            sessionId
+              ? () => (
+                  <Icon
+                    pack="eva"
+                    name="people-outline"
+                    style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]}
+                    onPress={() => setIsShareUserModalVisible(true)}
+                  />
+                )
+              : undefined
+          }
+        />
+        {sessionId ? (
+          <ShareToUserModal
+            visible={isShareUserModalVisible}
+            onClose={() => setIsShareUserModalVisible(false)}
+            contentType="feedback"
+            contentId={sessionId}
+          />
+        ) : null}
+        <Content padder contentContainerStyle={styles.content}>
+          <Flex center itemsCenter justify="center" vertical mb={24}>
+            <View style={[styles.doneBadge, { backgroundColor: theme['color-success-transparent-200'] }]}>
+              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon28, { tintColor: theme['color-success-500'] }]} />
+            </View>
+            <Text category="h6" bold mt={16} center>
+              {t('find:coding_session_complete_title', { defaultValue: 'Session complete' })}
+            </Text>
+            {interviewType ? (
+              <Text category="h9" status="placeholder" mt={4} center>
+                {getInterviewTypeLabel(interviewType, t)}
+              </Text>
+            ) : null}
+          </Flex>
+
+          {codingResult && (codingResult.testsTotal ?? 0) > 0 ? (
+            <Layout level="2" style={styles.codingSummaryCard}>
+              <Text category="h8" bold mb={4}>
+                {t('find:test_cases', { defaultValue: 'Test Cases' })}
+              </Text>
+              <Text category="h9-s" status={codingResult.testsPassed === codingResult.testsTotal ? 'success' : 'warning'}>
+                {t('find:test_cases_passed', {
+                  defaultValue: `${codingResult.testsPassed ?? 0} / ${codingResult.testsTotal} test cases passed`,
+                  passed: codingResult.testsPassed ?? 0,
+                  total: codingResult.testsTotal,
+                })}
+              </Text>
+            </Layout>
+          ) : null}
+
+          {/* Coding-only — System Design's own AI review already lives on
+              the whiteboard practice screen itself (product report: "The AI
+              code review button should not be in the coding session. It
+              should be in the feedback screen" was specifically about
+              Coding; system design's equivalent stays where the user is
+              actually mid-sketch — see SystemDesignWhiteboard.tsx). */}
+          {codingResult ? (
+            <>
+              <Button
+                children={isReviewingCode ? t('find:reviewing_code', { defaultValue: 'Reviewing…' }) : t('find:get_ai_code_review', { defaultValue: 'Get AI Code Review' })}
+                disabled={isReviewingCode}
+                status="info"
+                onPress={onGetCodeReview}
+                accessoryLeft={props => <Icon {...props} pack="assets" name="quote" />}
+                style={{ marginTop: 16 }}
+              />
+              {codeReview ? (
+                <Layout level="2" style={styles.codingSummaryCard}>
+                  <Text category="h9" bold status="link" mb={8}>
+                    {codeReview.complexityNote}
+                  </Text>
+                  {codeReview.feedback.map((line, i) => (
+                    <Flex key={i} justify="flex-start" itemsCenter mt={i === 0 ? 0 : 8}>
+                      <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
+                      <Text category="h9-s" ml={10} style={globalStyle.flexOne}>{line}</Text>
+                    </Flex>
+                  ))}
+                </Layout>
+              ) : null}
+            </>
+          ) : null}
+
+          <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 32 }]} />
+          <Button children={t('common:done')} status="outline" onPress={onDone} style={{ marginTop: 16 }} />
+        </Content>
+      </Container>
+    );
+  }
+
   return (
     <Container style={styles.container}>
       <TopNavigation
         title={t('find:interview_feedback')}
-        accessoryLeft={<NavigationAction onPress={goBack} />}
+        accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
         accessoryRight={
           sessionId
             ? () => (
@@ -576,5 +763,19 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 10,
     marginRight: 8,
     marginBottom: 8,
+  },
+  // Coding/System Design's simplified feedback layout — see isNonQaType's
+  // own comment above.
+  doneBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  codingSummaryCard: {
+    ...globalStyle.card,
+    marginTop: 16,
+    padding: 16,
   },
 });
