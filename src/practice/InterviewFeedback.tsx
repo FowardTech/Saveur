@@ -325,17 +325,20 @@ const InterviewFeedback = memo(() => {
 
   const onPracticeAgain = () => navigate('MockInterviewSetup', {});
   const onDone = () => navigate('MainBottomTab');
-  // BUG FIX (product report: "if i press the back button in the interview
-  // feedback screen it should take me back to the practice screen where i
-  // selected the type of the interview not taking me back to the interview
-  // screen"): the default `goBack` popped exactly one screen off the stack,
-  // which is always the just-finished LiveInterviewSession/CodingInterview/
-  // SystemDesignWhiteboard screen (already-ended, nothing useful to return
-  // to). MockInterviewSetup is already earlier in this same stack (that's
-  // how every path gets here), so navigating there instead pops back past
-  // the finished interview screen straight to setup — same destination as
-  // "Practice Again" below, just without starting a fresh session.
-  const onBackToPractice = () => navigate('MockInterviewSetup', {});
+  // REVERTED (product report: "I think you need to remove it and let the
+  // back button [be] the normal back button function... anytime I finish
+  // an interview and then tries to go back from the feedback screen it
+  // goes back to the interview screen and then the end interview just
+  // keep saying ending interview and it refuses to let me close") — this
+  // used to force-navigate to MockInterviewSetup instead of a plain
+  // goBack(), per an earlier report. That masked rather than fixed the
+  // real problem: the just-finished interview screen underneath (Live
+  // InterviewSession/CodingInterview/SystemDesignWhiteboard) was itself
+  // getting stuck on its own "Ending interview..." exit flow — see that
+  // screen's own bug-fix comment for the actual fix. With that screen now
+  // able to close properly, going back to it is no longer a dead end, so
+  // NavigationAction's own default behavior (goBack when no onPress is
+  // given — see components/NavigationAction.tsx) is correct again.
 
   // `status` isn't a confirmed field (see fetchFeedback's comment) — if a
   // response happens to match one of the PENDING_STATUSES strings for some
@@ -351,7 +354,7 @@ const InterviewFeedback = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           title={t('find:interview_feedback')}
-          accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
+          accessoryLeft={<NavigationAction />}
         />
         <Content padder contentContainerStyle={styles.content}>
           <Flex center vertical mt={60}>
@@ -373,7 +376,7 @@ const InterviewFeedback = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           title={t('find:interview_feedback')}
-          accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
+          accessoryLeft={<NavigationAction />}
         />
         <Content padder contentContainerStyle={styles.content}>
           <Flex center vertical mt={60}>
@@ -404,7 +407,7 @@ const InterviewFeedback = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           title={t('find:interview_feedback')}
-          accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
+          accessoryLeft={<NavigationAction />}
           accessoryRight={
             sessionId
               ? () => (
@@ -499,7 +502,7 @@ const InterviewFeedback = memo(() => {
     <Container style={styles.container}>
       <TopNavigation
         title={t('find:interview_feedback')}
-        accessoryLeft={<NavigationAction onPress={onBackToPractice} />}
+        accessoryLeft={<NavigationAction />}
         accessoryRight={
           sessionId
             ? () => (
