@@ -63,11 +63,26 @@ const AdPopupModal: React.FC<Props> = ({ visible, title, body, imageUrl, ctaLabe
 
         {/* Bottom scrim — an arbitrary admin-uploaded photo has no
             guaranteed empty region the way a purpose-built illustration
-            does, so title/body/CTA get a real dark-to-transparent gradient
-            behind them for legibility over any image. */}
+            does, so title/body/CTA get a real dark gradient behind them for
+            legibility over any image.
+            BUG FIX (product report, screenshot: caption card not full
+            width, visible image showing through below the caption): the
+            box itself was already full-width and bottom-anchored (see
+            styles.scrim below — left:0/right:0/bottom:0), so that wasn't
+            actually the bug. The real issue was the gradient's own bottom
+            stop: rgba(0,0,0,0.78) is still 22% see-through, so a bright
+            admin-uploaded image remained faintly visible behind the caption
+            text/CTA/dismiss row instead of reading as a solid container --
+            exactly what looks like "a gap where the image shows through" in
+            a screenshot. Now goes fully opaque (1) at the very bottom and
+            stays solid, not fading, for the last third of the scrim (extra
+            color stop at 0.55), so the lowest portion — where the CTA
+            button and "No thanks" text sit — is a true solid card, while
+            the transition into the image higher up stays a soft gradient. */}
         <LinearGradient
-          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.78)']}
-          style={[styles.scrim, { paddingBottom: bottom + 24 }]}>
+          colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,1)']}
+          locations={[0, 0.55, 1]}
+          style={[styles.scrim, { paddingBottom: bottom + 24, minHeight: Math.round(height * 0.32) }]}>
           <Text category="h4" bold style={styles.title}>
             {title}
           </Text>
