@@ -394,12 +394,25 @@ const LiveInterviewSession = memo(() => {
         const finalTranscript = await speechToText.stop();
         hasRealAnswer = !!finalTranscript.trim();
         if (sessionId && hasRealAnswer) {
-          interviewService
-            .submitAnswer(sessionId, {
+          // BUG FIX (product report: AI interviewer language flipping mid-
+          // session): this used to be fire-and-forget. advanceQuestion()
+          // below calls the backend's "next question" endpoint, which reads
+          // this session's message history to build its prompt — if that
+          // read raced ahead of this POST actually committing, the backend
+          // would generate the next question against STALE history (missing
+          // this answer), which is exactly the malformed-prompt shape that
+          // was found to trigger the language-drift bug (see interviews.py's
+          // _generate_question for the backend-side fix to the same root
+          // cause). Awaiting it here removes the race entirely rather than
+          // relying only on the backend-side mitigation.
+          try {
+            await interviewService.submitAnswer(sessionId, {
               questionId: backendQuestionId ?? `local_q${questionIndex}`,
               text: finalTranscript.trim(),
-            })
-            .catch(err => console.warn('[LiveInterviewSession] voice submitAnswer failed', err));
+            });
+          } catch (err) {
+            console.warn('[LiveInterviewSession] voice submitAnswer failed', err);
+          }
         }
       }
       if (isVoiceMode || isVideoMode) {
