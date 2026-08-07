@@ -888,4 +888,12 @@ export interface NotificationProps {
   // or correlation against the separate GET /api/v1/job-alerts list needed.
   // See services/notificationService.ts for the wire mapping.
   jobAlert?: JobAlertProps;
+  // Generic per-type reference payload (e.g. {session_id: "123"} for
+  // feedback_ready, {course_id: "abc"} for curriculum_week_unlocked) — the
+  // same `data` a push for this exact event already carries. Lets
+  // src/home/Notification/index.tsx route a tap through
+  // services/pushNotificationService.ts's handleDataTap the same way a
+  // push tap already does, instead of only job_alert going anywhere (see
+  // Saveur-Backend's app/models/tracker.py Notification.data).
+  data?: Record<string, string>;
 }

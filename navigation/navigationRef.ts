@@ -61,6 +61,16 @@ type PendingNavigation =
   // to show (the requester already knows who they requested), so it just
   // opens the default "Shared with Me" tab (0).
   | {name: 'SharedWithMe'; params?: {initialTab?: number}}
+  // curriculum_week_unlocked / curriculum_complete / roadmap_step_unlocked /
+  // roadmap_complete push+in-app-notification taps (product report: "the
+  // notifications are not navigating to the individual screens concerned"
+  // — these four kinds existed on both the push and in-app notification
+  // paths already, sent by Saveur-Backend's app/api/learning.py and
+  // app/api/career_roadmap.py, but neither path had ever routed them
+  // anywhere; both fell through to the generic notification list).
+  // roadmap_step_unlocked/roadmap_complete reuse the existing CareerRoadmap
+  // destination above (same screen roadmap_ready already lands on).
+  | {name: 'LearningCourses'}
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
   // matters on first mount, so simply flipping `isSignedIn` to true after
@@ -104,6 +114,8 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('SharedContentDetail', nav.params);
   } else if (nav.name === 'SharedWithMe') {
     navigationRef.navigate('SharedWithMe', nav.params);
+  } else if (nav.name === 'LearningCourses') {
+    navigationRef.navigate('LearningCourses');
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -269,6 +281,14 @@ export function navigateToSharedContentDetail(shareId: string): void {
  * directly on the "Pending Requests" tab. */
 export function navigateToSharedWithMe(initialTab?: number): void {
   queueOrNavigate({name: 'SharedWithMe', params: initialTab !== undefined ? {initialTab} : undefined});
+}
+
+/** curriculum_week_unlocked / curriculum_complete push+in-app-notification
+ * tap (Saveur-Backend's app/api/learning.py sends data.type = one of those)
+ * — takes the user to the Learning Courses list (src/more/LearningCourses.tsx)
+ * instead of the generic in-app notification list. */
+export function navigateToLearningCourses(): void {
+  queueOrNavigate({name: 'LearningCourses'});
 }
 
 /** See the ResetToMain case in PendingNavigation above — call once a cold-

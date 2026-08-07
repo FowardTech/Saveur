@@ -54,6 +54,8 @@ interface NotificationWire {
   read: boolean;
   created_at: string | number;
   job_alert?: NotificationJobAlertWire;
+  // See constants/Types.tsx's NotificationProps.data comment.
+  data?: Record<string, unknown> | null;
 }
 
 // Was the root cause of every notification showing the same wrong relative
@@ -82,6 +84,19 @@ function toMillis(value: string | number | undefined): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
+// The backend's Notification.data is a plain JSON column, so its values
+// could in principle be any JSON type — normalized to strings here since
+// every consumer (handleDataTap's Number()/String() calls) already expects
+// the flat string->string shape a push's `data` payload always has.
+function stringifyNotificationData(data: Record<string, unknown> | null | undefined): Record<string, string> | undefined {
+  if (!data) return undefined;
+  const out: Record<string, string> = {};
+  Object.entries(data).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) out[key] = String(value);
+  });
+  return Object.keys(out).length ? out : undefined;
+}
+
 function fromWire(wire: NotificationWire): NotificationProps {
   const createdAt = toMillis(wire.created_at) ?? Date.now();
   return {
@@ -91,6 +106,7 @@ function fromWire(wire: NotificationWire): NotificationProps {
     type: wire.type,
     read: wire.read ?? false,
     createdAt,
+    data: stringifyNotificationData(wire.data),
     jobAlert: wire.job_alert
       ? {
           id: wire.job_alert.id,

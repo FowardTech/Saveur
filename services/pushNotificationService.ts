@@ -20,6 +20,7 @@ import {
   navigateToGoalTipDetail,
   navigateToSharedContentDetail,
   navigateToSharedWithMe,
+  navigateToLearningCourses,
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 import * as scheduledInterviewService from './scheduledInterviewService';
@@ -138,7 +139,17 @@ function handleNotificationTap(
 // foreground notification below (setupForegroundPushHandler) — the `data`
 // shape is identical either way (it's the same FCM data payload in both
 // cases), so both taps resolve to the same screen.
-function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Record<string, string> | undefined): void {
+//
+// Exported so src/home/Notification/index.tsx's in-app notification list
+// can route through this exact same data.type -> destination table instead
+// of maintaining its own copy — that drift (a push tap knew where every
+// notification type should go; a tap on the same notification's in-app row
+// only ever handled job_alert) was the actual bug behind the product
+// report "the notifications are not navigating to the individual screens
+// concerned". The in-app list passes {type: item.type, ...item.data} (see
+// app/models/tracker.py's Notification.data on the backend), the exact
+// same shape a push's `data` payload already has.
+export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Record<string, string> | undefined): void {
   if (data?.type === 'job_alert') {
     const job = jobFromPushData(data);
     if (job) {
@@ -185,8 +196,23 @@ function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data'] | Reco
       return;
     }
   }
-  if (data?.type === 'roadmap_ready') {
+  // roadmap_step_unlocked/roadmap_complete (Saveur-Backend's
+  // app/api/career_roadmap.py) reuse the same CareerRoadmap destination as
+  // roadmap_ready — previously unhandled entirely (fell through to the
+  // generic notification list on both push and in-app taps).
+  if (
+    data?.type === 'roadmap_ready' ||
+    data?.type === 'roadmap_step_unlocked' ||
+    data?.type === 'roadmap_complete'
+  ) {
     navigateToCareerRoadmap();
+    return;
+  }
+  // AI Curriculum Builder week-unlocked/course-complete (Saveur-Backend's
+  // app/api/learning.py) — previously unhandled entirely, same gap as
+  // roadmap_step_unlocked/roadmap_complete above.
+  if (data?.type === 'curriculum_week_unlocked' || data?.type === 'curriculum_complete') {
+    navigateToLearningCourses();
     return;
   }
   if (data?.type === 'daily_leaderboard_tip') {

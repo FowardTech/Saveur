@@ -19,6 +19,7 @@ import Flex from 'components/Flex';
 import {NotificationProps} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import * as notificationService from 'services/notificationService';
+import {handleDataTap} from 'services/pushNotificationService';
 import Applications from './Applications';
 import CtaButton from 'components/CtaButton';
 
@@ -87,6 +88,19 @@ const Notification = memo(() => {
       // read path below.
       if (item.type === 'job_alert' && item.jobAlert) {
         navigate('JobAlertDetails', {job: item.jobAlert});
+      } else if (item.type) {
+        // BUG FIX (product report: "the notifications are not navigating to
+        // the individual screens concerned") — every OTHER notification
+        // type (feedback_ready, roadmap_ready, payment, goal_tip, etc.)
+        // used to do nothing but mark itself read here, even though an OS
+        // push for the exact same event already routed to the right screen
+        // via services/pushNotificationService.ts's handleDataTap. Reusing
+        // that same function (now exported) instead of a second, drifting
+        // copy of the type->screen table — {type, ...item.data} is the
+        // same shape a push's `data` payload already has (see
+        // services/notificationService.ts's fromWire and Saveur-Backend's
+        // app/models/tracker.py Notification.data).
+        handleDataTap({type: item.type, ...(item.data ?? {})});
       }
 
       if (item.read) return;
