@@ -44,11 +44,22 @@ import { ImportedFileInfo } from "services/resumeService";
 import { AuthContext } from "../../AuthContext";
 import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
+import i18n from "i18next";
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
 // orb (see renderAvatar below), same mark used on the Login screen and
 // onboarding art, instead of the old "Care.n" logo.png raster asset.
-const COACH_USER = { _id: 2, name: "AI Career Coach" };
+//
+// BUG FIX (final audit): `name` was a raw hardcoded English literal —
+// GiftedChat can surface `user.name` in some system-message/accessibility
+// contexts depending on props, so it wasn't guaranteed to stay invisible.
+// This is a module-level constant (outside any component), so it can't use
+// the useTranslation() hook — calling the standalone i18n.t() instance
+// directly works the same way here as it does in services/*.ts files.
+// Reuses common:default_coach_name, which already existed, fully
+// translated in all 12 locales, but had no real call site anywhere in the
+// app until now.
+const COACH_USER = { _id: 2, name: i18n.t('common:default_coach_name', { defaultValue: 'Your AI Coach' }) };
 const ME_USER = { _id: 1 };
 
 // gifted-chat's IMessage is a loose interface — carrying this extra field

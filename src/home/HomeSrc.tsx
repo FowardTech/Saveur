@@ -1513,11 +1513,19 @@ const themedStyles = StyleService.create({
   checkInValue: {
     color: 'text-basic-color',
   },
+  // BUG FIX (dark-mode audit): both of these were hardcoded literal colors
+  // left over from when this card sat on a solid blue gradient (now
+  // disabled, see checkInCardAccent's colors={['transparent','transparent']}
+  // above, same as checkInRingText/checkInValue right above this were
+  // already fixed to use theme tokens) -- '#FFE3E3' (light pink) and
+  // '#FFFFFF' (pure white) both read fine on that old blue fill but are
+  // wrong once the card follows the theme background: invisible-ish in
+  // light mode, wrong contrast in dark mode.
   checkInError: {
-    color: '#FFE3E3',
+    color: 'color-danger-500',
   },
   checkInRetry: {
-    color: '#FFFFFF',
+    color: 'text-basic-color',
     textDecorationLine: 'underline',
   },
   // Layered on top of checkInButton's own white-pill shape/spacing/padding

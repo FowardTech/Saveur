@@ -68,15 +68,13 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderBottomWidth: 2,
   },
-  labelContainer: {
-    position: "absolute",
-    paddingHorizontal: 8,
-    backgroundColor: "#FFF",
-  },
-  label: {
-    fontSize: 14,
-    fontFamily:'PlusJakartaSans-Medium'
-  },
+  // Redundancy cleanup: labelContainer/label were a leftover manual
+  // floating-label implementation, never referenced anywhere in this
+  // file's render -- the `label` prop is passed straight to UI Kitten's
+  // <Input label={label} /> above, which renders its own theme-aware
+  // floating label. These two were dead code (and labelContainer's
+  // hardcoded backgroundColor: "#FFF" would have been a real dark-mode
+  // bug had it ever actually rendered).
   enhancerContainer: {
     position: "absolute",
     top: 12,

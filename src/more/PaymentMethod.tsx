@@ -197,7 +197,15 @@ const PaymentMethod = memo(() => {
                 justify="flex-start"
                 border={12}
                 style={[
-                  {backgroundColor: '#fff', borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
+                  // BUG FIX (dark-mode audit): this hardcoded backgroundColor:
+                  // '#fff' directly contradicted the comment above ("No fill
+                  // — border-only") and was overriding the theme-aware
+                  // background `level="2"` already applies (see Flex.tsx —
+                  // backgroundColor: theme['background-basic-color-2']),
+                  // so every payment method row rendered as a solid white
+                  // card floating on a dark screen in dark mode. Dropped so
+                  // the level-2 theming actually takes effect.
+                  {borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
                   item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined,
                 ]}>
                 {/* Bug report: this used to be a real colored card-brand

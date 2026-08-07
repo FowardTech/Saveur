@@ -196,8 +196,17 @@ const JobAlertDetails = memo(() => {
               })}
         </Text>
 
-        <CtaButton onPress={onApply} style={{display:job.applied ? 'none':'flex'}}>
-          {job.source
+        {/* BUG FIX (final audit): the copy right above this promises "you
+            can still reopen it if you need to" once job.applied is true,
+            but the button itself was hidden (display:'none') in exactly
+            that state — a genuine dead end with no other way back to the
+            listing. onApply just opens job.applyUrl in a WebView either
+            way, so it's always safe to keep tappable; only the label
+            changes once already applied. */}
+        <CtaButton onPress={onApply}>
+          {job.applied
+            ? t('more:reopen_job_posting', {defaultValue: 'Reopen listing'})
+            : job.source
             ? t('more:apply_on_source', {defaultValue: `Apply on ${job.source}`, source: job.source})
             : t('more:apply_for_this_job', {defaultValue: 'Apply for this job'})}
         </CtaButton>
