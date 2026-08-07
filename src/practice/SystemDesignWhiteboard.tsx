@@ -109,11 +109,23 @@ const DraggableShapeOverlay: React.FC<{
   // recreate the gesture object itself on every render.
   const onMoveRef = React.useRef(onMove);
   onMoveRef.current = onMove;
+  // BUG FIX (crash report: "[Worklets] Tried to synchronously call a
+  // non-worklet function `dispatchSetState` on the UI thread") — see
+  // drawGesture's identical `.runOnJS(true)` fix below for the full
+  // explanation. onMoveRef.current(...) here ultimately calls moveElement,
+  // which is a plain setElements(...) React state update — exactly the
+  // same "non-worklet function called from a UI-thread worklet" violation,
+  // just not yet hit by a real device with Reanimated actually enforcing
+  // it. `.runOnJS(true)` makes this callback run on the JS thread like
+  // every other event handler in this file, where a plain state setter is
+  // always safe to call directly.
   const gesture = React.useMemo(
     () =>
-      Gesture.Pan().onUpdate(e => {
-        onMoveRef.current(e.changeX, e.changeY);
-      }),
+      Gesture.Pan()
+        .runOnJS(true)
+        .onUpdate(e => {
+          onMoveRef.current(e.changeX, e.changeY);
+        }),
     [],
   );
   return (
@@ -228,9 +240,34 @@ const SystemDesignWhiteboard = memo(() => {
   // below. Recreated (via useMemo) whenever activeTool flips so
   // GestureDetector always holds the current enabled/disabled gesture —
   // cheap, and gestures aren't meant to be mutated in place after creation.
+  // BUG FIX (crash report, screenshot: "[Worklets] Tried to synchronously
+  // call a non-worklet function `dispatchSetState` on the UI thread" —
+  // pointing straight at this gesture's onBegin/onUpdate, the
+  // setActivePathD calls specifically): react-native-gesture-handler's
+  // Gesture.Pan() callbacks (onBegin/onUpdate/onEnd/onFinalize) run as
+  // REANIMATED WORKLETS on the UI thread by default whenever Reanimated is
+  // installed (it is here — see App.tsx's GestureHandlerRootView and this
+  // file's own header comment on why RNGH was chosen over PanResponder in
+  // the first place). A worklet runs on a separate native thread with its
+  // own restricted JS runtime; it can't just call an arbitrary "normal" JS
+  // function like a React state setter (setActivePathD) or freely mutate a
+  // plain useRef the way this file does throughout (activePathRef.current
+  // = ...) — those only exist on the JS thread, and calling into them
+  // synchronously from the UI thread is exactly what Worklets' own runtime
+  // check caught and threw on here. None of this file's drawing logic
+  // (building up an SVG path string in a ref, committing it to state)
+  // needs UI-thread-level performance in the first place — it was never
+  // written with worklets/runOnJS/shared values in mind at all, just
+  // ordinary refs and setState the same as the old PanResponder version.
+  // `.runOnJS(true)` is RNGH's documented escape hatch for exactly this:
+  // it forces every callback on this gesture to run on the JS thread
+  // instead, where plain refs and state setters are always safe to touch
+  // directly, without needing to rewrite this file's logic around
+  // worklets/runOnJS calls at every single ref/state access.
   const drawGesture = React.useMemo(
     () =>
       Gesture.Pan()
+        .runOnJS(true)
         .enabled(activeTool === 'draw')
         .minDistance(0)
         .onBegin(e => {
