@@ -1,11 +1,12 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
   useTheme,
   Icon,
+  Spinner,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -17,9 +18,12 @@ import Container from 'components/Container';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { DATA_INTERVIEW_TYPES } from 'constants/Data';
-import { Interview_Type_Enum } from 'constants/Types';
+import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as configService from 'services/configService';
+import * as interviewService from 'services/interviewService';
+import { getSessionEntitlement } from 'services/entitlementsService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { AuthContext } from '../../AuthContext';
 import ThemeContext from '../../ThemeContext';
 import { tileColorAt } from 'styles/tileColors';
 
@@ -41,26 +45,86 @@ const FindScreen = memo(() => {
   // while everywhere else in dark mode has color variety.
   const { theme: appTheme } = React.useContext(ThemeContext);
   const isDarkMode = appTheme === 'dark';
+  const { subscription } = React.useContext(AuthContext);
 
   const onStartSetup = (interviewType?: Interview_Type_Enum) => {
     navigate('MockInterviewSetup', { interviewType });
   };
 
+  // Coding Practice tile (product report: "I removed the coding practice
+  // in the tools in the practice screen could you bring it back" — a
+  // follow-up reversing an earlier product request that had dropped this
+  // same tile, on the reasoning that the feature was "still reachable via
+  // MockInterviewSetup"; evidently that extra tap-through wasn't wanted
+  // after all). Starts a real session immediately (same as
+  // MockInterviewSetup.tsx's onStart does for a Coding pick) so this
+  // shortcut still shows up in Practice History — pre-checks entitlement
+  // so a free user past their session cap gets the real upgrade prompt
+  // instead of a silent no-op or raw backend error, and guards against
+  // double-taps with its own loading state.
+  const [isStartingCoding, setIsStartingCoding] = React.useState(false);
+  const onStartCodingPractice = async () => {
+    if (isStartingCoding) return;
+    setIsStartingCoding(true);
+    try {
+      const entitlement = await getSessionEntitlement(subscription);
+      if (!entitlement.canStart) {
+        Alert.alert(
+          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
+          t('find:free_limit_reached_body', {
+            limit: entitlement.sessionsLimit ?? 5,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              onPress: () => navigate('Subscription'),
+            },
+          ],
+        );
+        return;
+      }
+      const { sessionId } = await interviewService.startSession({
+        interviewType: Interview_Type_Enum.Coding,
+        mode: Practice_Mode_Enum.Text,
+        difficulty: Difficulty_Enum.Intermediate,
+        timed: true,
+      });
+      navigate('CodingInterview', { sessionId, interviewType: Interview_Type_Enum.Coding });
+    } catch (e: any) {
+      // See MockInterviewSetup.tsx's identical branch for why llm_unavailable
+      // gets its own copy instead of just showing e.message.
+      const body = e?.error === 'llm_unavailable'
+        ? t('find:interview_unavailable_body', {
+            defaultValue: 'Video, voice, and text interviews are temporarily unavailable. Please try again later.',
+          })
+        : e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' });
+      Alert.alert(
+        t('find:start_interview_failed', { defaultValue: 'Could not start interview' }),
+        body,
+      );
+    } finally {
+      setIsStartingCoding(false);
+    }
+  };
+
   // eva outline icons (see constants/Data.ts's DATA_INTERVIEW_TYPES comment
   // for why — same reasoning applies here, this row used to mix the custom
   // "assets" pack's filled 'myPost' badge icon with thinner line-art ones).
-  // Coding Practice tile removed (product request) — the underlying
-  // feature is untouched, still reachable from MockInterviewSetup's own
-  // "Coding" option; this was just an extra shortcut entry point here.
   const TOOLS = [
-    { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder') },
-    { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer') },
+    { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder'), loading: false },
+    { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer'), loading: false },
+    // Admin-configurable — see the Feature Flags page / services/configService.ts.
+    ...(configService.isFeatureEnabled('coding_practice')
+      ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice, loading: isStartingCoding }]
+      : []),
     // Practical Scenarios (product request) — the hands-on equivalent of
     // Coding Practice for non-engineering tracks. Routes to a setup screen
-    // (pick a field + role) rather than starting immediately, since it
-    // needs that choice first.
+    // (pick a field + role) rather than starting immediately like Coding
+    // Practice does, since it needs that choice first.
     ...(configService.isFeatureEnabled('practical_scenarios')
-      ? [{ title: t('find:practical_scenarios', { defaultValue: 'Practical Scenarios' }), icon: 'compass-outline', onPress: () => navigate('PracticalScenarioSetup') }]
+      ? [{ title: t('find:practical_scenarios', { defaultValue: 'Practical Scenarios' }), icon: 'compass-outline', onPress: () => navigate('PracticalScenarioSetup'), loading: false }]
       : []),
   ];
 
@@ -134,10 +198,9 @@ const FindScreen = memo(() => {
         <Text category="h6" bold mt={32} mb={16}>
           {t('find:tools')}
         </Text> */}
-        {/* Product request — drop the Coding Practice tile (still reachable
-            from MockInterviewSetup's own Coding option) and restack the
-            remaining tiles as full-width rows instead of a 3-wide square
-            grid, per explicit reference. */}
+        {/* Full-width rows (product request, superseding an earlier
+            3-wide-grid layout) — Coding Practice is back in this list (see
+            TOOLS above). */}
         <View style={{marginTop: 10,}}>
           {TOOLS.map((tool, i) => {
             const tile = tileColorAt(i);
@@ -148,13 +211,18 @@ const FindScreen = memo(() => {
                 key={i}
                 activeOpacity={0.7}
                 onPress={tool.onPress}
+                disabled={tool.loading}
                 style={[styles.toolRow, { backgroundColor: bg }]}>
                 <View style={[styles.toolIconWrap, { backgroundColor: isDarkMode ? theme['transparent'] : theme['background-basic-color-1'] }]}>
-                  <Icon
-                    pack="eva"
-                    name={tool.icon}
-                    style={[globalStyle.icon20, { tintColor: fg }]}
-                  />
+                  {tool.loading ? (
+                    <Spinner size="small" />
+                  ) : (
+                    <Icon
+                      pack="eva"
+                      name={tool.icon}
+                      style={[globalStyle.icon20, { tintColor: fg }]}
+                    />
+                  )}
                 </View>
                 <Text category="h9" bold numberOfLines={1} style={[styles.toolLabel, { color: fg }]}>
                   {tool.title}
