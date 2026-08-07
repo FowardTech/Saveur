@@ -1244,12 +1244,17 @@ const HomeSrc = memo(() => {
                   entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
                 ]}>
                 <View style={[styles.leaderboardRank]}>
-                  {/* Trophy icon instead of the "1" for whoever's leading,
-                      per explicit follow-up — every other rank keeps its
-                      plain number badge. */}
+                  {/* Trophy instead of the "1" for whoever's leading, per
+                      explicit follow-up — every other rank keeps its plain
+                      number badge. Was a 🏆 emoji (rendered inconsistently
+                      across devices/fonts); now the same real trophy image
+                      used on the full Leaderboard screen (product request:
+                      "Replace the trophy icon in the leaderboard screen
+                      with image 2"), so both surfaces show the same
+                      illustrated trophy instead of an emoji here and a
+                      real graphic there. */}
                   {entry.rank === 1 ? (
-
-                    <Text>🏆</Text>
+                    <Image source={Images.trophy} style={styles.leaderboardTrophyImage} resizeMode="contain" />
                   ) : (
                     <Text category="h9-s" bold style={{ color: medal.text }}>
                       {entry.rank}
@@ -1647,6 +1652,13 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
+  },
+  // Real trophy image for rank 1 (see the JSX comment above) — sized to sit
+  // comfortably inside the same 28x28 leaderboardRank badge the plain
+  // number ranks use, rather than the badge growing around it.
+  leaderboardTrophyImage: {
+    width: 22,
+    height: 22,
   },
   leaderboardAvatar: {
     marginRight: 10,

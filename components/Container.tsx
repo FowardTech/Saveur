@@ -1,5 +1,5 @@
 import React from "react";
-import { Layout, LayoutProps } from "@ui-kitten/components";
+import { Layout, LayoutProps, useTheme } from "@ui-kitten/components";
 import useLayout from "hooks/useLayout";
 import ThemeContext from "../ThemeContext";
 
@@ -36,7 +36,27 @@ const Container: React.FC<ContainerProps> = ({
 }) => {
   const { top, bottom } = useLayout();
   const { theme: appTheme } = React.useContext(ThemeContext);
+  const theme = useTheme();
   const resolvedLevel = level ?? (appTheme === "dark" ? "1" : "3");
+  // Product request ("give the app background body a very subtle light
+  // blue color"): the page body used to just be `background-basic-color-3`
+  // (light mode: #F0F0F0, a flat neutral gray — see this file's own git
+  // history above for why level=3 was picked). That same token is also
+  // shared by a bunch of small UI elements throughout the app (badge
+  // pills, inactive date circles, etc. — see e.g. HomeSrc.tsx's
+  // checkInButton/checkInBadgesButton), so recoloring the TOKEN itself
+  // would have tinted all of those too, not just the page background this
+  // request is actually about. A separate `background-page-body` token
+  // (added to both theme JSONs) keeps this scoped to exactly the one
+  // surface being asked for — only applied when the caller hasn't already
+  // passed their own explicit `level` (i.e. this is genuinely being used in
+  // its default "page body" role, not some other custom-leveled surface),
+  // and only in light mode: dark mode's existing background-basic-color-1
+  // (#12121F) already reads as a subtle dark navy/blue, so it's left
+  // untouched rather than risking the elevation contrast this file's own
+  // comment above already carefully reasons through.
+  const bodyBackgroundOverride =
+    level === undefined && appTheme !== "dark" ? { backgroundColor: theme["background-page-body"] } : null;
   return (
     <Layout
       level={resolvedLevel}
@@ -44,6 +64,7 @@ const Container: React.FC<ContainerProps> = ({
       style={[
         { flex: 1 },
         useSafeArea && { paddingTop: top, paddingBottom: bottom },
+        bodyBackgroundOverride,
         style,
       ]}
     >

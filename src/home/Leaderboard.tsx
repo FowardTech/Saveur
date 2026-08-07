@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Image } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -20,6 +20,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { LeaderboardEntryProps } from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
 import CtaButton from 'components/CtaButton';
+import { Images } from 'assets/images';
 
 // REDESIGN (product request, explicit reference screenshot: a colorful
 // podium with a blue "trophy" hero banner up top, a tinted card per
@@ -179,6 +180,18 @@ const Leaderboard = memo(() => {
   // lopsided with only 1-2 real spots filled in.
   const podiumEntry = (rank: 1 | 2 | 3) => top3[rank - 1];
 
+  // "make that leaderboard screen more professional" — a per-period caption
+  // under the trophy so the hero card reads as "here's who's winning right
+  // now" rather than just a static graphic, same idea as a real leaderboard
+  // product (Duolingo, Strava, etc.) framing the podium around a specific
+  // time window instead of leaving it ambiguous.
+  const periodCaption =
+    activePeriod === 'daily'
+      ? t('home:leaderboard_caption_daily', { defaultValue: "Today's top performers" })
+      : activePeriod === 'weekly'
+      ? t('home:leaderboard_caption_weekly', { defaultValue: "This week's top performers" })
+      : t('home:leaderboard_caption_monthly', { defaultValue: "This month's top performers" });
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -186,6 +199,17 @@ const Leaderboard = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder contentContainerStyle={styles.content}>
+        {/* Product polish pass ("make that leaderboard screen more
+            professional") — a one-line subhead under the title, same role
+            a real product's leaderboard screen almost always has (context
+            for what's being ranked and why), which this screen never had —
+            it went straight from the nav bar into the trophy hero card with
+            nothing explaining what the rankings even measure. */}
+        <Text category="h9-s" status="placeholder" mb={4}>
+          {t('home:leaderboard_subtitle', {
+            defaultValue: 'See how your XP stacks up against the Saveur community.',
+          })}
+        </Text>
         {isLoading ? (
           <Flex itemsCenter justify="center" style={styles.status}>
             <Spinner size="large" />
@@ -238,18 +262,24 @@ const Leaderboard = memo(() => {
                 })}
               </View>
               <View style={styles.trophyWrap}>
-                <View style={[styles.trophyCircle, { backgroundColor: theme['background-basic-color-3'] }]}>
-                  {/* BUG FIX: 'trophy' isn't a real Eva Icons name (same
-                      class of crash as SystemDesignWhiteboard's
-                      'minus-outline' and App.tsx's 'tools-outline') --
-                      'award'/'award-outline' is the closest real icon in
-                      the pack for a leaderboard/ranking trophy concept. */}
-                  <Icon
-                    pack="eva"
-                    name="award-outline"
-                    style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]}
-                  />
+                {/* Product request: "Replace the trophy icon in the
+                    leaderboard screen with image 2" — was a plain Eva
+                    'award-outline' glyph (a flat-icon substitute, since
+                    'trophy' isn't a real Eva Icons name) tinted brand-blue
+                    inside a gray circle. Now the real illustrated gold
+                    trophy graphic (assets/images/img_trophy.png). It's
+                    already a finished, full-color illustration, so it sits
+                    on a soft warm-gold-tinted backdrop instead of the old
+                    flat gray icon-circle treatment (which was designed
+                    around a monochrome glyph, not a real image) — reads as
+                    a genuine badge/award moment rather than a generic
+                    icon-in-a-box. */}
+                <View style={styles.trophyCircle}>
+                  <Image source={Images.trophy} style={styles.trophyImage} resizeMode="contain" />
                 </View>
+                <Text category="h10" bold status="placeholder" mt={10} center>
+                  {periodCaption}
+                </Text>
               </View>
             </View>
 
@@ -300,8 +330,18 @@ const Leaderboard = memo(() => {
             </View>
 
             {rest.length > 0 ? (
-              <View style={styles.listCard}>
-                {rest.map((entry, index) => (
+              <>
+                {/* Section label (polish pass) — the podium above and this
+                    list read as two disconnected blocks with nothing
+                    marking where "the podium" ends and "everyone else"
+                    begins; a plain section header is a small thing but is
+                    exactly what a real, professional ranked-list screen
+                    (App Store charts, Strava segments, etc.) always has. */}
+                <Text category="h9" bold mt={24} mb={10}>
+                  {t('home:leaderboard_more_rankings', { defaultValue: 'More Rankings' })}
+                </Text>
+                <View style={styles.listCard}>
+                  {rest.map((entry, index) => (
                   <View
                     key={entry.id}
                     style={[
@@ -329,8 +369,9 @@ const Leaderboard = memo(() => {
                       <ChangeBadge changePct={entry.changePct} t={t} />
                     </View>
                   </View>
-                ))}
-              </View>
+                  ))}
+                </View>
+              </>
             ) : null}
           </>
         )}
@@ -376,16 +417,25 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  // Neutral icon-circle behind the trophy now that it's no longer sitting
-  // on a colored gradient fill to stand out against — same treatment as
-  // this app's other icon-in-circle badges (brand-blue icon on a light
-  // neutral disc).
+  // Soft warm-gold backdrop behind the real trophy image (see the JSX
+  // comment above) — a literal one-off tint rather than a shared theme
+  // token, deliberately picked to complement the trophy graphic's own
+  // gold/amber palette instead of the app's usual brand-blue icon-circle
+  // treatment, which was designed around a flat monochrome glyph, not a
+  // full-color illustration. Bigger than the old 64px icon circle (88px)
+  // since a real illustrated graphic reads better with more breathing room
+  // than a small glyph does.
   trophyCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(217, 160, 44, 0.14)',
+  },
+  trophyImage: {
+    width: 56,
+    height: 56,
   },
   // Top-3 podium — 3 separate tinted cards (2nd/1st/3rd left-to-right,
   // matching the reference's own arrangement), each sized taller for a

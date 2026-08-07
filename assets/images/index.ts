@@ -221,4 +221,13 @@ export const Images = {
   // to just the real illustration content (1609x2528) so there's no black
   // strip down either side when this renders full-bleed.
   jobAlertsOnboarding: require("./img_job_alerts_onboarding.png"),
+  // Real gold trophy graphic (product request: "Replace the trophy icon in
+  // the leaderboard screen with image 2") — replaces the plain Eva
+  // 'award-outline' glyph in src/home/Leaderboard.tsx's hero card and the
+  // 🏆 emoji used for the #1 spot in src/home/HomeSrc.tsx's leaderboard
+  // preview, so both leaderboard surfaces show the same real illustrated
+  // trophy instead of a generic icon/emoji. Genuinely transparent PNG
+  // (verified via its alpha channel), 674x663 — square-ish, no backdrop
+  // baked in, so it drops cleanly onto any surface.
+  trophy: require('./img_trophy.png'),
 };
