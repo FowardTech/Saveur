@@ -43,12 +43,48 @@ interface Props {
 const AdPopupModal: React.FC<Props> = ({ visible, title, body, imageUrl, ctaLabel, onCta, onDismiss }) => {
   const { t } = useTranslation('common');
   const { width, height, top, bottom } = useLayout();
+  // BUG FIX (product report: "the pop up advert [is what's] freezing the
+  // app... anytime it loads and i try to scroll it just freezes and
+  // refuses to scroll" — traced by the user to this modal specifically):
+  // this Modal was rendered with `transparent` even though its own content
+  // is fully opaque (a solid #000 backdrop behind a full-bleed cover
+  // Image) — `transparent` should only be used for a modal that's
+  // genuinely meant to show the screen behind it dimmed through, which
+  // this one never was (see the file header comment: "fills the entire
+  // screen edge-to-edge"). A `transparent` RN Modal renders as a lighter-
+  // weight overlay window (an Android Dialog with a transparent theme
+  // under the hood, not a fully opaque new Activity-level surface), which
+  // has a well-documented Android RN bug where touch/gesture events can
+  // bleed through to the screen still mounted underneath instead of being
+  // fully captured by the modal — with Home's ScrollView sitting right
+  // there, that's exactly a recipe for two different responders (the
+  // modal's own touch handling and Home's ScrollView) fighting over the
+  // same touch stream, which reads to a user as "the screen just freezes
+  // and won't scroll." Since this modal was never actually meant to be
+  // see-through, dropping `transparent` here removes the buggy code path
+  // entirely while changing nothing about how it looks (still a full,
+  // solid #000 + image screen either way).
+  const [imageFailed, setImageFailed] = React.useState(false);
+  React.useEffect(() => {
+    // Reset the fallback flag every time a new ad image comes in — a
+    // previous ad's broken URL shouldn't permanently pin this to the local
+    // fallback image for every ad shown afterward.
+    setImageFailed(false);
+  }, [imageUrl]);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onDismiss} statusBarTranslucent>
+    <Modal visible={visible} animationType="slide" onRequestClose={onDismiss} statusBarTranslucent>
       <View style={[styles.container, { width, height }]}>
         <Image
-          source={imageUrl ? { uri: imageUrl } : Images.homeBannerAiCoach}
+          // BUG FIX (same report): a broken/slow admin-uploaded imageUrl
+          // used to just render blank, leaving the solid #000 backdrop as
+          // the only visible thing on screen — indistinguishable from a
+          // frozen black screen to a user who doesn't know an ad was even
+          // supposed to be here. Falls back to the same local asset used
+          // when no imageUrl is set at all, so a bad URL degrades to a
+          // working (if generic) ad instead of an apparently-broken app.
+          source={imageUrl && !imageFailed ? { uri: imageUrl } : Images.homeBannerAiCoach}
+          onError={() => setImageFailed(true)}
           resizeMode="cover"
           style={[styles.image, { width, height }]}
         />
