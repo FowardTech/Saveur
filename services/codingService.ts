@@ -262,14 +262,14 @@ export async function getCodeReview(
 
 /**
  * POST /api/v1/coding/system-design — AI feedback on a free-text system
- * design writeup. NOT currently called anywhere: SystemDesignWhiteboard.tsx
- * is a purely visual freehand-sketch + shape-stamp canvas (react-native-svg
- * strokes/rects/circles/arrows) with no text notes/description captured or
- * exported anywhere in that screen today, so there's no `notes` string to
- * send without inventing a new text-entry UI that isn't part of this task's
- * scope. Exposed here, same as resumeService's exportResume/
- * updateResumeSections, for whichever future pass adds a notes field (e.g. a
- * "describe your design" text box alongside the canvas) to that screen.
+ * design writeup. Called from SystemDesignWhiteboard.tsx's "Get AI Review"
+ * action: the whiteboard itself is a purely visual freehand-sketch +
+ * shape-stamp canvas (react-native-svg strokes/rects/circles/arrows) with
+ * nothing exportable as text, so the candidate types a brief explanation of
+ * what they sketched (designNotes) and that's what actually gets reviewed
+ * here — same as talking a design through out loud in a real interview.
+ * (Comment previously said this was unused — that was stale; the calling
+ * UI shipped in a later pass.)
  */
 export async function getSystemDesignFeedback(notes: string): Promise<SystemDesignFeedbackResult> {
   const {data} = await apiClient.post<{
