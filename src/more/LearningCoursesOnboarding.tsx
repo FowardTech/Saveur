@@ -63,7 +63,7 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
       />
       <View style={[styles.ctaWrap, { paddingBottom: bottom + 24 }]}>
         <CtaButton style={globalStyle.shadowBtn} onPress={onGetStarted}>
-          {t('more:learning_onboarding_get_started', { defaultValue: 'Get Started' })}
+          {t('common:continue', { defaultValue: 'Continue' })}
         </CtaButton>
         <Text
           category="h10"
@@ -72,7 +72,7 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
           mt={12}
           onPress={onGetStarted}
           style={styles.skipText}>
-          {t('more:learning_onboarding_skip', { defaultValue: 'Skip for now' })}
+          {t('more:onboarding_skip_for_now', { defaultValue: 'Skip for now' })}
         </Text>
       </View>
     </View>

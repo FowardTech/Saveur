@@ -59,7 +59,7 @@ const JobAlertsOnboarding = memo(({ onGetStarted }: JobAlertsOnboardingProps) =>
       />
       <View style={[styles.ctaWrap, { paddingBottom: bottom + 24 }]}>
         <CtaButton style={globalStyle.shadowBtn} onPress={onGetStarted}>
-          {t('more:job_alerts_onboarding_get_started', { defaultValue: 'Get Started' })}
+          {t('common:continue', { defaultValue: 'Continue' })}
         </CtaButton>
         <Text
           category="h10"
@@ -68,7 +68,7 @@ const JobAlertsOnboarding = memo(({ onGetStarted }: JobAlertsOnboardingProps) =>
           mt={12}
           onPress={onGetStarted}
           style={styles.skipText}>
-          {t('more:job_alerts_onboarding_skip', { defaultValue: 'Skip for now' })}
+          {t('more:onboarding_skip_for_now', { defaultValue: 'Skip for now' })}
         </Text>
       </View>
     </View>
