@@ -146,6 +146,62 @@ const HomeSrc = memo(() => {
     loadUnreadCount();
   }, [loadUnreadCount]);
 
+  // BUG FIX (repeat product report: "the pop up advert is still freezing
+  // the app... I thought you have solved this issue already?") — every
+  // previous round of fixes (removing AdPopupModal's buggy `transparent`
+  // prop, deferring its open with InteractionManager.runAfterInteractions)
+  // treated the ad popup as the sole cause, in isolation. It wasn't: this
+  // screen has FOUR separate auto-triggered overlays that each
+  // independently decide, on their own effect, to flip their own `visible`
+  // state to true on Home mount/focus — the App Tour walkthrough (below),
+  // the daily goal check-in sheet, the app-rating prompt, and the ad popup
+  // itself — every one of them a real native RN <Modal> (three of the four
+  // already `transparent`). None of them has ever known whether one of the
+  // OTHERS is already open. A brand new or returning user can easily
+  // satisfy two of these conditions at once (e.g. hasn't seen the tour yet
+  // AND it's before noon with no goal answered yet AND an ad happens to be
+  // available) — when that happens, TWO native Modals end up mounted at
+  // the same time, which is a well-documented Android RN failure mode
+  // (simultaneous Modals fight over the same native Window for touch
+  // dispatch) and matches "loads then freezes, won't scroll, won't
+  // dismiss" exactly — regardless of which two specific overlays actually
+  // collided, or whether the ad was even one of them. That's why fixing
+  // AdPopupModal in isolation, twice, never fully made the reports stop.
+  //
+  // This tiny queue makes sure only ONE of the four is ever visible at a
+  // time: each overlay "requests" its slot instead of just setting its own
+  // visible flag on its own, waits (still queued, not shown) if someone
+  // else already holds the slot, and "releases" it on dismiss/submit/close
+  // so the next queued one (if any) gets its turn. OVERLAY_PRIORITY governs
+  // which queued overlay goes next when a slot frees up with more than one
+  // waiting — roughly most-important-first (the one-time tour, then the
+  // time-sensitive morning check-in, then the rating ask, then the ad
+  // last, since it's the least essential and already the only one of the
+  // four with its own deliberate entry delay).
+  const OVERLAY_PRIORITY = ['tour', 'checkin', 'rating', 'ad'] as const;
+  type AutoOverlayKey = (typeof OVERLAY_PRIORITY)[number];
+  const [activeOverlay, setActiveOverlay] = React.useState<AutoOverlayKey | null>(null);
+  const activeOverlayRef = React.useRef<AutoOverlayKey | null>(null);
+  activeOverlayRef.current = activeOverlay;
+  const overlayQueueRef = React.useRef<AutoOverlayKey[]>([]);
+  const requestOverlay = React.useCallback((key: AutoOverlayKey) => {
+    if (activeOverlayRef.current === null) {
+      setActiveOverlay(key);
+      return;
+    }
+    if (activeOverlayRef.current !== key && !overlayQueueRef.current.includes(key)) {
+      overlayQueueRef.current.push(key);
+    }
+  }, []);
+  const releaseOverlay = React.useCallback((key: AutoOverlayKey) => {
+    overlayQueueRef.current = overlayQueueRef.current.filter(k => k !== key);
+    if (activeOverlayRef.current !== key) return;
+    overlayQueueRef.current.sort(
+      (a, b) => OVERLAY_PRIORITY.indexOf(a) - OVERLAY_PRIORITY.indexOf(b),
+    );
+    setActiveOverlay(overlayQueueRef.current.shift() ?? null);
+  }, []);
+
   // One-time "how this app works" walkthrough (components/AppTour.tsx) —
   // checked on every Home focus (not just mount) rather than once, so
   // MoreSrc.tsx's "Show app tour" replay entry (which clears this same
@@ -155,14 +211,18 @@ const HomeSrc = memo(() => {
   useFocusEffect(
     React.useCallback(() => {
       AsyncStorage.getItem(EKeyAsyncStorage.appTourSeen).then(seen => {
-        if (!seen) setShowTour(true);
+        if (!seen) {
+          setShowTour(true);
+          requestOverlay('tour'); // see OVERLAY_PRIORITY's own comment above
+        }
       });
-    }, []),
+    }, [requestOverlay]),
   );
   const onCloseTour = React.useCallback(() => {
     setShowTour(false);
+    releaseOverlay('tour');
     AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => { });
-  }, []);
+  }, [releaseOverlay]);
 
   // Regular QA rating prompt (product request item: "a regular if not
   // weekly or monthly app rating that will pop up as modal... for quality
@@ -206,17 +266,19 @@ const HomeSrc = memo(() => {
         const queued = (await AsyncStorage.getItem(EKeyAsyncStorage.ratingPromptQueued)) === 'true';
         if (queued) {
           setShowRatingPrompt(true);
+          requestOverlay('rating'); // see OVERLAY_PRIORITY's own comment above
           AsyncStorage.setItem(EKeyAsyncStorage.ratingPromptLastShownAt, String(Date.now())).catch(() => {});
           return;
         }
         const due = await appRatingService.isRatingPromptDue();
         if (due) {
           setShowRatingPrompt(true);
+          requestOverlay('rating');
           AsyncStorage.setItem(EKeyAsyncStorage.ratingPromptLastShownAt, String(Date.now())).catch(() => {});
         }
       })();
       // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []),
+    }, [requestOverlay]),
   );
   const onSubmitRating = React.useCallback(async (score: number, comment?: string) => {
     try {
@@ -226,6 +288,7 @@ const HomeSrc = memo(() => {
       // just retry, rather than silently losing the rating they were
       // trying to send.
       setShowRatingPrompt(false);
+      releaseOverlay('rating');
       AsyncStorage.removeItem(EKeyAsyncStorage.ratingPromptQueued).catch(() => {});
     } catch (e: any) {
       Alert.alert(
@@ -233,12 +296,13 @@ const HomeSrc = memo(() => {
         e?.message ?? t('common:try_again_later', { defaultValue: 'Please try again in a moment.' }),
       );
     }
-  }, [t]);
+  }, [t, releaseOverlay]);
   const onDismissRating = React.useCallback(() => {
     setShowRatingPrompt(false);
+    releaseOverlay('rating');
     appRatingService.dismissRatingPrompt().catch(() => { });
     AsyncStorage.removeItem(EKeyAsyncStorage.ratingPromptQueued).catch(() => {});
-  }, []);
+  }, [releaseOverlay]);
 
   // Daily career-goal check-in (product request item): on login, ask
   // "what's your career goal for today?" — explicitly distinct from the
@@ -272,13 +336,16 @@ const HomeSrc = memo(() => {
           dailyCheckinService.getToday(),
           dailyCheckinService.wasGoalPromptDismissedToday(),
         ]);
-        if (!today.goalAnswered && !dismissed) setCheckinSheet('goal');
+        if (!today.goalAnswered && !dismissed) {
+          setCheckinSheet('goal');
+          requestOverlay('checkin'); // see OVERLAY_PRIORITY's own comment above
+        }
       } catch {
         // Non-critical — a failed fetch just means no popup this session,
         // not a broken Home screen.
       }
     })();
-  }, [isSignedIn]);
+  }, [isSignedIn, requestOverlay]);
 
   // "How did your day go?" push tap (see pushNotificationService.ts) sets a
   // pending flag rather than assuming Home is already mounted/focused —
@@ -289,9 +356,12 @@ const HomeSrc = memo(() => {
   useFocusEffect(
     React.useCallback(() => {
       dailyCheckinService.consumePendingReflectionPrompt().then(pending => {
-        if (pending) setCheckinSheet('reflection');
+        if (pending) {
+          setCheckinSheet('reflection');
+          requestOverlay('checkin');
+        }
       });
-    }, []),
+    }, [requestOverlay]),
   );
 
   const onSubmitCheckin = React.useCallback(async (text: string) => {
@@ -301,7 +371,8 @@ const HomeSrc = memo(() => {
       await dailyCheckinService.submitReflection(text);
     }
     setCheckinSheet(null);
-  }, [checkinSheet]);
+    releaseOverlay('checkin');
+  }, [checkinSheet, releaseOverlay]);
 
   // Tap-a-calendar-day activity feed (product request item): WeekStrip's
   // onDayPress above hands back the real Date the user tapped;
@@ -320,7 +391,8 @@ const HomeSrc = memo(() => {
       dailyCheckinService.dismissGoalPromptForToday().catch(() => { });
     }
     setCheckinSheet(null);
-  }, [checkinSheet]);
+    releaseOverlay('checkin');
+  }, [checkinSheet, releaseOverlay]);
 
   // "Share a job" deep-link landing (product request item) — a pending job
   // id captured by App.tsx's AppsFlyer listeners / saveur://job fallback
@@ -653,10 +725,19 @@ const HomeSrc = memo(() => {
         const interactionHandle = InteractionManager.runAfterInteractions(() => {
           if (cancelled) return;
           showAd();
-          // Recorded once the popup actually renders, not on fetch — a
-          // fetched-but-never-shown ad (e.g. the user left the screen before
-          // the delay above fired) shouldn't burn one of its limited views.
-          adsService.recordImpression(ad.id).catch(() => { });
+          // See OVERLAY_PRIORITY's own comment above — this used to be the
+          // ONLY gate on whether the ad popup actually rendered, which is
+          // exactly what let it stack on top of the App Tour / check-in /
+          // rating Modals when more than one condition was true at once.
+          // `requestOverlay` here just reserves this screen's single
+          // overlay slot; the Modal itself (see its render below) also
+          // checks `activeOverlay === 'ad'` before actually going visible,
+          // so if another overlay already holds the slot, the ad silently
+          // waits its turn (still fetched and ready) rather than opening on
+          // top of it. Impression recording (below, in its own effect) is
+          // gated the same way, so a queued-but-not-yet-shown ad can't burn
+          // one of its limited views before the user ever actually sees it.
+          requestOverlay('ad');
         });
         cleanupInteraction = () => interactionHandle.cancel();
       }, 1500);
@@ -670,16 +751,31 @@ const HomeSrc = memo(() => {
       cleanupInteraction?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [requestOverlay]);
+  // Records the impression only once the popup has ACTUALLY rendered on
+  // screen (both showAd() fired AND this screen's shared overlay slot is
+  // really held by 'ad', not just requested/queued behind another overlay
+  // — see requestOverlay('ad') above) — a fetched-but-never-actually-shown
+  // ad (left the screen mid-queue, or the delay above never got a chance
+  // to fire) shouldn't burn one of its limited views.
+  const hasRecordedAdImpressionRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!adVisible || activeOverlay !== 'ad' || !pendingAd) return;
+    if (hasRecordedAdImpressionRef.current) return;
+    hasRecordedAdImpressionRef.current = true;
+    adsService.recordImpression(pendingAd.id).catch(() => { });
+  }, [adVisible, activeOverlay, pendingAd]);
   const onDismissAd = React.useCallback(() => {
     hideAd();
-  }, [hideAd]);
+    releaseOverlay('ad');
+  }, [hideAd, releaseOverlay]);
   const onOpenAd = React.useCallback(() => {
     hideAd();
+    releaseOverlay('ad');
     if (adRef.current) {
       navigate('AdDetails', { ad: adRef.current });
     }
-  }, [hideAd, navigate]);
+  }, [hideAd, releaseOverlay, navigate]);
 
   // Admin-configured Home banner — GET /api/v1/ads/banner (see
   // services/adsService.ts's getHomeBanner, backend's app/api/ads.py).
@@ -1364,17 +1460,30 @@ const HomeSrc = memo(() => {
           renders any caption over the ad image (product report: "I said I
           dont want captions on any ads... the caption overlay is making
           the ads banner look awful" — see that component's own comment). */}
+      {/* Each of these four `visible` props is ALSO gated on
+          `activeOverlay` (see that state's own comment further up this
+          file) on top of each one's own "do I want to show" flag — so even
+          if two or more of their conditions are true at the same moment,
+          only the one that actually holds the shared overlay slot ever
+          renders its Modal as visible; the rest stay mounted-but-invisible
+          until they're granted the slot, instead of stacking as multiple
+          simultaneous native Modals (the real cause of the repeat
+          "loads then freezes" reports). */}
       <AdPopupModal
-        visible={adVisible}
+        visible={adVisible && activeOverlay === 'ad'}
         imageUrl={pendingAd?.imageUrl}
         ctaLabel={t('common:view_details', { defaultValue: 'View Details' })}
         onCta={onOpenAd}
         onDismiss={onDismissAd}
       />
-      <AppTour visible={showTour} onClose={onCloseTour} />
-      <AppRatingModal visible={showRatingPrompt} onSubmit={onSubmitRating} onDismiss={onDismissRating} />
+      <AppTour visible={showTour && activeOverlay === 'tour'} onClose={onCloseTour} />
+      <AppRatingModal
+        visible={showRatingPrompt && activeOverlay === 'rating'}
+        onSubmit={onSubmitRating}
+        onDismiss={onDismissRating}
+      />
       <DailyCheckInSheet
-        visible={checkinSheet !== null}
+        visible={checkinSheet !== null && activeOverlay === 'checkin'}
         mode={checkinSheet ?? 'goal'}
         onSubmit={onSubmitCheckin}
         onDismiss={onDismissCheckin}
