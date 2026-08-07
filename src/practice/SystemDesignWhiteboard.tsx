@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { PanResponder, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, Modal, PanResponder, ScrollView, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Rect } from 'react-native-svg';
 import {
   TopNavigation,
@@ -7,8 +7,11 @@ import {
   useStyleSheet,
   useTheme,
   Icon,
+  Input,
+  Button,
+  Layout,
 } from '@ui-kitten/components';
-import { useNavigation } from '@react-navigation/native';
+import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -16,6 +19,9 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList, SystemDesignWhiteboardScreenNavigationProp } from 'navigation/types';
+import * as interviewService from 'services/interviewService';
+import * as codingService from 'services/codingService';
 
 // Freehand "sketch your system design" surface — built on react-native-svg
 // (already a project dependency) + PanResponder rather than pulling in a
@@ -67,10 +73,30 @@ const STROKE_COLOR = '#181b22';
 const COLOR_SWATCHES = ['#181b22', '#E53E3E', '#3182CE', '#38A169', '#805AD5'];
 
 const SystemDesignWhiteboard = memo(() => {
-  const { goBack } = useNavigation();
+  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<SystemDesignWhiteboardScreenNavigationProp>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['find']);
+  const { t } = useTranslation(['find', 'common']);
+
+  // Optional session context (product report: "the system design should
+  // also be added as part of the tools too" + session-length timer + AI
+  // review — see navigation/types.tsx's own comment on this route). All
+  // undefined when reached the old way (the standalone sandbox icon), which
+  // is still fully supported — every session-specific block below is
+  // gated on `sessionId` being present.
+  const { sessionId, interviewType, durationMin } = route.params ?? {};
+
+  const [secondsLeft, setSecondsLeft] = React.useState<number | null>(
+    durationMin ? durationMin * 60 : null,
+  );
+  const hasAutoFinishedRef = React.useRef(false);
+  const [isFinishing, setIsFinishing] = React.useState(false);
+
+  const [isReviewModalVisible, setIsReviewModalVisible] = React.useState(false);
+  const [designNotes, setDesignNotes] = React.useState('');
+  const [isReviewing, setIsReviewing] = React.useState(false);
+  const [reviewResult, setReviewResult] = React.useState<{ summary: string; feedback: string[] } | null>(null);
 
   const [elements, setElements] = React.useState<CanvasElement[]>([]);
   const [activePathD, setActivePathD] = React.useState<string | null>(null);
@@ -95,6 +121,37 @@ const SystemDesignWhiteboard = memo(() => {
     return `${prefix}_${nextElementIdRef.current}`;
   };
   const [canvasWidth, setCanvasWidth] = React.useState(0);
+  const [canvasHeight, setCanvasHeight] = React.useState(CANVAS_HEIGHT);
+  const canvasRef = React.useRef<View>(null);
+  // BUG FIX (repeat product report, after two earlier rounds already
+  // landed for different failure modes — touch-stealing overlay, then
+  // zero-length-path/duplicate-id commits — and the drawing STILL didn't
+  // appear at all): `locationX`/`locationY` on RN's touch events are a
+  // long-documented Android reliability problem — they're computed by the
+  // native layer relative to whichever view the OS decides is the current
+  // touch target, and can silently report stale/wrong coordinates (or
+  // coordinates relative to the wrong ancestor) once a gesture has been in
+  // progress for more than an instant, especially on Android and especially
+  // inside a nested touch-responder tree like this screen's. The
+  // symptom this produces is exactly what got reported: onPanResponderGrant
+  // still fires (so the first point of a stroke can register), but
+  // onPanResponderMove's locationX/Y readings drift or freeze, so the path
+  // string built from them draws nothing coherent (or nothing at all once
+  // the earlier fix started requiring a real line segment before
+  // committing). `pageX`/`pageY` (screen-absolute, always reliable) minus
+  // the canvas's own on-screen origin (captured once via a real native
+  // `.measure()` call, not derived from touch events at all) is the
+  // standard, well-established fix for RN PanResponder drawing surfaces —
+  // used by essentially every RN signature-pad/whiteboard library for
+  // exactly this reason.
+  const canvasOriginRef = React.useRef({ x: 0, y: 0 });
+  const pointFromEvent = (evt: any) => {
+    const { pageX, pageY } = evt.nativeEvent;
+    return {
+      x: pageX - canvasOriginRef.current.x,
+      y: pageY - canvasOriginRef.current.y,
+    };
+  };
 
   const panResponder = React.useRef(
     PanResponder.create({
@@ -109,13 +166,13 @@ const SystemDesignWhiteboard = memo(() => {
       onPanResponderTerminationRequest: () => false,
       onShouldBlockNativeResponder: () => true,
       onPanResponderGrant: evt => {
-        const { locationX, locationY } = evt.nativeEvent;
-        activePathRef.current = `M${locationX.toFixed(1)} ${locationY.toFixed(1)}`;
+        const { x, y } = pointFromEvent(evt);
+        activePathRef.current = `M${x.toFixed(1)} ${y.toFixed(1)}`;
         setActivePathD(activePathRef.current);
       },
       onPanResponderMove: evt => {
-        const { locationX, locationY } = evt.nativeEvent;
-        activePathRef.current += ` L${locationX.toFixed(1)} ${locationY.toFixed(1)}`;
+        const { x, y } = pointFromEvent(evt);
+        activePathRef.current += ` L${x.toFixed(1)} ${y.toFixed(1)}`;
         setActivePathD(activePathRef.current);
       },
       onPanResponderRelease: () => {
@@ -193,6 +250,91 @@ const SystemDesignWhiteboard = memo(() => {
     stampCountRef.current = 0;
   };
 
+  // Product report: "the system design hands on practice should also have
+  // a AI code review too and result." The whiteboard itself is a purely
+  // visual freehand canvas with nothing exportable as text (see
+  // codingService.getSystemDesignFeedback's own comment), so this asks the
+  // candidate to briefly explain what they sketched — that explanation is
+  // what actually gets reviewed, same as talking through a design on a
+  // real whiteboard interview.
+  const onGetReview = async () => {
+    if (isReviewing) return;
+    if (!designNotes.trim()) {
+      Alert.alert(
+        t('find:system_design_notes_required_title', { defaultValue: 'Describe your design first' }),
+        t('find:system_design_notes_required_body', {
+          defaultValue: 'Briefly explain what you sketched (components, data flow, tradeoffs) so the AI has something to review.',
+        }),
+      );
+      return;
+    }
+    setIsReviewing(true);
+    try {
+      const result = await codingService.getSystemDesignFeedback(designNotes);
+      setReviewResult(result);
+    } catch (e: any) {
+      Alert.alert(
+        t('find:review_failed', { defaultValue: 'Review failed' }),
+        e?.message ?? t('find:review_failed_body', { defaultValue: 'Could not get an AI code review. Please try again.' }),
+      );
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  const onFinish = async (opts?: { timedOut?: boolean }) => {
+    if (isFinishing) return;
+    setIsFinishing(true);
+    try {
+      if (sessionId) {
+        try {
+          await interviewService.completeSession(sessionId);
+        } catch (e: any) {
+          if (!opts?.timedOut) {
+            Alert.alert(
+              t('find:finish_interview_sync_failed', { defaultValue: 'Could not sync interview' }),
+              e?.message ?? t('find:finish_interview_sync_failed_body', { defaultValue: 'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.' }),
+            );
+          }
+        }
+      }
+    } finally {
+      setIsFinishing(false);
+      navigate('InterviewFeedback', { sessionId, interviewType });
+    }
+  };
+
+  // Countdown tick + time's-up handling — same pattern as
+  // CodingInterview.tsx's own timer (see that file's comment); a no-op
+  // whenever no durationMin was passed.
+  React.useEffect(() => {
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) {
+      if (!hasAutoFinishedRef.current) {
+        hasAutoFinishedRef.current = true;
+        Alert.alert(
+          t('find:coding_time_up_title', { defaultValue: "Time's up" }),
+          t('find:coding_time_up_body', {
+            defaultValue: 'Your session length has ended. Submitting what you have and moving to feedback.',
+          }),
+          [{ text: t('common:ok', { defaultValue: 'OK' }), onPress: () => onFinish({ timedOut: true }) }],
+        );
+      }
+      return;
+    }
+    const id = setTimeout(() => setSecondsLeft(s => (s === null ? null : s - 1)), 1000);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondsLeft]);
+
+  const timerLabel = React.useMemo(() => {
+    if (secondsLeft === null) return null;
+    const clamped = Math.max(0, secondsLeft);
+    const mm = Math.floor(clamped / 60).toString().padStart(2, '0');
+    const ss = (clamped % 60).toString().padStart(2, '0');
+    return `${mm}:${ss}`;
+  }, [secondsLeft]);
+
   const renderArrow = (el: CanvasElement) => {
     const { x1 = 0, y1 = 0, x2 = 0, y2 = 0, color } = el;
     const angle = Math.atan2(y2 - y1, x2 - x1);
@@ -242,6 +384,18 @@ const SystemDesignWhiteboard = memo(() => {
       <TopNavigation
         title={t('find:system_design_whiteboard', {defaultValue: 'System Design Whiteboard'})}
         accessoryLeft={<NavigationAction onPress={goBack} />}
+        accessoryRight={
+          timerLabel
+            ? () => (
+                <View style={[styles.timerPill, secondsLeft !== null && secondsLeft <= 60 ? styles.timerPillUrgent : null]}>
+                  <Icon pack="eva" name="clock-outline" style={[globalStyle.icon16, { tintColor: secondsLeft !== null && secondsLeft <= 60 ? '#FF6B6B' : theme['text-basic-color'] }]} />
+                  <Text category="h9" bold ml={6} style={secondsLeft !== null && secondsLeft <= 60 ? { color: '#FF6B6B' } : undefined}>
+                    {timerLabel}
+                  </Text>
+                </View>
+              )
+            : undefined
+        }
       />
       {/* Horizontally scrollable (product report: "add more tools too" —
           7 shape/action tools no longer fit a fixed space-around row
@@ -310,10 +464,21 @@ const SystemDesignWhiteboard = memo(() => {
       </Text>
 
       <View
+        ref={canvasRef}
         style={styles.canvas}
-        onLayout={e => setCanvasWidth(e.nativeEvent.layout.width)}
+        onLayout={e => {
+          setCanvasWidth(e.nativeEvent.layout.width);
+          setCanvasHeight(e.nativeEvent.layout.height || CANVAS_HEIGHT);
+          // Real native measurement of this view's on-screen position —
+          // see canvasOriginRef's own comment above for why this replaces
+          // locationX/locationY entirely rather than just supplementing it.
+          // measure() must run after layout, which onLayout guarantees.
+          canvasRef.current?.measure((_x, _y, _w, _h, pageX, pageY) => {
+            canvasOriginRef.current = { x: pageX, y: pageY };
+          });
+        }}
         {...panResponder.panHandlers}>
-        <Svg width={canvasWidth || '100%'} height={CANVAS_HEIGHT}>
+        <Svg width={canvasWidth || '100%'} height={canvasHeight}>
           {elements.map(el => {
             if (el.type === 'path') {
               return <Path key={el.id} d={el.d} stroke={el.color} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
@@ -349,6 +514,90 @@ const SystemDesignWhiteboard = memo(() => {
           </Flex>
         ) : null}
       </View>
+
+      {/* Product report: "the system design hands on practice should also
+          have a AI code review too and result" — always available (not
+          just within a scored session), since this is a genuinely useful
+          practice-time tool on its own. "Finish" only shows up when this
+          screen was actually reached as part of a real interview session
+          (sessionId present) — the standalone sandbox entry point has no
+          session to finish or feedback to show. */}
+      <View style={styles.footerBar}>
+        <Button
+          children={t('find:get_ai_code_review', { defaultValue: 'Get AI Review' })}
+          status="info"
+          size="small"
+          onPress={() => setIsReviewModalVisible(true)}
+          accessoryLeft={props => <Icon {...props} pack="assets" name="quote" />}
+          style={globalStyle.flexOne}
+        />
+        {sessionId ? (
+          <Button
+            children={isFinishing ? t('find:finishing', { defaultValue: 'Finishing…' }) : t('find:finish_interview', { defaultValue: 'Finish Interview' })}
+            disabled={isFinishing}
+            status="success"
+            size="small"
+            onPress={() => onFinish()}
+            style={[globalStyle.flexOne, { marginLeft: 10 }]}
+          />
+        ) : null}
+      </View>
+
+      <Modal
+        visible={isReviewModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setIsReviewModalVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalSheet, { backgroundColor: theme['background-basic-color-1'] }]}>
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold style={globalStyle.flexOne}>
+                {t('find:get_ai_code_review', { defaultValue: 'Get AI Review' })}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setIsReviewModalVisible(false)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </Flex>
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <Text category="h9-s" status="placeholder" mb={12}>
+                {t('find:system_design_notes_label', {
+                  defaultValue: 'Briefly explain what you sketched — the components, how data flows between them, and any tradeoffs you made. The AI reviews this explanation, the way an interviewer listens to you talk through a design.',
+                })}
+              </Text>
+              <Input
+                multiline
+                textStyle={{ minHeight: 90, textAlignVertical: 'top' }}
+                style={globalStyle.inputField}
+                value={designNotes}
+                onChangeText={setDesignNotes}
+                placeholder={t('find:system_design_notes_placeholder', { defaultValue: 'e.g. A load balancer routes requests to stateless API servers, which read/write to a sharded database with a cache in front for hot reads…' }).toString()}
+              />
+              <Button
+                children={isReviewing ? t('find:reviewing_code', { defaultValue: 'Reviewing…' }) : t('find:get_ai_code_review', { defaultValue: 'Get AI Review' })}
+                disabled={isReviewing}
+                status="info"
+                onPress={onGetReview}
+                style={{ marginTop: 12 }}
+              />
+              {reviewResult ? (
+                <Layout level="2" style={styles.reviewBox}>
+                  <Text category="h9" bold status="link" mb={8}>
+                    {reviewResult.summary}
+                  </Text>
+                  {reviewResult.feedback.map((line, i) => (
+                    <Flex key={i} justify="flex-start" itemsCenter mt={i === 0 ? 0 : 8}>
+                      <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
+                      <Text category="h9-s" ml={10} style={globalStyle.flexOne}>{line}</Text>
+                    </Flex>
+                  ))}
+                </Layout>
+              ) : null}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </Container>
   );
 });
@@ -412,11 +661,44 @@ const themedStyles = StyleService.create({
   canvas: {
     flex: 1,
     marginHorizontal: 16,
-    marginBottom: 24,
+    marginBottom: 16,
     borderRadius: 14,
     backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: 'background-basic-color-3',
     overflow: 'hidden',
+  },
+  footerBar: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  timerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    backgroundColor: 'background-basic-color-2',
+  },
+  timerPillUrgent: {
+    backgroundColor: 'rgba(255, 107, 107, 0.12)',
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    maxHeight: '80%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+  },
+  reviewBox: {
+    ...globalStyle.card,
+    marginTop: 16,
+    padding: 16,
   },
 });
