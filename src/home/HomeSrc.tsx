@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Image, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Image, InteractionManager, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Layout, Button, Spinner } from '@ui-kitten/components';
 // The daily XP check-in card below has its own inverted white-pill button
@@ -623,17 +623,42 @@ const HomeSrc = memo(() => {
   const { visible: adVisible, show: showAd, hide: hideAd } = useModal();
   React.useEffect(() => {
     let cancelled = false;
+    let cleanupInteraction: (() => void) | null = null;
     adsService.getNextAd().then(ad => {
       if (cancelled || !ad) return;
       adRef.current = ad;
       setPendingAd(ad);
       setTimeout(() => {
         if (cancelled) return;
-        showAd();
-        // Recorded once the popup actually renders, not on fetch — a
-        // fetched-but-never-shown ad (e.g. the user left the screen before
-        // the delay above fired) shouldn't burn one of its limited views.
-        adsService.recordImpression(ad.id).catch(() => { });
+        // BUG FIX (product report: "the pop up advert is still freezing the
+        // app when it loads the homescreen" — persisted even after removing
+        // the buggy `transparent` Modal prop, see AdPopupModal.tsx's own
+        // comment on that fix): this 1500ms timer fires completely blind to
+        // whatever the user is physically doing on screen at that exact
+        // moment — most commonly, still mid-scroll through the homescreen
+        // they just landed on. Android has a well-documented RN issue where
+        // presenting a native `Modal` (a real new Activity window) while the
+        // view underneath still has an ACTIVE touch responder (e.g. a
+        // ScrollView mid-drag/mid-fling) can leave that responder stuck --
+        // the touch stream gets cut off mid-gesture with no proper
+        // "cancelled" event, so the ScrollView never releases its own
+        // internal "I'm being touched" state and simply stops responding to
+        // new touches afterward, exactly matching "loads then freezes and
+        // refuses to scroll." InteractionManager.runAfterInteractions defers
+        // the callback until the JS thread reports no animations/gestures
+        // are currently in flight -- the standard, documented React Native
+        // pattern for exactly this "don't mount something heavy while the
+        // user might be mid-touch" scenario -- so the modal now always opens
+        // between gestures, never in the middle of one.
+        const interactionHandle = InteractionManager.runAfterInteractions(() => {
+          if (cancelled) return;
+          showAd();
+          // Recorded once the popup actually renders, not on fetch — a
+          // fetched-but-never-shown ad (e.g. the user left the screen before
+          // the delay above fired) shouldn't burn one of its limited views.
+          adsService.recordImpression(ad.id).catch(() => { });
+        });
+        cleanupInteraction = () => interactionHandle.cancel();
       }, 1500);
     }).catch(() => {
       // Offline or the request failed — no ad this session, same
@@ -642,6 +667,7 @@ const HomeSrc = memo(() => {
     });
     return () => {
       cancelled = true;
+      cleanupInteraction?.();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -701,6 +727,26 @@ const HomeSrc = memo(() => {
       navigate('AdDetails', { ad: homeBanner });
     }
   }, [homeBanner, navigate]);
+  // BUG FIX (product report, screenshot: a generic blue "AI Career Coach /
+  // Start Your Journey Now" gradient card instead of the actual banner
+  // image uploaded in admin — "this is not the image banner i uploaded in
+  // the admin so why is it displaying this"): an earlier pass (see the JSX
+  // comment at this card's render site) deliberately made this ALWAYS
+  // render the code-drawn gradient card, discarding homeBanner.imageUrl
+  // entirely, to fix two unrelated layout bugs in that code-drawn card
+  // (gradient not sizing to its text, a card that "looked untouched"). That
+  // went further than those two bugs required — it also permanently hid
+  // every real admin-uploaded banner image, which defeats the actual
+  // purpose of this feature (an admin uploads a real marketing image; the
+  // whole point is that it's what shows). Restoring image support, same
+  // broken-URL-degrades-gracefully pattern already used by AdPopupModal.tsx
+  // (see that file's own imageFailed state) — a bad/unreachable URL now
+  // falls back to the code-drawn card instead of the whole card just going
+  // blank, rather than never trying the real image at all.
+  const [homeBannerImageFailed, setHomeBannerImageFailed] = React.useState(false);
+  React.useEffect(() => {
+    setHomeBannerImageFailed(false);
+  }, [homeBanner?.imageUrl]);
 
   return (
     <Container style={styles.container}>
@@ -843,85 +889,104 @@ const HomeSrc = memo(() => {
             mode instead of rendering true black-on-black. */}
         
         {homeBanner ? (
-          // Product bug report ("you did not touch the second [card]" /
-          // "the gradient is hiding some of the text, and it's ugly in
-          // dark mode") — two separate fixes:
-          //
-          // 1. This used to branch on homeBanner.imageUrl: a real
-          //    admin-uploaded raster image rendered as-is (no way to
-          //    recolor pixels per-theme), falling back to this code-drawn
-          //    card only when no image was set. Whenever an admin image
-          //    WAS set, this whole card was invisible to every fix made
-          //    here — which is almost certainly why "the second card"
-          //    looked untouched. Now always the code-drawn card, using the
-          //    ad's own title/body text either way, so this card's look is
-          //    no longer at the mercy of whether an admin happened to
-          //    attach an image.
-          // 2. The gradient itself was applied to a LinearGradient used
-          //    AS the padded, row-layout content container — a
-          //    LinearGradient with no explicit height doesn't reliably
-          //    grow to wrap its own children's real intrinsic size on
-          //    every layout pass (same bug class documented on
-          //    checkInCard's own history elsewhere on this screen), which
-          //    is how text ends up laid out past the gradient's measured
-          //    box and clipped. Fixed the same way checkInCard already
-          //    solves it: the gradient is now a decorative
-          //    StyleSheet.absoluteFillObject layer behind an ordinary View
-          //    that sizes normally. Also dropped the separate corner
-          //    "accent" wash (competing with the main fill for attention)
-          //    for one clean, richer two-stop gradient instead — light
-          //    mode uses the brand blue family with real contrast between
-          //    the stops (color-primary-200/700, not near-identical
-          //    shades), dark mode gets its own subtle two-tone dark-navy
-          //    gradient instead of a flat single shade.
           <TouchableOpacity
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: bannerWidth }]}
             onPress={onOpenHomeBanner}>
-            <View style={styles.homeBannerFallback}>
-              <LinearGradient
-                colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : [theme['color-primary-500'], theme['color-primary-500']]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              {/* Product request — strip the logo's baked-in white/gray
-                  badge background and render just the "S" shape as a
-                  white line mark so it blends into the gradient instead
-                  of floating on its own light badge: Images.logoMark
-                  (same mark, background chroma-keyed to transparent — see
-                  assets/images/index.ts) tinted with the same isDarkMode
-                  color already used for this card's title/subtitle/arrow. */}
-              <View style={styles.homeBannerIconWrap}>
+            {homeBanner.imageUrl && !homeBannerImageFailed ? (
+              // BUG FIX (product report, screenshot: a generic blue "AI
+              // Career Coach" gradient card instead of the real image
+              // uploaded in admin — see homeBannerImageFailed's own comment
+              // above for the fuller history). This is the actual banner
+              // feature: an admin-uploaded image, shown as-is, same
+              // full-bleed-image-with-legible-text approach as the popup ad
+              // (AdPopupModal.tsx) uses, just sized as a persistent inline
+              // card here instead of a full-screen takeover.
+              <View style={styles.homeBannerImageWrap}>
                 <Image
-                  source={Images.logoMark}
-                  style={styles.homeBannerIcon}
-                  resizeMode="contain"
-                  tintColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
+                  source={{ uri: homeBanner.imageUrl }}
+                  style={styles.homeBannerImage}
+                  resizeMode="cover"
+                  onError={() => setHomeBannerImageFailed(true)}
+                />
+                {(homeBanner.title || homeBanner.body) ? (
+                  <LinearGradient
+                    colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.72)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 0, y: 1 }}
+                    style={styles.homeBannerImageScrim}>
+                    {homeBanner.title ? (
+                      <Text category="h9" bold numberOfLines={1} style={styles.homeBannerImageTitle}>
+                        {homeBanner.title}
+                      </Text>
+                    ) : null}
+                    {homeBanner.body ? (
+                      <Text category="h10" numberOfLines={2} mt={2} style={styles.homeBannerImageBody}>
+                        {homeBanner.body}
+                      </Text>
+                    ) : null}
+                  </LinearGradient>
+                ) : null}
+              </View>
+            ) : (
+              // No admin image (or it failed to load) — the code-drawn
+              // fallback card, still using the ad's real title/body text.
+              // Product bug report history that shaped THIS card's own look
+              // ("you did not touch the second [card]" / "the gradient is
+              // hiding some of the text, and it's ugly in dark mode"): the
+              // gradient here is a decorative StyleSheet.absoluteFillObject
+              // layer behind an ordinary View that sizes normally (a
+              // LinearGradient used directly AS a padded row-layout
+              // container doesn't reliably grow to wrap its own children's
+              // real height on every layout pass — same bug class
+              // documented on checkInCard's own history elsewhere on this
+              // screen, which is how text used to end up laid out past the
+              // gradient's measured box and clipped).
+              <View style={styles.homeBannerFallback}>
+                <LinearGradient
+                  colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : [theme['color-primary-500'], theme['color-primary-500']]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                {/* Product request — strip the logo's baked-in white/gray
+                    badge background and render just the "S" shape as a
+                    white line mark so it blends into the gradient instead
+                    of floating on its own light badge: Images.logoMark
+                    (same mark, background chroma-keyed to transparent — see
+                    assets/images/index.ts) tinted with the same isDarkMode
+                    color already used for this card's title/subtitle/arrow. */}
+                <View style={styles.homeBannerIconWrap}>
+                  <Image
+                    source={Images.logoMark}
+                    style={styles.homeBannerIcon}
+                    resizeMode="contain"
+                    tintColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
+                  />
+                </View>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text
+                    category="h9"
+                    bold
+                    numberOfLines={1}
+                    style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
+                    {homeBanner.title}
+                  </Text>
+                  <Text
+                    category="h10"
+                    numberOfLines={2}
+                    mt={2}
+                    style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
+                    {homeBanner.body}
+                  </Text>
+                </View>
+                <Icon
+                  pack="assets"
+                  name="arrowRight"
+                  style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
                 />
               </View>
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text
-                  category="h9"
-                  bold
-                  numberOfLines={1}
-                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
-                  {homeBanner.title}
-                </Text>
-                <Text
-                  category="h10"
-                  numberOfLines={2}
-                  mt={2}
-                  style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
-                  {homeBanner.body}
-                </Text>
-              </View>
-              <Icon
-                pack="assets"
-                name="arrowRight"
-                style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
-              />
-            </View>
+            )}
           </TouchableOpacity>
         ) : null}
         {/* Day Streak / Sessions This Week / Average Score stat cards
@@ -1371,12 +1436,39 @@ const themedStyles = StyleService.create({
   homeBannerCard: {
     // width is computed per-render from actual screen width (see
     // bannerWidth above the component's return statement) and applied
-    // inline, not here — see bannerWidth's own comment. No height here
-    // either (always the code-drawn card now, which sizes to its own
-    // content — see homeBannerFallback below).
+    // inline, not here. No height here either — either sub-variant
+    // (homeBannerImageWrap or homeBannerFallback) sizes itself.
     marginTop: 16,
     borderRadius: 14,
     overflow: 'hidden',
+  },
+  // Real admin-uploaded image variant (see the JSX comment at this card's
+  // render site). Fixed aspect ratio rather than an intrinsic-size Image so
+  // this card's height doesn't jump around between an admin's differently-
+  // shaped uploads — same "mobile banner" proportions as the reference
+  // asset AdPopupModal.tsx's own comment describes.
+  homeBannerImageWrap: {
+    width: '100%',
+    aspectRatio: 2.4,
+  },
+  homeBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  homeBannerImageScrim: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    paddingHorizontal: 16,
+    paddingTop: 28,
+    paddingBottom: 12,
+  },
+  homeBannerImageTitle: {
+    color: '#FFFFFF',
+  },
+  homeBannerImageBody: {
+    color: 'rgba(255,255,255,0.9)',
   },
   // Code-drawn banner (see the JSX comment where this renders) — a plain
   // View, NOT a LinearGradient: the gradient is a decorative
