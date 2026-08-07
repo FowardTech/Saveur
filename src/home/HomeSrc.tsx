@@ -55,6 +55,22 @@ import { AuthContext } from '../../AuthContext';
 // for the same reasoning.
 const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 
+// BUG FIX (product report: homescreen freezing on scroll, every load, both
+// platforms) — root cause: `useTranslation(['home', 'common'])` used to
+// pass a brand-new array literal as its namespace argument on every render,
+// which this app's react-i18next version doesn't deep-compare, so the
+// returned `t` function's own reference could change on every render even
+// with no real language change. Two of this screen's data-loading
+// useCallbacks had `t` in their dependency array feeding straight into a
+// mount effect, turning that reference churn into a genuine infinite
+// fetch-then-rerender loop (see loadStreak/loadLeaderboard's own comments
+// for the full mechanism) that pegs the JS thread solid, which is exactly
+// why scroll gestures stopped being processed. Hoisting this array to a
+// stable module-level constant closes off the root cause so the same
+// instability can't quietly reappear in some future effect that adds `t`
+// to its own dependency array.
+const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
+
 // Leaderboard preview's per-rank medal badge colors (module scope, not
 // inline in JSX, for the same "don't recompute a literal object every
 // render" reason as renderCheckInSpinner above). Ranks 1/2 use existing
@@ -109,7 +125,7 @@ const HomeSrc = memo(() => {
   // screen width.
   const bannerWidth = width - 48;
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['home', 'common']);
+  const { t } = useTranslation(HOME_I18N_NAMESPACES);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
@@ -442,6 +458,29 @@ const HomeSrc = memo(() => {
   const [checkingIn, setCheckingIn] = React.useState(false);
   const streakDays = streak?.streakDays ?? 0;
 
+  // BUG FIX (product report: "the homescreen is freezing, anytime it loads
+  // and i try to scroll it just freezes and refuses to scroll" — happens on
+  // both platforms, every single load): this useCallback had `t` in its
+  // dependency array, feeding directly into `React.useEffect(() => {
+  // loadStreak() }, [loadStreak])` below. `t` comes from
+  // `useTranslation(['home', 'common'])` above, which passes a brand-new
+  // array literal as the namespace argument on every single render — some
+  // react-i18next versions don't deep-compare that array, so `t` itself can
+  // come back as a new function reference on every render even though
+  // nothing about the language actually changed. That made `loadStreak`
+  // itself a new reference every render, which made the effect below
+  // re-fire every render, which called setStreak(...) with a freshly
+  // deserialized (so always reference-unequal) object, which triggered
+  // another render, which produced a new `t` again — a self-sustaining
+  // loop that starts the instant this screen mounts and never settles,
+  // pegging the JS thread solid (exactly why scrolling — which needs the JS
+  // thread to process gesture events — stops responding immediately and
+  // every time). `t` is only used here to translate the ERROR-path message;
+  // the actual translation happens by t() doing a live lookup against the
+  // shared i18n instance whenever it's called, not by baking in whatever
+  // language was active when this closure was created, so dropping it from
+  // the dependency array is safe — an in-flight stale closure still
+  // translates the CURRENT language correctly if the error path runs.
   const loadStreak = React.useCallback(async () => {
     setStreakLoading(true);
     setStreakError(null);
@@ -453,7 +492,8 @@ const HomeSrc = memo(() => {
     } finally {
       setStreakLoading(false);
     }
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     loadStreak();
@@ -491,6 +531,9 @@ const HomeSrc = memo(() => {
   const [leaderboardLoading, setLeaderboardLoading] = React.useState(true);
   const [leaderboardError, setLeaderboardError] = React.useState<string | null>(null);
 
+  // Same fix and same reasoning as loadStreak above — this was the other
+  // half of the freeze-inducing loop (`t` in the dep array of an effect-
+  // triggering callback).
   const loadLeaderboard = React.useCallback(async () => {
     setLeaderboardLoading(true);
     setLeaderboardError(null);
@@ -504,7 +547,8 @@ const HomeSrc = memo(() => {
     } finally {
       setLeaderboardLoading(false);
     }
-  }, [t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   React.useEffect(() => {
     loadLeaderboard();
