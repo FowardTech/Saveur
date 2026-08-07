@@ -53,21 +53,42 @@ function EditorTitleBar({ label }: { label: string }) {
   );
 }
 
-// "AI-graded" disclosure (product context: Judge0 isn't subscribed right
-// now, so results come from AI validation instead of a real sandboxed run
-// — see Saveur-Backend's app/api/coding.py's _active_provider() and
-// app/services/code_validator_service.py). Shown whenever a result's
-// `engine` says "ai", so a user never mistakes a predicted result for a
-// real execution.
+// "AI-graded" disclosure — shown whenever a result's `engine` says "ai", so
+// a user never mistakes a predicted result for a real sandboxed execution.
+// Product report ("the user dont need to see AI-graded-judge0 not connected
+// yet. They dont need to know whats running the code behind the scene"):
+// this used to literally name the backend's execution engine (Judge0) and
+// its connection status — an internal implementation detail with no
+// meaning to a candidate. Now just discloses THAT this result is an AI
+// prediction rather than a real program run, with no mention of what does
+// or doesn't power it.
 function AiGradedBadge() {
   const { t } = useTranslation(['find', 'common']);
   return (
     <View style={editorChromeStyles.aiBadge}>
       <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6' }]} />
       <Text category="h10" bold style={{ color: '#8B5CF6', marginLeft: 6 }}>
-        {t('find:ai_graded', { defaultValue: 'AI-graded — Judge0 not connected yet' })}
+        {t('find:ai_graded', { defaultValue: 'AI-graded result' })}
       </Text>
     </View>
+  );
+}
+
+// Section header used to visually separate the Problem / Your Code / Output
+// panels (product report: "the user dont know which one is the question and
+// where to write the code... arrange it well so that users can know which
+// one is the question and where to code and where the output appears").
+function SectionHeader({ icon, label }: { icon: string; label: string }) {
+  const theme = useTheme();
+  return (
+    <Flex justify="flex-start" itemsCenter mb={10}>
+      <View style={[editorChromeStyles.sectionIconBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+        <Icon pack="eva" name={icon} style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+      </View>
+      <Text category="h8" bold ml={10}>
+        {label}
+      </Text>
+    </Flex>
   );
 }
 
@@ -82,7 +103,7 @@ const CodingInterview = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
 
-  const { sessionId, interviewType } = route.params ?? {};
+  const { sessionId, interviewType, durationMin } = route.params ?? {};
 
   const [languages, setLanguages] = React.useState<CodingLanguage[]>(codingService.DEFAULT_LANGUAGES);
   const [languagesLoading, setLanguagesLoading] = React.useState(true);
@@ -99,10 +120,22 @@ const CodingInterview = memo(() => {
   const [testEngine, setTestEngine] = React.useState<'judge0' | 'ai' | undefined>(undefined);
 
   const [isFinishing, setIsFinishing] = React.useState(false);
-  const [isReviewing, setIsReviewing] = React.useState(false);
-  const [review, setReview] = React.useState<{ complexityNote: string; feedback: string[] } | null>(null);
 
   const problemStatement = `${t('find:coding_prompt_title')}\n\n${t('find:coding_prompt_description')}`;
+
+  // Session Length countdown (product report: "the selected session length
+  // should be followed in the coding session time length... once the time
+  // is up there should be a count down timer counting down. there should
+  // be a pop up telling the user that time is up and then it should just
+  // take them to the interview feedback"). Mirrors LiveInterviewSession's
+  // own hard time-limit pattern. No timer at all when durationMin is
+  // missing (e.g. an older nav call site that hasn't been updated) rather
+  // than guessing a default — silently not enforcing a limit is safer than
+  // enforcing a made-up one.
+  const [secondsLeft, setSecondsLeft] = React.useState<number | null>(
+    durationMin ? durationMin * 60 : null,
+  );
+  const hasAutoFinishedRef = React.useRef(false);
 
   const loadLanguages = React.useCallback(async () => {
     setLanguagesLoading(true);
@@ -134,7 +167,6 @@ const CodingInterview = memo(() => {
     setRunResult(null);
     setTestResults(null);
     setTestEngine(undefined);
-    setReview(null);
   };
 
   const onRun = async () => {
@@ -172,23 +204,16 @@ const CodingInterview = memo(() => {
     }
   };
 
-  const onGetCodeReview = async () => {
-    if (isReviewing) return;
-    setIsReviewing(true);
-    try {
-      const result = await codingService.getCodeReview(code, language.id, problemStatement);
-      setReview(result);
-    } catch (e: any) {
-      Alert.alert(
-        t('find:review_failed', { defaultValue: 'Review failed' }),
-        e?.message ?? t('find:review_failed_body', { defaultValue: 'Could not get an AI code review. Please try again.' }),
-      );
-    } finally {
-      setIsReviewing(false);
-    }
-  };
+  // BUG FIX / product report ("The AI code review button should not be in
+  // the coding session. It should be in the feedback screen because thats
+  // where the user will see the AI feedback"): onGetCodeReview + its review
+  // UI used to live entirely on this screen. Removed here — the same
+  // codingService.getCodeReview call now lives on InterviewFeedback.tsx,
+  // fed by the `code`/`language`/`problemStatement` this screen passes
+  // through onFinish below, so the review appears where the rest of the
+  // scored result does instead of being scattered across two screens.
 
-  const onFinish = async () => {
+  const onFinish = async (opts?: { timedOut?: boolean }) => {
     if (isFinishing) return;
     setIsFinishing(true);
     try {
@@ -200,34 +225,99 @@ const CodingInterview = memo(() => {
           // already happened locally, so don't strand the user on this
           // screen over a sync failure — warn and still move on to
           // InterviewFeedback, which may just show partial/stale feedback.
-          Alert.alert(
-            t('find:finish_interview_sync_failed', { defaultValue: 'Could not sync interview' }),
-            e?.message ?? t('find:finish_interview_sync_failed_body', { defaultValue: 'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.' }),
-          );
+          // Skipped for the timed-out path (below) since that already shows
+          // its own "Time's up" alert and shouldn't stack a second one.
+          if (!opts?.timedOut) {
+            Alert.alert(
+              t('find:finish_interview_sync_failed', { defaultValue: 'Could not sync interview' }),
+              e?.message ?? t('find:finish_interview_sync_failed_body', { defaultValue: 'Your session ended locally but we could not reach the server to finalize it. Your feedback may be incomplete.' }),
+            );
+          }
         }
       }
     } finally {
       setIsFinishing(false);
-      navigate('InterviewFeedback', { sessionId, interviewType });
+      navigate('InterviewFeedback', {
+        sessionId,
+        interviewType,
+        codingResult: {
+          language: language.id,
+          code,
+          problemStatement,
+          testsPassed: testResults ? testResults.filter(r => r.passed).length : undefined,
+          testsTotal: testResults ? testResults.length : undefined,
+        },
+      });
     }
   };
+
+  // Countdown tick + time's-up handling — see secondsLeft's own comment
+  // above for why this is entirely a no-op when no durationMin was passed.
+  React.useEffect(() => {
+    if (secondsLeft === null) return;
+    if (secondsLeft <= 0) {
+      if (!hasAutoFinishedRef.current) {
+        hasAutoFinishedRef.current = true;
+        Alert.alert(
+          t('find:coding_time_up_title', { defaultValue: "Time's up" }),
+          t('find:coding_time_up_body', {
+            defaultValue: 'Your session length has ended. Submitting what you have and moving to feedback.',
+          }),
+          [{ text: t('common:ok', { defaultValue: 'OK' }), onPress: () => onFinish({ timedOut: true }) }],
+        );
+      }
+      return;
+    }
+    const id = setTimeout(() => setSecondsLeft(s => (s === null ? null : s - 1)), 1000);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [secondsLeft]);
+
+  const timerLabel = React.useMemo(() => {
+    if (secondsLeft === null) return null;
+    const clamped = Math.max(0, secondsLeft);
+    const mm = Math.floor(clamped / 60).toString().padStart(2, '0');
+    const ss = (clamped % 60).toString().padStart(2, '0');
+    return `${mm}:${ss}`;
+  }, [secondsLeft]);
 
   return (
     <Container style={styles.container}>
       <TopNavigation
         title={t('find:coding_interview')}
         accessoryLeft={<NavigationAction onPress={goBack} />}
-        accessoryRight={<NavigationAction icon="edit_full" onPress={() => navigate('SystemDesignWhiteboard')} />}
+        accessoryRight={
+          timerLabel
+            ? () => (
+                <View style={[styles.timerPill, secondsLeft !== null && secondsLeft <= 60 ? styles.timerPillUrgent : null]}>
+                  <Icon pack="eva" name="clock-outline" style={[globalStyle.icon16, { tintColor: secondsLeft !== null && secondsLeft <= 60 ? '#FF6B6B' : theme['text-basic-color'] }]} />
+                  <Text category="h9" bold ml={6} style={secondsLeft !== null && secondsLeft <= 60 ? { color: '#FF6B6B' } : undefined}>
+                    {timerLabel}
+                  </Text>
+                </View>
+              )
+            : undefined
+        }
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        <Text category="h7" bold mb={8}>
-          {t('find:coding_prompt_title')}
-        </Text>
-        <Text category="h9-s" status="placeholder" mb={24}>
-          {t('find:coding_prompt_description')}
-        </Text>
+        {/* Restructure (product report: "the user dont know which one is
+            the question and where to write the code... arrange it well").
+            Problem statement now lives in its own clearly-labeled, plainly-
+            readable card, distinct from the dark IDE-style windows below it
+            for code/input/output — same visual language interviewing tools
+            like LeetCode/HackerRank use (light "read" panel vs dark "write"
+            panel) so the two are never confused at a glance. */}
+        <SectionHeader icon="message-square-outline" label={t('find:coding_problem_label', { defaultValue: 'Problem' })} />
+        <View style={styles.problemCard}>
+          <Text category="h7" bold mb={8}>
+            {t('find:coding_prompt_title')}
+          </Text>
+          <Text category="h9-s" status="placeholder">
+            {t('find:coding_prompt_description')}
+          </Text>
+        </View>
 
-        <Text category="h8" bold status="placeholder" mb={12}>
+        <Text category="h8" bold status="placeholder" mt={24} mb={12}>
           {t('find:language')}
         </Text>
         {languagesLoading ? (
@@ -270,6 +360,7 @@ const CodingInterview = memo(() => {
           </>
         )}
 
+        <SectionHeader icon="code-outline" label={t('find:coding_your_code_label', { defaultValue: 'Your Code' })} />
         <View style={editorChromeStyles.window}>
           <EditorTitleBar label={language.name} />
           <Input
@@ -310,6 +401,8 @@ const CodingInterview = memo(() => {
           style={{ marginTop: 12 }}
         />
         {runResult ? (
+          <>
+            <SectionHeader icon="terminal-outline" label={t('find:coding_output_label', { defaultValue: 'Output' })} />
           <View style={editorChromeStyles.window}>
             <EditorTitleBar label={t('find:stdout', { defaultValue: 'output' }).toString()} />
             <View style={{ padding: 14 }}>
@@ -338,11 +431,10 @@ const CodingInterview = memo(() => {
               ) : null}
             </View>
           </View>
+          </>
         ) : null}
 
-        <Text category="h8" bold status="placeholder" mt={24} mb={12}>
-          {t('find:test_cases', { defaultValue: 'Test Cases' })}
-        </Text>
+        <SectionHeader icon="checkmark-square-2-outline" label={t('find:test_cases', { defaultValue: 'Test Cases' })} />
         {codingService.TEST_CASES.map((tc, i) => {
           const outcome = testResults?.[i];
           return (
@@ -393,34 +485,17 @@ const CodingInterview = memo(() => {
         ) : null}
 
         <Button
-          children={isReviewing ? t('find:reviewing_code', { defaultValue: 'Reviewing…' }) : t('find:get_ai_code_review', { defaultValue: 'Get AI Code Review' })}
-          disabled={isReviewing}
-          status="info"
-          onPress={onGetCodeReview}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="quote" />}
-          style={{ marginTop: 16 }}
-        />
-        {review ? (
-          <Layout level="2" style={styles.reviewBox}>
-            <Text category="h9" bold status="link" mb={8}>
-              {review.complexityNote}
-            </Text>
-            {review.feedback.map((line, i) => (
-              <Flex key={i} justify="flex-start" itemsCenter mt={i === 0 ? 0 : 8}>
-                <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-                <Text category="h9-s" ml={10} style={globalStyle.flexOne}>{line}</Text>
-              </Flex>
-            ))}
-          </Layout>
-        ) : null}
-
-        <Button
           children={isFinishing ? t('find:finishing', { defaultValue: 'Finishing…' }) : t('find:finish_interview', { defaultValue: 'Finish Interview' })}
           disabled={isFinishing}
           status="success"
-          onPress={onFinish}
-          style={[globalStyle.shadowBtn, { marginTop: 16 }]}
+          onPress={() => onFinish()}
+          style={[globalStyle.shadowBtn, { marginTop: 24 }]}
         />
+        <Text category="h10" status="placeholder" center mt={10}>
+          {t('find:coding_review_on_feedback_hint', {
+            defaultValue: 'Get your AI code review and full result on the feedback screen after you finish.',
+          })}
+        </Text>
       </Content>
     </Container>
   );
@@ -488,10 +563,27 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 10,
     marginLeft: 12,
   },
-  reviewBox: {
+  // Redesign (product report: "arrange it well so that users can know
+  // which one is the question") — a plain readable card for the problem
+  // statement, deliberately NOT the dark IDE-chrome styling used for code/
+  // input/output below, so "what to read" vs. "where to type" are visually
+  // distinct at a glance.
+  problemCard: {
     ...globalStyle.card,
-    marginTop: 16,
     padding: 16,
+    backgroundColor: 'background-basic-color-2',
+  },
+  timerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    backgroundColor: 'background-basic-color-2',
+  },
+  timerPillUrgent: {
+    backgroundColor: 'rgba(255, 107, 107, 0.12)',
   },
 });
 
@@ -518,6 +610,13 @@ const editorChromeStyles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
+  },
+  sectionIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   aiBadge: {
     flexDirection: 'row',
