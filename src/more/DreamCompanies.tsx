@@ -20,6 +20,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import InfoBox from 'components/InfoBox';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as dreamCompaniesService from 'services/dreamCompaniesService';
@@ -315,6 +316,13 @@ const DreamCompanies = memo(() => {
                   <Flex justify="space-between" itemsCenter>
                     <View style={{ flex: 1 }}>
                       <Flex justify="flex-start" itemsCenter>
+                        {/* Product report: "when users type the company
+                            they want the app should display the logo of
+                            the company there too so that users can
+                            identify this company anywhere" — same
+                            CompanyLogoAvatar (real logo, or initials when
+                            unavailable) Job Alerts already uses. */}
+                        <CompanyLogoAvatar logoUrl={c.logoUrl} companyName={c.company} size="small" style={{ marginRight: 10 }} />
                         <Text category="h7" bold numberOfLines={1} style={globalStyle.flexOne}>{c.company}</Text>
                       </Flex>
                       {c.targetRole ? (

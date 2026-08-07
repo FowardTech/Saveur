@@ -31,6 +31,13 @@ export interface DreamCompanyPrepProgress {
 export interface DreamCompany {
   id: number;
   company: string;
+  // Product report: "when users type the company they want the app should
+  // display the logo of the company there too" — best-effort Clearbit logo
+  // URL, computed server-side (see app/services/company_logo_service.py);
+  // null/missing means no usable guess, in which case
+  // components/CompanyLogoAvatar.tsx already falls back to an
+  // initial-letter avatar (also its behavior on a wrong guess that 404s).
+  logoUrl: string | null;
   targetRole: string | null;
   intel: DreamCompanyIntel | null;
   researchedAt: string | null;
@@ -59,6 +66,7 @@ interface DreamCompanyIntelWire {
 interface DreamCompanyWire {
   id: number;
   company: string;
+  logo_url?: string | null;
   target_role?: string | null;
   intel?: DreamCompanyIntelWire | null;
   researched_at?: string | null;
@@ -88,6 +96,7 @@ function fromWire(w: DreamCompanyWire): DreamCompany {
   return {
     id: w.id,
     company: w.company,
+    logoUrl: w.logo_url ?? null,
     targetRole: w.target_role ?? null,
     intel: intelFromWire(w.intel),
     researchedAt: w.researched_at ?? null,
