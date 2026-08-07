@@ -39,14 +39,29 @@ const AdDetails = memo(() => {
         {ad.imageUrl ? (
           <Image source={{uri: ad.imageUrl}} style={styles.image} resizeMode="cover" />
         ) : null}
-        <Layout level="2" style={styles.card}>
-          <Text category="h3" bold mb={12}>
-            {ad.title}
-          </Text>
-          <Text category="h8-s" style={styles.detailBody}>
-            {ad.detailBody}
-          </Text>
-        </Layout>
+        {/* BUG FIX (product report: "I dont want banner title, subtitle
+            and detail screen body to be mandatory... sometimes I might not
+            want a caption to show in the ads") — title/detailBody used to
+            render unconditionally, so an image-only ad with no caption at
+            all still showed an empty white card (empty heading + empty
+            paragraph) floating below the image. Now the whole card is
+            skipped when there's genuinely nothing to show in it, and each
+            line inside it is independently optional so a title-only or
+            detail-only ad doesn't leave a blank gap where the other was. */}
+        {ad.title || ad.detailBody ? (
+          <Layout level="2" style={styles.card}>
+            {ad.title ? (
+              <Text category="h3" bold mb={ad.detailBody ? 12 : 0}>
+                {ad.title}
+              </Text>
+            ) : null}
+            {ad.detailBody ? (
+              <Text category="h8-s" style={styles.detailBody}>
+                {ad.detailBody}
+              </Text>
+            ) : null}
+          </Layout>
+        ) : null}
 
         {ad.ctaUrl ? (
           <CtaButton style={[globalStyle.shadowBtn]} onPress={onCta}>

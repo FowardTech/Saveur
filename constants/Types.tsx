@@ -609,6 +609,16 @@ export interface JobAlertProps {
 // page, including how many times it should show per user.
 export interface AdvertisementProps {
   id: number;
+  // title/body/detailBody are all genuinely OPTIONAL captions now (product
+  // report: "I dont want banner title, subtitle and detail screen body to
+  // be mandatory... sometimes I might not want a caption to show in the
+  // ads" — see Advertisement model's own comment on the backend). Kept as
+  // plain `string` rather than `string | undefined` here since every call
+  // site already treats '' the same as "no caption" (see AdPopupModal.tsx,
+  // AdDetails.tsx, HomeSrc.tsx) and adsService.ts's fromWire() normalizes a
+  // null/missing wire value to '' — an ad is only guaranteed to have an
+  // imageUrl and/or at least one of these three non-empty (see admin.py's
+  // create_ad validation), never all of them together.
   title: string;
   body: string; // short teaser shown in the popup itself
   imageUrl?: string;

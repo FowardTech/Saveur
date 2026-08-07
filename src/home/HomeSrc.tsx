@@ -965,20 +965,30 @@ const HomeSrc = memo(() => {
                   />
                 </View>
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text
-                    category="h9"
-                    bold
-                    numberOfLines={1}
-                    style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
-                    {homeBanner.title}
-                  </Text>
-                  <Text
-                    category="h10"
-                    numberOfLines={2}
-                    mt={2}
-                    style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
-                    {homeBanner.body}
-                  </Text>
+                  {/* BUG FIX (product report: title/body being mandatory —
+                      see homeBannerImageWrap's own comment above for the
+                      fuller history): title/body are optional now, so this
+                      degenerate case (no image AND no caption, or an image
+                      that failed to load on a caption-free ad) shouldn't
+                      show blank lines here. */}
+                  {homeBanner.title ? (
+                    <Text
+                      category="h9"
+                      bold
+                      numberOfLines={1}
+                      style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
+                      {homeBanner.title}
+                    </Text>
+                  ) : null}
+                  {homeBanner.body ? (
+                    <Text
+                      category="h10"
+                      numberOfLines={2}
+                      mt={homeBanner.title ? 2 : 0}
+                      style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
+                      {homeBanner.body}
+                    </Text>
+                  ) : null}
                 </View>
                 <Icon
                   pack="assets"

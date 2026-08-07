@@ -19,22 +19,36 @@ import {AdvertisementProps} from 'constants/Types';
 
 interface AdWire {
   id?: number;
-  title?: string;
-  body?: string;
+  title?: string | null;
+  body?: string | null;
   image_url?: string;
-  detail_body?: string;
+  detail_body?: string | null;
   cta_url?: string;
   cta_label?: string;
 }
 
+// BUG FIX (product report: "I dont want banner title, subtitle and detail
+// screen body to be mandatory... sometimes I might not want a caption to
+// show in the ads") — title/body/detail_body are genuinely optional now,
+// all the way from the Advertisement model through admin.py's create/
+// update endpoints (see those files' own comments). This function used to
+// require ALL THREE to be truthy just to treat the wire payload as a real
+// ad at all — a caption-free (or partially-captioned) ad an admin
+// successfully created would come back from a real, active `GET /ads/next`
+// or `/ads/banner` response and still get silently discarded here as if no
+// ad existed, never reaching the popup/banner UI (which — see
+// AdPopupModal.tsx, AdDetails.tsx, HomeSrc.tsx — already renders correctly
+// around a missing title/body/detail_body). Only `id` is genuinely
+// required; an ad with no image AND no caption at all can't exist per
+// admin.py's own validation, so nothing further to check here.
 function fromWire(wire: AdWire): AdvertisementProps | null {
-  if (!wire || !wire.id || !wire.title || !wire.body || !wire.detail_body) return null;
+  if (!wire || !wire.id) return null;
   return {
     id: wire.id,
-    title: wire.title,
-    body: wire.body,
+    title: wire.title || '',
+    body: wire.body || '',
     imageUrl: wire.image_url || undefined,
-    detailBody: wire.detail_body,
+    detailBody: wire.detail_body || '',
     ctaUrl: wire.cta_url || undefined,
     ctaLabel: wire.cta_label || undefined,
   };

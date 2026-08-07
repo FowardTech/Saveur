@@ -119,9 +119,17 @@ const AdPopupModal: React.FC<Props> = ({ visible, title, body, imageUrl, ctaLabe
           colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)', 'rgba(0,0,0,1)']}
           locations={[0, 0.55, 1]}
           style={[styles.scrim, { paddingBottom: bottom + 24, minHeight: Math.round(height * 0.32) }]}>
-          <Text category="h4" bold style={styles.title}>
-            {title}
-          </Text>
+          {/* BUG FIX (product report: "I dont want banner title, subtitle
+              and detail screen body to be mandatory... sometimes I might
+              not want a caption to show in the ads") — title used to
+              render unconditionally, same class of bug `body` right below
+              already avoided; an ad with no title left an empty (but still
+              space-taking, per h4's line-height) heading over the image. */}
+          {title ? (
+            <Text category="h4" bold style={styles.title}>
+              {title}
+            </Text>
+          ) : null}
           {body ? (
             <Text category="h9-s" mt={8} style={styles.body}>
               {body}
