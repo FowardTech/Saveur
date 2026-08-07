@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, TouchableOpacity, View } from 'react-native';
+import { Alert, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -27,11 +27,54 @@ import * as codingService from 'services/codingService';
 import { CodingLanguage, RunResult, TestRunResult } from 'services/codingService';
 import CtaButton from 'components/CtaButton';
 
-// Real coding-interview screen: a plain text area stands in for a real
-// syntax-highlighted code editor (TODO: integrate a real code editor, e.g.
-// Monaco / CodeMirror via WebView), but "Run" / "Run Tests" / "Get AI Code
-// Review" all now hit the real Judge0-backed sandbox via services/codingService.ts
-// instead of returning mocked results.
+// Cross-platform monospace — no monospace font asset is bundled in this app
+// (only the PlusJakartaSans family — see components/Text.tsx), but both
+// OSes ship a real fixed-width system font under these names.
+const MONO_FONT = Platform.select({ios: 'Courier New', android: 'monospace', default: 'monospace'});
+const EDITOR_DOT_COLORS = ['#FF5F56', '#FFBD2E', '#27C93F'];
+
+// Dark "editor window" title bar (product report: the Code Practice editor
+// "should look like a code editor design") — same 3-traffic-light-dots +
+// label chrome as components/CodeBlock.tsx (the read-only version used for
+// lesson code snippets), reimplemented locally here since this screen wraps
+// an editable <Input> rather than static text.
+function EditorTitleBar({ label }: { label: string }) {
+  return (
+    <View style={editorChromeStyles.header}>
+      <View style={{ flexDirection: 'row' }}>
+        {EDITOR_DOT_COLORS.map((c, i) => (
+          <View key={c} style={[editorChromeStyles.dot, i > 0 && { marginLeft: 6 }, { backgroundColor: c }]} />
+        ))}
+      </View>
+      <Text category="h10" style={{ color: '#8B8BA7', marginLeft: 12, fontFamily: MONO_FONT }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+// "AI-graded" disclosure (product context: Judge0 isn't subscribed right
+// now, so results come from AI validation instead of a real sandboxed run
+// — see Saveur-Backend's app/api/coding.py's _active_provider() and
+// app/services/code_validator_service.py). Shown whenever a result's
+// `engine` says "ai", so a user never mistakes a predicted result for a
+// real execution.
+function AiGradedBadge() {
+  const { t } = useTranslation(['find', 'common']);
+  return (
+    <View style={editorChromeStyles.aiBadge}>
+      <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6' }]} />
+      <Text category="h10" bold style={{ color: '#8B5CF6', marginLeft: 6 }}>
+        {t('find:ai_graded', { defaultValue: 'AI-graded — Judge0 not connected yet' })}
+      </Text>
+    </View>
+  );
+}
+
+// Real coding-interview screen: "Run" / "Run Tests" / "Get AI Code Review"
+// hit the real Judge0-backed sandbox when it's configured (services/
+// codingService.ts), or fall back to AI validation automatically
+// otherwise — see AiGradedBadge above.
 const CodingInterview = memo(() => {
   const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<CodingInterviewScreenNavigationProp>();
@@ -53,6 +96,7 @@ const CodingInterview = memo(() => {
 
   const [runningTests, setRunningTests] = React.useState(false);
   const [testResults, setTestResults] = React.useState<TestRunResult[] | null>(null);
+  const [testEngine, setTestEngine] = React.useState<'judge0' | 'ai' | undefined>(undefined);
 
   const [isFinishing, setIsFinishing] = React.useState(false);
   const [isReviewing, setIsReviewing] = React.useState(false);
@@ -89,6 +133,7 @@ const CodingInterview = memo(() => {
     setCode(lang.starterCode ?? '');
     setRunResult(null);
     setTestResults(null);
+    setTestEngine(undefined);
     setReview(null);
   };
 
@@ -114,8 +159,9 @@ const CodingInterview = memo(() => {
     setRunningTests(true);
     setTestResults(null);
     try {
-      const { results } = await codingService.runTests(language.id, code);
+      const { results, engine } = await codingService.runTests(language.id, code);
       setTestResults(results);
+      setTestEngine(engine);
     } catch (e: any) {
       Alert.alert(
         t('find:run_tests_failed', { defaultValue: 'Run tests failed' }),
@@ -224,7 +270,8 @@ const CodingInterview = memo(() => {
           </>
         )}
 
-        <Layout level="3" style={styles.editorWrap}>
+        <View style={editorChromeStyles.window}>
+          <EditorTitleBar label={language.name} />
           <Input
             multiline
             textStyle={styles.editorText}
@@ -233,13 +280,15 @@ const CodingInterview = memo(() => {
             onChangeText={setCode}
             autoCapitalize="none"
             autoCorrect={false}
+            placeholderTextColor="#6B6B85"
           />
-        </Layout>
+        </View>
 
         <Text category="h8" bold status="placeholder" mt={24} mb={8}>
           {t('find:stdin_optional', { defaultValue: 'Input (stdin) — optional' })}
         </Text>
-        <Layout level="3" style={styles.stdinWrap}>
+        <View style={editorChromeStyles.window}>
+          <EditorTitleBar label="stdin" />
           <Input
             multiline
             textStyle={styles.stdinText}
@@ -247,10 +296,11 @@ const CodingInterview = memo(() => {
             value={stdin}
             onChangeText={setStdin}
             placeholder={t('find:stdin_placeholder', { defaultValue: 'Anything your program reads from stdin' }).toString()}
+            placeholderTextColor="#6B6B85"
             autoCapitalize="none"
             autoCorrect={false}
           />
-        </Layout>
+        </View>
         <Button
           children={running ? t('find:running', { defaultValue: 'Running…' }) : t('find:run', { defaultValue: 'Run' })}
           disabled={running}
@@ -260,26 +310,34 @@ const CodingInterview = memo(() => {
           style={{ marginTop: 12 }}
         />
         {runResult ? (
-          <Layout level="2" style={styles.resultBox}>
-            <Text category="h9" bold status={runResult.stderr ? 'danger' : 'success'} mb={8}>
-              {runResult.status ?? (runResult.stderr ? t('find:error_status', { defaultValue: 'Error' }) : t('find:success_status', { defaultValue: 'Success' }))}
-            </Text>
-            {runResult.stdout ? (
-              <>
-                <Text category="h10" status="placeholder">{t('find:stdout', { defaultValue: 'Output' })}</Text>
-                <Text category="h9-s" mb={runResult.stderr ? 8 : 0} style={styles.mono}>{runResult.stdout}</Text>
-              </>
-            ) : null}
-            {runResult.stderr ? (
-              <>
-                <Text category="h10" status="placeholder">{t('find:stderr', { defaultValue: 'Errors' })}</Text>
-                <Text category="h9-s" status="danger" style={styles.mono}>{runResult.stderr}</Text>
-              </>
-            ) : null}
-            {!runResult.stdout && !runResult.stderr ? (
-              <Text category="h9-s" status="placeholder">{t('find:no_output', { defaultValue: '(no output)' })}</Text>
-            ) : null}
-          </Layout>
+          <View style={editorChromeStyles.window}>
+            <EditorTitleBar label={t('find:stdout', { defaultValue: 'output' }).toString()} />
+            <View style={{ padding: 14 }}>
+              {runResult.engine === 'ai' ? <AiGradedBadge /> : null}
+              <Text
+                category="h9"
+                bold
+                style={{ color: runResult.stderr ? '#FF6B6B' : '#5FE38E', fontFamily: MONO_FONT, marginTop: runResult.engine === 'ai' ? 10 : 0 }}
+                mb={8}>
+                {runResult.status ?? (runResult.stderr ? t('find:error_status', { defaultValue: 'Error' }) : t('find:success_status', { defaultValue: 'Success' }))}
+              </Text>
+              {runResult.stdout ? (
+                <>
+                  <Text category="h10" style={{ color: '#8B8BA7', fontFamily: MONO_FONT }}>{t('find:stdout', { defaultValue: 'Output' })}</Text>
+                  <Text category="h9-s" mb={runResult.stderr ? 8 : 0} style={{ color: '#E4E4F0', fontFamily: MONO_FONT }}>{runResult.stdout}</Text>
+                </>
+              ) : null}
+              {runResult.stderr ? (
+                <>
+                  <Text category="h10" style={{ color: '#8B8BA7', fontFamily: MONO_FONT }}>{t('find:stderr', { defaultValue: 'Errors' })}</Text>
+                  <Text category="h9-s" style={{ color: '#FF6B6B', fontFamily: MONO_FONT }}>{runResult.stderr}</Text>
+                </>
+              ) : null}
+              {!runResult.stdout && !runResult.stderr ? (
+                <Text category="h9-s" style={{ color: '#8B8BA7', fontFamily: MONO_FONT }}>{t('find:no_output', { defaultValue: '(no output)' })}</Text>
+              ) : null}
+            </View>
+          </View>
         ) : null}
 
         <Text category="h8" bold status="placeholder" mt={24} mb={12}>
@@ -323,7 +381,8 @@ const CodingInterview = memo(() => {
         />
         {testResults ? (
           <Layout level="2" style={styles.resultBox}>
-            <Text category="h8" bold status={testResults.every(r => r.passed) ? 'success' : 'warning'}>
+            {testEngine === 'ai' ? <AiGradedBadge /> : null}
+            <Text category="h8" bold status={testResults.every(r => r.passed) ? 'success' : 'warning'} mt={testEngine === 'ai' ? 10 : 0}>
               {t('find:test_cases_passed', {
                 defaultValue: `${testResults.filter(r => r.passed).length} / ${testResults.length} test cases passed`,
                 passed: testResults.filter(r => r.passed).length,
@@ -383,34 +442,33 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  editorWrap: {
-    borderRadius: 14,
-    padding: 8,
-    minHeight: 220,
-  },
   editorInput: {
     backgroundColor: 'transparent',
     borderWidth: 0,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
+  // Product report: "in the code practice too it should look like a code
+  // editor design" — dark background + light monospace text (was the
+  // app's plain sans-serif brand font on the default card color), matching
+  // components/CodeBlock.tsx's read-only lesson-code treatment. Color
+  // literals (not theme tokens) deliberately — a code editor reads as a
+  // code editor because it's ALWAYS dark, independent of the app's own
+  // light/dark mode, same as every real IDE/editor's default dark theme.
   editorText: {
-    fontFamily: 'PlusJakartaSans-Regular',
+    fontFamily: MONO_FONT,
     fontSize: 13,
     minHeight: 200,
     textAlignVertical: 'top',
-  },
-  stdinWrap: {
-    borderRadius: 14,
-    padding: 8,
-    minHeight: 60,
+    color: '#E4E4F0',
   },
   stdinText: {
-    fontFamily: 'PlusJakartaSans-Regular',
+    fontFamily: MONO_FONT,
     fontSize: 13,
     minHeight: 52,
     textAlignVertical: 'top',
-  },
-  mono: {
-    fontFamily: 'PlusJakartaSans-Regular',
+    color: '#E4E4F0',
   },
   resultBox: {
     ...globalStyle.card,
@@ -434,5 +492,40 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     marginTop: 16,
     padding: 16,
+  },
+});
+
+// Fixed dark "editor window" chrome shared by the code/stdin/output panels
+// above — plain (non-themed) StyleSheet since a code editor's dark theme is
+// deliberately independent of the app's own light/dark mode (see
+// editorText's own comment). Mirrors components/CodeBlock.tsx's colors.
+const editorChromeStyles = StyleSheet.create({
+  window: {
+    backgroundColor: '#1E1E2E',
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    backgroundColor: '#26263B',
+    borderBottomWidth: 1,
+    borderBottomColor: '#33334A',
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  aiBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(139, 92, 246, 0.12)',
+    borderRadius: 999,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
   },
 });

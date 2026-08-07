@@ -52,6 +52,11 @@ export interface RunTestsSummary {
   results: TestRunResult[];
   passedCount: number;
   totalCount: number;
+  /** "judge0" = a real sandboxed execution; "ai" = AI-predicted, since
+   * Judge0 isn't configured/active right now — see Saveur-Backend's
+   * app/api/coding.py's _active_provider(). Lets the UI show an
+   * "AI-graded" disclosure instead of implying a real run happened. */
+  engine?: 'judge0' | 'ai';
 }
 export interface RunResult {
   stdout: string;
@@ -60,6 +65,7 @@ export interface RunResult {
   exitCode?: number | null;
   timeMs?: number | null;
   memoryKb?: number | null;
+  engine?: 'judge0' | 'ai';
 }
 export interface CodeReviewResult {
   complexityNote: string;
@@ -164,6 +170,7 @@ export async function runCode(
     exit_code?: number | null;
     time_ms?: number | null;
     memory_kb?: number | null;
+    engine?: 'judge0' | 'ai';
   }>('/api/v1/coding/run', {language, code, stdin});
   return {
     stdout: data.stdout ?? '',
@@ -172,6 +179,7 @@ export async function runCode(
     exitCode: data.exit_code ?? null,
     timeMs: data.time_ms ?? null,
     memoryKb: data.memory_kb ?? null,
+    engine: data.engine,
   };
 }
 
@@ -189,6 +197,7 @@ export async function runTests(
     passed_count?: number;
     passedCount?: number;
     total_count?: number;
+    engine?: 'judge0' | 'ai';
     results?: Array<{
       stdin?: string;
       input?: string;
@@ -217,7 +226,7 @@ export async function runTests(
     };
   });
   const passedCount = data.passed_count ?? data.passedCount ?? results.filter(r => r.passed).length;
-  return {results, passedCount, totalCount: data.total_count ?? results.length};
+  return {results, passedCount, totalCount: data.total_count ?? results.length, engine: data.engine};
 }
 
 /**

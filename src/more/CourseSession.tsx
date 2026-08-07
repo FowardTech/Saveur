@@ -28,8 +28,54 @@ import ProLockGate from 'components/ProLockGate';
 import { getCourseLevelLabel } from 'utils/learningLabels';
 import CtaButton from 'components/CtaButton';
 import InAppVideoPlayer from 'components/InAppVideoPlayer';
+import CodeBlock from 'components/CodeBlock';
 
 type LessonMode = 'voice' | 'text';
+
+// Product report: "In the lesson course there are code written as
+// explanation for software engineer and IT related courses. So I want the
+// codes to be written like in real code editor design." CourseModule.body
+// (see services/learningService.ts) is a single AI-generated string with
+// no structural parsing at all today — a fenced ```language ... ``` block
+// (the AI already writes these for code-heavy topics, same markdown
+// convention it uses everywhere else in this app's AI output) used to
+// render as plain prose, fences and all, in the exact same font/size as
+// everything else. Splits the body on fences and renders each code segment
+// via CodeBlock (dark editor chrome + monospace) while prose segments keep
+// rendering as plain Text, same as before — deliberately NOT a full
+// markdown parser (no such library exists in this app yet, and headers/
+// lists/bold aren't part of this report), just fenced code-block
+// detection.
+const CODE_FENCE_RE = /```([a-zA-Z0-9_+-]*)\n?([\s\S]*?)```/g;
+
+interface BodySegment {
+  type: 'text' | 'code';
+  content: string;
+  language?: string;
+}
+
+function parseModuleBody(body: string): BodySegment[] {
+  if (!body) return [];
+  const segments: BodySegment[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+  CODE_FENCE_RE.lastIndex = 0;
+  while ((match = CODE_FENCE_RE.exec(body))) {
+    if (match.index > lastIndex) {
+      const prose = body.slice(lastIndex, match.index).trim();
+      if (prose) segments.push({type: 'text', content: prose});
+    }
+    const code = match[2].replace(/\n$/, '');
+    if (code.trim()) segments.push({type: 'code', content: code, language: match[1] || undefined});
+    lastIndex = CODE_FENCE_RE.lastIndex;
+  }
+  const rest = body.slice(lastIndex).trim();
+  if (rest) segments.push({type: 'text', content: rest});
+  // No fences at all — the overwhelmingly common case for non-technical
+  // courses — returns the original single text segment, so behavior is
+  // byte-for-byte unchanged for every lesson that isn't showing code.
+  return segments.length ? segments : [{type: 'text', content: body}];
+}
 
 // AI-taught course session — replaces the old LearningCourses.tsx "Start"
 // button, which just showed Alert("Course content coming soon.") with no
@@ -573,9 +619,20 @@ const CourseSession = memo(() => {
               </Flex>
             ) : null}
 
-            <Text category="h9-s" mb={20}>
-              {currentModule.body}
-            </Text>
+            {parseModuleBody(currentModule.body).map((segment, i) =>
+              segment.type === 'code' ? (
+                <CodeBlock
+                  key={i}
+                  code={segment.content}
+                  language={segment.language}
+                  style={{marginBottom: 20}}
+                />
+              ) : (
+                <Text key={i} category="h9-s" mb={20}>
+                  {segment.content}
+                </Text>
+              ),
+            )}
 
             {currentModule.checkQuestion ? (
               <View style={styles.checkCard}>
