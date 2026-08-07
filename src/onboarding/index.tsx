@@ -34,6 +34,20 @@ import { useTranslation } from 'react-i18next';
 import { SUPPORTED_LANGUAGES, getLanguageLabel } from 'constants/languages';
 import { EKeyAsyncStorage } from 'constants/Types';
 import { Images } from 'assets/images';
+import { getSignupOnboardingImage, SignupOnboardingImagesConfig } from 'services/configService';
+import { ImageSourcePropType } from 'react-native';
+
+/** Admin-uploaded override for one signup-carousel slide (see
+ * configService.getSignupOnboardingImage) if one exists, else the slide's
+ * own bundled local asset — unchanged behavior until an admin actually
+ * uploads something. */
+function slideImageSource(
+  key: keyof SignupOnboardingImagesConfig,
+  fallback: ImageSourcePropType,
+): ImageSourcePropType {
+  const remote = getSignupOnboardingImage(key);
+  return remote ? { uri: remote } : fallback;
+}
 
 const Onboarding = memo(() => {
   const { width, top } = useLayout();
@@ -153,6 +167,17 @@ const Onboarding = memo(() => {
   // directly, trimmed to the illustration's own content bounds rather than
   // an eyeballed rectangle — same content (no headline, transparent
   // background), just a cleaner edge.
+  // Product request: "implement the ability to upload the app onboarding
+  // images i.e the one at signup. Admin should be able to upload the
+  // images for it... single image upload for the [5] onboarding screen
+  // that is in the signup part" — each slide's `image` now prefers an
+  // admin-uploaded override (Admin > Content > Onboarding > Signup
+  // Carousel) over its bundled local asset, via `configKey` +
+  // slideImageSource() below. No per-language variant here (unlike the
+  // Job Alerts/Learning Courses onboarding banners) — this carousel's
+  // headline/subtitle text was deliberately cropped OUT of each source
+  // image and rebuilt as the translatable <Text> above, so the
+  // illustration itself has nothing baked in that needs localizing.
   const DATA = [
     // `aspect` (width / height, measured from each PNG's actual pixel
     // dimensions) — see the image container's own comment below for why
@@ -164,35 +189,35 @@ const Onboarding = memo(() => {
       id: 0,
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
-      image: Images.onboardingInterview,
+      image: slideImageSource('interview', Images.onboardingInterview),
       aspect: 1600 / 1537,
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
-      image: Images.onboardingFeedback,
+      image: slideImageSource('feedback', Images.onboardingFeedback),
       aspect: 1600 / 1530,
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
-      image: Images.onboardingJobAlert,
+      image: slideImageSource('job_alert', Images.onboardingJobAlert),
       aspect: 1600 / 1211,
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
-      image: Images.onboardingResumeScan,
+      image: slideImageSource('resume_scan', Images.onboardingResumeScan),
       aspect: 1600 / 1217,
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
-      image: Images.onboardingLearning,
+      image: slideImageSource('learning', Images.onboardingLearning),
       aspect: 1600 / 1369,
     },
   ];

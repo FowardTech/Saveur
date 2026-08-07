@@ -176,6 +176,25 @@ export interface DailyChallengeConfig {
   types: DailyChallengeType[];
 }
 
+// Pre-signup onboarding carousel illustrations (product request:
+// "implement the ability to upload the app onboarding images i.e the one
+// at signup... single image upload for the 4 onboarding screen that is in
+// the signup part" — src/onboarding/index.tsx's DATA array actually has 5
+// slides today). Flat string map, deliberately no per-language variant —
+// unlike the Job Alerts/Learning Courses onboarding banners, this
+// carousel's headline/subtitle text was specifically cropped OUT of each
+// source image and rebuilt as this app's own translatable <Text>, so
+// there's no baked-in text to localize, just one image per slide. Blank =
+// keep using the bundled asset (assets/images/index.ts's onboarding*
+// entries) — see src/onboarding/index.tsx's slideImage() helper.
+export interface SignupOnboardingImagesConfig {
+  interview: string;
+  feedback: string;
+  job_alert: string;
+  resume_scan: string;
+  learning: string;
+}
+
 export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
@@ -187,6 +206,7 @@ export interface AppConfig {
   student_eligibility: StudentEligibilityConfig;
   interview_personas: InterviewPersonasConfig;
   daily_challenge: DailyChallengeConfig;
+  signup_onboarding_images: SignupOnboardingImagesConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -235,6 +255,7 @@ const DEFAULT_CONFIG: AppConfig = {
   student_eligibility: {eligible_countries: [], discount_percent: 3},
   interview_personas: {items: []},
   daily_challenge: {enabled: true, xp_reward: 30, types: []},
+  signup_onboarding_images: {interview: '', feedback: '', job_alert: '', resume_scan: '', learning: ''},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -301,6 +322,14 @@ export function isFeatureEnabled(key: keyof FeatureFlags): boolean {
   return cached.feature_flags[key] !== false;
 }
 
+/** Admin-uploaded override for one signup-onboarding carousel slide, or
+ * null if the admin hasn't uploaded one (or the config hasn't loaded yet)
+ * — callers fall back to their own bundled local asset in that case. See
+ * SignupOnboardingImagesConfig's own comment above. */
+export function getSignupOnboardingImage(key: keyof SignupOnboardingImagesConfig): string | null {
+  return cached.signup_onboarding_images[key] || null;
+}
+
 /** Whether the CURRENT app build is below the admin-configured minimum for
  * this platform — i.e. whether the force-update screen should show. */
 export function needsForceUpdate(config: AppConfig): boolean {
@@ -351,6 +380,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
       student_eligibility: {...DEFAULT_CONFIG.student_eligibility, ...data.student_eligibility},
       interview_personas: {...DEFAULT_CONFIG.interview_personas, ...data.interview_personas},
       daily_challenge: {...DEFAULT_CONFIG.daily_challenge, ...data.daily_challenge},
+      signup_onboarding_images: {...DEFAULT_CONFIG.signup_onboarding_images, ...data.signup_onboarding_images},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {
