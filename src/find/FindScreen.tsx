@@ -109,6 +109,57 @@ const FindScreen = memo(() => {
     }
   };
 
+  // System Design tile (product report: "the system design should also be
+  // added as part of the tools too") — same immediate-start shortcut as
+  // Coding Practice above, straight into the whiteboard tool (see
+  // MockInterviewSetup.tsx's onStart for the same Coding/SystemDesign
+  // special-casing this mirrors) rather than routing through the generic
+  // voice/text/video interview flow, which doesn't apply here.
+  const [isStartingSystemDesign, setIsStartingSystemDesign] = React.useState(false);
+  const onStartSystemDesignPractice = async () => {
+    if (isStartingSystemDesign) return;
+    setIsStartingSystemDesign(true);
+    try {
+      const entitlement = await getSessionEntitlement(subscription);
+      if (!entitlement.canStart) {
+        Alert.alert(
+          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
+          t('find:free_limit_reached_body', {
+            limit: entitlement.sessionsLimit ?? 5,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              onPress: () => navigate('Subscription'),
+            },
+          ],
+        );
+        return;
+      }
+      const { sessionId } = await interviewService.startSession({
+        interviewType: Interview_Type_Enum.SystemDesign,
+        mode: Practice_Mode_Enum.Text,
+        difficulty: Difficulty_Enum.Intermediate,
+        timed: true,
+      });
+      navigate('SystemDesignWhiteboard', { sessionId, interviewType: Interview_Type_Enum.SystemDesign });
+    } catch (e: any) {
+      const body = e?.error === 'llm_unavailable'
+        ? t('find:interview_unavailable_body', {
+            defaultValue: 'Video, voice, and text interviews are temporarily unavailable. Please try again later.',
+          })
+        : e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' });
+      Alert.alert(
+        t('find:start_interview_failed', { defaultValue: 'Could not start interview' }),
+        body,
+      );
+    } finally {
+      setIsStartingSystemDesign(false);
+    }
+  };
+
   // eva outline icons (see constants/Data.ts's DATA_INTERVIEW_TYPES comment
   // for why — same reasoning applies here, this row used to mix the custom
   // "assets" pack's filled 'myPost' badge icon with thinner line-art ones).
@@ -119,6 +170,7 @@ const FindScreen = memo(() => {
     ...(configService.isFeatureEnabled('coding_practice')
       ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice, loading: isStartingCoding }]
       : []),
+    { title: t('find:system_design_whiteboard', { defaultValue: 'System Design' }), icon: 'grid-outline', onPress: onStartSystemDesignPractice, loading: isStartingSystemDesign },
     // Practical Scenarios (product request) — the hands-on equivalent of
     // Coding Practice for non-engineering tracks. Routes to a setup screen
     // (pick a field + role) rather than starting immediately like Coding

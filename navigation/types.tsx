@@ -93,6 +93,12 @@ export type RootStackParamList = {
   CodingInterview: {
     sessionId?: string;
     interviewType?: Interview_Type_Enum;
+    // Session Length picked in MockInterviewSetup (product report: "the
+    // selected session length should be followed in the coding session
+    // time length") — drives an on-screen countdown that auto-finishes the
+    // session when it runs out, same idea as LiveInterviewSession's own
+    // hard time limit.
+    durationMin?: number;
   };
   InterviewFeedback: {
     sessionId?: string;
@@ -102,6 +108,21 @@ export type RootStackParamList = {
     // cross-check by the time it navigates here (see that screen's onEnd).
     // GET /api/v1/feedback/session/:id doesn't itself return this data.
     videoAnalysis?: VideoAnalysisMetrics;
+    // Product report: "the feedback interview for coding session should be
+    // totally different from the normal interview feedback... AI code
+    // review button should be in the feedback screen." CodingInterview.tsx
+    // threads its final code/language/problem + test outcome through here
+    // so this screen can render a coding-specific layout (no Star
+    // Breakdown/Video Replay — neither applies to a coding session) with
+    // its own "Get AI Code Review" action, without needing a new backend
+    // field to persist and re-fetch the submitted code server-side.
+    codingResult?: {
+      language: string;
+      code: string;
+      problemStatement: string;
+      testsPassed?: number;
+      testsTotal?: number;
+    };
   };
   ResumeBuilder: undefined;
   // Generic uploaded-file manager (POST/GET/DELETE /api/v1/documents, see
@@ -233,7 +254,21 @@ export type RootStackParamList = {
   // current regardless of which tip triggered the push.
   GoalTipDetail: undefined;
   SalaryNegotiation: undefined;
-  SystemDesignWhiteboard: undefined;
+  // Product report: "the system design should also be added as part of the
+  // tools too" + "should also have a AI code review too and result" +
+  // "session length should be followed... once the time is up there should
+  // be a count down timer... a pop up telling the user that time is up".
+  // Optional session context — undefined when reached the old way (the
+  // small edit icon inside CodingInterview's TopNavigation, a standalone
+  // sandbox with nothing to finish/time/score), populated when reached as
+  // its own selectable interview type from MockInterviewSetup.
+  SystemDesignWhiteboard:
+    | {
+        sessionId?: string;
+        interviewType?: Interview_Type_Enum;
+        durationMin?: number;
+      }
+    | undefined;
   LearningCourses: undefined;
   // AI-taught module-by-module course session — see
   // services/learningService.ts and src/more/CourseSession.tsx. `level`
@@ -429,6 +464,10 @@ export type LiveInterviewSessionScreenNavigationProp = RouteProp<
 export type CodingInterviewScreenNavigationProp = RouteProp<
   RootStackParamList,
   'CodingInterview'
+>;
+export type SystemDesignWhiteboardScreenNavigationProp = RouteProp<
+  RootStackParamList,
+  'SystemDesignWhiteboard'
 >;
 export type SubscriptionScreenNavigationProp = RouteProp<
   RootStackParamList,

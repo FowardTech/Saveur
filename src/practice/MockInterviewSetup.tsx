@@ -28,6 +28,8 @@ import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
 import PersonaDetailModal from 'components/PersonaDetailModal';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import { guessCompanyLogoUrl } from 'utils/companyLogo';
 import { InterviewPersona } from 'services/configService';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
@@ -202,7 +204,17 @@ const MockInterviewSetup = memo(() => {
         persona,
       });
       if (interviewType === Interview_Type_Enum.Coding) {
-        navigate('CodingInterview', { sessionId, interviewType });
+        navigate('CodingInterview', { sessionId, interviewType, durationMin });
+      } else if (interviewType === Interview_Type_Enum.SystemDesign) {
+        // Product report: "the system design should also be added as part
+        // of the tools too" — previously SystemDesign fell into the same
+        // generic voice/text/video LiveInterviewSession branch as every
+        // other Q&A-style type, even though the app already has a purpose-
+        // built whiteboard tool for it (src/practice/SystemDesignWhiteboard.tsx,
+        // until now only reachable via a small, easy-to-miss icon inside
+        // the Coding Interview screen). Routes here instead, same
+        // sessionId/durationMin threading as Coding.
+        navigate('SystemDesignWhiteboard', { sessionId, interviewType, durationMin });
       } else {
         // BUG FIX (product report: "voice/video interview starts in
         // English, then later changes to the user's preferred language"):
@@ -269,6 +281,15 @@ const MockInterviewSetup = memo(() => {
           </TouchableOpacity>
         ) : null}
 
+        {/* Product report: "when user select coding as the type of
+            interview then the interview modes (voice, text, video) cards
+            dont need to show" — neither Coding nor System Design is a
+            spoken/typed Q&A session (onStart above routes both straight to
+            their own dedicated screens, never to LiveInterviewSession),
+            so `mode` is entirely unused for them; showing the picker
+            anyway just invited a meaningless choice. */}
+        {interviewType !== Interview_Type_Enum.Coding && interviewType !== Interview_Type_Enum.SystemDesign ? (
+          <>
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('find:choose_mode')}
         </Text>
@@ -305,6 +326,8 @@ const MockInterviewSetup = memo(() => {
             );
           })}
         </Flex>
+          </>
+        ) : null}
 
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('find:interview_type')}
@@ -394,6 +417,7 @@ const MockInterviewSetup = memo(() => {
         <View style={styles.chipsWrap}>
           {filteredCompanies.map((name, i) => {
             const active = name === COMPANY_ANY ? company === undefined : company === name;
+            const isRealCompany = name !== COMPANY_ANY;
             return (
               <TouchableOpacity
                 key={i}
@@ -401,10 +425,23 @@ const MockInterviewSetup = memo(() => {
                 onPress={() => setCompany(name === COMPANY_ANY ? undefined : name)}
                 style={[
                   styles.chip,
+                  isRealCompany && styles.chipWithLogo,
                   {
                     backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
                   },
                 ]}>
+                {/* Product report: "in the company list in the interview
+                    mock setup screen, you should also display the logos
+                    of these company too" — skipped for the "Other / Any
+                    Company" pill, which isn't a real company. */}
+                {isRealCompany ? (
+                  <CompanyLogoAvatar
+                    logoUrl={guessCompanyLogoUrl(name)}
+                    companyName={name}
+                    size="tiny"
+                    style={{ marginRight: 6 }}
+                  />
+                ) : null}
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
                   {name}
                 </Text>
@@ -617,6 +654,14 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+  },
+  // Company chips only (product report: "display the logos of these
+  // company too") — `chip` above has no flexDirection, so a plain View's
+  // children stack vertically by default; this lays the logo avatar and
+  // name out side by side instead.
+  chipWithLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   difficultyPill: {
     paddingVertical: 10,
