@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +7,7 @@ import CtaButton from 'components/CtaButton';
 import useLayout from 'hooks/useLayout';
 import { Images } from 'assets/images';
 import { globalStyle } from 'styles/globalStyle';
+import { getOnboardingImage } from 'services/onboardingImageService';
 
 interface JobAlertsOnboardingProps {
   onGetStarted(): void;
@@ -31,11 +32,28 @@ interface JobAlertsOnboardingProps {
 const JobAlertsOnboarding = memo(({ onGetStarted }: JobAlertsOnboardingProps) => {
   const { t } = useTranslation(['more', 'common']);
   const { width, height, bottom } = useLayout();
+  // The bundled illustration has text baked into the pixels, so it can't be
+  // auto-translated like the rest of this app's content — an admin can
+  // upload a localized version per language from Admin > Content >
+  // Onboarding (see services/onboardingImageService.ts). Falls back to the
+  // bundled asset below for English or any language with no upload of its
+  // own, exactly like before this existed.
+  const [remoteImage, setRemoteImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getOnboardingImage('job_alerts').then(url => {
+      if (!cancelled) setRemoteImage(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <View style={[styles.container, { width, height }]}>
       <Image
-        source={Images.jobAlertsOnboarding}
+        source={remoteImage ? { uri: remoteImage } : Images.jobAlertsOnboarding}
         resizeMode="cover"
         style={[styles.image, { width, height }]}
       />

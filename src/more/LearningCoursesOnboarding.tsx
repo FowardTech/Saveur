@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
@@ -7,6 +7,7 @@ import CtaButton from 'components/CtaButton';
 import useLayout from 'hooks/useLayout';
 import { Images } from 'assets/images';
 import { globalStyle } from 'styles/globalStyle';
+import { getOnboardingImage } from 'services/onboardingImageService';
 
 interface LearningCoursesOnboardingProps {
   onGetStarted(): void;
@@ -30,23 +31,33 @@ interface LearningCoursesOnboardingProps {
 // plan — it's introducing the feature, not paywalling it; a non-Premium
 // user taps through to the real ProLockGate upsell screen right after.
 //
-// Deliberately keeps the image's own baked-in headline/illustration as one
-// static hero graphic rather than rebuilding it with this app's own
-// translatable Text the way the pre-signup onboarding carousel
-// (src/onboarding/index.tsx) does — this is a single one-time welcome
-// screen for an already-signed-up, already-localized user, not a slide a
-// first-time visitor's whole first impression rides on, so the smaller
-// localization gap is an acceptable trade for shipping the exact image
-// supplied. The "Get Started" action itself is a real translatable native
-// button, not baked into the image.
+// The image itself has a headline baked into the pixels, so it can't be
+// auto-translated like the rest of this app's content — an admin can now
+// upload a localized version per language from Admin > Content > Onboarding
+// (see services/onboardingImageService.ts), and this screen shows that
+// override for the user's current app language if one exists, falling back
+// to the bundled asset above for English or any language with no upload of
+// its own. The "Get Started" action itself is a real translatable native
+// button, not baked into the image either way.
 const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboardingProps) => {
   const { t } = useTranslation(['more', 'common']);
   const { width, height, bottom } = useLayout();
+  const [remoteImage, setRemoteImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getOnboardingImage('learning_courses').then(url => {
+      if (!cancelled) setRemoteImage(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <View style={[styles.container, { width, height }]}>
       <Image
-        source={Images.learningOnboarding}
+        source={remoteImage ? { uri: remoteImage } : Images.learningOnboarding}
         resizeMode="cover"
         style={[styles.image, { width, height }]}
       />
