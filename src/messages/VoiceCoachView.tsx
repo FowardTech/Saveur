@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
 import { AppState, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { useTheme } from '@ui-kitten/components';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -108,7 +107,6 @@ const VoiceCoachView = memo(({
   // mode (onRunSuggestedAction), so both modes navigate identically.
   onSuggestedAction?: (action: SuggestedActionId) => void;
 }) => {
-  const theme = useTheme();
   const { t } = useTranslation(['message']);
   const stt = speechService.useSpeechToText();
 
@@ -470,8 +468,13 @@ const VoiceCoachView = memo(({
         onPress={onInterrupt}
         style={styles.orbWrap}>
         <Animated.View style={[styles.halo, haloStyle]}>
+          {/* Was a blue-tinted glow (rgba(90,150,255,...)) — against the
+              new solid blue page background (see this file's own comment
+              above) that nearly blended into the fill instead of reading as
+              a halo. A soft white glow gives the orb real visual separation
+              from the background it now sits on. */}
           <LinearGradient
-            colors={['rgba(90,150,255,0.35)', 'rgba(90,150,255,0.05)']}
+            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)']}
             style={styles.haloFill}
           />
         </Animated.View>
@@ -487,7 +490,14 @@ const VoiceCoachView = memo(({
         </Animated.View>
       </TouchableOpacity>
 
-      <Text category="h7" bold center mt={24} style={{ color: theme['text-basic-color'] }}>
+      {/* Product request: "make the background of this screen the default
+          blue and the text white" — this view is only ever rendered on
+          that blue background (see src/messages/Chat.tsx's Voice-mode
+          Container/TopNavigation override), so every text color below is
+          now a literal white/translucent-white instead of the theme's
+          normal dark ink, which would be unreadable against a solid blue
+          fill. */}
+      <Text category="h7" bold center mt={24} style={styles.whiteText}>
         {statusLabel}
       </Text>
 
@@ -498,12 +508,12 @@ const VoiceCoachView = memo(({
         maxWidth={300}
         numberOfLines={4}
         ellipsizeMode="tail"
-        style={{ color: theme['text-placeholder-color'] }}>
+        style={styles.translucentWhiteText}>
         {displayLine}
       </Text>
 
       {errorMsg ? (
-        <Text category="h10" status="danger" center mt={16} maxWidth={280}>
+        <Text category="h10" center mt={16} maxWidth={280} style={styles.errorText}>
           {errorMsg}
         </Text>
       ) : null}
@@ -512,8 +522,8 @@ const VoiceCoachView = memo(({
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onInterrupt}
-          style={[styles.interruptPill, { backgroundColor: theme['background-basic-color-2'] }]}>
-          <Text category="h10" bold status="basic">
+          style={styles.interruptPill}>
+          <Text category="h10" bold style={styles.whiteText}>
             {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap to interrupt' })}
           </Text>
         </TouchableOpacity>
@@ -567,5 +577,24 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 99,
+    // Was `background-basic-color-2` (a theme token meant to sit on a
+    // neutral page background) — against the new solid-blue background
+    // (see this file's own comment above) that read as a jarring light-gray
+    // patch. A translucent white pill reads as "a control sitting on a
+    // colored surface", the same convention CtaButton-adjacent controls
+    // elsewhere in this app already use on colored fills.
+    backgroundColor: 'rgba(255,255,255,0.22)',
+  },
+  whiteText: {
+    color: '#FFFFFF',
+  },
+  translucentWhiteText: {
+    color: 'rgba(255,255,255,0.85)',
+  },
+  // Errors still need to read as "something's wrong", but a saturated red
+  // on top of solid brand blue is harsh — a soft warm-white/pink reads as
+  // an alert without clashing the way `status="danger"`'s normal red would.
+  errorText: {
+    color: '#FFE1E1',
   },
 });

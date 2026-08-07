@@ -25,6 +25,15 @@ interface NavigationActionProps {
   onPress?: () => void;
   title?: string;
   titleStatus?: EvaStatus | 'body' | 'white';
+  // Explicit color override for the `title` text path below — `titleStatus`
+  // only maps to this app's own Text.tsx `status` prop, which just forwards
+  // to UI-Kitten's Text and only recognizes real Eva statuses ('basic',
+  // 'primary', 'control', etc.); 'white' isn't one of those, so it silently
+  // falls back to the default ink color instead of actually going white.
+  // For a screen that genuinely needs a specific literal title color (e.g.
+  // white text on a colored header — see src/messages/Chat.tsx's voice-mode
+  // background), pass it here instead.
+  titleColor?: string;
   status?:
     | 'basic'
     | 'primary'
@@ -53,6 +62,7 @@ const NavigationAction = memo(
     size = 'giant',
     status = 'basic',
     titleStatus,
+    titleColor,
     disabled,
     backgroundColor,
     style,
@@ -155,7 +165,7 @@ const NavigationAction = memo(
         disabled={disabled}
         activeOpacity={0.7}
         onPress={_onPress}>
-        <Text category="h6" status={titleStatus}>
+        <Text category="h6" status={titleStatus} style={titleColor ? {color: titleColor} : undefined}>
           {title}
         </Text>
       </TouchableOpacity>

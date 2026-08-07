@@ -224,7 +224,25 @@ const AppContainer = () => {
         <Stack.Screen name="GoalTipDetail" component={GoalTipDetail} />
         <Stack.Screen name="CourseSession" component={CourseSession} />
         <Stack.Screen name="SalaryNegotiation" component={SalaryNegotiation} />
-        <Stack.Screen name="SystemDesignWhiteboard" component={SystemDesignWhiteboard} />
+        {/* BUG FIX (repeat product report: freehand drawing on this screen
+            registers nothing, after three earlier rounds of fixes to the
+            drawing PanResponder itself never resolved it): this app's root
+            Stack.Navigator uses TransitionPresets.SlideFromRightIOS (see
+            screenOptions above), which defaults `gestureEnabled: true` --
+            an edge-swipe-to-go-back PanGestureHandler (react-native-
+            gesture-handler-powered, not RN's own PanResponder) sits active
+            on every screen unless explicitly turned off, and can compete
+            with -- or entirely swallow -- touches meant for a screen's own
+            PanResponder-based gesture surface, since RNGH and PanResponder
+            are two separate touch-handling systems that don't always
+            negotiate cleanly. A full-screen drawing canvas is exactly the
+            kind of screen that should never have a competing swipe gesture
+            active, so it's disabled here specifically. */}
+        <Stack.Screen
+          name="SystemDesignWhiteboard"
+          component={SystemDesignWhiteboard}
+          options={{ gestureEnabled: false }}
+        />
         <Stack.Screen name="LearningCourses" component={LearningCourses} />
         <Stack.Screen name="NetworkingAssistant" component={NetworkingAssistant} />
         <Stack.Screen name="CareerDiary" component={CareerDiary} />

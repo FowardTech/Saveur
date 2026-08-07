@@ -453,11 +453,32 @@ const Chat = memo(() => {
     );
   }, [styles.coachAvatar]);
 
+  // Product request: "make the background of this screen the default blue
+  // and the text white" (Voice mode's full-screen listening/thinking/
+  // speaking view — see VoiceCoachView.tsx, rendered below when
+  // mode==='voice'). Scoped to voice mode only — Text mode keeps the
+  // normal page background/ink, this is purely a Voice-mode visual
+  // treatment. `color-primary-500` is the same brand blue CtaButton.tsx and
+  // every other "default blue" surface in this app already uses.
+  const isVoiceMode = mode === 'voice';
+
   return (
-    <Container style={[styles.container, { marginBottom: -bottom }]}>
+    <Container
+      style={[
+        styles.container,
+        { marginBottom: -bottom },
+        isVoiceMode && { backgroundColor: theme['color-primary-500'] },
+      ]}>
       <TopNavigation
-        title={t("message:ai_coach_name", { defaultValue: "AI Career Coach" })}
-        accessoryLeft={<NavigationAction />}
+        style={isVoiceMode ? { backgroundColor: theme['color-primary-500'] } : undefined}
+        title={renderProps => (
+          <Text
+            {...renderProps}
+            style={[renderProps?.style, isVoiceMode && { color: '#FFFFFF' }]}>
+            {t("message:ai_coach_name", { defaultValue: "AI Career Coach" })}
+          </Text>
+        )}
+        accessoryLeft={<NavigationAction status={isVoiceMode ? 'white' : 'basic'} />}
         accessoryRight={
           voiceCoachEnabled ? (
             <NavigationAction
@@ -466,7 +487,8 @@ const Chat = memo(() => {
                   ? t("message:mode_text", { defaultValue: "Text" })
                   : t("message:mode_voice", { defaultValue: "Voice" })
               }
-              titleStatus="link"
+              titleStatus={isVoiceMode ? undefined : "link"}
+              titleColor={isVoiceMode ? '#FFFFFF' : undefined}
               onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
             />
           ) : undefined

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Modal, PanResponder, ScrollView, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, PanResponder, Platform, ScrollView, TouchableOpacity, View } from 'react-native';
 import Svg, { Circle, Ellipse, Line, Path, Polygon, Rect } from 'react-native-svg';
 import {
   TopNavigation,
@@ -478,7 +478,22 @@ const SystemDesignWhiteboard = memo(() => {
           });
         }}
         {...panResponder.panHandlers}>
-        <Svg width={canvasWidth || '100%'} height={canvasHeight}>
+        {/* BUG FIX (repeat product report, after three earlier rounds already
+            landed for other failure modes on this exact feature — the
+            touch-stealing empty-state overlay, zero-length-path commits,
+            locationX/Y drift — and drawing STILL registered nothing):
+            react-native-svg's <Svg> renders its own native view UNDER the
+            finger, and on Android in particular it can participate in touch
+            hit-testing/responder negotiation on its own rather than staying
+            purely decorative — several other RN whiteboard/signature-pad
+            implementations hit this exact same "PanResponder never fires
+            because the SVG underneath is intercepting first" issue.
+            `pointerEvents="none"` makes this element (and everything drawn
+            inside it) completely touch-transparent, guaranteeing every touch
+            passes straight through to the parent View's PanResponder below,
+            which is the only thing that should ever be deciding what a
+            stroke does. */}
+        <Svg pointerEvents="none" width={canvasWidth || '100%'} height={canvasHeight}>
           {elements.map(el => {
             if (el.type === 'path') {
               return <Path key={el.id} d={el.d} stroke={el.color} strokeWidth={3} fill="none" strokeLinecap="round" strokeLinejoin="round" />;
@@ -548,7 +563,21 @@ const SystemDesignWhiteboard = memo(() => {
         animationType="slide"
         transparent
         onRequestClose={() => setIsReviewModalVisible(false)}>
-        <View style={styles.modalBackdrop}>
+        {/* BUG FIX (product report: "the keypad is covering the 'Get AI
+            code Review' Input field") — this bottom sheet had no keyboard
+            awareness at all, same class of bug already fixed once on
+            components/DailyCheckInSheet.tsx (see that file's own comment):
+            the moment the multiline Input actually gets focus, the on-
+            screen keyboard covers the bottom of the screen — including the
+            Input itself and the "Get AI Review" submit button below it —
+            with nothing to push the sheet up out from under it.
+            KeyboardAvoidingView's 'padding' (iOS) / 'height' (Android)
+            behavior shrinks this view's available height by the keyboard's
+            height, so the bottom-anchored sheet rises to clear it instead
+            of sitting underneath. */}
+        <KeyboardAvoidingView
+          style={styles.modalBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <View style={[styles.modalSheet, { backgroundColor: theme['background-basic-color-1'] }]}>
             <Flex justify="space-between" itemsCenter mb={16}>
               <Text category="h7" bold style={globalStyle.flexOne}>
@@ -596,7 +625,7 @@ const SystemDesignWhiteboard = memo(() => {
               ) : null}
             </ScrollView>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </Container>
   );
