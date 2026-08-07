@@ -1024,7 +1024,7 @@ const HomeSrc = memo(() => {
                   Card in homescreen should [be] black not blue" — was
                   '#0063f8' (the app's brand blue), now the theme's plain
                   text color. */}
-              <Text category="h7" bold style={{ color: theme['text-basic-color'] }}>
+              <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
                 {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
               </Text>
               <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{ color: '#0063f8' }}>
