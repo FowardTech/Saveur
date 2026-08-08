@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -9,6 +9,7 @@ import {
   Input,
   Icon,
   Spinner,
+  Button,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -83,6 +84,14 @@ const DreamCompanies = memo(() => {
     load();
   }, [load]);
 
+  // Product request item: "I want forms like this in the app to appear as
+  // bottom sheets just like it is in the Resume Evolution" — this "add a
+  // company" form used to sit permanently open at the top of the screen;
+  // now it's a slide-up Modal sheet (same Modal + KeyboardAvoidingView +
+  // rounded Layout pattern as src/more/ResumeVariants.tsx's "+ New Variant"
+  // sheet), opened from a compact trigger card instead.
+  const [showAddSheet, setShowAddSheet] = React.useState(false);
+
   const onAdd = async () => {
     const name = newCompany.trim();
     if (!name || isAdding) return;
@@ -93,6 +102,7 @@ const DreamCompanies = memo(() => {
       setNewCompany('');
       setNewRole('');
       setExpandedId(added.id);
+      setShowAddSheet(false);
     } catch (e: any) {
       Alert.alert(
         t('more:dream_company_add_failed_title', { defaultValue: "Couldn't add company" }),
@@ -207,44 +217,32 @@ const DreamCompanies = memo(() => {
           })}
         </InfoBox>
 
-        <Layout level="2" style={styles.addCard}>
-          <Input
-            placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
-            value={newCompany}
-            onChangeText={setNewCompany}
-            style={[styles.input, { marginBottom: 8 }]}
-            textStyle={globalStyle.inputText}
-          />
-          <Input
-            placeholder={t('more:role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
-            value={newRole}
-            onChangeText={setNewRole}
-            style={[styles.input, { marginBottom: 12 }]}
-            textStyle={globalStyle.inputText}
-          />
-          <CtaButton disabled={!newCompany.trim() || isAdding} onPress={onAdd}>
-            {isAdding
-              ? <Spinner size="small" status="control" />
-              : t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
-          </CtaButton>
-          {/* Product report: "link the company intelligence from the dream
-              company dashboard... instead of it being in a separate
-              feature" — Company Intelligence (src/more/CompanyIntelligence.tsx)
-              is the same AI research shown per-company below, just for a
-              one-off lookup before you've decided to track anywhere. No
-              longer its own row in the main menu (see MoreSrc.tsx); this is
-              now the only way in. */}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => navigation.navigate('CompanyIntelligence', {})}
-            style={{ marginTop: 12, alignSelf: 'center' }}>
-            <Text category="h10" bold status="link">
-              {t('more:dream_company_lookup_link', {
-                defaultValue: 'Just researching? Look up any company →',
-              })}
-            </Text>
-          </TouchableOpacity>
-        </Layout>
+        <TouchableOpacity activeOpacity={0.8} style={styles.addTrigger} onPress={() => setShowAddSheet(true)}>
+          <View style={styles.addTriggerIconWrap}>
+            <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+          </View>
+          <Text category="h9" bold style={globalStyle.flexOne}>
+            {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
+          </Text>
+          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+        </TouchableOpacity>
+        {/* Product report: "link the company intelligence from the dream
+            company dashboard... instead of it being in a separate
+            feature" — Company Intelligence (src/more/CompanyIntelligence.tsx)
+            is the same AI research shown per-company below, just for a
+            one-off lookup before you've decided to track anywhere. No
+            longer its own row in the main menu (see MoreSrc.tsx); this is
+            now the only way in. */}
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => navigation.navigate('CompanyIntelligence', {})}
+          style={{ marginTop: 12, marginBottom: 20, alignSelf: 'center' }}>
+          <Text category="h10" bold status="link">
+            {t('more:dream_company_lookup_link', {
+              defaultValue: 'Just researching? Look up any company →',
+            })}
+          </Text>
+        </TouchableOpacity>
 
         {isLoading ? (
           <EmptyState variant="loading" />
@@ -524,6 +522,38 @@ const DreamCompanies = memo(() => {
           </>
         )}
       </Content>
+
+      <Modal visible={showAddSheet} transparent animationType="slide" onRequestClose={() => setShowAddSheet(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={styles.modalSheet}>
+            <Text category="h7" bold mb={16}>
+              {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
+            </Text>
+            <Input
+              placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
+              value={newCompany}
+              onChangeText={setNewCompany}
+              style={[styles.input, { marginBottom: 12 }]}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              placeholder={t('more:role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
+              value={newRole}
+              onChangeText={setNewRole}
+              style={[styles.input, { marginBottom: 20 }]}
+              textStyle={globalStyle.inputText}
+            />
+            <CtaButton disabled={!newCompany.trim() || isAdding} onPress={onAdd}>
+              {isAdding
+                ? <Spinner size="small" status="control" />
+                : t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
+            </CtaButton>
+            <Button appearance="outline" style={{ marginTop: 12 }} onPress={() => setShowAddSheet(false)}>
+              {t('common:cancel', { defaultValue: 'Cancel' })}
+            </Button>
+          </Layout>
+        </KeyboardAvoidingView>
+      </Modal>
     </Container>
   );
 });
@@ -534,11 +564,33 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   input: { ...globalStyle.inputField },
-  // Radius inherited from globalStyle.card (24) — no local override.
-  addCard: {
+  // Compact trigger card that opens the "add a company" bottom sheet (see
+  // the Modal below) — replaces the old always-open inline form.
+  addTrigger: {
     ...globalStyle.card,
-    padding: 16,
-    marginBottom: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    marginBottom: 8,
+  },
+  addTriggerIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'color-primary-transparent-100',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
   },
   companyCard: {
     ...globalStyle.card,

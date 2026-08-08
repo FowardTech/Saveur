@@ -1,8 +1,11 @@
 import React, {memo} from 'react';
 import {
   Alert,
+  KeyboardAvoidingView,
+  Modal,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  Platform,
   RefreshControl,
   TouchableOpacity,
   View,
@@ -424,8 +427,19 @@ const JobAlerts = memo(() => {
           </View>
         ) : null}
 
-        {isPrefsOpen ? (
-          <Layout level="2" style={styles.prefsCard}>
+        {/* Product request item: "I want forms like this in the app to
+            appear as bottom sheets just like it is in the Resume
+            Evolution" — was an inline card that expanded in-flow within
+            this screen's own scroll content; now a slide-up Modal sheet,
+            same Modal + KeyboardAvoidingView + rounded Layout pattern as
+            src/more/ResumeVariants.tsx's "+ New Variant" sheet (see also
+            DreamCompanies.tsx's "add company" sheet, converted the same
+            way). `isPrefsOpen` still drives the same trigger points (the
+            header gear icon, and the "Set preferences" button in the hint
+            card above) — only what showing it actually looks like changed. */}
+        <Modal visible={isPrefsOpen} transparent animationType="slide" onRequestClose={() => setIsPrefsOpen(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={styles.modalSheet}>
             <Text category="h8" bold mb={4}>
               {t('more:job_alerts_targeted_roles_label', {defaultValue: "Roles you're targeting"})}
             </Text>
@@ -530,8 +544,12 @@ const JobAlerts = memo(() => {
                 ? t('more:job_alerts_saving', {defaultValue: 'Saving…'})
                 : t('more:job_alerts_save_preferences', {defaultValue: 'Save preferences'})}
             </CtaButton>
+            <Button appearance="outline" style={{marginTop: 12}} onPress={() => setIsPrefsOpen(false)}>
+              {t('common:cancel', {defaultValue: 'Cancel'})}
+            </Button>
           </Layout>
-        ) : null}
+        </KeyboardAvoidingView>
+        </Modal>
 
         {isLoading ? (
           <EmptyState variant="loading" />
@@ -702,10 +720,15 @@ const themedStyles = StyleService.create({
     padding: 14,
     marginBottom: 16,
   },
-  prefsCard: {
-    ...globalStyle.card,
-    padding: 16,
-    marginBottom: 20,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
   },
   prefsInput: {
     ...globalStyle.inputField,

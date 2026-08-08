@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -185,58 +185,70 @@ const NetworkingAssistant = memo(() => {
         accessoryRight={<NavigationAction icon="plusImg" size="small" onPress={onOpenAdd} />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        {isFormOpen ? (
-          <Layout level="2" style={styles.formCard}>
-            <Text category="h7" bold mb={12}>
-              {editingId != null
-                ? t('more:edit_contact', { defaultValue: 'Edit Contact' })
-                : t('more:add_contact', { defaultValue: 'Add Contact' })}
-            </Text>
-            <Input
-              placeholder={t('more:contact_name', { defaultValue: 'Name' })}
-              value={form.name}
-              onChangeText={name => setForm(prev => ({ ...prev, name }))}
-              style={styles.formInput}
-              textStyle={globalStyle.inputText}
-            />
-            <Input
-              placeholder={t('more:contact_company', { defaultValue: 'Company' })}
-              value={form.company}
-              onChangeText={company => setForm(prev => ({ ...prev, company }))}
-              style={styles.formInput}
-              textStyle={globalStyle.inputText}
-            />
-            <Input
-              placeholder={t('more:contact_role', { defaultValue: 'Role' })}
-              value={form.role}
-              onChangeText={role => setForm(prev => ({ ...prev, role }))}
-              style={styles.formInput}
-              textStyle={globalStyle.inputText}
-            />
-            <Input
-              placeholder={t('more:contact_note', { defaultValue: 'Note (how you met, follow-up plan…)' })}
-              value={form.note}
-              onChangeText={note => setForm(prev => ({ ...prev, note }))}
-              multiline
-              textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
-              style={styles.formInput}
-            />
-            <Flex justify="flex-start" mt={4}>
-              <CtaButton
-                children={isSaving ? t('more:saving', { defaultValue: 'Saving…' }) : t('common:save', { defaultValue: 'Save' })}
-                disabled={isSaving || !form.name.trim()}
-                onPress={onSave}
-                style={{ marginRight: 12 }}
+        {/* Product request item: "I want forms like this in the app to
+            appear as bottom sheets just like it is in the Resume
+            Evolution" — was an inline card that pushed the contact list
+            down the screen while open; now a slide-up Modal sheet, same
+            Modal + KeyboardAvoidingView + rounded Layout pattern as
+            src/more/ResumeVariants.tsx's "+ New Variant" sheet (see also
+            DreamCompanies.tsx / JobAlerts.tsx, converted the same way).
+            `isFormOpen` still drives the same two triggers (the header "+"
+            icon via onOpenAdd, and each contact card's "Edit" link via
+            onOpenEdit) — only what showing it actually looks like changed. */}
+        <Modal visible={isFormOpen} transparent animationType="slide" onRequestClose={onCancelForm}>
+          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <Layout level="1" style={styles.modalSheet}>
+              <Text category="h7" bold mb={12}>
+                {editingId != null
+                  ? t('more:edit_contact', { defaultValue: 'Edit Contact' })
+                  : t('more:add_contact', { defaultValue: 'Add Contact' })}
+              </Text>
+              <Input
+                placeholder={t('more:contact_name', { defaultValue: 'Name' })}
+                value={form.name}
+                onChangeText={name => setForm(prev => ({ ...prev, name }))}
+                style={styles.formInput}
+                textStyle={globalStyle.inputText}
               />
-              <Button
-                children={t('common:cancel', { defaultValue: 'Cancel' })}
-                status="basic"
-                appearance="ghost"
-                onPress={onCancelForm}
+              <Input
+                placeholder={t('more:contact_company', { defaultValue: 'Company' })}
+                value={form.company}
+                onChangeText={company => setForm(prev => ({ ...prev, company }))}
+                style={styles.formInput}
+                textStyle={globalStyle.inputText}
               />
-            </Flex>
-          </Layout>
-        ) : null}
+              <Input
+                placeholder={t('more:contact_role', { defaultValue: 'Role' })}
+                value={form.role}
+                onChangeText={role => setForm(prev => ({ ...prev, role }))}
+                style={styles.formInput}
+                textStyle={globalStyle.inputText}
+              />
+              <Input
+                placeholder={t('more:contact_note', { defaultValue: 'Note (how you met, follow-up plan…)' })}
+                value={form.note}
+                onChangeText={note => setForm(prev => ({ ...prev, note }))}
+                multiline
+                textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
+                style={styles.formInput}
+              />
+              <Flex justify="flex-start" mt={4}>
+                <CtaButton
+                  children={isSaving ? t('more:saving', { defaultValue: 'Saving…' }) : t('common:save', { defaultValue: 'Save' })}
+                  disabled={isSaving || !form.name.trim()}
+                  onPress={onSave}
+                  style={{ marginRight: 12 }}
+                />
+                <Button
+                  children={t('common:cancel', { defaultValue: 'Cancel' })}
+                  status="basic"
+                  appearance="ghost"
+                  onPress={onCancelForm}
+                />
+              </Flex>
+            </Layout>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {!isLoading && contacts.length === 0 ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
@@ -377,10 +389,15 @@ const themedStyles = StyleService.create({
   // needs an opaque fill on Android — dropped the 'transparent' overrides
   // below so each Layout's own `level="2"` background shows through
   // instead.
-  formCard: {
-    ...globalStyle.card,
-    padding: 16,
-    marginBottom: 20,
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
   },
   formInput: {
     ...globalStyle.inputField,
