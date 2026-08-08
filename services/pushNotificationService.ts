@@ -18,6 +18,7 @@ import {
   navigateToPaymentHistory,
   navigateToHome,
   navigateToGoalTipDetail,
+  navigateToDailyChallenge,
   navigateToSharedContentDetail,
   navigateToSharedWithMe,
   navigateToLearningCourses,
@@ -229,6 +230,16 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   }
   if (data?.type === 'goal_tip') {
     navigateToGoalTipDetail();
+    return;
+  }
+  // Today's Surprise Challenge (Saveur-Backend's daily_challenge_service
+  // sends data.type = "daily_challenge") — product request item: "the
+  // todays challenge, todays tips should link to their individual screens
+  // when users click on them on the notification tile or in the
+  // notification center." Nothing to parse out of `data` here (same shape
+  // as goal_tip above) — the detail screen fetches today's challenge itself.
+  if (data?.type === 'daily_challenge') {
+    navigateToDailyChallenge();
     return;
   }
   // Daily career-goal check-in evening reflection push (product request

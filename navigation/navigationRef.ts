@@ -52,6 +52,7 @@ type PendingNavigation =
   | {name: 'PaymentHistory'}
   | {name: 'Home'}
   | {name: 'GoalTipDetail'}
+  | {name: 'DailyChallenge'}
   | {name: 'SharedContentDetail'; params: {shareId: string}}
   // connection_request / connection_accepted push taps (product request
   // item: "Before a user can share something with another Saveur user they
@@ -266,6 +267,16 @@ export function navigateToHome(): void {
  * push. */
 export function navigateToGoalTipDetail(): void {
   queueOrNavigate({name: 'GoalTipDetail'});
+}
+
+/** Daily Challenge push tap (Saveur-Backend's daily_challenge_service sends
+ * data.type = "daily_challenge") — takes the user straight to today's
+ * Surprise Challenge (src/home/DailyChallengeScreen.tsx), which fetches
+ * GET /api/v1/daily-challenge/today itself, same "always shows today's
+ * current content regardless of which push triggered it" pattern as
+ * navigateToGoalTipDetail above. */
+export function navigateToDailyChallenge(): void {
+  queueOrNavigate({name: 'DailyChallenge'});
 }
 
 /** Content-shared push tap (Saveur-Backend's shares_service sends
