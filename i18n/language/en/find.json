@@ -1,8 +1,12 @@
 {
   "about_me": "About me",
   "actual_output": "Actual Output",
-  "ai_graded": "AI-graded — Judge0 not connected yet",
   "add_to_favorites": "Add to Favorites",
+  "addon_required_body": "Purchase the add-on once to unlock it for good.",
+  "addon_required_title": "Coding Practice is a paid add-on",
+  "addon_required_title_generic": "This is a paid add-on",
+  "addon_required_title_system_design": "System Design Whiteboard is a paid add-on",
+  "ai_graded": "AI-graded — Judge0 not connected yet",
   "annotation_confidence_dip": "Eye contact dropped for a few seconds here",
   "annotation_strong_moment": "Strong eye contact and a genuine smile here",
   "approach_competing_offer_description": "Let them know you have another offer on the table.",
