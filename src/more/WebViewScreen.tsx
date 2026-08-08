@@ -511,7 +511,8 @@ const themedStyles = StyleService.create({
     bottom: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 16,
+    // Product request: solid CTA pills app-wide -> border radius 5.
+    borderRadius: 5,
     paddingVertical: 12,
     paddingHorizontal: 18,
     backgroundColor: 'color-primary-500',

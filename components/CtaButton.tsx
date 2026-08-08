@@ -61,7 +61,12 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           // already in the app (see that token's own comment history).
           backgroundColor: theme['color-primary-100'],
           borderColor: theme['color-primary-100'],
-          borderRadius: 20,
+          // Product request: "All buttons like the one in the screenshot
+          // [a fully-rounded blue pill CTA] should have a border radius of
+          // 5 too." Was 20 (fully rounded pill); every primary CTA button
+          // app-wide renders through this one component, so this single
+          // change covers all of them at once.
+          borderRadius: 5,
         },
         globalStyle.shadowBtn,
         style,

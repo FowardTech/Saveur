@@ -654,7 +654,7 @@
               "tiny": {
                 "minWidth": 30,
                 "minHeight": 30,
-                "borderRadius": 8,
+                "borderRadius": 5,
                 "borderWidth": 8,
                 "paddingHorizontal": 4,
                 "paddingVertical": 4,
@@ -667,7 +667,7 @@
               },
               "small": {
                 "minHeight": 36,
-                "borderRadius": "border-radius",
+                "borderRadius": 5,
                 "borderWidth": "border-width",
                 "paddingHorizontal": 36,
                 "paddingVertical": 0,
@@ -681,7 +681,7 @@
               "medium": {
                 "minWidth": 40,
                 "minHeight": 40,
-                "borderRadius": "border-radius",
+                "borderRadius": 5,
                 "borderWidth": "border-width",
                 "paddingHorizontal": 10,
                 "paddingVertical": 12,
@@ -694,7 +694,7 @@
               },
               "large": {
                 "minHeight": 50,
-                "borderRadius": 16,
+                "borderRadius": 5,
                 "borderWidth": "border-width",
                 "paddingHorizontal": 12,
                 "paddingVertical": 12,
@@ -707,7 +707,7 @@
               "giant": {
                 "minWidth": 56,
                 "minHeight": 56,
-                "borderRadius": "border-radius",
+                "borderRadius": 5,
                 "borderWidth": "border-width",
                 "paddingHorizontal": 12,
                 "paddingVertical": 16,

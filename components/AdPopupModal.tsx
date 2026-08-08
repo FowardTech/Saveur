@@ -177,7 +177,8 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     paddingHorizontal: 28,
     paddingVertical: 14,
-    borderRadius: 999,
+    // Product request: solid CTA pills app-wide -> border radius 5.
+    borderRadius: 5,
     backgroundColor: '#FFFFFF',
     ...globalStyle.shadowBtn,
   },

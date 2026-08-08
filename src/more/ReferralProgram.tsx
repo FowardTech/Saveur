@@ -256,7 +256,8 @@ const themedStyles = StyleService.create({
   heroShareButton: {
     marginTop: 16,
     width: '100%',
-    borderRadius: 16,
+    // Product request: solid CTA pills app-wide -> border radius 5.
+    borderRadius: 5,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',
