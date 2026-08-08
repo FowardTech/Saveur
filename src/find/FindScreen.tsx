@@ -21,7 +21,7 @@ import { DATA_INTERVIEW_TYPES } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as configService from 'services/configService';
 import * as interviewService from 'services/interviewService';
-import { getSessionEntitlement } from 'services/entitlementsService';
+import { getSessionEntitlement, hasAddon, ADDON_CODES } from 'services/entitlementsService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 import ThemeContext from '../../ThemeContext';
@@ -85,6 +85,29 @@ const FindScreen = memo(() => {
         );
         return;
       }
+      // Paid Add-on gate (product request: "for the coding practice and
+      // system design whiteboard I want them to be in a separate screen
+      // called add-ons and they should be paid for") — checked AFTER the
+      // free-session-limit gate above (a Pro user with no add-on should see
+      // "buy the add-on", not "upgrade to Pro", which they already are), and
+      // BEFORE starting a real session, same insertion point as that check.
+      const codingUnlocked = await hasAddon(ADDON_CODES.codingPractice);
+      if (!codingUnlocked) {
+        Alert.alert(
+          t('find:addon_required_title', { defaultValue: 'Coding Practice is a paid add-on' }),
+          t('find:addon_required_body', {
+            defaultValue: 'Purchase the Coding Practice add-on once to unlock it for good.',
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('more:addons_title', { defaultValue: 'Add-ons' }),
+              onPress: () => navigate('AddOns', { highlightCode: ADDON_CODES.codingPractice }),
+            },
+          ],
+        );
+        return;
+      }
       const { sessionId } = await interviewService.startSession({
         interviewType: Interview_Type_Enum.Coding,
         mode: Practice_Mode_Enum.Text,
@@ -133,6 +156,25 @@ const FindScreen = memo(() => {
             {
               text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
               onPress: () => navigate('Subscription'),
+            },
+          ],
+        );
+        return;
+      }
+      // Paid Add-on gate — see onStartCodingPractice above for the full
+      // reasoning; same insertion point, same pattern, different add-on.
+      const systemDesignUnlocked = await hasAddon(ADDON_CODES.systemDesignWhiteboard);
+      if (!systemDesignUnlocked) {
+        Alert.alert(
+          t('find:addon_required_title_system_design', { defaultValue: 'System Design Whiteboard is a paid add-on' }),
+          t('find:addon_required_body', {
+            defaultValue: 'Purchase the System Design Whiteboard add-on once to unlock it for good.',
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('more:addons_title', { defaultValue: 'Add-ons' }),
+              onPress: () => navigate('AddOns', { highlightCode: ADDON_CODES.systemDesignWhiteboard }),
             },
           ],
         );
@@ -192,6 +234,31 @@ const FindScreen = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('find:title')} />
       <Content contentContainerStyle={styles.content} padder>
+        {/* Product request: "Take the upcoming session card where user can
+            schedule session and place it at the top of the practice
+            screen." The DISPLAY of an already-scheduled session moved to
+            Home instead (see src/home/UpcomingSessionHomeCard.tsx) — this
+            is just the scheduling entry point, always visible (not
+            conditional on whether one's already scheduled) since its job
+            is starting a NEW schedule, not showing status. */}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          style={[styles.scheduleCard, { backgroundColor: theme['background-basic-color-2'] }]}
+          onPress={() => navigate('ScheduleInterview')}>
+          <View style={[styles.scheduleIconWrap, { backgroundColor: theme['color-primary-transparent-100'] }]}>
+            <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+          </View>
+          <View style={globalStyle.flexOne}>
+            <Text category="h9" bold numberOfLines={1}>
+              {t('find:schedule_session_card_title', { defaultValue: 'Schedule a session' })}
+            </Text>
+            <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
+              {t('find:schedule_session_card_subtitle', { defaultValue: 'Set a reminder for your next mock interview.' })}
+            </Text>
+          </View>
+          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+        </TouchableOpacity>
+
         {/* Product bug report ("the gradient is very bad and ugly, it's
             hiding some of the text") — root cause was using LinearGradient
             itself as the padded, flex-direction:'column' content
@@ -336,6 +403,26 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  // "Schedule a session" card (see the JSX comment above where this
+  // renders) — a compact single-row card, same shape as Home's
+  // ContinueLearningCard/UpcomingSessionHomeCard so this app's "small
+  // compact info-row card" pattern reads consistently across screens.
+  scheduleCard: {
+    ...globalStyle.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginTop: 8,
+  },
+  scheduleIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Purely a shadow-casting shell — the real fill lives on heroInner's
   // absolute-positioned LinearGradient (see the JSX comment). Static

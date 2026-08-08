@@ -4,6 +4,7 @@ import {SuggestedActionId} from 'constants/Types';
 import {NEW_JOB_COURSE_TITLE, NEW_JOB_COURSE_MODULES} from 'constants/Data';
 import {RootStackParamList} from 'navigation/types';
 import * as learningService from './learningService';
+import {hasAddon, ADDON_CODES} from './entitlementsService';
 
 // ---------------------------------------------------------------------------
 // Single source of truth for what the AI Coach's SUGGESTED_ACTION marker can
@@ -75,6 +76,8 @@ export const ACTION_META: Record<SuggestedActionId, ActionMeta> = {
   shared_with_me: {title: 'Shared With Me', titleKey: 'message:suggested_action_title_shared_with_me', icon: 'share-outline'},
   schedule_interview: {title: 'Schedule an Interview', titleKey: 'message:suggested_action_title_schedule_interview', icon: 'calendar-outline'},
   cover_letter_generator: {title: 'the Cover Letter Generator', titleKey: 'message:suggested_action_title_cover_letter_generator', icon: 'file-text-outline'},
+  coding_practice: {title: 'Coding Practice', titleKey: 'message:suggested_action_title_coding_practice', icon: 'code-outline'},
+  addons: {title: 'the Add-ons screen', titleKey: 'message:suggested_action_title_addons', icon: 'star-outline'},
 };
 
 // Localized title — falls back to the plain-English `title` above (used as
@@ -117,7 +120,6 @@ const SCREEN_MAP: Partial<Record<SuggestedActionId, {screen: string; params?: ob
   company_intelligence: {screen: 'CompanyIntelligence', params: {}},
   student_verification: {screen: 'StudentVerification'},
   salary_negotiation: {screen: 'SalaryNegotiation'},
-  system_design_whiteboard: {screen: 'SystemDesignWhiteboard'},
   learning_courses: {screen: 'LearningCourses'},
   career_diary: {screen: 'CareerDiary'},
   my_ratings: {screen: 'MyRatings'},
@@ -133,11 +135,35 @@ const SCREEN_MAP: Partial<Record<SuggestedActionId, {screen: string; params?: ob
   shared_with_me: {screen: 'SharedWithMe'},
   schedule_interview: {screen: 'ScheduleInterview'},
   cover_letter_generator: {screen: 'CoverLetterGenerator', params: {}},
-  // new_job_course, continue_learning, application_tracker are NOT here —
-  // each needs real logic (a fixed course payload, an async lookup, or a
-  // 2-level nested tab navigation) rather than a flat screen+params pair.
-  // Handled explicitly in runSuggestedAction below.
+  addons: {screen: 'AddOns', params: {}},
+  // new_job_course, continue_learning, application_tracker, coding_practice,
+  // and system_design_whiteboard are NOT here — the first three each need
+  // real logic (a fixed course payload, an async lookup, or a 2-level
+  // nested tab navigation); the last two need an add-on entitlement check
+  // before the coach can auto-navigate there at all (product request: "the
+  // AI coach should be aware that its an add-on so that if it wants to
+  // navigate there automatically it can know if the user have paid for the
+  // add-on or not before it auto navigate the user there"). All five are
+  // handled explicitly in runSuggestedAction below.
 };
+
+/**
+ * Shared gate for the two add-on-only actions below — mirrors the exact
+ * same check FindScreen.tsx's Tools tile and MockInterviewSetup.tsx's
+ * onStart use before starting a real session, so the coach can never walk
+ * a user somewhere a manual tap wouldn't also let them go. Redirects to the
+ * Add-ons purchase screen (with this add-on highlighted) instead of the
+ * locked destination when the user hasn't bought it yet; returns whether
+ * navigation should continue to the original target.
+ */
+async function gateAddonAction(addonCode: string, nav: (screen: string, params?: object) => void): Promise<boolean> {
+  const unlocked = await hasAddon(addonCode);
+  if (!unlocked) {
+    nav('AddOns', {highlightCode: addonCode});
+    return false;
+  }
+  return true;
+}
 
 /**
  * Actually performs the navigation for a SUGGESTED_ACTION id — the ONLY
@@ -214,6 +240,25 @@ export async function runSuggestedAction(id: SuggestedActionId, navigate: Nav['n
     // Nothing genuinely in progress to resume — the course catalog itself
     // is still a reasonable landing spot rather than doing nothing.
     nav('LearningCourses');
+    return;
+  }
+
+  if (id === 'coding_practice') {
+    if (!(await gateAddonAction(ADDON_CODES.codingPractice, nav))) return;
+    // No standalone params-free entry point exists that can create a live
+    // interview session (CodingInterview itself requires a real sessionId —
+    // see MockInterviewSetup.tsx's Interview_Type_Enum.Coding branch), so —
+    // same fallback reasoning as continue_learning's video case above —
+    // land on the Practice tab's own "Coding Practice" tile, which already
+    // knows how to start one, rather than attempting a bare, param-less
+    // deep jump this dispatcher can't safely construct.
+    nav('MainBottomTab', {screen: 'Practice'});
+    return;
+  }
+
+  if (id === 'system_design_whiteboard') {
+    if (!(await gateAddonAction(ADDON_CODES.systemDesignWhiteboard, nav))) return;
+    nav('MainBottomTab', {screen: 'Practice'});
     return;
   }
 

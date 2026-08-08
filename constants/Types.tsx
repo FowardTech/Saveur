@@ -832,7 +832,22 @@ export type SuggestedActionId =
   | 'payment_history'
   | 'shared_with_me'
   | 'schedule_interview'
-  | 'cover_letter_generator';
+  | 'cover_letter_generator'
+  // Coding Practice — was reachable only via FindScreen.tsx's Tools tile,
+  // never through the AI coach's SUGGESTED_ACTION marker at all (unlike
+  // 'system_design_whiteboard' above, which already had an entry). Added
+  // alongside the paid Add-ons gating in suggestedActions.ts's
+  // runSuggestedAction — see that file for why both this and
+  // 'system_design_whiteboard' now redirect to 'addons' instead of
+  // navigating straight in when the user hasn't purchased the add-on yet.
+  | 'coding_practice'
+  // Paid Add-ons screen itself (product request item — "the AI coach should
+  // be aware that its an add-on so that if it wants to navigate there
+  // automatically it can know if the user have paid for the add-on or not
+  // before it auto navigate the user there") — lets the coach send someone
+  // straight to the purchase screen when asked directly, not just as a
+  // redirect target for the two gated actions above.
+  | 'addons';
 
 // ---- AI Interview Coach additions (networking assistant) ----
 export interface NetworkingContactProps {

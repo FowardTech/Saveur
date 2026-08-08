@@ -23,7 +23,7 @@ import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPAN
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as configService from 'services/configService';
-import { getSessionEntitlement } from 'services/entitlementsService';
+import { getSessionEntitlement, hasAddon, addonCodeForInterviewType } from 'services/entitlementsService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
@@ -189,6 +189,28 @@ const MockInterviewSetup = memo(() => {
             {
               text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
               onPress: () => navigate('Subscription'),
+            },
+          ],
+        );
+        return;
+      }
+      // Paid Add-on gate (product request: "for the coding practice and
+      // system design whiteboard I want them to be in a separate screen
+      // called add-ons and they should be paid for") — same mapping/pattern
+      // as FindScreen.tsx's Tools-tile shortcuts. Every other interviewType
+      // is unaffected (addonCodeForInterviewType returns null for them).
+      const requiredAddon = addonCodeForInterviewType(interviewType);
+      if (requiredAddon && !(await hasAddon(requiredAddon))) {
+        Alert.alert(
+          t('find:addon_required_title_generic', { defaultValue: 'This is a paid add-on' }),
+          t('find:addon_required_body', {
+            defaultValue: 'Purchase the add-on once to unlock it for good.',
+          }),
+          [
+            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+            {
+              text: t('more:addons_title', { defaultValue: 'Add-ons' }),
+              onPress: () => navigate('AddOns', { highlightCode: requiredAddon }),
             },
           ],
         );

@@ -103,7 +103,10 @@ interface SubscriptionWire {
 
 const CURRENCY_SYMBOLS: Record<string, string> = {usd: '$', eur: '€', gbp: '£'};
 
-function formatPrice(amount: number, currency: string): string {
+/** Exported for src/more/AddOns.tsx (and anywhere else a raw cents+currency
+ * pair needs the same "$9.99"-style formatting Subscription.tsx's plan
+ * cards already use). */
+export function formatPrice(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency?.toLowerCase()] ?? '';
   return `${symbol}${(amount / 100).toFixed(2)}`;
 }
@@ -223,7 +226,14 @@ export async function createCheckoutSession(planCode: string): Promise<string> {
 
 export type PaymentSheetRequest =
   | {planCode: string}
-  | {mode: 'payment'; amount: number; currency: string};
+  | {mode: 'payment'; amount: number; currency: string}
+  // Paid Add-ons feature ("I want [Coding Practice / System Design
+  // Whiteboard] to be in a separate screen called add-ons and they should
+  // be paid for") — amount/currency are deliberately NOT sent here; the
+  // backend re-reads them from the Addon catalog row server-side (see
+  // app/api/billing.py's payment_sheet() docstring) so this client can't
+  // spoof a price for a real product purchase.
+  | {mode: 'payment'; addonCode: string};
 
 export interface PaymentSheetInit {
   publishableKey: string;
@@ -255,7 +265,11 @@ interface PaymentSheetWire {
  */
 export async function createPaymentSheet(req: PaymentSheetRequest): Promise<PaymentSheetInit> {
   const body =
-    'planCode' in req ? {plan_code: req.planCode} : {mode: req.mode, amount: req.amount, currency: req.currency};
+    'planCode' in req
+      ? {plan_code: req.planCode}
+      : 'addonCode' in req
+      ? {mode: req.mode, addon_code: req.addonCode}
+      : {mode: req.mode, amount: req.amount, currency: req.currency};
   const {data} = await apiClient.post<PaymentSheetWire>('/api/v1/billing/payment-sheet', body);
   // Guard rail, not paranoia: an empty/missing publishable_key handed
   // straight to @stripe/stripe-react-native's initStripe() doesn't fail
@@ -551,4 +565,67 @@ export async function downloadReceiptPdf(payment: PaymentHistoryItemProps): Prom
   const dest = `${RNBlobUtil.fs.dirs.CacheDir}/${filename}`;
   const res = await RNBlobUtil.config({path: dest, overwrite: true}).fetch('GET', url, headers);
   return {path: res.path(), filename};
+}
+
+// ---- Paid Add-ons (Coding Practice / System Design Whiteboard) -----------
+// "for the coding practice and system design whiteboard I want them to be
+// in a separate screen called add-ons and they should be paid for ...
+// configurable in the admin" — one-time purchase, unlocked forever, via
+// the same in-app PaymentSheet flow above (createPaymentSheet({mode:
+// 'payment', addonCode})). See src/more/AddOns.tsx for the actual
+// initPaymentSheet/presentPaymentSheet call sequence, and
+// services/entitlementsService.ts's getAddonEntitlement for the
+// pre-navigation gate used at every Coding Practice / System Design entry
+// point.
+
+export interface AddonProps {
+  code: string;
+  name: string;
+  description: string | null;
+  amount: number; // minor currency unit (cents)
+  currency: string;
+  unlocked: boolean;
+}
+
+interface AddonWire {
+  code: string;
+  name: string;
+  description: string | null;
+  amount: number;
+  currency: string;
+  is_active: boolean;
+  unlocked: boolean;
+}
+
+function fromAddonWire(wire: AddonWire): AddonProps {
+  return {
+    code: wire.code,
+    name: wire.name,
+    description: wire.description,
+    amount: wire.amount ?? 0,
+    currency: wire.currency ?? 'usd',
+    unlocked: !!wire.unlocked,
+  };
+}
+
+/** GET /api/v1/billing/addons — the Add-ons screen's catalog, each entry
+ * already annotated with whether the current user has unlocked it. */
+export async function listAddons(): Promise<AddonProps[]> {
+  const {data} = await apiClient.get<AddonWire[]>('/api/v1/billing/addons');
+  return (data ?? []).map(fromAddonWire);
+}
+
+/**
+ * POST /api/v1/billing/addons/confirm — call this immediately after
+ * `presentPaymentSheet()` resolves successfully for an add-on purchase,
+ * same reasoning as confirmSubscription above: this synchronously
+ * re-checks Stripe and grants the unlock in the same request, rather than
+ * waiting on the payment_intent.succeeded webhook to land before the
+ * add-on shows as active.
+ */
+export async function confirmAddonPurchase(paymentIntentId: string): Promise<{addonCode: string; unlocked: boolean}> {
+  const {data} = await apiClient.post<{addon_code: string; unlocked: boolean}>('/api/v1/billing/addons/confirm', {
+    payment_intent_id: paymentIntentId,
+  });
+  return {addonCode: data.addon_code, unlocked: !!data.unlocked};
 }

@@ -410,6 +410,19 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('StudentVerification'),
     },
     {
+      // Paid Add-ons (product request item) — "for the coding practice and
+      // system design whiteboard I want them to be in a separate screen
+      // called add-ons and they should be paid for." One-time-purchase
+      // catalog, independent of subscription tier — see src/more/AddOns.tsx
+      // and services/billingService.ts's Addon section.
+      title: t('more:addons_title', {defaultValue: 'Add-ons'}),
+      icon: 'premiumAcc',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('AddOns'),
+    },
+    {
       title: t('more:subscription', {defaultValue: 'Subscription'}),
       icon: 'premiumAcc',
       status: 'success',

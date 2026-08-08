@@ -42,6 +42,7 @@ import LinkedInOptimizer from 'src/more/LinkedInOptimizer';
 import EmotionalCoach from 'src/more/EmotionalCoach';
 import CompanyIntelligence from 'src/more/CompanyIntelligence';
 import DreamCompanies from 'src/more/DreamCompanies';
+import AddOns from 'src/more/AddOns';
 import CareerDna from 'src/more/CareerDna';
 import DailyChallengeScreen from 'src/home/DailyChallengeScreen';
 import InterviewReplay from 'src/practice/InterviewReplay';
@@ -213,6 +214,7 @@ const AppContainer = () => {
         <Stack.Screen name="EmotionalCoach" component={EmotionalCoach} />
         <Stack.Screen name="CompanyIntelligence" component={CompanyIntelligence} />
         <Stack.Screen name="DreamCompanies" component={DreamCompanies} />
+        <Stack.Screen name="AddOns" component={AddOns} />
         <Stack.Screen name="CareerDna" component={CareerDna} />
         <Stack.Screen name="DailyChallenge" component={DailyChallengeScreen} />
         <Stack.Screen name="InterviewReplay" component={InterviewReplay} />

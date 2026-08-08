@@ -1,6 +1,7 @@
 import dayjs from 'utils/dayjs';
 import {SubscriptionStatusProps} from 'constants/Types';
 import * as interviewService from './interviewService';
+import * as billingService from './billingService';
 
 // ---------------------------------------------------------------------------
 // entitlementsService — single source of truth for "what does this user's
@@ -103,4 +104,51 @@ export async function getSessionEntitlement(
     remaining,
     canStart: remaining === null || remaining > 0,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Paid Add-ons (Coding Practice / System Design Whiteboard) — "for the
+// coding practice and system design whiteboard I want them to be in a
+// separate screen called add-ons and they should be paid for." Independent
+// of subscription tier entirely (a free-tier user can buy just one add-on
+// without touching Pro/Premium, and a Pro/Premium subscriber still has to
+// buy it separately) — see saveur-backend/app/services/
+// entitlements_service.py's "Paid Add-ons" section for the mirrored
+// backend-side check. The AI coach (services/suggestedActions.ts) also
+// reads this before auto-navigating someone into either screen.
+// ---------------------------------------------------------------------------
+
+export const ADDON_CODES = {
+  codingPractice: 'coding_practice',
+  systemDesignWhiteboard: 'system_design_whiteboard',
+} as const;
+
+export type AddonCode = (typeof ADDON_CODES)[keyof typeof ADDON_CODES];
+
+/**
+ * Whether the current user has purchased a given add-on. Fails CLOSED (not
+ * open) on a network error — unlike getSessionEntitlement's free-session
+ * fallback above, this gates a feature that costs real money, so a failed
+ * lookup should never be treated as "unlocked."
+ */
+export async function hasAddon(addonCode: string): Promise<boolean> {
+  try {
+    const addons = await billingService.listAddons();
+    return addons.some(addon => addon.code === addonCode && addon.unlocked);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Maps an Interview_Type_Enum value (Coding / System Design) to the add-on
+ * code that gates it, or `null` for every other type (not gated by an
+ * add-on at all). Kept here as the single mapping every gating call site
+ * (FindScreen.tsx, MockInterviewSetup.tsx, suggestedActions.ts) shares, so
+ * the two never drift apart.
+ */
+export function addonCodeForInterviewType(interviewType: string): AddonCode | null {
+  if (interviewType === 'Coding') return ADDON_CODES.codingPractice;
+  if (interviewType === 'System Design') return ADDON_CODES.systemDesignWhiteboard;
+  return null;
 }

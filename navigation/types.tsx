@@ -341,6 +341,14 @@ export type RootStackParamList = {
   // list of target companies with cached research + prep progress. See
   // services/dreamCompaniesService.ts.
   DreamCompanies: undefined;
+  // Paid Add-ons (product request item) — "for the coding practice and
+  // system design whiteboard I want them to be in a separate screen called
+  // add-ons and they should be paid for." Browse/purchase catalog; an
+  // optional `highlightCode` scrolls/highlights a specific add-on when
+  // navigated here from a gated entry point (FindScreen.tsx,
+  // MockInterviewSetup.tsx) that just blocked the user. See
+  // services/billingService.ts's Addon section and src/more/AddOns.tsx.
+  AddOns: {highlightCode?: string} | undefined;
   // Today's Surprise Challenge, own dedicated screen (product request item
   // — "open on a new screen instead of displaying the content in that same
   // card") — see src/home/DailyChallengeScreen.tsx / DailyChallengeCard.tsx.
