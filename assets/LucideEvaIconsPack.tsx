@@ -40,6 +40,7 @@ import {
   Globe,
   Globe2,
   Grid,
+  GripVertical,
   Headphones,
   Heart,
   HelpCircle,
@@ -183,6 +184,15 @@ const LucideEvaIconsPack: IconPack<any> = {
     'globe-2-outline': lucideIcon(Globe2),
     'globe-outline': lucideIcon(Globe),
     'grid-outline': lucideIcon(Grid),
+    // BUG FIX (crash report, screenshot: "Icon: 'menu-outline' icon is not
+    // registered in pack 'eva'") — components/DraggableList.tsx's drag
+    // handle (added for the resume/CV section reordering feature) used
+    // this name, same "screen added after this pass" gap this file's own
+    // header comment warns about. Renamed to 'grip-outline' (a vertical
+    // six-dot grip is the standard drag-handle glyph, and a plain
+    // hamburger-menu icon doesn't read as "drag me" the way this does) —
+    // see DraggableList.tsx's own call site.
+    'grip-outline': lucideIcon(GripVertical),
     'headphones-outline': lucideIcon(Headphones),
     'heart-outline': lucideIcon(Heart),
     'home-outline': lucideIcon(Home),

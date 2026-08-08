@@ -19,6 +19,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import { DraggableList } from 'components/DraggableList';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as resumeGenerationService from 'services/resumeGenerationService';
@@ -29,6 +30,13 @@ import {
   mimeForFormat,
 } from 'services/documentDownloadService';
 import { ResumeSections, ResumeStyle, ResumeDocType } from 'services/resumeGenerationService';
+import {
+  ResumeExperienceEntry,
+  ResumeEducationEntry,
+  ResumeProjectEntry,
+  ResumeVolunteerEntry,
+  ResumeReferenceEntry,
+} from 'services/resumeService';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
 
@@ -106,6 +114,56 @@ const GenerateResume = memo(() => {
       };
     });
   }, []);
+
+  // Product request item: "Users should be able to drag, rearrange and edit
+  // the content of the resume, cover letter generated in the JD analyzer
+  // screen... and cv... generated in the resume builder screen." This
+  // screen is reused by BOTH entry points (JD Analyzer's "Build Matching
+  // Resume" and ResumeBuilder's "Create My CV" — see this file's own top
+  // comment), so wiring editing here covers both at once. One generic
+  // setter for every section — every section is just a top-level key on
+  // `content`, so there's no need for a separate updater per section.
+  const updateSection = React.useCallback(<K extends keyof ResumeSections>(key: K, value: ResumeSections[K]) => {
+    setContent(prev => (prev ? { ...prev, [key]: value } : prev));
+  }, []);
+
+  const [savingChanges, setSavingChanges] = React.useState(false);
+  const [savedChanges, setSavedChanges] = React.useState(false);
+  // Persists whatever's currently in `content` to the user's stored resume
+  // (PATCH /api/v1/resume, same endpoint `onDownload` already calls before
+  // exporting — see resumeGenerationService.generateResumeDocument). That
+  // existing call already saves edits made just before a download, but a
+  // user editing/reordering without immediately downloading had no way to
+  // persist those changes — this gives them an explicit one.
+  const onSaveChanges = React.useCallback(async () => {
+    if (!content || savingChanges) return;
+    setSavingChanges(true);
+    try {
+      await resumeService.updateResumeSections({
+        contact: content.contact,
+        summary: content.summary,
+        core_skills: content.coreSkills,
+        certifications: content.certifications,
+        experience: content.experience,
+        education: content.education,
+        projects: content.projects,
+        volunteer: content.volunteer,
+        awards: content.awards,
+        languages: content.languages,
+        references: content.references,
+        suggested_keywords: content.suggestedKeywords,
+      });
+      setSavedChanges(true);
+      setTimeout(() => setSavedChanges(false), 2500);
+    } catch (e: any) {
+      Alert.alert(
+        t('more:resume_save_failed_title', { defaultValue: "Couldn't save your changes" }),
+        e?.message ?? t('more:resume_save_failed_message', { defaultValue: 'Please try again in a moment.' }),
+      );
+    } finally {
+      setSavingChanges(false);
+    }
+  }, [content, savingChanges, t]);
 
   const buildContent = React.useCallback(
     async (targetRole: string) => {
@@ -284,149 +342,241 @@ const GenerateResume = memo(() => {
           </Flex>
         ) : content ? (
           <>
-            {content.summary ? (
-              <>
-                <Text category="h6" bold mb={8}>
-                  {t('more:resume_professional_summary', { defaultValue: 'Professional Summary' })}
-                </Text>
-                <Text category="h9-s" status="placeholder" mb={24}>
-                  {content.summary}
-                </Text>
-              </>
-            ) : null}
-
-            {content.coreSkills.length ? (
-              <>
-                <Text category="h6" bold mb={12}>
-                  {t('more:resume_core_skills', { defaultValue: 'Core Skills' })}
-                </Text>
-                <View style={styles.chipsWrap}>
-                  {content.coreSkills.map((skill, i) => (
-                    <View key={i} style={[styles.chip, { backgroundColor: theme['background-basic-color-2'] }]}>
-                      <Text category="h9" bold>
-                        {skill}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </>
-            ) : null}
-
-            {content.certifications.length ? (
-              <SimpleListSection
-                title={t('more:resume_certifications', { defaultValue: 'Certifications' })}
-                items={content.certifications}
-                theme={theme}
+            {/* Product request: "Users should be able to drag, rearrange
+                and edit the content of the resume/CV." Every section below
+                is now a real editable field, and every list-type section
+                (experience, education, projects, volunteer, certifications,
+                awards, languages, references, and the bullets inside each
+                experience entry) can be reordered by dragging its handle —
+                see components/DraggableList.tsx for how the drag mechanic
+                itself works and why it deliberately avoids gesture-handler/
+                Reanimated. Core Skills stays as add/remove chips (no drag) —
+                its own wrapping-row layout isn't a vertical list, so a drag
+                handle there doesn't have a natural "which row" meaning the
+                way it does everywhere else on this screen. */}
+            <SectionHeading>{t('more:resume_contact_info', { defaultValue: 'Contact Info' })}</SectionHeading>
+            <View style={styles.contactGrid}>
+              <Input
+                placeholder={t('more:resume_contact_name', { defaultValue: 'Full name' })}
+                value={content.contact.name ?? ''}
+                onChangeText={v => updateSection('contact', { ...content.contact, name: v })}
+                style={[globalStyle.inputField, styles.contactField]}
+                textStyle={globalStyle.inputText}
               />
-            ) : null}
-
-            {content.experience.length ? (
-              <>
-                <Text category="h6" bold mt={24} mb={12}>
-                  {t('more:resume_professional_experience', { defaultValue: 'Professional Experience' })}
-                </Text>
-                {content.experience.map((e, i) => (
-                  <View key={i} style={{ marginBottom: 16 }}>
-                    <Text category="h8" bold>
-                      {[e.title, e.company].filter(Boolean).join(' — ')}
-                    </Text>
-                    {e.location || e.start || e.end ? (
-                      <Text category="h10" status="placeholder" mb={6}>
-                        {[e.location, [e.start, e.end].filter(Boolean).join(' – ')].filter(Boolean).join(' · ')}
-                      </Text>
-                    ) : null}
-                    {e.bullets.map((b, bi) => (
-                      <Flex key={bi} justify="flex-start" itemsCenter mb={6}>
-                        <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-                        <Text category="h9-s" ml={10} style={globalStyle.flexOne}>
-                          {b}
-                        </Text>
-                      </Flex>
-                    ))}
-                  </View>
-                ))}
-              </>
-            ) : null}
-
-            {content.education.length ? (
-              <>
-                <Text category="h6" bold mt={12} mb={12}>
-                  {t('more:resume_education', { defaultValue: 'Education' })}
-                </Text>
-                {content.education.map((e, i) => (
-                  <View key={i} style={{ marginBottom: 10 }}>
-                    <Text category="h8" bold>
-                      {[e.school, [e.degree, e.field].filter(Boolean).join(', ')].filter(Boolean).join(' — ')}
-                    </Text>
-                    {e.start || e.end ? (
-                      <Text category="h10" status="placeholder">
-                        {[e.start, e.end].filter(Boolean).join(' – ')}
-                      </Text>
-                    ) : null}
-                  </View>
-                ))}
-              </>
-            ) : null}
-
-            {content.projects.length ? (
-              <>
-                <Text category="h6" bold mt={12} mb={12}>
-                  {t('more:resume_projects_publications', { defaultValue: 'Projects & Publications' })}
-                </Text>
-                {content.projects.map((p, i) => (
-                  <View key={i} style={{ marginBottom: 10 }}>
-                    <Text category="h8" bold>{p.name}</Text>
-                    {p.description ? <Text category="h9-s" status="placeholder">{p.description}</Text> : null}
-                  </View>
-                ))}
-              </>
-            ) : null}
-
-            {content.volunteer.length ? (
-              <>
-                <Text category="h6" bold mt={12} mb={12}>
-                  {t('more:resume_volunteer_experience', { defaultValue: 'Volunteer Experience' })}
-                </Text>
-                {content.volunteer.map((v, i) => (
-                  <View key={i} style={{ marginBottom: 10 }}>
-                    <Text category="h8" bold>{[v.role, v.org].filter(Boolean).join(' — ')}</Text>
-                    {v.description ? <Text category="h9-s" status="placeholder">{v.description}</Text> : null}
-                  </View>
-                ))}
-              </>
-            ) : null}
-
-            {content.awards.length ? (
-              <SimpleListSection
-                title={t('more:resume_awards_achievements', { defaultValue: 'Awards & Achievements' })}
-                items={content.awards}
-                theme={theme}
+              <Input
+                placeholder={t('more:resume_contact_email', { defaultValue: 'Email' })}
+                value={content.contact.email ?? ''}
+                onChangeText={v => updateSection('contact', { ...content.contact, email: v })}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                style={[globalStyle.inputField, styles.contactField]}
+                textStyle={globalStyle.inputText}
               />
-            ) : null}
+              <Input
+                placeholder={t('more:resume_contact_phone', { defaultValue: 'Phone' })}
+                value={content.contact.phone ?? ''}
+                onChangeText={v => updateSection('contact', { ...content.contact, phone: v })}
+                keyboardType="phone-pad"
+                style={[globalStyle.inputField, styles.contactField]}
+                textStyle={globalStyle.inputText}
+              />
+              <Input
+                placeholder={t('more:resume_contact_location', { defaultValue: 'Location' })}
+                value={content.contact.location ?? ''}
+                onChangeText={v => updateSection('contact', { ...content.contact, location: v })}
+                style={[globalStyle.inputField, styles.contactField]}
+                textStyle={globalStyle.inputText}
+              />
+            </View>
 
-            {content.languages.length ? (
-              <>
-                <Text category="h6" bold mt={12} mb={8}>
-                  {t('more:resume_languages', { defaultValue: 'Languages' })}
-                </Text>
-                <Text category="h9-s" status="placeholder" mb={12}>
-                  {content.languages.join(' • ')}
-                </Text>
-              </>
-            ) : null}
+            <SectionHeading mt={24}>{t('more:resume_professional_summary', { defaultValue: 'Professional Summary' })}</SectionHeading>
+            <Input
+              multiline
+              value={content.summary}
+              onChangeText={v => updateSection('summary', v)}
+              style={[globalStyle.inputField, styles.multilineInput]}
+              textStyle={[globalStyle.inputText, styles.multilineText]}
+              placeholder={t('more:resume_professional_summary', { defaultValue: 'Professional Summary' })}
+            />
 
-            {content.references.length ? (
-              <>
-                <Text category="h6" bold mt={12} mb={12}>
-                  {t('more:resume_references', { defaultValue: 'References' })}
-                </Text>
-                {content.references.map((r, i) => (
-                  <Text key={i} category="h9-s" status="placeholder" mb={4}>
-                    {[r.name, r.relationship, r.contact].filter(Boolean).join(' — ')}
+            <SectionHeading mt={24}>{t('more:resume_core_skills', { defaultValue: 'Core Skills' })}</SectionHeading>
+            <View style={styles.chipsWrap}>
+              {content.coreSkills.map((skill, i) => (
+                <View key={i} style={[styles.chip, styles.editableChip, { backgroundColor: theme['background-basic-color-2'] }]}>
+                  <Text category="h9" bold>
+                    {skill}
                   </Text>
-                ))}
-              </>
-            ) : null}
+                  <TouchableOpacity
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    onPress={() => updateSection('coreSkills', content.coreSkills.filter((_, si) => si !== i))}>
+                    <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'], marginLeft: 6 }]} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+            <AddChipInput
+              placeholder={t('more:resume_add_skill', { defaultValue: 'Add a skill…' })}
+              onAdd={skill => updateSection('coreSkills', [...content.coreSkills, skill])}
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_certifications', { defaultValue: 'Certifications' })}</SectionHeading>
+            <StringListEditor
+              items={content.certifications}
+              onChange={next => updateSection('certifications', next)}
+              placeholder={t('more:resume_add_certification', { defaultValue: 'Add a certification…' })}
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_professional_experience', { defaultValue: 'Professional Experience' })}</SectionHeading>
+            <DraggableList
+              data={content.experience}
+              keyExtractor={(_e, i) => `exp-${i}`}
+              onReorder={next => updateSection('experience', next)}
+              renderItem={(entry, i, handle) => (
+                <ExperienceCard
+                  entry={entry}
+                  handle={handle}
+                  onChange={next => {
+                    const copy = content.experience.slice();
+                    copy[i] = next;
+                    updateSection('experience', copy);
+                  }}
+                  onRemove={() => updateSection('experience', content.experience.filter((_, ei) => ei !== i))}
+                  t={t}
+                  theme={theme}
+                />
+              )}
+            />
+            <AddRowButton
+              label={t('more:resume_add_experience', { defaultValue: 'Add work experience' })}
+              onPress={() =>
+                updateSection('experience', [
+                  ...content.experience,
+                  { title: '', company: '', location: '', start: '', end: '', bullets: [] },
+                ])
+              }
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_education', { defaultValue: 'Education' })}</SectionHeading>
+            <DraggableList
+              data={content.education}
+              keyExtractor={(_e, i) => `edu-${i}`}
+              onReorder={next => updateSection('education', next)}
+              renderItem={(entry, i, handle) => (
+                <EducationCard
+                  entry={entry}
+                  handle={handle}
+                  onChange={next => {
+                    const copy = content.education.slice();
+                    copy[i] = next;
+                    updateSection('education', copy);
+                  }}
+                  onRemove={() => updateSection('education', content.education.filter((_, ei) => ei !== i))}
+                  t={t}
+                />
+              )}
+            />
+            <AddRowButton
+              label={t('more:resume_add_education', { defaultValue: 'Add education' })}
+              onPress={() =>
+                updateSection('education', [...content.education, { school: '', degree: '', field: '', start: '', end: '' }])
+              }
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_projects_publications', { defaultValue: 'Projects & Publications' })}</SectionHeading>
+            <DraggableList
+              data={content.projects}
+              keyExtractor={(_e, i) => `proj-${i}`}
+              onReorder={next => updateSection('projects', next)}
+              renderItem={(entry, i, handle) => (
+                <ProjectCard
+                  entry={entry}
+                  handle={handle}
+                  onChange={next => {
+                    const copy = content.projects.slice();
+                    copy[i] = next;
+                    updateSection('projects', copy);
+                  }}
+                  onRemove={() => updateSection('projects', content.projects.filter((_, ei) => ei !== i))}
+                  t={t}
+                />
+              )}
+            />
+            <AddRowButton
+              label={t('more:resume_add_project', { defaultValue: 'Add a project' })}
+              onPress={() => updateSection('projects', [...content.projects, { name: '', description: '', link: '' }])}
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_volunteer_experience', { defaultValue: 'Volunteer Experience' })}</SectionHeading>
+            <DraggableList
+              data={content.volunteer}
+              keyExtractor={(_e, i) => `vol-${i}`}
+              onReorder={next => updateSection('volunteer', next)}
+              renderItem={(entry, i, handle) => (
+                <VolunteerCard
+                  entry={entry}
+                  handle={handle}
+                  onChange={next => {
+                    const copy = content.volunteer.slice();
+                    copy[i] = next;
+                    updateSection('volunteer', copy);
+                  }}
+                  onRemove={() => updateSection('volunteer', content.volunteer.filter((_, ei) => ei !== i))}
+                  t={t}
+                />
+              )}
+            />
+            <AddRowButton
+              label={t('more:resume_add_volunteer', { defaultValue: 'Add volunteer experience' })}
+              onPress={() => updateSection('volunteer', [...content.volunteer, { org: '', role: '', description: '' }])}
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_awards_achievements', { defaultValue: 'Awards & Achievements' })}</SectionHeading>
+            <StringListEditor
+              items={content.awards}
+              onChange={next => updateSection('awards', next)}
+              placeholder={t('more:resume_add_award', { defaultValue: 'Add an award…' })}
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_languages', { defaultValue: 'Languages' })}</SectionHeading>
+            <StringListEditor
+              items={content.languages}
+              onChange={next => updateSection('languages', next)}
+              placeholder={t('more:resume_add_language', { defaultValue: 'Add a language…' })}
+            />
+
+            <SectionHeading mt={24}>{t('more:resume_references', { defaultValue: 'References' })}</SectionHeading>
+            <DraggableList
+              data={content.references}
+              keyExtractor={(_e, i) => `ref-${i}`}
+              onReorder={next => updateSection('references', next)}
+              renderItem={(entry, i, handle) => (
+                <ReferenceCard
+                  entry={entry}
+                  handle={handle}
+                  onChange={next => {
+                    const copy = content.references.slice();
+                    copy[i] = next;
+                    updateSection('references', copy);
+                  }}
+                  onRemove={() => updateSection('references', content.references.filter((_, ei) => ei !== i))}
+                  t={t}
+                />
+              )}
+            />
+            <AddRowButton
+              label={t('more:resume_add_reference', { defaultValue: 'Add a reference' })}
+              onPress={() => updateSection('references', [...content.references, { name: '', relationship: '', contact: '' }])}
+            />
+
+            <Flex justify="flex-start" itemsCenter mt={24}>
+              <Text category="h9" status="link" bold onPress={onSaveChanges}>
+                {savingChanges
+                  ? t('more:resume_saving', { defaultValue: 'Saving…' })
+                  : savedChanges
+                  ? t('more:resume_saved', { defaultValue: 'Saved ✓' })
+                  : t('more:resume_save_changes', { defaultValue: 'Save changes' })}
+              </Text>
+            </Flex>
 
             {content.suggestedKeywords.length ? (
               <>
@@ -627,23 +777,454 @@ const GenerateResume = memo(() => {
   );
 });
 
-function SimpleListSection({ title, items, theme }: { title: string; items: string[]; theme: Record<string, string> }) {
+function SectionHeading({ children, mt }: { children: React.ReactNode; mt?: number }) {
+  return (
+    <Text category="h6" bold mt={mt ?? 0} mb={12}>
+      {children}
+    </Text>
+  );
+}
+
+// Small inline "type + Enter/tap-to-add" control used by Core Skills — kept
+// separate from StringListEditor below since skills render as wrapping
+// chips, not a vertical list (see the comment above the Core Skills section
+// on why chips don't get a drag handle).
+function AddChipInput({ placeholder, onAdd }: { placeholder: string; onAdd: (value: string) => void }) {
+  const [value, setValue] = React.useState('');
+  const commit = () => {
+    const trimmed = value.trim();
+    if (trimmed) onAdd(trimmed);
+    setValue('');
+  };
+  return (
+    <Flex justify="flex-start" mb={16} mt={4}>
+      <Input
+        value={value}
+        onChangeText={setValue}
+        placeholder={placeholder}
+        onSubmitEditing={commit}
+        returnKeyType="done"
+        style={[globalStyle.inputField, addChipStyles.input]}
+        textStyle={globalStyle.inputText}
+      />
+      <TouchableOpacity onPress={commit} style={addChipStyles.addBtn}>
+        <Icon pack="eva" name="plus-outline" style={globalStyle.icon20} />
+      </TouchableOpacity>
+    </Flex>
+  );
+}
+const addChipStyles = StyleService.create({
+  input: { flex: 1, marginRight: 8 },
+  addBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 5,
+    backgroundColor: 'color-primary-100',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+// Reorderable, editable, deletable list of plain strings — used by
+// Certifications, Awards, and Languages (the resume's three string-array
+// sections). One shared implementation instead of three near-identical
+// copies.
+function StringListEditor({
+  items,
+  onChange,
+  placeholder,
+}: {
+  items: string[];
+  onChange: (next: string[]) => void;
+  placeholder: string;
+}) {
+  const [draft, setDraft] = React.useState('');
+  const commitDraft = () => {
+    const trimmed = draft.trim();
+    if (trimmed) onChange([...items, trimmed]);
+    setDraft('');
+  };
   return (
     <>
-      <Text category="h6" bold mt={12} mb={12}>
-        {title}
-      </Text>
-      {items.map((item, i) => (
-        <Flex key={i} justify="flex-start" itemsCenter mb={6}>
-          <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
-          <Text category="h9-s" ml={10} style={globalStyle.flexOne}>
-            {item}
-          </Text>
-        </Flex>
-      ))}
+      <DraggableList
+        data={items}
+        keyExtractor={(_item, i) => `str-${i}`}
+        onReorder={onChange}
+        renderItem={(item, i, handle) => (
+          <Flex justify="flex-start" itemsCenter mb={8}>
+            {handle}
+            <Input
+              value={item}
+              onChangeText={v => {
+                const copy = items.slice();
+                copy[i] = v;
+                onChange(copy);
+              }}
+              style={[globalStyle.inputField, globalStyle.flexOne]}
+              textStyle={globalStyle.inputText}
+            />
+            <TouchableOpacity
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => onChange(items.filter((_, ri) => ri !== i))}
+              style={rowStyles.removeBtn}>
+              <Icon pack="eva" name="trash-2-outline" style={globalStyle.icon16} />
+            </TouchableOpacity>
+          </Flex>
+        )}
+      />
+      <Flex justify="flex-start" itemsCenter mb={8}>
+        <Input
+          value={draft}
+          onChangeText={setDraft}
+          placeholder={placeholder}
+          onSubmitEditing={commitDraft}
+          returnKeyType="done"
+          style={[globalStyle.inputField, globalStyle.flexOne]}
+          textStyle={globalStyle.inputText}
+        />
+        <TouchableOpacity onPress={commitDraft} style={rowStyles.removeBtn}>
+          <Icon pack="eva" name="plus-outline" style={globalStyle.icon16} />
+        </TouchableOpacity>
+      </Flex>
     </>
   );
 }
+
+function AddRowButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={rowStyles.addRow} activeOpacity={0.7}>
+      <Icon pack="eva" name="plus-outline" style={globalStyle.icon16} />
+      <Text category="h9" bold ml={6}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+function CardShell({ handle, onRemove, children }: { handle: React.ReactNode; onRemove: () => void; children: React.ReactNode }) {
+  return (
+    <View style={rowStyles.card}>
+      <Flex justify="space-between" itemsCenter mb={8}>
+        {handle}
+        <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={onRemove}>
+          <Icon pack="eva" name="trash-2-outline" style={globalStyle.icon16} />
+        </TouchableOpacity>
+      </Flex>
+      {children}
+    </View>
+  );
+}
+
+function FieldRow({ children }: { children: React.ReactNode }) {
+  return <Flex justify="flex-start" mb={8}>{children}</Flex>;
+}
+
+function ExperienceCard({
+  entry,
+  handle,
+  onChange,
+  onRemove,
+  t,
+  theme,
+}: {
+  entry: ResumeExperienceEntry;
+  handle: React.ReactNode;
+  onChange: (next: ResumeExperienceEntry) => void;
+  onRemove: () => void;
+  t: TFunction;
+  theme: Record<string, string>;
+}) {
+  const bullets = entry.bullets ?? [];
+  return (
+    <CardShell handle={handle} onRemove={onRemove}>
+      <Input
+        value={entry.title ?? ''}
+        onChangeText={v => onChange({ ...entry, title: v })}
+        placeholder={t('more:resume_field_job_title', { defaultValue: 'Job title' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.company ?? ''}
+        onChangeText={v => onChange({ ...entry, company: v })}
+        placeholder={t('more:resume_field_company', { defaultValue: 'Company' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.location ?? ''}
+        onChangeText={v => onChange({ ...entry, location: v })}
+        placeholder={t('more:resume_field_location', { defaultValue: 'Location' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <FieldRow>
+        <Input
+          value={entry.start ?? ''}
+          onChangeText={v => onChange({ ...entry, start: v })}
+          placeholder={t('more:resume_field_start_date', { defaultValue: 'Start (e.g. Jan 2022)' })}
+          style={[globalStyle.inputField, rowStyles.halfField, { marginRight: 8 }]}
+          textStyle={globalStyle.inputText}
+        />
+        <Input
+          value={entry.end ?? ''}
+          onChangeText={v => onChange({ ...entry, end: v })}
+          placeholder={t('more:resume_field_end_date', { defaultValue: 'End (or Present)' })}
+          style={[globalStyle.inputField, rowStyles.halfField]}
+          textStyle={globalStyle.inputText}
+        />
+      </FieldRow>
+      <Text category="h10" bold status="placeholder" mt={4} mb={6}>
+        {t('more:resume_bullets_label', { defaultValue: 'Highlights' })}
+      </Text>
+      <DraggableList
+        data={bullets}
+        keyExtractor={(_b, bi) => `bullet-${bi}`}
+        onReorder={next => onChange({ ...entry, bullets: next })}
+        renderItem={(bullet, bi, bulletHandle) => (
+          <Flex justify="flex-start" itemsCenter mb={6}>
+            {bulletHandle}
+            <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 6 }]} />
+            <Input
+              multiline
+              value={bullet}
+              onChangeText={v => {
+                const copy = bullets.slice();
+                copy[bi] = v;
+                onChange({ ...entry, bullets: copy });
+              }}
+              style={[globalStyle.inputField, globalStyle.flexOne]}
+              textStyle={globalStyle.inputText}
+            />
+            <TouchableOpacity
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              onPress={() => onChange({ ...entry, bullets: bullets.filter((_, ri) => ri !== bi) })}
+              style={rowStyles.removeBtn}>
+              <Icon pack="eva" name="close-outline" style={globalStyle.icon16} />
+            </TouchableOpacity>
+          </Flex>
+        )}
+      />
+      <TouchableOpacity onPress={() => onChange({ ...entry, bullets: [...bullets, ''] })} style={rowStyles.addBulletBtn}>
+        <Icon pack="eva" name="plus-outline" style={globalStyle.icon16} />
+        <Text category="h10" bold ml={4}>
+          {t('more:resume_add_bullet', { defaultValue: 'Add highlight' })}
+        </Text>
+      </TouchableOpacity>
+    </CardShell>
+  );
+}
+
+function EducationCard({
+  entry,
+  handle,
+  onChange,
+  onRemove,
+  t,
+}: {
+  entry: ResumeEducationEntry;
+  handle: React.ReactNode;
+  onChange: (next: ResumeEducationEntry) => void;
+  onRemove: () => void;
+  t: TFunction;
+}) {
+  return (
+    <CardShell handle={handle} onRemove={onRemove}>
+      <Input
+        value={entry.school ?? ''}
+        onChangeText={v => onChange({ ...entry, school: v })}
+        placeholder={t('more:resume_field_school', { defaultValue: 'School' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.degree ?? ''}
+        onChangeText={v => onChange({ ...entry, degree: v })}
+        placeholder={t('more:resume_field_degree', { defaultValue: 'Degree' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.field ?? ''}
+        onChangeText={v => onChange({ ...entry, field: v })}
+        placeholder={t('more:resume_field_field_of_study', { defaultValue: 'Field of study' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <FieldRow>
+        <Input
+          value={entry.start ?? ''}
+          onChangeText={v => onChange({ ...entry, start: v })}
+          placeholder={t('more:resume_field_start_date', { defaultValue: 'Start (e.g. Jan 2022)' })}
+          style={[globalStyle.inputField, rowStyles.halfField, { marginRight: 8 }]}
+          textStyle={globalStyle.inputText}
+        />
+        <Input
+          value={entry.end ?? ''}
+          onChangeText={v => onChange({ ...entry, end: v })}
+          placeholder={t('more:resume_field_end_date', { defaultValue: 'End (or Present)' })}
+          style={[globalStyle.inputField, rowStyles.halfField]}
+          textStyle={globalStyle.inputText}
+        />
+      </FieldRow>
+    </CardShell>
+  );
+}
+
+function ProjectCard({
+  entry,
+  handle,
+  onChange,
+  onRemove,
+  t,
+}: {
+  entry: ResumeProjectEntry;
+  handle: React.ReactNode;
+  onChange: (next: ResumeProjectEntry) => void;
+  onRemove: () => void;
+  t: TFunction;
+}) {
+  return (
+    <CardShell handle={handle} onRemove={onRemove}>
+      <Input
+        value={entry.name ?? ''}
+        onChangeText={v => onChange({ ...entry, name: v })}
+        placeholder={t('more:resume_field_project_name', { defaultValue: 'Project name' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        multiline
+        value={entry.description ?? ''}
+        onChangeText={v => onChange({ ...entry, description: v })}
+        placeholder={t('more:resume_field_description', { defaultValue: 'Description' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.link ?? ''}
+        onChangeText={v => onChange({ ...entry, link: v })}
+        placeholder={t('more:resume_field_link', { defaultValue: 'Link (optional)' })}
+        autoCapitalize="none"
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+    </CardShell>
+  );
+}
+
+function VolunteerCard({
+  entry,
+  handle,
+  onChange,
+  onRemove,
+  t,
+}: {
+  entry: ResumeVolunteerEntry;
+  handle: React.ReactNode;
+  onChange: (next: ResumeVolunteerEntry) => void;
+  onRemove: () => void;
+  t: TFunction;
+}) {
+  return (
+    <CardShell handle={handle} onRemove={onRemove}>
+      <Input
+        value={entry.role ?? ''}
+        onChangeText={v => onChange({ ...entry, role: v })}
+        placeholder={t('more:resume_field_role', { defaultValue: 'Role' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.org ?? ''}
+        onChangeText={v => onChange({ ...entry, org: v })}
+        placeholder={t('more:resume_field_organization', { defaultValue: 'Organization' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        multiline
+        value={entry.description ?? ''}
+        onChangeText={v => onChange({ ...entry, description: v })}
+        placeholder={t('more:resume_field_description', { defaultValue: 'Description' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+    </CardShell>
+  );
+}
+
+function ReferenceCard({
+  entry,
+  handle,
+  onChange,
+  onRemove,
+  t,
+}: {
+  entry: ResumeReferenceEntry;
+  handle: React.ReactNode;
+  onChange: (next: ResumeReferenceEntry) => void;
+  onRemove: () => void;
+  t: TFunction;
+}) {
+  return (
+    <CardShell handle={handle} onRemove={onRemove}>
+      <Input
+        value={entry.name ?? ''}
+        onChangeText={v => onChange({ ...entry, name: v })}
+        placeholder={t('more:resume_field_name', { defaultValue: 'Name' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.relationship ?? ''}
+        onChangeText={v => onChange({ ...entry, relationship: v })}
+        placeholder={t('more:resume_field_relationship', { defaultValue: 'Relationship' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+      <Input
+        value={entry.contact ?? ''}
+        onChangeText={v => onChange({ ...entry, contact: v })}
+        placeholder={t('more:resume_field_contact_info', { defaultValue: 'Contact info' })}
+        style={[globalStyle.inputField, rowStyles.field]}
+        textStyle={globalStyle.inputText}
+      />
+    </CardShell>
+  );
+}
+
+const rowStyles = StyleService.create({
+  card: {
+    ...globalStyle.card,
+    backgroundColor: 'background-basic-color-1',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 12,
+  },
+  field: {
+    marginBottom: 8,
+  },
+  halfField: {
+    flex: 1,
+  },
+  removeBtn: {
+    marginLeft: 8,
+    padding: 6,
+  },
+  addRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  addBulletBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    marginTop: 2,
+  },
+});
 
 export default GenerateResume;
 
@@ -672,9 +1253,36 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     marginBottom: 8,
   },
+  editableChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   suggestedChip: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  contactGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -4,
+  },
+  contactField: {
+    width: '50%',
+    paddingHorizontal: 4,
+    marginBottom: 8,
+  },
+  // NOTE: `minHeight` on an <Input>'s `style` prop resolves against the
+  // OUTER invisible wrapper (see UI Kitten's Input.getComponentStyle --
+  // `minHeight` is in PropsService.FlexViewCrossStyleProps, same routing
+  // quirk documented in JDAnalyzer.tsx's jdInput/jdText fix), not the
+  // visible bordered box or the TextInput itself, so it isn't set here.
+  // `multilineText` below carries the real minHeight instead -- it's
+  // applied via `textStyle`, which lands directly on the native TextInput,
+  // and the visible bordered box then auto-sizes to wrap that.
+  multilineInput: {},
+  multilineText: {
+    minHeight: 84,
+    textAlignVertical: 'top',
   },
   styleCard: {
     ...globalStyle.card,

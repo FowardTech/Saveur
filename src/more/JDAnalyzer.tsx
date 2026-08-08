@@ -432,24 +432,38 @@ const themedStyles = StyleService.create({
   // design") — border/background/radius now match the shared
   // globalStyle.inputField convention used elsewhere (was missing a
   // visible border and used a one-off radius of 16 instead of 12).
+  //
+  // BUG FIX (product report: pasted job descriptions weren't actually
+  // scrollable/editable past the visible box): `height`/`overflow` set
+  // here on the Input's `style` prop do NOT reach the bordered box that
+  // wraps the actual TextInput. UI Kitten's Input.getComponentStyle()
+  // splits the `style` prop via PropsService.allWithRest(...,
+  // FlexViewCrossStyleProps) -- and `height`/`overflow` are both in that
+  // list, so they get routed to an outer, invisible TouchableWithoutFeedback
+  // wrapper (see node_modules/@ui-kitten/components/ui/input/
+  // input.component.js's render()), not to `inputContainer` (the visible
+  // bordered row) or the TextInput itself. Only border/background/radius
+  // (excluded from that list) actually land on the visible box. Net effect:
+  // the real TextInput was never height-constrained at all -- it grew to
+  // fit however much text was pasted, and the outer wrapper just visually
+  // cropped the overflow at 260px with nothing left to scroll, so anything
+  // past the fold was there but unreachable. Fixed at the source below.
   jdInput: {
     ...globalStyle.inputField,
-    // Fixed height (not minHeight) so pasting a long job description makes
-    // the text scroll inside the box instead of pushing the box itself
-    // (and everything below it, including the Analyze button) further down
-    // the screen every keystroke. A fixed height alone doesn't actually
-    // clip a multiline TextInput's content though -- without
-    // `scrollEnabled` on the Input (above) and `overflow: 'hidden'` here,
-    // the text just kept rendering past the box's bottom edge instead of
-    // scrolling inside it, which is what was actually happening before.
-    height: 260,
-    overflow: 'hidden',
   },
   jdText: {
     ...globalStyle.inputText,
-    height: '100%',
+    // This IS applied directly to the native TextInput (it's passed as
+    // `textStyle`, which input.component.js spreads straight onto
+    // <TextInput style={[...,  textStyle]}>) -- so a real, fixed height
+    // here (not '100%' of an unconstrained parent, which resolves to
+    // nothing) is what actually bounds the scrollable element. Paired with
+    // `multiline` + `scrollEnabled` on the Input itself, native multiline
+    // TextInput scrolling now has an actual box smaller than its content to
+    // scroll within, so long pasted job descriptions scroll internally and
+    // stay fully editable/selectable instead of being cut off.
+    height: 260,
     textAlignVertical: 'top',
-    minHeight: 200,
   },
   chipsWrap: {
     flexDirection: 'row',

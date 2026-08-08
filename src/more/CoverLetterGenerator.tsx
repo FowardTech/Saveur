@@ -199,7 +199,25 @@ const CoverLetterGenerator = memo(() => {
 
         {letter ? (
           <View style={styles.letterBox}>
-            <Text category="para-m" style={styles.letterText}>{letter}</Text>
+            {/* Product request: "Users should be able to... edit the
+                content of the... cover letter generated in the JD analyzer
+                screen... and cover letter generated in the resume builder
+                screen." This screen is the one shared cover-letter flow
+                both entry points funnel through (see this file's own top
+                comment), so making the letter editable here covers both at
+                once. Was a read-only <Text> — swapped for a multiline
+                <Input> bound to the same `letter` state, so onDownload/
+                exportCoverLetter below already send whatever the user
+                edited, no separate save step needed. No drag/reorder here
+                (unlike GenerateResume.tsx's section lists) — a cover
+                letter is prose, not a reorderable list of entries. */}
+            <Input
+              multiline
+              value={letter}
+              onChangeText={setLetter}
+              style={[globalStyle.inputField, styles.letterInput]}
+              textStyle={[globalStyle.inputText, styles.letterInputText]}
+            />
             <Button
               size="small"
               appearance="outline"
@@ -266,5 +284,16 @@ const themedStyles = StyleService.create({
   },
   letterText: {
     lineHeight: 24,
+  },
+  // See the JSX comment above where these are used, and JDAnalyzer.tsx's
+  // jdInput/jdText comment for why the real min-height has to live on
+  // `textStyle` (applied directly to the native TextInput) rather than
+  // `style` (routes to an outer wrapper UI Kitten's Input doesn't visibly
+  // size around this content the same way).
+  letterInput: {},
+  letterInputText: {
+    minHeight: 320,
+    lineHeight: 24,
+    textAlignVertical: 'top',
   },
 });
