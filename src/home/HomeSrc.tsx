@@ -8,6 +8,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import GradientCard from 'components/GradientCard';
+import { ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -489,38 +490,51 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* "Happy to meet you" two-card landing (see this file's module
-            comment above for the full redesign context). Career Coach ->
-            navigation/MainBottomTab.tsx's "Coach" tab (src/messages/
-            MessagesScreen.tsx, repurposed as the AI Coach chat). Explicit
-            {screen: 'Coach'} target (not a bare 'MainBottomTab') is
-            required, not optional — React Navigation doesn't fire a focus
-            change (so nothing re-checks/re-renders) when you "navigate" to
-            a tab that's already the active one, same reasoning MoreSrc.tsx's
-            onReplayTour comment documents for the equivalent Home case. */}
+        {/* "Happy to meet you" card landing (see this file's module comment
+            above for the full redesign context). Straightforward left-to-
+            right linear gradient (product follow-up — was a diagonal
+            corner-to-corner gradient, which read as an uneven "inner" patch
+            rather than a clean fill) via GradientCard's start/end props, an
+            SVG illustration (src/home/HomeHeroArt.tsx) anchored to the
+            card's right side, and a real caption line, not just a bare
+            title. Career Coach -> navigation/MainBottomTab.tsx's "Coach" tab
+            (src/messages/MessagesScreen.tsx, repurposed as the AI Coach
+            chat). Explicit {screen: 'Coach'} target (not a bare
+            'MainBottomTab') is required, not optional — React Navigation
+            doesn't fire a focus change (so nothing re-checks/re-renders)
+            when you "navigate" to a tab that's already the active one, same
+            reasoning MoreSrc.tsx's onReplayTour comment documents for the
+            equivalent Home case. */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
           <GradientCard
             colors={['#0063f8', '#1DA1F2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={styles.heroCard}
             contentStyle={styles.heroCardContent}>
-            <View style={styles.heroIconWrap}>
-              <Icon
-                pack="eva"
-                name="message-circle-outline"
-                style={[globalStyle.icon24, styles.heroIcon]}
-              />
-            </View>
-            <View>
-              <Text category="h6" bold style={styles.heroTitle}>
+            <View style={globalStyle.flexOne}>
+              <View style={styles.heroIconWrap}>
+                <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon24, styles.heroIcon]} />
+              </View>
+              <Text category="h6" bold style={styles.heroTitle} mt={14}>
                 {t('home:career_coach_card_title', { defaultValue: 'Career Coach' })}
               </Text>
               <Text category="h9-s" style={styles.heroSubtitle} mt={4}>
                 {t('home:career_coach_card_subtitle', {
-                  defaultValue: 'Get personalized career guidance, anytime',
+                  defaultValue: 'Ask anything — interview prep, salary talk, next-step advice — get a straight answer, day or night.',
                 })}
               </Text>
+              <Flex justify="flex-start" itemsCenter mt={14}>
+                <Text category="h10" bold style={styles.heroCta}>
+                  {t('home:career_coach_card_cta', { defaultValue: 'Start chatting' })}
+                </Text>
+                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, styles.heroIcon, { marginLeft: 4 }]} />
+              </Flex>
+            </View>
+            <View style={styles.heroArtWrap}>
+              <ArtCareerCoach size={92} />
             </View>
           </GradientCard>
         </TouchableOpacity>
@@ -533,26 +547,69 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('MainBottomTab', { screen: 'Practice' })}>
           <GradientCard
             colors={['#FF9068', '#FD746C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
             style={[styles.heroCard, styles.heroCardSecond]}
             contentStyle={styles.heroCardContent}>
-            <View style={styles.heroIconWrap}>
-              <Icon
-                pack="eva"
-                name="mic-outline"
-                style={[globalStyle.icon24, styles.heroIcon]}
-              />
-            </View>
-            <View>
-              <Text category="h6" bold style={styles.heroTitle}>
+            <View style={globalStyle.flexOne}>
+              <View style={styles.heroIconWrap}>
+                <Icon pack="eva" name="mic-outline" style={[globalStyle.icon24, styles.heroIcon]} />
+              </View>
+              <Text category="h6" bold style={styles.heroTitle} mt={14}>
                 {t('home:practice_card_title', { defaultValue: 'Practice' })}
               </Text>
               <Text category="h9-s" style={styles.heroSubtitle} mt={4}>
                 {t('home:practice_card_subtitle', {
-                  defaultValue: 'Run a mock interview and sharpen your skills',
+                  defaultValue: 'Run a real mock interview with live AI feedback and sharpen your skills before it counts.',
                 })}
               </Text>
+              <Flex justify="flex-start" itemsCenter mt={14}>
+                <Text category="h10" bold style={styles.heroCta}>
+                  {t('home:practice_card_cta', { defaultValue: 'Start a session' })}
+                </Text>
+                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, styles.heroIcon, { marginLeft: 4 }]} />
+              </Flex>
+            </View>
+            <View style={styles.heroArtWrap}>
+              <ArtPractice size={92} />
             </View>
           </GradientCard>
+        </TouchableOpacity>
+
+        {/* Dream Company Dashboard (product follow-up — "under the practice
+            card let's have the dream company dashboard card... same size
+            with the practice card but let it be a white background").
+            src/more/DreamCompanies.tsx already exists and already has its
+            own Pro Premium gate (see entitlements_service.require_premium
+            on its backend routes) — tapping through to it and letting that
+            screen enforce entitlements is the same pattern every other
+            More-menu row already uses, not something this card needs to
+            duplicate. */}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('DreamCompanies')}>
+          <View style={[styles.heroCard, styles.heroCardWhite, styles.heroCardContent]}>
+            <View style={globalStyle.flexOne}>
+              <View style={styles.heroIconWrapLight}>
+                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon24, { tintColor: '#0063f8' }]} />
+              </View>
+              <Text category="h6" bold style={styles.heroTitleDark} mt={14}>
+                {t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' })}
+              </Text>
+              <Text category="h9-s" status="placeholder" mt={4}>
+                {t('home:dream_company_card_subtitle', {
+                  defaultValue: 'Track the employers you actually want, with AI research and prep built in.',
+                })}
+              </Text>
+              <Flex justify="flex-start" itemsCenter mt={14}>
+                <Text category="h10" bold style={styles.heroCtaDark}>
+                  {t('home:dream_company_card_cta', { defaultValue: 'View dashboard' })}
+                </Text>
+                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#0063f8', marginLeft: 4 }]} />
+              </Flex>
+            </View>
+            <View style={styles.heroArtWrap}>
+              <ArtDreamCompany size={92} />
+            </View>
+          </View>
         </TouchableOpacity>
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
@@ -613,10 +670,14 @@ const themedStyles = StyleService.create({
   verifyBannerText: {
     marginHorizontal: 10,
   },
-  // Two-card landing (see this file's module comment). GradientCard already
+  // Card landing (see this file's module comment). GradientCard already
   // supplies the shadow/rounded-corner/gradient-fill mechanics (see
   // components/GradientCard.tsx) — these just size/space the cards and lay
-  // out what's inside each one.
+  // out what's inside each one. Row layout (icon/title/subtitle/CTA on the
+  // left, flexOne so it never runs under the illustration; the SVG
+  // illustration fixed-width on the right) rather than the original stacked
+  // column — product follow-up: "place some svg illustration on the right
+  // side of the cards".
   heroCard: {
     marginTop: 16,
   },
@@ -625,8 +686,23 @@ const themedStyles = StyleService.create({
   },
   heroCardContent: {
     padding: 20,
-    minHeight: 168,
-    justifyContent: 'space-between',
+    minHeight: 176,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Third card (Dream Company Dashboard) — same size/shape as the two
+  // gradient cards above it, opaque white/theme-adaptive fill instead of a
+  // gradient (product follow-up: "let it be a white background").
+  heroCardWhite: {
+    ...globalStyle.card,
+    backgroundColor: 'background-basic-color-2',
+  },
+  heroArtWrap: {
+    width: 92,
+    height: 92,
+    marginLeft: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroIconWrap: {
     width: 44,
@@ -636,13 +712,33 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Same circle treatment as heroIconWrap, tinted for a white card instead
+  // of a translucent-white one for a gradient card.
+  heroIconWrapLight: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'color-primary-transparent-100',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   heroIcon: {
     tintColor: '#fff',
   },
   heroTitle: {
     color: '#fff',
   },
+  heroTitleDark: {
+    color: 'text-basic-color',
+  },
   heroSubtitle: {
     color: 'rgba(255,255,255,0.85)',
+  },
+  heroCta: {
+    color: '#fff',
+    textDecorationLine: 'underline',
+  },
+  heroCtaDark: {
+    color: '#0063f8',
   },
 });
