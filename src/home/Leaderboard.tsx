@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { View, TouchableOpacity, Image } from 'react-native';
+import { Alert, View, TouchableOpacity, Image } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -17,6 +17,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import UserAvatar from 'components/UserAvatar';
 import CircularProgress from 'components/CircularProgress';
+import BadgesModal from 'components/BadgesModal';
 import { globalStyle } from 'styles/globalStyle';
 import { GamificationStreakProps, LeaderboardEntryProps } from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
@@ -169,6 +170,48 @@ const Leaderboard = memo(() => {
       // stays hidden rather than blocking the page.
     });
   }, []);
+
+  // Check-In + Badges (product request: "Remove the XP card from the My
+  // Progress screen since it's already in the leaderboard... Place the
+  // checkin pill and the badges button in the one in the leaderboard") —
+  // both used to live on src/practice/MyProgress.tsx's own streak card,
+  // which no longer renders at all now that this "Your standing" card is
+  // the one place a user's streak/XP shows. Same POST /gamification/checkin
+  // call, same client-computed badge-unlock rules (now shared via
+  // gamificationService.getUnlockedBadgeIds so this logic isn't duplicated).
+  const [checkingIn, setCheckingIn] = React.useState(false);
+  const onCheckIn = React.useCallback(async () => {
+    if (checkingIn || !streak || streak.checkedInToday) return;
+    setCheckingIn(true);
+    try {
+      const updated = await gamificationService.checkin();
+      setStreak(updated);
+    } catch (error: any) {
+      Alert.alert(
+        t('home:check_in_failed_title', { defaultValue: "Couldn't check in" }),
+        error?.message ?? t('home:check_in_failed_body', { defaultValue: 'Please try again in a moment.' }),
+      );
+    } finally {
+      setCheckingIn(false);
+    }
+  }, [checkingIn, streak, t]);
+
+  const [unlockedBadgeIds, setUnlockedBadgeIds] = React.useState<Set<string>>(new Set());
+  const [isBadgesModalVisible, setIsBadgesModalVisible] = React.useState(false);
+  React.useEffect(() => {
+    if (!streak) return;
+    let cancelled = false;
+    gamificationService.getUnlockedBadgeIds(streak.streakDays).then(ids => {
+      if (!cancelled) setUnlockedBadgeIds(ids);
+    }).catch(() => {
+      // Non-critical — the Badges button just opens an all-locked grid on a
+      // failed fetch rather than blocking this screen.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [streak?.streakDays]);
+
   const currentUserRank = React.useMemo(
     () => leaderboard.find(entry => entry.isCurrentUser)?.rank ?? null,
     [leaderboard],
@@ -241,36 +284,72 @@ const Leaderboard = memo(() => {
             hide the viewer's own numbers, and vice versa). */}
         {streak ? (
           <View style={[globalStyle.card, styles.yourStatsCard, { backgroundColor: theme['background-basic-color-2'] }]}>
-            <CircularProgress
-              progress={Math.min(100, (streak.streakDays / 7) * 100)}
-              size={60}
-              strokeWidth={6}
-              trackColor="#0063f81f"
-              gradientFrom="#1DA1F2"
-              gradientTo="#0063f8"
-              style={styles.yourStatsRing}>
-              <Text category="h9" bold style={{ color: theme['text-basic-color'] }}>
-                {streak.streakDays}
-              </Text>
-            </CircularProgress>
-            <View style={globalStyle.flexOne}>
-              <Text category="h9" bold>
-                {t('home:leaderboard_your_standing', { defaultValue: 'Your standing' })}
-              </Text>
-              <Text category="h10" status="placeholder" mt={2}>
-                {t('home:leaderboard_your_stats_line', {
-                  defaultValue: '{{xp}} XP · {{days}}-day streak',
-                  xp: streak.xp,
-                  days: streak.streakDays,
-                })}
-              </Text>
-            </View>
-            <View style={[styles.yourRankPill, { backgroundColor: theme['color-primary-transparent-100'] }]}>
-              <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
-              <Text category="h9" bold ml={4} style={{ color: '#0063f8' }}>
-                {currentUserRank ? `#${currentUserRank}` : t('home:leaderboard_unranked', { defaultValue: 'Unranked' })}
-              </Text>
-            </View>
+            <Flex justify="flex-start" itemsCenter>
+              <CircularProgress
+                progress={Math.min(100, (streak.streakDays / 7) * 100)}
+                size={60}
+                strokeWidth={6}
+                trackColor="#0063f81f"
+                gradientFrom="#1DA1F2"
+                gradientTo="#0063f8"
+                style={styles.yourStatsRing}>
+                <Text category="h9" bold style={{ color: theme['text-basic-color'] }}>
+                  {streak.streakDays}
+                </Text>
+              </CircularProgress>
+              <View style={globalStyle.flexOne}>
+                <Text category="h9" bold>
+                  {t('home:leaderboard_your_standing', { defaultValue: 'Your standing' })}
+                </Text>
+                <Text category="h10" status="placeholder" mt={2}>
+                  {t('home:leaderboard_your_stats_line', {
+                    defaultValue: '{{xp}} XP · {{days}}-day streak',
+                    xp: streak.xp,
+                    days: streak.streakDays,
+                  })}
+                </Text>
+              </View>
+              <View style={[styles.yourRankPill, { backgroundColor: theme['color-primary-transparent-100'] }]}>
+                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+                <Text category="h9" bold ml={4} style={{ color: '#0063f8' }}>
+                  {currentUserRank ? `#${currentUserRank}` : t('home:leaderboard_unranked', { defaultValue: 'Unranked' })}
+                </Text>
+              </View>
+            </Flex>
+            {/* Check-In + Badges (product request — see this card's state
+                comments above for why these moved here from My Progress). */}
+            <Flex justify="space-between" itemsCenter mt={14}>
+              {streak.checkedInToday ? (
+                <View style={[styles.yourStatsActionBtn, styles.checkedInPill, { backgroundColor: theme['background-basic-color-3'] }]}>
+                  <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
+                  <Text category="h9-s" bold ml={4} style={{ color: theme['text-basic-color'] }}>
+                    {t('home:checked_in_today', { defaultValue: 'Checked in' })}
+                  </Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  disabled={checkingIn}
+                  onPress={onCheckIn}
+                  style={[styles.yourStatsActionBtn, { backgroundColor: theme['background-basic-color-3'] }, checkingIn && styles.checkInButtonDisabled]}>
+                  {checkingIn ? (
+                    <Spinner size="tiny" status="primary" />
+                  ) : (
+                    <Text category="h9-s" bold style={{ color: theme['text-basic-color'] }}>
+                      {t('home:check_in', { defaultValue: 'Check In' })}
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={[styles.yourStatsActionBtn, { backgroundColor: theme['background-basic-color-3'] }]}
+                onPress={() => setIsBadgesModalVisible(true)}>
+                <Text category="h9-s" bold style={{ color: theme['text-basic-color'] }}>
+                  {t('home:badges', { defaultValue: 'Badges' })}
+                </Text>
+              </TouchableOpacity>
+            </Flex>
           </View>
         ) : null}
 
@@ -440,6 +519,11 @@ const Leaderboard = memo(() => {
           </>
         )}
       </Content>
+      <BadgesModal
+        visible={isBadgesModalVisible}
+        unlockedBadgeIds={unlockedBadgeIds}
+        onClose={() => setIsBadgesModalVisible(false)}
+      />
     </Container>
   );
 });
@@ -476,6 +560,24 @@ const themedStyles = StyleService.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 999,
+  },
+  // Check-In / Badges pills (moved here from MyProgress.tsx's old streak
+  // card — see the JSX comment above where these render). Same pill shape
+  // as MyProgress's own checkInButton/checkInBadgesButton used to have,
+  // sized to sit side-by-side under the ring/XP row above.
+  yourStatsActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  checkedInPill: {
+    flexDirection: 'row',
+  },
+  checkInButtonDisabled: {
+    opacity: 0.6,
   },
   // Trophy hero (see the JSX comment above) — flat card fill (no
   // gradient, per the follow-up correction), rounded like every other

@@ -9,6 +9,8 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import GradientCard from 'components/GradientCard';
 import { ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
+import ContinueLearningCard from './ContinueLearningCard';
+import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -460,6 +462,22 @@ const HomeSrc = memo(() => {
         notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
+        {/* Product request: "remove the continue learning card in the My
+            Progress screen and then place it at the top in the homescreen
+            but let the background be white and the height be very small
+            like an info card" + "the upcoming session already scheduled
+            should be placed side by side with the continue learning card
+            at the top in the homescreen." Both cards are self-contained
+            and render null when they have nothing to show (see their own
+            files) — a null child contributes no space in this row, so a
+            single card naturally takes the full row width when only one
+            of the two has content, and neither renders at all when both
+            are empty. */}
+        <View style={styles.topCardsRow}>
+          <ContinueLearningCard style={styles.topCardHalf} />
+          <UpcomingSessionHomeCard style={styles.topCardHalf} />
+        </View>
+
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -509,9 +527,9 @@ const HomeSrc = memo(() => {
           activeOpacity={0.9}
           onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
           <GradientCard
-            colors={['#0063f8', '#1DA1F2']}
+            colors={['#0063f8', '#0063f8']}
             start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.heroCard}
             contentStyle={styles.heroCardContent}>
             <View style={styles.heroCardLeft}>
@@ -546,7 +564,7 @@ const HomeSrc = memo(() => {
           activeOpacity={0.9}
           onPress={() => navigate('MainBottomTab', { screen: 'Practice' })}>
           <GradientCard
-            colors={['#FF9068', '#FD746C']}
+            colors={['#FD746C', '#FD746C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.heroCard, styles.heroCardSecond]}
@@ -655,6 +673,18 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 40,
+  },
+  // Top-of-Home compact card row (see the JSX comment above where this
+  // renders) — both children are self-contained and render null when
+  // empty, so this row costs nothing (zero height, no visible gap) on a
+  // user with neither an in-progress lesson nor a scheduled session.
+  topCardsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  topCardHalf: {
+    flex: 1,
+    marginTop: 0,
   },
   verifyBanner: {
     ...globalStyle.card,

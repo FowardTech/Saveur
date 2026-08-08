@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, Image, TouchableOpacity, View } from 'react-native';
+import { Image, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -23,11 +23,8 @@ import CircularProgress from 'components/CircularProgress';
 import WeeklyBarChart from 'components/WeeklyBarChart';
 import SegmentedTabBar from 'components/SegmentedTabBar';
 import UserAvatar from 'components/UserAvatar';
-import BadgesModal from 'components/BadgesModal';
 import DayActivityModal from 'components/DayActivityModal';
 import WeekStrip from 'src/home/WeekStrip';
-import ContinueLearningCard from 'src/home/ContinueLearningCard';
-import DailyChallengeCard from 'src/home/DailyChallengeCard';
 import { globalStyle } from 'styles/globalStyle';
 import { tileColorAt } from 'styles/tileColors';
 import { Images } from 'assets/images';
@@ -35,10 +32,8 @@ import dayjs from 'utils/dayjs';
 import { RootStackParamList } from 'navigation/types';
 import {
   GamificationStreakProps,
-  Interview_Type_Enum,
   LeaderboardEntryProps,
   MockInterviewSessionProps,
-  ScheduledInterviewProps,
 } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as gamificationService from 'services/gamificationService';
@@ -46,17 +41,9 @@ import * as roadmapService from 'services/roadmapService';
 import * as feedbackService from 'services/feedbackService';
 import { HeatMapEntry } from 'services/feedbackService';
 import * as configService from 'services/configService';
-import * as resumeService from 'services/resumeService';
-import * as networkingService from 'services/networkingService';
-import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { AuthContext } from '../../AuthContext';
-import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
-
-// Defined at module scope (not inline in JSX) so it's a stable component
-// reference across renders — see Subscription.tsx's renderCheckoutSpinner
-// for the same reasoning.
-const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
+import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 
 // Leaderboard preview's per-rank medal badge colors (module scope, same
 // reasoning as renderCheckInSpinner above). Ranks 1/2 use existing theme
@@ -79,18 +66,29 @@ const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: stri
 
 // "My Progress" — real per-user progress toward the career goal(s) picked at
 // signup (profile.goals, editable any time from here via ChangeCareType).
-// Reachable from the More menu's "My Progress" row (see src/more/MoreSrc.tsx)
-// now that Home was redesigned down to two big entry-point cards (product
-// request, reference screenshot: a clean "what do you want to do" landing
-// screen) — everything that dashboard used to show lives here instead:
-// the day-of-week calendar strip, "continue learning" card, the streak/XP/
-// check-in card (with its Badges button and "upcoming session" sub-block),
-// the surprise daily challenge, and the leaderboard preview, on top of this
-// screen's own pre-existing goal/roadmap/stats/chart/skills/history content.
-// Nothing was deleted or reduced in scope — the same services, same state
-// shapes, same badge-unlock logic, just consolidated into this one existing
-// "your real progress" screen instead of also duplicating a dashboard on
-// Home.
+// Reachable from the More menu's "My Progress" row (see src/more/MoreSrc.tsx).
+//
+// This screen used to also carry a "continue learning" card, a streak/XP/
+// check-in card (with a Badges button and an "upcoming session" sub-block),
+// and a surprise-daily-challenge card — all since moved back OUT of this
+// screen per a later product follow-up:
+//   - Continue Learning -> src/home/HomeSrc.tsx (compact white card, top of
+//     Home, side by side with the "already scheduled" upcoming-session card)
+//   - Streak/XP display -> src/home/Leaderboard.tsx's "Your standing" card
+//     (this screen's own version was a pure duplicate of that once the
+//     trophy-header shortcut existed); the Check-In button and Badges
+//     button moved there too, since that's the only place the streak/XP
+//     number is shown anymore.
+//   - Today's Surprise Challenge card -> removed entirely; the notification
+//     tile / notification center now deep-links straight to that screen
+//     (see services/pushNotificationService.ts's handleDataTap), so a
+//     standing card here was redundant with that.
+//   - The Mon-Sun WeekStrip calendar moved from the Overview tab into the
+//     History tab below (it's a day-by-day activity view, which is what
+//     History already is).
+// What's left here: the goal/roadmap cards, the 3 stat tiles, the weekly
+// bar chart, the Skill Heat Map tab, and the leaderboard preview — this
+// screen's own original "your real progress" content.
 const MyProgress = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
@@ -196,83 +194,6 @@ const MyProgress = memo(() => {
     setSelectedActivityDay(date);
   }, []);
 
-  // Gamification: badge unlock state, computed client-side from real signals
-  // — practice history length, the real streak day-count above, resume-
-  // import count (used as a stand-in for "ATS optimized" too — see
-  // resumeService.ts), and tracked networking contacts. Recomputes whenever
-  // `completed`/`streakDays` change, which itself happens on every focus via
-  // `load()` above — so completing another interview and coming back here
-  // always reflects the latest unlock state, not a frozen snapshot from
-  // first mount.
-  const [unlockedBadgeIds, setUnlockedBadgeIds] = React.useState<Set<string>>(new Set());
-  // Full-grid modal (components/BadgesModal.tsx).
-  const [isBadgesModalVisible, setIsBadgesModalVisible] = React.useState(false);
-  React.useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const [importedSources, contacts] = await Promise.all([
-          resumeService.getImportedSources(),
-          networkingService.listContacts(),
-        ]);
-        if (cancelled) return;
-        const importedCount = Object.keys(importedSources).length;
-        const unlocked = new Set<string>();
-        if (completed.length >= 1) unlocked.add('first_interview');
-        if (completed.length >= 5) unlocked.add('five_sessions');
-        if (completed.length >= 10) unlocked.add('ten_sessions');
-        if (streakDays >= 3) unlocked.add('three_day_streak');
-        if (streakDays >= 5) unlocked.add('five_day_streak');
-        if (completed.some(s => (s.overallScore ?? 0) >= 90)) unlocked.add('perfect_score');
-        if (importedCount > 0) unlocked.add('resume_uploaded');
-        if (importedCount >= 3) unlocked.add('ats_optimized');
-        if (completed.some(s => s.interviewType === Interview_Type_Enum.Coding)) unlocked.add('coding_complete');
-        if (contacts.length >= 3) unlocked.add('networker');
-        setUnlockedBadgeIds(unlocked);
-      } catch {
-        // Non-critical — badge state just doesn't refresh this pass.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [completed, streakDays]);
-
-  // POST /api/v1/gamification/checkin — daily check-in.
-  const [checkingIn, setCheckingIn] = React.useState(false);
-  const onCheckIn = React.useCallback(async () => {
-    if (checkingIn || isLoading || streak?.checkedInToday) return;
-    setCheckingIn(true);
-    try {
-      const updated = await gamificationService.checkin();
-      setStreak(updated);
-    } catch (error: any) {
-      Alert.alert(
-        t('home:check_in_failed_title', { defaultValue: "Couldn't check in" }),
-        error?.message ?? t('home:check_in_failed_body', { defaultValue: 'Please try again in a moment.' }),
-      );
-    } finally {
-      setCheckingIn(false);
-    }
-  }, [checkingIn, isLoading, streak, t]);
-
-  // Upcoming Session — GET /api/v1/interviews/scheduled. Refreshes whenever
-  // this screen regains focus so a reminder just created on ScheduleInterview
-  // shows up immediately on the way back.
-  const [upcomingSessions, setUpcomingSessions] = React.useState<ScheduledInterviewProps[]>([]);
-  useFocusEffect(
-    React.useCallback(() => {
-      let cancelled = false;
-      scheduledInterviewService.listUpcoming().then(list => {
-        if (!cancelled) setUpcomingSessions(list);
-      });
-      return () => {
-        cancelled = true;
-      };
-    }, []),
-  );
-  const nextSession = upcomingSessions[0];
-
   // Leaderboard preview (GET /api/v1/gamification/leaderboard) — top 3, same
   // fetch src/home/Leaderboard.tsx's own full-list screen uses, with its own
   // "View all" link into that screen.
@@ -329,134 +250,7 @@ const MyProgress = memo(() => {
           />
         ) : activeTab === 0 ? (
           <>
-            {/* Day-of-week calendar strip + "continue learning" + daily
-                challenge — relocated from Home (see this file's module
-                comment). Own self-contained components; ContinueLearningCard/
-                DailyChallengeCard render nothing when there's nothing to
-                show, so they're safe to always mount here. */}
-            <WeekStrip checkedInToday={!!streak?.checkedInToday} onDayPress={onPressCalendarDay} />
-            <ContinueLearningCard />
-
-            {/* Streak / XP / check-in card, with the Badges button and
-                "Upcoming Session" sub-block — relocated from Home unchanged. */}
-            <View style={styles.checkInCard}>
-              <View style={styles.checkInCardInner}>
-                <View style={styles.checkInTopRow}>
-                  <CircularProgress
-                    progress={Math.min(100, (streakDays / 7) * 100)}
-                    size={72}
-                    strokeWidth={8}
-                    trackColor="#0063f81f"
-                    gradientFrom="#1DA1F2"
-                    gradientTo="#0063f8"
-                    style={styles.checkInRing}>
-                    <Text category="h6" bold style={styles.checkInRingText}>
-                      {streakDays}
-                    </Text>
-                  </CircularProgress>
-                  <View style={globalStyle.flexOne}>
-                    <Text category="h7" bold style={styles.checkInValue} numberOfLines={1}>
-                      {isLoading && !streak ? '—' : `${streak?.xp ?? 0} ${t('home:xp_label', { defaultValue: 'XP' })}`}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    activeOpacity={0.8}
-                    style={styles.checkInBadgesButton}
-                    onPress={() => setIsBadgesModalVisible(true)}>
-                    <Text category="h10" bold style={styles.checkInButtonText} numberOfLines={1}>
-                      {t('home:badges', { defaultValue: 'Badges' })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-                {streak?.checkedInToday ? (
-                  <View style={[styles.checkInButton, styles.checkedInPill]}>
-                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
-                    <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
-                      {t('home:checked_in_today', { defaultValue: 'Checked in' })}
-                    </Text>
-                  </View>
-                ) : (
-                  <TouchableOpacity
-                    activeOpacity={0.85}
-                    disabled={checkingIn || isLoading}
-                    onPress={onCheckIn}
-                    style={[styles.checkInButton, (checkingIn || isLoading) && styles.checkInButtonDisabled]}>
-                    {checkingIn ? (
-                      <Spinner size="tiny" status="primary" />
-                    ) : (
-                      <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
-                        {t('home:check_in', { defaultValue: 'Check In' })}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                )}
-                <Flex justify="space-between" itemsCenter mt={32} mb={16}>
-                  <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
-                    {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
-                  </Text>
-                  <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{ color: '#0063f8' }}>
-                    {t('home:schedule_new', { defaultValue: '+ Schedule' })}
-                  </Text>
-                </Flex>
-                {nextSession ? (
-                  <Flex
-                    level="2"
-                    style={styles.upcomingCard}
-                    justify="flex-start"
-                    itemsCenter
-                    onPress={() =>
-                      navigate('MockInterviewSetup', {
-                        interviewType: nextSession.interviewType,
-                        mode: nextSession.mode,
-                        difficulty: nextSession.difficulty,
-                        role: nextSession.role,
-                        company: nextSession.company,
-                        durationMin: nextSession.durationMin,
-                      })
-                    }>
-                    <View style={globalStyle.flexOne}>
-                      <Text category="h7" bold>
-                        {getInterviewTypeLabel(nextSession.interviewType, t)}
-                      </Text>
-                      <Text category="h9-s" status="placeholder" mt={4}>
-                        {new Date(nextSession.scheduledAt).toLocaleString(undefined, {
-                          weekday: 'short',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })}
-                      </Text>
-                      <Text category="h9-s" status="placeholder" mt={2}>
-                        {getPracticeModeLabel(nextSession.mode, t)} · {getDifficultyLabel(nextSession.difficulty, t)} ·{' '}
-                        {nextSession.durationMin} {t('find:minutes_unit', { defaultValue: 'min' })}
-                      </Text>
-                    </View>
-                    <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
-                  </Flex>
-                ) : (
-                  <Flex
-                    level="2"
-                    style={styles.upcomingCard}
-                    justify="flex-start"
-                    itemsCenter
-                    onPress={() => navigate('ScheduleInterview')}>
-                    <View style={globalStyle.flexOne}>
-                      <Text category="h9-s" status="placeholder">
-                        {t('home:no_upcoming_session', {
-                          defaultValue: 'Nothing scheduled yet — set a reminder for your next mock interview.',
-                        })}
-                      </Text>
-                    </View>
-                    <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                  </Flex>
-                )}
-              </View>
-            </View>
-
-            <DailyChallengeCard />
-
-            <Layout level="2" style={styles.goalCard}>
+            <Layout level="2" style={[styles.goalCard, { marginTop: 0 }]}>
               <Text category="h8" bold mb={8}>
                 {t('find:your_career_goal', { defaultValue: 'Your career goal' })}
               </Text>
@@ -734,7 +528,15 @@ const MyProgress = memo(() => {
           </>
         ) : (
           <>
-            <Text category="h6" bold mb={16}>
+            {/* Day-of-week calendar strip (product follow-up: "The mon-sun
+                date in the My progress screen should be place in the
+                history tab") — was at the top of the Overview tab; this
+                IS a history/activity-by-day view, so it belongs alongside
+                the rest of this tab's own history content rather than on
+                Overview. Tapping a day still opens DayActivityModal below,
+                unchanged. */}
+            <WeekStrip checkedInToday={!!streak?.checkedInToday} onDayPress={onPressCalendarDay} />
+            <Text category="h6" bold mt={20} mb={16}>
               {t('find:recent_sessions', { defaultValue: 'Recent sessions' })}
             </Text>
             {recent.length === 0 ? (
@@ -775,11 +577,6 @@ const MyProgress = memo(() => {
         visible={selectedActivityDay !== null}
         date={selectedActivityDay}
         onClose={() => setSelectedActivityDay(null)}
-      />
-      <BadgesModal
-        visible={isBadgesModalVisible}
-        unlockedBadgeIds={unlockedBadgeIds}
-        onClose={() => setIsBadgesModalVisible(false)}
       />
     </Container>
   );
@@ -840,76 +637,6 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'border-basic-color-3',
-  },
-  // Streak/XP/check-in card — relocated from src/home/HomeSrc.tsx unchanged
-  // (see that file's git history for this styling's own iteration history).
-  upcomingCard: {
-    ...globalStyle.card,
-    padding: 16,
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'color-primary-transparent-200',
-  },
-  checkInCard: {
-    ...globalStyle.card,
-    marginTop: 16,
-    borderRadius: 14,
-    backgroundColor: 'background-basic-color-2',
-  },
-  checkInCardInner: {
-    borderRadius: 14,
-    overflow: 'hidden',
-    position: 'relative',
-    padding: 16,
-  },
-  checkInBadgesButton: {
-    marginLeft: 8,
-    marginRight: 8,
-    borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'background-basic-color-3',
-    borderWidth: 1,
-    borderColor: 'border-basic-color-3',
-  },
-  checkInTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  checkInRing: {
-    marginRight: 12,
-  },
-  checkInRingText: {
-    color: 'text-basic-color',
-  },
-  checkInValue: {
-    color: 'text-basic-color',
-  },
-  checkedInPill: {
-    flexDirection: 'row',
-  },
-  checkedInIcon: {
-    tintColor: 'text-basic-color',
-  },
-  checkInButton: {
-    alignSelf: 'flex-end',
-    marginTop: 12,
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'background-basic-color-3',
-    borderWidth: 1,
-    borderColor: 'border-basic-color-3',
-  },
-  checkInButtonDisabled: {
-    opacity: 0.6,
-  },
-  checkInButtonText: {
-    color: 'text-basic-color',
   },
   // Leaderboard preview — relocated from src/home/HomeSrc.tsx unchanged.
   leaderboardCard: {

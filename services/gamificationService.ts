@@ -1,7 +1,10 @@
 import auth from '@react-native-firebase/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {EKeyAsyncStorage, GamificationStreakProps, LeaderboardEntryProps} from 'constants/Types';
+import {EKeyAsyncStorage, GamificationStreakProps, Interview_Type_Enum, LeaderboardEntryProps} from 'constants/Types';
 import apiClient from './apiClient';
+import * as interviewService from './interviewService';
+import * as resumeService from './resumeService';
+import * as networkingService from './networkingService';
 
 // ---------------------------------------------------------------------------
 // gamificationService — real backend implementation of the streak/XP/
@@ -162,4 +165,41 @@ export async function getLeaderboard(period: LeaderboardPeriod = 'all'): Promise
     if (cached) return cached;
     throw error;
   }
+}
+
+/**
+ * Badge unlock state (product request: "Remove the XP card from the My
+ * Progress screen since it's already in the leaderboard... Place the
+ * checkin pill and the badges button in the one in the leaderboard") —
+ * this exact computation used to live inline in src/practice/MyProgress.tsx
+ * (the streak/XP/check-in card that screen no longer renders); pulled out
+ * here so src/home/Leaderboard.tsx's own "Your standing" card, which now
+ * owns the Check-In button and Badges button, can compute the same unlock
+ * state without duplicating this logic. Badge *definitions* stay
+ * client-computed (see this file's own header comment) — real practice
+ * history, resume-import count, and networking-contact count are fetched
+ * fresh here, combined with the caller's already-fetched `streakDays`
+ * (Leaderboard.tsx fetches streak separately via getStreak() above, so it's
+ * passed in rather than re-fetched here).
+ */
+export async function getUnlockedBadgeIds(streakDays: number): Promise<Set<string>> {
+  const [history, importedSources, contacts] = await Promise.all([
+    interviewService.getPracticeHistory(),
+    resumeService.getImportedSources(),
+    networkingService.listContacts(),
+  ]);
+  const completed = history.filter(s => s.status === 'Completed');
+  const importedCount = Object.keys(importedSources).length;
+  const unlocked = new Set<string>();
+  if (completed.length >= 1) unlocked.add('first_interview');
+  if (completed.length >= 5) unlocked.add('five_sessions');
+  if (completed.length >= 10) unlocked.add('ten_sessions');
+  if (streakDays >= 3) unlocked.add('three_day_streak');
+  if (streakDays >= 5) unlocked.add('five_day_streak');
+  if (completed.some(s => (s.overallScore ?? 0) >= 90)) unlocked.add('perfect_score');
+  if (importedCount > 0) unlocked.add('resume_uploaded');
+  if (importedCount >= 3) unlocked.add('ats_optimized');
+  if (completed.some(s => s.interviewType === Interview_Type_Enum.Coding)) unlocked.add('coding_complete');
+  if (contacts.length >= 3) unlocked.add('networker');
+  return unlocked;
 }
