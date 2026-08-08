@@ -62,17 +62,35 @@ export default GradientCard;
 const styles = StyleSheet.create({
   outer: {
     ...globalStyle.card,
-    // Explicit, not left to implicit flex-stretch — react-native-linear-
-    // gradient's LinearGradient (below) is a native-backed view with no
-    // content of its own to derive an intrinsic size from, unlike a plain
-    // View; being explicit here removes any ambiguity about whether it
-    // actually receives the parent's full width in every layout context
-    // this card gets used in (defensive fix — see checkInCard's own
-    // recurring width/clipping bug history in src/home/HomeSrc.tsx).
-    width: '100%',
+    // BUG FIX (product report, with screenshot: "the inner gradient is
+    // cutting off the svg icons on the right ... expand the width of the
+    // inner gradient card") — `width: '100%'` is a PERCENTAGE, resolved
+    // against this view's own parent (a plain, unsized TouchableOpacity
+    // relying on the default column stretch to get its width in the
+    // first place). Nesting a percentage inside a size that itself only
+    // exists because of stretch is exactly the kind of chain Yoga (RN's
+    // layout engine) doesn't always resolve identically on every pass —
+    // on some devices/timings `inner` below (a second, INDEPENDENT
+    // percentage-of-outer's-own-content-box) would end up a few px
+    // narrower than `outer`'s actual rendered shape, so the SVG
+    // illustration anchored to the right edge (heroArtWrap in
+    // src/home/HomeSrc.tsx) rendered past `inner`'s true boundary and got
+    // sliced off by `inner`'s own `overflow: 'hidden'`, while `outer`'s
+    // same-color rounded shape kept going a little further right,
+    // underneath — invisible, but leaving no room for the icon.
+    // `alignSelf: 'stretch'` instead asks Yoga to directly match this
+    // view's cross-axis size to its parent's, with no percentage
+    // arithmetic involved, which is the robust fix for this whole class
+    // of bug (same reasoning applied to `inner` below).
+    alignSelf: 'stretch',
   },
   inner: {
     overflow: 'hidden',
-    width: '100%',
+    // See `outer`'s comment above — `inner` has no `width` at all now.
+    // It's the sole child of `outer` (a plain View, which stretches its
+    // children to its own full content-box width by default), so it
+    // already fills `outer` exactly with zero arithmetic, guaranteeing
+    // the two always match pixel-for-pixel instead of relying on two
+    // separately-resolved percentages staying in sync.
   },
 });
