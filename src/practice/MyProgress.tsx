@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Alert, Image, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -8,6 +8,7 @@ import {
   Icon,
   Layout,
   Button,
+  Spinner,
 } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -21,68 +22,103 @@ import EmptyState from 'components/EmptyState';
 import CircularProgress from 'components/CircularProgress';
 import WeeklyBarChart from 'components/WeeklyBarChart';
 import SegmentedTabBar from 'components/SegmentedTabBar';
+import UserAvatar from 'components/UserAvatar';
+import BadgesModal from 'components/BadgesModal';
+import DayActivityModal from 'components/DayActivityModal';
+import WeekStrip from 'src/home/WeekStrip';
+import ContinueLearningCard from 'src/home/ContinueLearningCard';
+import DailyChallengeCard from 'src/home/DailyChallengeCard';
 import { globalStyle } from 'styles/globalStyle';
 import { tileColorAt } from 'styles/tileColors';
+import { Images } from 'assets/images';
 import dayjs from 'utils/dayjs';
 import { RootStackParamList } from 'navigation/types';
-import { MockInterviewSessionProps } from 'constants/Types';
+import {
+  GamificationStreakProps,
+  Interview_Type_Enum,
+  LeaderboardEntryProps,
+  MockInterviewSessionProps,
+  ScheduledInterviewProps,
+} from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as gamificationService from 'services/gamificationService';
 import * as roadmapService from 'services/roadmapService';
 import * as feedbackService from 'services/feedbackService';
 import { HeatMapEntry } from 'services/feedbackService';
 import * as configService from 'services/configService';
+import * as resumeService from 'services/resumeService';
+import * as networkingService from 'services/networkingService';
+import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
-import { GamificationStreakProps } from 'constants/Types';
 import { AuthContext } from '../../AuthContext';
-import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
+
+// Defined at module scope (not inline in JSX) so it's a stable component
+// reference across renders — see Subscription.tsx's renderCheckoutSpinner
+// for the same reasoning.
+const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
+
+// Leaderboard preview's per-rank medal badge colors (module scope, same
+// reasoning as renderCheckInSpinner above). Ranks 1/2 use existing theme
+// tokens (warning=gold, the app's own neutral basic-color-3/6 pair for
+// silver); rank 3 has no dedicated "bronze" token anywhere in constants/
+// theme/{light,dark}.json, so it's a literal copper hex — a reasonable
+// one-off for a purely decorative 3rd-place medal.
+const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: string; text: string } => {
+  switch (rank) {
+    case 1:
+      return { bg: '#0063f8', text: '#FFFFFF' };
+    case 2:
+      return { bg: theme['background-basic-color-3'], text: theme['background-basic-color-6'] };
+    case 3:
+      return { bg: 'rgba(205, 127, 50, 0.18)', text: '#CD7F32' };
+    default:
+      return { bg: theme['background-basic-color-3'], text: theme['text-placeholder-color'] };
+  }
+};
 
 // "My Progress" — real per-user progress toward the career goal(s) picked at
 // signup (profile.goals, editable any time from here via ChangeCareType).
-// Replaces the old "View My Progress" quick action in Chat.tsx, which used
-// to just call navigate('MainBottomTab') — i.e. simply closed the sheet and
-// dropped the user back where they already were, with no actual progress
-// content anywhere. Everything here is real: practice history
-// (GET /api/v1/interviews/sessions) and streak/XP
-// (GET /api/v1/gamification/streak) — same services/functions HomeSrc.tsx
-// uses, just presented as a dedicated goal-progress view instead of a
-// dashboard.
+// Reachable from the More menu's "My Progress" row (see src/more/MoreSrc.tsx)
+// now that Home was redesigned down to two big entry-point cards (product
+// request, reference screenshot: a clean "what do you want to do" landing
+// screen) — everything that dashboard used to show lives here instead:
+// the day-of-week calendar strip, "continue learning" card, the streak/XP/
+// check-in card (with its Badges button and "upcoming session" sub-block),
+// the surprise daily challenge, and the leaderboard preview, on top of this
+// screen's own pre-existing goal/roadmap/stats/chart/skills/history content.
+// Nothing was deleted or reduced in scope — the same services, same state
+// shapes, same badge-unlock logic, just consolidated into this one existing
+// "your real progress" screen instead of also duplicating a dashboard on
+// Home.
 const MyProgress = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
-  const { t } = useTranslation(['find', 'common']);
+  const { t } = useTranslation(['find', 'common', 'home']);
   const { profile } = React.useContext(AuthContext);
 
   const [history, setHistory] = React.useState<MockInterviewSessionProps[]>([]);
   const [streak, setStreak] = React.useState<GamificationStreakProps | null>(null);
   // Overall progress toward the user's career goal (product request item:
   // "There should be an overall progress of the user towards the goal in the
-  // progress screen not just a repeated stats from the homescreen" — the
-  // stat cards above were literally the same three numbers already shown on
-  // Home's dashboard, with no actual "toward the goal" content anywhere).
-  // The AI Career Roadmap (services/roadmapService.ts) is the one feature
-  // that already tracks a linear, ordered sequence of real-world milestones
-  // from today to the goal role — and per CareerRoadmap.tsx's own comment,
-  // every user lands with one auto-generated from their signup goal/role
-  // (see backend's career_roadmap_service.ensure_auto_roadmap), so this is
-  // reliably populated rather than a Pro-only dead end.
+  // progress screen not just a repeated stats from the homescreen"). The AI
+  // Career Roadmap (services/roadmapService.ts) is the one feature that
+  // already tracks a linear, ordered sequence of real-world milestones from
+  // today to the goal role — and every user lands with one auto-generated
+  // from their signup goal/role, so this is reliably populated rather than a
+  // Pro-only dead end.
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
   // Interview Heat Map (product request item) — cross-session average per
-  // skill dimension, distinct from InterviewFeedback.tsx's existing
-  // single-session ring breakdown. Best-effort/fail-open (.catch(() =>
-  // null)) like streak above — a user with zero scored sessions yet just
-  // sees the section stay hidden rather than blocking this whole screen.
+  // skill dimension. Best-effort/fail-open (.catch(() => null)) like streak
+  // above — a user with zero scored sessions yet just sees the section stay
+  // hidden rather than blocking this whole screen.
   const [heatMap, setHeatMap] = React.useState<HeatMapEntry[] | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
   // Segmented top-tab bar (task #64, product reference — a fitness app's
-  // "Overview | Calories | Nutrients | Macros | Weight" tab row). This
-  // screen used to stack goal/progress/stats/chart/heat-map/history all in
-  // one long scroll; splitting it into tabs mirrors that reference's
-  // pattern of separate data views under one shared header instead of one
-  // ever-growing page. See components/SegmentedTabBar.tsx.
+  // "Overview | Calories | Nutrients | Macros | Weight" tab row).
   const TABS = [
     t('find:progress_tab_overview', { defaultValue: 'Overview' }),
     t('find:progress_tab_skills', { defaultValue: 'Skills' }),
@@ -114,10 +150,9 @@ const MyProgress = memo(() => {
   }, [t]);
 
   // Was a plain useEffect — only ran once on mount, so returning here after
-  // another completed interview (this screen stays mounted in the stack,
-  // it doesn't remount) kept showing stale history/chart data, same root
-  // cause as HomeSrc.tsx's weekly chart. useFocusEffect re-runs every time
-  // this screen regains focus.
+  // another completed interview (this screen stays mounted in the stack, it
+  // doesn't remount) kept showing stale history/chart data. useFocusEffect
+  // re-runs every time this screen regains focus.
   useFocusEffect(
     React.useCallback(() => {
       load();
@@ -131,8 +166,8 @@ const MyProgress = memo(() => {
     : null;
   const weeklyPractice = React.useMemo(() => interviewService.computeWeeklyPractice(completed), [completed]);
   // Mon-first index of today (computeWeeklyPractice's own days array is
-  // built Monday-first, same convention as WeekStrip.tsx on Home) — which
-  // bar the weekly chart below renders solid instead of pastel.
+  // built Monday-first, same convention as WeekStrip.tsx) — which bar the
+  // weekly chart below renders solid instead of pastel.
   const todayWeekIndex = (new Date().getDay() + 6) % 7;
   const roadmapPercent = roadmap && roadmap.totalCount > 0
     ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
@@ -150,6 +185,118 @@ const MyProgress = memo(() => {
   );
 
   const goals = profile?.goals ?? [];
+  const streakDays = streak?.streakDays ?? 0;
+
+  // Tap-a-calendar-day activity feed (product request item): WeekStrip's
+  // onDayPress hands back the real Date the user tapped; DayActivityModal
+  // fetches+renders that day's activity on open. (Relocated from Home along
+  // with WeekStrip itself — see this file's module comment.)
+  const [selectedActivityDay, setSelectedActivityDay] = React.useState<Date | null>(null);
+  const onPressCalendarDay = React.useCallback((date: Date) => {
+    setSelectedActivityDay(date);
+  }, []);
+
+  // Gamification: badge unlock state, computed client-side from real signals
+  // — practice history length, the real streak day-count above, resume-
+  // import count (used as a stand-in for "ATS optimized" too — see
+  // resumeService.ts), and tracked networking contacts. Recomputes whenever
+  // `completed`/`streakDays` change, which itself happens on every focus via
+  // `load()` above — so completing another interview and coming back here
+  // always reflects the latest unlock state, not a frozen snapshot from
+  // first mount.
+  const [unlockedBadgeIds, setUnlockedBadgeIds] = React.useState<Set<string>>(new Set());
+  // Full-grid modal (components/BadgesModal.tsx).
+  const [isBadgesModalVisible, setIsBadgesModalVisible] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [importedSources, contacts] = await Promise.all([
+          resumeService.getImportedSources(),
+          networkingService.listContacts(),
+        ]);
+        if (cancelled) return;
+        const importedCount = Object.keys(importedSources).length;
+        const unlocked = new Set<string>();
+        if (completed.length >= 1) unlocked.add('first_interview');
+        if (completed.length >= 5) unlocked.add('five_sessions');
+        if (completed.length >= 10) unlocked.add('ten_sessions');
+        if (streakDays >= 3) unlocked.add('three_day_streak');
+        if (streakDays >= 5) unlocked.add('five_day_streak');
+        if (completed.some(s => (s.overallScore ?? 0) >= 90)) unlocked.add('perfect_score');
+        if (importedCount > 0) unlocked.add('resume_uploaded');
+        if (importedCount >= 3) unlocked.add('ats_optimized');
+        if (completed.some(s => s.interviewType === Interview_Type_Enum.Coding)) unlocked.add('coding_complete');
+        if (contacts.length >= 3) unlocked.add('networker');
+        setUnlockedBadgeIds(unlocked);
+      } catch {
+        // Non-critical — badge state just doesn't refresh this pass.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [completed, streakDays]);
+
+  // POST /api/v1/gamification/checkin — daily check-in.
+  const [checkingIn, setCheckingIn] = React.useState(false);
+  const onCheckIn = React.useCallback(async () => {
+    if (checkingIn || isLoading || streak?.checkedInToday) return;
+    setCheckingIn(true);
+    try {
+      const updated = await gamificationService.checkin();
+      setStreak(updated);
+    } catch (error: any) {
+      Alert.alert(
+        t('home:check_in_failed_title', { defaultValue: "Couldn't check in" }),
+        error?.message ?? t('home:check_in_failed_body', { defaultValue: 'Please try again in a moment.' }),
+      );
+    } finally {
+      setCheckingIn(false);
+    }
+  }, [checkingIn, isLoading, streak, t]);
+
+  // Upcoming Session — GET /api/v1/interviews/scheduled. Refreshes whenever
+  // this screen regains focus so a reminder just created on ScheduleInterview
+  // shows up immediately on the way back.
+  const [upcomingSessions, setUpcomingSessions] = React.useState<ScheduledInterviewProps[]>([]);
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      scheduledInterviewService.listUpcoming().then(list => {
+        if (!cancelled) setUpcomingSessions(list);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
+  const nextSession = upcomingSessions[0];
+
+  // Leaderboard preview (GET /api/v1/gamification/leaderboard) — top 3, same
+  // fetch src/home/Leaderboard.tsx's own full-list screen uses, with its own
+  // "View all" link into that screen.
+  const [leaderboard, setLeaderboard] = React.useState<LeaderboardEntryProps[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = React.useState(true);
+  const [leaderboardError, setLeaderboardError] = React.useState<string | null>(null);
+  const loadLeaderboard = React.useCallback(async () => {
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
+    try {
+      const data = await gamificationService.getLeaderboard();
+      setLeaderboard(data);
+    } catch (error: any) {
+      setLeaderboardError(
+        error?.message ?? t('home:leaderboard_load_failed', { defaultValue: 'Could not load the leaderboard.' }),
+      );
+    } finally {
+      setLeaderboardLoading(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  React.useEffect(() => {
+    loadLeaderboard();
+  }, [loadLeaderboard]);
 
   return (
     <Container style={styles.container}>
@@ -182,6 +329,133 @@ const MyProgress = memo(() => {
           />
         ) : activeTab === 0 ? (
           <>
+            {/* Day-of-week calendar strip + "continue learning" + daily
+                challenge — relocated from Home (see this file's module
+                comment). Own self-contained components; ContinueLearningCard/
+                DailyChallengeCard render nothing when there's nothing to
+                show, so they're safe to always mount here. */}
+            <WeekStrip checkedInToday={!!streak?.checkedInToday} onDayPress={onPressCalendarDay} />
+            <ContinueLearningCard />
+
+            {/* Streak / XP / check-in card, with the Badges button and
+                "Upcoming Session" sub-block — relocated from Home unchanged. */}
+            <View style={styles.checkInCard}>
+              <View style={styles.checkInCardInner}>
+                <View style={styles.checkInTopRow}>
+                  <CircularProgress
+                    progress={Math.min(100, (streakDays / 7) * 100)}
+                    size={72}
+                    strokeWidth={8}
+                    trackColor="#0063f81f"
+                    gradientFrom="#1DA1F2"
+                    gradientTo="#0063f8"
+                    style={styles.checkInRing}>
+                    <Text category="h6" bold style={styles.checkInRingText}>
+                      {streakDays}
+                    </Text>
+                  </CircularProgress>
+                  <View style={globalStyle.flexOne}>
+                    <Text category="h7" bold style={styles.checkInValue} numberOfLines={1}>
+                      {isLoading && !streak ? '—' : `${streak?.xp ?? 0} ${t('home:xp_label', { defaultValue: 'XP' })}`}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    style={styles.checkInBadgesButton}
+                    onPress={() => setIsBadgesModalVisible(true)}>
+                    <Text category="h10" bold style={styles.checkInButtonText} numberOfLines={1}>
+                      {t('home:badges', { defaultValue: 'Badges' })}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                {streak?.checkedInToday ? (
+                  <View style={[styles.checkInButton, styles.checkedInPill]}>
+                    <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, styles.checkedInIcon]} />
+                    <Text category="h9-s" bold style={[styles.checkInButtonText, { marginLeft: 4 }]} numberOfLines={1}>
+                      {t('home:checked_in_today', { defaultValue: 'Checked in' })}
+                    </Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    disabled={checkingIn || isLoading}
+                    onPress={onCheckIn}
+                    style={[styles.checkInButton, (checkingIn || isLoading) && styles.checkInButtonDisabled]}>
+                    {checkingIn ? (
+                      <Spinner size="tiny" status="primary" />
+                    ) : (
+                      <Text category="h9-s" bold style={styles.checkInButtonText} numberOfLines={1}>
+                        {t('home:check_in', { defaultValue: 'Check In' })}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                )}
+                <Flex justify="space-between" itemsCenter mt={32} mb={16}>
+                  <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
+                    {t('home:upcoming_session', { defaultValue: 'Upcoming Session' })}
+                  </Text>
+                  <Text category="h9" status="link" bold onPress={() => navigate('ScheduleInterview')} style={{ color: '#0063f8' }}>
+                    {t('home:schedule_new', { defaultValue: '+ Schedule' })}
+                  </Text>
+                </Flex>
+                {nextSession ? (
+                  <Flex
+                    level="2"
+                    style={styles.upcomingCard}
+                    justify="flex-start"
+                    itemsCenter
+                    onPress={() =>
+                      navigate('MockInterviewSetup', {
+                        interviewType: nextSession.interviewType,
+                        mode: nextSession.mode,
+                        difficulty: nextSession.difficulty,
+                        role: nextSession.role,
+                        company: nextSession.company,
+                        durationMin: nextSession.durationMin,
+                      })
+                    }>
+                    <View style={globalStyle.flexOne}>
+                      <Text category="h7" bold>
+                        {getInterviewTypeLabel(nextSession.interviewType, t)}
+                      </Text>
+                      <Text category="h9-s" status="placeholder" mt={4}>
+                        {new Date(nextSession.scheduledAt).toLocaleString(undefined, {
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </Text>
+                      <Text category="h9-s" status="placeholder" mt={2}>
+                        {getPracticeModeLabel(nextSession.mode, t)} · {getDifficultyLabel(nextSession.difficulty, t)} ·{' '}
+                        {nextSession.durationMin} {t('find:minutes_unit', { defaultValue: 'min' })}
+                      </Text>
+                    </View>
+                    <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+                  </Flex>
+                ) : (
+                  <Flex
+                    level="2"
+                    style={styles.upcomingCard}
+                    justify="flex-start"
+                    itemsCenter
+                    onPress={() => navigate('ScheduleInterview')}>
+                    <View style={globalStyle.flexOne}>
+                      <Text category="h9-s" status="placeholder">
+                        {t('home:no_upcoming_session', {
+                          defaultValue: 'Nothing scheduled yet — set a reminder for your next mock interview.',
+                        })}
+                      </Text>
+                    </View>
+                    <Icon pack="eva" name="plus-circle-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
+                  </Flex>
+                )}
+              </View>
+            </View>
+
+            <DailyChallengeCard />
+
             <Layout level="2" style={styles.goalCard}>
               <Text category="h8" bold mb={8}>
                 {t('find:your_career_goal', { defaultValue: 'Your career goal' })}
@@ -218,11 +492,6 @@ const MyProgress = memo(() => {
               </Text>
               {roadmap ? (
                 <>
-                  {/* Redesign v2 (full reskin, "screenshot 3" reference —
-                      circular progress rings instead of plain numbers/bars):
-                      replaces the old header-row percent + separate linear
-                      track with one ring showing the same roadmapPercent
-                      value, gradient-filled in the app's own brand blue. */}
                   <Flex justify="flex-start" itemsCenter>
                     <CircularProgress
                       progress={roadmapPercent}
@@ -232,11 +501,6 @@ const MyProgress = memo(() => {
                       gradientFrom="#0063f8"
                       gradientTo="#1DA1F2"
                       style={{ marginRight: 16 }}>
-                      {/* BUG FIX: status="primary" -> near-white
-                          text-primary-color — CircularProgress's center is
-                          transparent (no fill), so this sat directly on the
-                          card's own white background in light mode,
-                          invisible. */}
                       <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
                         {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
                       </Text>
@@ -292,18 +556,6 @@ const MyProgress = memo(() => {
               )}
             </Layout>
 
-            {/* Pastel stat tiles (product request item, layout reference: a
-                light/clean fitness-app screenshot's "Calories" (peach) /
-                "Sleep" (blue) side-by-side tinted tiles) — same 3 rings/
-                numbers as before, just each on its own tinted background
-                instead of a neutral white card, so the row reads as a
-                distinct "stat" visually the way the reference does rather
-                than three identical white boxes. Colors pulled from the
-                shared styles/tileColors.ts palette (index 0/2/1) so this
-                matches every other screen's tiles exactly, keeping the SAME
-                color family each ring already used (blue=sessions,
-                orange=streak, mint=score) so nothing about what a color
-                "means" here changed, only that it now tints the card too. */}
             <Flex justify="space-between" style={{ marginTop: 20 }}>
               <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(0).bg] }]}>
                 <CircularProgress
@@ -322,13 +574,13 @@ const MyProgress = memo(() => {
               </View>
               <View style={[styles.statCard, { backgroundColor: theme[tileColorAt(2).bg] }]}>
                 <CircularProgress
-                  progress={Math.min(100, ((streak?.streakDays ?? 0) / 7) * 100)}
+                  progress={Math.min(100, (streakDays / 7) * 100)}
                   size={56}
                   strokeWidth={5}
                   trackColor="rgba(255,255,255,0.6)"
                   color={theme[tileColorAt(2).text]}>
                   <Text category="h7" bold style={{ color: theme[tileColorAt(2).text] }}>
-                    {streak?.streakDays ?? 0}
+                    {streakDays}
                   </Text>
                 </CircularProgress>
                 <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(2).text] }}>
@@ -355,29 +607,87 @@ const MyProgress = memo(() => {
             <Text category="h6" bold mt={32} mb={16}>
               {t('find:this_week', { defaultValue: 'This week' })}
             </Text>
-            {/* Colorful per-bar chart (product request item, explicit
-                layout reference: a light/clean fitness-app screenshot's
-                "Activity this week" chart) — replaces the old single-flat-
-                color react-native-chart-kit bar chart, which couldn't
-                produce a different color per bar no matter how it was
-                configured (see components/WeeklyBarChart.tsx's own
-                comment). Today's bar renders solid instead of pastel, same
-                "one bar stands out" treatment the reference uses. */}
             <Layout level="2" style={styles.chartCard}>
               <WeeklyBarChart
                 data={weeklyPractice.map(d => ({ day: d.day, value: d.sessions }))}
                 highlightIndex={todayWeekIndex}
               />
             </Layout>
+
+            {/* Leaderboard preview — relocated from Home unchanged (top 3,
+                "View all" into src/home/Leaderboard.tsx). */}
+            <Flex justify="space-between" itemsCenter mt={32} mb={12}>
+              <Text category="h7" bold>
+                {t('home:leaderboard', { defaultValue: 'Leaderboard' })}
+              </Text>
+              <Text category="h9" status="link" bold onPress={() => navigate('Leaderboard')}>
+                {t('common:view_all', { defaultValue: 'View all' })}
+              </Text>
+            </Flex>
+            {leaderboardLoading ? (
+              <Layout level="1" style={styles.leaderboardCard}>
+                <Flex itemsCenter justify="center" style={styles.leaderboardStatus}>
+                  <Spinner size="small" />
+                </Flex>
+              </Layout>
+            ) : leaderboardError ? (
+              <Layout level="1" style={styles.leaderboardCard}>
+                <Flex vertical itemsCenter justify="center" style={styles.leaderboardStatus}>
+                  <Text category="h10" status="danger" center mb={8}>
+                    {leaderboardError}
+                  </Text>
+                  <Text category="h10" status="link" onPress={loadLeaderboard}>
+                    {t('common:try_again', { defaultValue: 'Try again' }).toString()}
+                  </Text>
+                </Flex>
+              </Layout>
+            ) : leaderboard.length === 0 ? (
+              <Layout level="1" style={styles.leaderboardCard}>
+                <Text category="h9-s" status="placeholder" center style={styles.leaderboardStatus}>
+                  {t('home:leaderboard_empty', { defaultValue: 'No leaderboard data yet.' })}
+                </Text>
+              </Layout>
+            ) : (
+              leaderboard.slice(0, 3).map((entry, index) => {
+                const medal = rankMedalStyle(entry.rank, theme);
+                return (
+                  <View
+                    key={entry.id}
+                    style={[
+                      styles.leaderboardCard,
+                      styles.leaderboardRow,
+                      index < 2 && styles.leaderboardCardSpacing,
+                      entry.isCurrentUser && { backgroundColor: theme['color-primary-transparent-100'] },
+                    ]}>
+                    <View style={styles.leaderboardRank}>
+                      {entry.rank === 1 ? (
+                        <Image source={Images.trophy} style={styles.leaderboardTrophyImage} resizeMode="contain" />
+                      ) : (
+                        <Text category="h9-s" bold style={{ color: medal.text }}>
+                          {entry.rank}
+                        </Text>
+                      )}
+                    </View>
+                    <UserAvatar
+                      uri={entry.avatarUrl}
+                      name={entry.name}
+                      size="medium"
+                      shape="round"
+                      style={styles.leaderboardAvatar}
+                    />
+                    <Text category="h9-s" bold numberOfLines={1} style={globalStyle.flexOne}>
+                      {entry.name}
+                      {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
+                    </Text>
+                    <Text category="h10" status="placeholder">
+                      {entry.xp} {t('home:xp_label', { defaultValue: 'XP' })}
+                    </Text>
+                  </View>
+                );
+              })
+            )}
           </>
         ) : activeTab === 1 ? (
-          // Skills tab (task #64) — was always-inline directly under the
-          // weekly chart, gated on `heatMap && heatMap.length > 0` with no
-          // visible section at all otherwise. Now its own tab so it reads
-          // as a deliberate view to switch to, same as the reference's
-          // "Nutrients"/"Macros" tabs — including an explicit empty state
-          // when there's no scored session yet, rather than the section
-          // just silently not existing.
           <>
             <Text category="h6" bold mb={4}>
               {t('find:skill_heat_map_title', { defaultValue: 'Skill Heat Map' })}
@@ -442,9 +752,6 @@ const MyProgress = memo(() => {
                   justify="space-between"
                   itemsCenter
                   style={styles.sessionRow}
-                  // Tapping a past session opens Interview Replay — see
-                  // src/practice/InterviewReplay.tsx. This row previously
-                  // wasn't tappable at all.
                   onPress={() => navigate('InterviewReplay', { sessionId: String(session.id) })}>
                   <Flex vertical style={{ flex: 1 }}>
                     <Text category="h9" bold numberOfLines={1}>
@@ -464,6 +771,16 @@ const MyProgress = memo(() => {
           </>
         )}
       </Content>
+      <DayActivityModal
+        visible={selectedActivityDay !== null}
+        date={selectedActivityDay}
+        onClose={() => setSelectedActivityDay(null)}
+      />
+      <BadgesModal
+        visible={isBadgesModalVisible}
+        unlockedBadgeIds={unlockedBadgeIds}
+        onClose={() => setIsBadgesModalVisible(false)}
+      />
     </Container>
   );
 });
@@ -475,20 +792,13 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   content: {
-    // Small top gap (product reference — the segmented tab row above
-    // shouldn't sit flush against the first card) now that
-    // SegmentedTabBar renders directly above this ScrollView instead of
-    // this being the first thing under TopNavigation.
     paddingTop: 16,
     paddingBottom: 60,
   },
-  // Redesign v2 (full reskin): `card` carries a real shadow again, which
-  // needs an opaque fill on Android — dropped the 'transparent' overrides
-  // below so each Layout's own `level="2"` background shows through
-  // instead.
   goalCard: {
     ...globalStyle.card,
     padding: 16,
+    marginTop: 16,
   },
   goalChip: {
     borderRadius: 99,
@@ -497,9 +807,6 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     marginBottom: 8,
   },
-  // Radius comes from globalStyle.card (24, app-wide "big rounded card"
-  // token) — no local override, unlike before the wellness-app-inspired
-  // reskin pass (was pinned to 16 here specifically).
   statCard: {
     ...globalStyle.card,
     flex: 1,
@@ -510,18 +817,11 @@ const themedStyles = StyleService.create({
   chartCard: {
     ...globalStyle.card,
     padding: 16,
-    // Product bug report ("the bar values are extending out of the box") —
-    // extra top padding on top of WeeklyBarChart's own internal headroom
-    // fix, so the tallest bar's value label always has clear room above it
-    // no matter the device's font-scale settings.
     paddingTop: 24,
   },
   heatMapCard: {
     ...globalStyle.card,
     padding: 16,
-    // Same as goalCard/statCard above — this Layout's own `level="2"`
-    // background needs to be opaque for `card`'s Android elevation shadow
-    // to compute a correctly-rounded silhouette.
   },
   heatMapRow: {
     marginBottom: 14,
@@ -536,12 +836,111 @@ const themedStyles = StyleService.create({
     height: 10,
     borderRadius: 5,
   },
-  // Redesign v2 (full reskin): the linear progressTrack/progressFill pair
-  // that used to render "progress toward your goal" was replaced by a
-  // CircularProgress ring (see the JSX above) — no longer used.
   sessionRow: {
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: 'border-basic-color-3',
+  },
+  // Streak/XP/check-in card — relocated from src/home/HomeSrc.tsx unchanged
+  // (see that file's git history for this styling's own iteration history).
+  upcomingCard: {
+    ...globalStyle.card,
+    padding: 16,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'color-primary-transparent-200',
+  },
+  checkInCard: {
+    ...globalStyle.card,
+    marginTop: 16,
+    borderRadius: 14,
+    backgroundColor: 'background-basic-color-2',
+  },
+  checkInCardInner: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    padding: 16,
+  },
+  checkInBadgesButton: {
+    marginLeft: 8,
+    marginRight: 8,
+    borderRadius: 999,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'background-basic-color-3',
+    borderWidth: 1,
+    borderColor: 'border-basic-color-3',
+  },
+  checkInTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkInRing: {
+    marginRight: 12,
+  },
+  checkInRingText: {
+    color: 'text-basic-color',
+  },
+  checkInValue: {
+    color: 'text-basic-color',
+  },
+  checkedInPill: {
+    flexDirection: 'row',
+  },
+  checkedInIcon: {
+    tintColor: 'text-basic-color',
+  },
+  checkInButton: {
+    alignSelf: 'flex-end',
+    marginTop: 12,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'background-basic-color-3',
+    borderWidth: 1,
+    borderColor: 'border-basic-color-3',
+  },
+  checkInButtonDisabled: {
+    opacity: 0.6,
+  },
+  checkInButtonText: {
+    color: 'text-basic-color',
+  },
+  // Leaderboard preview — relocated from src/home/HomeSrc.tsx unchanged.
+  leaderboardCard: {
+    ...globalStyle.card,
+    marginTop: 8,
+    padding: 12,
+    backgroundColor: 'background-basic-color-2',
+  },
+  leaderboardCardSpacing: {
+    marginBottom: 12,
+  },
+  leaderboardStatus: {
+    paddingVertical: 24,
+  },
+  leaderboardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  leaderboardRank: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  leaderboardTrophyImage: {
+    width: 22,
+    height: 22,
+  },
+  leaderboardAvatar: {
+    marginRight: 10,
   },
 });

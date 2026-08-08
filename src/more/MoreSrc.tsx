@@ -170,6 +170,20 @@ const MoreSrc = memo(() => {
       navigateSrc: 'ProfileSrc',
     },
     {
+      // Product follow-up: Home was redesigned down to two big entry-point
+      // cards (Career Coach / Practice) — everything that used to be on the
+      // Home dashboard (streak/XP/check-in, week strip, continue learning,
+      // daily challenge, leaderboard) now lives on this row's destination,
+      // src/practice/MyProgress.tsx, alongside its own pre-existing goal/
+      // roadmap/stats content. This is the new front door to all of it.
+      title: t('more:my_progress', {defaultValue: 'My Progress'}),
+      icon: 'increase',
+      status: 'facebook',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('MyProgress'),
+    },
+    {
       title: t('more:resume_builder', {defaultValue: 'Resume Builder'}),
       icon: 'myPost',
       status: 'facebook',
