@@ -16,8 +16,9 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import UserAvatar from 'components/UserAvatar';
+import CircularProgress from 'components/CircularProgress';
 import { globalStyle } from 'styles/globalStyle';
-import { LeaderboardEntryProps } from 'constants/Types';
+import { GamificationStreakProps, LeaderboardEntryProps } from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
 import CtaButton from 'components/CtaButton';
 import { Images } from 'assets/images';
@@ -150,6 +151,29 @@ const Leaderboard = memo(() => {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [activePeriod, setActivePeriod] = React.useState<Period>('daily');
 
+  // Product follow-up: "Add a trophy icon beside the notification icon to
+  // navigate to the leaderboard. In the leaderboard you can place the XP
+  // card at there." — the viewer's own streak/XP, read-only here (the
+  // actual Check In action lives on src/practice/MyProgress.tsx, which is
+  // where this same GET /api/v1/gamification/streak call already feeds the
+  // interactive version of this card) so a tap on the header's new trophy
+  // button lands somewhere that immediately shows "here's where you stand"
+  // before scrolling into the ranked list. Fetched once on mount, not
+  // per-period like the leaderboard itself — a streak/XP total doesn't
+  // change based on which Daily/Weekly/Monthly tab is selected.
+  const [streak, setStreak] = React.useState<GamificationStreakProps | null>(null);
+  React.useEffect(() => {
+    gamificationService.getStreak().then(setStreak).catch(() => {
+      // Non-critical — the ranked list below is the real content of this
+      // screen; a failed streak fetch just means the "Your standing" card
+      // stays hidden rather than blocking the page.
+    });
+  }, []);
+  const currentUserRank = React.useMemo(
+    () => leaderboard.find(entry => entry.isCurrentUser)?.rank ?? null,
+    [leaderboard],
+  );
+
   const load = React.useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
@@ -210,6 +234,46 @@ const Leaderboard = memo(() => {
             defaultValue: 'See how your XP stacks up against the Saveur community.',
           })}
         </Text>
+
+        {/* "Your standing" — see this state's own comment above for why
+            this is read-only here and separate from the leaderboard's own
+            loading/error state (a failed/slow ranked-list fetch shouldn't
+            hide the viewer's own numbers, and vice versa). */}
+        {streak ? (
+          <View style={[globalStyle.card, styles.yourStatsCard, { backgroundColor: theme['background-basic-color-2'] }]}>
+            <CircularProgress
+              progress={Math.min(100, (streak.streakDays / 7) * 100)}
+              size={60}
+              strokeWidth={6}
+              trackColor="#0063f81f"
+              gradientFrom="#1DA1F2"
+              gradientTo="#0063f8"
+              style={styles.yourStatsRing}>
+              <Text category="h9" bold style={{ color: theme['text-basic-color'] }}>
+                {streak.streakDays}
+              </Text>
+            </CircularProgress>
+            <View style={globalStyle.flexOne}>
+              <Text category="h9" bold>
+                {t('home:leaderboard_your_standing', { defaultValue: 'Your standing' })}
+              </Text>
+              <Text category="h10" status="placeholder" mt={2}>
+                {t('home:leaderboard_your_stats_line', {
+                  defaultValue: '{{xp}} XP · {{days}}-day streak',
+                  xp: streak.xp,
+                  days: streak.streakDays,
+                })}
+              </Text>
+            </View>
+            <View style={[styles.yourRankPill, { backgroundColor: theme['color-primary-transparent-100'] }]}>
+              <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+              <Text category="h9" bold ml={4} style={{ color: '#0063f8' }}>
+                {currentUserRank ? `#${currentUserRank}` : t('home:leaderboard_unranked', { defaultValue: 'Unranked' })}
+              </Text>
+            </View>
+          </View>
+        ) : null}
+
         {isLoading ? (
           <Flex itemsCenter justify="center" style={styles.status}>
             <Spinner size="large" />
@@ -391,6 +455,27 @@ const themedStyles = StyleService.create({
   },
   status: {
     paddingVertical: 40,
+  },
+  // "Your standing" card (see the JSX comment above) — same flat-card/no-
+  // gradient treatment as the trophy hero below it, sits between the
+  // subtitle and that hero so the viewer's own numbers are the very first
+  // real content on the screen.
+  yourStatsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    marginTop: 12,
+    borderRadius: 16,
+  },
+  yourStatsRing: {
+    marginRight: 12,
+  },
+  yourRankPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
   },
   // Trophy hero (see the JSX comment above) — flat card fill (no
   // gradient, per the follow-up correction), rounded like every other

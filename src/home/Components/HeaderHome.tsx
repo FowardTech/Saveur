@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {View} from 'react-native';
+import {Image, View} from 'react-native';
 import {StyleService, useStyleSheet} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
@@ -8,6 +8,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
+import {Images} from 'assets/images';
 import {useTranslation} from 'react-i18next';
 
 // Was hardcoded to "Good morning!" regardless of actual time of day.
@@ -37,6 +38,12 @@ const HeaderHome = memo(
     const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
     const styles = useStyleSheet(themedStyles);
     const _onNotification = () => navigate('Notification');
+    // Product follow-up: "Add a trophy icon beside the notification icon
+    // to navigate to the leaderboard" — same real trophy graphic already
+    // used inside src/home/Leaderboard.tsx's own hero card (product
+    // request: "Replace the trophy icon... with image 2"), not a generic
+    // Eva glyph, so both surfaces read as the same illustrated trophy.
+    const _onLeaderboard = () => navigate('Leaderboard');
     const {t} = useTranslation(['home', 'common']);
     return (
       <Flex justify="space-between" itemsCenter mh={24} mt={24} mb={8}>
@@ -62,6 +69,9 @@ const HeaderHome = memo(
             </Text>
           ) : null}
         </View>
+        <Flex onPress={_onLeaderboard} style={[styles.button, styles.trophyButton]}>
+          <Image source={Images.trophy} style={styles.trophyIcon} resizeMode="contain" />
+        </Flex>
         <Flex onPress={_onNotification} style={styles.button}>
           <NavigationAction
             icon="notification"
@@ -105,5 +115,12 @@ const themedStyles = StyleService.create({
     borderColor: 'border-card-default',
     ...globalStyle.center,
     borderRadius: 12,
+  },
+  trophyButton: {
+    marginRight: 10,
+  },
+  trophyIcon: {
+    width: 22,
+    height: 22,
   },
 });

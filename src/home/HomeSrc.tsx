@@ -514,14 +514,14 @@ const HomeSrc = memo(() => {
             end={{ x: 1, y: 0 }}
             style={styles.heroCard}
             contentStyle={styles.heroCardContent}>
-            <View style={globalStyle.flexOne}>
+            <View style={styles.heroCardLeft}>
               <View style={styles.heroIconWrap}>
                 <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon24, styles.heroIcon]} />
               </View>
               <Text category="h6" bold style={styles.heroTitle} mt={14}>
                 {t('home:career_coach_card_title', { defaultValue: 'Career Coach' })}
               </Text>
-              <Text category="h9-s" style={styles.heroSubtitle} mt={4}>
+              <Text category="h9-s" style={styles.heroSubtitle} mt={4} numberOfLines={2}>
                 {t('home:career_coach_card_subtitle', {
                   defaultValue: 'Ask anything — interview prep, salary talk, next-step advice — get a straight answer, day or night.',
                 })}
@@ -551,14 +551,14 @@ const HomeSrc = memo(() => {
             end={{ x: 1, y: 0 }}
             style={[styles.heroCard, styles.heroCardSecond]}
             contentStyle={styles.heroCardContent}>
-            <View style={globalStyle.flexOne}>
+            <View style={styles.heroCardLeft}>
               <View style={styles.heroIconWrap}>
                 <Icon pack="eva" name="mic-outline" style={[globalStyle.icon24, styles.heroIcon]} />
               </View>
               <Text category="h6" bold style={styles.heroTitle} mt={14}>
                 {t('home:practice_card_title', { defaultValue: 'Practice' })}
               </Text>
-              <Text category="h9-s" style={styles.heroSubtitle} mt={4}>
+              <Text category="h9-s" style={styles.heroSubtitle} mt={4} numberOfLines={2}>
                 {t('home:practice_card_subtitle', {
                   defaultValue: 'Run a real mock interview with live AI feedback and sharpen your skills before it counts.',
                 })}
@@ -587,14 +587,14 @@ const HomeSrc = memo(() => {
             duplicate. */}
         <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('DreamCompanies')}>
           <View style={[styles.heroCard, styles.heroCardWhite, styles.heroCardContent]}>
-            <View style={globalStyle.flexOne}>
+            <View style={styles.heroCardLeft}>
               <View style={styles.heroIconWrapLight}>
                 <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon24, { tintColor: '#0063f8' }]} />
               </View>
               <Text category="h6" bold style={styles.heroTitleDark} mt={14}>
                 {t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' })}
               </Text>
-              <Text category="h9-s" status="placeholder" mt={4}>
+              <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
                 {t('home:dream_company_card_subtitle', {
                   defaultValue: 'Track the employers you actually want, with AI research and prep built in.',
                 })}
@@ -686,9 +686,23 @@ const themedStyles = StyleService.create({
   },
   heroCardContent: {
     padding: 20,
-    minHeight: 176,
+    minHeight: 180,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  // BUG FIX (product report: "the svg icons you place are being cut off at
+  // the edge") — GradientCard's inner fill layer is `overflow:'hidden'`
+  // (see components/GradientCard.tsx), and this row's left column had no
+  // shrink constraint of its own beyond the parent's `flex:1` — RN's Yoga
+  // won't shrink a flex child below its own unconstrained content width
+  // without an explicit `minWidth:0` (the standard flexbox fix for exactly
+  // this: text refusing to wrap/shrink inside a row, pushing a sibling
+  // partly outside the clipped bounds). `flexShrink:1` alongside it makes
+  // that shrink allowance explicit rather than relying on `flex:1` alone.
+  heroCardLeft: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
   },
   // Third card (Dream Company Dashboard) — same size/shape as the two
   // gradient cards above it, opaque white/theme-adaptive fill instead of a
@@ -697,10 +711,15 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
   },
+  // `flexShrink:0` pins this to its real 92px size no matter what the left
+  // column above needs — paired with heroCardLeft's own shrink fix, this is
+  // the other half of making sure the illustration never gets clipped by
+  // the card's own overflow:hidden edge again.
   heroArtWrap: {
     width: 92,
     height: 92,
-    marginLeft: 12,
+    marginLeft: 14,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
