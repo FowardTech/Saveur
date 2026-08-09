@@ -607,7 +607,7 @@ const HomeSrc = memo(() => {
           <View style={[styles.heroCard, styles.heroCardWhite, styles.heroCardContent]}>
             <View style={styles.heroCardLeft}>
               <View style={styles.heroIconWrapLight}>
-                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon24, { tintColor: '#0063f8' }]} />
+                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon24, { tintColor: '#0063f8', }]} />
               </View>
               <Text category="h6" bold style={styles.heroTitleDark} mt={14}>
                 {t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' })}
@@ -715,7 +715,7 @@ const themedStyles = StyleService.create({
     marginTop: 16,
   },
   heroCardContent: {
-    padding: 20,
+    paddingHorizontal:10,
     minHeight: 180,
     flexDirection: 'row',
     alignItems: 'center',
@@ -764,12 +764,14 @@ const themedStyles = StyleService.create({
   // Same circle treatment as heroIconWrap, tinted for a white card instead
   // of a translucent-white one for a gradient card.
   heroIconWrapLight: {
+    marginTop: 10,
     width: 44,
     height: 44,
     borderRadius: 22,
     backgroundColor: 'color-primary-transparent-100',
     alignItems: 'center',
     justifyContent: 'center',
+
   },
   heroIcon: {
     tintColor: '#fff',
@@ -785,9 +787,10 @@ const themedStyles = StyleService.create({
   },
   heroCta: {
     color: '#fff',
-    textDecorationLine: 'underline',
+    textDecorationLine: 'none',
   },
   heroCtaDark: {
     color: '#0063f8',
+    marginBottom: 5,
   },
 });
