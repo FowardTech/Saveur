@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   TopNavigation,
@@ -62,6 +62,11 @@ const CareerDiary = memo(() => {
   const [role, setRole] = React.useState('');
   const [category, setCategory] = React.useState<DiaryCategory | undefined>(undefined);
   const [isSaving, setIsSaving] = React.useState(false);
+  // Product request: "the form in the career diary too has to be a bottom
+  // sheet" — same Modal + KeyboardAvoidingView + rounded Layout pattern as
+  // DreamCompanies.tsx / JobAlerts.tsx / NetworkingAssistant.tsx, all
+  // converted from an always-open inline card the same way.
+  const [showComposer, setShowComposer] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -94,6 +99,7 @@ const CareerDiary = memo(() => {
       setText('');
       setRole('');
       setCategory(undefined);
+      setShowComposer(false);
     } catch (e: any) {
       Alert.alert(
         t('more:career_diary_save_failed_title', {defaultValue: "Couldn't save that entry"}),
@@ -150,48 +156,71 @@ const CareerDiary = memo(() => {
           })}
         </Text>
 
-        <Layout level="2" style={styles.composerCard}>
-          <Input
-            multiline
-            placeholder={t('more:career_diary_composer_placeholder', {defaultValue: 'What did you do, learn, or achieve today?'})}
-            value={text}
-            onChangeText={setText}
-            style={styles.textInput}
-            textStyle={[globalStyle.inputText, styles.textInputInner]}
-          />
-          <Flex justify="flex-start" mt={12} mb={12}>
-            {CATEGORY_KEYS.map(key => {
-              const active = category === key;
-              return (
-                <Text
-                  key={key}
-                  category="h10"
-                  bold
-                  status={active ? 'control' : 'basic'}
-                  onPress={() => setCategory(active ? undefined : key)}
-                  style={[
-                    styles.categoryPill,
-                    { backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
-                  ]}>
-                  {categoryLabel(key, t)}
-                </Text>
-              );
-            })}
-          </Flex>
-          <Input
-            placeholder={t('more:career_diary_role_placeholder', {defaultValue: 'Role / career / job (optional)'})}
-            value={role}
-            onChangeText={setRole}
-            style={styles.roleInput}
-            textStyle={globalStyle.inputText}
-          />
-          <CtaButton
-            disabled={!text.trim() || isSaving}
-            onPress={onAdd}
-            style={{ marginTop: 12 }}>
-            {isSaving ? t('more:career_diary_saving', {defaultValue: 'Saving…'}) : t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
-          </CtaButton>
-        </Layout>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.addTrigger}
+          onPress={() => setShowComposer(true)}>
+          <View style={[styles.addTriggerIconWrap, { backgroundColor: theme['color-primary-transparent-100'] }]}>
+            <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+          </View>
+          <Text category="h9" bold style={globalStyle.flexOne} ml={12}>
+            {t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
+          </Text>
+          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+        </TouchableOpacity>
+
+        <Modal visible={showComposer} transparent animationType="slide" onRequestClose={() => setShowComposer(false)}>
+          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+            <Layout level="1" style={styles.modalSheet}>
+              <Text category="h7" bold mb={16}>
+                {t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
+              </Text>
+              <Input
+                multiline
+                placeholder={t('more:career_diary_composer_placeholder', {defaultValue: 'What did you do, learn, or achieve today?'})}
+                value={text}
+                onChangeText={setText}
+                style={styles.textInput}
+                textStyle={[globalStyle.inputText, styles.textInputInner]}
+              />
+              <Flex justify="flex-start" mt={12} mb={12}>
+                {CATEGORY_KEYS.map(key => {
+                  const active = category === key;
+                  return (
+                    <Text
+                      key={key}
+                      category="h10"
+                      bold
+                      status={active ? 'control' : 'basic'}
+                      onPress={() => setCategory(active ? undefined : key)}
+                      style={[
+                        styles.categoryPill,
+                        { backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                      ]}>
+                      {categoryLabel(key, t)}
+                    </Text>
+                  );
+                })}
+              </Flex>
+              <Input
+                placeholder={t('more:career_diary_role_placeholder', {defaultValue: 'Role / career / job (optional)'})}
+                value={role}
+                onChangeText={setRole}
+                style={styles.roleInput}
+                textStyle={globalStyle.inputText}
+              />
+              <CtaButton
+                disabled={!text.trim() || isSaving}
+                onPress={onAdd}
+                style={{ marginTop: 12 }}>
+                {isSaving ? t('more:career_diary_saving', {defaultValue: 'Saving…'}) : t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
+              </CtaButton>
+              <Button appearance="outline" style={{ marginTop: 12 }} onPress={() => setShowComposer(false)}>
+                {t('common:cancel', {defaultValue: 'Cancel'})}
+              </Button>
+            </Layout>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {isLoading ? (
           <EmptyState variant="loading" />
@@ -268,12 +297,29 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
-  composerCard: {
+  addTrigger: {
     ...globalStyle.card,
-    padding: 20,
-    // Redesign v2 (full reskin): `card` carries a real shadow again, which
-    // needs an opaque fill on Android — dropped the 'transparent' override
-    // so this Layout's own `level="2"` background shows through instead.
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 16,
+  },
+  addTriggerIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
   },
   textInput: {
     ...globalStyle.inputField,

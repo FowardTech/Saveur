@@ -544,9 +544,22 @@ const themedStyles = StyleService.create({
   // gradient treatment as the trophy hero below it, sits between the
   // subtitle and that hero so the viewer's own numbers are the very first
   // real content on the screen.
+  // BUG FIX (product report, with screenshot: "the checkin button is
+  // extending out of the box") — this was `flexDirection: 'row'`, which
+  // made the card's two children (the ring/title/rank-pill row and the
+  // Check-In/Badges row, each already its own internal <Flex> row) lay
+  // out AS row items of this outer row instead of stacking on top of
+  // each other -- the second row got squeezed to the right of the first
+  // and clipped by the card's own width. Plain column stacking (the View
+  // default -- flexDirection removed rather than set to 'column'
+  // explicitly, same as every other stacked card in this file) is what
+  // this was always meant to be; `alignItems: 'center'` (a row-centering
+  // property) is dropped for the same reason -- the default 'stretch'
+  // lets both inner rows span the card's full width, which is what
+  // `justify="space-between"` on the Check-In/Badges row needs to
+  // actually push Badges to the right edge instead of sitting wherever
+  // its own content happened to end.
   yourStatsCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 14,
     marginTop: 12,
     borderRadius: 16,
