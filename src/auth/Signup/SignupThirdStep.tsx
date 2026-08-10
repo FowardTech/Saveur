@@ -7,7 +7,6 @@ import {
   Input,
   Icon,
   Button,
-  Avatar,
   CheckBox,
 } from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
@@ -22,7 +21,6 @@ import {Controller, useForm} from 'react-hook-form';
 import {RuleEmail, RuleName, RulePassword} from 'utils/rules';
 import useToggle from 'hooks/useToggle';
 import AnimatedAppearance from 'components/AnimatedAppearance';
-import AvatarPickerModal from 'components/AvatarPickerModal';
 import {AuthStackParamList, RootStackParamList} from 'navigation/types';
 import {mapFirebaseAuthError} from 'utils/authErrors';
 import {AuthContext} from '../../../AuthContext';
@@ -57,15 +55,17 @@ const SignupThirdStep = memo(() => {
     return false;
   }, [agreedToTerms, t]);
 
-  // Optional leaderboard avatar preset, picked here per explicit product
-  // request ("users should be giving the option to set it during signup").
-  // Deliberately never tied to the account's real photo — see
-  // UserProfileProps.leaderboardAvatarUrl (constants/Types.tsx) for why this
-  // is a wholly separate field. Skipping this step is fine; the leaderboard
-  // just falls back to the generated default like any account before this
-  // existed.
-  const [leaderboardAvatarUrl, setLeaderboardAvatarUrl] = React.useState<string | undefined>(undefined);
-  const [isAvatarPickerVisible, setIsAvatarPickerVisible] = React.useState(false);
+  // BUG FIX (product report: "remove the selection of avatar from signup")
+  // — this screen used to offer an optional leaderboard-avatar preset picker
+  // here; removed per explicit product request. leaderboardAvatarUrl was
+  // always a separate, optional field from the account's real photo (see
+  // UserProfileProps.leaderboardAvatarUrl, constants/Types.tsx) that only
+  // ever affected the Leaderboard's display, so no signup/profile data is
+  // lost by dropping it — an account created without ever setting it just
+  // falls back to the generated default avatar, same as before this picker
+  // existed. It's still settable any time afterward from
+  // src/more/EditProfile.tsx, so the capability itself isn't gone, just the
+  // early prompt for it.
 
   const {
     control,
@@ -166,7 +166,6 @@ const SignupThirdStep = memo(() => {
         preferredCountries,
         desiredRoles,
         locale,
-        leaderboardAvatarUrl,
       });
       goToUsernameStep();
     } catch (e: any) {
@@ -205,10 +204,10 @@ const SignupThirdStep = memo(() => {
       await signInWithGoogle({isSignup: true});
       // signInWithGoogle only provisions the bare profile (POST /api/users/me)
       // — the onboarding data collected in the earlier steps
-      // (goals/industries/preferredCountries/locale/leaderboardAvatarUrl)
+      // (goals/industries/preferredCountries/locale)
       // still needs an explicit PATCH, same as the email/password path does
       // via signUp().
-      await updateProfile({goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl});
+      await updateProfile({goals, industries, preferredCountries, desiredRoles, locale});
       goToUsernameStep();
     } catch (e: any) {
       if (e?.code === 'auth/email-already-in-use' || e?.code === 'auth/account-exists-with-different-credential') {
@@ -230,7 +229,7 @@ const SignupThirdStep = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl, goToUsernameStep, isSocialSubmitting, t, showAlreadyRegisteredAlert, requireTermsAcceptance]);
+  }, [signInWithGoogle, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToUsernameStep, isSocialSubmitting, t, showAlreadyRegisteredAlert, requireTermsAcceptance]);
   // LinkedIn has no first-party Firebase/RN SDK — AuthContext's
   // signInWithLinkedIn drives a custom OAuth2 flow instead. Same
   // isSignup/already-registered handling as onGoogle above.
@@ -240,7 +239,7 @@ const SignupThirdStep = memo(() => {
     setIsSocialSubmitting(true);
     try {
       await signInWithLinkedIn({isSignup: true});
-      await updateProfile({goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl});
+      await updateProfile({goals, industries, preferredCountries, desiredRoles, locale});
       goToUsernameStep();
     } catch (e: any) {
       if (e?.code === 'auth/email-already-in-use' || e?.code === 'auth/account-exists-with-different-credential') {
@@ -254,7 +253,7 @@ const SignupThirdStep = memo(() => {
     } finally {
       setIsSocialSubmitting(false);
     }
-  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, leaderboardAvatarUrl, goToUsernameStep, isSocialSubmitting, t, showAlreadyRegisteredAlert, requireTermsAcceptance]);
+  }, [signInWithLinkedIn, updateProfile, goals, industries, preferredCountries, desiredRoles, locale, goToUsernameStep, isSocialSubmitting, t, showAlreadyRegisteredAlert, requireTermsAcceptance]);
   return (
     <Container style={styles.container}>
       <TopNavigation accessoryLeft={<NavigationAction />} />
@@ -343,31 +342,6 @@ const SignupThirdStep = memo(() => {
               />
             )}
           />
-          {/* Optional -- product request item, see leaderboardAvatarUrl's
-              comment above. Purely cosmetic for the Leaderboard; skipping
-              this leaves it null and the generated default avatar is used
-              instead, same as any account that predates this step. */}
-          <Flex justify="space-between" itemsCenter mb={32}>
-            <Flex vertical style={{flex: 1, paddingRight: 16}}>
-              <Text category="h8-s" bold>
-                {t('more:leaderboard_avatar', {defaultValue: 'Leaderboard avatar'})}
-              </Text>
-              <Text category="c1" status="placeholder" mt={4}>
-                {t('auth:leaderboard_avatar_signup_description', {
-                  defaultValue: 'Optional — shown next to your username on the Leaderboard only.',
-                })}
-              </Text>
-            </Flex>
-            <TouchableOpacity activeOpacity={0.75} onPress={() => setIsAvatarPickerVisible(true)}>
-              {leaderboardAvatarUrl ? (
-                <Avatar source={{uri: leaderboardAvatarUrl}} size="large" shape="rounded" />
-              ) : (
-                <Flex center style={styles.avatarPlaceholder}>
-                  <Icon pack="eva" name="plus-outline" style={styles.avatarPlaceholderIcon} />
-                </Flex>
-              )}
-            </TouchableOpacity>
-          </Flex>
           {/* Terms & Privacy Policy acceptance (product request item) —
               gates handleSignup/onGoogle/onLinkedIn above via
               requireTermsAcceptance(). Reuses term_of_service/
@@ -425,15 +399,6 @@ const SignupThirdStep = memo(() => {
           </View>
         </Content>
       </AnimatedAppearance>
-      <AvatarPickerModal
-        visible={isAvatarPickerVisible}
-        currentUrl={leaderboardAvatarUrl}
-        onClose={() => setIsAvatarPickerVisible(false)}
-        onSelect={url => {
-          setLeaderboardAvatarUrl(url);
-          setIsAvatarPickerVisible(false);
-        }}
-      />
     </Container>
   );
 });
@@ -463,19 +428,6 @@ const themedStyles = StyleService.create({
     left: 16,
     top: 14,
     color: 'color-primary-100'
-  },
-  avatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: 'border-basic-color-3',
-    borderStyle: 'dashed',
-  },
-  avatarPlaceholderIcon: {
-    width: 20,
-    height: 20,
-    tintColor: 'text-hint-color',
   },
   termsRow: {
     flexDirection: 'row',
