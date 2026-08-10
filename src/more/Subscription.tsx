@@ -93,7 +93,7 @@ async function pollForSubscriptionTier(expectedTier: PlanId): Promise<{
 const Subscription = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['more', 'common']);
+  const { t, i18n } = useTranslation(['more', 'common']);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<SubscriptionScreenNavigationProp>();
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
@@ -617,11 +617,11 @@ const Subscription = memo(() => {
                         {subscription.cancelAtPeriodEnd
                           ? t('more:subscription_cancels_on', {
                               defaultValue: 'Cancels on {{date}} — you keep access until then.',
-                              date: new Date(subscription.periodEnd).toLocaleDateString(),
+                              date: new Date(subscription.periodEnd).toLocaleDateString(i18n.language),
                             })
                           : t('more:subscription_renews_on', {
                               defaultValue: 'Renews on {{date}}',
-                              date: new Date(subscription.periodEnd).toLocaleDateString(),
+                              date: new Date(subscription.periodEnd).toLocaleDateString(i18n.language),
                             })}
                       </Text>
                     ) : subscription?.status && subscription.status !== 'none' && subscription.status !== 'active' ? (

@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Alert, KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import {
   TopNavigation,
   StyleService,
@@ -42,7 +43,13 @@ function formatDateHeader(dateStr: string, t: (k: string, o?: any) => string): s
   yesterday.setDate(today.getDate() - 1);
   if (isToday) return t('more:today', { defaultValue: 'Today' });
   if (d.toDateString() === yesterday.toDateString()) return t('more:yesterday', { defaultValue: 'Yesterday' });
-  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+  // BUG FIX (product report: "a lot of things in this app are not auto
+  // translated") — `undefined` locale falls back to the device's system
+  // locale rather than the language picked inside the app. `i18n.language`
+  // (the shared i18next singleton, imported directly since this is a
+  // standalone helper outside the component) is the correct app-selected
+  // locale to format with, same fix as UpcomingSessionHomeCard.tsx.
+  return d.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 // Career Diary — a plain journal for logging what the user did, learned, or

@@ -37,7 +37,7 @@ const emptyForm = {name: '', company: '', role: '', note: ''};
 const NetworkingAssistant = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['more', 'common']);
+  const { t, i18n } = useTranslation(['more', 'common']);
   const { isPro } = React.useContext(AuthContext);
 
   const [contacts, setContacts] = React.useState<NetworkingContactProps[]>([]);
@@ -283,7 +283,7 @@ const NetworkingAssistant = memo(() => {
                   // did anything — indistinguishable from a broken button.
                   // toLocaleString() includes the time, so a same-day re-tap
                   // is now visibly reflected.
-                  `${t('more:last_contacted', { defaultValue: 'Last contacted' })}: ${new Date(contact.lastContactedDate).toLocaleString()}`
+                  `${t('more:last_contacted', { defaultValue: 'Last contacted' })}: ${new Date(contact.lastContactedDate).toLocaleString(i18n.language)}`
                 : t('more:never_contacted', { defaultValue: 'Not yet contacted' })}
             </Text>
             <Flex justify="space-between" itemsCenter mt={4}>

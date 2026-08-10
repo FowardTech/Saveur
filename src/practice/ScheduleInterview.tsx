@@ -41,7 +41,7 @@ const ScheduleInterview = memo(() => {
   const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['find', 'common']);
+  const { t, i18n } = useTranslation(['find', 'common']);
   const { isPremium } = React.useContext(AuthContext);
 
   const [mode, setMode] = React.useState<Practice_Mode_Enum>(Practice_Mode_Enum.Voice);
@@ -171,7 +171,7 @@ const ScheduleInterview = memo(() => {
             style={[styles.dateTimePill, { borderColor: theme['background-basic-color-3'] }]}>
             <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]} />
             <Text category="h9" bold ml={8}>
-              {scheduledAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+              {scheduledAt.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -180,7 +180,7 @@ const ScheduleInterview = memo(() => {
             style={[styles.dateTimePill, { borderColor: theme['background-basic-color-3'], marginLeft: 12 }]}>
             <Icon pack="eva" name="clock-outline" style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]} />
             <Text category="h9" bold ml={8}>
-              {scheduledAt.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+              {scheduledAt.toLocaleTimeString(i18n.language, { hour: 'numeric', minute: '2-digit' })}
             </Text>
           </TouchableOpacity>
         </Flex>

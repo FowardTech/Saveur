@@ -32,7 +32,18 @@ import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 const UpcomingSessionHomeCard = memo(({ style }: { style?: StyleProp<ViewStyle> }) => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
-  const { t } = useTranslation(['home', 'find']);
+  // BUG FIX (product report: "the time and date in the upcoming schedule
+  // need to be translated too") — this card's date/time text was never
+  // missing an i18n key, it was passing `undefined` as the locale to
+  // `toLocaleString`, which makes JS fall back to the *device's* system
+  // locale rather than the language the user picked inside the app. Those
+  // two are usually the same but very often aren't (e.g. a phone left on
+  // English iOS settings while the user picked Spanish inside Saveur), so
+  // this always rendered in whatever locale the OS happened to be in.
+  // `i18n.language` is the same "es"/"fr"/"zh" etc. code already used
+  // elsewhere in this app (see DailyChallengeCard.tsx) and is valid
+  // directly as a BCP-47 locale for the Intl/toLocaleString APIs.
+  const { t, i18n } = useTranslation(['home', 'find']);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [nextSession, setNextSession] = React.useState<
@@ -75,7 +86,7 @@ const UpcomingSessionHomeCard = memo(({ style }: { style?: StyleProp<ViewStyle> 
           {getInterviewTypeLabel(nextSession.interviewType, t)}
         </Text>
         <Text category="h10" status="placeholder" numberOfLines={1} mt={1}>
-          {new Date(nextSession.scheduledAt).toLocaleString(undefined, {
+          {new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
             weekday: 'short',
             month: 'short',
             day: 'numeric',

@@ -29,7 +29,7 @@ import { AppRatingProps } from 'services/appRatingService';
 const MyRatings = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['more', 'common']);
+  const { t, i18n } = useTranslation(['more', 'common']);
 
   const [ratings, setRatings] = React.useState<AppRatingProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -86,7 +86,7 @@ const MyRatings = memo(() => {
                     fewer place duplicating the same star-fill logic. */}
                 <StarRating value={r.score} size={16} />
                 <Text category="h10" status="placeholder">
-                  {r.createdAt ? new Date(r.createdAt).toLocaleDateString() : ''}
+                  {r.createdAt ? new Date(r.createdAt).toLocaleDateString(i18n.language) : ''}
                 </Text>
               </Flex>
               {r.comment ? (

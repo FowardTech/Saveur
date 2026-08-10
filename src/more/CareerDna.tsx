@@ -43,7 +43,7 @@ import CtaButton from 'components/CtaButton';
 const CareerDna = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(['more', 'common']);
+  const { t, i18n } = useTranslation(['more', 'common']);
   // Product decision: Career DNA moved from plain Pro to Pro Premium (Pro
   // Yearly also qualifies — see AuthContext's isPremium/isPremiumTier for
   // the full tier breakdown, mirroring the backend's require_premium on
@@ -433,7 +433,7 @@ const CareerDna = memo(() => {
                       {t('more:career_dna_history_version_label', {
                         defaultValue: 'Version {{version}}{{date}}',
                         version: entry.version,
-                        date: entry.generatedAt ? ` • ${new Date(entry.generatedAt).toLocaleDateString()}` : '',
+                        date: entry.generatedAt ? ` • ${new Date(entry.generatedAt).toLocaleDateString(i18n.language)}` : '',
                       })}
                     </Text>
                     <Text category="h9-s">{entry.narrative}</Text>

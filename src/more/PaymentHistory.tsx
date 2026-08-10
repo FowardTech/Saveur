@@ -44,7 +44,7 @@ const BRAND_ICON: Record<string, string> = {
 const PaymentHistory = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const {t} = useTranslation(['more', 'common']);
+  const {t, i18n} = useTranslation(['more', 'common']);
 
   const [payments, setPayments] = React.useState<PaymentHistoryItemProps[] | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -154,7 +154,7 @@ const PaymentHistory = memo(() => {
                   </Text>
                 </Flex>
                 <Text category="h10" status="placeholder" mt={4}>
-                  {new Date(payment.createdAt).toLocaleDateString(undefined, {year: 'numeric', month: 'long', day: 'numeric'})}
+                  {new Date(payment.createdAt).toLocaleDateString(i18n.language, {year: 'numeric', month: 'long', day: 'numeric'})}
                 </Text>
                 {payment.cardBrand && payment.cardLast4 ? (
                   <Flex justify="flex-start" itemsCenter mt={10}>

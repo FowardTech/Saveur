@@ -12,6 +12,7 @@ import {
   Button,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -59,7 +60,9 @@ function formatDate(iso: string | null): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  // BUG FIX (translations staling): see CareerDiary.tsx's identical fix —
+  // `undefined` used the device locale instead of the app's picked language.
+  return d.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const GeneratedDocuments = memo(() => {

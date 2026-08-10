@@ -31,7 +31,7 @@ import {useTranslation} from 'react-i18next';
 const JobAlertDetails = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const {t} = useTranslation(['more', 'common']);
+  const {t, i18n} = useTranslation(['more', 'common']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'JobAlertDetails'>>();
   const {job} = route.params;
@@ -179,7 +179,7 @@ const JobAlertDetails = memo(() => {
               <Flex justify="flex-start" itemsCenter style={styles.metaRow}>
                 <Icon pack="eva" name="clock-outline" style={[globalStyle.icon20, {tintColor: theme['text-placeholder-color']}]} />
                 <Text category="h9" ml={10} numberOfLines={1}>
-                  {t('more:job_posted_on', {defaultValue: 'Posted {{date}}', date: new Date(job.postedAt).toLocaleDateString()})}
+                  {t('more:job_posted_on', {defaultValue: 'Posted {{date}}', date: new Date(job.postedAt).toLocaleDateString(i18n.language)})}
                 </Text>
               </Flex>
             ) : null}
