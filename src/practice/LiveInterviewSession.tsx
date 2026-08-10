@@ -697,8 +697,31 @@ const LiveInterviewSession = memo(() => {
   //   delay between the Camera mounting and calling startRecording(),
   //   giving the audioQueue's task time to complete first. Adding/removing
   //   an AVCaptureDeviceInput + AVCaptureAudioDataOutput is normally a
-  //   low-tens-of-milliseconds operation, so 600ms is a generous safety
-  //   margin, not a fragile guess.
+  //   low-tens-of-milliseconds operation, so 600ms was calculated as a
+  //   generous safety margin, not a fragile guess.
+  //
+  // BUG FIX (product report: "the video interview is not capturing the
+  // voice of the user again — I thought we solved this issue already"):
+  // that 600ms margin was sized assuming a mostly-idle device during this
+  // startup window. It wasn't — `startAnalysis()` (called by the
+  // permission effect above, which runs and completes BEFORE this effect's
+  // timer even starts) flips `isAnalyzingRef.current` true, and this
+  // Camera's `faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}`
+  // prop means every detected frame starts running its full per-frame ML
+  // Kit-derived analysis (gaze/smile/pose/movement signals — several of
+  // which were added after this delay was originally tuned) from the
+  // moment the camera mounts, i.e. for this entire delay window, not just
+  // after recording starts. That's real concurrent CPU work on the same
+  // device racing the native audioQueue's one-shot
+  // configureAudioSession() for CPU time — on a slower device or under any
+  // thermal/background load, 600ms is no longer the generous margin it was
+  // calculated to be when this fix was written, and the exact same silent,
+  // no-error failure mode returns with zero code having been reverted. No
+  // JS-visible signal exists to confirm audio-session-ready (still true,
+  // per this fix's original research), so short of patching VisionCamera's
+  // native Swift source (a real fix, but not one that can be written and
+  // verified without an actual iOS device/build here), a materially larger
+  // fixed margin is the safe, low-risk mitigation available from JS.
   React.useEffect(() => {
     if (!isVideoMode || cameraPermissionState !== 'granted' || !videoAnalysis.device) return;
     let cancelled = false;
@@ -711,7 +734,7 @@ const LiveInterviewSession = memo(() => {
       // gated on this flag is guaranteed to only attempt playback AFTER
       // that, never racing it.
       setVideoRecordingStarted(true);
-    }, 600);
+    }, 1500);
     return () => {
       cancelled = true;
       clearTimeout(timer);
