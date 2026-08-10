@@ -635,6 +635,25 @@ export const AuthProvider: React.FC = ({children}) => {
     await user.reload();
     const verified = !!auth().currentUser?.emailVerified;
     setEmailVerified(verified);
+    // BUG FIX (product report: "the practice scenario is asking me to
+    // verify email even after it has been verified") — `user.reload()`
+    // only updates `currentUser.emailVerified` locally; it does NOT reissue
+    // the cached Firebase ID token. Every backend call (see
+    // services/apiClient.ts's `getIdToken()`, without forceRefresh) sends
+    // that same token until it naturally expires, and the backend's
+    // require_verified_email gate (Saveur-Backend/app/auth.py) reads
+    // `email_verified` straight off the token's own JWT claims -- not a
+    // fresh Firestore/Auth lookup. So the UI unlocks immediately (this
+    // function's own React state is fresh) while every API call, including
+    // POST /practical/sessions that starts a Practice Scenario, keeps
+    // getting rejected with 403 email_not_verified using a token that can
+    // be baked with the old `false` claim for up to ~1 hour. Forcing a
+    // token refresh here (once, right after we already know the account IS
+    // verified) reissues it immediately with the correct claim instead of
+    // waiting on Firebase's own near-expiry refresh cycle.
+    if (verified) {
+      await user.getIdToken(true).catch(() => {});
+    }
     return verified;
   }, []);
 

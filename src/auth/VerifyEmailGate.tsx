@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert} from 'react-native';
+import {Alert, AppState} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon, Button} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
@@ -73,6 +73,36 @@ const VerifyEmailGate = memo(() => {
       setIsRefreshing(false);
     }
   }, [isRefreshing, refreshEmailVerified, t]);
+
+  // BUG FIX (product report: "when user verify email it should auto detect
+  // without user click the 'I have verified - Refresh' button") — this gate
+  // used to rely entirely on the user remembering to come back and tap that
+  // button. Tapping the emailed link normally opens the mail app or a
+  // browser, which backgrounds Saveur, so listening for the app returning
+  // to the foreground (same AppState pattern already used for Home's old
+  // banner and Subscription.tsx's Stripe-checkout return) silently reruns
+  // the same check `onIveVerified` runs manually — no error alert here
+  // since an unverified "not yet" result on a background poll is the
+  // expected common case, not something to interrupt the user about. A
+  // short foreground interval is layered on top for the case where
+  // verification happens without ever backgrounding the app (e.g. the link
+  // opens in an in-app browser tab/webview rather than a separate app).
+  React.useEffect(() => {
+    let cancelled = false;
+    const tryRefresh = () => {
+      if (cancelled) return;
+      refreshEmailVerified();
+    };
+    const listener = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') tryRefresh();
+    });
+    const interval = setInterval(tryRefresh, 15000);
+    return () => {
+      cancelled = true;
+      listener.remove();
+      clearInterval(interval);
+    };
+  }, [refreshEmailVerified]);
 
   const onLogout = React.useCallback(() => {
     Alert.alert(
