@@ -26,6 +26,8 @@ import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import { guessCompanyLogoUrl } from 'utils/companyLogo';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
 
@@ -301,6 +303,14 @@ const ScheduleInterview = memo(() => {
         <View style={styles.chipsWrap}>
           {filteredCompanies.map((name, i) => {
             const active = name === COMPANY_ANY ? company === undefined : company === name;
+            // BUG FIX (product report: "in the schedule interview screen
+            // the company logos are not displaying") — this picker is the
+            // same DATA_COMPANIES/COMPANY_ANY chip list as
+            // MockInterviewSetup.tsx's, which already shows a logo per
+            // company; this screen never had the CompanyLogoAvatar branch
+            // added at all. Mirrors that screen's fix exactly, including
+            // skipping the logo for the non-real "Other / Any Company" pill.
+            const isRealCompany = name !== COMPANY_ANY;
             return (
               <TouchableOpacity
                 key={i}
@@ -308,8 +318,17 @@ const ScheduleInterview = memo(() => {
                 onPress={() => setCompany(name === COMPANY_ANY ? undefined : name)}
                 style={[
                   styles.chip,
+                  isRealCompany && styles.chipWithLogo,
                   { backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'] },
                 ]}>
+                {isRealCompany ? (
+                  <CompanyLogoAvatar
+                    logoUrl={guessCompanyLogoUrl(name)}
+                    companyName={name}
+                    size="tiny"
+                    style={{ marginRight: 6 }}
+                  />
+                ) : null}
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
                   {name}
                 </Text>
@@ -418,6 +437,13 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+  },
+  // Company chips only, same fix/comment as MockInterviewSetup.tsx's own
+  // chipWithLogo — `chip` above has no flexDirection, so lays the logo
+  // avatar and name out side by side instead of stacked.
+  chipWithLogo: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   difficultyPill: {
     paddingVertical: 10,

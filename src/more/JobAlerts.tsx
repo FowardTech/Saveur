@@ -7,6 +7,7 @@ import {
   NativeSyntheticEvent,
   Platform,
   RefreshControl,
+  ScrollView,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -439,7 +440,22 @@ const JobAlerts = memo(() => {
             card above) — only what showing it actually looks like changed. */}
         <Modal visible={isPrefsOpen} transparent animationType="slide" onRequestClose={() => setIsPrefsOpen(false)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          {/* BUG FIX (product report: "the bottom sheet for job alert is
+              over extending the height, is too much that some things are
+              being hidden") — this sheet has two Inputs, two unbounded
+              chip lists (roles/countries grow with every add), a slider,
+              and two buttons; `modalSheet` had no maxHeight and this was a
+              plain Layout rather than a ScrollView, so once the content's
+              natural height exceeded the screen (easily happens with a
+              handful of chips, worse with the keyboard open), the bottom
+              of the sheet — often the Save button itself — rendered off
+              the visible screen with no way to reach it. Capped the sheet
+              at 80% of screen height and made the body scroll internally
+              instead, matching the one bottom sheet in this app that
+              already handles long content correctly
+              (SystemDesignWhiteboard.tsx's notes sheet). */}
           <Layout level="1" style={styles.modalSheet}>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Text category="h8" bold mb={4}>
               {t('more:job_alerts_targeted_roles_label', {defaultValue: "Roles you're targeting"})}
             </Text>
@@ -547,6 +563,7 @@ const JobAlerts = memo(() => {
             <Button appearance="outline" style={{marginTop: 12}} onPress={() => setIsPrefsOpen(false)}>
               {t('common:cancel', {defaultValue: 'Cancel'})}
             </Button>
+          </ScrollView>
           </Layout>
         </KeyboardAvoidingView>
         </Modal>
@@ -726,6 +743,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
   modalSheet: {
+    maxHeight: '80%',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
