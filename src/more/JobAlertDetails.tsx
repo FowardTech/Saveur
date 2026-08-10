@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {View} from 'react-native';
+import {Linking, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Layout, Icon} from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 
@@ -98,6 +98,22 @@ const JobAlertDetails = memo(() => {
         accessoryLeft={<NavigationAction />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
+            {/* Product request item: "there should be open in a browser in
+                the job apply screen" — "Apply on {source}" (below) always
+                opens the posting in-app via WebViewScreen; this is the
+                system-browser fallback (real address bar, saved
+                autofill/passwords, extensions), same external-link-outline
+                icon + Linking.openURL(...).catch(() => {}) convention as
+                DailyIndustryNews.tsx's source-link row. A peer action next
+                to Share/Share-to-user, not competing with the primary CTA. */}
+            {job.applyUrl ? (
+              <Icon
+                pack="eva"
+                name="external-link-outline"
+                style={[globalStyle.icon24, {marginRight: 16, tintColor: theme['text-basic-color']}]}
+                onPress={() => Linking.openURL(job.applyUrl!).catch(() => {})}
+              />
+            ) : null}
             <Icon
               pack="eva"
               name="people-outline"
