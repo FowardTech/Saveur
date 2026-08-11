@@ -19,7 +19,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList, MockInterviewSetupScreenNavigationProp } from 'navigation/types';
-import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY } from 'constants/Data';
+import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY, companiesForCountries } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as interviewService from 'services/interviewService';
 import * as configService from 'services/configService';
@@ -51,7 +51,7 @@ const MockInterviewSetup = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
-  const { subscription, isPro, isPremium } = React.useContext(AuthContext);
+  const { subscription, isPro, isPremium, profile } = React.useContext(AuthContext);
 
   const [mode, setMode] = React.useState<Practice_Mode_Enum>(
     route.params?.mode ?? Practice_Mode_Enum.Voice,
@@ -115,13 +115,24 @@ const MockInterviewSetup = memo(() => {
     };
   }, [subscription]);
 
+  // Product report: "the company list in the interview setup is very
+  // US-centric" — regionCompanies puts the user's own regional employers
+  // (from their signup/JobPreferences preferredCountries) ahead of the
+  // rest of the global DATA_COMPANIES list, rather than showing the same
+  // US Big Tech-heavy list to everyone regardless of where they are. See
+  // constants/Data.ts's companiesForCountries for the region mapping.
+  const regionCompanies = React.useMemo(
+    () => companiesForCountries(profile?.preferredCountries),
+    [profile?.preferredCountries],
+  );
+
   const filteredCompanies = React.useMemo(() => {
     const query = companySearch.trim().toLowerCase();
     const list = query
-      ? DATA_COMPANIES.filter(name => name.toLowerCase().includes(query))
-      : DATA_COMPANIES;
+      ? regionCompanies.filter(name => name.toLowerCase().includes(query))
+      : regionCompanies;
     return [...list, COMPANY_ANY];
-  }, [companySearch]);
+  }, [companySearch, regionCompanies]);
 
   // Video mode is gated to Pro Premium/Pro Yearly specifically (see
   // saveur-backend/app/api/interviews.py's create_session, which enforces

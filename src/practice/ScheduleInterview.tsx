@@ -20,7 +20,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
-import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY } from 'constants/Data';
+import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY, companiesForCountries } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
@@ -44,7 +44,7 @@ const ScheduleInterview = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t, i18n } = useTranslation(['find', 'common']);
-  const { isPremium } = React.useContext(AuthContext);
+  const { isPremium, profile } = React.useContext(AuthContext);
 
   const [mode, setMode] = React.useState<Practice_Mode_Enum>(Practice_Mode_Enum.Voice);
   const [interviewType, setInterviewType] = React.useState<Interview_Type_Enum>(Interview_Type_Enum.Behavioral);
@@ -66,11 +66,19 @@ const ScheduleInterview = memo(() => {
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [showTimePicker, setShowTimePicker] = React.useState(false);
 
+  // Product report: "the company list in the interview setup is very
+  // US-centric" — same region-aware fix as MockInterviewSetup.tsx's own
+  // filteredCompanies (see constants/Data.ts's companiesForCountries).
+  const regionCompanies = React.useMemo(
+    () => companiesForCountries(profile?.preferredCountries),
+    [profile?.preferredCountries],
+  );
+
   const filteredCompanies = React.useMemo(() => {
     const query = companySearch.trim().toLowerCase();
-    const list = query ? DATA_COMPANIES.filter(name => name.toLowerCase().includes(query)) : DATA_COMPANIES;
+    const list = query ? regionCompanies.filter(name => name.toLowerCase().includes(query)) : regionCompanies;
     return [...list, COMPANY_ANY];
-  }, [companySearch]);
+  }, [companySearch, regionCompanies]);
 
   const onChangeDate = (_event: unknown, selected?: Date) => {
     setShowDatePicker(Platform.OS === 'ios');

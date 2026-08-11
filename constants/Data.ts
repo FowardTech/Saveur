@@ -1171,6 +1171,182 @@ export const DATA_COMPANIES: string[] = [
 ];
 export const COMPANY_ANY = 'Other / Any Company';
 
+// Product report: "the company list in the interview setup is very US-
+// centric — a user outside the US should see companies that are actually
+// relevant to them too." DATA_COMPANIES above is a fine global-mega-cap
+// default (and stays as the always-shown base list — a US Big Tech
+// question set is still broadly useful prep for anyone), but it's the
+// ENTIRE list today regardless of where the user actually is.
+//
+// Grouped by region rather than one list per country: the same curated set
+// of prominent, real employers is genuinely relevant across neighboring
+// countries (e.g. someone in Portugal and someone in Switzerland both
+// plausibly interview with SAP or Nestlé), and a full 71-country x
+// N-companies matrix would be unmaintainable and mostly duplicate entries
+// anyway. REGION_BY_COUNTRY maps every real entry in constants/countries.ts's
+// COUNTRIES (the exact same list SignupSecondStep/JobPreferences.tsx already
+// collect preferredCountries from) to one of these regions; the synthetic
+// "Remote - Anywhere" entry has no region and is simply skipped (falls back
+// to the base DATA_COMPANIES list with nothing added, same as today).
+export type CompanyRegion =
+  | 'north_america'
+  | 'uk_ireland'
+  | 'western_europe'
+  | 'nordics'
+  | 'eastern_europe'
+  | 'anz'
+  | 'southeast_asia'
+  | 'east_asia'
+  | 'south_asia'
+  | 'middle_east'
+  | 'africa'
+  | 'latin_america';
+
+export const REGION_BY_COUNTRY: Record<string, CompanyRegion> = {
+  'United States': 'north_america',
+  Canada: 'north_america',
+  'United Kingdom': 'uk_ireland',
+  Ireland: 'uk_ireland',
+  Germany: 'western_europe',
+  France: 'western_europe',
+  Spain: 'western_europe',
+  Portugal: 'western_europe',
+  Italy: 'western_europe',
+  Switzerland: 'western_europe',
+  Austria: 'western_europe',
+  Belgium: 'western_europe',
+  Netherlands: 'western_europe',
+  Luxembourg: 'western_europe',
+  Denmark: 'nordics',
+  Sweden: 'nordics',
+  Norway: 'nordics',
+  Finland: 'nordics',
+  Iceland: 'nordics',
+  Poland: 'eastern_europe',
+  'Czech Republic': 'eastern_europe',
+  Hungary: 'eastern_europe',
+  Romania: 'eastern_europe',
+  Greece: 'eastern_europe',
+  Estonia: 'eastern_europe',
+  Latvia: 'eastern_europe',
+  Lithuania: 'eastern_europe',
+  Australia: 'anz',
+  'New Zealand': 'anz',
+  Singapore: 'southeast_asia',
+  Malaysia: 'southeast_asia',
+  Indonesia: 'southeast_asia',
+  Philippines: 'southeast_asia',
+  Thailand: 'southeast_asia',
+  Vietnam: 'southeast_asia',
+  'Hong Kong': 'east_asia',
+  Taiwan: 'east_asia',
+  Japan: 'east_asia',
+  'South Korea': 'east_asia',
+  China: 'east_asia',
+  India: 'south_asia',
+  Pakistan: 'south_asia',
+  Bangladesh: 'south_asia',
+  'Sri Lanka': 'south_asia',
+  'United Arab Emirates': 'middle_east',
+  'Saudi Arabia': 'middle_east',
+  Qatar: 'middle_east',
+  Israel: 'middle_east',
+  Turkey: 'middle_east',
+  Egypt: 'middle_east',
+  Nigeria: 'africa',
+  Kenya: 'africa',
+  Ghana: 'africa',
+  'South Africa': 'africa',
+  Morocco: 'africa',
+  Brazil: 'latin_america',
+  Mexico: 'latin_america',
+  Argentina: 'latin_america',
+  Chile: 'latin_america',
+  Colombia: 'latin_america',
+  Peru: 'latin_america',
+  'Costa Rica': 'latin_america',
+  Uruguay: 'latin_america',
+};
+
+// Real, well-known employers per region — additive to DATA_COMPANIES, never
+// a replacement for it (North America already IS the base list, so gets no
+// separate entries here). Deliberately kept to major, easily-recognizable
+// names only — this is flavor text for interview question framing (see
+// LiveInterviewSession.tsx), not a claim of any hiring relationship, so
+// nothing obscure or unverifiable.
+export const REGION_COMPANIES: Partial<Record<CompanyRegion, string[]>> = {
+  uk_ireland: [
+    'HSBC', 'Barclays', 'BP', 'Unilever', 'Vodafone', 'Tesco',
+    'GlaxoSmithKline', 'AstraZeneca', 'Rolls-Royce', 'Revolut', 'Sky',
+  ],
+  western_europe: [
+    'SAP', 'Siemens', 'Volkswagen', 'BMW', 'Mercedes-Benz', 'Nestlé',
+    'Roche', 'Novartis', 'LVMH', "L'Oréal", 'TotalEnergies', 'ING',
+    'Philips', 'ASML', 'Adyen',
+  ],
+  nordics: [
+    'Spotify', 'Ericsson', 'Volvo', 'IKEA', 'Novo Nordisk', 'Maersk',
+    'Nokia', 'H&M', 'Equinor', 'Klarna',
+  ],
+  eastern_europe: [
+    'CD Projekt', 'Škoda Auto', 'Wise', 'Bolt', 'InPost', 'Allegro',
+    'MOL Group',
+  ],
+  anz: [
+    'Atlassian', 'Canva', 'Commonwealth Bank', 'BHP', 'Telstra',
+    'Woolworths', 'Xero', 'Qantas',
+  ],
+  southeast_asia: [
+    'Grab', 'Sea Limited', 'DBS Bank', 'Singtel', 'Gojek', 'Tokopedia',
+    'TSMC', 'PLDT',
+  ],
+  east_asia: [
+    'Sony', 'Toyota', 'SoftBank', 'Rakuten', 'Samsung', 'LG', 'Hyundai',
+    'Naver', 'Alibaba', 'Tencent', 'ByteDance', 'Huawei',
+  ],
+  south_asia: [
+    'Tata Consultancy Services', 'Infosys', 'Wipro', 'Reliance Industries',
+    'HDFC Bank', 'Flipkart', 'Zomato',
+  ],
+  middle_east: [
+    'Emirates', 'Saudi Aramco', 'Qatar Airways', 'Wix', 'Check Point',
+    'Careem', 'noon', 'Turkish Airlines',
+  ],
+  africa: [
+    'Flutterwave', 'Paystack', 'MTN Group', 'Dangote Group', 'Safaricom',
+    'Naspers', 'Standard Bank', 'Jumia',
+  ],
+  latin_america: [
+    'Nubank', 'Mercado Libre', 'Itaú Unibanco', 'Rappi', 'América Móvil',
+    'Grupo Bimbo', 'iFood',
+  ],
+};
+
+/**
+ * Region-aware company list for the interview setup company picker — the
+ * user's own regional employers (deduped, in REGION_COMPANIES order) first,
+ * then the rest of DATA_COMPANIES. Takes the user's full preferredCountries
+ * list (not just the first entry) since a user can select more than one at
+ * signup/in JobPreferences.tsx, and surfaces every matching region's
+ * companies, not just the first country's.
+ */
+export function companiesForCountries(preferredCountries: string[] | undefined): string[] {
+  const regional: string[] = [];
+  const seen = new Set<string>();
+  (preferredCountries ?? []).forEach(country => {
+    const region = REGION_BY_COUNTRY[country];
+    const companies = region ? REGION_COMPANIES[region] : undefined;
+    (companies ?? []).forEach(name => {
+      if (!seen.has(name)) {
+        seen.add(name);
+        regional.push(name);
+      }
+    });
+  });
+  const rest = DATA_COMPANIES.filter(name => !seen.has(name));
+  return [...regional, ...rest];
+}
+
 // ---- AI Interview Coach additions (gamification / badges) ----
 // Unlock conditions are computed client-side from whatever's cheaply
 // derivable out of existing mock data (practice history, streak, ATS score,
