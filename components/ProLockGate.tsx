@@ -13,6 +13,7 @@ import {RootStackParamList} from 'navigation/types';
 import useLayout from 'hooks/useLayout';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import CtaButton from 'components/CtaButton';
+import {ArtLockedGift} from 'src/home/HomeHeroArt';
 
 interface ProLockGateProps {
   title?: string;
@@ -80,11 +81,16 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
             whole centered block up slightly, per design feedback that dead
             center read a bit low. */}
         <Flex vertical itemsCenter justify="center" style={styles.body}>
-          <Icon
-            pack="eva"
-            name="lock-outline"
-            style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
-          />
+          {/* Product request: "add illustrations like the gift box
+              wherever needed" — this is the shared full-screen gate for
+              every Pro/Pro Premium feature in the app (15+ screens), so
+              swapping its bare lock icon for a real illustration here
+              upgrades all of them at once. A padlock on a small gift box
+              reframes "paywall" as "something worth unlocking", matching
+              this app's existing reward-forward tone rather than a purely
+              restrictive glyph. See src/home/HomeHeroArt.tsx's own comment
+              for the full illustration-sweep context. */}
+          <ArtLockedGift size={104} />
           <Text category="h3" bold center mt={20}>
             {isPremiumVariant ? t('common:pro_premium_gate_heading', { defaultValue: 'This is a Pro Premium feature' }) : t('common:pro_gate_heading', { defaultValue: 'This is a Pro feature' })}
           </Text>

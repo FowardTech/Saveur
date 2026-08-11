@@ -27,6 +27,7 @@ import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
+import { ArtMagnifyingDoc } from 'src/home/HomeHeroArt';
 
 // Job-description analyzer: paste a JD, get a match score + gap analysis via
 // jdService, which calls POST /jd/analyze and POST /jd/match in parallel and
@@ -219,6 +220,19 @@ const JDAnalyzer = memo(() => {
         accessoryLeft={<NavigationAction onPress={goBack} />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        {/* Product request: "add illustrations like the gift box wherever
+            needed" — this screen went straight from the nav bar into the
+            paste-text/paste-URL toggle with no icon at all. A document
+            under a magnifying glass matches what this screen actually does
+            (analyze a JD for a match score). Only shown before a result
+            exists — once there's a score/chips to look at, the illustration
+            would just be pushing real content further down. See
+            src/home/HomeHeroArt.tsx's own comment for the full sweep. */}
+        {!result ? (
+          <Flex center mb={20}>
+            <ArtMagnifyingDoc size={100} />
+          </Flex>
+        ) : null}
         {/* Paste text / Paste URL tabs — two input modes feeding the same
             downstream analysis (see this file's top comment). A plain
             two-button toggle rather than a full TabView/TabBar component,

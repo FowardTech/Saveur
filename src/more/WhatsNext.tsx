@@ -25,6 +25,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import { ArtSignpost } from 'src/home/HomeHeroArt';
 import * as whatsNextService from 'services/whatsNextService';
 import { PostOfferPlan, PlanStep } from 'services/whatsNextService';
 
@@ -178,6 +179,17 @@ const WhatsNext = memo(() => {
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {!plan ? (
           <>
+            {/* Product request: "add illustrations like the gift box
+                wherever needed" — this intro had no icon at all before,
+                straight into the description text. A signpost fits the
+                "here's your path forward" framing of this feature (three
+                sections: negotiate, checklist, first 90 days). Only shown
+                before a plan exists — once generated, the timeline/checklist
+                below are the visual content. See src/home/HomeHeroArt.tsx's
+                own comment for the full sweep. */}
+            <Flex center mb={20}>
+              <ArtSignpost size={100} />
+            </Flex>
             <Text category="h9-s" status="placeholder" mb={20}>
               {t('more:whats_next_description', {
                 defaultValue: "Tell the AI about your offer, and it plans your negotiation, your pre-start checklist, and your first 90 days — all for this specific role.",

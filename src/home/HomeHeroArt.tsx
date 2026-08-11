@@ -126,3 +126,174 @@ export const ArtGiftBox: React.FC<ArtProps> = ({ size }) => (
     <Circle cx="60" cy="41" r="5" fill="#F5B430" />
   </Svg>
 );
+
+// Product request: "I love the style of illustration of the gift card...
+// go through the whole app and add illustrations like it wherever
+// needed" — a design-consistency sweep found several full-screen "hero
+// moment" spots (Pro upgrade gates, email verification, celebrations,
+// empty intro forms) using nothing but a bare 40px Eva icon glyph where
+// every other major screen in the app already got one of these small
+// filled-shape scenes. The six below follow the exact same construction
+// ArtGiftBox/ArtDreamCompany above already established: a soft brand-tint
+// wash circle behind everything, a ground shadow ellipse, then 3-5 solid
+// flat shapes — no gradients, no strokes-as-outlines, no shading.
+
+// components/ProLockGate.tsx (shared by every Pro/Pro Premium-gated
+// screen in the app — Job Alerts, JD Analyzer, Career Roadmap, Salary
+// Negotiation, What's Next, Learning Courses, Networking Assistant,
+// Resume Builder, the whole Coach tab, and more) — was a bare
+// "lock-outline" Eva icon. A padlock sitting on a small gift box reframes
+// "this is a paywall" as "there's something worth unlocking here",
+// matching this app's existing reward-forward tone (see the gift-box
+// referral card) rather than a purely restrictive lock glyph.
+export const ArtLockedGift: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#8B5CF60f" />
+    <Ellipse cx="60" cy="98" rx="30" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* small gift box, same purple/gold pairing as ArtGiftBox but scaled
+        down and pushed back so the padlock reads as the foreground focus */}
+    <Rect x="32" y="58" width="56" height="36" rx="4" fill="#8B5CF6" />
+    <Rect x="28" y="46" width="64" height="16" rx="4" fill="#7C4DEF" />
+    <Rect x="54" y="46" width="12" height="48" fill="#FFC94A" />
+    <Rect x="28" y="51" width="64" height="8" fill="#FFC94A" />
+
+    {/* padlock, pinned front-and-center on top of the box */}
+    <Path
+      d="M46 40a14 14 0 0 1 28 0v8"
+      stroke="#F5B430"
+      strokeWidth={7}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <Rect x="40" y="46" width="40" height="30" rx="6" fill="#FFC94A" />
+    <Circle cx="60" cy="58" r="5" fill="#7C4DEF" />
+    <Rect x="57.5" y="60" width="5" height="9" rx="2.5" fill="#7C4DEF" />
+  </Svg>
+);
+
+// src/auth/VerifyEmailGate.tsx — was a bare "email-outline" Eva icon above
+// "Verify your email." An envelope with a checkmark badge reads as
+// "confirmed"/"on its way", a more encouraging beat than a plain static
+// envelope glyph for a screen whose whole point is "check your inbox, one
+// more step and you're in."
+export const ArtEmailSent: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
+    <Ellipse cx="60" cy="94" rx="32" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* envelope body + folded flap, drawn as two triangles over the body
+        so the flap reads as a real fold, not a printed line */}
+    <Rect x="26" y="42" width="68" height="46" rx="6" fill="#0063f8" />
+    <Path d="M26 48 L60 72 L94 48" stroke="#EAF2FF" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+
+    {/* "sent/confirmed" badge, pinned to the envelope's corner */}
+    <Circle cx="90" cy="82" r="16" fill="#0EAD69" />
+    <Path
+      d="M83 82l5 5 10-11"
+      stroke="#FFFFFF"
+      strokeWidth={4}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      fill="none"
+    />
+  </Svg>
+);
+
+// src/more/CourseSession.tsx's "Tier Complete!" celebration screen — was
+// a bare "award-outline" Eva icon. A real trophy with a couple of small
+// sparkle accents reads as an actual celebration moment rather than a
+// generic achievement badge.
+export const ArtTrophy: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#FFC94A1a" />
+    <Ellipse cx="60" cy="98" rx="26" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* cup */}
+    <Path d="M38 34h44v18a22 22 0 0 1-44 0z" fill="#FFC94A" />
+    {/* handles */}
+    <Path d="M38 38c-10 0-14 6-14 12s4 10 12 11" stroke="#F5B430" strokeWidth={5} strokeLinecap="round" fill="none" />
+    <Path d="M82 38c10 0 14 6 14 12s-4 10-12 11" stroke="#F5B430" strokeWidth={5} strokeLinecap="round" fill="none" />
+    {/* stem + base */}
+    <Rect x="54" y="70" width="12" height="14" fill="#F5B430" />
+    <Rect x="42" y="84" width="36" height="8" rx="3" fill="#F5B430" />
+    <Rect x="36" y="92" width="48" height="7" rx="3.5" fill="#7C4DEF" />
+
+    {/* sparkles */}
+    <Path d="M26 30l2.4 5.6L34 38l-5.6 2.4L26 46l-2.4-5.6L18 38l5.6-2.4z" fill="#8B5CF6" />
+    <Circle cx="92" cy="26" r="4" fill="#0063f8" />
+  </Svg>
+);
+
+// src/more/CareerRoadmap.tsx's intro form (before a roadmap is generated)
+// — had no icon at all, just description text straight into the form
+// card. A winding road with a flag at the end matches the feature's own
+// framing ("plans the real path to get there").
+export const ArtRoadmapPath: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
+    <Ellipse cx="60" cy="100" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* winding road, drawn as one thick curved stroke with a lighter
+        centerline dash on top */}
+    <Path
+      d="M22 92c8-14 0-22 12-30s6-18 18-24 8-16 22-18"
+      stroke="#0063f8"
+      strokeWidth={12}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <Path
+      d="M22 92c8-14 0-22 12-30s6-18 18-24 8-16 22-18"
+      stroke="#EAF2FF"
+      strokeWidth={2.5}
+      strokeDasharray="6 7"
+      strokeLinecap="round"
+      fill="none"
+    />
+
+    {/* flag, planted at the road's end */}
+    <Rect x="74" y="14" width="4" height="26" rx="2" fill="#F5B430" />
+    <Path d="M78 15l16 6-16 6z" fill="#FFC94A" />
+  </Svg>
+);
+
+// src/more/WhatsNext.tsx's intro form (before a plan is generated) — had
+// no icon at all. A signpost with a few arms pointing different
+// directions matches "what's next" more literally than a single-path
+// scene, and stays visually distinct from ArtRoadmapPath right above.
+export const ArtSignpost: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#8B5CF60f" />
+    <Ellipse cx="60" cy="100" rx="20" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* post */}
+    <Rect x="55" y="40" width="10" height="58" rx="3" fill="#7C4DEF" />
+
+    {/* three arms at different heights/directions, each a simple
+        pointed-rectangle sign */}
+    <Path d="M65 44h30l-6 8H65z" fill="#8B5CF6" />
+    <Path d="M55 58H30l6-8h19z" fill="#FFC94A" />
+    <Path d="M65 70h24l-6 8H65z" fill="#0063f8" />
+  </Svg>
+);
+
+// src/more/JDAnalyzer.tsx's intro (before a JD is analyzed) — had no icon
+// on the screen at all, just the paste-text/paste-URL tabs. A magnifying
+// glass over a document reads as "we're going to examine this posting."
+export const ArtMagnifyingDoc: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
+    <Ellipse cx="54" cy="100" rx="30" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* document */}
+    <Rect x="28" y="24" width="52" height="66" rx="5" fill="#EAF2FF" />
+    <Rect x="38" y="38" width="32" height="5" rx="2.5" fill="#0063f8" />
+    <Rect x="38" y="50" width="32" height="5" rx="2.5" fill="#C7DBFF" />
+    <Rect x="38" y="62" width="22" height="5" rx="2.5" fill="#C7DBFF" />
+
+    {/* magnifying glass, overlapping the document's bottom-right corner */}
+    <Circle cx="76" cy="72" r="17" fill="none" stroke="#0063f8" strokeWidth={7} />
+    <Line x1="88" y1="84" x2="100" y2="96" stroke="#0063f8" strokeWidth={7} strokeLinecap="round" />
+  </Svg>
+);

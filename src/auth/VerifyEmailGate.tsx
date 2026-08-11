@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {Alert, AppState} from 'react-native';
-import {StyleService, useStyleSheet, useTheme, Icon, Button} from '@ui-kitten/components';
+import {StyleService, useStyleSheet, Button} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
@@ -8,11 +8,11 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import BrandWordmark from 'components/BrandWordmark';
-import {globalStyle} from 'styles/globalStyle';
 import {AuthContext} from '../../AuthContext';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import useLayout from 'hooks/useLayout';
 import CtaButton from 'components/CtaButton';
+import {ArtEmailSent} from 'src/home/HomeHeroArt';
 
 // Shown IN PLACE of the Home/Practice/Coach/Interviews tabs (see
 // navigation/MainBottomTab.tsx) whenever a signed-in user hasn't verified
@@ -26,7 +26,6 @@ import CtaButton from 'components/CtaButton';
 // (See utils/buttonLabel.tsx's renderCenteredLabel for why button text below
 // is rendered that way instead of as a plain string.)
 const VerifyEmailGate = memo(() => {
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {bottom} = useLayout();
   const {t} = useTranslation(['auth', 'more', 'common']);
@@ -143,11 +142,13 @@ const VerifyEmailGate = memo(() => {
             alignItems:'center' prop. */}
         <Flex vertical itemsCenter justify="center" style={{flex: 1}}>
           <BrandWordmark markOnly size={64} />
-          <Icon
-            pack="eva"
-            name="email-outline"
-            style={[globalStyle.icon40, {tintColor: theme['text-basic-color'], marginTop: 24}]}
-          />
+          {/* Product request: "add illustrations like the gift box
+              wherever needed" — was a bare "email-outline" Eva icon. An
+              envelope with a confirmed/sent badge reads as encouraging
+              rather than a plain static glyph, fitting for a screen whose
+              whole point is "check your inbox, one more step." See
+              src/home/HomeHeroArt.tsx's own comment for the full sweep. */}
+          <ArtEmailSent size={100} />
           <Text category="h3" bold center mt={20}>
             {t('auth:verify_email_gate_title', {defaultValue: 'Verify your email'})}
           </Text>

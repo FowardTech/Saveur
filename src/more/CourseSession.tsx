@@ -29,6 +29,7 @@ import { getCourseLevelLabel } from 'utils/learningLabels';
 import CtaButton from 'components/CtaButton';
 import InAppVideoPlayer from 'components/InAppVideoPlayer';
 import CodeBlock from 'components/CodeBlock';
+import { ArtTrophy } from 'src/home/HomeHeroArt';
 
 type LessonMode = 'voice' | 'text';
 
@@ -375,7 +376,13 @@ const CourseSession = memo(() => {
         />
         <Content padder contentContainerStyle={styles.content}>
           <Flex vertical itemsCenter justify="center" style={{ flex: 1, paddingTop: 60 }}>
-            <Icon pack="eva" name="award-outline" style={[globalStyle.icon40, { tintColor: theme['text-basic-color'] }]} />
+            {/* Product request: "add illustrations like the gift box
+                wherever needed" — was a bare "award-outline" Eva icon on
+                what's actually a real celebration moment. A trophy with a
+                couple of sparkle accents reads as an achievement, not just
+                a generic badge glyph. See src/home/HomeHeroArt.tsx's own
+                comment for the full sweep. */}
+            <ArtTrophy size={104} />
             <Text category="h3" bold center mt={20}>
               {t('more:course_tier_complete', {
                 defaultValue: '{{level}} Tier Complete!',

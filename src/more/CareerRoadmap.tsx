@@ -21,6 +21,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import { ArtRoadmapPath } from 'src/home/HomeHeroArt';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan, RoadmapStep, RoadmapStepType } from 'services/roadmapService';
 import CtaButton from 'components/CtaButton';
@@ -150,6 +151,18 @@ const CareerRoadmap = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        {/* Product request: "add illustrations like the gift box wherever
+            needed" — this intro had no icon at all before, just text
+            straight into the form. Only shown before a roadmap exists —
+            once one's been generated, the timeline itself is the visual
+            content, so a redundant illustration would take up space for no
+            reason. See src/home/HomeHeroArt.tsx's own comment for the full
+            sweep. */}
+        {!roadmap ? (
+          <Flex center mb={20}>
+            <ArtRoadmapPath size={100} />
+          </Flex>
+        ) : null}
         <Text category="h9-s" status="placeholder" mb={20}>
           {t('more:career_roadmap_description', {
             defaultValue: 'Tell the AI the role you want, and it plans the real path to get there — skills to learn, things to build, and the interview that lands it.',
