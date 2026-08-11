@@ -18,7 +18,7 @@ import {useTranslation} from 'react-i18next';
 import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import {AuthStackParamList, RootStackParamList} from 'navigation/types';
-import {COUNTRIES} from 'constants/countries';
+import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
 import CtaButton from 'components/CtaButton';
 
 // Step 2 of signup: which countries is the user open to working in? This
@@ -188,7 +188,7 @@ const SignupSecondStep = memo(() => {
                 onPress={() => toggleCountry(country)}
                 style={[styles.chip, {backgroundColor: theme['color-primary-500'], borderColor: theme['color-primary-600']}]}>
                 <Text category="h9" status="control" bold>
-                  {countryLabel(country)}
+                  {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
                 <Icon
                   pack="eva"
@@ -209,8 +209,14 @@ const SignupSecondStep = memo(() => {
                 activeOpacity={0.7}
                 onPress={() => toggleCountry(country)}
                 style={styles.row}>
+                {/* Product request: "when users are selecting countries
+                    during signup they should also see the flags of those
+                    countries beside them. so many people don't know
+                    countries until they see the flags." Empty string for
+                    "Remote - Anywhere" (no ISO code, see countries.ts),
+                    so no stray leading space before that one label. */}
                 <Text category="h8" status={selected ? 'link' : 'basic'}>
-                  {countryLabel(country)}
+                  {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
                 {selected ? (
                   <Icon

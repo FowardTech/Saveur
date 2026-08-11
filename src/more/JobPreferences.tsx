@@ -18,7 +18,7 @@ import {useTranslation} from 'react-i18next';
 import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
-import {COUNTRIES} from 'constants/countries';
+import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
 import {AuthContext} from '../../AuthContext';
 
 // "Change it later" equivalent of src/auth/Signup/SignupSecondStep.tsx — was
@@ -187,7 +187,7 @@ const JobPreferences = memo(() => {
                 onPress={() => toggleCountry(country)}
                 style={[styles.chip, {backgroundColor: theme['color-primary-500'], borderColor: theme['color-primary-600']}]}>
                 <Text category="h9" status="control" bold>
-                  {countryLabel(country)}
+                  {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
                 <Icon
                   pack="eva"
@@ -208,8 +208,10 @@ const JobPreferences = memo(() => {
                 activeOpacity={0.7}
                 onPress={() => toggleCountry(country)}
                 style={styles.row}>
+                {/* Product request: country flags beside each option, same
+                    fix as SignupSecondStep.tsx (shared list/pattern). */}
                 <Text category="h8" status={selected ? 'link' : 'basic'}>
-                  {countryLabel(country)}
+                  {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
                 {selected ? (
                   <Icon
