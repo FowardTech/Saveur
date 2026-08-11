@@ -258,23 +258,34 @@ export const ArtRoadmapPath: React.FC<ArtProps> = ({ size }) => (
   </Svg>
 );
 
-// src/more/WhatsNext.tsx's intro form (before a plan is generated) — had
-// no icon at all. A signpost with a few arms pointing different
-// directions matches "what's next" more literally than a single-path
-// scene, and stays visually distinct from ArtRoadmapPath right above.
-export const ArtSignpost: React.FC<ArtProps> = ({ size }) => (
+// REDESIGN (product follow-up: "the signpost doesn't fit — What's Next
+// isn't just 'here's your path', it's about how to navigate a brand-new
+// job: fitting in with a new team, knowing how to behave with colleagues,
+// what to do in the first days"). A signpost reads as a generic "which
+// way do I go" glyph with no people in it, which undersold the social
+// side of the feature. This is a compass (finding your footing in an
+// unfamiliar place) with two small colleague figures arriving together at
+// its base — the "you're not navigating this alone" framing — used both
+// on src/more/WhatsNext.tsx's intro screen and inside its offer-details
+// bottom sheet.
+export const ArtWorkplaceCompass: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#8B5CF60f" />
-    <Ellipse cx="60" cy="100" rx="20" ry="5" fill="rgba(0,0,0,0.06)" />
+    <Circle cx="60" cy="60" r="48" fill="#0063f80f" />
+    <Ellipse cx="60" cy="104" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
 
-    {/* post */}
-    <Rect x="55" y="40" width="10" height="58" rx="3" fill="#7C4DEF" />
+    {/* compass */}
+    <Circle cx="60" cy="50" r="30" fill="#EAF2FF" />
+    <Circle cx="60" cy="50" r="30" fill="none" stroke="#0063f8" strokeWidth={5} />
+    <Path d="M60 28l7 22-7 22-7-22z" fill="#FFC94A" />
+    <Path d="M60 28l7 22h-7z" fill="#F5B430" />
+    <Path d="M60 72l-7-22h7z" fill="#7C4DEF" />
+    <Circle cx="60" cy="50" r="4" fill="#0063f8" />
 
-    {/* three arms at different heights/directions, each a simple
-        pointed-rectangle sign */}
-    <Path d="M65 44h30l-6 8H65z" fill="#8B5CF6" />
-    <Path d="M55 58H30l6-8h19z" fill="#FFC94A" />
-    <Path d="M65 70h24l-6 8H65z" fill="#0063f8" />
+    {/* two colleagues, arriving together at the destination */}
+    <Circle cx="40" cy="90" r="7" fill="#8B5CF6" />
+    <Path d="M28 112c0-9.5 5.4-16 12-16s12 6.5 12 16z" fill="#8B5CF6" />
+    <Circle cx="80" cy="90" r="7" fill="#0063f8" />
+    <Path d="M68 112c0-9.5 5.4-16 12-16s12 6.5 12 16z" fill="#0063f8" />
   </Svg>
 );
 

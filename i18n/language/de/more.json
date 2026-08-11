@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "Überprüfe deinen Posteingang auf die Willkommens-E-Mail.",
   "welcome_email_resent_title": "E-Mail gesendet",
   "whats_next_90day_complete": "Du hast deine ersten 90 Tage bei {{company}} gemeistert!",
-  "whats_next_90day_description": "Ein phasenweiser Plan für deinen Erfolg in dieser Rolle, den du unterwegs verfolgst.",
+  "whats_next_90day_description": "Ein phasenweiser Plan, um dich einzuleben, gut mit deinem neuen Team zusammenzuarbeiten und in dieser Rolle erfolgreich zu sein, den du unterwegs verfolgst.",
   "whats_next_90day_title": "Deine ersten 90 Tage",
   "whats_next_build_cta": "Meinen Plan erstellen",
   "whats_next_checklist_progress": "{{done}} von {{total}} erledigt",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "z. B. Acme Inc.",
   "whats_next_current_offer_label": "Dein aktuelles Angebot (optional)",
   "whats_next_current_offer_placeholder": "z. B. 115.000 $ Grundgehalt + 10.000 $ Signing-Bonus",
-  "whats_next_description": "Erzähl der KI von deinem Angebot, und sie plant deine Verhandlung, deine Checkliste vor Arbeitsbeginn und deine ersten 90 Tage — alles für genau diese Stelle.",
+  "whats_next_description": "Erzähl der KI von deinem Angebot, und sie erstellt deine Verhandlungspunkte, eine Checkliste vor Arbeitsbeginn und einen Plan für deine ersten 90 Tage — wie du dich in dein neues Team einfindest, gut mit Kolleg:innen zusammenarbeitest und wirklich etwas bewirkst, nicht nur Aufgaben abhakst.",
   "whats_next_generate_failed": "Dein Plan konnte gerade nicht erstellt werden. Bitte versuche es erneut.",
   "whats_next_negotiate_description": "Konkrete Gesprächspunkte für dieses Angebot — sag sie mit deinen eigenen Worten.",
   "whats_next_negotiate_title": "Verhandle dein Angebot",
   "whats_next_offer_label": "Angebot",
   "whats_next_practice_live_cta": "Live üben",
-  "whats_next_pro_gate_description": "Verhandlungspunkte, eine Checkliste vor Arbeitsbeginn und ein 90-Tage-Erfolgsplan für dein Angebot — eine Pro-Premium-Funktion.",
+  "whats_next_pro_gate_description": "Verhandlungspunkte, eine Checkliste vor Arbeitsbeginn und ein Plan, um dich einzuleben und mit deinem neuen Team erfolgreich zu sein — eine Pro-Premium-Funktion.",
   "whats_next_role_label": "Position",
   "whats_next_role_placeholder": "z. B. Senior Product Manager",
   "whats_next_start_date_label": "Startdatum (optional)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "Studienjahr",
   "yes_mark_applied": "Ja, als beworben markieren",
   "yesterday": "Gestern",
-  "your_badges": "Deine Abzeichen"
+  "your_badges": "Deine Abzeichen",
+  "whats_next_get_started_cta": "Loslegen",
+  "whats_next_form_sheet_title": "Erzähl uns von deinem Angebot"
 }

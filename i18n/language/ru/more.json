@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "Проверьте свою почту на наличие приветственного письма.",
   "welcome_email_resent_title": "Письмо отправлено",
   "whats_next_90day_complete": "Вы прошли первые 90 дней в {{company}}!",
-  "whats_next_90day_description": "Поэтапный план успеха в этой роли, который вы отслеживаете по мере продвижения.",
+  "whats_next_90day_description": "Поэтапный план адаптации, выстраивания отношений с новой командой и успеха в этой роли, который вы отслеживаете по мере продвижения.",
   "whats_next_90day_title": "Ваши первые 90 дней",
   "whats_next_build_cta": "Создать план",
   "whats_next_checklist_progress": "Выполнено {{done}} из {{total}}",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "напр. Acme Inc.",
   "whats_next_current_offer_label": "Ваш текущий оффер (необязательно)",
   "whats_next_current_offer_placeholder": "напр. базовая $115k + бонус за подписание $10k",
-  "whats_next_description": "Расскажите ИИ о вашем оффере, и он спланирует переговоры, чек-лист перед стартом и первые 90 дней — всё именно для этой роли.",
+  "whats_next_description": "Расскажите ИИ о вашем оффере — он подготовит аргументы для переговоров, чек-лист перед стартом и план на первые 90 дней: как влиться в новую команду, наладить отношения с коллегами и добиться реального результата, а не просто закрывать задачи.",
   "whats_next_generate_failed": "Не удалось создать план. Попробуйте ещё раз.",
   "whats_next_negotiate_description": "Конкретные аргументы для этого оффера — сформулируйте их своими словами.",
   "whats_next_negotiate_title": "Обсудите ваш оффер",
   "whats_next_offer_label": "Оффер",
   "whats_next_practice_live_cta": "Отработать вживую",
-  "whats_next_pro_gate_description": "Аргументы для переговоров, чек-лист перед стартом и 90-дневный план успеха для вашего оффера — функция Pro Premium.",
+  "whats_next_pro_gate_description": "Аргументы для переговоров, чек-лист перед стартом и план адаптации и успеха в новой команде — функция Pro Premium.",
   "whats_next_role_label": "Должность",
   "whats_next_role_placeholder": "напр. старший продакт-менеджер",
   "whats_next_start_date_label": "Дата начала работы (необязательно)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "Курс обучения",
   "yes_mark_applied": "Да, отметить как поданное",
   "yesterday": "Вчера",
-  "your_badges": "Ваши значки"
+  "your_badges": "Ваши значки",
+  "whats_next_get_started_cta": "Начать",
+  "whats_next_form_sheet_title": "Расскажите нам о вашем оффере"
 }

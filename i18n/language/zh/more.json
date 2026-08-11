@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "请查收您的收件箱以获取欢迎邮件。",
   "welcome_email_resent_title": "邮件已发送",
   "whats_next_90day_complete": "您已顺利完成在{{company}}的头90天!",
-  "whats_next_90day_description": "分阶段助您在此职位上取得成功的计划,可随时追踪进度。",
+  "whats_next_90day_description": "分阶段的计划,帮助您融入新团队、与同事良好相处并在此职位上取得成功,可随时追踪进度。",
   "whats_next_90day_title": "您的头90天",
   "whats_next_build_cta": "生成我的计划",
   "whats_next_checklist_progress": "已完成 {{done}} / {{total}} 项",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "例如:Acme公司",
   "whats_next_current_offer_label": "您目前的录用条件(可选)",
   "whats_next_current_offer_placeholder": "例如:11.5万美元底薪 + 1万美元签约奖金",
-  "whats_next_description": "告诉 AI 您的录用条件,它会为这一具体职位规划您的谈判策略、入职前清单和头90天计划。",
+  "whats_next_description": "告诉 AI 您的录用条件,它会为您准备谈判要点、入职前清单,以及头90天的规划——如何融入新团队、与同事良好相处、真正产生影响,而不只是完成任务。",
   "whats_next_generate_failed": "暂时无法生成您的计划,请重试。",
   "whats_next_negotiate_description": "针对此录用提供的具体谈判要点——用您自己的话表达出来。",
   "whats_next_negotiate_title": "谈判您的录用条件",
   "whats_next_offer_label": "录用信息",
   "whats_next_practice_live_cta": "进行实时演练",
-  "whats_next_pro_gate_description": "为您的录用通知提供谈判要点、入职前清单和90天成功计划——Pro Premium 功能。",
+  "whats_next_pro_gate_description": "谈判要点、入职前清单,以及帮助您融入并在新团队中取得成功的规划——Pro Premium 功能。",
   "whats_next_role_label": "职位",
   "whats_next_role_placeholder": "例如:高级产品经理",
   "whats_next_start_date_label": "入职日期(可选)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "年级",
   "yes_mark_applied": "是的，标记为已申请",
   "yesterday": "昨天",
-  "your_badges": "您的徽章"
+  "your_badges": "您的徽章",
+  "whats_next_get_started_cta": "开始",
+  "whats_next_form_sheet_title": "告诉我们您的录用条件"
 }

@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "受信箱でウェルカムメールをご確認ください。",
   "welcome_email_resent_title": "メールを送信しました",
   "whats_next_90day_complete": "{{company}}での最初の90日間をやり遂げました!",
-  "whats_next_90day_description": "この役割で成功するための段階的なプランで、進捗を記録できます。",
+  "whats_next_90day_description": "新しいチームに馴染み、同僚と良い関係を築きながらこの役割で成功するための段階的なプランで、進捗を記録できます。",
   "whats_next_90day_title": "最初の90日間",
   "whats_next_build_cta": "プランを作成",
   "whats_next_checklist_progress": "{{total}}件中{{done}}件完了",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "例:Acme株式会社",
   "whats_next_current_offer_label": "現在のオファー内容(任意)",
   "whats_next_current_offer_placeholder": "例:基本給11.5万ドル + サインオンボーナス1万ドル",
-  "whats_next_description": "オファーの内容をAIに伝えると、この職種専用の交渉プラン、入社前チェックリスト、最初の90日間のプランを立ててくれます。",
+  "whats_next_description": "オファーの内容をAIに伝えると、交渉ポイント、入社前チェックリスト、最初の90日間のプランを立ててくれます。新しいチームに馴染み、同僚と良い関係を築き、単にタスクをこなすだけでなく本当の成果を出すためのプランです。",
   "whats_next_generate_failed": "現在プランを作成できませんでした。もう一度お試しください。",
   "whats_next_negotiate_description": "このオファーに関する具体的な交渉ポイントです — 自分の言葉で伝えましょう。",
   "whats_next_negotiate_title": "オファーを交渉する",
   "whats_next_offer_label": "オファー",
   "whats_next_practice_live_cta": "ライブで練習する",
-  "whats_next_pro_gate_description": "オファーのための交渉ポイント、入社前チェックリスト、90日間の成功プランを提供します — Pro Premium の機能です。",
+  "whats_next_pro_gate_description": "交渉ポイント、入社前チェックリスト、新しいチームに馴染んで成功するためのプランを提供します — Pro Premium の機能です。",
   "whats_next_role_label": "職種",
   "whats_next_role_placeholder": "例:シニアプロダクトマネージャー",
   "whats_next_start_date_label": "入社日(任意)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "学年",
   "yes_mark_applied": "はい、応募済みにする",
   "yesterday": "昨日",
-  "your_badges": "あなたのバッジ"
+  "your_badges": "あなたのバッジ",
+  "whats_next_get_started_cta": "はじめる",
+  "whats_next_form_sheet_title": "オファーについて教えてください"
 }

@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "Consultez votre boîte de réception pour l'e-mail de bienvenue.",
   "welcome_email_resent_title": "E-mail envoyé",
   "whats_next_90day_complete": "Vous avez terminé vos 90 premiers jours chez {{company}} !",
-  "whats_next_90day_description": "Un plan par phases pour réussir dans ce poste, suivi au fur et à mesure.",
+  "whats_next_90day_description": "Un plan par phases pour vous intégrer, bien vous entendre avec votre nouvelle équipe et réussir dans ce poste, suivi au fur et à mesure.",
   "whats_next_90day_title": "Vos 90 premiers jours",
   "whats_next_build_cta": "Créer mon plan",
   "whats_next_checklist_progress": "{{done}} sur {{total}} effectuées",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "p. ex. Acme Inc.",
   "whats_next_current_offer_label": "Votre offre actuelle (facultatif)",
   "whats_next_current_offer_placeholder": "p. ex. 115k$ de base + 10k$ de prime de signature",
-  "whats_next_description": "Décrivez votre offre à l'IA, et elle planifie votre négociation, votre liste avant prise de poste et vos 90 premiers jours — tout pour ce poste précis.",
+  "whats_next_description": "Décrivez votre offre à l'IA : elle prépare vos arguments de négociation, une liste avant prise de poste et un plan pour vos 90 premiers jours — vous intégrer à votre nouvelle équipe, bien vous entendre avec vos collègues et avoir un vrai impact, pas seulement cocher des tâches.",
   "whats_next_generate_failed": "Impossible de créer votre plan pour le moment. Veuillez réessayer.",
   "whats_next_negotiate_description": "Des arguments concrets pour cette offre — reformulez-les avec vos propres mots.",
   "whats_next_negotiate_title": "Négociez votre offre",
   "whats_next_offer_label": "Offre",
   "whats_next_practice_live_cta": "Entraînez-vous en direct",
-  "whats_next_pro_gate_description": "Arguments de négociation, une liste de tâches avant votre prise de poste et un plan de réussite sur 90 jours pour votre offre — une fonctionnalité Pro Premium.",
+  "whats_next_pro_gate_description": "Arguments de négociation, une liste de tâches avant votre prise de poste et un plan pour vous intégrer et réussir avec votre nouvelle équipe — une fonctionnalité Pro Premium.",
   "whats_next_role_label": "Poste",
   "whats_next_role_placeholder": "p. ex. Chef de produit senior",
   "whats_next_start_date_label": "Date de début (facultatif)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "Année d'études",
   "yes_mark_applied": "Oui, marquer comme postulé",
   "yesterday": "Hier",
-  "your_badges": "Vos insignes"
+  "your_badges": "Vos insignes",
+  "whats_next_get_started_cta": "Commencer",
+  "whats_next_form_sheet_title": "Parlez-nous de votre offre"
 }

@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "환영 이메일을 받은 편지함에서 확인하세요.",
   "welcome_email_resent_title": "이메일이 전송되었습니다",
   "whats_next_90day_complete": "{{company}}에서의 첫 90일을 완주하셨습니다!",
-  "whats_next_90day_description": "이 역할에서 성공하기 위한 단계별 계획이며, 진행 상황을 추적할 수 있습니다.",
+  "whats_next_90day_description": "새로운 팀에 적응하고 동료들과 좋은 관계를 맺으며 이 역할에서 성공하기 위한 단계별 계획이며, 진행 상황을 추적할 수 있습니다.",
   "whats_next_90day_title": "첫 90일",
   "whats_next_build_cta": "계획 만들기",
   "whats_next_checklist_progress": "{{total}}개 중 {{done}}개 완료",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "예: Acme Inc.",
   "whats_next_current_offer_label": "현재 제안 내용(선택 사항)",
   "whats_next_current_offer_placeholder": "예: 기본급 $115k + 사이닝 보너스 $10k",
-  "whats_next_description": "제안 내용을 AI에게 알려주면 이 특정 직무에 맞춰 협상, 입사 전 체크리스트, 첫 90일 계획을 세워줍니다.",
+  "whats_next_description": "제안 내용을 AI에게 알려주면 협상 포인트, 입사 전 체크리스트, 첫 90일 계획을 세워줍니다. 새로운 팀에 적응하고 동료들과 좋은 관계를 맺으며 단순히 업무를 처리하는 것을 넘어 실제로 성과를 내는 데 초점을 맞춘 계획입니다.",
   "whats_next_generate_failed": "지금은 계획을 만들 수 없습니다. 다시 시도해 주세요.",
   "whats_next_negotiate_description": "이 제안에 대한 구체적인 협상 포인트입니다 — 본인의 말로 이야기해 보세요.",
   "whats_next_negotiate_title": "제안 협상하기",
   "whats_next_offer_label": "제안",
   "whats_next_practice_live_cta": "실시간으로 연습하기",
-  "whats_next_pro_gate_description": "제안에 대한 협상 포인트, 입사 전 체크리스트, 90일 성공 계획을 제공합니다 — Pro Premium 기능입니다.",
+  "whats_next_pro_gate_description": "협상 포인트, 입사 전 체크리스트, 새로운 팀에 적응하고 성공하기 위한 계획을 제공합니다 — Pro Premium 기능입니다.",
   "whats_next_role_label": "직무",
   "whats_next_role_placeholder": "예: 시니어 프로덕트 매니저",
   "whats_next_start_date_label": "입사일(선택 사항)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "학년",
   "yes_mark_applied": "네, 지원 완료로 표시",
   "yesterday": "어제",
-  "your_badges": "내 배지"
+  "your_badges": "내 배지",
+  "whats_next_get_started_cta": "시작하기",
+  "whats_next_form_sheet_title": "제안에 대해 알려주세요"
 }

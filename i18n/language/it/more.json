@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "Controlla la tua casella di posta per l'e-mail di benvenuto.",
   "welcome_email_resent_title": "E-mail inviata",
   "whats_next_90day_complete": "Hai completato i tuoi primi 90 giorni in {{company}}!",
-  "whats_next_90day_description": "Un piano suddiviso in fasi per avere successo in questo ruolo, monitorato passo dopo passo.",
+  "whats_next_90day_description": "Un piano suddiviso in fasi per inserirti, relazionarti bene con il nuovo team e avere successo in questo ruolo, monitorato passo dopo passo.",
   "whats_next_90day_title": "I tuoi primi 90 giorni",
   "whats_next_build_cta": "Crea il mio piano",
   "whats_next_checklist_progress": "{{done}} di {{total}} completate",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "es. Acme Inc.",
   "whats_next_current_offer_label": "La tua offerta attuale (facoltativo)",
   "whats_next_current_offer_placeholder": "es. $115k base + $10k bonus di ingresso",
-  "whats_next_description": "Racconta all'IA la tua offerta, e pianificherà la tua negoziazione, la tua checklist prima dell'inizio e i tuoi primi 90 giorni — tutto per questo ruolo specifico.",
+  "whats_next_description": "Racconta all'IA la tua offerta: preparerà i tuoi punti di negoziazione, una checklist prima dell'inizio e un piano per i tuoi primi 90 giorni — come inserirti nel nuovo team, relazionarti bene con i colleghi e avere un impatto reale, non solo completare attività.",
   "whats_next_generate_failed": "Impossibile creare il tuo piano in questo momento. Riprova.",
   "whats_next_negotiate_description": "Punti concreti per questa offerta — dilli con parole tue.",
   "whats_next_negotiate_title": "Negozia la tua offerta",
   "whats_next_offer_label": "Offerta",
   "whats_next_practice_live_cta": "Esercitati dal vivo",
-  "whats_next_pro_gate_description": "Punti di negoziazione, una checklist prima dell'inizio e un piano di successo di 90 giorni per la tua offerta — una funzione di Pro Premium.",
+  "whats_next_pro_gate_description": "Punti di negoziazione, una checklist prima dell'inizio e un piano per inserirti e avere successo con il tuo nuovo team — una funzione di Pro Premium.",
   "whats_next_role_label": "Ruolo",
   "whats_next_role_placeholder": "es. Senior Product Manager",
   "whats_next_start_date_label": "Data di inizio (facoltativo)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "Anno di studio",
   "yes_mark_applied": "Sì, segna come candidatura inviata",
   "yesterday": "Ieri",
-  "your_badges": "I tuoi badge"
+  "your_badges": "I tuoi badge",
+  "whats_next_get_started_cta": "Inizia",
+  "whats_next_form_sheet_title": "Raccontaci la tua offerta"
 }

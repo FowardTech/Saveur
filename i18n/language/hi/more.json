@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "स्वागत ईमेल के लिए अपना इनबॉक्स जांचें।",
   "welcome_email_resent_title": "ईमेल भेजा गया",
   "whats_next_90day_complete": "आपने {{company}} में अपने पहले 90 दिन पूरे कर लिए हैं!",
-  "whats_next_90day_description": "इस भूमिका में सफल होने के लिए चरण-दर-चरण योजना, जिसे आप आगे बढ़ते हुए ट्रैक कर सकते हैं।",
+  "whats_next_90day_description": "नई टीम में घुलने-मिलने, सहकर्मियों के साथ अच्छे संबंध बनाने, और इस भूमिका में सफल होने के लिए चरण-दर-चरण योजना, जिसे आप आगे बढ़ते हुए ट्रैक कर सकते हैं।",
   "whats_next_90day_title": "आपके पहले 90 दिन",
   "whats_next_build_cta": "मेरी योजना बनाएं",
   "whats_next_checklist_progress": "{{total}} में से {{done}} पूर्ण",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "उदा. Acme Inc.",
   "whats_next_current_offer_label": "आपका मौजूदा ऑफ़र (वैकल्पिक)",
   "whats_next_current_offer_placeholder": "उदा. $115k आधार + $10k साइनिंग बोनस",
-  "whats_next_description": "AI को अपने ऑफ़र के बारे में बताएं, और यह आपकी बातचीत, शुरुआत-से-पहले की चेकलिस्ट, और आपके पहले 90 दिनों की योजना बनाएगा — यह सब इसी भूमिका के लिए।",
+  "whats_next_description": "AI को अपने ऑफ़र के बारे में बताएं, और यह आपके लिए बातचीत के मुख्य बिंदु, शुरुआत-से-पहले की चेकलिस्ट, और आपके पहले 90 दिनों की योजना तैयार करेगा — नई टीम में घुलने-मिलने, सहकर्मियों के साथ अच्छे संबंध बनाने, और सिर्फ़ काम निपटाने के बजाय वास्तविक प्रभाव डालने के लिए।",
   "whats_next_generate_failed": "अभी आपकी योजना नहीं बन सकी। कृपया फिर से प्रयास करें।",
   "whats_next_negotiate_description": "इस ऑफ़र के लिए ठोस बातचीत बिंदु — इन्हें अपने शब्दों में कहें।",
   "whats_next_negotiate_title": "अपने ऑफ़र पर बातचीत करें",
   "whats_next_offer_label": "ऑफ़र",
   "whats_next_practice_live_cta": "इसे लाइव अभ्यास करें",
-  "whats_next_pro_gate_description": "आपके ऑफ़र के लिए बातचीत के बिंदु, शुरुआत-से-पहले की चेकलिस्ट, और 90-दिन की सफलता योजना — एक Pro Premium सुविधा।",
+  "whats_next_pro_gate_description": "बातचीत के बिंदु, शुरुआत-से-पहले की चेकलिस्ट, और अपनी नई टीम में घुलने-मिलने और सफल होने की योजना — एक Pro Premium सुविधा।",
   "whats_next_role_label": "पद",
   "whats_next_role_placeholder": "उदा. वरिष्ठ प्रोडक्ट मैनेजर",
   "whats_next_start_date_label": "आरंभ तिथि (वैकल्पिक)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "अध्ययन वर्ष",
   "yes_mark_applied": "हां, आवेदित के रूप में चिह्नित करें",
   "yesterday": "कल",
-  "your_badges": "आपके बैज"
+  "your_badges": "आपके बैज",
+  "whats_next_get_started_cta": "शुरू करें",
+  "whats_next_form_sheet_title": "हमें अपने ऑफ़र के बारे में बताएं"
 }

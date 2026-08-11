@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -25,7 +25,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
-import { ArtSignpost } from 'src/home/HomeHeroArt';
+import { ArtWorkplaceCompass } from 'src/home/HomeHeroArt';
 import * as whatsNextService from 'services/whatsNextService';
 import { PostOfferPlan, PlanStep } from 'services/whatsNextService';
 
@@ -51,6 +51,12 @@ const WhatsNext = memo(() => {
 
   const [plan, setPlan] = React.useState<PostOfferPlan | null>(null);
   const [planLoaded, setPlanLoaded] = React.useState(false);
+
+  // Product request: "convert this form to a bottom sheet" — same
+  // Modal + KeyboardAvoidingView + Layout sheet pattern as
+  // DreamCompanies.tsx/NetworkingAssistant.tsx/CareerDiary.tsx, replacing
+  // the old always-open inline form card.
+  const [showFormSheet, setShowFormSheet] = React.useState(false);
 
   const [company, setCompany] = React.useState(route.params?.company ?? '');
   const [role, setRole] = React.useState(route.params?.role ?? '');
@@ -88,6 +94,7 @@ const WhatsNext = memo(() => {
         startDate: startDate ? startDate.toISOString().slice(0, 10) : undefined,
       });
       setPlan(built);
+      setShowFormSheet(false);
     } catch {
       setError(t('more:whats_next_generate_failed', {
         defaultValue: "Couldn't build your plan right now. Please try again.",
@@ -164,7 +171,7 @@ const WhatsNext = memo(() => {
         variant="premium"
         title={t('more:whats_next_title', { defaultValue: "What's Next" })}
         description={t('more:whats_next_pro_gate_description', {
-          defaultValue: 'Negotiation talking points, a pre-start checklist, and a 90-day success plan for your offer — a Pro Premium feature.',
+          defaultValue: 'Negotiation talking points, a pre-start checklist, and a plan for settling in and succeeding with your new team — a Pro Premium feature.',
         })}
       />
     );
@@ -178,103 +185,30 @@ const WhatsNext = memo(() => {
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {!plan ? (
-          <>
+          <Flex vertical itemsCenter justify="center" style={styles.introBody}>
             {/* Product request: "add illustrations like the gift box
-                wherever needed" — this intro had no icon at all before,
-                straight into the description text. A signpost fits the
-                "here's your path forward" framing of this feature (three
-                sections: negotiate, checklist, first 90 days). Only shown
-                before a plan exists — once generated, the timeline/checklist
-                below are the visual content. See src/home/HomeHeroArt.tsx's
-                own comment for the full sweep. */}
-            <Flex center mb={20}>
-              <ArtSignpost size={100} />
-            </Flex>
-            <Text category="h9-s" status="placeholder" mb={20}>
+                wherever needed", then a follow-up: "use a better
+                illustration". Also shown inside the form sheet's own
+                header below. Only rendered before a plan exists — once
+                generated, the timeline/checklist are the visual content.
+                See src/home/HomeHeroArt.tsx's own comment for the full
+                context on why this replaced the earlier signpost. */}
+            <ArtWorkplaceCompass size={104} />
+            <Text category="h9-s" status="placeholder" center mt={20} mb={28} maxWidth={320}>
               {t('more:whats_next_description', {
-                defaultValue: "Tell the AI about your offer, and it plans your negotiation, your pre-start checklist, and your first 90 days — all for this specific role.",
+                defaultValue: "Tell the AI about your offer, and it builds your negotiation talking points, a pre-start checklist, and a plan for navigating your first 90 days — fitting in with your new team, working well with colleagues, and making a real impact, not just closing tasks.",
               })}
             </Text>
 
             {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
 
-            <Layout level="2" style={styles.formCard}>
-              <Text category="h10" status="placeholder" mb={6}>
-                {t('more:whats_next_company_label', { defaultValue: 'Company' })}
-              </Text>
-              <Input
-                placeholder={t('more:whats_next_company_placeholder', { defaultValue: 'e.g. Acme Inc.' })}
-                value={company}
-                onChangeText={setCompany}
-                style={[styles.input, { marginBottom: 16 }]}
-                textStyle={globalStyle.inputText}
-              />
-              <Text category="h10" status="placeholder" mb={6}>
-                {t('more:whats_next_role_label', { defaultValue: 'Role' })}
-              </Text>
-              <Input
-                placeholder={t('more:whats_next_role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
-                value={role}
-                onChangeText={setRole}
-                style={[styles.input, { marginBottom: 16 }]}
-                textStyle={globalStyle.inputText}
-              />
-              <Text category="h10" status="placeholder" mb={6}>
-                {t('more:whats_next_current_offer_label', { defaultValue: 'Your current offer (optional)' })}
-              </Text>
-              <Input
-                multiline
-                placeholder={t('more:whats_next_current_offer_placeholder', { defaultValue: 'e.g. $115k base + $10k signing bonus' })}
-                value={currentOffer}
-                onChangeText={setCurrentOffer}
-                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
-                textStyle={globalStyle.inputText}
-              />
-              <Text category="h10" status="placeholder" mb={6}>
-                {t('more:whats_next_target_ask_label', { defaultValue: "What you'd like to negotiate for (optional)" })}
-              </Text>
-              <Input
-                multiline
-                placeholder={t('more:whats_next_target_ask_placeholder', { defaultValue: 'e.g. $130k base, or more PTO' })}
-                value={targetAsk}
-                onChangeText={setTargetAsk}
-                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
-                textStyle={globalStyle.inputText}
-              />
-              <Text category="h10" status="placeholder" mb={6}>
-                {t('more:whats_next_start_date_label', { defaultValue: 'Start date (optional)' })}
-              </Text>
-              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, styles.dateInput]}>
-                <Text category="h9" status={startDate ? 'basic' : 'placeholder'}>
-                  {startDate
-                    ? startDate.toLocaleDateString(i18n.language)
-                    : t('more:whats_next_start_date_placeholder', { defaultValue: 'Select a date' })}
-                </Text>
-              </TouchableOpacity>
-              {showDatePicker ? (
-                <DateTimePicker
-                  value={startDate ?? new Date()}
-                  mode="date"
-                  display="default"
-                  minimumDate={new Date()}
-                  onChange={(_, selected) => {
-                    setShowDatePicker(false);
-                    if (selected) setStartDate(selected);
-                  }}
-                />
-              ) : null}
-
-              <CtaButton
-                style={[globalStyle.shadowBtn, { marginTop: 20 }]}
-                disabled={!company.trim() || !role.trim() || isGenerating}
-                onPress={onGenerate}
-              >
-                {isGenerating
-                  ? () => <Spinner size="small" status="control" />
-                  : t('more:whats_next_build_cta', { defaultValue: 'Build my plan' })}
-              </CtaButton>
-            </Layout>
-          </>
+            <CtaButton
+              style={[globalStyle.shadowBtn, { width: '100%' }]}
+              onPress={() => setShowFormSheet(true)}
+            >
+              {t('more:whats_next_get_started_cta', { defaultValue: 'Get started' })}
+            </CtaButton>
+          </Flex>
         ) : (
           <View>
             {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
@@ -368,7 +302,7 @@ const WhatsNext = memo(() => {
             </Text>
             <Text category="h9-s" status="placeholder" mb={16}>
               {t('more:whats_next_90day_description', {
-                defaultValue: 'A phase-by-phase plan for succeeding in this role, tracked as you go.',
+                defaultValue: 'A phase-by-phase plan for settling in, working well with your new team, and succeeding in this role, tracked as you go.',
               })}
             </Text>
 
@@ -439,6 +373,135 @@ const WhatsNext = memo(() => {
           </View>
         )}
       </Content>
+
+      <Modal visible={showFormSheet} transparent animationType="slide" onRequestClose={() => setShowFormSheet(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={styles.modalSheet}>
+            {/* flexShrink:1 on the ScrollView (Content), paired with
+                modalSheet's maxHeight below, is what actually lets this
+                sheet scroll internally instead of growing past the screen
+                — a ScrollView with no explicit flex sizes itself to its
+                full content height regardless of an ancestor's maxHeight,
+                so without this the last field/button could render off the
+                bottom of the screen unreachable. */}
+            <Content style={{ flexGrow: 0, flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+              <Flex center mb={12}>
+                <ArtWorkplaceCompass size={72} />
+              </Flex>
+              <Text category="h7" bold center mb={20}>
+                {t('more:whats_next_form_sheet_title', { defaultValue: 'Tell us about your offer' })}
+              </Text>
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_company_label', { defaultValue: 'Company' })}
+              </Text>
+              <Input
+                placeholder={t('more:whats_next_company_placeholder', { defaultValue: 'e.g. Acme Inc.' })}
+                value={company}
+                onChangeText={setCompany}
+                style={[styles.input, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_role_label', { defaultValue: 'Role' })}
+              </Text>
+              <Input
+                placeholder={t('more:whats_next_role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
+                value={role}
+                onChangeText={setRole}
+                style={[styles.input, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_current_offer_label', { defaultValue: 'Your current offer (optional)' })}
+              </Text>
+              <Input
+                multiline
+                placeholder={t('more:whats_next_current_offer_placeholder', { defaultValue: 'e.g. $115k base + $10k signing bonus' })}
+                value={currentOffer}
+                onChangeText={setCurrentOffer}
+                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_target_ask_label', { defaultValue: "What you'd like to negotiate for (optional)" })}
+              </Text>
+              <Input
+                multiline
+                placeholder={t('more:whats_next_target_ask_placeholder', { defaultValue: 'e.g. $130k base, or more PTO' })}
+                value={targetAsk}
+                onChangeText={setTargetAsk}
+                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_start_date_label', { defaultValue: 'Start date (optional)' })}
+              </Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, styles.dateInput]}>
+                <Text category="h9" status={startDate ? 'basic' : 'placeholder'}>
+                  {startDate
+                    ? startDate.toLocaleDateString(i18n.language)
+                    : t('more:whats_next_start_date_placeholder', { defaultValue: 'Select a date' })}
+                </Text>
+                <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]} />
+              </TouchableOpacity>
+              {/* BUG FIX (product report: "the date selector is not looking
+                  good") — this used to render the native DateTimePicker
+                  inline with `display="default"`, which on iOS resolves to
+                  a small floating "compact" chip that sat awkwardly beneath
+                  the trigger row, and closed itself (setShowDatePicker(false)
+                  in onChange) on the very first tap — before the compact
+                  chip's own popover calendar even had a chance to open, so
+                  it was nearly impossible to actually pick a date. `spinner`
+                  is a real inline wheel that reads as an intentional part of
+                  this card, and only closes when the user taps Done.
+                  Android's `default` was never the problem (it's a proper
+                  native dialog that dismisses correctly on its own), so it's
+                  left exactly as it was. */}
+              {showDatePicker && Platform.OS === 'ios' ? (
+                <View style={styles.iosDatePickerWrap}>
+                  <DateTimePicker
+                    value={startDate ?? new Date()}
+                    mode="date"
+                    display="spinner"
+                    minimumDate={new Date()}
+                    onChange={(_, selected) => {
+                      if (selected) setStartDate(selected);
+                    }}
+                  />
+                  <Button size="small" style={{ alignSelf: 'center', marginTop: 4 }} onPress={() => setShowDatePicker(false)}>
+                    {t('common:done', { defaultValue: 'Done' })}
+                  </Button>
+                </View>
+              ) : null}
+              {showDatePicker && Platform.OS !== 'ios' ? (
+                <DateTimePicker
+                  value={startDate ?? new Date()}
+                  mode="date"
+                  display="default"
+                  minimumDate={new Date()}
+                  onChange={(_, selected) => {
+                    setShowDatePicker(false);
+                    if (selected) setStartDate(selected);
+                  }}
+                />
+              ) : null}
+
+              <CtaButton
+                style={[globalStyle.shadowBtn, { marginTop: 24 }]}
+                disabled={!company.trim() || !role.trim() || isGenerating}
+                onPress={onGenerate}
+              >
+                {isGenerating
+                  ? () => <Spinner size="small" status="control" />
+                  : t('more:whats_next_build_cta', { defaultValue: 'Build my plan' })}
+              </CtaButton>
+              <Button appearance="outline" style={{ marginTop: 12, marginBottom: 8 }} onPress={() => setShowFormSheet(false)}>
+                {t('common:cancel', { defaultValue: 'Cancel' })}
+              </Button>
+            </Content>
+          </Layout>
+        </KeyboardAvoidingView>
+      </Modal>
     </Container>
   );
 });
@@ -448,17 +511,42 @@ export default WhatsNext;
 const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
+  // Centers the pre-plan illustration/description/CTA as one block instead
+  // of pinning them to the top — same `justify`/`itemsCenter` reasoning as
+  // components/ProLockGate.tsx's own `body` Flex (see that file's comment):
+  // Flex.tsx defaults `justify` to 'space-between' when omitted.
+  introBody: {
+    flex: 1,
+    paddingTop: 24,
+  },
   input: { ...globalStyle.inputField },
   multilineInput: {
     minHeight: 60,
     textAlignVertical: 'top',
   },
   dateInput: {
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  formCard: {
-    ...globalStyle.card,
-    padding: 20,
+  // Wraps the iOS spinner + Done button (see the BUG FIX comment at the
+  // call site) so it reads as one contained control instead of a bare
+  // wheel floating in the sheet.
+  iosDatePickerWrap: {
+    marginTop: 4,
+    marginBottom: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: '88%',
+    flexShrink: 1,
   },
   headerRow: {
     flexDirection: 'row',

@@ -836,7 +836,7 @@
   "welcome_email_resent_body": "تحقق من صندوق الوارد للاطلاع على بريد الترحيب.",
   "welcome_email_resent_title": "تم إرسال البريد الإلكتروني",
   "whats_next_90day_complete": "لقد أتممت أول 90 يومًا لك في {{company}}!",
-  "whats_next_90day_description": "خطة مرحلية للنجاح في هذا الدور، يتم تتبعها أثناء تقدمك.",
+  "whats_next_90day_description": "خطة مرحلية للاندماج والتعامل بشكل جيد مع فريقك الجديد والنجاح في هذا الدور، يتم تتبعها أثناء تقدمك.",
   "whats_next_90day_title": "أول 90 يومًا لك",
   "whats_next_build_cta": "إنشاء خطتي",
   "whats_next_checklist_progress": "تم إنجاز {{done}} من {{total}}",
@@ -845,13 +845,13 @@
   "whats_next_company_placeholder": "مثال: شركة Acme",
   "whats_next_current_offer_label": "عرضك الحالي (اختياري)",
   "whats_next_current_offer_placeholder": "مثال: راتب أساسي 115 ألف دولار + مكافأة توقيع 10 آلاف دولار",
-  "whats_next_description": "أخبر الذكاء الاصطناعي بتفاصيل عرضك، وسيخطط لتفاوضك وقائمة مهامك قبل البدء وأول 90 يومًا لك — كل ذلك لهذا الدور تحديدًا.",
+  "whats_next_description": "أخبر الذكاء الاصطناعي بتفاصيل عرضك، وسيُعِدّ لك نقاط التفاوض، وقائمة مهام قبل البدء، وخطة لأول 90 يومًا — كيف تندمج مع فريقك الجديد، وتتعامل بشكل جيد مع زملائك، وتحقق أثرًا حقيقيًا، لا مجرد إنجاز المهام.",
   "whats_next_generate_failed": "تعذّر إنشاء خطتك الآن. يرجى المحاولة مرة أخرى.",
   "whats_next_negotiate_description": "نقاط حوار ملموسة لهذا العرض — قلها بأسلوبك الخاص.",
   "whats_next_negotiate_title": "تفاوض على عرضك",
   "whats_next_offer_label": "العرض",
   "whats_next_practice_live_cta": "تدرّب على هذا مباشرة",
-  "whats_next_pro_gate_description": "نقاط تفاوض، وقائمة مهام قبل بدء العمل، وخطة نجاح لـ90 يومًا لعرضك — ميزة حصرية لباقة Pro Premium.",
+  "whats_next_pro_gate_description": "نقاط تفاوض، وقائمة مهام قبل بدء العمل، وخطة للاندماج والنجاح مع فريقك الجديد — ميزة حصرية لباقة Pro Premium.",
   "whats_next_role_label": "الدور الوظيفي",
   "whats_next_role_placeholder": "مثال: مدير منتج أول",
   "whats_next_start_date_label": "تاريخ بدء العمل (اختياري)",
@@ -867,5 +867,7 @@
   "year_of_study_label": "السنة الدراسية",
   "yes_mark_applied": "نعم، ضع علامة تم التقديم",
   "yesterday": "أمس",
-  "your_badges": "شاراتك"
+  "your_badges": "شاراتك",
+  "whats_next_get_started_cta": "ابدأ",
+  "whats_next_form_sheet_title": "أخبرنا عن عرضك"
 }
