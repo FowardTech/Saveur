@@ -55,6 +55,7 @@ export interface FeatureFlags {
   username_editing: boolean;
   learning_course_onboarding_banner: boolean;
   job_alerts_onboarding_banner: boolean;
+  post_offer_plan: boolean;
 }
 
 export interface ReleaseConfig {
@@ -237,6 +238,11 @@ const DEFAULT_CONFIG: AppConfig = {
     dream_company_dashboard: true,
     daily_challenge: true,
     interview_heat_map: true,
+    location_language_gate: true,
+    username_editing: true,
+    learning_course_onboarding_banner: true,
+    job_alerts_onboarding_banner: true,
+    post_offer_plan: true,
   },
   release: {
     ios_min_version: '',

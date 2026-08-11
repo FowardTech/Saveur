@@ -7,6 +7,7 @@ import {
   useTheme,
   Layout,
   Button,
+  Icon,
 } from '@ui-kitten/components';
 import {NavigationProp, useNavigation, useRoute} from '@react-navigation/native';
 import useLayout from 'hooks/useLayout';
@@ -128,6 +129,13 @@ const ApplicationDetails = memo(() => {
   };
 
   const onPracticeForThis = () => navigate('MockInterviewSetup', {});
+
+  // Product request: "What's Next" post-offer guided journey — the Offer
+  // stage of this tracker is the natural moment to surface it (a user just
+  // reached the point this feature exists for), pre-filled with the real
+  // company/role from this application rather than making them retype it
+  // on WhatsNext's own form. See src/more/WhatsNext.tsx.
+  const onWhatsNext = () => navigate('WhatsNext', {company: application?.company, role: application?.role});
 
   if (isLoading) {
     return (
@@ -270,6 +278,16 @@ const ApplicationDetails = memo(() => {
             </Text>
             <Text mb={32}>{application.nextStep}</Text>
           </>
+        ) : null}
+
+        {stage === Application_Stage_Enum.Offer ? (
+          <Button
+            children={t('request:whats_next_cta', {defaultValue: "What's Next?"})}
+            status="success"
+            accessoryLeft={props => <Icon {...props} name="gift-outline" pack="eva" />}
+            onPress={onWhatsNext}
+            style={{marginBottom: 12}}
+          />
         ) : null}
 
         <Button

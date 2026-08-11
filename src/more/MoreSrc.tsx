@@ -293,6 +293,15 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('CareerRoadmap'),
     },
     {
+      title: t('more:whats_next_title', {defaultValue: "What's Next"}),
+      icon: 'dollar',
+      status: 'success',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      featureKey: 'post_offer_plan',
+      onPress: () => navigate('WhatsNext'),
+    },
+    {
       title: t('more:refer_and_earn', {defaultValue: 'Refer & Earn'}),
       icon: 'share',
       status: 'success',

@@ -333,6 +333,14 @@ export type RootStackParamList = {
   // real-world milestones toward it, tracked step by step. See
   // services/roadmapService.ts and src/more/CareerRoadmap.tsx.
   CareerRoadmap: undefined;
+  // "What's Next" post-offer guided journey (product request, Pro Premium)
+  // — negotiation talking points + a pre-start checklist + a 90-day success
+  // plan, generated together for one specific offer. Reached from the Offer
+  // stage of the Application Tracker (company/role pre-filled from that
+  // application) and from the More menu (both fields blank, filled in on
+  // this screen's own form instead). See services/whatsNextService.ts and
+  // src/more/WhatsNext.tsx.
+  WhatsNext: {company?: string; role?: string} | undefined;
   // Career DNA (product request item — merges what was pitched separately
   // as "Career DNA" and "Career Genome") — a living behavioral profile the
   // AI builds from real usage signals. See services/careerDnaService.ts.

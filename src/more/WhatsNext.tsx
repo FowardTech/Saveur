@@ -1,0 +1,516 @@
+import React, { memo } from 'react';
+import { TouchableOpacity, View } from 'react-native';
+import {
+  TopNavigation,
+  StyleService,
+  useStyleSheet,
+  useTheme,
+  Layout,
+  Button,
+  Input,
+  Icon,
+  Spinner,
+} from '@ui-kitten/components';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
+
+import Text from 'components/Text';
+import Content from 'components/Content';
+import Container from 'components/Container';
+import Flex from 'components/Flex';
+import NavigationAction from 'components/NavigationAction';
+import CtaButton from 'components/CtaButton';
+import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
+import { AuthContext } from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
+import * as whatsNextService from 'services/whatsNextService';
+import { PostOfferPlan, PlanStep } from 'services/whatsNextService';
+
+// "What's Next" — Pro Premium post-offer guided journey (product request:
+// once a user gets an offer, one feature should cover negotiation help, a
+// pre-start checklist, and a 90-day success plan together, not three
+// separate screens — explicit product-owner scope decision: "both, as a
+// single guided journey"). One AI call plans all three sections for this
+// specific offer (see services/whatsNextService.ts / app/api/post_offer.py).
+//
+// Reached two ways: from the Offer stage of the Application Tracker
+// (src/requests/Applications/ApplicationDetails.tsx passes company/role
+// pre-filled from that application) and from the More menu (both blank,
+// typed in on this screen's own form instead) — both land here identically,
+// this screen doesn't need to know which.
+const WhatsNext = memo(() => {
+  const theme = useTheme();
+  const styles = useStyleSheet(themedStyles);
+  const { t, i18n } = useTranslation(['more', 'common']);
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'WhatsNext'>>();
+  const { isPremium } = React.useContext(AuthContext);
+
+  const [plan, setPlan] = React.useState<PostOfferPlan | null>(null);
+  const [planLoaded, setPlanLoaded] = React.useState(false);
+
+  const [company, setCompany] = React.useState(route.params?.company ?? '');
+  const [role, setRole] = React.useState(route.params?.role ?? '');
+  const [currentOffer, setCurrentOffer] = React.useState('');
+  const [targetAsk, setTargetAsk] = React.useState('');
+  const [startDate, setStartDate] = React.useState<Date | null>(null);
+  const [showDatePicker, setShowDatePicker] = React.useState(false);
+  const [isGenerating, setIsGenerating] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  // Which checklist item / plan phase currently has a request in flight —
+  // disables just that row/button, same pattern CareerRoadmap.tsx's
+  // completingOrder uses for its own "mark complete" calls.
+  const [togglingItemId, setTogglingItemId] = React.useState<number | null>(null);
+  const [completingOrder, setCompletingOrder] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    whatsNextService.getSavedPlan()
+      .then(setPlan)
+      .finally(() => setPlanLoaded(true));
+  }, []);
+
+  const onGenerate = async () => {
+    const co = company.trim();
+    const r = role.trim();
+    if (!co || !r || isGenerating) return;
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const built = await whatsNextService.generatePlan({
+        company: co,
+        role: r,
+        currentOffer: currentOffer.trim(),
+        targetAsk: targetAsk.trim(),
+        startDate: startDate ? startDate.toISOString().slice(0, 10) : undefined,
+      });
+      setPlan(built);
+    } catch {
+      setError(t('more:whats_next_generate_failed', {
+        defaultValue: "Couldn't build your plan right now. Please try again.",
+      }));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const onReset = async () => {
+    await whatsNextService.resetPlan();
+    setPlan(null);
+    setCompany('');
+    setRole('');
+    setCurrentOffer('');
+    setTargetAsk('');
+    setStartDate(null);
+    setError(null);
+  };
+
+  const onToggleChecklistItem = async (id: number) => {
+    if (togglingItemId != null) return;
+    setTogglingItemId(id);
+    setError(null);
+    try {
+      const updated = await whatsNextService.toggleChecklistItem(id);
+      setPlan(updated);
+    } catch {
+      setError(t('more:whats_next_update_failed', {
+        defaultValue: "Couldn't update your plan right now. Please try again.",
+      }));
+    } finally {
+      setTogglingItemId(null);
+    }
+  };
+
+  const onCompletePlanStep = async (order: number) => {
+    if (completingOrder != null) return;
+    setCompletingOrder(order);
+    setError(null);
+    try {
+      const updated = await whatsNextService.completePlanStep(order);
+      setPlan(updated);
+    } catch {
+      setError(t('more:whats_next_update_failed', {
+        defaultValue: "Couldn't update your plan right now. Please try again.",
+      }));
+    } finally {
+      setCompletingOrder(null);
+    }
+  };
+
+  const stepColor = (status: PlanStep['status']) => {
+    if (status === 'completed') return theme['color-success-500'];
+    if (status === 'current') return theme['color-primary-500'];
+    return theme['text-hint-color'];
+  };
+
+  if (!planLoaded) {
+    return (
+      <Container style={styles.container}>
+        <TopNavigation
+          title={t('more:whats_next_title', { defaultValue: "What's Next" })}
+          accessoryLeft={<NavigationAction />}
+        />
+        <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
+      </Container>
+    );
+  }
+
+  if (!plan && !isPremium) {
+    return (
+      <ProLockGate
+        variant="premium"
+        title={t('more:whats_next_title', { defaultValue: "What's Next" })}
+        description={t('more:whats_next_pro_gate_description', {
+          defaultValue: 'Negotiation talking points, a pre-start checklist, and a 90-day success plan for your offer — a Pro Premium feature.',
+        })}
+      />
+    );
+  }
+
+  return (
+    <Container style={styles.container}>
+      <TopNavigation
+        title={t('more:whats_next_title', { defaultValue: "What's Next" })}
+        accessoryLeft={<NavigationAction />}
+      />
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        {!plan ? (
+          <>
+            <Text category="h9-s" status="placeholder" mb={20}>
+              {t('more:whats_next_description', {
+                defaultValue: "Tell the AI about your offer, and it plans your negotiation, your pre-start checklist, and your first 90 days — all for this specific role.",
+              })}
+            </Text>
+
+            {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
+
+            <Layout level="2" style={styles.formCard}>
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_company_label', { defaultValue: 'Company' })}
+              </Text>
+              <Input
+                placeholder={t('more:whats_next_company_placeholder', { defaultValue: 'e.g. Acme Inc.' })}
+                value={company}
+                onChangeText={setCompany}
+                style={[styles.input, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_role_label', { defaultValue: 'Role' })}
+              </Text>
+              <Input
+                placeholder={t('more:whats_next_role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
+                value={role}
+                onChangeText={setRole}
+                style={[styles.input, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_current_offer_label', { defaultValue: 'Your current offer (optional)' })}
+              </Text>
+              <Input
+                multiline
+                placeholder={t('more:whats_next_current_offer_placeholder', { defaultValue: 'e.g. $115k base + $10k signing bonus' })}
+                value={currentOffer}
+                onChangeText={setCurrentOffer}
+                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_target_ask_label', { defaultValue: "What you'd like to negotiate for (optional)" })}
+              </Text>
+              <Input
+                multiline
+                placeholder={t('more:whats_next_target_ask_placeholder', { defaultValue: 'e.g. $130k base, or more PTO' })}
+                value={targetAsk}
+                onChangeText={setTargetAsk}
+                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
+                textStyle={globalStyle.inputText}
+              />
+              <Text category="h10" status="placeholder" mb={6}>
+                {t('more:whats_next_start_date_label', { defaultValue: 'Start date (optional)' })}
+              </Text>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, styles.dateInput]}>
+                <Text category="h9" status={startDate ? 'basic' : 'placeholder'}>
+                  {startDate
+                    ? startDate.toLocaleDateString(i18n.language)
+                    : t('more:whats_next_start_date_placeholder', { defaultValue: 'Select a date' })}
+                </Text>
+              </TouchableOpacity>
+              {showDatePicker ? (
+                <DateTimePicker
+                  value={startDate ?? new Date()}
+                  mode="date"
+                  display="default"
+                  minimumDate={new Date()}
+                  onChange={(_, selected) => {
+                    setShowDatePicker(false);
+                    if (selected) setStartDate(selected);
+                  }}
+                />
+              ) : null}
+
+              <CtaButton
+                style={[globalStyle.shadowBtn, { marginTop: 20 }]}
+                disabled={!company.trim() || !role.trim() || isGenerating}
+                onPress={onGenerate}
+              >
+                {isGenerating
+                  ? () => <Spinner size="small" status="control" />
+                  : t('more:whats_next_build_cta', { defaultValue: 'Build my plan' })}
+              </CtaButton>
+            </Layout>
+          </>
+        ) : (
+          <View>
+            {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
+
+            <View style={styles.headerRow}>
+              <View style={{ flex: 1 }}>
+                <Text category="h10" status="placeholder">
+                  {t('more:whats_next_offer_label', { defaultValue: 'Offer' })}
+                </Text>
+                <Text category="h7" bold mt={2}>{plan.role}</Text>
+                <Text category="h9-s" status="placeholder" mt={2}>{plan.company}</Text>
+              </View>
+              <Text category="h10" status="link" onPress={onReset}>
+                {t('more:curriculum_start_over', { defaultValue: 'Start over' })}
+              </Text>
+            </View>
+
+            {/* Section 1: negotiation */}
+            <Text category="h6" bold mb={4} mt={12}>
+              {t('more:whats_next_negotiate_title', { defaultValue: 'Negotiate your offer' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mb={16}>
+              {t('more:whats_next_negotiate_description', {
+                defaultValue: 'Concrete talking points for this offer — say them in your own words.',
+              })}
+            </Text>
+            {plan.negotiationPoints.map((point, i) => (
+              <Layout level="2" key={i} style={styles.pointCard}>
+                <Text category="h9" bold mb={4}>{point.title}</Text>
+                <Text category="h9-s" status="placeholder">{point.script}</Text>
+              </Layout>
+            ))}
+            <Button
+              size="small"
+              appearance="outline"
+              style={{ marginTop: 4, marginBottom: 28, alignSelf: 'flex-start' }}
+              accessoryLeft={props => <Icon {...props} name="mic-outline" />}
+              onPress={() => navigate('SalaryNegotiation')}
+            >
+              {t('more:whats_next_practice_live_cta', { defaultValue: 'Practice this live' })}
+            </Button>
+
+            {/* Section 2: pre-start checklist */}
+            <Text category="h6" bold mb={4}>
+              {t('more:whats_next_checklist_title', { defaultValue: 'Before you start' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mb={16}>
+              {t('more:whats_next_checklist_progress', {
+                defaultValue: '{{done}} of {{total}} done',
+                done: plan.checklistDoneCount,
+                total: plan.checklistTotalCount,
+              })}
+            </Text>
+            {plan.checklist.map(item => {
+              const isDone = item.status === 'done';
+              const isBusy = togglingItemId === item.id;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.7}
+                  disabled={isBusy}
+                  onPress={() => onToggleChecklistItem(item.id)}
+                  style={styles.checklistRow}
+                >
+                  <View style={[
+                    styles.checkbox,
+                    { borderColor: isDone ? theme['color-success-500'] : theme['border-basic-color-3'] },
+                    isDone ? { backgroundColor: theme['color-success-500'] } : null,
+                  ]}>
+                    {isBusy ? (
+                      <Spinner size="tiny" status="basic" />
+                    ) : isDone ? (
+                      <Icon pack="eva" name="checkmark-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+                    ) : null}
+                  </View>
+                  <View style={{ flex: 1, marginLeft: 12 }}>
+                    <Text category="h9" bold status={isDone ? 'placeholder' : 'basic'} style={isDone ? styles.strikethrough : undefined}>
+                      {item.title}
+                    </Text>
+                    {item.description ? (
+                      <Text category="h10" status="placeholder" mt={2}>{item.description}</Text>
+                    ) : null}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+
+            {/* Section 3: 90-day plan */}
+            <Text category="h6" bold mb={4} mt={28}>
+              {t('more:whats_next_90day_title', { defaultValue: 'Your first 90 days' })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mb={16}>
+              {t('more:whats_next_90day_description', {
+                defaultValue: 'A phase-by-phase plan for succeeding in this role, tracked as you go.',
+              })}
+            </Text>
+
+            {plan.planIsComplete ? (
+              <View style={[styles.completeBanner, styles.completeBannerInner]}>
+                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: 'color-success-500' }]} />
+                <Text category="h9" bold status="success" style={{ marginLeft: 10, flex: 1 }}>
+                  {t('more:whats_next_90day_complete', {
+                    defaultValue: "You've worked through your first 90 days at {{company}}!",
+                    company: plan.company,
+                  })}
+                </Text>
+              </View>
+            ) : null}
+
+            <View style={styles.timeline}>
+              {plan.ninetyDayPlan.map((step, i) => {
+                const isLast = i === plan.ninetyDayPlan.length - 1;
+                const color = stepColor(step.status);
+                const isCompletingThis = completingOrder === step.order;
+                return (
+                  <View key={step.order} style={styles.timelineRow}>
+                    <View style={styles.timelineIndicatorCol}>
+                      <View style={[
+                        styles.timelineDot,
+                        { borderColor: color },
+                        step.status !== 'locked' ? { backgroundColor: color } : null,
+                      ]}>
+                        <Icon
+                          pack="eva"
+                          name={step.status === 'locked' ? 'lock-outline' : (step.status === 'completed' ? 'checkmark-outline' : 'flag-outline')}
+                          style={[globalStyle.icon16, { tintColor: step.status !== 'locked' ? theme['color-basic-100'] : theme['text-hint-color'] }]}
+                        />
+                      </View>
+                      {!isLast ? (
+                        <View style={[styles.timelineLine, { backgroundColor: step.status === 'completed' ? theme['color-success-500'] : theme['border-basic-color-3'] }]} />
+                      ) : null}
+                    </View>
+                    <View style={[styles.timelineContent, { paddingBottom: isLast ? 0 : 24 }]}>
+                      <Text category="h10" status="placeholder">{step.phase}</Text>
+                      <Text category="h9" bold status={step.status === 'locked' ? 'placeholder' : 'basic'} mt={2}>
+                        {step.title}
+                      </Text>
+                      <Text category="h10" status="placeholder" mt={2} mb={step.status === 'current' ? 10 : 0}>
+                        {step.description}
+                      </Text>
+                      {step.status === 'current' ? (
+                        <Button
+                          size="small"
+                          status="primary"
+                          disabled={completingOrder != null}
+                          onPress={() => onCompletePlanStep(step.order)}
+                        >
+                          {isCompletingThis
+                            ? () => <Spinner size="small" status="control" />
+                            : t('more:roadmap_mark_complete', { defaultValue: 'Mark complete' })}
+                        </Button>
+                      ) : step.status === 'completed' ? (
+                        <Text category="h10" status="success" bold mt={4}>
+                          {t('more:completed', { defaultValue: 'Completed' })}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
+      </Content>
+    </Container>
+  );
+});
+
+export default WhatsNext;
+
+const themedStyles = StyleService.create({
+  container: { flex: 1 },
+  content: { paddingBottom: 80 },
+  input: { ...globalStyle.inputField },
+  multilineInput: {
+    minHeight: 60,
+    textAlignVertical: 'top',
+  },
+  dateInput: {
+    justifyContent: 'center',
+  },
+  formCard: {
+    ...globalStyle.card,
+    padding: 20,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  pointCard: {
+    ...globalStyle.card,
+    padding: 16,
+    marginBottom: 10,
+  },
+  checklistRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingVertical: 10,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+  },
+  strikethrough: {
+    textDecorationLine: 'line-through',
+  },
+  completeBanner: {
+    marginBottom: 20,
+    borderRadius: 12,
+    backgroundColor: 'color-success-transparent-200',
+  },
+  completeBannerInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+  },
+  timeline: {
+    marginTop: 4,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+  },
+  timelineIndicatorCol: {
+    width: 32,
+    alignItems: 'center',
+  },
+  timelineDot: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    marginVertical: 4,
+  },
+  timelineContent: {
+    flex: 1,
+    marginLeft: 14,
+  },
+});
