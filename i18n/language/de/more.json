@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "Länder, in denen du arbeiten würdest",
   "job_alerts_targeted_roles_label": "Rollen, die du anstrebst",
   "job_alerts_via_source": "über {{source}}",
+  "job_details_premium_gate_description": "Die vollständigen Details einer Job-Benachrichtigung anzuzeigen ist eine Pro-Premium-Funktion.",
   "job_details_title": "Job-Details",
   "job_posted": "Veröffentlicht",
   "job_posted_on": "Veröffentlicht am {{date}}",

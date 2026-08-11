@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "Countries you'd work in",
   "job_alerts_targeted_roles_label": "Roles you're targeting",
   "job_alerts_via_source": "via {{source}}",
+  "job_details_premium_gate_description": "Viewing full job alert details is a Pro Premium feature.",
   "job_details_title": "Job Details",
   "job_posted": "Posted",
   "job_posted_on": "Posted {{date}}",

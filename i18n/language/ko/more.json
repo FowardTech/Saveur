@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "일하고 싶은 국가",
   "job_alerts_targeted_roles_label": "목표로 하는 직무",
   "job_alerts_via_source": "{{source}} 경유",
+  "job_details_premium_gate_description": "구직 알림의 전체 세부 정보를 보는 것은 Pro Premium 기능입니다.",
   "job_details_title": "채용 상세 정보",
   "job_posted": "게시일",
   "job_posted_on": "{{date}}에 게시됨",

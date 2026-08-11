@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "Países onde você trabalharia",
   "job_alerts_targeted_roles_label": "Funções que você busca",
   "job_alerts_via_source": "via {{source}}",
+  "job_details_premium_gate_description": "Ver todos os detalhes de um alerta de emprego é um recurso do Pro Premium.",
   "job_details_title": "Detalhes da Vaga",
   "job_posted": "Publicada",
   "job_posted_on": "Publicada em {{date}}",

@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "働きたい国",
   "job_alerts_targeted_roles_label": "希望する職種",
   "job_alerts_via_source": "{{source}} 経由",
+  "job_details_premium_gate_description": "求人アラートの詳細をすべて表示するにはPro Premiumの機能が必要です。",
   "job_details_title": "求人詳細",
   "job_posted": "掲載日",
   "job_posted_on": "{{date}}に投稿",

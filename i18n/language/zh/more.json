@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "您愿意工作的国家",
   "job_alerts_targeted_roles_label": "您的目标职位",
   "job_alerts_via_source": "来自 {{source}}",
+  "job_details_premium_gate_description": "查看职位提醒的完整详情是 Pro Premium 功能。",
   "job_details_title": "职位详情",
   "job_posted": "发布时间",
   "job_posted_on": "发布于 {{date}}",

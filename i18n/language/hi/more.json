@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "जिन देशों में आप काम करना चाहेंगे",
   "job_alerts_targeted_roles_label": "जिन भूमिकाओं को आप लक्षित कर रहे हैं",
   "job_alerts_via_source": "{{source}} के माध्यम से",
+  "job_details_premium_gate_description": "जॉब अलर्ट का पूरा विवरण देखना एक Pro Premium सुविधा है।",
   "job_details_title": "नौकरी का विवरण",
   "job_posted": "पोस्ट किया गया",
   "job_posted_on": "{{date}} को पोस्ट किया गया",

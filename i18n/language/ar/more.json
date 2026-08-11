@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "الدول التي ترغب بالعمل فيها",
   "job_alerts_targeted_roles_label": "الأدوار التي تستهدفها",
   "job_alerts_via_source": "عبر {{source}}",
+  "job_details_premium_gate_description": "عرض التفاصيل الكاملة لتنبيه الوظيفة ميزة حصرية لباقة Pro Premium.",
   "job_details_title": "تفاصيل الوظيفة",
   "job_posted": "تاريخ النشر",
   "job_posted_on": "نُشرت في {{date}}",

@@ -411,6 +411,7 @@
   "job_alerts_targeted_countries_label": "Страны, где вы хотели бы работать",
   "job_alerts_targeted_roles_label": "Должности, на которые вы претендуете",
   "job_alerts_via_source": "через {{source}}",
+  "job_details_premium_gate_description": "Просмотр полной информации об уведомлении о вакансии доступен только в Pro Premium.",
   "job_details_title": "Детали вакансии",
   "job_posted": "Опубликовано",
   "job_posted_on": "Опубликовано {{date}}",

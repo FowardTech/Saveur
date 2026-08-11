@@ -17,6 +17,8 @@ import * as jobAlertsService from 'services/jobAlertsService';
 import * as jobShareService from 'services/jobShareService';
 import ShareToUserModal from 'components/ShareToUserModal';
 import {useTranslation} from 'react-i18next';
+import {AuthContext} from '../../AuthContext';
+import ProLockGate from 'components/ProLockGate';
 
 // The in-app landing spot for a matched job — reached from three places that
 // all hand it the same JobAlertProps shape: tapping a card on
@@ -35,6 +37,7 @@ const JobAlertDetails = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'JobAlertDetails'>>();
   const {job} = route.params;
+  const {isPremium} = React.useContext(AuthContext);
 
   // Reached from the bell/a push tap, this alert may not have been marked
   // read yet (Notification screen only marks read on the general list tap,
@@ -90,6 +93,29 @@ const JobAlertDetails = memo(() => {
       },
     });
   };
+
+  // Product report: the Job Alerts list (JobAlerts.tsx) is already gated
+  // behind Pro Premium, but this detail screen is reachable three other
+  // ways that all skip that gate entirely -- tapping a "job_alert"
+  // notification from the bell, tapping the equivalent OS push
+  // notification, and (per the same report) the notification/push payload
+  // itself carrying the full job title/company/location before any tap
+  // happens at all. This screen-level gate closes the "reach it directly"
+  // path; the notification/push payload redaction for non-Premium users is
+  // handled server-side (see Saveur-Backend's job_search_service.py
+  // notification creation, push_service.py send_job_alert, and
+  // app/api/notifications.py's _job_alert_payload).
+  if (!isPremium) {
+    return (
+      <ProLockGate
+        variant="premium"
+        title={t('more:job_details_title', {defaultValue: 'Job Details'})}
+        description={t('more:job_details_premium_gate_description', {
+          defaultValue: 'Viewing full job alert details is a Pro Premium feature.',
+        })}
+      />
+    );
+  }
 
   return (
     <Container style={styles.container}>
