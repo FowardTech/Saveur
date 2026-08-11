@@ -484,7 +484,7 @@ const HomeSrc = memo(() => {
             or no digest yet; DailyTipsBanner: no goals set yet), same
             convention as every other card on this screen, so neither one
             reserves space or shows a placeholder when empty. */}
-        <DailyNewsBanner />
+        {/* <DailyNewsBanner /> */}
         <DailyTipsBanner />
 
         {/* Product request: "remove the continue learning card in the My
