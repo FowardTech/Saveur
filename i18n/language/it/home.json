@@ -134,5 +134,8 @@
   "xp_label": "XP",
   "you": "Tu",
   "your_progress": "I Tuoi Progressi",
-  "your_progress_subtitle": "{{sessions}} sessioni questa settimana · {{score}}% punteggio medio"
+  "your_progress_subtitle": "{{sessions}} sessioni questa settimana · {{score}}% punteggio medio",
+  "student_checkin_title": "Come va questo semestre?",
+  "student_checkin_subtitle": "Un rapido check-in — raccontaci come vanno le cose e di cosa hai bisogno.",
+  "student_checkin_placeholder": "es. Si avvicinano gli esami finali, mi servirebbe fare pratica per colloqui di stage..."
 }

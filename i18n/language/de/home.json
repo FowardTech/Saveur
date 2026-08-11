@@ -134,5 +134,8 @@
   "xp_label": "XP",
   "you": "Du",
   "your_progress": "Dein Fortschritt",
-  "your_progress_subtitle": "{{sessions}} Sitzungen diese Woche · {{score}}% Durchschnittspunktzahl"
+  "your_progress_subtitle": "{{sessions}} Sitzungen diese Woche · {{score}}% Durchschnittspunktzahl",
+  "student_checkin_title": "Wie läuft dieses Semester?",
+  "student_checkin_subtitle": "Ein kurzer Check-in — erzähl uns, wie es läuft und was du brauchst.",
+  "student_checkin_placeholder": "z. B. Abschlussprüfungen stehen an, könnte Interviewübung für Praktikumsbewerbungen gebrauchen..."
 }

@@ -134,5 +134,8 @@
   "xp_label": "XP",
   "you": "You",
   "your_progress": "Your Progress",
-  "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score"
+  "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score",
+  "student_checkin_title": "How's this term going?",
+  "student_checkin_subtitle": "A quick check-in — tell us how things are going and get anything you need.",
+  "student_checkin_placeholder": "e.g. Finals coming up, could use interview practice for internship applications..."
 }

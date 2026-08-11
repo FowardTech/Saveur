@@ -180,3 +180,50 @@ export async function resetPlan(): Promise<void> {
     // best-effort
   }
 }
+
+// ---------------------------------------------------------------------------
+// Weekly "how's it going?" check-in (product request: "always check up on
+// the user regularly to know how they are doing at the new role until the
+// first 90 days are over"). See Saveur-Backend's
+// app/services/post_offer_checkin_service.py.
+// ---------------------------------------------------------------------------
+
+export interface PostOfferCheckIn {
+  id: number;
+  weekNumber: number;
+  responseText: string | null;
+  responded: boolean;
+}
+
+interface WireCheckIn {
+  id?: number;
+  week_number?: number;
+  response_text?: string | null;
+  responded?: boolean;
+}
+
+function mapCheckIn(w: WireCheckIn): PostOfferCheckIn {
+  return {
+    id: w.id ?? 0,
+    weekNumber: w.week_number ?? 0,
+    responseText: w.response_text ?? null,
+    responded: !!w.responded,
+  };
+}
+
+/** GET /api/v1/whats-next/checkin — the caller's most recent sent-but-
+ * unanswered weekly check-in, if any. Null most of the time (these only go
+ * out once a week). */
+export async function getPendingCheckIn(): Promise<PostOfferCheckIn | null> {
+  try {
+    const {data} = await apiClient.get<{checkin: WireCheckIn | null}>('/api/v1/whats-next/checkin');
+    return data.checkin ? mapCheckIn(data.checkin) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function submitCheckIn(id: number, text: string): Promise<PostOfferCheckIn> {
+  const {data} = await apiClient.post<{checkin: WireCheckIn}>(`/api/v1/whats-next/checkin/${id}/respond`, {text});
+  return mapCheckIn(data.checkin);
+}

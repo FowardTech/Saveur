@@ -332,7 +332,19 @@ export type RootStackParamList = {
   // Senior Backend Engineer" -> the AI plans a linear sequence of
   // real-world milestones toward it, tracked step by step. See
   // services/roadmapService.ts and src/more/CareerRoadmap.tsx.
-  CareerRoadmap: undefined;
+  // `targetRole` is an optional prefill -- used by
+  // src/more/NextStepRecommendation.tsx's "Build my AI Career Roadmap" CTA
+  // to carry its AI-suggested role straight into this screen's form,
+  // mirroring WhatsNext's own company/role prefill below.
+  CareerRoadmap: {targetRole?: string} | undefined;
+  // Post-graduation "what's next" recommendation (product request: "after
+  // that [graduation] redirect them to the next step and build up a next
+  // step career plan recommendation or suggestion for them") — a short
+  // AI-authored nudge + a suggested entry-level role, generated
+  // automatically the moment graduation is processed. Reached only via the
+  // "next_step_plan" push notification tap. See services/nextStepService.ts
+  // and src/more/NextStepRecommendation.tsx.
+  NextStepRecommendation: undefined;
   // "What's Next" post-offer guided journey (product request, Pro Premium)
   // — negotiation talking points + a pre-start checklist + a 90-day success
   // plan, generated together for one specific offer. Reached from the Offer

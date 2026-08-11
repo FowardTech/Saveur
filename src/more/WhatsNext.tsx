@@ -12,7 +12,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NavigationProp, RouteProp, useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -21,13 +21,14 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
+import PeriodicCheckInSheet from 'components/PeriodicCheckInSheet';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import { ArtWorkplaceCompass } from 'src/home/HomeHeroArt';
 import * as whatsNextService from 'services/whatsNextService';
-import { PostOfferPlan, PlanStep } from 'services/whatsNextService';
+import { PostOfferPlan, PlanStep, PostOfferCheckIn } from 'services/whatsNextService';
 
 // "What's Next" — Pro Premium post-offer guided journey (product request:
 // once a user gets an offer, one feature should cover negotiation help, a
@@ -78,6 +79,42 @@ const WhatsNext = memo(() => {
       .then(setPlan)
       .finally(() => setPlanLoaded(true));
   }, []);
+
+  // Weekly "how's it going?" check-in (product request: "always check up
+  // on the user regularly to know how they are doing at the new role until
+  // the first 90 days are over. Usually via push notification and pop up
+  // questions") — the push (data.type: "post_offer_checkin", see
+  // pushNotificationService.ts) just navigates here; there's nothing to
+  // parse out of its payload, so a plain re-fetch on every focus (not just
+  // mount) is what actually surfaces it, whether the user tapped the push
+  // or was already sitting on this screen. Only meaningful once a plan
+  // exists — before that there's nothing to check in on.
+  const [pendingCheckIn, setPendingCheckIn] = React.useState<PostOfferCheckIn | null>(null);
+  // Dismissing without answering shouldn't immediately re-pop the same
+  // check-in the moment this screen regains focus again (e.g. backgrounding
+  // and reopening the app) — same "asked, dismissed, don't re-ask this
+  // session" idea as dailyCheckinService.wasGoalPromptDismissedToday, just
+  // in-memory only rather than persisted, since these are far less frequent
+  // (weekly, not daily) and refetching next session is fine.
+  const dismissedCheckInIdsRef = React.useRef<Set<number>>(new Set());
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!plan) return;
+      whatsNextService.getPendingCheckIn().then(found => {
+        if (found && dismissedCheckInIdsRef.current.has(found.id)) return;
+        setPendingCheckIn(found);
+      });
+    }, [plan]),
+  );
+  const onSubmitCheckIn = React.useCallback(async (text: string) => {
+    if (!pendingCheckIn) return;
+    await whatsNextService.submitCheckIn(pendingCheckIn.id, text);
+    setPendingCheckIn(null);
+  }, [pendingCheckIn]);
+  const onDismissCheckIn = React.useCallback(() => {
+    if (pendingCheckIn) dismissedCheckInIdsRef.current.add(pendingCheckIn.id);
+    setPendingCheckIn(null);
+  }, [pendingCheckIn]);
 
   const onGenerate = async () => {
     const co = company.trim();
@@ -502,6 +539,21 @@ const WhatsNext = memo(() => {
           </Layout>
         </KeyboardAvoidingView>
       </Modal>
+
+      <PeriodicCheckInSheet
+        visible={pendingCheckIn !== null}
+        title={t('more:whats_next_checkin_title', { defaultValue: "How's the new role going?" })}
+        subtitle={t('more:whats_next_checkin_subtitle', {
+          week: pendingCheckIn?.weekNumber ?? '',
+          company: plan?.company ?? '',
+          defaultValue: "Week {{week}} at {{company}} — tell us how it's going.",
+        })}
+        placeholder={t('more:whats_next_checkin_placeholder', {
+          defaultValue: 'e.g. Settling in well, still learning the codebase, my manager has been great...',
+        })}
+        onSubmit={onSubmitCheckIn}
+        onDismiss={onDismissCheckIn}
+      />
     </Container>
   );
 });

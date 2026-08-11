@@ -869,5 +869,13 @@
   "yesterday": "Yesterday",
   "your_badges": "Your Badges",
   "whats_next_get_started_cta": "Get started",
-  "whats_next_form_sheet_title": "Tell us about your offer"
+  "whats_next_form_sheet_title": "Tell us about your offer",
+  "whats_next_checkin_title": "How's the new role going?",
+  "whats_next_checkin_subtitle": "Week {{week}} at {{company}} — tell us how it's going.",
+  "whats_next_checkin_placeholder": "e.g. Settling in well, still learning the codebase, my manager has been great...",
+  "next_step_title": "What's Next",
+  "next_step_congrats_title": "Congratulations on graduating!",
+  "next_step_suggested_role_label": "A role to consider targeting",
+  "next_step_build_roadmap_cta": "Build my AI Career Roadmap",
+  "next_step_empty": "There's nothing here yet — check back soon."
 }

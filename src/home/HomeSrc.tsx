@@ -27,8 +27,11 @@ import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
 import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInSheet';
+import PeriodicCheckInSheet from 'components/PeriodicCheckInSheet';
 import * as appRatingService from 'services/appRatingService';
 import * as dailyCheckinService from 'services/dailyCheckinService';
+import * as studentCheckinService from 'services/studentCheckinService';
+import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
@@ -130,7 +133,12 @@ const HomeSrc = memo(() => {
   // time-sensitive morning check-in, then the rating ask, then the ad
   // last, since it's the least essential and already the only one of the
   // four with its own deliberate entry delay).
-  const OVERLAY_PRIORITY = ['tour', 'checkin', 'rating', 'ad'] as const;
+  // 'studentCheckin' added (product request: "check up on [students]
+  // regularly until their graduation date") right after the daily
+  // check-in slot -- same "time-sensitive, but not as urgent as the
+  // one-time tour" reasoning, and since it's weekly (not daily) it should
+  // still win over the rating ask/ad when both happen to be due at once.
+  const OVERLAY_PRIORITY = ['tour', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
   type AutoOverlayKey = (typeof OVERLAY_PRIORITY)[number];
   const [activeOverlay, setActiveOverlay] = React.useState<AutoOverlayKey | null>(null);
   const activeOverlayRef = React.useRef<AutoOverlayKey | null>(null);
@@ -316,6 +324,44 @@ const HomeSrc = memo(() => {
     setCheckinSheet(null);
     releaseOverlay('checkin');
   }, [checkinSheet, releaseOverlay]);
+
+  // Weekly student "how's this term going?" check-in (product request:
+  // "For students I want the App to always check up on them too regularly
+  // until their graduation date"). Checked on every focus (not just mount)
+  // so both the organic "you're due for one" case and a push tap (which
+  // sets the same pending flag dailyCheckinService's reflection prompt
+  // uses -- see studentCheckinService.setPendingCheckInPrompt /
+  // pushNotificationService.ts) surface it the moment Home is actually
+  // visible. getPendingCheckIn() itself is the only gate needed for "is
+  // this even an active student" -- the backend only ever creates a
+  // check-in row for a currently active verified student (see
+  // student_checkin_service.py), so a non-student caller always just gets
+  // null back, same as any other week with nothing due.
+  const [studentCheckin, setStudentCheckin] = React.useState<StudentCheckIn | null>(null);
+  const dismissedStudentCheckinIdsRef = React.useRef<Set<number>>(new Set());
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!isSignedIn) return;
+      studentCheckinService.getPendingCheckIn().then(found => {
+        if (found && dismissedStudentCheckinIdsRef.current.has(found.id)) return;
+        if (found) {
+          setStudentCheckin(found);
+          requestOverlay('studentCheckin');
+        }
+      });
+    }, [isSignedIn, requestOverlay]),
+  );
+  const onSubmitStudentCheckin = React.useCallback(async (text: string) => {
+    if (!studentCheckin) return;
+    await studentCheckinService.submitCheckIn(studentCheckin.id, text);
+    setStudentCheckin(null);
+    releaseOverlay('studentCheckin');
+  }, [studentCheckin, releaseOverlay]);
+  const onDismissStudentCheckin = React.useCallback(() => {
+    if (studentCheckin) dismissedStudentCheckinIdsRef.current.add(studentCheckin.id);
+    setStudentCheckin(null);
+    releaseOverlay('studentCheckin');
+  }, [studentCheckin, releaseOverlay]);
 
   // "Share a job" deep-link landing (product request item) — a pending job
   // id captured by App.tsx's AppsFlyer listeners / saveur://job fallback
@@ -589,7 +635,8 @@ const HomeSrc = memo(() => {
           activeOpacity={0.9}
           onPress={() => navigate('MainBottomTab', { screen: 'Practice' })}>
           <GradientCard
-            colors={['#FD746C', '#FD746C']}
+            colors={['#9d9d9dff', '#9d9d9dff']}
+            // colors={['#FD746C', '#FD746C']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={[styles.heroCard, styles.heroCardSecond]}
@@ -751,6 +798,18 @@ const HomeSrc = memo(() => {
         mode={checkinSheet ?? 'goal'}
         onSubmit={onSubmitCheckin}
         onDismiss={onDismissCheckin}
+      />
+      <PeriodicCheckInSheet
+        visible={studentCheckin !== null && activeOverlay === 'studentCheckin'}
+        title={t('home:student_checkin_title', { defaultValue: "How's this term going?" })}
+        subtitle={t('home:student_checkin_subtitle', {
+          defaultValue: 'A quick check-in — tell us how things are going and get anything you need.',
+        })}
+        placeholder={t('home:student_checkin_placeholder', {
+          defaultValue: 'e.g. Finals coming up, could use interview practice for internship applications...',
+        })}
+        onSubmit={onSubmitStudentCheckin}
+        onDismiss={onDismissStudentCheckin}
       />
     </Container>
   );

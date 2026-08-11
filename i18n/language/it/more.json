@@ -869,5 +869,13 @@
   "yesterday": "Ieri",
   "your_badges": "I tuoi badge",
   "whats_next_get_started_cta": "Inizia",
-  "whats_next_form_sheet_title": "Raccontaci la tua offerta"
+  "whats_next_form_sheet_title": "Raccontaci la tua offerta",
+  "whats_next_checkin_title": "Come va il nuovo ruolo?",
+  "whats_next_checkin_subtitle": "Settimana {{week}} presso {{company}} — raccontaci come va.",
+  "whats_next_checkin_placeholder": "es. Mi sto ambientando bene, sto ancora imparando il codice, il mio manager è stato fantastico...",
+  "next_step_title": "Cosa fare adesso",
+  "next_step_congrats_title": "Congratulazioni per la laurea!",
+  "next_step_suggested_role_label": "Un ruolo da considerare",
+  "next_step_build_roadmap_cta": "Crea la mia Roadmap di Carriera IA",
+  "next_step_empty": "Non c'è ancora nulla qui — torna presto."
 }

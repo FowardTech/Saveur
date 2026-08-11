@@ -11,6 +11,7 @@ import {
   Icon,
   Spinner,
 } from '@ui-kitten/components';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -19,6 +20,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
+import { RootStackParamList } from 'navigation/types';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import { ArtRoadmapPath } from 'src/home/HomeHeroArt';
@@ -44,8 +46,15 @@ const CareerRoadmap = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
   const { isPremium } = React.useContext(AuthContext);
+  // Optional prefill from src/more/NextStepRecommendation.tsx's "Build my
+  // AI Career Roadmap" CTA (product request: post-graduation "next step
+  // career plan recommendation") -- mirrors WhatsNext.tsx's own
+  // route.params?.company/role prefill pattern. Only ever pre-fills the
+  // form; a user who already has a saved roadmap still just sees it
+  // normally, same as reaching this screen any other way.
+  const route = useRoute<RouteProp<RootStackParamList, 'CareerRoadmap'>>();
 
-  const [targetRole, setTargetRole] = React.useState('');
+  const [targetRole, setTargetRole] = React.useState(route.params?.targetRole ?? '');
   const [currentRole, setCurrentRole] = React.useState('');
   const [isGenerating, setIsGenerating] = React.useState(false);
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);

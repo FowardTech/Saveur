@@ -869,5 +869,13 @@
   "yesterday": "أمس",
   "your_badges": "شاراتك",
   "whats_next_get_started_cta": "ابدأ",
-  "whats_next_form_sheet_title": "أخبرنا عن عرضك"
+  "whats_next_form_sheet_title": "أخبرنا عن عرضك",
+  "whats_next_checkin_title": "كيف تسير الوظيفة الجديدة؟",
+  "whats_next_checkin_subtitle": "الأسبوع {{week}} في {{company}} — أخبرنا كيف تسير الأمور.",
+  "whats_next_checkin_placeholder": "مثال: أتأقلم بشكل جيد، ما زلت أتعلم قاعدة الشيفرة، مديري كان رائعًا...",
+  "next_step_title": "الخطوة التالية",
+  "next_step_congrats_title": "تهانينا على التخرج!",
+  "next_step_suggested_role_label": "وظيفة يمكنك التفكير في استهدافها",
+  "next_step_build_roadmap_cta": "إنشاء خارطة طريق مسيرتي المهنية بالذكاء الاصطناعي",
+  "next_step_empty": "لا يوجد شيء هنا بعد — تحقق مرة أخرى قريبًا."
 }

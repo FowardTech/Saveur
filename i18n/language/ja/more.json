@@ -869,5 +869,13 @@
   "yesterday": "昨日",
   "your_badges": "あなたのバッジ",
   "whats_next_get_started_cta": "はじめる",
-  "whats_next_form_sheet_title": "オファーについて教えてください"
+  "whats_next_form_sheet_title": "オファーについて教えてください",
+  "whats_next_checkin_title": "新しい仕事の調子はどうですか?",
+  "whats_next_checkin_subtitle": "{{company}}での{{week}}週目 — 状況を教えてください。",
+  "whats_next_checkin_placeholder": "例:順調に馴染んでいます、まだコードを勉強中です、上司がとても良くしてくれています...",
+  "next_step_title": "次のステップ",
+  "next_step_congrats_title": "卒業おめでとうございます!",
+  "next_step_suggested_role_label": "検討すべき職種",
+  "next_step_build_roadmap_cta": "AIキャリアロードマップを作成する",
+  "next_step_empty": "まだ何もありません — また後で確認してください。"
 }

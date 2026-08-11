@@ -869,5 +869,13 @@
   "yesterday": "어제",
   "your_badges": "내 배지",
   "whats_next_get_started_cta": "시작하기",
-  "whats_next_form_sheet_title": "제안에 대해 알려주세요"
+  "whats_next_form_sheet_title": "제안에 대해 알려주세요",
+  "whats_next_checkin_title": "새 역할은 어떻게 되어가고 있나요?",
+  "whats_next_checkin_subtitle": "{{company}}에서의 {{week}}주차 — 어떻게 지내고 있는지 알려주세요.",
+  "whats_next_checkin_placeholder": "예: 잘 적응하고 있어요, 아직 코드를 배우는 중이에요, 매니저님이 정말 좋으세요...",
+  "next_step_title": "다음 단계",
+  "next_step_congrats_title": "졸업을 축하합니다!",
+  "next_step_suggested_role_label": "고려해볼 만한 직무",
+  "next_step_build_roadmap_cta": "AI 커리어 로드맵 만들기",
+  "next_step_empty": "아직 여기에 아무것도 없습니다 — 곧 다시 확인해주세요."
 }

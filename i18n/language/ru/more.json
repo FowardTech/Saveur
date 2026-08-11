@@ -869,5 +869,13 @@
   "yesterday": "Вчера",
   "your_badges": "Ваши значки",
   "whats_next_get_started_cta": "Начать",
-  "whats_next_form_sheet_title": "Расскажите нам о вашем оффере"
+  "whats_next_form_sheet_title": "Расскажите нам о вашем оффере",
+  "whats_next_checkin_title": "Как дела на новой должности?",
+  "whats_next_checkin_subtitle": "Неделя {{week}} в {{company}} — расскажите, как идут дела.",
+  "whats_next_checkin_placeholder": "например: Хорошо осваиваюсь, ещё изучаю кодовую базу, руководитель отличный...",
+  "next_step_title": "Что дальше",
+  "next_step_congrats_title": "Поздравляем с выпуском!",
+  "next_step_suggested_role_label": "Должность, на которую стоит обратить внимание",
+  "next_step_build_roadmap_cta": "Создать мой ИИ-план карьеры",
+  "next_step_empty": "Здесь пока пусто — загляните позже."
 }

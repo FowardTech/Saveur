@@ -869,5 +869,13 @@
   "yesterday": "Gestern",
   "your_badges": "Deine Abzeichen",
   "whats_next_get_started_cta": "Loslegen",
-  "whats_next_form_sheet_title": "Erzähl uns von deinem Angebot"
+  "whats_next_form_sheet_title": "Erzähl uns von deinem Angebot",
+  "whats_next_checkin_title": "Wie läuft die neue Stelle?",
+  "whats_next_checkin_subtitle": "Woche {{week}} bei {{company}} — erzähl uns, wie es läuft.",
+  "whats_next_checkin_placeholder": "z. B. Komme gut rein, lerne noch den Code kennen, mein:e Vorgesetzte:r war großartig...",
+  "next_step_title": "Was kommt als Nächstes",
+  "next_step_congrats_title": "Herzlichen Glückwunsch zum Abschluss!",
+  "next_step_suggested_role_label": "Eine Rolle, die du in Betracht ziehen solltest",
+  "next_step_build_roadmap_cta": "Meinen KI-Karriereplan erstellen",
+  "next_step_empty": "Hier gibt es noch nichts — schau bald wieder vorbei."
 }

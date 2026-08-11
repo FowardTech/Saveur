@@ -22,6 +22,8 @@ import {
   navigateToSharedContentDetail,
   navigateToSharedWithMe,
   navigateToLearningCourses,
+  navigateToWhatsNext,
+  navigateToNextStepRecommendation,
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 import * as scheduledInterviewService from './scheduledInterviewService';
@@ -252,6 +254,34 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // there; HomeSrc.tsx's useFocusEffect picks it up and opens the sheet.
   if (data?.type === 'daily_checkin_reflection') {
     dailyCheckinService.setPendingReflectionPrompt().finally(navigateToHome);
+    return;
+  }
+  // Weekly post-offer "how's it going?" check-in (product request: "always
+  // check up on the user regularly to know how they are doing at the new
+  // role until the first 90 days are over"). Nothing to parse out of
+  // `data` beyond a week number the screen re-fetches anyway -- What's Next
+  // itself re-checks for a pending check-in on focus and pops the sheet.
+  if (data?.type === 'post_offer_checkin') {
+    navigateToWhatsNext();
+    return;
+  }
+  // Weekly student "how's this term going?" check-in (product request:
+  // "check up on [students] too regularly until their graduation date") --
+  // lives on Home (there's no dedicated "my student status" screen).
+  // Unlike the daily check-in reflection above, there's no pending-flag
+  // dance needed here: HomeSrc.tsx's own useFocusEffect re-fetches
+  // studentCheckinService.getPendingCheckIn() on every focus regardless of
+  // how Home was reached, so simply landing there is enough for a tap on
+  // this push to surface the sheet.
+  if (data?.type === 'student_checkin') {
+    navigateToHome();
+    return;
+  }
+  // Post-graduation "what's next" recommendation (product request: "after
+  // that [graduation] redirect them to the next step and build up a next
+  // step career plan recommendation or suggestion for them").
+  if (data?.type === 'next_step_plan') {
+    navigateToNextStepRecommendation();
     return;
   }
   if (data?.type === 'content_shared' && data.share_id) {

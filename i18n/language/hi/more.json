@@ -869,5 +869,13 @@
   "yesterday": "कल",
   "your_badges": "आपके बैज",
   "whats_next_get_started_cta": "शुरू करें",
-  "whats_next_form_sheet_title": "हमें अपने ऑफ़र के बारे में बताएं"
+  "whats_next_form_sheet_title": "हमें अपने ऑफ़र के बारे में बताएं",
+  "whats_next_checkin_title": "नई भूमिका कैसी चल रही है?",
+  "whats_next_checkin_subtitle": "{{company}} में सप्ताह {{week}} — हमें बताएं कि यह कैसा चल रहा है।",
+  "whats_next_checkin_placeholder": "जैसे: अच्छी तरह से ढल रहा/रही हूं, अभी भी कोड सीख रहा/रही हूं, मेरे मैनेजर बहुत अच्छे रहे हैं...",
+  "next_step_title": "आगे क्या",
+  "next_step_congrats_title": "स्नातक होने पर बधाई!",
+  "next_step_suggested_role_label": "एक भूमिका जिस पर विचार करें",
+  "next_step_build_roadmap_cta": "मेरा AI करियर रोडमैप बनाएं",
+  "next_step_empty": "यहां अभी कुछ नहीं है — जल्द ही वापस देखें।"
 }

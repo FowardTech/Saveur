@@ -61,6 +61,7 @@ import CareerDiary from 'src/more/CareerDiary';
 import MyRatings from 'src/more/MyRatings';
 import CareerRoadmap from 'src/more/CareerRoadmap';
 import WhatsNext from 'src/more/WhatsNext';
+import NextStepRecommendation from 'src/more/NextStepRecommendation';
 import PracticalScenarioSetup from 'src/practice/PracticalScenarioSetup';
 import PracticalScenarioSession from 'src/practice/PracticalScenarioSession';
 import PracticalScenarioFeedback from 'src/practice/PracticalScenarioFeedback';
@@ -252,6 +253,7 @@ const AppContainer = () => {
         <Stack.Screen name="MyRatings" component={MyRatings} />
         <Stack.Screen name="CareerRoadmap" component={CareerRoadmap} />
         <Stack.Screen name="WhatsNext" component={WhatsNext} />
+        <Stack.Screen name="NextStepRecommendation" component={NextStepRecommendation} />
         <Stack.Screen name="PracticalScenarioSetup" component={PracticalScenarioSetup} />
         <Stack.Screen name="PracticalScenarioSession" component={PracticalScenarioSession} />
         <Stack.Screen name="PracticalScenarioFeedback" component={PracticalScenarioFeedback} />

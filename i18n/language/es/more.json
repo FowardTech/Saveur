@@ -869,5 +869,13 @@
   "yesterday": "Ayer",
   "your_badges": "Tus Insignias",
   "whats_next_get_started_cta": "Comenzar",
-  "whats_next_form_sheet_title": "Cuéntanos sobre tu oferta"
+  "whats_next_form_sheet_title": "Cuéntanos sobre tu oferta",
+  "whats_next_checkin_title": "¿Cómo va el nuevo puesto?",
+  "whats_next_checkin_subtitle": "Semana {{week}} en {{company}} — cuéntanos cómo va.",
+  "whats_next_checkin_placeholder": "p. ej. Adaptándome bien, todavía aprendiendo el código, mi jefe ha sido genial...",
+  "next_step_title": "Qué sigue",
+  "next_step_congrats_title": "¡Felicidades por graduarte!",
+  "next_step_suggested_role_label": "Un puesto a considerar",
+  "next_step_build_roadmap_cta": "Crear mi Hoja de Ruta de Carrera con IA",
+  "next_step_empty": "Todavía no hay nada aquí — vuelve pronto."
 }

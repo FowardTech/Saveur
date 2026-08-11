@@ -134,5 +134,8 @@
   "xp_label": "Опыт",
   "you": "Вы",
   "your_progress": "Ваш прогресс",
-  "your_progress_subtitle": "{{sessions}} сессий на этой неделе · средний балл {{score}}%"
+  "your_progress_subtitle": "{{sessions}} сессий на этой неделе · средний балл {{score}}%",
+  "student_checkin_title": "Как проходит этот семестр?",
+  "student_checkin_subtitle": "Быстрая проверка — расскажите, как дела и что вам нужно.",
+  "student_checkin_placeholder": "например: Скоро финальные экзамены, не помешала бы практика собеседований для стажировок..."
 }

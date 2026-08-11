@@ -134,5 +134,8 @@
   "xp_label": "経験値",
   "you": "あなた",
   "your_progress": "あなたの進捗",
-  "your_progress_subtitle": "今週 {{sessions}} セッション ・平均スコア {{score}}%"
+  "your_progress_subtitle": "今週 {{sessions}} セッション ・平均スコア {{score}}%",
+  "student_checkin_title": "今学期の調子はどうですか?",
+  "student_checkin_subtitle": "簡単なチェックイン — 状況と必要なことを教えてください。",
+  "student_checkin_placeholder": "例:期末試験が近いので、インターン面接の練習をしたいです..."
 }

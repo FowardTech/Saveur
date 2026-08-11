@@ -134,5 +134,8 @@
   "xp_label": "经验值",
   "you": "您",
   "your_progress": "您的进度",
-  "your_progress_subtitle": "本周 {{sessions}} 次练习 · 平均得分 {{score}}%"
+  "your_progress_subtitle": "本周 {{sessions}} 次练习 · 平均得分 {{score}}%",
+  "student_checkin_title": "这学期过得怎么样?",
+  "student_checkin_subtitle": "快速签到——告诉我们进展如何,以及您需要什么。",
+  "student_checkin_placeholder": "例如:期末考试快到了,想练习一下实习面试……"
 }

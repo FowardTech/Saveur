@@ -869,5 +869,13 @@
   "yesterday": "Hier",
   "your_badges": "Vos insignes",
   "whats_next_get_started_cta": "Commencer",
-  "whats_next_form_sheet_title": "Parlez-nous de votre offre"
+  "whats_next_form_sheet_title": "Parlez-nous de votre offre",
+  "whats_next_checkin_title": "Comment se passe le nouveau poste ?",
+  "whats_next_checkin_subtitle": "Semaine {{week}} chez {{company}} — dites-nous comment ça se passe.",
+  "whats_next_checkin_placeholder": "ex. Je m'adapte bien, encore en train d'apprendre le code, mon manager a été formidable...",
+  "next_step_title": "Et ensuite",
+  "next_step_congrats_title": "Félicitations pour votre diplôme !",
+  "next_step_suggested_role_label": "Un poste à envisager",
+  "next_step_build_roadmap_cta": "Créer mon Parcours de Carrière IA",
+  "next_step_empty": "Rien ici pour l'instant — revenez bientôt."
 }

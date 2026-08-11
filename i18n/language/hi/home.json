@@ -134,5 +134,8 @@
   "xp_label": "XP",
   "you": "आप",
   "your_progress": "आपकी प्रगति",
-  "your_progress_subtitle": "इस सप्ताह {{sessions}} सत्र · {{score}}% औसत स्कोर"
+  "your_progress_subtitle": "इस सप्ताह {{sessions}} सत्र · {{score}}% औसत स्कोर",
+  "student_checkin_title": "यह सेमेस्टर कैसा चल रहा है?",
+  "student_checkin_subtitle": "एक त्वरित चेक-इन — हमें बताएं कि चीज़ें कैसी चल रही हैं और आपको क्या चाहिए।",
+  "student_checkin_placeholder": "जैसे: फाइनल परीक्षाएं आ रही हैं, इंटर्नशिप इंटरव्यू के लिए अभ्यास चाहिए..."
 }

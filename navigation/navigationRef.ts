@@ -72,6 +72,19 @@ type PendingNavigation =
   // roadmap_step_unlocked/roadmap_complete reuse the existing CareerRoadmap
   // destination above (same screen roadmap_ready already lands on).
   | {name: 'LearningCourses'}
+  // post_offer_checkin push tap (product request: "always check up on the
+  // user regularly to know how they are doing at the new role until the
+  // first 90 days are over") -- nothing to parse out of the payload beyond
+  // a week number the screen itself re-fetches anyway, so this just lands
+  // on What's Next, which re-checks for a pending check-in on focus (see
+  // src/more/WhatsNext.tsx) and pops the sheet itself.
+  | {name: 'WhatsNext'}
+  // next_step_plan push tap (product request: "after that [graduation]
+  // redirect them to the next step and build up a next step career plan
+  // recommendation or suggestion for them") -- see
+  // src/more/NextStepRecommendation.tsx, which fetches the AI-authored
+  // recommendation itself; nothing to parse out of the payload.
+  | {name: 'NextStepRecommendation'}
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
   // matters on first mount, so simply flipping `isSignedIn` to true after
@@ -117,6 +130,10 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('SharedWithMe', nav.params);
   } else if (nav.name === 'LearningCourses') {
     navigationRef.navigate('LearningCourses');
+  } else if (nav.name === 'WhatsNext') {
+    navigationRef.navigate('WhatsNext');
+  } else if (nav.name === 'NextStepRecommendation') {
+    navigationRef.navigate('NextStepRecommendation');
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -228,6 +245,18 @@ export function navigateToPracticalScenarioFeedback(sessionId: number): void {
  * career_roadmap_service sends data.type = "roadmap_ready"). */
 export function navigateToCareerRoadmap(): void {
   queueOrNavigate({name: 'CareerRoadmap'});
+}
+
+/** post_offer_checkin push tap -- see the PendingNavigation union's own
+ * comment above. */
+export function navigateToWhatsNext(): void {
+  queueOrNavigate({name: 'WhatsNext'});
+}
+
+/** next_step_plan push tap -- see the PendingNavigation union's own
+ * comment above. */
+export function navigateToNextStepRecommendation(): void {
+  queueOrNavigate({name: 'NextStepRecommendation'});
 }
 
 /** Daily leaderboard + tip push tap (Saveur-Backend's

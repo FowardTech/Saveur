@@ -869,5 +869,13 @@
   "yesterday": "昨天",
   "your_badges": "您的徽章",
   "whats_next_get_started_cta": "开始",
-  "whats_next_form_sheet_title": "告诉我们您的录用条件"
+  "whats_next_form_sheet_title": "告诉我们您的录用条件",
+  "whats_next_checkin_title": "新工作进展如何?",
+  "whats_next_checkin_subtitle": "在{{company}}的第{{week}}周——告诉我们进展如何。",
+  "whats_next_checkin_placeholder": "例如:适应得不错,还在熟悉代码,我的经理一直很棒……",
+  "next_step_title": "下一步",
+  "next_step_congrats_title": "恭喜毕业!",
+  "next_step_suggested_role_label": "可以考虑的职位",
+  "next_step_build_roadmap_cta": "创建我的AI职业路线图",
+  "next_step_empty": "这里还没有内容——请稍后再来查看。"
 }

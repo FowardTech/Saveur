@@ -869,5 +869,13 @@
   "yesterday": "Ontem",
   "your_badges": "Seus Emblemas",
   "whats_next_get_started_cta": "Começar",
-  "whats_next_form_sheet_title": "Conte-nos sobre sua proposta"
+  "whats_next_form_sheet_title": "Conte-nos sobre sua proposta",
+  "whats_next_checkin_title": "Como está indo o novo cargo?",
+  "whats_next_checkin_subtitle": "Semana {{week}} na {{company}} — conte como está indo.",
+  "whats_next_checkin_placeholder": "ex. Me adaptando bem, ainda aprendendo o código, meu gestor tem sido ótimo...",
+  "next_step_title": "Próximos passos",
+  "next_step_congrats_title": "Parabéns pela formatura!",
+  "next_step_suggested_role_label": "Um cargo a considerar",
+  "next_step_build_roadmap_cta": "Criar meu Roteiro de Carreira com IA",
+  "next_step_empty": "Ainda não há nada aqui — volte em breve."
 }
