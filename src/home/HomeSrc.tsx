@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, InteractionManager, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -7,12 +7,12 @@ import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation
 import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
-import GradientCard from 'components/GradientCard';
-import { ArtCareerCoach, ArtPractice, ArtDreamCompany, ArtGiftBox } from './HomeHeroArt';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
+import QuickActionGrid, { QuickAction } from './QuickActionGrid';
+import RecentActivityList from './RecentActivityList';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -35,9 +35,6 @@ import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
-import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
-import {guessCompanyLogoUrl} from 'utils/companyLogo';
-import {dreamCompanyLogoNames} from 'constants/Data';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -56,26 +53,34 @@ const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 // dependency arrays — the exact loop that made this matter).
 const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
 
-// Home redesign (product request, reference screenshot: a clean two-big-card
-// "what do you want to do" landing screen) — this screen used to be a long,
-// ever-growing dashboard: nav pills, a "continue learning" card, a day-of-
-// week calendar strip, an admin promo banner, a streak/XP/check-in card with
-// its own "upcoming session" sub-block, a surprise daily-challenge card, a
-// Career DNA/Dream Company teaser, and a leaderboard preview. All of that
-// was real, working content — none of it was deleted, just moved. It now
-// lives on src/practice/MyProgress.tsx's "Overview" tab (reachable from the
-// More menu's new "My Progress" row, see src/more/MoreSrc.tsx), which was
-// already this app's dedicated "your progress toward your goal" screen and
-// had no overlapping content of its own to collide with. Home itself is now
-// just: the existing header (unchanged), the verify-email banner (kept here
-// since it's a critical, time-sensitive account action, not "content"), and
-// two large tappable cards into this app's two actual entry points —
-// AI Career Coach (navigation/MainBottomTab.tsx's "Coach" tab) and Practice
-// (that same file's "Practice" tab, FindScreen.tsx). The four auto-triggered
-// overlays (App Tour, daily check-in sheet, rating prompt, ad popup) and
-// their shared one-at-a-time arbitration queue are UNCHANGED — they're
-// app-wide engagement mechanisms triggered independently of what's on
-// screen, not a "content card" a user would look for here.
+// Home redesign v2 (product request: "restructure the homescreen UI of
+// this app to be like the layout in the [reference] screenshots... I just
+// want the kind of layout and the look and feel not the texts" — two
+// reference screenshots were provided, a light healthcare-app mockup and a
+// dark "Sundae" AI-voice-assistant mockup; user explicitly picked the
+// second one's STRUCTURE while confirming "layout only, keep light theme"
+// when asked — so this adopts that mockup's four structural building
+// blocks (a greeting header, a grid of square quick-action tiles, a
+// recent-activity list, and a floating center nav button — the last of
+// those lives in navigation/MainBottomTab.tsx since the bottom nav is
+// shared chrome, not something owned by this screen) using Saveur's own
+// existing light color palette, icons, and copy throughout — none of the
+// reference mockup's own dark theme, iconography, or text made it in).
+//
+// This is actually the SECOND redesign of this screen (see git history for
+// the original "two-big-card 'what do you want to do' landing screen" this
+// replaces) — the underlying content is unchanged from that pass (header,
+// verify-email banner, Continue Learning/Upcoming Session compact row, then
+// Career Coach / Practice / Dream Company Dashboard / Refer & Earn as the
+// four things to do), just re-laid-out: those four now render as
+// QuickActionGrid tiles instead of stacked full-width cards, and a new
+// RecentActivityList (reusing the same GET /api/v1/activity/day data
+// components/DayActivityModal.tsx already shows behind a calendar-day tap)
+// sits underneath, giving the screen the mockup's "here's what to do, here's
+// what you've been doing" two-part read. The four auto-triggered overlays
+// (App Tour, daily check-in sheet, rating prompt, ad popup) and their shared
+// one-at-a-time arbitration queue are UNCHANGED — app-wide engagement
+// mechanisms triggered independently of what's laid out on screen.
 const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const theme = useTheme();
@@ -84,14 +89,49 @@ const HomeSrc = memo(() => {
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
-  // Product request: "add 3 logos of top Fortune 500 companies overlapping
-  // each other" to the Dream Company Dashboard card below — see
-  // constants/Data.ts's dreamCompanyLogoNames for the actual
-  // 2-global-plus-1-regional selection logic.
-  const dreamCompanyLogos = React.useMemo(
-    () => dreamCompanyLogoNames(profile?.preferredCountries),
-    [profile?.preferredCountries],
-  );
+  // The four quick-action tiles (see QuickActionGrid.tsx) — same
+  // destinations/copy/accent colors the old stacked hero cards used, just
+  // fed into the grid instead of rendered as four separate JSX blocks.
+  // Refer & Earn stays behind the same admin "referral_program" feature
+  // flag src/more/MoreSrc.tsx's own row already respects (see that card's
+  // original comment, preserved in spirit here) — filtered out of the
+  // array entirely rather than rendered-then-hidden, so an odd number of
+  // enabled tiles still wraps cleanly.
+  const quickActions = React.useMemo<QuickAction[]>(() => {
+    const items: QuickAction[] = [
+      {
+        key: 'coach',
+        title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
+        icon: 'message-circle-outline',
+        tint: '#0063f8',
+        onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
+      },
+      {
+        key: 'practice',
+        title: t('home:practice_card_title', { defaultValue: 'Practice' }),
+        icon: 'mic-outline',
+        tint: '#71717a',
+        onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
+      },
+      {
+        key: 'dreamCompanies',
+        title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
+        icon: 'briefcase-outline',
+        tint: '#0063f8',
+        onPress: () => navigate('DreamCompanies'),
+      },
+    ];
+    if (configService.isFeatureEnabled('referral_program')) {
+      items.push({
+        key: 'referral',
+        title: t('home:referral_card_title', { defaultValue: 'Refer & Earn' }),
+        icon: 'gift-outline',
+        tint: '#8B5CF6',
+        onPress: () => navigate('ReferralProgram'),
+      });
+    }
+    return items;
+  }, [t, navigate]);
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -579,194 +619,18 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* "Happy to meet you" card landing (see this file's module comment
-            above for the full redesign context). Straightforward left-to-
-            right linear gradient (product follow-up — was a diagonal
-            corner-to-corner gradient, which read as an uneven "inner" patch
-            rather than a clean fill) via GradientCard's start/end props, an
-            SVG illustration (src/home/HomeHeroArt.tsx) anchored to the
-            card's right side, and a real caption line, not just a bare
-            title. Career Coach -> navigation/MainBottomTab.tsx's "Coach" tab
-            (src/messages/MessagesScreen.tsx, repurposed as the AI Coach
-            chat). Explicit {screen: 'Coach'} target (not a bare
-            'MainBottomTab') is required, not optional — React Navigation
-            doesn't fire a focus change (so nothing re-checks/re-renders)
-            when you "navigate" to a tab that's already the active one, same
-            reasoning MoreSrc.tsx's onReplayTour comment documents for the
-            equivalent Home case. */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-          <GradientCard
-            colors={['#0063f8', '#0063f8']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.heroCard}
-            contentStyle={styles.heroCardContent}>
-            <View style={styles.heroCardLeft}>
-              <View style={styles.heroIconWrap}>
-                <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon24, styles.heroIcon]} />
-              </View>
-              <Text category="h6" bold style={styles.heroTitle} mt={14}>
-                {t('home:career_coach_card_title', { defaultValue: 'Career Coach' })}
-              </Text>
-              <Text category="h9-s" style={styles.heroSubtitle} mt={4} numberOfLines={2}>
-                {t('home:career_coach_card_subtitle', {
-                  defaultValue: 'Ask anything — interview prep, salary talk, next-step advice — get a straight answer, day or night.',
-                })}
-              </Text>
-              <Flex justify="flex-start" itemsCenter mt={14}>
-                <Text category="h10" bold style={styles.heroCta}>
-                  {t('home:career_coach_card_cta', { defaultValue: 'Start chatting' })}
-                </Text>
-                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, styles.heroIcon, { marginLeft: 4 }]} />
-              </Flex>
-            </View>
-            <View style={styles.heroArtWrap}>
-              <ArtCareerCoach size={92} />
-            </View>
-          </GradientCard>
-        </TouchableOpacity>
-
-        {/* Practice -> navigation/MainBottomTab.tsx's "Practice" tab
-            (src/find/FindScreen.tsx, repurposed as the practice hub — pick
-            an interview type/mode/difficulty and start a mock session). */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => navigate('MainBottomTab', { screen: 'Practice' })}>
-          <GradientCard
-            colors={['#9d9d9dff', '#9d9d9dff']}
-            // colors={['#FD746C', '#FD746C']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            style={[styles.heroCard, styles.heroCardSecond]}
-            contentStyle={styles.heroCardContent}>
-            <View style={styles.heroCardLeft}>
-              <View style={styles.heroIconWrap}>
-                <Icon pack="eva" name="mic-outline" style={[globalStyle.icon24, styles.heroIcon]} />
-              </View>
-              <Text category="h6" bold style={styles.heroTitle} mt={14}>
-                {t('home:practice_card_title', { defaultValue: 'Practice' })}
-              </Text>
-              <Text category="h9-s" style={styles.heroSubtitle} mt={4} numberOfLines={2}>
-                {t('home:practice_card_subtitle', {
-                  defaultValue: 'Run a real mock interview with live AI feedback and sharpen your skills before it counts.',
-                })}
-              </Text>
-              <Flex justify="flex-start" itemsCenter mt={14}>
-                <Text category="h10" bold style={styles.heroCta}>
-                  {t('home:practice_card_cta', { defaultValue: 'Start a session' })}
-                </Text>
-                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, styles.heroIcon, { marginLeft: 4 }]} />
-              </Flex>
-            </View>
-            <View style={styles.heroArtWrap}>
-              <ArtPractice size={92} />
-            </View>
-          </GradientCard>
-        </TouchableOpacity>
-
-        {/* Dream Company Dashboard (product follow-up — "under the practice
-            card let's have the dream company dashboard card... same size
-            with the practice card but let it be a white background").
-            src/more/DreamCompanies.tsx already exists and already has its
-            own Pro Premium gate (see entitlements_service.require_premium
-            on its backend routes) — tapping through to it and letting that
-            screen enforce entitlements is the same pattern every other
-            More-menu row already uses, not something this card needs to
-            duplicate. */}
-        <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('DreamCompanies')}>
-          <View style={[styles.heroCard, styles.heroCardWhite, styles.heroCardContent]}>
-            <View style={styles.heroCardLeft}>
-              <View style={styles.heroIconWrapLight}>
-                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon24, { tintColor: '#0063f8', }]} />
-              </View>
-              <Text category="h6" bold style={styles.heroTitleDark} mt={14}>
-                {t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' })}
-              </Text>
-              <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
-                {t('home:dream_company_card_subtitle', {
-                  defaultValue: 'Track the employers you actually want, with AI research and prep built in.',
-                })}
-              </Text>
-              {/* Product request: "add 3 logos of top Fortune 500 companies
-                  overlapping each other" — a real-world credibility touch
-                  (these are actual trackable companies, not just an
-                  abstract illustration) sitting right above the CTA row.
-                  Each avatar's white border is what actually creates the
-                  "overlapping" read against a same-color neighbor logo;
-                  without it two similarly-colored logos next to each other
-                  would just look like one wide smear, not distinct stacked
-                  circles. CompanyLogoAvatar already degrades to a plain
-                  building icon (never initials) if a logo guess 404s, same
-                  as everywhere else this component is used. */}
-              <Flex justify="flex-start" itemsCenter mt={12}>
-                {dreamCompanyLogos.map((name, i) => (
-                  <CompanyLogoAvatar
-                    key={name}
-                    logoUrl={guessCompanyLogoUrl(name)}
-                    companyName={name}
-                    size="small"
-                    shape="round"
-                    style={[
-                      styles.dreamCompanyLogo,
-                      i > 0 ? {marginLeft: -12} : null,
-                      {zIndex: dreamCompanyLogos.length - i},
-                    ]}
-                  />
-                ))}
-              </Flex>
-              <Flex justify="flex-start" itemsCenter mt={14}>
-                <Text category="h10" bold style={styles.heroCtaDark}>
-                  {t('home:dream_company_card_cta', { defaultValue: 'View dashboard' })}
-                </Text>
-                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#0063f8', marginLeft: 4 }]} />
-              </Flex>
-            </View>
-            <View style={styles.heroArtWrap}>
-              <ArtDreamCompany size={92} />
-            </View>
-          </View>
-        </TouchableOpacity>
-
-        {/* Refer & Earn (product request: "Home card + a gift-box referral
-            screen") — this used to be reachable only from the More menu,
-            with nothing promoting it on Home at all. Same white hero-card
-            shape as Dream Company Dashboard right above (this feature has
-            never had a colored-gradient treatment), gated on the same
-            "referral_program" admin feature flag src/more/MoreSrc.tsx
-            already respects for its own Refer & Earn row — without this,
-            turning the feature off in admin would hide it from the More
-            menu but leave a dangling promo card here still linking to a
-            now-hidden screen. */}
-        {configService.isFeatureEnabled('referral_program') ? (
-          <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('ReferralProgram')}>
-            <View style={[styles.heroCard, styles.heroCardWhite, styles.heroCardContent]}>
-              <View style={styles.heroCardLeft}>
-                <View style={styles.heroIconWrapLight}>
-                  <Icon pack="eva" name="gift-outline" style={[globalStyle.icon24, { tintColor: '#8B5CF6' }]} />
-                </View>
-                <Text category="h6" bold style={styles.heroTitleDark} mt={14}>
-                  {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
-                </Text>
-                <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
-                  {t('home:referral_card_subtitle', {
-                    defaultValue: 'Invite a friend — you both get a reward when they go Pro.',
-                  })}
-                </Text>
-                <Flex justify="flex-start" itemsCenter mt={14}>
-                  <Text category="h10" bold style={[styles.heroCtaDark, { color: '#8B5CF6' }]}>
-                    {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
-                  </Text>
-                  <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6', marginLeft: 4 }]} />
-                </Flex>
-              </View>
-              <View style={styles.heroArtWrap}>
-                <ArtGiftBox size={92} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        ) : null}
+        {/* Quick-action grid + recent activity (see this file's module
+            comment above for the full redesign context) — same four
+            destinations/copy/colors the old stacked hero cards linked to
+            (Career Coach -> navigation/MainBottomTab.tsx's "Coach" tab;
+            Practice -> that same file's "Practice" tab; Dream Company
+            Dashboard -> src/more/DreamCompanies.tsx, which already enforces
+            its own Pro Premium gate server-side; Refer & Earn ->
+            src/more/ReferralProgram's screen, admin-flag-gated — see the
+            quickActions useMemo above), just laid out as tiles instead of
+            full-width cards. */}
+        <QuickActionGrid items={quickActions} />
+        <RecentActivityList />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
@@ -855,106 +719,5 @@ const themedStyles = StyleService.create({
   },
   verifyBannerText: {
     marginHorizontal: 10,
-  },
-  // Card landing (see this file's module comment). GradientCard already
-  // supplies the shadow/rounded-corner/gradient-fill mechanics (see
-  // components/GradientCard.tsx) — these just size/space the cards and lay
-  // out what's inside each one. Row layout (icon/title/subtitle/CTA on the
-  // left, flexOne so it never runs under the illustration; the SVG
-  // illustration fixed-width on the right) rather than the original stacked
-  // column — product follow-up: "place some svg illustration on the right
-  // side of the cards".
-  heroCard: {
-    marginTop: 16,
-  },
-  heroCardSecond: {
-    marginTop: 16,
-  },
-  heroCardContent: {
-    paddingHorizontal:10,
-    minHeight: 180,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  // BUG FIX (product report: "the svg icons you place are being cut off at
-  // the edge") — GradientCard's inner fill layer is `overflow:'hidden'`
-  // (see components/GradientCard.tsx), and this row's left column had no
-  // shrink constraint of its own beyond the parent's `flex:1` — RN's Yoga
-  // won't shrink a flex child below its own unconstrained content width
-  // without an explicit `minWidth:0` (the standard flexbox fix for exactly
-  // this: text refusing to wrap/shrink inside a row, pushing a sibling
-  // partly outside the clipped bounds). `flexShrink:1` alongside it makes
-  // that shrink allowance explicit rather than relying on `flex:1` alone.
-  heroCardLeft: {
-    flex: 1,
-    flexShrink: 1,
-    minWidth: 0,
-  },
-  // Third card (Dream Company Dashboard) — same size/shape as the two
-  // gradient cards above it, opaque white/theme-adaptive fill instead of a
-  // gradient (product follow-up: "let it be a white background").
-  heroCardWhite: {
-    ...globalStyle.card,
-    backgroundColor: 'background-basic-color-2',
-  },
-  // `flexShrink:0` pins this to its real 92px size no matter what the left
-  // column above needs — paired with heroCardLeft's own shrink fix, this is
-  // the other half of making sure the illustration never gets clipped by
-  // the card's own overflow:hidden edge again.
-  heroArtWrap: {
-    width: 92,
-    height: 92,
-    marginLeft: 14,
-    flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  heroIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.24)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Same circle treatment as heroIconWrap, tinted for a white card instead
-  // of a translucent-white one for a gradient card.
-  heroIconWrapLight: {
-    marginTop: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'color-primary-transparent-100',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Overlapping Fortune 500 logo stack (product request) — a real white
-  // border (not just a transparent gap) is what actually sells the
-  // "stacked circles" look once two logos with similar background colors
-  // sit right next to each other; without it they'd read as one smeared
-  // shape instead of distinct overlapping avatars.
-  dreamCompanyLogo: {
-    borderWidth: 2,
-    borderColor: 'background-basic-color-2',
-  },
-  heroIcon: {
-    tintColor: '#fff',
-  },
-  heroTitle: {
-    color: '#fff',
-  },
-  heroTitleDark: {
-    color: 'text-basic-color',
-  },
-  heroSubtitle: {
-    color: 'rgba(255,255,255,0.85)',
-  },
-  heroCta: {
-    color: '#fff',
-    textDecorationLine: 'none',
-  },
-  heroCtaDark: {
-    color: '#0063f8',
-    marginBottom: 5,
   },
 });

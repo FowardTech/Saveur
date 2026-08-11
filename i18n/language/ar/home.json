@@ -137,5 +137,7 @@
   "your_progress_subtitle": "{{sessions}} جلسات هذا الأسبوع · متوسط الدرجات {{score}}%",
   "student_checkin_title": "كيف يسير هذا الفصل الدراسي؟",
   "student_checkin_subtitle": "تسجيل دخول سريع — أخبرنا كيف تسير الأمور وما الذي تحتاجه.",
-  "student_checkin_placeholder": "مثال: الامتحانات النهائية تقترب، أحتاج للتدرب على مقابلات التدريب..."
+  "student_checkin_placeholder": "مثال: الامتحانات النهائية تقترب، أحتاج للتدرب على مقابلات التدريب...",
+  "recent_activity_title": "النشاط الأخير",
+  "recent_activity_empty": "لا يوجد شيء هنا بعد — تدرب على مقابلة أو تحدث مع مدربك للبدء."
 }

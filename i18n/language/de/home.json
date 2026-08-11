@@ -137,5 +137,7 @@
   "your_progress_subtitle": "{{sessions}} Sitzungen diese Woche · {{score}}% Durchschnittspunktzahl",
   "student_checkin_title": "Wie läuft dieses Semester?",
   "student_checkin_subtitle": "Ein kurzer Check-in — erzähl uns, wie es läuft und was du brauchst.",
-  "student_checkin_placeholder": "z. B. Abschlussprüfungen stehen an, könnte Interviewübung für Praktikumsbewerbungen gebrauchen..."
+  "student_checkin_placeholder": "z. B. Abschlussprüfungen stehen an, könnte Interviewübung für Praktikumsbewerbungen gebrauchen...",
+  "recent_activity_title": "Letzte Aktivität",
+  "recent_activity_empty": "Noch nichts hier — übe ein Interview oder chatte mit deinem Coach, um loszulegen."
 }

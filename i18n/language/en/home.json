@@ -137,5 +137,7 @@
   "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score",
   "student_checkin_title": "How's this term going?",
   "student_checkin_subtitle": "A quick check-in — tell us how things are going and get anything you need.",
-  "student_checkin_placeholder": "e.g. Finals coming up, could use interview practice for internship applications..."
+  "student_checkin_placeholder": "e.g. Finals coming up, could use interview practice for internship applications...",
+  "recent_activity_title": "Recent activity",
+  "recent_activity_empty": "Nothing yet — practice an interview or chat with your coach to get started."
 }

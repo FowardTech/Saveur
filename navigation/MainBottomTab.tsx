@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { AppState, View } from "react-native";
+import { AppState, TouchableOpacity, View } from "react-native";
 import {
   useTheme,
   useStyleSheet,
@@ -7,7 +7,8 @@ import {
   StyleService,
 } from "@ui-kitten/components";
 import { useTranslation } from "react-i18next";
-import { MainBottomTabStackParamList } from "./types";
+import { NavigationProp, useNavigation } from "@react-navigation/native";
+import { MainBottomTabStackParamList, RootStackParamList } from "./types";
 import Text from "components/Text";
 import { globalStyle } from "styles/globalStyle";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -67,6 +68,21 @@ const MainBottomTab = memo(() => {
   const { height, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
   const { visible, show, hide } = useModal();
+  // Home redesign (product request: "restructure the homescreen UI...
+  // floating center nav button" -- one of the reference screenshots'
+  // structural layout elements, see src/home/HomeSrc.tsx's own module
+  // comment for the full context). The bottom nav bar is app-wide shared
+  // chrome, not something Home itself renders, so the floating button
+  // lives here rather than in HomeSrc.tsx -- it raises the Coach tab
+  // (this app's other primary destination alongside Home, and the one
+  // that best matches a voice-assistant reference app's own center
+  // action) onto a circular brand-blue button that visually pokes above
+  // the pill-shaped bar, instead of sitting flush in the row like the
+  // other four tabs. Same navigate('MainBottomTab', {screen: 'Coach'})
+  // pattern src/home/HomeSrc.tsx's own Career Coach card already uses to
+  // jump tabs imperatively.
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const tabBarHeight = (54 + bottom) * (height / 812);
   // Product decision: an unverified user can't use practice/coach/interview
   // tools, but the Profile tab itself stays untouched (Resend/Logout/account
   // settings must always be reachable) — see src/auth/VerifyEmailGate.tsx.
@@ -224,7 +240,7 @@ const MainBottomTab = memo(() => {
           tabBarStyle: [
             styles.tabBarStyle,
             {
-              height: (54 + bottom) * (height / 812),
+              height: tabBarHeight,
             },
           ],
         }}
@@ -261,22 +277,19 @@ const MainBottomTab = memo(() => {
           name="Coach"
           component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesScreen}
           options={{
-            tabBarLabel: t("common:tab_coach", { defaultValue: "Coach" }),
-            tabBarIcon: ({ focused }) => (
-              <ButtonTab
-                focused={focused}
-                icon="comment"
-                // Was a hardcoded numberNotification={1} — always showed
-                // "1" regardless of actual state, i.e. not dynamic at all,
-                // which is exactly the reported issue. Removed rather than
-                // wired to a fake signal: there's no real "unread" concept
-                // for Coach today (the chat isn't persisted server-side,
-                // and there's no proactive/unprompted coach message), so
-                // there's nothing genuine to count yet. Revisit once there
-                // is (e.g. unseen AI-suggested topics).
-                numberNotification={undefined}
-              />
-            ),
+            // Home redesign (floating center nav button, see this
+            // component's own top-of-file comment) -- Coach's normal
+            // label/icon are hidden here since the floating button
+            // rendered below (over the bar) is what visually represents
+            // this tab now; `tabBarButton` still defaults to a real
+            // touchable in this exact spot (react-navigation always
+            // renders one per screen for tap-target/accessibility
+            // purposes even with no visible label/icon), so the tab
+            // itself still works normally if someone taps where its
+            // (now blank) row cell would be, right under the floating
+            // button.
+            tabBarLabel: () => null,
+            tabBarIcon: () => null,
           }}
         />
         <BottomTab.Screen
@@ -318,6 +331,27 @@ const MainBottomTab = memo(() => {
           }}
         />
       </BottomTab.Navigator>
+      {/* Floating center nav button (see this component's own top-of-file
+          comment) -- rendered as a sibling OVER the tab bar rather than as
+          that tab's own tabBarIcon, since tabBarStyle's `overflow:'hidden'`
+          (needed for the bar's rounded top corners) would otherwise clip
+          off the part of the button meant to poke above the bar's top
+          edge. `bottom` is tied to the same responsive tabBarHeight the
+          bar itself uses, offset by half the button's own height so it
+          sits centered right on the bar's top edge. Tapping it uses the
+          exact same imperative tab-switch src/home/HomeSrc.tsx's Career
+          Coach card already relies on. */}
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={[styles.floatingButton, { bottom: tabBarHeight - 30 }]}
+        onPress={() => navigate("MainBottomTab", { screen: "Coach" })}
+      >
+        <Icon
+          pack="assets"
+          name="commentActive"
+          style={{ width: 24, height: 24, tintColor: theme["text-control-color"] }}
+        />
+      </TouchableOpacity>
       {/* Notification modal — only rendered visible when a real, unread
           "feedback_ready" notification exists (see checkFeedbackNotification
           above); its title/message come straight from that notification
@@ -366,6 +400,28 @@ const themedStyles = StyleService.create({
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 0,
+  },
+  // Floating center nav button (see the JSX comment above where this
+  // renders) -- a raised circle sitting on top of the pill bar's own top
+  // edge, brand-blue fill + a real shadow (unlike the flat bar itself,
+  // which had its own Android shadow deliberately removed above) so it
+  // visually reads as "lifted" above the row of flat tab icons around it,
+  // matching the reference screenshots' floating center nav button.
+  floatingButton: {
+    position: "absolute",
+    alignSelf: "center",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "color-primary-500",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 20,
+    shadowColor: "rgba(0, 99, 248, 0.5)",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
   },
   // The colored pill behind the active tab's icon (see ButtonTab above).
   activePill: {

@@ -137,5 +137,7 @@
   "your_progress_subtitle": "이번 주 {{sessions}}회 세션 · 평균 점수 {{score}}%",
   "student_checkin_title": "이번 학기는 어떻게 되어가고 있나요?",
   "student_checkin_subtitle": "간단한 체크인 — 어떻게 지내고 있는지, 필요한 것이 있는지 알려주세요.",
-  "student_checkin_placeholder": "예: 기말고사가 다가와요, 인턴십 면접 연습이 필요해요..."
+  "student_checkin_placeholder": "예: 기말고사가 다가와요, 인턴십 면접 연습이 필요해요...",
+  "recent_activity_title": "최근 활동",
+  "recent_activity_empty": "아직 아무것도 없습니다 — 모의 면접을 연습하거나 코치와 대화하며 시작해보세요."
 }

@@ -137,5 +137,7 @@
   "your_progress_subtitle": "{{sessions}} sesiones esta semana · {{score}}% de puntaje promedio",
   "student_checkin_title": "¿Cómo va este semestre?",
   "student_checkin_subtitle": "Un check-in rápido — cuéntanos cómo van las cosas y qué necesitas.",
-  "student_checkin_placeholder": "p. ej. Se acercan los exámenes finales, me vendría bien practicar entrevistas para prácticas profesionales..."
+  "student_checkin_placeholder": "p. ej. Se acercan los exámenes finales, me vendría bien practicar entrevistas para prácticas profesionales...",
+  "recent_activity_title": "Actividad reciente",
+  "recent_activity_empty": "Nada por aquí todavía — practica una entrevista o habla con tu coach para empezar."
 }
