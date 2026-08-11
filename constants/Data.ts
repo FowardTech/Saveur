@@ -1347,6 +1347,38 @@ export function companiesForCountries(preferredCountries: string[] | undefined):
   return [...regional, ...rest];
 }
 
+// Product request: "on the Dream Company Dashboard card on the home
+// screen, add 3 logos of top Fortune 500 companies overlapping each
+// other... a mixture of the top Fortune 500 in the world and the one
+// locally." Two fixed, universally recognizable global giants (Walmart
+// and Amazon — both consistently top-3 Fortune 500 by revenue, and both
+// have verified logo domains in utils/companyLogo.ts's
+// KNOWN_DOMAIN_OVERRIDES, so their logos are guaranteed to resolve, not a
+// guess) plus one region-specific pick reusing the exact same
+// REGION_BY_COUNTRY/REGION_COMPANIES data the interview-setup company
+// picker above already uses — a user in Nigeria sees Flutterwave/MTN
+// Group next to Walmart/Amazon instead of a third US mega-cap they have
+// no personal connection to. Falls back to a third global name (Apple)
+// when the user has no preferredCountries set (or only picked
+// "Remote - Anywhere", which has no region) so this never renders fewer
+// than 3 logos.
+const DREAM_COMPANY_GLOBAL_LOGOS: [string, string] = ['Walmart', 'Amazon'];
+const DREAM_COMPANY_FALLBACK_LOGO = 'Apple';
+
+export function dreamCompanyLogoNames(preferredCountries: string[] | undefined): [string, string, string] {
+  let local: string | undefined;
+  for (const country of preferredCountries ?? []) {
+    const region = REGION_BY_COUNTRY[country];
+    const candidates = region ? REGION_COMPANIES[region] : undefined;
+    const pick = (candidates ?? []).find(name => !DREAM_COMPANY_GLOBAL_LOGOS.includes(name as any));
+    if (pick) {
+      local = pick;
+      break;
+    }
+  }
+  return [DREAM_COMPANY_GLOBAL_LOGOS[0], DREAM_COMPANY_GLOBAL_LOGOS[1], local ?? DREAM_COMPANY_FALLBACK_LOGO];
+}
+
 // ---- AI Interview Coach additions (gamification / badges) ----
 // Unlock conditions are computed client-side from whatever's cheaply
 // derivable out of existing mock data (practice history, streak, ATS score,

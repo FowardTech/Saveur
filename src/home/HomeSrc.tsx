@@ -32,6 +32,9 @@ import * as dailyCheckinService from 'services/dailyCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import {guessCompanyLogoUrl} from 'utils/companyLogo';
+import {dreamCompanyLogoNames} from 'constants/Data';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -77,6 +80,15 @@ const HomeSrc = memo(() => {
   const { t } = useTranslation(HOME_I18N_NAMESPACES);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
+
+  // Product request: "add 3 logos of top Fortune 500 companies overlapping
+  // each other" to the Dream Company Dashboard card below — see
+  // constants/Data.ts's dreamCompanyLogoNames for the actual
+  // 2-global-plus-1-regional selection logic.
+  const dreamCompanyLogos = React.useMemo(
+    () => dreamCompanyLogoNames(profile?.preferredCountries),
+    [profile?.preferredCountries],
+  );
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -630,6 +642,33 @@ const HomeSrc = memo(() => {
                   defaultValue: 'Track the employers you actually want, with AI research and prep built in.',
                 })}
               </Text>
+              {/* Product request: "add 3 logos of top Fortune 500 companies
+                  overlapping each other" — a real-world credibility touch
+                  (these are actual trackable companies, not just an
+                  abstract illustration) sitting right above the CTA row.
+                  Each avatar's white border is what actually creates the
+                  "overlapping" read against a same-color neighbor logo;
+                  without it two similarly-colored logos next to each other
+                  would just look like one wide smear, not distinct stacked
+                  circles. CompanyLogoAvatar already degrades to a plain
+                  building icon (never initials) if a logo guess 404s, same
+                  as everywhere else this component is used. */}
+              <Flex justify="flex-start" itemsCenter mt={12}>
+                {dreamCompanyLogos.map((name, i) => (
+                  <CompanyLogoAvatar
+                    key={name}
+                    logoUrl={guessCompanyLogoUrl(name)}
+                    companyName={name}
+                    size="small"
+                    shape="round"
+                    style={[
+                      styles.dreamCompanyLogo,
+                      i > 0 ? {marginLeft: -12} : null,
+                      {zIndex: dreamCompanyLogos.length - i},
+                    ]}
+                  />
+                ))}
+              </Flex>
               <Flex justify="flex-start" itemsCenter mt={14}>
                 <Text category="h10" bold style={styles.heroCtaDark}>
                   {t('home:dream_company_card_cta', { defaultValue: 'View dashboard' })}
@@ -829,7 +868,15 @@ const themedStyles = StyleService.create({
     backgroundColor: 'color-primary-transparent-100',
     alignItems: 'center',
     justifyContent: 'center',
-
+  },
+  // Overlapping Fortune 500 logo stack (product request) — a real white
+  // border (not just a transparent gap) is what actually sells the
+  // "stacked circles" look once two logos with similar background colors
+  // sit right next to each other; without it they'd read as one smeared
+  // shape instead of distinct overlapping avatars.
+  dreamCompanyLogo: {
+    borderWidth: 2,
+    borderColor: 'background-basic-color-2',
   },
   heroIcon: {
     tintColor: '#fff',
