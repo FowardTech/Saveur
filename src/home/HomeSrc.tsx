@@ -8,7 +8,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import GradientCard from 'components/GradientCard';
-import { ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
+import { ArtCareerCoach, ArtPractice, ArtDreamCompany, ArtGiftBox } from './HomeHeroArt';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyNewsBanner from './DailyNewsBanner';
@@ -31,6 +31,7 @@ import * as appRatingService from 'services/appRatingService';
 import * as dailyCheckinService from 'services/dailyCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
+import * as configService from 'services/configService';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -641,6 +642,45 @@ const HomeSrc = memo(() => {
             </View>
           </View>
         </TouchableOpacity>
+
+        {/* Refer & Earn (product request: "Home card + a gift-box referral
+            screen") — this used to be reachable only from the More menu,
+            with nothing promoting it on Home at all. Same white hero-card
+            shape as Dream Company Dashboard right above (this feature has
+            never had a colored-gradient treatment), gated on the same
+            "referral_program" admin feature flag src/more/MoreSrc.tsx
+            already respects for its own Refer & Earn row — without this,
+            turning the feature off in admin would hide it from the More
+            menu but leave a dangling promo card here still linking to a
+            now-hidden screen. */}
+        {configService.isFeatureEnabled('referral_program') ? (
+          <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('ReferralProgram')}>
+            <View style={[styles.heroCard, styles.heroCardWhite, styles.heroCardContent]}>
+              <View style={styles.heroCardLeft}>
+                <View style={styles.heroIconWrapLight}>
+                  <Icon pack="eva" name="gift-outline" style={[globalStyle.icon24, { tintColor: '#8B5CF6' }]} />
+                </View>
+                <Text category="h6" bold style={styles.heroTitleDark} mt={14}>
+                  {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
+                </Text>
+                <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
+                  {t('home:referral_card_subtitle', {
+                    defaultValue: 'Invite a friend — you both get a reward when they go Pro.',
+                  })}
+                </Text>
+                <Flex justify="flex-start" itemsCenter mt={14}>
+                  <Text category="h10" bold style={[styles.heroCtaDark, { color: '#8B5CF6' }]}>
+                    {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
+                  </Text>
+                  <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6', marginLeft: 4 }]} />
+                </Flex>
+              </View>
+              <View style={styles.heroArtWrap}>
+                <ArtGiftBox size={92} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        ) : null}
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its

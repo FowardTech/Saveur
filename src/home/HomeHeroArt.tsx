@@ -93,3 +93,36 @@ export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
     />
   </Svg>
 );
+
+// Referral program (product request: "Home card + a gift-box referral
+// screen") — a real gift box (lid, ribbon cross, bow) rather than the flat
+// single-glyph "gift-outline" Eva icon the referral screen used before this,
+// sitting on a white card like ArtDreamCompany above (this feature has
+// never been on a colored-gradient card). Purple box (constants/theme/
+// appTheme.json's color-accent-purple, #8B5CF6 — this app's existing
+// "special/featured" accent, see StatusBadge's `accent` variant) with a
+// warm gold ribbon/bow for a genuine "gift" read rather than reusing the
+// brand-blue everything else on this screen already uses.
+export const ArtGiftBox: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#8B5CF60f" />
+
+    {/* ground shadow, grounds the box in the scene like the other scenes'
+        own shadow ellipse */}
+    <Ellipse cx="60" cy="100" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* box body */}
+    <Rect x="30" y="56" width="60" height="42" rx="4" fill="#8B5CF6" />
+    {/* lid, slightly wider + a hair taller than the body so it reads as a
+        separate piece sitting on top, not just a stripe */}
+    <Rect x="25" y="42" width="70" height="18" rx="4" fill="#7C4DEF" />
+    {/* vertical + horizontal ribbon, over both lid and body in one pass */}
+    <Rect x="53" y="42" width="14" height="56" fill="#FFC94A" />
+    <Rect x="25" y="48" width="70" height="10" fill="#FFC94A" />
+
+    {/* bow — two teardrop loops + a small knot, pinned centered on the lid */}
+    <Path d="M60 42c0-10-16-14-18-4-1.5 7 8 10 18 4z" fill="#FFC94A" />
+    <Path d="M60 42c0-10 16-14 18-4 1.5 7-8 10-18 4z" fill="#FFC94A" />
+    <Circle cx="60" cy="41" r="5" fill="#F5B430" />
+  </Svg>
+);

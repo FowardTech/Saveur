@@ -9,7 +9,6 @@ import {
   Layout,
   Button,
   Input,
-  Icon,
   Spinner,
 } from '@ui-kitten/components';
 
@@ -21,6 +20,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import * as referralService from 'services/referralService';
 import { ReferralSummary } from 'services/referralService';
+import { ArtGiftBox } from 'src/home/HomeHeroArt';
 
 // Referral program — share a link, both sides get a reward off their next
 // subscription once the referred person actually subscribes to a paid plan
@@ -133,7 +133,16 @@ const ReferralProgram = memo(() => {
                 to need; the share button keeps its solid brand-blue fill
                 since that reads fine on a plain card too. */}
             <Layout level="2" style={[styles.heroCard, styles.heroCardInner]}>
-              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon40, { tintColor: theme['color-primary-500'] }]} />
+              {/* Product request: "a gift-box referral screen" — the flat
+                  single-glyph "gift-outline" Eva icon this used to be read
+                  as a generic placeholder, not a "you're being given
+                  something" moment. Same ArtGiftBox illustration
+                  (src/home/HomeHeroArt.tsx) as the new Home promo card
+                  below, at hero size, on this screen's existing white/light
+                  card (no gradient — see this card's own comment further
+                  down about that being a deliberate, prior product
+                  decision). */}
+              <ArtGiftBox size={96} />
               <Text category="h3" bold center mt={16}>
                 {t('more:referral_hero_title', {defaultValue: 'Give {{reward}}, Get {{reward}}', reward: rewardLabel})}
               </Text>
