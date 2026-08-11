@@ -19,6 +19,7 @@ import ShareToUserModal from 'components/ShareToUserModal';
 import {useTranslation} from 'react-i18next';
 import {AuthContext} from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import JobFitAnalysis from './JobFitAnalysis';
 
 // The in-app landing spot for a matched job — reached from three places that
 // all hand it the same JobAlertProps shape: tapping a card on
@@ -227,6 +228,13 @@ const JobAlertDetails = memo(() => {
             ) : null}
           </View>
         </Layout>
+
+        {/* Product request item: "job detail screen should show
+            qualification pills and a resume gap analysis" — see
+            JobFitAnalysis.tsx's own comment for the full design (reuses
+            JDAnalyzer's analysis pipeline, sourced from this posting's own
+            apply_url instead of pasted text; self-hides on any failure). */}
+        <JobFitAnalysis applyUrl={job.applyUrl} jobTitle={job.title} />
 
         <Text category="h9-s" status="placeholder" mb={20} center>
           {job.applied
