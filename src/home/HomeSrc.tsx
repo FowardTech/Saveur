@@ -11,6 +11,8 @@ import GradientCard from 'components/GradientCard';
 import { ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
+import DailyNewsBanner from './DailyNewsBanner';
+import DailyTipsBanner from './DailyTipsBanner';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -462,6 +464,16 @@ const HomeSrc = memo(() => {
         notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
+        {/* Product request: "Daily News and daily tips banners should
+            display at the top of the HomeScreen." Placed as the very first
+            content below the greeting header — both are self-contained and
+            render null with nothing to show (DailyNewsBanner: non-Premium
+            or no digest yet; DailyTipsBanner: no goals set yet), same
+            convention as every other card on this screen, so neither one
+            reserves space or shows a placeholder when empty. */}
+        <DailyNewsBanner />
+        <DailyTipsBanner />
+
         {/* Product request: "remove the continue learning card in the My
             Progress screen and then place it at the top in the homescreen
             but let the background be white and the height be very small
@@ -681,6 +693,12 @@ const themedStyles = StyleService.create({
   topCardsRow: {
     flexDirection: 'row',
     gap: 10,
+    // DailyNewsBanner/DailyTipsBanner above already carry their own
+    // marginTop:12 (each self-contained, same convention as every other
+    // card here), so this row needs its own matching gap in case either or
+    // both banners are hidden (non-Premium, or no goals set) and this row
+    // ends up sitting directly under the header/Content padding instead.
+    marginTop: 12,
   },
   topCardHalf: {
     flex: 1,
