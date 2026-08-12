@@ -196,7 +196,7 @@ const Tile = ({
         </View>
       ) : null}
       <View style={styles.iconWrap}>
-        <Icon3D size={48} />
+        <Icon3D size={60} />
       </View>
       <Text
         category="h8"
@@ -228,7 +228,7 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
         </View>
       ) : null}
       <View style={styles.tallIconWrap}>
-        <Icon3D size={56} />
+        <Icon3D size={72} />
       </View>
       <Text category="h7" bold numberOfLines={2} style={styles.tallTitle}>
         {item.title}
@@ -346,7 +346,11 @@ const themedStyles = StyleService.create({
   // Used to be a fixed-size solid-`tint` circle wrapping a flat Eva glyph;
   // each icon is now a complete standalone SVG badge with its own size/
   // shape/fill, so this wrapper only needs to reserve the same vertical gap
-  // before the title that the old circle badge used to take up.
+  // before the title that the old circle badge used to take up. Icon's own
+  // `size` prop (48/56 -> 60/72, see Tile/TallTile above) is what actually
+  // drives the badge's on-screen size now, per follow-up "make the 3D icons
+  // bigger" -- this wrapper's own dimensions were already just spacing, not
+  // a hard clip/crop box, so nothing here needed to change to let that grow.
   iconWrap: {
     marginBottom: 12,
     flexShrink: 0,
@@ -390,16 +394,19 @@ const themedStyles = StyleService.create({
     bottom: 0,
     opacity: 0.22,
   },
-  // `solid` tiles only (see Tile's own comment) -- full opacity, since
-  // ArtCareerCoach (the only illustration currently paired with a `solid`
-  // tile) is translucent-white/rgba shapes with their own baked-in
-  // subtlety, unlike the solid-`tint`-colored shapes the white tiles'
-  // illustrations use.
+  // `solid` tiles only (see Tile's own comment). Was opacity 1 (full
+  // strength) on the reasoning that ArtCareerCoach's own translucent-white/
+  // rgba shapes already carried enough built-in subtlety on their own --
+  // product follow-up ("make the chat illustration on the career coach
+  // card subtle and transparent") said otherwise, so this now fades to the
+  // same low-contrast level `artWrap` above uses for the other three
+  // tiles' illustrations, for one consistent "subtle corner accent" look
+  // across all four cards regardless of tile color.
   artWrapSolid: {
     position: 'absolute',
     right: 0,
     bottom: 0,
-    opacity: 1,
+    opacity: 0.22,
   },
   artWrapTall: {
     position: 'absolute',
