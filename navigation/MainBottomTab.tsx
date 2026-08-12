@@ -293,7 +293,14 @@ const MainBottomTab = memo(() => {
           name="Interviews"
           component={isGated ? VerifyEmailGate : RequestsBottomNavigator}
           options={{
-            tabBarLabel: t("common:tab_interviews", { defaultValue: "Interviews" }),
+            // BUG FIX (pre-launch redundancy/flow audit): this tab is really
+            // an application tracker + a Practice History log — the
+            // "Interviews" label made it read as a duplicate of the
+            // "Practice" tab, where interviews are actually taken. Route
+            // name ("Interviews") stays as-is to avoid touching every
+            // navigate('Interviews'/'RequestStack', ...) call site — only
+            // the user-facing label changes.
+            tabBarLabel: t("common:tab_interviews", { defaultValue: "Applications" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab
                 focused={focused}

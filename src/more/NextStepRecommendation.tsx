@@ -62,7 +62,14 @@ const NextStepRecommendation = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('more:next_step_title', { defaultValue: "What's Next" })}
+        // BUG FIX (pre-launch redundancy/flow audit): this screen's title
+        // used to default to the exact same string as the unrelated
+        // src/more/WhatsNext.tsx (offer-negotiation help) — a user tapping
+        // a "What's Next" push notification after graduating, then later
+        // opening Menu -> "What's Next", would land on two completely
+        // different features with the same name and no cross-link.
+        // Renamed to keep "What's Next" for the offer-negotiation feature.
+        title={t('more:next_step_title', { defaultValue: 'Your Next Step' })}
         accessoryLeft={<NavigationAction />}
       />
       <Content padder contentContainerStyle={styles.content}>
