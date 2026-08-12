@@ -3,6 +3,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 
 import Text from 'components/Text';
+import GradientCard from 'components/GradientCard';
 import { globalStyle } from 'styles/globalStyle';
 
 // Home redesign (product request: "restructure the homescreen UI... to be
@@ -12,36 +13,32 @@ import { globalStyle } from 'styles/globalStyle';
 // light theme" -- adopt the STRUCTURE, not the reference app's own dark
 // theme or copy). This replaces the four full-width stacked cards (Career
 // Coach, Practice, Dream Company Dashboard, Refer & Earn) HomeSrc.tsx used
-// to render one after another -- same destinations, same icons, same
-// copy/i18n keys, just laid out as a 2-column grid of compact square tiles
-// instead of a long vertical stack of tall cards, matching the reference
-// layout's "grid of things you can do" read. See HomeSrc.tsx for the actual
-// item list.
+// to render one after another -- same destinations/icons/copy, just laid
+// out as a 2-column grid of compact square tiles. See HomeSrc.tsx for the
+// actual item list.
 //
-// PRODUCT FOLLOW-UP (with screenshot: "I would have preferred the main
-// cards should be in this structure grid[, colorful like the second
-// screenshot]") -- the first pass rendered these as plain white tiles with
-// only a small tinted icon circle, which read as flat/undifferentiated
-// next to the reference grid's own solid, distinctly-colored tiles. Each
-// tile's own fill is now its full accent color (the exact same color each
-// card already used for its icon before this change -- Career Coach's
-// existing brand blue, Practice's existing gray, Dream Company's blue,
-// Refer & Earn's purple) with a white icon circle and white bold title,
-// the same colored-fill-plus-translucent-white-icon-circle treatment this
-// app's OLD full-width hero cards already used successfully (see git
-// history / components/GradientCard.tsx's own heroIconWrap convention)
-// before this redesign -- reused here rather than inventing a new pastel
-// treatment from scratch.
+// PRODUCT FOLLOW-UP #1 (with screenshot: "main cards should be... colorful
+// like the second screenshot") -- flat white tiles with a small tinted
+// icon circle became a solid-color fill per tile instead (see git history).
+//
+// PRODUCT FOLLOW-UP #2 ("make it look the best of the best" after being
+// asked directly whether this read as modern) -- flat solid fills read
+// closer to old-school Material Design than a current, premium AI-product
+// feel, and two of the four tiles (Career Coach, Dream Company) reused the
+// exact same blue, which undercut the "colorful, scannable grid" goal in
+// the first place. Each tile is now a real two-tone diagonal gradient (via
+// the same GradientCard component this app's original hero cards already
+// used, not a new dependency) with FOUR genuinely distinct hues -- blue-
+// violet, emerald-teal, amber-orange, and pink-purple -- so every tile
+// reads as its own destination at a glance, matching the gradient-tile
+// language most current AI-product home screens use instead of flat fills.
 export interface QuickAction {
   key: string;
   title: string;
   icon: string;
-  // The tile's own solid fill color AND its icon's circle/glyph tint --
-  // e.g. Career Coach keeps its existing brand blue, Practice its neutral
-  // gray, Dream Company its blue, Refer & Earn its purple, matching each
-  // card's previous accent color 1:1 so the redesign doesn't quietly
-  // change which feature reads as "the primary one."
-  tint: string;
+  // Two-stop diagonal gradient, e.g. ['#0063f8', '#7C3AED'] -- see the
+  // per-item definitions in HomeSrc.tsx's quickActions useMemo.
+  gradient: [string, string];
   onPress: () => void;
 }
 
@@ -53,15 +50,22 @@ const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
       {items.map(item => (
         <TouchableOpacity
           key={item.key}
-          activeOpacity={0.85}
-          style={[styles.tile, { backgroundColor: item.tint }]}
+          activeOpacity={0.88}
+          style={styles.tileWrap}
           onPress={item.onPress}>
-          <View style={styles.iconWrap}>
-            <Icon pack="eva" name={item.icon} style={[globalStyle.icon20, styles.icon]} />
-          </View>
-          <Text category="h9" bold numberOfLines={2} mt={10} style={styles.title}>
-            {item.title}
-          </Text>
+          <GradientCard
+            colors={item.gradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            borderRadius={20}
+            contentStyle={styles.tile}>
+            <View style={styles.iconWrap}>
+              <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
+            </View>
+            <Text category="h9" bold numberOfLines={2} mt={12} style={styles.title}>
+              {item.title}
+            </Text>
+          </GradientCard>
         </TouchableOpacity>
       ))}
     </View>
@@ -81,29 +85,27 @@ const themedStyles = StyleService.create({
     // `gap: 10` above is a plain non-wrapping row, a narrower case that
     // works even on older Yoga builds this one shouldn't assume).
     justifyContent: 'space-between',
-    marginTop: 16,
+    marginTop: 18,
   },
-  // `backgroundColor` is set per-tile inline (each item's own `tint`, a
-  // real hex value -- not a theme token), so it's deliberately left out of
-  // this base style.
-  tile: {
-    ...globalStyle.card,
+  // GradientCard already supplies its own shadow/rounded-corner/fill
+  // mechanics (see components/GradientCard.tsx) -- this just sizes/spaces
+  // the tile within the grid.
+  tileWrap: {
     width: '48%',
-    marginBottom: 12,
-    paddingVertical: 18,
-    paddingHorizontal: 14,
+    marginBottom: 14,
+  },
+  tile: {
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    minHeight: 118,
   },
   iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 46,
+    height: 46,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    // Same translucent-white-circle-on-a-colored-fill treatment this app's
-    // old hero cards used (see GradientCard.tsx's own heroIconWrap) --
-    // gives the icon a soft "badge" against the tile's solid color instead
-    // of needing a second, different color of its own.
-    backgroundColor: 'rgba(255,255,255,0.24)',
+    backgroundColor: 'rgba(255,255,255,0.26)',
   },
   icon: {
     tintColor: '#fff',

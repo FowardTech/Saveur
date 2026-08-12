@@ -90,34 +90,42 @@ const HomeSrc = memo(() => {
     React.useContext(AuthContext);
 
   // The four quick-action tiles (see QuickActionGrid.tsx) — same
-  // destinations/copy/accent colors the old stacked hero cards used, just
-  // fed into the grid instead of rendered as four separate JSX blocks.
+  // destinations/copy the old stacked hero cards used, just fed into the
+  // grid instead of rendered as four separate JSX blocks. Each gets its
+  // own two-stop gradient (product follow-up: "make it look the best of
+  // the best" -- four genuinely distinct hues instead of the flat single-
+  // color fills this had before, and instead of Career Coach/Dream
+  // Company sharing the exact same blue) -- blue-violet for Career Coach
+  // (this app's own brand blue leading into violet, its primary/AI-coach
+  // destination), emerald-teal for Practice (an energetic "go do
+  // something" color, distinct from Coach's blue), amber-orange for Dream
+  // Company Dashboard (a "gold standard/aspirational" feel), pink-purple
+  // for Refer & Earn (a livelier "reward" feel than plain purple alone).
   // Refer & Earn stays behind the same admin "referral_program" feature
-  // flag src/more/MoreSrc.tsx's own row already respects (see that card's
-  // original comment, preserved in spirit here) — filtered out of the
-  // array entirely rather than rendered-then-hidden, so an odd number of
-  // enabled tiles still wraps cleanly.
+  // flag src/more/MoreSrc.tsx's own row already respects — filtered out
+  // of the array entirely rather than rendered-then-hidden, so an odd
+  // number of enabled tiles still wraps cleanly.
   const quickActions = React.useMemo<QuickAction[]>(() => {
     const items: QuickAction[] = [
       {
         key: 'coach',
         title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
         icon: 'message-circle-outline',
-        tint: '#0063f8',
+        gradient: ['#0063f8', '#7C3AED'],
         onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
       },
       {
         key: 'practice',
         title: t('home:practice_card_title', { defaultValue: 'Practice' }),
         icon: 'mic-outline',
-        tint: '#71717a',
+        gradient: ['#10B981', '#0D9488'],
         onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       },
       {
         key: 'dreamCompanies',
         title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
         icon: 'briefcase-outline',
-        tint: '#0063f8',
+        gradient: ['#F59E0B', '#EA580C'],
         onPress: () => navigate('DreamCompanies'),
       },
     ];
@@ -126,7 +134,7 @@ const HomeSrc = memo(() => {
         key: 'referral',
         title: t('home:referral_card_title', { defaultValue: 'Refer & Earn' }),
         icon: 'gift-outline',
-        tint: '#8B5CF6',
+        gradient: ['#EC4899', '#8B5CF6'],
         onPress: () => navigate('ReferralProgram'),
       });
     }

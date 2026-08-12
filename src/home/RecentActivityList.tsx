@@ -1,10 +1,11 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon, Spinner } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, Icon, Spinner } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 
 import Text from 'components/Text';
+import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
 import * as dayActivityService from 'services/dayActivityService';
 import { DayActivityItem, DayActivityItemType } from 'services/dayActivityService';
@@ -33,11 +34,32 @@ const ICON_BY_TYPE: Record<DayActivityItemType, string> = {
   xp_earned: 'award-outline',
 };
 
+// PRODUCT FOLLOW-UP ("make it look the best of the best" after being asked
+// directly whether Home read as modern) -- every row used to share the
+// exact same blue icon regardless of what actually happened, which made a
+// list of nine possible activity types visually indistinguishable from
+// each other. A well-designed activity feed color-codes by event type (the
+// same idea GitHub/Linear-style timelines use) so the feed is scannable at
+// a glance, not just readable line by line -- one deliberately distinct hue
+// per type, matching the same vivid palette QuickActionGrid.tsx's tiles
+// just adopted (blue/teal/amber/purple/pink family) rather than introducing
+// yet another color language.
+const COLOR_BY_TYPE: Record<DayActivityItemType, string> = {
+  mock_interview: '#0063f8',
+  practical_scenario: '#0D9488',
+  daily_challenge: '#F59E0B',
+  daily_checkin_goal: '#EC4899',
+  daily_checkin_reflection: '#7C3AED',
+  career_diary: '#F97316',
+  learning_course: '#6366F1',
+  job_application: '#10B981',
+  xp_earned: '#EAB308',
+};
+
 const MAX_ITEMS = 5;
 
 const RecentActivityList = memo(() => {
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   const { t } = useTranslation(['home', 'common']);
   const [items, setItems] = React.useState<DayActivityItem[] | null>(null);
 
@@ -65,9 +87,14 @@ const RecentActivityList = memo(() => {
 
   return (
     <View style={styles.section}>
-      <Text category="h8" bold mb={12}>
-        {t('home:recent_activity_title', { defaultValue: 'Recent activity' })}
-      </Text>
+      <Flex justify="flex-start" itemsCenter mb={14}>
+        <View style={styles.headerIconWrap}>
+          <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, styles.headerIcon]} />
+        </View>
+        <Text category="h7" bold ml={10}>
+          {t('home:recent_activity_title', { defaultValue: 'Recent activity' })}
+        </Text>
+      </Flex>
       {items === null ? (
         <Spinner size="small" />
       ) : items.length === 0 ? (
@@ -80,34 +107,37 @@ const RecentActivityList = memo(() => {
         </View>
       ) : (
         <View style={styles.listCard}>
-          {items.map((item, i) => (
-            <View
-              key={`${item.type}-${i}`}
-              style={[styles.row, i === items.length - 1 ? styles.rowLast : null]}>
-              <View style={styles.iconWrap}>
-                <Icon
-                  pack="eva"
-                  name={ICON_BY_TYPE[item.type] ?? 'checkmark-circle-2-outline'}
-                  style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
-                />
-              </View>
-              <View style={globalStyle.flexOne}>
-                <Text category="h9" bold numberOfLines={1}>
-                  {item.title}
-                </Text>
-                {item.subtitle ? (
-                  <Text category="h10" status="placeholder" numberOfLines={1} mt={2}>
-                    {item.subtitle}
+          {items.map((item, i) => {
+            const color = COLOR_BY_TYPE[item.type] ?? '#0063f8';
+            return (
+              <View
+                key={`${item.type}-${i}`}
+                style={[styles.row, i === items.length - 1 ? styles.rowLast : null]}>
+                <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
+                  <Icon
+                    pack="eva"
+                    name={ICON_BY_TYPE[item.type] ?? 'checkmark-circle-2-outline'}
+                    style={[globalStyle.icon20, { tintColor: color }]}
+                  />
+                </View>
+                <View style={globalStyle.flexOne}>
+                  <Text category="h9" bold numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  {item.subtitle ? (
+                    <Text category="h10" status="placeholder" numberOfLines={1} mt={2}>
+                      {item.subtitle}
+                    </Text>
+                  ) : null}
+                </View>
+                {item.time ? (
+                  <Text category="h10" status="placeholder" style={styles.time}>
+                    {dayjs(item.time).fromNow()}
                   </Text>
                 ) : null}
               </View>
-              {item.time ? (
-                <Text category="h10" status="placeholder">
-                  {dayjs(item.time).fromNow()}
-                </Text>
-              ) : null}
-            </View>
-          ))}
+            );
+          })}
         </View>
       )}
     </View>
@@ -118,7 +148,18 @@ export default RecentActivityList;
 
 const themedStyles = StyleService.create({
   section: {
-    marginTop: 20,
+    marginTop: 22,
+  },
+  headerIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'color-primary-transparent-100',
+  },
+  headerIcon: {
+    tintColor: 'color-primary-500',
   },
   // BUG FIX (product report, with screenshot: "these cards should be
   // white") — see src/home/DailyTipsBanner.tsx's own comment on this same
@@ -128,34 +169,39 @@ const themedStyles = StyleService.create({
   listCard: {
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
+    borderRadius: 20,
   },
   emptyCard: {
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
-    paddingVertical: 24,
+    borderRadius: 20,
+    paddingVertical: 28,
     paddingHorizontal: 20,
   },
+  // PRODUCT FOLLOW-UP ("best of the best") -- hard borderBottom dividers
+  // between every row read as a dated, dense list-view treatment. Dropped
+  // in favor of consistent vertical rhythm (each row's own paddingVertical)
+  // plus the color-coded icon circles above doing the visual separation
+  // instead -- the same "grouping through spacing and color, not lines"
+  // convention most current activity/timeline feeds use.
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    // Same shared row-divider color already used elsewhere in this app
-    // (InterviewReplay, Student Verification, etc.) -- see
-    // globalStyle.divider's own comment.
-    borderBottomColor: 'rgba(128,128,128,0.15)',
+    paddingVertical: 14,
   },
   rowLast: {
-    borderBottomWidth: 0,
+    paddingBottom: 16,
   },
   iconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 13,
     marginRight: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'color-primary-transparent-100',
+  },
+  time: {
+    marginLeft: 8,
   },
 });
