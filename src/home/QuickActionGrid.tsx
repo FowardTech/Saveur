@@ -74,6 +74,14 @@ export interface QuickAction {
   // Optional small illustration, rendered in this tile's bottom-right
   // corner -- see the module comment above.
   art?: React.FC<{ size: number }>;
+  // Product follow-up: "give the career coach card the default blue
+  // background and the text in it white" -- an opt-in per-tile override
+  // that flips this ONE tile from the Material tonal look (pale `tint`
+  // wash + dark text) every other tile uses back to a solid `tint` fill +
+  // white title, closer to this app's original saturated-hero-card
+  // treatment. See Tile's own comment for what else changes with it (icon
+  // badge, illustration).
+  solid?: boolean;
 }
 
 const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
@@ -133,6 +141,20 @@ export default QuickActionGrid;
 // title (rather than centering them side by side) is what actually makes
 // the tile taller -- a bigger paddingVertical alone was tried in the
 // previous pass and wasn't enough on its own.
+//
+// `solid` (product follow-up: "give the career coach card the default
+// blue background and the text in it white") -- three things flip
+// together when this is on, all necessary for the tile to stay legible:
+// (1) the tile's own fill goes from the pale `${tint}17` wash to a full-
+// strength `tint`; (2) the icon badge, which is normally a solid `tint`
+// circle with a white glyph, would go invisible against a same-color
+// tile, so it becomes a translucent-white circle instead (the same
+// "frosted accent against a saturated fill" treatment this app's very
+// first hero cards used); (3) the title switches to white. `art` is
+// deliberately NOT rendered in solid mode -- the illustrations are drawn
+// in solid `tint` shapes meant to sit on a pale tonal background (see
+// HomeHeroArt.tsx), and would go equally invisible against a same-color
+// solid tile.
 const Tile = ({
   item,
   style,
@@ -144,7 +166,7 @@ const Tile = ({
   styles: ReturnType<typeof useStyleSheet>;
   theme: ReturnType<typeof useTheme>;
 }) => {
-  const Art = item.art;
+  const Art = item.solid ? undefined : item.art;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -153,7 +175,7 @@ const Tile = ({
         styles.tileVertical,
         style,
         Art ? styles.tileArtBottom : null,
-        { backgroundColor: `${item.tint}17` },
+        { backgroundColor: item.solid ? item.tint : `${item.tint}17` },
       ]}
       onPress={item.onPress}>
       {Art ? (
@@ -161,10 +183,18 @@ const Tile = ({
           <Art size={58} />
         </View>
       ) : null}
-      <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
+      <View
+        style={[
+          styles.iconWrap,
+          { backgroundColor: item.solid ? 'rgba(255,255,255,0.24)' : item.tint },
+        ]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
-      <Text category="h8" bold numberOfLines={2} style={styles.titleVertical}>
+      <Text
+        category="h8"
+        bold
+        numberOfLines={2}
+        style={[styles.titleVertical, item.solid ? styles.titleSolid : null]}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -329,6 +359,12 @@ const themedStyles = StyleService.create({
   titleVertical: {
     alignSelf: 'stretch',
     lineHeight: 22,
+  },
+  // `solid` tiles only (see Tile's own comment) -- white title against a
+  // full-strength `tint` fill, since the default title color comes from
+  // the theme's dark body-text token, which would be unreadable there.
+  titleSolid: {
+    color: '#fff',
   },
   tallTitle: {
     lineHeight: 24,
