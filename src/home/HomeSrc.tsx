@@ -13,7 +13,7 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox } from './HomeHeroArt';
+import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -110,11 +110,22 @@ const HomeSrc = memo(() => {
   // rendered again as its own full-width white card right after the grid
   // (see the JSX below).
   //
-  // PRODUCT FOLLOW-UP: "the height of the third card on the right should
-  // cover the space left by the fourth card that was removed earlier" --
-  // Dream Company Dashboard (the last remaining tile) is marked `wide` so
-  // QuickActionGrid.tsx spans it across the full row instead of leaving
-  // it alone at half-width with dead space where Refer & Earn used to sit.
+  // PRODUCT FOLLOW-UP (corrected): an earlier pass read "the height of the
+  // third card on the right should cover the space left by the fourth
+  // card that was removed earlier" as "make Dream Company Dashboard span
+  // the full row." Product corrected that: "I did not mean the dream
+  // company dashboard card. I meant the practice card should span
+  // vertically covering the space left by the fourth card." `tall` is now
+  // on Practice (not `wide` on Dream Company Dashboard) -- see
+  // QuickActionGrid.tsx's own comment for how this drives its bento
+  // layout: Coach + Dream Company Dashboard stack in a left column,
+  // Practice stretches to match their combined height on the right.
+  //
+  // `art` (product follow-up: "place some beautiful illustrations as
+  // background image of the 3 cards") -- each tile's own small
+  // illustration, retinted to match its `tint` (see HomeHeroArt.tsx's own
+  // comment on that retint), rendered as a faded corner accent by
+  // QuickActionGrid.tsx.
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
@@ -122,6 +133,7 @@ const HomeSrc = memo(() => {
       icon: 'message-circle-outline',
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
+      art: ArtCareerCoach,
     },
     {
       key: 'practice',
@@ -129,6 +141,8 @@ const HomeSrc = memo(() => {
       icon: 'mic-outline',
       tint: '#0D9488',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
+      tall: true,
+      art: ArtPractice,
     },
     {
       key: 'dreamCompanies',
@@ -136,7 +150,7 @@ const HomeSrc = memo(() => {
       icon: 'briefcase-outline',
       tint: '#EA580C',
       onPress: () => navigate('DreamCompanies'),
-      wide: true,
+      art: ArtDreamCompany,
     },
   ], [t, navigate]);
 
