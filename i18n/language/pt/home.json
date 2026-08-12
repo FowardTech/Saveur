@@ -97,6 +97,7 @@
   "leaderboard_weekly": "Semanal",
   "leaderboard_your_standing": "Sua posição",
   "leaderboard_your_stats_line": "{{xp}} XP · {{days}} dias seguidos",
+  "learning_courses_card_title": "Cursos de Aprendizagem",
   "my_favorites": "Meus favoritos",
   "next_plan": "Próximo plano",
   "no_upcoming_session": "Nada agendado ainda — defina um lembrete para sua próxima entrevista simulada.",
@@ -108,6 +109,8 @@
   "read_more": "Ler mais",
   "ready_to_practice": "Pronto para praticar?",
   "ready_to_practice_description": "Escolha um tipo de entrevista e inicie uma sessão simulada.",
+  "recent_activity_empty": "Nada por aqui ainda — pratique uma entrevista ou converse com seu coach para começar.",
+  "recent_activity_title": "Atividade recente",
   "recommend_for_you": "Recomendado para você",
   "referral_card_cta": "Compartilhe seu link",
   "referral_card_subtitle": "Convide um amigo — vocês dois recebem uma recompensa quando ele assinar o Pro.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ Agendar",
   "sessions_this_week": "Sessões nesta semana",
   "streak_load_failed": "Não foi possível carregar sua sequência.",
+  "student_checkin_placeholder": "ex. As provas finais estão chegando, eu gostaria de praticar entrevistas para vagas de estágio...",
+  "student_checkin_subtitle": "Um check-in rápido — conte como as coisas estão indo e do que você precisa.",
+  "student_checkin_title": "Como está indo este semestre?",
   "title_first_time": "Encontre o cuidador de confiança certo para sua família!",
   "today": "Hoje",
   "upcoming_session": "Próxima sessão",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "Você",
   "your_progress": "Seu Progresso",
-  "your_progress_subtitle": "{{sessions}} sessões esta semana · {{score}}% de pontuação média",
-  "student_checkin_title": "Como está indo este semestre?",
-  "student_checkin_subtitle": "Um check-in rápido — conte como as coisas estão indo e do que você precisa.",
-  "student_checkin_placeholder": "ex. As provas finais estão chegando, eu gostaria de praticar entrevistas para vagas de estágio...",
-  "recent_activity_title": "Atividade recente",
-  "recent_activity_empty": "Nada por aqui ainda — pratique uma entrevista ou converse com seu coach para começar."
+  "your_progress_subtitle": "{{sessions}} sessões esta semana · {{score}}% de pontuação média"
 }

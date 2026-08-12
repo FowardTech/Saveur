@@ -97,6 +97,7 @@
   "leaderboard_weekly": "Settimanale",
   "leaderboard_your_standing": "La tua posizione",
   "leaderboard_your_stats_line": "{{xp}} XP · {{days}} giorni consecutivi",
+  "learning_courses_card_title": "Corsi di Apprendimento",
   "my_favorites": "I miei preferiti",
   "next_plan": "Prossimo piano",
   "no_upcoming_session": "Ancora nulla in programma — imposta un promemoria per il tuo prossimo colloquio simulato.",
@@ -108,6 +109,8 @@
   "read_more": "Leggi di più",
   "ready_to_practice": "Pronto a esercitarti?",
   "ready_to_practice_description": "Scegli un tipo di colloquio e avvia una sessione simulata.",
+  "recent_activity_empty": "Ancora niente qui — fai pratica con un colloquio o parla con il tuo coach per iniziare.",
+  "recent_activity_title": "Attività recente",
   "recommend_for_you": "Consigliato per te",
   "referral_card_cta": "Condividi il tuo link",
   "referral_card_subtitle": "Invita un amico: ricevete entrambi un premio quando passa a Pro.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ Pianifica",
   "sessions_this_week": "Sessioni questa settimana",
   "streak_load_failed": "Impossibile caricare la tua serie.",
+  "student_checkin_placeholder": "es. Si avvicinano gli esami finali, mi servirebbe fare pratica per colloqui di stage...",
+  "student_checkin_subtitle": "Un rapido check-in — raccontaci come vanno le cose e di cosa hai bisogno.",
+  "student_checkin_title": "Come va questo semestre?",
   "title_first_time": "Trova il caregiver di fiducia giusto per la tua famiglia!",
   "today": "Oggi",
   "upcoming_session": "Prossima sessione",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "Tu",
   "your_progress": "I Tuoi Progressi",
-  "your_progress_subtitle": "{{sessions}} sessioni questa settimana · {{score}}% punteggio medio",
-  "student_checkin_title": "Come va questo semestre?",
-  "student_checkin_subtitle": "Un rapido check-in — raccontaci come vanno le cose e di cosa hai bisogno.",
-  "student_checkin_placeholder": "es. Si avvicinano gli esami finali, mi servirebbe fare pratica per colloqui di stage...",
-  "recent_activity_title": "Attività recente",
-  "recent_activity_empty": "Ancora niente qui — fai pratica con un colloquio o parla con il tuo coach per iniziare."
+  "your_progress_subtitle": "{{sessions}} sessioni questa settimana · {{score}}% punteggio medio"
 }

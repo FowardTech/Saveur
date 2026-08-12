@@ -97,6 +97,7 @@
   "leaderboard_weekly": "주간",
   "leaderboard_your_standing": "나의 순위",
   "leaderboard_your_stats_line": "{{xp}} XP · {{days}}일 연속",
+  "learning_courses_card_title": "학습 강좌",
   "my_favorites": "내 즐겨찾기",
   "next_plan": "다음 플랜",
   "no_upcoming_session": "아직 예정된 일정이 없습니다 — 다음 모의 면접에 대한 알림을 설정하세요.",
@@ -108,6 +109,8 @@
   "read_more": "더 보기",
   "ready_to_practice": "연습할 준비가 되셨나요?",
   "ready_to_practice_description": "면접 유형을 선택하고 모의 세션을 시작하세요.",
+  "recent_activity_empty": "아직 아무것도 없습니다 — 모의 면접을 연습하거나 코치와 대화하며 시작해보세요.",
+  "recent_activity_title": "최근 활동",
   "recommend_for_you": "추천 항목",
   "referral_card_cta": "링크 공유하기",
   "referral_card_subtitle": "친구를 초대하세요 — 친구가 Pro로 전환하면 두 분 모두 보상을 받습니다.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ 일정 추가",
   "sessions_this_week": "이번 주 세션 수",
   "streak_load_failed": "연속 기록을 불러올 수 없습니다.",
+  "student_checkin_placeholder": "예: 기말고사가 다가와요, 인턴십 면접 연습이 필요해요...",
+  "student_checkin_subtitle": "간단한 체크인 — 어떻게 지내고 있는지, 필요한 것이 있는지 알려주세요.",
+  "student_checkin_title": "이번 학기는 어떻게 되어가고 있나요?",
   "title_first_time": "가족을 위한 믿을 수 있는 돌봄 제공자를 찾아보세요!",
   "today": "오늘",
   "upcoming_session": "다가오는 세션",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "나",
   "your_progress": "나의 진행 상황",
-  "your_progress_subtitle": "이번 주 {{sessions}}회 세션 · 평균 점수 {{score}}%",
-  "student_checkin_title": "이번 학기는 어떻게 되어가고 있나요?",
-  "student_checkin_subtitle": "간단한 체크인 — 어떻게 지내고 있는지, 필요한 것이 있는지 알려주세요.",
-  "student_checkin_placeholder": "예: 기말고사가 다가와요, 인턴십 면접 연습이 필요해요...",
-  "recent_activity_title": "최근 활동",
-  "recent_activity_empty": "아직 아무것도 없습니다 — 모의 면접을 연습하거나 코치와 대화하며 시작해보세요."
+  "your_progress_subtitle": "이번 주 {{sessions}}회 세션 · 평균 점수 {{score}}%"
 }

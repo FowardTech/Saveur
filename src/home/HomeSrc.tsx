@@ -89,57 +89,35 @@ const HomeSrc = memo(() => {
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
-  // The three quick-action tiles (see QuickActionGrid.tsx) — same
-  // destinations/copy the old stacked hero cards used, just fed into the
-  // grid instead of rendered as separate JSX blocks.
+  // The four quick-action tiles (see QuickActionGrid.tsx). History: this
+  // grid used to be a saturated-gradient hero-card stack, then a Material
+  // 3 tonal-surface pass (pale container fill + solid icon badge instead
+  // of a gradient), then all three tiles were unified onto this app's one
+  // brand blue instead of distinct per-card hues, with faint corner
+  // illustrations retinted to match (see HomeHeroArt.tsx's own comment).
+  // Full history in git log if any of that needs revisiting.
   //
-  // EXPERIMENTAL "Google-style" pass (product request: "try the Google-
-  // style pass and let's see if it's not good we can revert back") --
-  // swapped each tile's two-stop gradient for a single flat accent color
-  // (QuickActionGrid.tsx now renders it as a pale tonal container + a
-  // solid icon badge in this color, Material 3's own "container/on-
-  // container" pattern, instead of a saturated gradient fill). Easy to
-  // revert to the gradient version via git history if this doesn't land
-  // well.
+  // Refer & Earn used to be a 4th grid tile; product asked for it back out
+  // as its own standalone white card instead (see the JSX below, right
+  // after this grid) -- that briefly left this grid an ODD 3-tile set, so
+  // Practice was marked `tall` to absorb the gap the missing 4th tile left
+  // behind (see QuickActionGrid.tsx's own bento-layout comment for that
+  // period's history).
   //
-  // PRODUCT FOLLOW-UP: "All the three cards should have the default blue
-  // background" -- the three tiles used distinct per-card hues (blue/
-  // emerald/amber) up through the previous pass; now all three share this
-  // app's one brand blue instead. HomeHeroArt.tsx's Practice/Dream Company
-  // illustrations were retinted back to blue too (see that file's own
-  // comment) so the faint background art still matches its own tile's
-  // color rather than clashing with it.
-  //
-  // PRODUCT FOLLOW-UP (earlier): "remove the referral card as one of the
-  // grid cards and place it as a normal white card as below as you did
-  // before" -- Refer & Earn is no longer in this grid at all; it's
-  // rendered again as its own full-width white card right after the grid
-  // (see the JSX below).
-  //
-  // PRODUCT FOLLOW-UP (corrected): an earlier pass read "the height of the
-  // third card on the right should cover the space left by the fourth
-  // card that was removed earlier" as "make Dream Company Dashboard span
-  // the full row." Product corrected that: "I did not mean the dream
-  // company dashboard card. I meant the practice card should span
-  // vertically covering the space left by the fourth card." `tall` is now
-  // on Practice (not `wide` on Dream Company Dashboard) -- see
-  // QuickActionGrid.tsx's own comment for how this drives its bento
-  // layout: Coach + Dream Company Dashboard stack in a left column,
-  // Practice stretches to match their combined height on the right.
-  //
-  // Background illustrations, round 4 (product follow-up: "put back the
-  // illustrations of the other 2 cards and then make the illustrations of
-  // the 3 cards subtle and transparent the way you made them before") --
-  // all three tiles carry an `art` again. "The way you made them before"
-  // (faint, low-opacity) is back, but still rendered in QuickActionGrid.
-  // tsx's normal-document-flow position (below the title, not absolutely
-  // positioned behind it) rather than the earlier corner-overlay
-  // mechanism -- that overlay version is what caused the actual "title
-  // covering the illustration" bug on Dream Company Dashboard's longer
-  // title, so reintroducing it here for all three would very likely bring
-  // the same bug back on any card whose title happens to wrap wide/tall
-  // enough. This keeps the SUBTLE LOOK product asked for while keeping the
-  // overlap fix.
+  // PRODUCT FOLLOW-UP: "place a fourth card below the practice card and
+  // name it Learning Courses" -- a real 4th tile again, so `tall` comes
+  // back off Practice (QuickActionGrid.tsx falls back to its plain 2-up
+  // wrapping grid whenever nothing is marked `tall`) and Learning Courses
+  // slots in as the 4th array item. Array order IS render order in that
+  // plain grid (fills left-to-right, top-to-bottom), so Learning Courses
+  // -- 4th item -- lands directly under Practice -- 2nd item -- exactly
+  // matching the request, with no bento math needed anymore. Routes to
+  // the same LearningCourses screen MoreSrc.tsx's own "Learning Courses"
+  // row does; unlike that row, this tile isn't gated behind the
+  // `learning_courses` admin feature flag, matching how Coach/Practice/
+  // Dream Company Dashboard already aren't gated at this grid level either
+  // (DreamCompanies enforces its own Pro Premium gate server-side instead
+  // -- see that entry's own history).
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
@@ -155,7 +133,6 @@ const HomeSrc = memo(() => {
       icon: 'mic-outline',
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
-      tall: true,
       art: ArtPractice,
     },
     {
@@ -165,6 +142,13 @@ const HomeSrc = memo(() => {
       tint: '#0063f8',
       onPress: () => navigate('DreamCompanies'),
       art: ArtDreamCompany,
+    },
+    {
+      key: 'learningCourses',
+      title: t('home:learning_courses_card_title', { defaultValue: 'Learning Courses' }),
+      icon: 'book-outline',
+      tint: '#0063f8',
+      onPress: () => navigate('LearningCourses'),
     },
   ], [t, navigate]);
 

@@ -97,6 +97,7 @@
   "leaderboard_weekly": "साप्ताहिक",
   "leaderboard_your_standing": "आपकी रैंकिंग",
   "leaderboard_your_stats_line": "{{xp}} XP · लगातार {{days}} दिन",
+  "learning_courses_card_title": "लर्निंग कोर्स",
   "my_favorites": "मेरे पसंदीदा",
   "next_plan": "अगली योजना",
   "no_upcoming_session": "अभी तक कुछ भी निर्धारित नहीं है — अपने अगले मॉक इंटरव्यू के लिए रिमाइंडर सेट करें।",
@@ -108,6 +109,8 @@
   "read_more": "और पढ़ें",
   "ready_to_practice": "अभ्यास के लिए तैयार हैं?",
   "ready_to_practice_description": "एक इंटरव्यू प्रकार चुनें और एक मॉक सत्र शुरू करें।",
+  "recent_activity_empty": "अभी तक कुछ नहीं है — शुरू करने के लिए किसी इंटरव्यू का अभ्यास करें या अपने कोच से बात करें।",
+  "recent_activity_title": "हाल की गतिविधि",
   "recommend_for_you": "आपके लिए अनुशंसित",
   "referral_card_cta": "अपना लिंक साझा करें",
   "referral_card_subtitle": "किसी दोस्त को आमंत्रित करें — जब वे Pro लें तो आप दोनों को इनाम मिलेगा।",
@@ -116,6 +119,9 @@
   "schedule_new": "+ शेड्यूल करें",
   "sessions_this_week": "इस सप्ताह के सत्र",
   "streak_load_failed": "आपकी स्ट्रीक लोड नहीं हो सकी।",
+  "student_checkin_placeholder": "जैसे: फाइनल परीक्षाएं आ रही हैं, इंटर्नशिप इंटरव्यू के लिए अभ्यास चाहिए...",
+  "student_checkin_subtitle": "एक त्वरित चेक-इन — हमें बताएं कि चीज़ें कैसी चल रही हैं और आपको क्या चाहिए।",
+  "student_checkin_title": "यह सेमेस्टर कैसा चल रहा है?",
   "title_first_time": "अपने परिवार के लिए सही भरोसेमंद देखभालकर्ता खोजें!",
   "today": "आज",
   "upcoming_session": "आगामी सत्र",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "आप",
   "your_progress": "आपकी प्रगति",
-  "your_progress_subtitle": "इस सप्ताह {{sessions}} सत्र · {{score}}% औसत स्कोर",
-  "student_checkin_title": "यह सेमेस्टर कैसा चल रहा है?",
-  "student_checkin_subtitle": "एक त्वरित चेक-इन — हमें बताएं कि चीज़ें कैसी चल रही हैं और आपको क्या चाहिए।",
-  "student_checkin_placeholder": "जैसे: फाइनल परीक्षाएं आ रही हैं, इंटर्नशिप इंटरव्यू के लिए अभ्यास चाहिए...",
-  "recent_activity_title": "हाल की गतिविधि",
-  "recent_activity_empty": "अभी तक कुछ नहीं है — शुरू करने के लिए किसी इंटरव्यू का अभ्यास करें या अपने कोच से बात करें।"
+  "your_progress_subtitle": "इस सप्ताह {{sessions}} सत्र · {{score}}% औसत स्कोर"
 }

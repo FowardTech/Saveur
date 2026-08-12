@@ -97,6 +97,7 @@
   "leaderboard_weekly": "Weekly",
   "leaderboard_your_standing": "Your standing",
   "leaderboard_your_stats_line": "{{xp}} XP · {{days}}-day streak",
+  "learning_courses_card_title": "Learning Courses",
   "my_favorites": "My Favorites",
   "next_plan": "Next Plan",
   "no_upcoming_session": "Nothing scheduled yet — set a reminder for your next mock interview.",
@@ -108,6 +109,8 @@
   "read_more": "Read more",
   "ready_to_practice": "Ready to practice?",
   "ready_to_practice_description": "Pick an interview type and start a mock session.",
+  "recent_activity_empty": "Nothing yet — practice an interview or chat with your coach to get started.",
+  "recent_activity_title": "Recent activity",
   "recommend_for_you": "Recommended for You",
   "referral_card_cta": "Share your link",
   "referral_card_subtitle": "Invite a friend — you both get a reward when they go Pro.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ Schedule",
   "sessions_this_week": "Sessions This Week",
   "streak_load_failed": "Could not load your streak.",
+  "student_checkin_placeholder": "e.g. Finals coming up, could use interview practice for internship applications...",
+  "student_checkin_subtitle": "A quick check-in — tell us how things are going and get anything you need.",
+  "student_checkin_title": "How's this term going?",
   "title_first_time": "Find the right trusted caregiver for your family!",
   "today": "Today",
   "upcoming_session": "Upcoming Session",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "You",
   "your_progress": "Your Progress",
-  "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score",
-  "student_checkin_title": "How's this term going?",
-  "student_checkin_subtitle": "A quick check-in — tell us how things are going and get anything you need.",
-  "student_checkin_placeholder": "e.g. Finals coming up, could use interview practice for internship applications...",
-  "recent_activity_title": "Recent activity",
-  "recent_activity_empty": "Nothing yet — practice an interview or chat with your coach to get started."
+  "your_progress_subtitle": "{{sessions}} sessions this week · {{score}}% avg score"
 }

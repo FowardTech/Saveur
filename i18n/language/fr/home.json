@@ -97,6 +97,7 @@
   "leaderboard_weekly": "Hebdomadaire",
   "leaderboard_your_standing": "Votre classement",
   "leaderboard_your_stats_line": "{{xp}} XP · {{days}} jours d'affilée",
+  "learning_courses_card_title": "Cours de formation",
   "my_favorites": "Mes favoris",
   "next_plan": "Prochain forfait",
   "no_upcoming_session": "Rien de prévu pour le moment — définissez un rappel pour votre prochain entretien simulé.",
@@ -108,6 +109,8 @@
   "read_more": "Lire la suite",
   "ready_to_practice": "Prêt à vous entraîner ?",
   "ready_to_practice_description": "Choisissez un type d'entretien et démarrez une session simulée.",
+  "recent_activity_empty": "Rien pour l'instant — entraînez-vous à un entretien ou discutez avec votre coach pour commencer.",
+  "recent_activity_title": "Activité récente",
   "recommend_for_you": "Recommandé pour vous",
   "referral_card_cta": "Partagez votre lien",
   "referral_card_subtitle": "Invitez un ami — vous recevez tous les deux une récompense quand il passe à Pro.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ Planifier",
   "sessions_this_week": "Sessions cette semaine",
   "streak_load_failed": "Impossible de charger votre série.",
+  "student_checkin_placeholder": "ex. Les examens finaux approchent, j'aurais besoin de m'entraîner aux entretiens pour des stages...",
+  "student_checkin_subtitle": "Un point rapide — dites-nous comment ça va et ce dont vous avez besoin.",
+  "student_checkin_title": "Comment se passe ce semestre ?",
   "title_first_time": "Trouvez le bon aidant de confiance pour votre famille !",
   "today": "Aujourd'hui",
   "upcoming_session": "Session à venir",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "Vous",
   "your_progress": "Vos Progrès",
-  "your_progress_subtitle": "{{sessions}} séances cette semaine · {{score}}% de score moyen",
-  "student_checkin_title": "Comment se passe ce semestre ?",
-  "student_checkin_subtitle": "Un point rapide — dites-nous comment ça va et ce dont vous avez besoin.",
-  "student_checkin_placeholder": "ex. Les examens finaux approchent, j'aurais besoin de m'entraîner aux entretiens pour des stages...",
-  "recent_activity_title": "Activité récente",
-  "recent_activity_empty": "Rien pour l'instant — entraînez-vous à un entretien ou discutez avec votre coach pour commencer."
+  "your_progress_subtitle": "{{sessions}} séances cette semaine · {{score}}% de score moyen"
 }

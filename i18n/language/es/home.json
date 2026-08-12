@@ -97,6 +97,7 @@
   "leaderboard_weekly": "Semanal",
   "leaderboard_your_standing": "Tu posición",
   "leaderboard_your_stats_line": "{{xp}} XP · racha de {{days}} días",
+  "learning_courses_card_title": "Cursos de Aprendizaje",
   "my_favorites": "Mis favoritos",
   "next_plan": "Próximo plan",
   "no_upcoming_session": "Nada programado aún — configura un recordatorio para tu próxima entrevista simulada.",
@@ -108,6 +109,8 @@
   "read_more": "Leer más",
   "ready_to_practice": "¿Listo para practicar?",
   "ready_to_practice_description": "Elige un tipo de entrevista y comienza una sesión simulada.",
+  "recent_activity_empty": "Nada por aquí todavía — practica una entrevista o habla con tu coach para empezar.",
+  "recent_activity_title": "Actividad reciente",
   "recommend_for_you": "Recomendado para ti",
   "referral_card_cta": "Comparte tu enlace",
   "referral_card_subtitle": "Invita a un amigo: ambos reciben una recompensa cuando se pase a Pro.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ Programar",
   "sessions_this_week": "Sesiones esta semana",
   "streak_load_failed": "No se pudo cargar tu racha.",
+  "student_checkin_placeholder": "p. ej. Se acercan los exámenes finales, me vendría bien practicar entrevistas para prácticas profesionales...",
+  "student_checkin_subtitle": "Un check-in rápido — cuéntanos cómo van las cosas y qué necesitas.",
+  "student_checkin_title": "¿Cómo va este semestre?",
   "title_first_time": "¡Encuentra al cuidador de confianza ideal para tu familia!",
   "today": "Hoy",
   "upcoming_session": "Próxima sesión",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "Tú",
   "your_progress": "Tu Progreso",
-  "your_progress_subtitle": "{{sessions}} sesiones esta semana · {{score}}% de puntaje promedio",
-  "student_checkin_title": "¿Cómo va este semestre?",
-  "student_checkin_subtitle": "Un check-in rápido — cuéntanos cómo van las cosas y qué necesitas.",
-  "student_checkin_placeholder": "p. ej. Se acercan los exámenes finales, me vendría bien practicar entrevistas para prácticas profesionales...",
-  "recent_activity_title": "Actividad reciente",
-  "recent_activity_empty": "Nada por aquí todavía — practica una entrevista o habla con tu coach para empezar."
+  "your_progress_subtitle": "{{sessions}} sesiones esta semana · {{score}}% de puntaje promedio"
 }

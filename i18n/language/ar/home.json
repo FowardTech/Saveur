@@ -97,6 +97,7 @@
   "leaderboard_weekly": "أسبوعي",
   "leaderboard_your_standing": "ترتيبك",
   "leaderboard_your_stats_line": "{{xp}} نقاط الخبرة · {{days}} أيام متتالية",
+  "learning_courses_card_title": "دورات التعلم",
   "my_favorites": "المفضلة لدي",
   "next_plan": "الخطة التالية",
   "no_upcoming_session": "لا يوجد شيء مجدول بعد — عيّن تذكيرًا لمقابلتك التجريبية القادمة.",
@@ -108,6 +109,8 @@
   "read_more": "قراءة المزيد",
   "ready_to_practice": "هل أنت مستعد للتدريب؟",
   "ready_to_practice_description": "اختر نوع المقابلة وابدأ جلسة تجريبية.",
+  "recent_activity_empty": "لا يوجد شيء هنا بعد — تدرب على مقابلة أو تحدث مع مدربك للبدء.",
+  "recent_activity_title": "النشاط الأخير",
   "recommend_for_you": "موصى به لك",
   "referral_card_cta": "شارك رابطك",
   "referral_card_subtitle": "ادعُ صديقًا — يحصل كلاكما على مكافأة عندما يشترك في Pro.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ جدولة",
   "sessions_this_week": "الجلسات هذا الأسبوع",
   "streak_load_failed": "تعذّر تحميل سلسلتك المتتالية.",
+  "student_checkin_placeholder": "مثال: الامتحانات النهائية تقترب، أحتاج للتدرب على مقابلات التدريب...",
+  "student_checkin_subtitle": "تسجيل دخول سريع — أخبرنا كيف تسير الأمور وما الذي تحتاجه.",
+  "student_checkin_title": "كيف يسير هذا الفصل الدراسي؟",
   "title_first_time": "اعثر على مقدم الرعاية الموثوق المناسب لعائلتك!",
   "today": "اليوم",
   "upcoming_session": "الجلسة القادمة",
@@ -134,10 +140,5 @@
   "xp_label": "نقاط الخبرة",
   "you": "أنت",
   "your_progress": "تقدمك",
-  "your_progress_subtitle": "{{sessions}} جلسات هذا الأسبوع · متوسط الدرجات {{score}}%",
-  "student_checkin_title": "كيف يسير هذا الفصل الدراسي؟",
-  "student_checkin_subtitle": "تسجيل دخول سريع — أخبرنا كيف تسير الأمور وما الذي تحتاجه.",
-  "student_checkin_placeholder": "مثال: الامتحانات النهائية تقترب، أحتاج للتدرب على مقابلات التدريب...",
-  "recent_activity_title": "النشاط الأخير",
-  "recent_activity_empty": "لا يوجد شيء هنا بعد — تدرب على مقابلة أو تحدث مع مدربك للبدء."
+  "your_progress_subtitle": "{{sessions}} جلسات هذا الأسبوع · متوسط الدرجات {{score}}%"
 }

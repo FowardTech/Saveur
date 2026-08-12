@@ -97,6 +97,7 @@
   "leaderboard_weekly": "Wöchentlich",
   "leaderboard_your_standing": "Deine Platzierung",
   "leaderboard_your_stats_line": "{{xp}} XP · {{days}} Tage in Folge",
+  "learning_courses_card_title": "Lernkurse",
   "my_favorites": "Meine Favoriten",
   "next_plan": "Nächster Plan",
   "no_upcoming_session": "Noch nichts geplant — stelle eine Erinnerung für dein nächstes Übungsinterview ein.",
@@ -108,6 +109,8 @@
   "read_more": "Weiterlesen",
   "ready_to_practice": "Bereit zum Üben?",
   "ready_to_practice_description": "Wähle eine Interviewart und starte eine simulierte Sitzung.",
+  "recent_activity_empty": "Noch nichts hier — übe ein Interview oder chatte mit deinem Coach, um loszulegen.",
+  "recent_activity_title": "Letzte Aktivität",
   "recommend_for_you": "Für dich empfohlen",
   "referral_card_cta": "Teile deinen Link",
   "referral_card_subtitle": "Lade einen Freund ein — ihr bekommt beide eine Belohnung, wenn er Pro wird.",
@@ -116,6 +119,9 @@
   "schedule_new": "+ Planen",
   "sessions_this_week": "Sitzungen diese Woche",
   "streak_load_failed": "Deine Serie konnte nicht geladen werden.",
+  "student_checkin_placeholder": "z. B. Abschlussprüfungen stehen an, könnte Interviewübung für Praktikumsbewerbungen gebrauchen...",
+  "student_checkin_subtitle": "Ein kurzer Check-in — erzähl uns, wie es läuft und was du brauchst.",
+  "student_checkin_title": "Wie läuft dieses Semester?",
   "title_first_time": "Finde die richtige vertrauenswürdige Betreuungsperson für deine Familie!",
   "today": "Heute",
   "upcoming_session": "Bevorstehende Sitzung",
@@ -134,10 +140,5 @@
   "xp_label": "XP",
   "you": "Du",
   "your_progress": "Dein Fortschritt",
-  "your_progress_subtitle": "{{sessions}} Sitzungen diese Woche · {{score}}% Durchschnittspunktzahl",
-  "student_checkin_title": "Wie läuft dieses Semester?",
-  "student_checkin_subtitle": "Ein kurzer Check-in — erzähl uns, wie es läuft und was du brauchst.",
-  "student_checkin_placeholder": "z. B. Abschlussprüfungen stehen an, könnte Interviewübung für Praktikumsbewerbungen gebrauchen...",
-  "recent_activity_title": "Letzte Aktivität",
-  "recent_activity_empty": "Noch nichts hier — übe ein Interview oder chatte mit deinem Coach, um loszulegen."
+  "your_progress_subtitle": "{{sessions}} Sitzungen diese Woche · {{score}}% Durchschnittspunktzahl"
 }
