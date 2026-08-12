@@ -13,7 +13,7 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
+import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany, ArtLearningCourses } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -149,6 +149,7 @@ const HomeSrc = memo(() => {
       icon: 'book-outline',
       tint: '#0063f8',
       onPress: () => navigate('LearningCourses'),
+      art: ArtLearningCourses,
     },
   ], [t, navigate]);
 

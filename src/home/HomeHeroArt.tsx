@@ -113,6 +113,40 @@ export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
   </Svg>
 );
 
+// src/home/HomeSrc.tsx's "Learning Courses" quick-action tile (product
+// follow-up: "you did not give the learning course card its own
+// illustration") — an open book reads as the clearest "courses/learning"
+// glyph at this size, same construction as ArtDreamCompany above (a
+// lighter-tint page behind a full-brand-blue one for real depth, not a
+// single flat shape) plus a small bookmark ribbon pinned to the spine for
+// a "there's real progress being tracked here" beat, matching this app's
+// own reward-forward tone (see ArtGiftBox/ArtDreamCompany's own pinned
+// badges) rather than a static, generic book icon.
+export const ArtLearningCourses: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
+    <Ellipse cx="60" cy="100" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* left page — lighter tint, sits behind the spine for real depth */}
+    <Path d="M58 38 L20 46 L20 90 L58 96 Z" fill="#C7DBFF" />
+    <Rect x="27" y="58" width="24" height="4" rx="2" fill="#FFFFFF" />
+    <Rect x="27" y="68" width="24" height="4" rx="2" fill="#FFFFFF" />
+    <Rect x="27" y="78" width="18" height="4" rx="2" fill="#FFFFFF" />
+
+    {/* right page — full brand blue, the "open" side facing forward */}
+    <Path d="M62 38 L100 46 L100 90 L62 96 Z" fill="#0063f8" />
+    <Rect x="69" y="58" width="24" height="4" rx="2" fill="#EAF2FF" />
+    <Rect x="69" y="68" width="24" height="4" rx="2" fill="#EAF2FF" />
+    <Rect x="69" y="78" width="18" height="4" rx="2" fill="#EAF2FF" />
+
+    {/* spine, binds both pages into one scene */}
+    <Rect x="58" y="36" width="4" height="62" rx="2" fill="#0047B3" />
+
+    {/* bookmark ribbon, pinned at the spine's top */}
+    <Path d="M56 20h8v22l-4-3-4 3z" fill="#FFC94A" />
+  </Svg>
+);
+
 // Referral program (product request: "Home card + a gift-box referral
 // screen") — a real gift box (lid, ribbon cross, bow) rather than the flat
 // single-glyph "gift-outline" Eva icon the referral screen used before this,
