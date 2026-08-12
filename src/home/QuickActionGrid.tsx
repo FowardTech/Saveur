@@ -30,6 +30,21 @@ import { globalStyle } from 'styles/globalStyle';
 // tiles stacked in a left column, not a tile stretched to full row width.
 // `wide` is gone; `tall` (see HomeSrc.tsx's quickActions -- now set on
 // Practice) drives this two-column bento layout below instead.
+//
+// BACKGROUND ILLUSTRATIONS -- TRIED AND REVERTED (product follow-up, with
+// screenshot: "this not looking nice at all it look so crowded and not
+// professional"). A corner-anchored `art` illustration per tile was built
+// and shipped once (see git history), but broke two ways at once: (1) a
+// real bug -- the illustration rendered outside the tile's own rounded
+// bounds into the gap between tiles, meaning `overflow:'hidden'` wasn't
+// actually clipping an absolutely-positioned sibling here; (2) even where
+// contained, a multi-shape illustration crammed into a compact tile just
+// added visual noise on top of the icon/title, the same "too busy" problem
+// this screen's earlier gradient-tile pass already hit once (see this
+// file's own "Google-style pass" comment below). Removed entirely rather
+// than just bug-fixed, since product's own reaction was about the crowded
+// LOOK, not just the clipping glitch -- these tiles are deliberately back
+// to plain icon + title only, no `art` field.
 export interface QuickAction {
   key: string;
   title: string;
@@ -43,15 +58,6 @@ export interface QuickAction {
   // match the combined height of the other (non-tall) tiles stacked in a
   // left column -- see the module comment above.
   tall?: boolean;
-  // Optional small illustration rendered as a faded, corner-anchored
-  // background accent behind this tile's icon/title (product follow-up:
-  // "place some beautiful illustrations as background image of the 3
-  // cards") -- see HomeHeroArt.tsx's retinted Art* components. Kept small,
-  // low-opacity, and painted before the icon/title so it never competes
-  // with them for legibility -- an earlier gradient-tile pass had exactly
-  // that bug ("the inner color gradient padding is covering the captions
-  // of the cards") and this is deliberately built to not repeat it.
-  art?: React.FC<{ size: number }>;
 }
 
 const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
@@ -110,17 +116,11 @@ const Tile = ({
   styles: ReturnType<typeof useStyleSheet>;
   theme: ReturnType<typeof useTheme>;
 }) => {
-  const Art = item.art;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
       style={[styles.tile, style, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
-      {Art ? (
-        <View style={styles.artWrap} pointerEvents="none">
-          <Art size={78} />
-        </View>
-      ) : null}
       <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
@@ -139,17 +139,11 @@ const Tile = ({
 // title-right row the smaller tiles use -- a wide-but-short row would sit
 // awkwardly stranded inside a tall container.
 const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<typeof useStyleSheet> }) => {
-  const Art = item.art;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
       style={[styles.tile, styles.tallTile, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
-      {Art ? (
-        <View style={styles.artWrapTall} pointerEvents="none">
-          <Art size={128} />
-        </View>
-      ) : null}
       <View style={[styles.tallIconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon28, styles.icon]} />
       </View>
@@ -197,9 +191,6 @@ const themedStyles = StyleService.create({
   // plain white cards. Radius 24 (vs. this app's usual 14px) and roomier
   // padding than the first pass -- Material You's own larger, softer
   // corner language, made a little bigger again per explicit follow-up.
-  // `overflow: 'hidden'` clips each tile's optional background
-  // illustration (see `art`/`artWrap` below) to the tile's own rounded
-  // corners instead of it poking past a square edge.
   tile: {
     marginBottom: 14,
     borderRadius: 24,
@@ -207,7 +198,6 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     paddingVertical: 22,
     paddingHorizontal: 18,
-    overflow: 'hidden',
   },
   tileHalf: {
     width: '48%',
@@ -254,25 +244,5 @@ const themedStyles = StyleService.create({
   },
   tallTitle: {
     lineHeight: 24,
-  },
-  // Background illustration accent (product follow-up: "place some
-  // beautiful illustrations as background image of the 3 cards") --
-  // bottom-right corner, deliberately bleeding partly off the tile's edge
-  // (negative right/bottom) and faded, so it reads as a soft texture
-  // behind the icon/title rather than a second competing focal point.
-  // Painted before the icon/title in the component above (so it sits
-  // underneath) and `pointerEvents: 'none'` so it never intercepts the
-  // tile's own tap.
-  artWrap: {
-    position: 'absolute',
-    right: -18,
-    bottom: -18,
-    opacity: 0.5,
-  },
-  artWrapTall: {
-    position: 'absolute',
-    right: -26,
-    bottom: -26,
-    opacity: 0.55,
   },
 });

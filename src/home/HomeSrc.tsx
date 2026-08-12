@@ -13,7 +13,7 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
+import { ArtGiftBox } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -121,11 +121,11 @@ const HomeSrc = memo(() => {
   // layout: Coach + Dream Company Dashboard stack in a left column,
   // Practice stretches to match their combined height on the right.
   //
-  // `art` (product follow-up: "place some beautiful illustrations as
-  // background image of the 3 cards") -- each tile's own small
-  // illustration, retinted to match its `tint` (see HomeHeroArt.tsx's own
-  // comment on that retint), rendered as a faded corner accent by
-  // QuickActionGrid.tsx.
+  // Background illustrations tried and reverted (product follow-up, with
+  // screenshot: "this not looking nice at all it look so crowded and not
+  // professional") -- see QuickActionGrid.tsx's own comment for the full
+  // reasoning (a real clipping bug plus genuine visual clutter). No `art`
+  // field on these three tiles anymore.
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
@@ -133,7 +133,6 @@ const HomeSrc = memo(() => {
       icon: 'message-circle-outline',
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
-      art: ArtCareerCoach,
     },
     {
       key: 'practice',
@@ -142,7 +141,6 @@ const HomeSrc = memo(() => {
       tint: '#0D9488',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       tall: true,
-      art: ArtPractice,
     },
     {
       key: 'dreamCompanies',
@@ -150,7 +148,6 @@ const HomeSrc = memo(() => {
       icon: 'briefcase-outline',
       tint: '#EA580C',
       onPress: () => navigate('DreamCompanies'),
-      art: ArtDreamCompany,
     },
   ], [t, navigate]);
 
