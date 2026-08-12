@@ -31,20 +31,19 @@ import { globalStyle } from 'styles/globalStyle';
 // `wide` is gone; `tall` (see HomeSrc.tsx's quickActions -- now set on
 // Practice) drives this two-column bento layout below instead.
 //
-// BACKGROUND ILLUSTRATIONS -- TRIED AND REVERTED (product follow-up, with
-// screenshot: "this not looking nice at all it look so crowded and not
-// professional"). A corner-anchored `art` illustration per tile was built
-// and shipped once (see git history), but broke two ways at once: (1) a
-// real bug -- the illustration rendered outside the tile's own rounded
-// bounds into the gap between tiles, meaning `overflow:'hidden'` wasn't
-// actually clipping an absolutely-positioned sibling here; (2) even where
-// contained, a multi-shape illustration crammed into a compact tile just
-// added visual noise on top of the icon/title, the same "too busy" problem
-// this screen's earlier gradient-tile pass already hit once (see this
-// file's own "Google-style pass" comment below). Removed entirely rather
-// than just bug-fixed, since product's own reaction was about the crowded
-// LOOK, not just the clipping glitch -- these tiles are deliberately back
-// to plain icon + title only, no `art` field.
+// BACKGROUND ILLUSTRATIONS -- round 2 (product follow-up: first "add
+// illustrations", then, on seeing them, "it looks crowded and not
+// professional" with a screenshot showing one illustration rendered
+// OUTSIDE its own tile's rounded bounds, then "add the illustrations back
+// but... give the 3 cards spacing from each other"). Two things changed
+// from the reverted first attempt (see git history for that version):
+// (1) `art` is now positioned fully INSIDE each tile's own box (`right: 0,
+// bottom: 0`, no negative bleed-past-the-edge offset) so it can never
+// visually escape even if `overflow:'hidden'` fails to clip an absolutely-
+// positioned sibling on some RN/platform combination the way it silently
+// did last time -- containment no longer depends on that clip actually
+// working. (2) smaller + lower opacity than the first attempt, so it reads
+// as a faint corner texture instead of a second competing scene.
 export interface QuickAction {
   key: string;
   title: string;
@@ -58,6 +57,9 @@ export interface QuickAction {
   // match the combined height of the other (non-tall) tiles stacked in a
   // left column -- see the module comment above.
   tall?: boolean;
+  // Optional small illustration, rendered as a faded corner accent fully
+  // inside this tile's own bounds -- see the module comment above.
+  art?: React.FC<{ size: number }>;
 }
 
 const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
@@ -116,11 +118,17 @@ const Tile = ({
   styles: ReturnType<typeof useStyleSheet>;
   theme: ReturnType<typeof useTheme>;
 }) => {
+  const Art = item.art;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
       style={[styles.tile, style, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
+      {Art ? (
+        <View style={styles.artWrap} pointerEvents="none">
+          <Art size={58} />
+        </View>
+      ) : null}
       <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
@@ -139,11 +147,17 @@ const Tile = ({
 // title-right row the smaller tiles use -- a wide-but-short row would sit
 // awkwardly stranded inside a tall container.
 const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<typeof useStyleSheet> }) => {
+  const Art = item.art;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
       style={[styles.tile, styles.tallTile, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
+      {Art ? (
+        <View style={styles.artWrapTall} pointerEvents="none">
+          <Art size={104} />
+        </View>
+      ) : null}
       <View style={[styles.tallIconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon28, styles.icon]} />
       </View>
@@ -172,16 +186,27 @@ const themedStyles = StyleService.create({
   // height: Yoga measures each column's own natural size first, then
   // stretches any child that doesn't set its own height/alignSelf to the
   // tallest sibling's size.
+  //
+  // Spacing follow-up (product request: "give the 3 cards spacing from
+  // each other") -- switched from `justifyContent:'space-between'` +
+  // percentage widths (whose gap shrinks/grows with screen width and read
+  // as too tight) to `bentoColumn`'s own fixed-pixel `marginRight`, so the
+  // gap between the left column and the tall right tile is the same
+  // explicit 16px as `stackedTileGap` between the two stacked tiles below
+  // -- one consistent gap value on every side of every tile instead of two
+  // different, width-dependent ones.
   bentoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginTop: 20,
   },
   bentoColumn: {
-    width: '48%',
+    flex: 1,
+    marginRight: 16,
   },
+  // Bumped 14 -> 16 (same spacing follow-up) to match bentoColumn's own
+  // gap above.
   stackedTileGap: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   // Material 3-style tonal tile: flat pale fill (set inline per item, see
   // render above), no shadow/elevation -- separation from the page comes
@@ -191,13 +216,25 @@ const themedStyles = StyleService.create({
   // plain white cards. Radius 24 (vs. this app's usual 14px) and roomier
   // padding than the first pass -- Material You's own larger, softer
   // corner language, made a little bigger again per explicit follow-up.
+  // `overflow:'hidden'` keeps each tile's optional background
+  // illustration's own corners tucked under the tile's rounded shape --
+  // `art`/`artWrap` below no longer *depend* on this clip actually
+  // working (see the module comment on why), but it's kept as a belt-and-
+  // suspenders second layer of containment.
+  //
+  // Height follow-up (product request: "make the 2 horizontal cards have
+  // a little more height") -- paddingVertical 22 -> 28 on the two stacked
+  // tiles (Coach/Dream Company Dashboard); the tall tile (Practice) picks
+  // this up automatically since it's stretched to match their new,
+  // slightly taller combined height rather than having its own fixed size.
   tile: {
-    marginBottom: 14,
+    marginBottom: 16,
     borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 22,
+    paddingVertical: 28,
     paddingHorizontal: 18,
+    overflow: 'hidden',
   },
   tileHalf: {
     width: '48%',
@@ -208,7 +245,6 @@ const themedStyles = StyleService.create({
   // normal row shape (see TallTile above), with roomier padding to match
   // its bigger footprint.
   tallTile: {
-    width: '48%',
     flex: 1,
     marginBottom: 0,
     flexDirection: 'column',
@@ -244,5 +280,23 @@ const themedStyles = StyleService.create({
   },
   tallTitle: {
     lineHeight: 24,
+  },
+  // Background illustration accent -- pinned flush to the tile's own
+  // bottom-right corner (NOT bled past it -- see the module comment on why
+  // that changed from the first, reverted attempt), faded so it reads as a
+  // soft texture rather than a second focal point competing with the
+  // icon/title. Painted before the icon/title (so it sits underneath) and
+  // `pointerEvents:'none'` so it never intercepts the tile's own tap.
+  artWrap: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    opacity: 0.22,
+  },
+  artWrapTall: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    opacity: 0.28,
   },
 });
