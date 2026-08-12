@@ -188,10 +188,13 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 80,
   },
+  // Radius bumped 14 -> 20 (Google-style furnishing pass, extended from
+  // Home/Practice to this screen -- see src/home/QuickActionGrid.tsx's own
+  // comment on the design language).
   hero: {
     marginTop: 16,
     padding: 20,
-    borderRadius: 14,
+    borderRadius: 20,
     overflow: 'hidden',
     // Opaque Android shadow fallback only — always fully covered by the
     // absolute-fill gradient rendered as this Flex's first child (see the
@@ -206,6 +209,7 @@ const themedStyles = StyleService.create({
   },
   negotiationCard: {
     ...globalStyle.card,
+    borderRadius: 20,
     marginTop: 16,
     padding: 20,
     // Redesign v2 (full reskin): `card` carries a real shadow again, which

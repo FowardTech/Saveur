@@ -408,8 +408,13 @@ const themedStyles = StyleService.create({
   // renders) — a compact single-row card, same shape as Home's
   // ContinueLearningCard/UpcomingSessionHomeCard so this app's "small
   // compact info-row card" pattern reads consistently across screens.
+  // Radius bumped 14 -> 20 (Google-style furnishing pass, extended from
+  // Home to this screen -- see src/home/QuickActionGrid.tsx's own comment
+  // on the design language; scheduleIconWrap was already a circular tonal
+  // fill, matching Material 3's icon-badge shape, so it's unchanged here).
   scheduleCard: {
     ...globalStyle.card,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
@@ -453,11 +458,15 @@ const themedStyles = StyleService.create({
   // Full-width stacked rows (product request — was a 3-wide square tile
   // grid, now each tool "covers full length width" and stacks on top of
   // each other instead).
+  // Google-style furnishing pass (see scheduleCard's own comment above):
+  // radius 14 -> 20, and toolIconWrap 12 -> 20 (a true circle at this 40px
+  // box size) -- Material 3's own fully-rounded icon-badge shape, matching
+  // HeaderHome.tsx/ContinueLearningCard.tsx's own icon wraps on Home.
   toolRow: {
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 20,
     backgroundColor: 'background-basic-color-2',
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -466,7 +475,7 @@ const themedStyles = StyleService.create({
   toolIconWrap: {
     width: 40,
     height: 40,
-    borderRadius: 12,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -482,7 +491,7 @@ const themedStyles = StyleService.create({
   typeCard: {
     ...globalStyle.card,
     width: '48%',
-    borderRadius: 14,
+    borderRadius: 22,
     // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
     // renders correctly on Android (was 'transparent').
     backgroundColor: 'background-basic-color-2',
