@@ -120,17 +120,12 @@ const HomeSrc = memo(() => {
   // -- see that entry's own history).
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
-      // PRODUCT FOLLOW-UP: "give the career coach card the default blue
-      // background and the text in it white" -- opts this one tile out of
-      // the Material tonal look every other tile uses (see
-      // QuickActionGrid.tsx's own comment on `solid` for what that flips).
       key: 'coach',
       title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
       icon: 'message-circle-outline',
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
       art: ArtCareerCoach,
-      solid: true,
     },
     {
       key: 'practice',

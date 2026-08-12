@@ -58,13 +58,27 @@ import { globalStyle } from 'styles/globalStyle';
 // `tile`) plus a non-negative `right`/`bottom` on the illustration itself
 // still keeps it fully inside the tile's own rounded bounds, the fix for
 // the earlier separate "illustration renders outside the tile" bug.
+//
+// WHITE CARDS, pre-launch polish pass (product request: "turning the 4
+// cards to white background" + "give the app background gray instead of
+// the subtle blue background") -- the Material tonal wash (pale `tint`
+// fill) and the one-off `solid` full-strength-fill tile (Career Coach,
+// see git history) are both gone. All four tiles are now the same plain
+// white card (`background-basic-color-2`, matching every other card in
+// the app) sitting on Container.tsx's gray page body -- the tint accent
+// now lives ONLY in the icon badge and the illustration, not the tile
+// fill itself. This also collapses `solid`/`titleSolid`/`artWrapSolid`
+// entirely: with a uniform white fill there's no more "will this text/
+// icon/illustration be legible against this tile's own color" branch to
+// carry, every tile renders exactly the same way.
 export interface QuickAction {
   key: string;
   title: string;
   icon: string;
-  // Single accent hex, e.g. '#0063f8' -- used at low opacity for the
-  // tile's own pale container fill and at full strength for the icon
-  // badge.
+  // Single accent hex, e.g. '#0063f8' -- used at full strength for the
+  // icon badge and the illustration's shapes (see HomeHeroArt.tsx). The
+  // tile's own fill is a plain white card (see `tile`'s own comment) --
+  // this tint no longer touches the tile background itself.
   tint: string;
   onPress: () => void;
   // When true, this tile becomes a single right-hand column stretched to
@@ -74,14 +88,6 @@ export interface QuickAction {
   // Optional small illustration, rendered in this tile's bottom-right
   // corner -- see the module comment above.
   art?: React.FC<{ size: number }>;
-  // Product follow-up: "give the career coach card the default blue
-  // background and the text in it white" -- an opt-in per-tile override
-  // that flips this ONE tile from the Material tonal look (pale `tint`
-  // wash + dark text) every other tile uses back to a solid `tint` fill +
-  // white title, closer to this app's original saturated-hero-card
-  // treatment. See Tile's own comment for what else changes with it (icon
-  // badge, illustration).
-  solid?: boolean;
 }
 
 const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
@@ -142,30 +148,6 @@ export default QuickActionGrid;
 // the tile taller -- a bigger paddingVertical alone was tried in the
 // previous pass and wasn't enough on its own.
 //
-// `solid` (product follow-up: "give the career coach card the default
-// blue background and the text in it white") -- three things flip
-// together when this is on, all necessary for the tile to stay legible:
-// (1) the tile's own fill goes from the pale `${tint}17` wash to a full-
-// strength `tint`; (2) the icon badge, which is normally a solid `tint`
-// circle with a white glyph, would go invisible against a same-color
-// tile, so it becomes a translucent-white circle instead (the same
-// "frosted accent against a saturated fill" treatment this app's very
-// first hero cards used); (3) the title switches to white.
-//
-// `art` DOES still render in solid mode (product follow-up correction:
-// "you forgot the illustration in the career coach card... its not
-// visible" -- an earlier pass suppressed it here on the assumption the
-// solid-`tint`-colored shapes every other illustration uses would be
-// invisible against a same-color tile, which is true, but the fix is to
-// retint that ONE illustration, not drop it -- see HomeHeroArt.tsx's own
-// comment on ArtCareerCoach's third retint back to translucent-white
-// shapes, the same "frosted accent" construction the icon badge above
-// uses). Solid tiles use `artWrapSolid` (opacity 1) instead of `artWrap`
-// (opacity 0.22) -- that lower opacity was tuned for solid `tint` shapes
-// sitting on a near-white pale tile, and would fade an already-
-// translucent white illustration to near invisibility on a saturated
-// tile; the SVG's own internal rgba alphas already provide the subtlety
-// here.
 const Tile = ({
   item,
   style,
@@ -181,31 +163,17 @@ const Tile = ({
   return (
     <TouchableOpacity
       activeOpacity={0.75}
-      style={[
-        styles.tile,
-        styles.tileVertical,
-        style,
-        Art ? styles.tileArtBottom : null,
-        { backgroundColor: item.solid ? item.tint : `${item.tint}17` },
-      ]}
+      style={[styles.tile, styles.tileVertical, style, Art ? styles.tileArtBottom : null]}
       onPress={item.onPress}>
       {Art ? (
-        <View style={item.solid ? styles.artWrapSolid : styles.artWrap} pointerEvents="none">
+        <View style={styles.artWrap} pointerEvents="none">
           <Art size={58} />
         </View>
       ) : null}
-      <View
-        style={[
-          styles.iconWrap,
-          { backgroundColor: item.solid ? 'rgba(255,255,255,0.24)' : item.tint },
-        ]}>
+      <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
-      <Text
-        category="h8"
-        bold
-        numberOfLines={2}
-        style={[styles.titleVertical, item.solid ? styles.titleSolid : null]}>
+      <Text category="h8" bold numberOfLines={2} style={styles.titleVertical}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -222,7 +190,7 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
   return (
     <TouchableOpacity
       activeOpacity={0.75}
-      style={[styles.tile, styles.tallTile, { backgroundColor: `${item.tint}17` }]}
+      style={[styles.tile, styles.tallTile]}
       onPress={item.onPress}>
       {Art ? (
         <View style={styles.artWrapTall} pointerEvents="none">
@@ -279,15 +247,6 @@ const themedStyles = StyleService.create({
   stackedTileGap: {
     marginBottom: 16,
   },
-  // Material 3-style tonal tile: flat pale fill (set inline per item, see
-  // render above), no shadow/elevation -- separation from the page comes
-  // purely from the container's own tint against the white page
-  // background, the same "color contrast, not a shadow" convention
-  // globalStyle.card's own comment already established for this app's
-  // plain white cards. Radius 24 (vs. this app's usual 14px) and roomier
-  // padding than the first pass -- Material You's own larger, softer
-  // corner language, made a little bigger again per explicit follow-up.
-  //
   // Height follow-up, round 2 (product request: "increase the height of
   // the other 2 cards on the left... so that the card titles can be
   // visible") -- paddingVertical 28 -> 30, on top of the layout switch to
@@ -296,12 +255,25 @@ const themedStyles = StyleService.create({
   // height increase). The tall tile (Practice) still picks this up
   // automatically since it's stretched to match the stacked column's
   // combined height rather than having its own fixed size.
+  //
+  // WHITE CARDS (see module comment) -- was a flat pale `tint` wash set
+  // inline per item (Material 3's own tonal-surface look); now a plain
+  // `background-basic-color-2` white fill, the exact same token/level
+  // every other card in the app uses, so these tiles read as consistent
+  // "cards" rather than a one-off Home-only treatment. No shadow/
+  // elevation, same as every other card -- separation from the page comes
+  // from real color contrast against Container.tsx's gray page body, not
+  // a shadow (globalStyle.card's own comment already established this
+  // convention app-wide). Radius 24 (vs. this app's usual 20px) stays --
+  // Material You's larger, softer corner language on this one screen's
+  // tiles specifically, per an earlier explicit follow-up.
   tile: {
     marginBottom: 16,
     borderRadius: 24,
     paddingVertical: 30,
     paddingHorizontal: 18,
     overflow: 'hidden',
+    backgroundColor: 'background-basic-color-2',
   },
   // Overrides `tile`'s (now baseline-less) layout for the two stacked
   // tiles -- icon pinned to the top-left corner, title below it, matching
@@ -371,12 +343,6 @@ const themedStyles = StyleService.create({
     alignSelf: 'stretch',
     lineHeight: 22,
   },
-  // `solid` tiles only (see Tile's own comment) -- white title against a
-  // full-strength `tint` fill, since the default title color comes from
-  // the theme's dark body-text token, which would be unreadable there.
-  titleSolid: {
-    color: '#fff',
-  },
   tallTitle: {
     lineHeight: 24,
   },
@@ -396,17 +362,6 @@ const themedStyles = StyleService.create({
     right: 0,
     bottom: 0,
     opacity: 0.22,
-  },
-  // `solid` tiles only (see Tile's own comment) -- full opacity, since
-  // ArtCareerCoach (the only illustration currently paired with a `solid`
-  // tile) is already built from translucent-white/rgba shapes with their
-  // own baked-in subtlety, unlike the solid-`tint`-colored shapes the
-  // pale tonal tiles' illustrations use.
-  artWrapSolid: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    opacity: 1,
   },
   artWrapTall: {
     position: 'absolute',

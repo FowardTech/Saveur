@@ -55,6 +55,15 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 // cards used (see this file's own top comment) -- ArtPractice/
 // ArtDreamCompany/ArtLearningCourses are untouched, since their own tiles
 // are still the pale tonal look.
+//
+// ArtCareerCoach RETINTED A FOURTH TIME, back to solid-tint-shapes-on-
+// pale-backdrop (product follow-up: "turning the 4 [quick-action] cards
+// to white background" — the `solid` full-strength-blue tile treatment
+// that needed this illustration's own translucent-white palette is gone;
+// see QuickActionGrid.tsx's own comment). All four quick-action tiles are
+// plain white cards now, so ArtCareerCoach converges back onto the exact
+// same construction ArtPractice/ArtDreamCompany/ArtLearningCourses below
+// already use — one consistent illustration style across all four.
 
 interface ArtProps {
   size: number;
@@ -62,13 +71,13 @@ interface ArtProps {
 
 export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="58" r="48" fill="rgba(255,255,255,0.14)" />
-    <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.08)" />
-    <Path d="M38 78l-6 16 20-11z" fill="rgba(255,255,255,0.96)" />
-    <Rect x="26" y="32" width="68" height="48" rx="18" fill="rgba(255,255,255,0.96)" />
-    <Circle cx="45" cy="56" r="5.5" fill="#0063f8" />
-    <Circle cx="60" cy="56" r="5.5" fill="#0063f8" />
-    <Circle cx="75" cy="56" r="5.5" fill="#0063f8" />
+    <Circle cx="60" cy="58" r="48" fill="#0063f80f" />
+    <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.06)" />
+    <Path d="M38 78l-6 16 20-11z" fill="#0063f8" />
+    <Rect x="26" y="32" width="68" height="48" rx="18" fill="#0063f8" />
+    <Circle cx="45" cy="56" r="5.5" fill="#EAF2FF" />
+    <Circle cx="60" cy="56" r="5.5" fill="#EAF2FF" />
+    <Circle cx="75" cy="56" r="5.5" fill="#EAF2FF" />
   </Svg>
 );
 
