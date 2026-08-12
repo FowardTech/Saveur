@@ -55,6 +55,16 @@ const Container: React.FC<ContainerProps> = ({
   // (#12121F) already reads as a subtle dark navy/blue, so it's left
   // untouched rather than risking the elevation contrast this file's own
   // comment above already carefully reasons through.
+  //
+  // REVERTED (pre-launch polish pass, product request: "give the app
+  // background gray instead of the subtle blue background") — light.json's
+  // `background-page-body` is back to #F0F0F0, the same flat neutral gray
+  // level=3 used before the light-blue request above. The token/override
+  // mechanism itself stays (still only light mode, still skipped when a
+  // caller passes its own `level`) since it's still the one clean place to
+  // recolor just the page body without touching the shared badge-pill/
+  // date-circle uses of `background-basic-color-3` -- only the color value
+  // in the theme JSON changed.
   const bodyBackgroundOverride =
     level === undefined && appTheme !== "dark" ? { backgroundColor: theme["background-page-body"] } : null;
   return (
