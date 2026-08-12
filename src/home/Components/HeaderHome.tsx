@@ -107,14 +107,19 @@ const themedStyles = StyleService.create({
     right: -6,
     top: -6,
   },
+  // Google-style furnishing pass (see src/home/QuickActionGrid.tsx's own
+  // comment on this app-wide direction) -- was a white square with a
+  // hairline border; Material 3's own icon buttons are fully rounded
+  // tonal-fill circles with no border at all (the tonal fill itself is
+  // what reads as "a button," the same "color contrast, not an outline"
+  // idea now used throughout this screen). `border-radius: width/2`
+  // makes this a true circle regardless of future size tweaks.
   button: {
     width: 40,
     height: 40,
-    backgroundColor: 'background-basic-color-1',
-    borderWidth: 1,
-    borderColor: 'border-card-default',
+    backgroundColor: 'background-basic-color-3',
     ...globalStyle.center,
-    borderRadius: 12,
+    borderRadius: 20,
   },
   trophyButton: {
     marginRight: 10,

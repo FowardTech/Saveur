@@ -90,8 +90,13 @@ const themedStyles = StyleService.create({
   // resolves to real `#FFFFFF`, the same token this app's own
   // `heroCardWhite`/`verifyBanner` treatments already used for "a card
   // that's actually white on this page" — this now matches that.
+  // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
+  // src/home/QuickActionGrid.tsx's own comment) to match this screen's
+  // larger, softer corner language. Slightly smaller than the grid tiles'
+  // own 24px since this is a much shorter single-row card.
   card: {
     ...globalStyle.card,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

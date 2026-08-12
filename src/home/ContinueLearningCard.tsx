@@ -165,8 +165,12 @@ const themedStyles = StyleService.create({
   // against Container's `#F5F8FF` page background; `background-basic-
   // color-2` (real `#FFFFFF`) is the token this app's other "actually
   // white" cards already use.
+  // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
+  // src/home/QuickActionGrid.tsx's own comment) to match this screen's
+  // larger, softer corner language.
   card: {
     ...globalStyle.card,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

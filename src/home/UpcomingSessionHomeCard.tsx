@@ -110,8 +110,12 @@ const themedStyles = StyleService.create({
   // BUG FIX (product report, with screenshot: "these cards should be
   // white") — see ContinueLearningCard.tsx's own comment on this exact
   // same fix.
+  // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
+  // src/home/QuickActionGrid.tsx's own comment) to match this screen's
+  // larger, softer corner language.
   card: {
     ...globalStyle.card,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

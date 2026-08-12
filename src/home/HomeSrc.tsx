@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 
 import Content from 'components/Content';
@@ -84,7 +84,6 @@ const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
 // mechanisms triggered independently of what's laid out on screen.
 const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(HOME_I18N_NAMESPACES);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
@@ -110,6 +109,12 @@ const HomeSrc = memo(() => {
   // before" -- Refer & Earn is no longer in this grid at all; it's
   // rendered again as its own full-width white card right after the grid
   // (see the JSX below).
+  //
+  // PRODUCT FOLLOW-UP: "the height of the third card on the right should
+  // cover the space left by the fourth card that was removed earlier" --
+  // Dream Company Dashboard (the last remaining tile) is marked `wide` so
+  // QuickActionGrid.tsx spans it across the full row instead of leaving
+  // it alone at half-width with dead space where Refer & Earn used to sit.
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
@@ -131,6 +136,7 @@ const HomeSrc = memo(() => {
       icon: 'briefcase-outline',
       tint: '#EA580C',
       onPress: () => navigate('DreamCompanies'),
+      wide: true,
     },
   ], [t, navigate]);
 
@@ -599,7 +605,7 @@ const HomeSrc = memo(() => {
             <Icon
               pack="eva"
               name="email-outline"
-              style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]}
+              style={[globalStyle.icon20, { tintColor: '#B45309' }]}
             />
             <View style={[globalStyle.flexOne, styles.verifyBannerText]}>
               <Text category="h9-s" bold>
@@ -639,7 +645,7 @@ const HomeSrc = memo(() => {
           <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('ReferralProgram')}>
             <View style={[styles.whiteCard, styles.whiteCardContent]}>
               <View style={styles.whiteCardLeft}>
-                <View style={styles.whiteCardIconWrap}>
+                <View style={[styles.whiteCardIconWrap, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
                   <Icon pack="eva" name="gift-outline" style={[globalStyle.icon24, { tintColor: '#8B5CF6' }]} />
                 </View>
                 <Text category="h6" bold mt={14}>
@@ -740,16 +746,17 @@ const themedStyles = StyleService.create({
     flex: 1,
     marginTop: 0,
   },
+  // Google-style pass: converted from a white card with a colored border
+  // to a real Material 3 "error/warning container" -- a pale flat tonal
+  // fill in the warning hue, no border at all -- the same tonal-surface
+  // language now used throughout this screen (see QuickActionGrid.tsx's
+  // own comment), rather than the outlined-card treatment other design
+  // systems favor for alerts.
   verifyBanner: {
-    ...globalStyle.card,
+    borderRadius: 20,
     padding: 16,
     marginTop: 16,
-    // `card` carries a real soft shadow, which needs an opaque fill to
-    // render correctly (especially on Android). The warning-colored border
-    // stays as the "needs attention" accent on top of that opaque fill.
-    backgroundColor: 'background-basic-color-2',
-    borderWidth: 1,
-    borderColor: 'color-warning-500',
+    backgroundColor: 'rgba(180, 83, 9, 0.1)',
   },
   verifyBannerText: {
     marginHorizontal: 10,
@@ -759,9 +766,12 @@ const themedStyles = StyleService.create({
   // redesign: opaque white fill (not the flat-off-white token, see
   // DailyTipsBanner.tsx's own comment on that exact fix), icon/title/
   // subtitle/CTA on the left, illustration fixed-width on the right.
+  // Radius bumped 14 -> 24 (Google-style pass) to match the rest of this
+  // screen's larger, softer corner language.
   whiteCard: {
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
+    borderRadius: 24,
     marginTop: 14,
   },
   whiteCardContent: {
@@ -775,12 +785,17 @@ const themedStyles = StyleService.create({
     flexShrink: 1,
     minWidth: 0,
   },
+  // BUG FIX (Google-style furnishing pass): this icon circle's tonal fill
+  // was always the same blue regardless of which card used it (a leftover
+  // from when Dream Company and Refer & Earn shared one style object) --
+  // set inline per card now (see the JSX above) so each card's icon
+  // circle actually matches its own accent color, the same "container
+  // tinted to match its own icon" pattern QuickActionGrid.tsx's tiles use.
   whiteCardIconWrap: {
     marginTop: 10,
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'color-primary-transparent-100',
     alignItems: 'center',
     justifyContent: 'center',
   },
