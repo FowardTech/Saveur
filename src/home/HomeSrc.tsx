@@ -98,11 +98,17 @@ const HomeSrc = memo(() => {
   // swapped each tile's two-stop gradient for a single flat accent color
   // (QuickActionGrid.tsx now renders it as a pale tonal container + a
   // solid icon badge in this color, Material 3's own "container/on-
-  // container" pattern, instead of a saturated gradient fill). Same three
-  // distinct hues kept as before -- blue for Career Coach (this app's own
-  // brand blue), emerald for Practice, amber for Dream Company Dashboard
-  // -- easy to revert to the gradient version via git history if this
-  // doesn't land well.
+  // container" pattern, instead of a saturated gradient fill). Easy to
+  // revert to the gradient version via git history if this doesn't land
+  // well.
+  //
+  // PRODUCT FOLLOW-UP: "All the three cards should have the default blue
+  // background" -- the three tiles used distinct per-card hues (blue/
+  // emerald/amber) up through the previous pass; now all three share this
+  // app's one brand blue instead. HomeHeroArt.tsx's Practice/Dream Company
+  // illustrations were retinted back to blue too (see that file's own
+  // comment) so the faint background art still matches its own tile's
+  // color rather than clashing with it.
   //
   // PRODUCT FOLLOW-UP (earlier): "remove the referral card as one of the
   // grid cards and place it as a normal white card as below as you did
@@ -139,7 +145,7 @@ const HomeSrc = memo(() => {
       key: 'practice',
       title: t('home:practice_card_title', { defaultValue: 'Practice' }),
       icon: 'mic-outline',
-      tint: '#0D9488',
+      tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       tall: true,
       art: ArtPractice,
@@ -148,7 +154,7 @@ const HomeSrc = memo(() => {
       key: 'dreamCompanies',
       title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
       icon: 'briefcase-outline',
-      tint: '#EA580C',
+      tint: '#0063f8',
       onPress: () => navigate('DreamCompanies'),
       art: ArtDreamCompany,
     },

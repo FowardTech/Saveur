@@ -31,11 +31,15 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 // tiles (QuickActionGrid.tsx), which are a pale, near-white fill, not a
 // saturated color — so both are re-colored here to the same "solid brand-
 // tint shapes over a faint brand-tint backdrop circle" construction
-// ArtDreamCompany/ArtGiftBox below already use, and ArtDreamCompany's own
-// palette swapped from blue to its card's actual amber/orange accent so
-// all three now visually match the tile they sit on (QuickActionGrid.tsx
-// passes each card's own `tint` art component in HomeSrc.tsx's
-// quickActions list).
+// ArtDreamCompany/ArtGiftBox below already use.
+//
+// RETINTED AGAIN, back to blue (product follow-up: "All the three cards
+// should have the default blue background") — the three quick-action
+// tiles briefly had distinct per-card hues (blue/emerald/amber); once
+// product asked for all three tiles to share one blue background instead,
+// ArtPractice/ArtDreamCompany's emerald/amber palettes would have clashed
+// with their own now-blue tile, so both are back to this app's one brand
+// blue (#0063f8) here too, matching ArtCareerCoach.
 
 interface ArtProps {
   size: number;
@@ -55,28 +59,28 @@ export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
 
 export const ArtPractice: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="60" r="48" fill="#0D94880f" />
+    <Circle cx="60" cy="60" r="48" fill="#0063f80f" />
     <Ellipse cx="60" cy="98" rx="22" ry="5" fill="rgba(0,0,0,0.06)" />
-    <Rect x="47" y="24" width="26" height="44" rx="13" fill="#0D9488" />
+    <Rect x="47" y="24" width="26" height="44" rx="13" fill="#0063f8" />
     <Path
       d="M36 56a24 24 0 0 0 48 0"
-      stroke="#0D9488"
+      stroke="#0063f8"
       strokeWidth={5.5}
       fill="none"
       strokeLinecap="round"
     />
-    <Line x1="60" y1="80" x2="60" y2="90" stroke="#0D9488" strokeWidth={5.5} strokeLinecap="round" />
-    <Line x1="45" y1="90" x2="75" y2="90" stroke="#0D9488" strokeWidth={5.5} strokeLinecap="round" />
+    <Line x1="60" y1="80" x2="60" y2="90" stroke="#0063f8" strokeWidth={5.5} strokeLinecap="round" />
+    <Line x1="45" y1="90" x2="75" y2="90" stroke="#0063f8" strokeWidth={5.5} strokeLinecap="round" />
   </Svg>
 );
 
 export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#EA580C0f" />
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
 
     {/* back building — shorter, light tint, sits behind/left of the front
         one for real depth instead of a single flat glyph */}
-    <Rect x="22" y="54" width="28" height="46" rx="4" fill="#FFD3B0" />
+    <Rect x="22" y="54" width="28" height="46" rx="4" fill="#C7DBFF" />
     <Rect x="29" y="62" width="6" height="6" rx="1.2" fill="#FFFFFF" />
     <Rect x="41" y="62" width="6" height="6" rx="1.2" fill="#FFFFFF" />
     <Rect x="29" y="74" width="6" height="6" rx="1.2" fill="#FFFFFF" />
@@ -84,19 +88,19 @@ export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
     <Rect x="29" y="86" width="6" height="6" rx="1.2" fill="#FFFFFF" />
     <Rect x="41" y="86" width="6" height="6" rx="1.2" fill="#FFFFFF" />
 
-    {/* front building — taller, this card's own amber/orange accent, a
-        real window grid + a door */}
-    <Rect x="50" y="32" width="36" height="68" rx="5" fill="#EA580C" />
-    <Rect x="58" y="42" width="7.5" height="7.5" rx="1.6" fill="#FFEDE0" />
-    <Rect x="71" y="42" width="7.5" height="7.5" rx="1.6" fill="#FFEDE0" />
-    <Rect x="58" y="56" width="7.5" height="7.5" rx="1.6" fill="#FFEDE0" />
-    <Rect x="71" y="56" width="7.5" height="7.5" rx="1.6" fill="#FFEDE0" />
-    <Rect x="58" y="70" width="7.5" height="7.5" rx="1.6" fill="#FFEDE0" />
-    <Rect x="71" y="70" width="7.5" height="7.5" rx="1.6" fill="#FFEDE0" />
-    <Rect x="64" y="86" width="8" height="14" rx="1.6" fill="#FFEDE0" opacity={0.75} />
+    {/* front building — taller, this app's brand blue, a real window grid
+        + a door */}
+    <Rect x="50" y="32" width="36" height="68" rx="5" fill="#0063f8" />
+    <Rect x="58" y="42" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
+    <Rect x="71" y="42" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
+    <Rect x="58" y="56" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
+    <Rect x="71" y="56" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
+    <Rect x="58" y="70" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
+    <Rect x="71" y="70" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
+    <Rect x="64" y="86" width="8" height="14" rx="1.6" fill="#EAF2FF" opacity={0.75} />
 
     {/* ground line + soft shadow, grounds both buildings as one scene */}
-    <Rect x="20" y="100" width="70" height="3" rx="1.5" fill="#EA580C33" />
+    <Rect x="20" y="100" width="70" height="3" rx="1.5" fill="#0063f833" />
     <Ellipse cx="55" cy="106" rx="38" ry="4" fill="rgba(0,0,0,0.05)" />
 
     {/* "dream" badge — small gold star pinned to the tall building's roof,
