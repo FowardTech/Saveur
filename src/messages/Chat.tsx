@@ -122,21 +122,21 @@ const Chat = memo(() => {
   const { profile } = React.useContext(AuthContext);
 
   const [showAction, setShowAction] = React.useState(false);
-  // Voice is the default mode per product direction ("instead of it being
-  // a text chat it should be a AI voice responding to the user") — Text
-  // stays available as a toggle rather than being removed outright, since
-  // both modes share the exact same persisted conversation thread (see
-  // coachService.sendVoiceMessage's doc comment). Arriving here with a
-  // pre-composed `initialPrompt` (a "Suggested Topic" tap on the Coach
-  // tab) starts in Text mode instead — that flow auto-sends a specific
-  // typed question via the text pipeline below, which wouldn't feed into
-  // the voice conversation loop.
+  // Product follow-up (revert of the earlier "voice is the default mode"
+  // direction): "the chat icon tab in the bottom navigation will just lead
+  // straight to the AI coach screen" — now that the Coach tab drops the
+  // user straight into this screen with no intermediate menu (see
+  // MainBottomTab.tsx), immediately launching into a live voice-listening
+  // session (mic on, full-screen "I'm listening") was too aggressive as a
+  // first thing to see. Text mode's own greeting screen (renderChatEmpty
+  // below — headline, suggested topics, a "Suggested for you" card, real
+  // text input) is the new landing state instead; Voice is still one tap
+  // away via the same Text/Voice toggle in the header, just no longer
+  // where the user starts.
   // Admin-configurable — see the Feature Flags page / services/configService.ts.
-  // Turning "voice_coach" off falls back to text-only, no release needed.
+  // Turning "voice_coach" off hides the toggle entirely, same as before.
   const voiceCoachEnabled = configService.isFeatureEnabled('voice_coach');
-  const [mode, setMode] = React.useState<'voice' | 'text'>(
-    initialPrompt || !voiceCoachEnabled ? 'text' : 'voice',
-  );
+  const [mode, setMode] = React.useState<'voice' | 'text'>('text');
 
   React.useEffect(() => {
     coachService.getChatHistory().then(history => {
@@ -185,11 +185,16 @@ const Chat = memo(() => {
     }
   }, [isSending, profile, t]);
 
-  // Arrived here from a "Suggested Topic" tap on the Coach tab
-  // (src/messages/MessagesScreen.tsx) — auto-send that topic's text as the
-  // opening question instead of dropping the user on a blank thread. Guarded
-  // by a ref (not state) so this only ever fires once per screen visit, even
-  // though `messages` above updates asynchronously right after mount.
+  // Auto-sends a pre-composed opening question instead of dropping the
+  // user on a blank thread, when this screen is entered with a specific
+  // prompt already chosen (the route param itself has no current caller
+  // now that MessagesScreen.tsx — the old intermediate "Suggested Topic"
+  // tap-to-navigate menu — is gone, since the Coach tab opens straight
+  // into this screen's own greeting/topics below; kept as the mechanism
+  // any future entry point — a deep link, a suggested-action offer, etc. —
+  // can reuse to jump straight into a specific opening question). Guarded
+  // by a ref (not state) so this only ever fires once per screen visit,
+  // even though `messages` above updates asynchronously right after mount.
   React.useEffect(() => {
     if (!initialPrompt || hasSentInitialPromptRef.current) return;
     hasSentInitialPromptRef.current = true;
@@ -197,11 +202,10 @@ const Chat = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt]);
 
-  // Empty-thread greeting state (renderChatEmpty below) — same suggested
-  // topics data source as MessagesScreen.tsx's chip grid
-  // (services/coachService.ts's getSuggestedTopics), fetched independently
-  // here since a user can land directly on an empty Chat thread without
-  // passing through that screen first.
+  // Empty-thread greeting state (renderChatEmpty below) — real suggested
+  // topics (services/coachService.ts's getSuggestedTopics), same data this
+  // screen's now-removed MessagesScreen.tsx menu used to show in its own
+  // grid before this screen absorbed it.
   const [topics, setTopics] = React.useState<SuggestedTopic[]>([]);
   React.useEffect(() => {
     coachService
@@ -210,9 +214,10 @@ const Chat = memo(() => {
       .catch(() => {});
   }, [profile?.goals, profile?.desiredRoles]);
 
-  // Tapping a chip in the empty-state grid below sends it the same way an
-  // initialPrompt from MessagesScreen.tsx does — straight into the real
-  // onSend pipeline, not a separate/fake preview.
+  // Tapping a topic button in the empty-state row below sends it straight
+  // into the real onSend pipeline, not a separate/fake preview — same
+  // effect as arriving with a pre-composed initialPrompt, just triggered
+  // from inside this screen instead of before it.
   const onTapTopic = React.useCallback((title: string) => {
     onSend([{ _id: `topic_${Date.now()}`, text: title, createdAt: Date.now(), user: ME_USER }]);
   }, [onSend]);
@@ -514,8 +519,12 @@ const Chat = memo(() => {
           </Text>
         </View>
 
+        {/* Reference-redesign follow-up: was a 2x2 card grid — the new
+            reference shows a single row of 4 round icon buttons with the
+            label underneath each one, more compact and icon-forward. Same
+            real topics/palette, just a different shape. */}
         {topics.length > 0 ? (
-          <View style={styles.emptyTopicGrid}>
+          <View style={styles.emptyTopicRow}>
             {topics.slice(0, 4).map((item, i) => {
               const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
               return (
@@ -523,11 +532,11 @@ const Chat = memo(() => {
                   key={item.id}
                   activeOpacity={0.7}
                   onPress={() => onTapTopic(item.title)}
-                  style={[styles.emptyTopicChip, { backgroundColor: chipStyle.bg }]}>
-                  <View style={styles.emptyTopicIconWrap}>
-                    <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon16, { tintColor: chipStyle.iconColor }]} />
+                  style={styles.emptyTopicButton}>
+                  <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
+                    <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
                   </View>
-                  <Text category="h10" bold numberOfLines={2} mt={8}>
+                  <Text category="h10" bold center numberOfLines={2} mt={8}>
                     {item.title}
                   </Text>
                 </TouchableOpacity>
@@ -803,25 +812,24 @@ const themedStyles = StyleService.create({
     marginTop: 12,
     marginBottom: 28,
   },
-  emptyTopicGrid: {
+  // Reference-redesign follow-up: a single row of 4 round icon buttons
+  // (was a 2x2 card grid — see the JSX comment above).
+  emptyTopicRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
+    marginBottom: 8,
   },
-  emptyTopicChip: {
-    width: '48%',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 12,
+  emptyTopicButton: {
+    alignItems: 'center',
+    width: 72,
   },
-  emptyTopicIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
+  emptyTopicCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
   },
   emptySuggestedCard: {
     flexDirection: 'row',
