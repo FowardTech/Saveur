@@ -758,6 +758,36 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         ) : null}
 
+        {/* Product follow-up: "remove [the AI Career Coach hero card on the
+            Coach tab] totally and then the Salary Negotiation Simulator
+            should be a card in the homescreen that leads to the simulation
+            screen" — same compact pastel-row treatment as the three rows
+            above (teal, the one color in this row family not already used
+            here), rather than reviving a full-width hero card. Gated the
+            same way the Coach tab's own entry point was
+            (configService.isFeatureEnabled('salary_negotiation')) — the
+            destination screen itself (SalaryNegotiation.tsx) still shows
+            its own ProLockGate for non-Pro users, same as always. */}
+        {configService.isFeatureEnabled('salary_negotiation') ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={[styles.actionRow, { backgroundColor: 'rgba(29, 158, 117, 0.08)' }]}
+            onPress={() => navigate('SalaryNegotiation')}>
+            <View style={styles.actionRowIconWrap}>
+              <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#1D9E75' }]} />
+            </View>
+            <View style={globalStyle.flexOne}>
+              <Text category="h9" bold>
+                {t('home:salary_negotiation_card_title', { defaultValue: 'Salary Negotiation Simulator' })}
+              </Text>
+              <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
+                {t('home:salary_negotiation_card_subtitle_short', { defaultValue: 'Practice countering a mock offer' })}
+              </Text>
+            </View>
+            <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
+          </TouchableOpacity>
+        ) : null}
+
         <RecentActivityList />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,

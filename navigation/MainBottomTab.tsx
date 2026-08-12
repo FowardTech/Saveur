@@ -21,8 +21,18 @@ import { NotificationProps } from "constants/Types";
 import HomeStackNavigator from "./HomeStackNavigator";
 // "Find" is repurposed as the Practice hub (pick interview type / mode / difficulty).
 import FindScreen from "src/find/FindScreen";
-// "Messages" is repurposed as the AI Coach chat.
-import MessagesScreen from "src/messages/MessagesScreen";
+// "Messages" is repurposed as the AI Coach chat. Product follow-up: "the
+// chat icon tab in the bottom navigation will just lead straight to the AI
+// coach screen" — used to render MessagesScreen.tsx (a menu page: a hero
+// card you had to tap to actually reach the chat, plus a Salary
+// Negotiation Simulator card and a Suggested Topics grid). That hero card
+// is gone (see Home's own new "Salary Negotiation Simulator" row, and
+// Chat.tsx's own greeting screen, which now carries the Suggested Topics
+// grid instead), so there's nothing left on that intermediate screen worth
+// keeping — this tab now renders MessagesNavigator directly, which mounts
+// Chat.tsx as its first screen (see that navigator's own
+// initialRouteName="Chat"). MessagesScreen.tsx itself has been deleted.
+import MessagesNavigator from "./MessagesNavigator";
 import RequestsBottomNavigator from "./RequestsBottomNavigator";
 import MoreNavigator from "./MoreNavigator";
 import VerifyEmailGate from "src/auth/VerifyEmailGate";
@@ -260,7 +270,7 @@ const MainBottomTab = memo(() => {
         />
         <BottomTab.Screen
           name="Coach"
-          component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesScreen}
+          component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesNavigator}
           options={{
             // Product follow-up (revert): "the floating chat icon in the
             // bottom navigation should return as normal like the other
