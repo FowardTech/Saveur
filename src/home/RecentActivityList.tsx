@@ -166,16 +166,18 @@ const themedStyles = StyleService.create({
   // fix: `background-basic-color-1` is a faint off-white almost invisible
   // against the page background; `background-basic-color-2` is real
   // `#FFFFFF`.
+  // Radius bumped 20 -> 24 (Google-style pass, see QuickActionGrid.tsx's
+  // own comment) to match the grid tiles' larger, softer corner language.
   listCard: {
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
     paddingHorizontal: 16,
-    borderRadius: 20,
+    borderRadius: 24,
   },
   emptyCard: {
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 20,
+    borderRadius: 24,
     paddingVertical: 28,
     paddingHorizontal: 20,
   },

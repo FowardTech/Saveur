@@ -92,41 +92,44 @@ const HomeSrc = memo(() => {
 
   // The three quick-action tiles (see QuickActionGrid.tsx) — same
   // destinations/copy the old stacked hero cards used, just fed into the
-  // grid instead of rendered as separate JSX blocks. Each gets its own
-  // two-stop gradient (product follow-up: "make it look the best of the
-  // best" -- distinct hues instead of the flat single-color fills this
-  // had before, and instead of Career Coach/Dream Company sharing the
-  // exact same blue) -- blue-violet for Career Coach (this app's own
-  // brand blue leading into violet, its primary/AI-coach destination),
-  // emerald-teal for Practice (an energetic "go do something" color,
-  // distinct from Coach's blue), amber-orange for Dream Company Dashboard
-  // (a "gold standard/aspirational" feel).
+  // grid instead of rendered as separate JSX blocks.
   //
-  // PRODUCT FOLLOW-UP: "remove the referral card as one of the grid cards
-  // and place it as a normal white card as below as you did before" --
-  // Refer & Earn is no longer in this grid at all; it's rendered again as
-  // its own full-width white card right after the grid (see the JSX
-  // below), the same treatment it had before the colorful-grid redesign.
+  // EXPERIMENTAL "Google-style" pass (product request: "try the Google-
+  // style pass and let's see if it's not good we can revert back") --
+  // swapped each tile's two-stop gradient for a single flat accent color
+  // (QuickActionGrid.tsx now renders it as a pale tonal container + a
+  // solid icon badge in this color, Material 3's own "container/on-
+  // container" pattern, instead of a saturated gradient fill). Same three
+  // distinct hues kept as before -- blue for Career Coach (this app's own
+  // brand blue), emerald for Practice, amber for Dream Company Dashboard
+  // -- easy to revert to the gradient version via git history if this
+  // doesn't land well.
+  //
+  // PRODUCT FOLLOW-UP (earlier): "remove the referral card as one of the
+  // grid cards and place it as a normal white card as below as you did
+  // before" -- Refer & Earn is no longer in this grid at all; it's
+  // rendered again as its own full-width white card right after the grid
+  // (see the JSX below).
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
       title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
       icon: 'message-circle-outline',
-      gradient: ['#0063f8', '#7C3AED'],
+      tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
     },
     {
       key: 'practice',
       title: t('home:practice_card_title', { defaultValue: 'Practice' }),
       icon: 'mic-outline',
-      gradient: ['#10B981', '#0D9488'],
+      tint: '#0D9488',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
     },
     {
       key: 'dreamCompanies',
       title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
       icon: 'briefcase-outline',
-      gradient: ['#F59E0B', '#EA580C'],
+      tint: '#EA580C',
       onPress: () => navigate('DreamCompanies'),
     },
   ], [t, navigate]);
