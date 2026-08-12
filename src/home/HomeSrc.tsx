@@ -13,7 +13,7 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox, ArtDreamCompany } from './HomeHeroArt';
+import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -127,17 +127,19 @@ const HomeSrc = memo(() => {
   // layout: Coach + Dream Company Dashboard stack in a left column,
   // Practice stretches to match their combined height on the right.
   //
-  // Background illustrations, round 3 (product follow-up: "remove the
-  // illustration from the other 2 cards and leave the illustration on the
-  // third one because the card title is covering the illustration of the
-  // dream company dashboard card... make it look better so the
-  // illustration will be more visible and the dream company dashboard
-  // text can be fully visible") -- Coach/Practice no longer pass an `art`
-  // at all. Dream Company Dashboard keeps its illustration; the actual
-  // "title covering it" fix lives in QuickActionGrid.tsx (constraining the
-  // title's width so it wraps clear of the illustration's corner instead
-  // of painting over it, plus a bigger/more-opaque illustration now that
-  // it's the only one and has room to itself).
+  // Background illustrations, round 4 (product follow-up: "put back the
+  // illustrations of the other 2 cards and then make the illustrations of
+  // the 3 cards subtle and transparent the way you made them before") --
+  // all three tiles carry an `art` again. "The way you made them before"
+  // (faint, low-opacity) is back, but still rendered in QuickActionGrid.
+  // tsx's normal-document-flow position (below the title, not absolutely
+  // positioned behind it) rather than the earlier corner-overlay
+  // mechanism -- that overlay version is what caused the actual "title
+  // covering the illustration" bug on Dream Company Dashboard's longer
+  // title, so reintroducing it here for all three would very likely bring
+  // the same bug back on any card whose title happens to wrap wide/tall
+  // enough. This keeps the SUBTLE LOOK product asked for while keeping the
+  // overlap fix.
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
@@ -145,6 +147,7 @@ const HomeSrc = memo(() => {
       icon: 'message-circle-outline',
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
+      art: ArtCareerCoach,
     },
     {
       key: 'practice',
@@ -153,6 +156,7 @@ const HomeSrc = memo(() => {
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       tall: true,
+      art: ArtPractice,
     },
     {
       key: 'dreamCompanies',

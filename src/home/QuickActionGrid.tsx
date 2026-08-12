@@ -31,35 +31,31 @@ import { globalStyle } from 'styles/globalStyle';
 // `wide` is gone; `tall` (see HomeSrc.tsx's quickActions -- now set on
 // Practice) drives this two-column bento layout below instead.
 //
-// BACKGROUND ILLUSTRATIONS -- round 3 (product follow-up: first "add
-// illustrations", then "it looks crowded and not professional" with a
-// screenshot showing one illustration rendered OUTSIDE its own tile's
-// rounded bounds, then "add the illustrations back but... give the 3
-// cards spacing from each other", then "remove the illustration from the
-// other 2 cards and leave the illustration on the third one because the
-// card title is covering the illustration of the dream company dashboard
-// card... make it look better so the illustration will be more visible
-// and the dream company dashboard text can be fully visible"). Only Dream
-// Company Dashboard carries an `art` now (see HomeSrc.tsx's quickActions).
+// BACKGROUND ILLUSTRATIONS -- round 4 (product follow-up history: "add
+// illustrations" -> "it looks crowded and not professional" (screenshot
+// showed one illustration rendered OUTSIDE its own tile's rounded bounds)
+// -> "add the illustrations back but... give the 3 cards spacing from
+// each other" -> "remove the illustration from the other 2 cards and
+// leave [it] on the third one because the card title is covering the
+// illustration of the dream company dashboard card... make it more
+// visible and the text fully visible" -> "put back the illustrations of
+// the other 2 cards and... make the illustrations of the 3 cards subtle
+// and transparent the way you made them before"). All three tiles carry
+// an `art` again.
 //
-// The "title covering the illustration" bug was a real text-paints-over-
-// art overlap: `art` used to be absolutely positioned behind the icon/
-// title, pinned to the tile's bottom-right corner, with the title spanning
-// the tile's FULL width above it -- on a narrow ~48%-width tile, "Dream
-// Company Dashboard" wrapped across two lines tall/wide enough to paint
-// straight over that corner. Rather than trying to reserve just-enough
-// pixels for the art with padding (fragile -- the exact right number
-// depends on the tile's actual on-device width, which varies by screen
-// size, and guessing wrong either re-creates the overlap or squeezes the
-// title so narrow it truncates), `art` is now rendered in normal document
-// flow, stacked AFTER the title instead of positioned behind it. That
-// makes the overlap structurally impossible on any screen size -- the
-// title gets the tile's full width to wrap in exactly like every other
-// tile's title, and the illustration simply sits in its own space below
-// it, right-aligned. With nothing left to hide it behind, it's also drawn
-// larger and at full opacity now ("make the illustration more visible")
-// instead of the faint, semi-transparent corner texture the two earlier
-// rounds used.
+// What's carried forward from the previous round rather than reverted:
+// `art` renders in normal document flow, stacked AFTER the title (see
+// `artRow`/`artRowTall` below), not absolutely positioned behind it. The
+// EARLIER "title covering the illustration" bug was a real text-paints-
+// over-art overlap from that absolute-corner version -- title spanned the
+// tile's FULL width above/over a corner-pinned illustration, and "Dream
+// Company Dashboard" wrapped tall/wide enough to paint straight over it.
+// Bringing that same mechanism back for all three tiles now would risk
+// reintroducing that exact bug on any card whose title happens to wrap
+// wide/tall enough, on any screen size -- so containment stays
+// structural (below the title, not behind it) even though the LOOK is
+// back to "subtle and transparent" (low opacity, small size) per this
+// round's request.
 export interface QuickAction {
   key: string;
   title: string;
@@ -160,7 +156,7 @@ const Tile = ({
       </Text>
       {Art ? (
         <View style={styles.artRow} pointerEvents="none">
-          <Art size={64} />
+          <Art size={58} />
         </View>
       ) : null}
     </TouchableOpacity>
@@ -187,7 +183,7 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
       </Text>
       {Art ? (
         <View style={styles.artRowTall} pointerEvents="none">
-          <Art size={92} />
+          <Art size={104} />
         </View>
       ) : null}
     </TouchableOpacity>
@@ -319,20 +315,24 @@ const themedStyles = StyleService.create({
     lineHeight: 24,
   },
   // Illustration accent, in normal document flow AFTER the title (see the
-  // module comment on why this replaced the earlier absolutely-positioned
-  // corner version) -- `alignSelf:'flex-end'` right-aligns it within the
-  // tile's own column instead of stretching, `marginTop` gives it a clean
-  // gap below the title rather than touching it, and `pointerEvents:'none'`
-  // keeps it from intercepting the tile's own tap. No opacity fade here
-  // (unlike the reverted version) -- with the overlap risk gone, it's
-  // meant to read as a real, fully visible illustration, not a faint
-  // texture.
+  // module comment on why this stays structurally below the title instead
+  // of absolutely positioned behind it) -- `alignSelf:'flex-end'` right-
+  // aligns it within the tile's own column instead of stretching,
+  // `marginTop` gives it a clean gap below the title rather than touching
+  // it, and `pointerEvents:'none'` keeps it from intercepting the tile's
+  // own tap. Opacity back to a faint, low-contrast fade (product request:
+  // "make the illustrations... subtle and transparent the way you made
+  // them before") -- a real illustration would otherwise read as a second
+  // focal point competing with the icon/title, the same "too busy" problem
+  // an earlier saturated-gradient-tile pass already hit once.
   artRow: {
     alignSelf: 'flex-end',
     marginTop: 10,
+    opacity: 0.22,
   },
   artRowTall: {
     alignSelf: 'flex-end',
     marginTop: 14,
+    opacity: 0.28,
   },
 });
