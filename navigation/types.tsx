@@ -17,7 +17,6 @@ export type RootStackParamList = {
   AuthStack: NavigatorScreenParams<AuthStackParamList>;
   SelectLanguage: undefined;
   Notification: undefined;
-  AddMorePayment: undefined;
   MoreNavigator: NavigatorScreenParams<MoreStackParamList>;
   MessagesStack: NavigatorScreenParams<MessagesStackParamList>;
   RequestStack: NavigatorScreenParams<RequestsStackParamList>;
@@ -251,21 +250,6 @@ export type RootStackParamList = {
   // creation" placement in the wizard, before the celebratory success
   // screen.
   ChooseUsername: {fromSignup?: boolean} | undefined;
-  // Full-page "Today's Briefing" — HomeSrc.tsx's dashboard card only shows a
-  // 3-line preview of the narrative with a "Read more" arrow; this shows the
-  // whole thing plus all priorities. Takes the already-fetched briefing
-  // straight via route params (see services/careerOsService.ts) rather than
-  // re-fetching — it's a same-day, same-language, cached-on-the-server value
-  // anyway, so there's nothing new to gain from a second network round trip.
-  CareerBriefingDetail: {
-    narrative: string;
-    priorities: {label: string; action: string}[];
-    // See careerOsService.ts's HomeBriefing.isTeaser — lets this screen
-    // show a "Get Started" title instead of "Today's Briefing" for the
-    // admin-editable teaser shown to a user with nothing real to
-    // synthesize yet.
-    isTeaser?: boolean;
-  };
   // Full-page "Today's Goal Tips" — HomeSrc.tsx's dashboard card was removed
   // (product request item: rely on the daily push notification instead of a
   // persistent home card); this is where a "goal_tip" push tap now lands.
@@ -484,7 +468,6 @@ export type MessagesStackParamList = {
   // the first message once chat history has loaded, instead of opening to a
   // blank thread regardless of which topic was tapped.
   Chat: {initialPrompt?: string} | undefined;
-  VideoCall: undefined;
 };
 export type RequestsBottomStackParamList = {
   RequestsSrc: undefined;

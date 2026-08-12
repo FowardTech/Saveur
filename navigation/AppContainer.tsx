@@ -13,7 +13,6 @@ import Notification from 'src/home/Notification';
 import MessagesNavigator from './MessagesNavigator';
 import RequestsStackNavigator from './RequestStackNavigator';
 import MoreNavigator from './MoreNavigator';
-import AddMorePayment from 'src/more/AddMorePayment/AddMorePayment';
 import FaqScreen from 'src/more/faqScreen';
 import AboutScreen from 'src/more/aboutScreen';
 import ChangeCareType from 'src/more/ChangeCareType';
@@ -50,7 +49,6 @@ import StudentVerification from 'src/more/StudentVerification';
 import ChooseUsername from 'src/auth/Signup/ChooseUsername';
 import SharedWithMe from 'src/more/SharedWithMe';
 import SharedContentDetail from 'src/more/SharedContentDetail';
-import CareerBriefingDetail from 'src/home/CareerBriefingDetail';
 import GoalTipDetail from 'src/home/GoalTipDetail';
 import SalaryNegotiation from 'src/practice/SalaryNegotiation';
 import SystemDesignWhiteboard from 'src/practice/SystemDesignWhiteboard';
@@ -185,7 +183,6 @@ const AppContainer = () => {
         <Stack.Screen name="RequestStack" component={RequestsStackNavigator} />
 
         <Stack.Screen name="MoreNavigator" component={MoreNavigator} />
-        <Stack.Screen name="AddMorePayment" component={AddMorePayment} />
         <Stack.Screen name="ChangeCareType" component={ChangeCareType} />
         <Stack.Screen name="GoalsScreen" component={GoalsScreen} />
         <Stack.Screen name="JobPreferences" component={JobPreferences} />
@@ -224,7 +221,6 @@ const AppContainer = () => {
         <Stack.Screen name="ChooseUsername" component={ChooseUsername} />
         <Stack.Screen name="SharedWithMe" component={SharedWithMe} />
         <Stack.Screen name="SharedContentDetail" component={SharedContentDetail} />
-        <Stack.Screen name="CareerBriefingDetail" component={CareerBriefingDetail} />
         <Stack.Screen name="GoalTipDetail" component={GoalTipDetail} />
         <Stack.Screen name="CourseSession" component={CourseSession} />
         <Stack.Screen name="SalaryNegotiation" component={SalaryNegotiation} />
