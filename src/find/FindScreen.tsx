@@ -24,8 +24,6 @@ import * as interviewService from 'services/interviewService';
 import { getSessionEntitlement, hasAddon, ADDON_CODES } from 'services/entitlementsService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
-import ThemeContext from '../../ThemeContext';
-import { tileColorAt } from 'styles/tileColors';
 
 // "Practice" tab — the entry point for AI mock interviews. Lets a candidate
 // jump straight into a category, or open the full setup wizard (mode /
@@ -36,15 +34,15 @@ const FindScreen = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common', 'more']);
-  // Product follow-up ("leave the cards in this screen white background as
-  // they are before but you can give them different colors in the dark
-  // mode") — the Tools/Interview Types grids below stay plain white in
-  // light mode (unchanged from before the reskin) but pick up the same
-  // rotating pastel palette every other screen's stat tiles use once dark
-  // mode is on, so this screen isn't a wall of identical dark-navy cards
-  // while everywhere else in dark mode has color variety.
-  const { theme: appTheme } = React.useContext(ThemeContext);
-  const isDarkMode = appTheme === 'dark';
+  // REVERTED (product follow-up: "remove the different color you gave to
+  // cards in the practice screen in the dark mode") — the Tools/Interview
+  // Types grids below used to pick up a rotating pastel palette
+  // (`tileColorAt`) once dark mode was on, so this screen wasn't a wall of
+  // identical dark-navy cards while everywhere else in dark mode had color
+  // variety (see git history). Product reversed that call -- both grids now
+  // use the same plain `background-basic-color-2`/`text-basic-color`
+  // card in light AND dark mode, same as every other screen's default card
+  // treatment.
   const { subscription } = React.useContext(AuthContext);
 
   const onStartSetup = (interviewType?: Interview_Type_Enum) => {
@@ -330,9 +328,8 @@ const FindScreen = memo(() => {
             TOOLS above). */}
         <View style={{marginTop: 10,}}>
           {TOOLS.map((tool, i) => {
-            const tile = tileColorAt(i);
-            const bg = isDarkMode ? theme[tile.bg] : theme['background-basic-color-2'];
-            const fg = isDarkMode ? theme[tile.text] : theme['text-basic-color'];
+            const bg = theme['background-basic-color-2'];
+            const fg = theme['text-basic-color'];
             return (
               <TouchableOpacity
                 key={i}
@@ -340,7 +337,7 @@ const FindScreen = memo(() => {
                 onPress={tool.onPress}
                 disabled={tool.loading}
                 style={[styles.toolRow, { backgroundColor: bg }]}>
-                <View style={[styles.toolIconWrap, { backgroundColor: isDarkMode ? theme['transparent'] : theme['background-basic-color-1'] }]}>
+                <View style={[styles.toolIconWrap, { backgroundColor: theme['background-basic-color-1'] }]}>
                   {tool.loading ? (
                     <Spinner size="small" />
                   ) : (
@@ -369,9 +366,8 @@ const FindScreen = memo(() => {
         </Text>
         <View style={styles.typesGrid}>
           {DATA_INTERVIEW_TYPES.map((item, i) => {
-            const tile = tileColorAt(i);
-            const bg = isDarkMode ? theme[tile.bg] : theme['background-basic-color-2'];
-            const fg = isDarkMode ? theme[tile.text] : theme['text-basic-color'];
+            const bg = theme['background-basic-color-2'];
+            const fg = theme['text-basic-color'];
             return (
               <TouchableOpacity
                 key={i}
@@ -412,9 +408,21 @@ const themedStyles = StyleService.create({
   // Home to this screen -- see src/home/QuickActionGrid.tsx's own comment
   // on the design language; scheduleIconWrap was already a circular tonal
   // fill, matching Material 3's icon-badge shape, so it's unchanged here).
+  //
+  // Blue border (product follow-up: "give the schedule a session card
+  // default blue color border to differentiate it from a regular white
+  // card") -- this card's fill is the same plain white every other card
+  // on this screen now uses (see the Tools/Interview Types dark-mode
+  // revert above), so without its own accent it would be indistinguishable
+  // from a plain content card despite being this screen's one CTA. A thin
+  // brand-blue ring (not a fill -- the card stays white/legible either
+  // theme) is enough to read as "this one's different" without going back
+  // to a solid or tonal fill.
   scheduleCard: {
     ...globalStyle.card,
     borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#0063f8',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
