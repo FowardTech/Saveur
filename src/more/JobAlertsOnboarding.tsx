@@ -2,7 +2,6 @@ import React, { memo, useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 
-import Text from 'components/Text';
 import CtaButton from 'components/CtaButton';
 import useLayout from 'hooks/useLayout';
 import { Images } from 'assets/images';
@@ -61,15 +60,6 @@ const JobAlertsOnboarding = memo(({ onGetStarted }: JobAlertsOnboardingProps) =>
         <CtaButton style={globalStyle.shadowBtn} onPress={onGetStarted}>
           {t('common:continue', { defaultValue: 'Continue' })}
         </CtaButton>
-        <Text
-          category="h10"
-          status="placeholder"
-          center
-          mt={12}
-          onPress={onGetStarted}
-          style={styles.skipText}>
-          {t('more:onboarding_skip_for_now', { defaultValue: 'Skip for now' })}
-        </Text>
       </View>
     </View>
   );
@@ -98,8 +88,5 @@ const styles = StyleSheet.create({
     left: 24,
     right: 24,
     bottom: 0,
-  },
-  skipText: {
-    textDecorationLine: 'underline',
   },
 });

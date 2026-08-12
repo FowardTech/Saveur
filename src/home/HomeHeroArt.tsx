@@ -73,6 +73,13 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 // above would go invisible against it, same problem/same fix as the
 // third retint above. ArtPractice/ArtDreamCompany/ArtLearningCourses stay
 // on the pale-tonal construction -- their own tiles are still plain white.
+//
+// ArtCareerCoach RETINTED A SIXTH TIME, back to solid-tint-shapes-on-
+// pale-backdrop (product follow-up: "make the career coach card white
+// background too like the other 3 cards") — `solid` is off this tile for
+// good this time (see QuickActionGrid.tsx's own comment), so it converges
+// back onto the exact same construction ArtPractice/ArtDreamCompany below
+// use, matching every other white quick-action tile.
 
 interface ArtProps {
   size: number;
@@ -80,13 +87,13 @@ interface ArtProps {
 
 export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="58" r="48" fill="rgba(255,255,255,0.14)" />
-    <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.08)" />
-    <Path d="M38 78l-6 16 20-11z" fill="rgba(255,255,255,0.96)" />
-    <Rect x="26" y="32" width="68" height="48" rx="18" fill="rgba(255,255,255,0.96)" />
-    <Circle cx="45" cy="56" r="5.5" fill="#0063f8" />
-    <Circle cx="60" cy="56" r="5.5" fill="#0063f8" />
-    <Circle cx="75" cy="56" r="5.5" fill="#0063f8" />
+    <Circle cx="60" cy="58" r="48" fill="#0063f80f" />
+    <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.06)" />
+    <Path d="M38 78l-6 16 20-11z" fill="#0063f8" />
+    <Rect x="26" y="32" width="68" height="48" rx="18" fill="#0063f8" />
+    <Circle cx="45" cy="56" r="5.5" fill="#EAF2FF" />
+    <Circle cx="60" cy="56" r="5.5" fill="#EAF2FF" />
+    <Circle cx="75" cy="56" r="5.5" fill="#EAF2FF" />
   </Svg>
 );
 

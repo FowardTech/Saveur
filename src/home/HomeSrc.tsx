@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, InteractionManager, StyleSheet, TouchableOpacity, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -13,8 +14,8 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany, ArtLearningCourses } from './HomeHeroArt';
-import { IconChatBubble3D, IconMic3D, IconBriefcase3D, IconBook3D } from './QuickActionIcons';
+import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
+import { IconChatBubble3D, IconMic3D } from './QuickActionIcons';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -37,6 +38,9 @@ import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import { guessCompanyLogoUrl } from 'utils/companyLogo';
+import { dreamCompanyLogoNames } from 'constants/Data';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -98,40 +102,27 @@ const HomeSrc = memo(() => {
   // illustrations retinted to match (see HomeHeroArt.tsx's own comment).
   // Full history in git log if any of that needs revisiting.
   //
-  // Refer & Earn used to be a 4th grid tile; product asked for it back out
-  // as its own standalone white card instead (see the JSX below, right
-  // after this grid) -- that briefly left this grid an ODD 3-tile set, so
-  // Practice was marked `tall` to absorb the gap the missing 4th tile left
-  // behind (see QuickActionGrid.tsx's own bento-layout comment for that
-  // period's history).
-  //
-  // PRODUCT FOLLOW-UP: "place a fourth card below the practice card and
-  // name it Learning Courses" -- a real 4th tile again, so `tall` comes
-  // back off Practice (QuickActionGrid.tsx falls back to its plain 2-up
-  // wrapping grid whenever nothing is marked `tall`) and Learning Courses
-  // slots in as the 4th array item. Array order IS render order in that
-  // plain grid (fills left-to-right, top-to-bottom), so Learning Courses
-  // -- 4th item -- lands directly under Practice -- 2nd item -- exactly
-  // matching the request, with no bento math needed anymore. Routes to
-  // the same LearningCourses screen MoreSrc.tsx's own "Learning Courses"
-  // row does; unlike that row, this tile isn't gated behind the
-  // `learning_courses` admin feature flag, matching how Coach/Practice/
-  // Dream Company Dashboard already aren't gated at this grid level either
-  // (DreamCompanies enforces its own Pro Premium gate server-side instead
-  // -- see that entry's own history).
+  // PRODUCT FOLLOW-UP: "make the career coach card white background too
+  // like the other 3 cards" + "remove the dream company card and the
+  // learning course card from the grid, leaving just the career coach and
+  // the practice card" -- Career Coach drops `solid` (back to the plain
+  // white-tile default every tile now uses, see QuickActionGrid.tsx's own
+  // comment on that flag) and this grid goes back down to just 2 tiles.
+  // Dream Company Dashboard moves to its own standalone full-width card
+  // below this grid instead (see the JSX below, same pattern Refer & Earn
+  // already used) rather than disappearing; Learning Courses has no
+  // standalone replacement -- it's reachable from MoreSrc.tsx's own
+  // "Learning Courses" row same as before this tile ever existed. With
+  // only 2 tiles left, QuickActionGrid.tsx's bento layout still applies
+  // (Practice stays `tall`, Coach fills the stacked column beside it).
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
-      // Product follow-up: "give the career [coach] card the default blue
-      // background" -- opts this one tile out of the white-card default
-      // every other tile uses (see QuickActionGrid.tsx's own comment on
-      // `solid` for what that flips).
       key: 'coach',
       title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
       icon: IconChatBubble3D,
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
       art: ArtCareerCoach,
-      solid: true,
     },
     {
       key: 'practice',
@@ -140,24 +131,20 @@ const HomeSrc = memo(() => {
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       art: ArtPractice,
-    },
-    {
-      key: 'dreamCompanies',
-      title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
-      icon: IconBriefcase3D,
-      tint: '#0063f8',
-      onPress: () => navigate('DreamCompanies'),
-      art: ArtDreamCompany,
-    },
-    {
-      key: 'learningCourses',
-      title: t('home:learning_courses_card_title', { defaultValue: 'Learning Courses' }),
-      icon: IconBook3D,
-      tint: '#0063f8',
-      onPress: () => navigate('LearningCourses'),
-      art: ArtLearningCourses,
+      tall: true,
     },
   ], [t, navigate]);
+
+  // Product follow-up: "place the dream company dashboard card below the
+  // grid... place the 3 or 4 logos of the fortune 500 companies logo
+  // overlapping each other like the way you did it before" -- restores
+  // the logo-stack feature this card had before it was folded into the
+  // grid above (see constants/Data.ts's dreamCompanyLogoNames for the
+  // actual 2-global-plus-1-regional selection logic).
+  const dreamCompanyLogos = React.useMemo(
+    () => dreamCompanyLogoNames(profile?.preferredCountries),
+    [profile?.preferredCountries],
+  );
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -653,37 +640,110 @@ const HomeSrc = memo(() => {
             Premium gate server-side. See the quickActions useMemo above. */}
         <QuickActionGrid items={quickActions} />
 
-        {/* Refer & Earn (product follow-up: "remove the referral card as
-            one of the grid cards and place it as a normal white card as
-            below as you did before") — back to its own full-width white
-            card, the exact same shape (icon circle, title, subtitle, CTA
-            row, ArtGiftBox illustration) it had before the colorful-grid
-            redesign, gated on the same "referral_program" admin feature
-            flag src/more/MoreSrc.tsx's own row already respects. */}
+        {/* Dream Company Dashboard (product follow-up: "remove the dream
+            company card... from the grid. Place the dream company
+            dashboard card below the grid and make it full width and then
+            place the 3 or 4 logos of the fortune 500 companies logo
+            overlapping each other like the way you did it before") — back
+            to its own full-width white card (same whiteCard/whiteCardContent
+            shape Refer & Earn below already uses), with the overlapping
+            Fortune-500 logo row restored (see the dreamCompanyLogos useMemo
+            above and constants/Data.ts's dreamCompanyLogoNames — this exact
+            feature previously shipped, then was removed when this became a
+            grid tile). Not gated behind an admin feature flag at this level,
+            same as when it was a grid tile — DreamCompanies enforces its
+            own Pro Premium gate server-side. */}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('DreamCompanies')}>
+          <View style={[styles.whiteCard, styles.whiteCardContent]}>
+            <View style={styles.whiteCardLeft}>
+              <View style={[styles.whiteCardIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
+                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon24, { tintColor: '#0063f8' }]} />
+              </View>
+              <Text category="h6" bold mt={14}>
+                {t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' })}
+              </Text>
+              <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
+                {t('home:dream_company_card_subtitle', {
+                  defaultValue: 'Track the employers you actually want, with AI research and prep built in.',
+                })}
+              </Text>
+              {/* Overlapping Fortune 500 logo stack — each avatar's real
+                  border (not just a transparent gap) is what actually sells
+                  the "stacked circles" look once two logos with similar
+                  background colors sit right next to each other (see
+                  dreamCompanyLogo's own style comment below). */}
+              <Flex justify="flex-start" itemsCenter mt={12}>
+                {dreamCompanyLogos.map((name, i) => (
+                  <CompanyLogoAvatar
+                    key={name}
+                    logoUrl={guessCompanyLogoUrl(name)}
+                    companyName={name}
+                    size="small"
+                    shape="round"
+                    style={[
+                      styles.dreamCompanyLogo,
+                      i > 0 ? { marginLeft: -12 } : null,
+                      { zIndex: dreamCompanyLogos.length - i },
+                    ]}
+                  />
+                ))}
+              </Flex>
+              <Flex justify="flex-start" itemsCenter mt={14}>
+                <Text category="h10" bold style={{ color: '#0063f8', marginBottom: 5 }}>
+                  {t('home:dream_company_card_cta', { defaultValue: 'View dashboard' })}
+                </Text>
+                <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#0063f8', marginLeft: 4 }]} />
+              </Flex>
+            </View>
+            <View style={styles.whiteCardArtWrap}>
+              <ArtDreamCompany size={92} />
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Refer & Earn (product follow-up: "give the referral card a
+            linear gradient background of black and purple and the texts
+            white") — same whiteCard/whiteCardContent shape as before, but
+            the plain white fill is replaced with an absolute-fill
+            LinearGradient layer (black -> this app's purple accent) sized
+            by the plain-View parent rather than by the gradient itself —
+            same fix FindScreen.tsx's own hero card history documents for
+            why a flex-sized LinearGradient used AS the content container
+            doesn't reliably grow to wrap its own children's height on every
+            layout pass. All text/icons switch to white/near-white so they
+            stay legible against the dark fill. */}
         {configService.isFeatureEnabled('referral_program') ? (
           <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('ReferralProgram')}>
-            <View style={[styles.whiteCard, styles.whiteCardContent]}>
-              <View style={styles.whiteCardLeft}>
-                <View style={[styles.whiteCardIconWrap, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
-                  <Icon pack="eva" name="gift-outline" style={[globalStyle.icon24, { tintColor: '#8B5CF6' }]} />
-                </View>
-                <Text category="h6" bold mt={14}>
-                  {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
-                </Text>
-                <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
-                  {t('home:referral_card_subtitle', {
-                    defaultValue: 'Invite a friend — you both get a reward when they go Pro.',
-                  })}
-                </Text>
-                <Flex justify="flex-start" itemsCenter mt={14}>
-                  <Text category="h10" bold style={{ color: '#8B5CF6', marginBottom: 5 }}>
-                    {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
+            <View style={[styles.whiteCard, styles.gradientCardOuter]}>
+              <LinearGradient
+                colors={['#0A0A0A', '#8B5CF6']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <View style={styles.whiteCardContent}>
+                <View style={styles.whiteCardLeft}>
+                  <View style={[styles.whiteCardIconWrap, { backgroundColor: 'rgba(255, 255, 255, 0.16)' }]}>
+                    <Icon pack="eva" name="gift-outline" style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]} />
+                  </View>
+                  <Text category="h6" bold mt={14} style={styles.gradientCardText}>
+                    {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
                   </Text>
-                  <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6', marginLeft: 4 }]} />
-                </Flex>
-              </View>
-              <View style={styles.whiteCardArtWrap}>
-                <ArtGiftBox size={92} />
+                  <Text category="h9-s" mt={4} numberOfLines={2} style={[styles.gradientCardText, styles.gradientCardSubtitle]}>
+                    {t('home:referral_card_subtitle', {
+                      defaultValue: 'Invite a friend — you both get a reward when they go Pro.',
+                    })}
+                  </Text>
+                  <Flex justify="flex-start" itemsCenter mt={14}>
+                    <Text category="h10" bold style={[styles.gradientCardText, { marginBottom: 5 }]}>
+                      {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
+                    </Text>
+                    <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF', marginLeft: 4 }]} />
+                  </Flex>
+                </View>
+                <View style={styles.whiteCardArtWrap}>
+                  <ArtGiftBox size={92} />
+                </View>
               </View>
             </View>
           </TouchableOpacity>
@@ -825,5 +885,31 @@ const themedStyles = StyleService.create({
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Overlapping Fortune 500 logo stack (Dream Company Dashboard card above)
+  // — a real border (not just a transparent gap) is what actually sells the
+  // "stacked circles" look once two logos with similar background colors
+  // sit right next to each other; without it they'd read as one smeared
+  // shape instead of distinct overlapping avatars.
+  dreamCompanyLogo: {
+    borderWidth: 2,
+    borderColor: 'background-basic-color-2',
+  },
+  // Refer & Earn's gradient fill (product request: "give the referral card
+  // a linear gradient background of black and purple") — `overflow:'hidden'`
+  // is what actually clips the absolute-fill LinearGradient layer to this
+  // card's own rounded corners; `whiteCard`'s own `background-basic-color-2`
+  // fill stays underneath as a same-frame-paint fallback (invisible once the
+  // gradient layer covers it, but avoids a flash of the page's gray body
+  // showing through on the very first paint before the gradient layer
+  // mounts).
+  gradientCardOuter: {
+    overflow: 'hidden',
+  },
+  gradientCardText: {
+    color: '#FFFFFF',
+  },
+  gradientCardSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
   },
 });

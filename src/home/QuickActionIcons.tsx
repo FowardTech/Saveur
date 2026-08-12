@@ -21,20 +21,20 @@ interface IconProps {
 // needs a separate colored circle behind it.
 //
 // Each icon is purpose-built for the ONE tile it renders on, not a generic
-// re-tintable component the way HomeHeroArt.tsx's illustrations are:
-// IconChatBubble3D sits on Career Coach's solid blue tile (`solid: true` in
-// HomeSrc.tsx), so its body gradient is white-to-pale-blue -- a glossy
-// white icon on a blue card, same "frosted accent" logic this app's solid-
-// tile icon badge already used -- with brand-blue accent dots. The other
-// three sit on plain white tiles, so their body gradient is this app's own
-// brand blue, light-to-dark.
+// re-tintable component the way HomeHeroArt.tsx's illustrations are. All
+// four now sit on plain white tiles (Career Coach's tile briefly went
+// `solid` blue -- see HomeSrc.tsx/QuickActionGrid.tsx's own history -- and
+// IconChatBubble3D was a glossy white-on-pale-blue gradient for that one
+// tile specifically; it's back on the same brand-blue, light-to-dark
+// gradient the other icons use now that every tile is white again), so
+// every icon's body gradient is this app's own brand blue, light-to-dark.
 
 export const IconChatBubble3D: React.FC<IconProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 64 64">
     <Defs>
       <LinearGradient id="qaChatGrad" x1="0" y1="0" x2="1" y2="1">
-        <Stop offset="0%" stopColor="#FFFFFF" />
-        <Stop offset="100%" stopColor="#CFE0FF" />
+        <Stop offset="0%" stopColor="#58A6FF" />
+        <Stop offset="100%" stopColor="#0047B3" />
       </LinearGradient>
     </Defs>
     <Ellipse cx="32" cy="52" rx="14" ry="3.5" fill="rgba(0,0,0,0.18)" />
@@ -42,10 +42,10 @@ export const IconChatBubble3D: React.FC<IconProps> = ({ size }) => (
       d="M14 14h36a6 6 0 0 1 6 6v16a6 6 0 0 1-6 6H30l-9 8v-8h-7a6 6 0 0 1-6-6V20a6 6 0 0 1 6-6z"
       fill="url(#qaChatGrad)"
     />
-    <Ellipse cx="24" cy="21" rx="9" ry="5" fill="rgba(255,255,255,0.55)" />
-    <Circle cx="24" cy="27" r="3" fill="#0063f8" />
-    <Circle cx="32" cy="27" r="3" fill="#0063f8" />
-    <Circle cx="40" cy="27" r="3" fill="#0063f8" />
+    <Ellipse cx="24" cy="21" rx="9" ry="5" fill="rgba(255,255,255,0.4)" />
+    <Circle cx="24" cy="27" r="3" fill="#EAF2FF" />
+    <Circle cx="32" cy="27" r="3" fill="#EAF2FF" />
+    <Circle cx="40" cy="27" r="3" fill="#EAF2FF" />
   </Svg>
 );
 
