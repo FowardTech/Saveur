@@ -566,25 +566,40 @@ const Chat = memo(() => {
             label underneath each one, more compact and icon-forward. Same
             real topics/palette, just a different shape. */}
         {topics.length > 0 ? (
-          <View style={styles.emptyTopicRow}>
-            {topics.slice(0, 4).map((item, i) => {
-              const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
-              return (
-                <TouchableOpacity
-                  key={item.id}
-                  activeOpacity={0.7}
-                  onPress={() => onTapTopic(item.title)}
-                  style={styles.emptyTopicButton}>
-                  <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
-                    <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
-                  </View>
-                  <Text category="h10" bold center numberOfLines={2} mt={8}>
-                    {item.title}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <>
+            {/* BUG FIX (pre-launch redundancy/flow audit): tapping a topic
+                here silently leaves text mode and starts a live spoken
+                voice call (see onTapTopic below) — nothing previously told
+                the user that would happen, which read as a surprising mode
+                switch for anyone expecting a text reply. A one-line hint
+                plus a small mic badge on each circle (below) now signal it
+                up front. */}
+            <Text category="h10" center mb={10} style={{ color: theme['text-hint-color'] }}>
+              {t("message:topics_start_voice_hint", { defaultValue: "Tap a topic to start a voice conversation" })}
+            </Text>
+            <View style={styles.emptyTopicRow}>
+              {topics.slice(0, 4).map((item, i) => {
+                const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    activeOpacity={0.7}
+                    onPress={() => onTapTopic(item.title)}
+                    style={styles.emptyTopicButton}>
+                    <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
+                      <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
+                      <View style={styles.emptyTopicMicBadge}>
+                        <Icon pack="eva" name="mic" style={{ width: 10, height: 10, tintColor: '#fff' }} />
+                      </View>
+                    </View>
+                    <Text category="h10" bold center numberOfLines={2} mt={8}>
+                      {item.title}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
         ) : null}
 
         {/* "Suggested for you" — a real existing feature (same Composer
@@ -887,6 +902,23 @@ const themedStyles = StyleService.create({
     width: 56,
     height: 56,
     borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  // Small mic badge on each topic circle — signals up front that tapping a
+  // topic starts a live voice conversation, not a text reply (see the hint
+  // text rendered just above emptyTopicRow).
+  emptyTopicMicBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    borderWidth: 1.5,
+    borderColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
