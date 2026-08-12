@@ -136,7 +136,9 @@ const themedStyles = StyleService.create({
   },
   card: {
     flexDirection: 'row',
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     padding: 12,
     alignItems: 'center',
   },

@@ -148,7 +148,9 @@ const AppTour = memo(({ visible, onClose }: AppTourProps) => {
             style={{
               width: width - 48,
               maxWidth: 420,
-              borderRadius: 14,
+              // Google-style furnishing pass (see styles/globalStyle.ts's
+              // `card`) -- 14 -> 20.
+              borderRadius: 20,
               padding: 28,
             }}
           >

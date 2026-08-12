@@ -452,7 +452,9 @@ const themedStyles = StyleService.create({
   },
   editCard: {
     width: '100%',
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     padding: 24,
   },
   editInput: {

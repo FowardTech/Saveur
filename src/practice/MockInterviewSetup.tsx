@@ -633,7 +633,9 @@ const themedStyles = StyleService.create({
     // gives these three cards a visible edge with no shadow at all.
     width: '31%',
     borderWidth: 2,
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,
@@ -649,7 +651,7 @@ const themedStyles = StyleService.create({
   personaCard: {
     width: '48%',
     borderWidth: 2,
-    borderRadius: 14,
+    borderRadius: 20,
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 8,

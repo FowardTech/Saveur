@@ -407,7 +407,9 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-1',
     width: '31%',
     borderWidth: 2,
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,

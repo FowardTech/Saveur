@@ -209,9 +209,10 @@ const themedStyles = StyleService.create({
     // App-wide card standardization (product request: "all cards in this
     // app has a border radius of 13 or 14") — was a formula-derived
     // squircle radius (120 * 0.32 = 38.4, a much rounder "chip" shape than
-    // the rest of the app's cards). Same flat 14 every other card in the
-    // app now uses (see styles/globalStyle.ts's `card`).
-    borderRadius: 14,
+    // the rest of the app's cards). Google-style furnishing pass (see
+    // styles/globalStyle.ts's `card`) -- 14 -> 20, matching every other
+    // card in the app again.
+    borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },

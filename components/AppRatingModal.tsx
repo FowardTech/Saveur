@@ -114,7 +114,9 @@ const styles = {
   },
   card: {
     width: '100%' as const,
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     padding: 24,
     alignItems: 'center' as const,
   },

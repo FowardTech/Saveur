@@ -111,7 +111,9 @@ const themedStyles = StyleService.create({
     // container, same white as every other card's fill (background-basic-
     // color-2).
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     paddingVertical: 12,
     paddingHorizontal: 8,
   },

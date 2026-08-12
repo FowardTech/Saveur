@@ -1198,7 +1198,10 @@ const rowStyles = StyleService.create({
   card: {
     ...globalStyle.card,
     backgroundColor: 'background-basic-color-1',
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20 (redundant with the shared default now, kept explicit for
+    // clarity).
+    borderRadius: 20,
     padding: 14,
     marginBottom: 12,
   },
@@ -1293,7 +1296,9 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-1',
     flex: 1,
     borderWidth: 2,
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     padding: 14,
     marginRight: 10,
   },

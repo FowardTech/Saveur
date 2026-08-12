@@ -125,7 +125,10 @@ const SignupFirstStep = memo(() => {
                       // "all cards in this app has a border radius of 13 or
                       // 14") — was a formula-derived squircle radius, same
                       // fix as ChangeCareType/index.tsx's identical chip.
-                      borderRadius: 14,
+                      // Google-style furnishing pass (see styles/
+                      // globalStyle.ts's `card`) -- 14 -> 20, matching that
+                      // same chip's own update.
+                      borderRadius: 20,
                       backgroundColor:
                         isChoose === i
                           ? theme['color-primary-500']

@@ -302,7 +302,9 @@ const themedStyles = StyleService.create({
   },
   creditCard: {
     backgroundColor: 'color-success-transparent-200',
-    borderRadius: 14,
+    // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
+    // 14 -> 20.
+    borderRadius: 20,
     padding: 16,
     overflow: 'hidden',
   },

@@ -459,7 +459,9 @@ const themedStyles = StyleService.create({
     right: 20,
     width: 200,
     maxHeight: 320,
-    borderRadius: 14,
+    // Google-style furnishing pass (see src/home/QuickActionGrid.tsx's own
+    // comment / styles/globalStyle.ts's `card`) -- 14 -> 20.
+    borderRadius: 20,
     paddingVertical: 8,
     ...globalStyle.shadowBtn,
   },
