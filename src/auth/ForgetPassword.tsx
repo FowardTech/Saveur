@@ -94,7 +94,7 @@ const ForgetPassword = memo(() => {
           <Controller
             control={control}
             name="email"
-            rules={RuleEmail}
+            rules={RuleEmail()}
             render={({field: {onChange, onBlur, value}}) => (
               <Input
                 label={t('auth:email').toString()}

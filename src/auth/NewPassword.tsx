@@ -91,7 +91,7 @@ const NewPassword = memo(() => {
         <Controller
           control={control}
           name="code"
-          rules={RuleResetCode}
+          rules={RuleResetCode()}
           render={({field: {onChange, onBlur, value}}) => (
             <Input
               label={t('auth:code').toString()}
@@ -111,7 +111,7 @@ const NewPassword = memo(() => {
         <Controller
           control={control}
           name="password"
-          rules={RulePassword}
+          rules={RulePassword()}
           render={({field: {onChange, onBlur, value}}) => (
             <Input
               label={t('auth:password').toString()}
@@ -141,7 +141,7 @@ const NewPassword = memo(() => {
         <Controller
           control={control}
           name="confirmPassword"
-          rules={RulePassword}
+          rules={RulePassword()}
           render={({field: {onChange, onBlur, value}}) => (
             <Input
               label={t('auth:confirm_password').toString()}

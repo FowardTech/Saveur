@@ -275,7 +275,7 @@ const SignupThirdStep = memo(() => {
           <Controller
             control={control}
             name="full_name"
-            rules={RuleName}
+            rules={RuleName()}
             render={({field: {onChange, onBlur, value}}) => (
               <Input
                 label={t('auth:full_name').toString()}
@@ -295,7 +295,7 @@ const SignupThirdStep = memo(() => {
           <Controller
             control={control}
             name="email"
-            rules={RuleEmail}
+            rules={RuleEmail()}
             render={({field: {onChange, onBlur, value}}) => (
               <Input
                 label={t('auth:email').toString()}
@@ -315,7 +315,7 @@ const SignupThirdStep = memo(() => {
           <Controller
             control={control}
             name="password"
-            rules={RulePassword}
+            rules={RulePassword()}
             render={({field: {onChange, onBlur, value}}) => (
               <Input
                 label={t('auth:password').toString()}

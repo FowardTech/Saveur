@@ -339,7 +339,7 @@ const EditProfile = memo(() => {
         <Controller
           control={control}
           name="fullName"
-          rules={RuleName}
+          rules={RuleName()}
           render={({field: {onChange, onBlur, value}}) => (
             <Input
               label={t('auth:full_name').toString()}
