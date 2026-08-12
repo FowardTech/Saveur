@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, View } from 'react-native';
+import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -13,6 +13,7 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
+import { ArtGiftBox } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -89,57 +90,46 @@ const HomeSrc = memo(() => {
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
-  // The four quick-action tiles (see QuickActionGrid.tsx) — same
+  // The three quick-action tiles (see QuickActionGrid.tsx) — same
   // destinations/copy the old stacked hero cards used, just fed into the
-  // grid instead of rendered as four separate JSX blocks. Each gets its
-  // own two-stop gradient (product follow-up: "make it look the best of
-  // the best" -- four genuinely distinct hues instead of the flat single-
-  // color fills this had before, and instead of Career Coach/Dream
-  // Company sharing the exact same blue) -- blue-violet for Career Coach
-  // (this app's own brand blue leading into violet, its primary/AI-coach
-  // destination), emerald-teal for Practice (an energetic "go do
-  // something" color, distinct from Coach's blue), amber-orange for Dream
-  // Company Dashboard (a "gold standard/aspirational" feel), pink-purple
-  // for Refer & Earn (a livelier "reward" feel than plain purple alone).
-  // Refer & Earn stays behind the same admin "referral_program" feature
-  // flag src/more/MoreSrc.tsx's own row already respects — filtered out
-  // of the array entirely rather than rendered-then-hidden, so an odd
-  // number of enabled tiles still wraps cleanly.
-  const quickActions = React.useMemo<QuickAction[]>(() => {
-    const items: QuickAction[] = [
-      {
-        key: 'coach',
-        title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
-        icon: 'message-circle-outline',
-        gradient: ['#0063f8', '#7C3AED'],
-        onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
-      },
-      {
-        key: 'practice',
-        title: t('home:practice_card_title', { defaultValue: 'Practice' }),
-        icon: 'mic-outline',
-        gradient: ['#10B981', '#0D9488'],
-        onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
-      },
-      {
-        key: 'dreamCompanies',
-        title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
-        icon: 'briefcase-outline',
-        gradient: ['#F59E0B', '#EA580C'],
-        onPress: () => navigate('DreamCompanies'),
-      },
-    ];
-    if (configService.isFeatureEnabled('referral_program')) {
-      items.push({
-        key: 'referral',
-        title: t('home:referral_card_title', { defaultValue: 'Refer & Earn' }),
-        icon: 'gift-outline',
-        gradient: ['#EC4899', '#8B5CF6'],
-        onPress: () => navigate('ReferralProgram'),
-      });
-    }
-    return items;
-  }, [t, navigate]);
+  // grid instead of rendered as separate JSX blocks. Each gets its own
+  // two-stop gradient (product follow-up: "make it look the best of the
+  // best" -- distinct hues instead of the flat single-color fills this
+  // had before, and instead of Career Coach/Dream Company sharing the
+  // exact same blue) -- blue-violet for Career Coach (this app's own
+  // brand blue leading into violet, its primary/AI-coach destination),
+  // emerald-teal for Practice (an energetic "go do something" color,
+  // distinct from Coach's blue), amber-orange for Dream Company Dashboard
+  // (a "gold standard/aspirational" feel).
+  //
+  // PRODUCT FOLLOW-UP: "remove the referral card as one of the grid cards
+  // and place it as a normal white card as below as you did before" --
+  // Refer & Earn is no longer in this grid at all; it's rendered again as
+  // its own full-width white card right after the grid (see the JSX
+  // below), the same treatment it had before the colorful-grid redesign.
+  const quickActions = React.useMemo<QuickAction[]>(() => [
+    {
+      key: 'coach',
+      title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
+      icon: 'message-circle-outline',
+      gradient: ['#0063f8', '#7C3AED'],
+      onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
+    },
+    {
+      key: 'practice',
+      title: t('home:practice_card_title', { defaultValue: 'Practice' }),
+      icon: 'mic-outline',
+      gradient: ['#10B981', '#0D9488'],
+      onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
+    },
+    {
+      key: 'dreamCompanies',
+      title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
+      icon: 'briefcase-outline',
+      gradient: ['#F59E0B', '#EA580C'],
+      onPress: () => navigate('DreamCompanies'),
+    },
+  ], [t, navigate]);
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -627,17 +617,50 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* Quick-action grid + recent activity (see this file's module
-            comment above for the full redesign context) — same four
-            destinations/copy/colors the old stacked hero cards linked to
-            (Career Coach -> navigation/MainBottomTab.tsx's "Coach" tab;
-            Practice -> that same file's "Practice" tab; Dream Company
-            Dashboard -> src/more/DreamCompanies.tsx, which already enforces
-            its own Pro Premium gate server-side; Refer & Earn ->
-            src/more/ReferralProgram's screen, admin-flag-gated — see the
-            quickActions useMemo above), just laid out as tiles instead of
-            full-width cards. */}
+        {/* Quick-action grid (see this file's module comment above for the
+            full redesign context) — Career Coach -> navigation/
+            MainBottomTab.tsx's "Coach" tab; Practice -> that same file's
+            "Practice" tab; Dream Company Dashboard ->
+            src/more/DreamCompanies.tsx, which already enforces its own Pro
+            Premium gate server-side. See the quickActions useMemo above. */}
         <QuickActionGrid items={quickActions} />
+
+        {/* Refer & Earn (product follow-up: "remove the referral card as
+            one of the grid cards and place it as a normal white card as
+            below as you did before") — back to its own full-width white
+            card, the exact same shape (icon circle, title, subtitle, CTA
+            row, ArtGiftBox illustration) it had before the colorful-grid
+            redesign, gated on the same "referral_program" admin feature
+            flag src/more/MoreSrc.tsx's own row already respects. */}
+        {configService.isFeatureEnabled('referral_program') ? (
+          <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('ReferralProgram')}>
+            <View style={[styles.whiteCard, styles.whiteCardContent]}>
+              <View style={styles.whiteCardLeft}>
+                <View style={styles.whiteCardIconWrap}>
+                  <Icon pack="eva" name="gift-outline" style={[globalStyle.icon24, { tintColor: '#8B5CF6' }]} />
+                </View>
+                <Text category="h6" bold mt={14}>
+                  {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
+                </Text>
+                <Text category="h9-s" status="placeholder" mt={4} numberOfLines={2}>
+                  {t('home:referral_card_subtitle', {
+                    defaultValue: 'Invite a friend — you both get a reward when they go Pro.',
+                  })}
+                </Text>
+                <Flex justify="flex-start" itemsCenter mt={14}>
+                  <Text category="h10" bold style={{ color: '#8B5CF6', marginBottom: 5 }}>
+                    {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
+                  </Text>
+                  <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6', marginLeft: 4 }]} />
+                </Flex>
+              </View>
+              <View style={styles.whiteCardArtWrap}>
+                <ArtGiftBox size={92} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        ) : null}
+
         <RecentActivityList />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
@@ -727,5 +750,43 @@ const themedStyles = StyleService.create({
   },
   verifyBannerText: {
     marginHorizontal: 10,
+  },
+  // Refer & Earn's standalone white card (see the JSX above) — the same
+  // shape this app's white hero cards used before the quick-action grid
+  // redesign: opaque white fill (not the flat-off-white token, see
+  // DailyTipsBanner.tsx's own comment on that exact fix), icon/title/
+  // subtitle/CTA on the left, illustration fixed-width on the right.
+  whiteCard: {
+    ...globalStyle.card,
+    backgroundColor: 'background-basic-color-2',
+    marginTop: 14,
+  },
+  whiteCardContent: {
+    paddingHorizontal: 10,
+    minHeight: 180,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  whiteCardLeft: {
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
+  },
+  whiteCardIconWrap: {
+    marginTop: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'color-primary-transparent-100',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  whiteCardArtWrap: {
+    width: 92,
+    height: 92,
+    marginLeft: 14,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
