@@ -725,7 +725,17 @@ const Chat = memo(() => {
               // without these it renders unreadable dark-on-dark text in the
               // input pill. textInputStyle covers what's actually typed;
               // placeholderTextColor covers the empty-state hint text.
-              textInputStyle={{ color: theme['text-basic-color'] }}
+              // BUG FIX (product report, with screenshot: "this is not
+              // looking good in dark mode" — the input pill itself): the
+              // real TextInput gifted-chat renders here has no
+              // backgroundColor of its own in the library's source, so it
+              // was falling back to the OS's own default fill (a light/
+              // white Android EditText background) instead of showing
+              // renderInputToolbar's primaryStyle color through it.
+              // `transparent` lets that dark `background-basic-color-3`
+              // pill color show through cleanly in both themes, rather than
+              // duplicating that theme token in a second place here.
+              textInputStyle={{ color: theme['text-basic-color'], backgroundColor: 'transparent' }}
               placeholderTextColor={theme['text-hint-color']}
               // BUG FIX (product report: "Coach Text chat is not translating —
               // renders in English even when the language is changed"): with no
