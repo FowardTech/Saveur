@@ -14,6 +14,7 @@ import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
 import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany, ArtLearningCourses } from './HomeHeroArt';
+import { IconChatBubble3D, IconMic3D, IconBriefcase3D, IconBook3D } from './QuickActionIcons';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -126,7 +127,7 @@ const HomeSrc = memo(() => {
       // `solid` for what that flips).
       key: 'coach',
       title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
-      icon: 'message-circle-outline',
+      icon: IconChatBubble3D,
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
       art: ArtCareerCoach,
@@ -135,7 +136,7 @@ const HomeSrc = memo(() => {
     {
       key: 'practice',
       title: t('home:practice_card_title', { defaultValue: 'Practice' }),
-      icon: 'mic-outline',
+      icon: IconMic3D,
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       art: ArtPractice,
@@ -143,7 +144,7 @@ const HomeSrc = memo(() => {
     {
       key: 'dreamCompanies',
       title: t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' }),
-      icon: 'briefcase-outline',
+      icon: IconBriefcase3D,
       tint: '#0063f8',
       onPress: () => navigate('DreamCompanies'),
       art: ArtDreamCompany,
@@ -151,7 +152,7 @@ const HomeSrc = memo(() => {
     {
       key: 'learningCourses',
       title: t('home:learning_courses_card_title', { defaultValue: 'Learning Courses' }),
-      icon: 'book-outline',
+      icon: IconBook3D,
       tint: '#0063f8',
       onPress: () => navigate('LearningCourses'),
       art: ArtLearningCourses,

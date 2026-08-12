@@ -1,9 +1,8 @@
 import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, useTheme } from '@ui-kitten/components';
 
 import Text from 'components/Text';
-import { globalStyle } from 'styles/globalStyle';
 
 // Home redesign (product request: "restructure the homescreen UI... to be
 // like the layout in the screenshots" -- reference screenshots showed a
@@ -79,13 +78,20 @@ import { globalStyle } from 'styles/globalStyle';
 // (HomeHeroArt.tsx's ArtCareerCoach is retinted back to translucent-
 // white-on-blue to match). Practice/Dream Company Dashboard/Learning
 // Courses are untouched, still plain white.
+// 3D ICON BADGES (product follow-up: "give the 4 cards the 3D icons i
+// talked about the last time") -- `icon` used to be an Eva icon-pack glyph
+// name rendered inside a flat solid-`tint` circle (see git history). It's
+// now a whole custom SVG component (see QuickActionIcons.tsx) that IS the
+// badge -- its own gradient fill, glossy highlight, and ground shadow --
+// with no separate circle wrapper needed. `iconWrap`/`tallIconWrap` below
+// now just reserve spacing, not a colored circle.
 export interface QuickAction {
   key: string;
   title: string;
-  icon: string;
-  // Single accent hex, e.g. '#0063f8' -- used at full strength for the
-  // icon badge and the illustration's shapes (see HomeHeroArt.tsx) on a
-  // white tile, or as the tile's own fill on a `solid` tile.
+  icon: React.FC<{ size: number }>;
+  // Single accent hex, e.g. '#0063f8' -- used for the illustration's shapes
+  // (see HomeHeroArt.tsx) and as the tile's own fill on a `solid` tile. No
+  // longer drives the icon badge's color -- see `icon`'s own comment.
   tint: string;
   onPress: () => void;
   // When true, this tile becomes a single right-hand column stretched to
@@ -172,6 +178,7 @@ const Tile = ({
   theme: ReturnType<typeof useTheme>;
 }) => {
   const Art = item.art;
+  const Icon3D = item.icon;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -188,12 +195,8 @@ const Tile = ({
           <Art size={58} />
         </View>
       ) : null}
-      <View
-        style={[
-          styles.iconWrap,
-          { backgroundColor: item.solid ? 'rgba(255,255,255,0.24)' : item.tint },
-        ]}>
-        <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
+      <View style={styles.iconWrap}>
+        <Icon3D size={48} />
       </View>
       <Text
         category="h8"
@@ -213,6 +216,7 @@ const Tile = ({
 // Tile above now uses too, just bigger (see `tallIconWrap`/`tallTitle`).
 const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<typeof useStyleSheet> }) => {
   const Art = item.art;
+  const Icon3D = item.icon;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -223,8 +227,8 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
           <Art size={104} />
         </View>
       ) : null}
-      <View style={[styles.tallIconWrap, { backgroundColor: item.tint }]}>
-        <Icon pack="eva" name={item.icon} style={[globalStyle.icon28, styles.icon]} />
+      <View style={styles.tallIconWrap}>
+        <Icon3D size={56} />
       </View>
       <Text category="h7" bold numberOfLines={2} style={styles.tallTitle}>
         {item.title}
@@ -337,27 +341,18 @@ const themedStyles = StyleService.create({
     paddingVertical: 24,
     paddingHorizontal: 20,
   },
-  // marginBottom (not marginRight) now that Tile is a vertical block, icon
-  // above title, rather than a horizontal row.
+  // Just spacing now (product follow-up: "give the 4 cards the 3D icons" --
+  // see QuickActionGrid.tsx's own top comment and QuickActionIcons.tsx).
+  // Used to be a fixed-size solid-`tint` circle wrapping a flat Eva glyph;
+  // each icon is now a complete standalone SVG badge with its own size/
+  // shape/fill, so this wrapper only needs to reserve the same vertical gap
+  // before the title that the old circle badge used to take up.
   iconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
     marginBottom: 12,
     flexShrink: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tallIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 18,
     marginBottom: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  icon: {
-    tintColor: '#fff',
   },
   // `alignSelf: 'stretch'` (rather than `flex: 1`, which only matters in a
   // row) is what makes this Text wrap against the tile's actual width in
