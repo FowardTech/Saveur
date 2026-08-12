@@ -138,6 +138,21 @@ const Chat = memo(() => {
   const voiceCoachEnabled = configService.isFeatureEnabled('voice_coach');
   const [mode, setMode] = React.useState<'voice' | 'text'>('text');
 
+  // BUG FIX (product report, twice now: "it's just automatically going to
+  // the chat screen instead of letting the user see the suggested
+  // topics"): the previous fix only special-cased a thread containing
+  // NOTHING but the client-side placeholder greeting bubble — but any
+  // account with real prior conversation history (i.e. basically anyone
+  // who has ever actually used the coach) has more than that, so the
+  // greeting/topics screen still never showed for them. The greeting is
+  // meant to be this screen's own landing state regardless of whatever
+  // history already exists underneath it — real history isn't gone, it's
+  // just not the first thing shown; see giftedChatMessages below for how
+  // this is applied. Starts false when arriving with an initialPrompt
+  // (that flow auto-sends immediately below — there's nothing to land on
+  // a greeting for).
+  const [showGreeting, setShowGreeting] = React.useState(!initialPrompt);
+
   React.useEffect(() => {
     coachService.getChatHistory().then(history => {
       // GiftedChat renders newest-first.
@@ -158,6 +173,11 @@ const Chat = memo(() => {
   const onSend = React.useCallback(async (outgoing: IMessage[] = []) => {
     const draft = outgoing[0];
     if (!draft || !draft.text || isSending) return;
+    // A real message (typed directly, or a tapped topic's opening
+    // question) is what actually starts the conversation — dismiss the
+    // greeting/topics landing screen for the rest of this visit so the
+    // just-sent message and the reply are visible.
+    setShowGreeting(false);
     // Optimistically show the user's message immediately.
     setMessages(previous => GiftedChat.append(previous, [draft]));
     setIsSending(true);
@@ -227,6 +247,12 @@ const Chat = memo(() => {
   const onTapTopic = React.useCallback((title: string) => {
     setVoiceInitialTopic(title);
     setMode('voice');
+    // A topic tap starts the conversation just as much as typing a real
+    // message does (see onSend's own setShowGreeting) — if the user later
+    // toggles back to Text mode, they should land on the real thread
+    // (their voice exchange included, since both modes share one
+    // persisted thread), not the greeting again.
+    setShowGreeting(false);
   }, []);
 
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
@@ -486,29 +512,17 @@ const Chat = memo(() => {
     return null;
   }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse, onRunSuggestedAction, t]);
 
-  // BUG FIX (product report: "when I click the chat icon tab it's just
-  // taking me directly to the chat, instead of showing the suggested
-  // topics"): coachService.getChatHistory() always returns at least a
-  // client-side placeholder greeting bubble ('msg_greeting', see that
-  // file's buildGreetingMessage) when the real thread is genuinely empty —
-  // so `messages` here was NEVER actually empty, not even for a brand new
-  // user, and GiftedChat's renderChatEmpty (the greeting/topics screen
-  // below) could never fire; every visit landed straight on a one-bubble
-  // "chat" instead. GiftedChat itself decides whether to show
-  // renderChatEmpty purely off whether the `messages` array it's given is
-  // empty, so this filters that lone placeholder out of what's actually
-  // passed to it — once a real message exists (the placeholder is never
-  // itself a real, persisted exchange), the thread renders normally.
+  // BUG FIX (product report, see showGreeting's own comment above for the
+  // full story): GiftedChat itself decides whether to show renderChatEmpty
+  // (the greeting/topics screen below) purely off whether the `messages`
+  // array it's given is empty. While showGreeting is true, this hands it
+  // an empty array regardless of what real history is actually loaded —
+  // the moment the user acts (taps a topic -> Voice mode, or sends a real
+  // message -> onSend flips showGreeting false), the real `messages`
+  // (placeholder bubble and all prior history included) takes over.
   const giftedChatMessages = React.useMemo(
-    // `as any` here for the same reason renderCustomView/renderAvatar below
-    // type their own params `any` — react-native-gifted-chat's own IMessage
-    // type fails to import in this project's TS setup (see the pre-existing
-    // TS2305 "no exported member" errors on this file's gifted-chat import
-    // block), so CoachIMessage doesn't actually inherit `_id` as far as tsc
-    // is concerned even though it's a real field at runtime (see
-    // toGiftedMessage/ME_USER above, both of which set it).
-    () => (messages.length === 1 && (messages[0] as any)?._id === 'msg_greeting' ? [] : messages),
-    [messages],
+    () => (showGreeting ? [] : messages),
+    [showGreeting, messages],
   );
 
   // Empty-thread greeting (reference-redesign: "I want the career coach
