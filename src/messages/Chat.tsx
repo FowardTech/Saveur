@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
-import LinearGradient from "react-native-linear-gradient";
 import {
   Bubble,
   GiftedChat,
@@ -545,16 +544,13 @@ const Chat = memo(() => {
     // scaleY(-1) below, the whole greeting renders upside down.
     return (
       <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
+        {/* Product follow-up: "the saveur logo background should be the
+            default blue color" — was the soft two-tone reference-blue
+            gradient (#9DBFEF -> #7EA8E2); this is a brand mark, not a
+            motivational/streak surface, so it gets this app's actual
+            brand blue (#0063f8) as a plain solid fill instead. */}
         <View style={styles.emptyGlowWrap}>
-          <LinearGradient
-            colors={['#9DBFEF', '#7EA8E2']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.emptyGlow}
-          />
-          <View style={styles.emptyGlowInner}>
-            <BrandWordmark markOnly size={34} markColor="#fff" />
-          </View>
+          <BrandWordmark markOnly size={34} markColor="#fff" />
         </View>
         <Text category="h5" bold center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
@@ -639,7 +635,20 @@ const Chat = memo(() => {
     <Container
       style={[
         styles.container,
-        { marginBottom: -bottom },
+        // BUG FIX (product report, with screenshot: "the chat input field
+        // is covered by the bottom navigation thereby not letting it
+        // visible") — this used to cancel out Container's own default
+        // `paddingBottom: bottom` safe-area inset (`marginBottom: -bottom`)
+        // so the input toolbar could sit flush against the true bottom
+        // edge of the screen. That was tuned for when this screen was only
+        // ever reached as a full-screen push with no tab bar underneath it
+        // (see MessagesNavigator's git history) — now that the Coach tab
+        // renders this screen directly inside the bottom tab navigator
+        // (see MainBottomTab.tsx), the tab bar itself already occupies
+        // that space, so reclaiming it here pushed the input toolbar down
+        // far enough to render partly behind the tab bar instead. Removed;
+        // Container's normal safe-area padding is correct here now, same
+        // as every other tab screen (Home, Practice, Interviews, Menu).
         isVoiceMode && { backgroundColor: theme['color-primary-500'] },
       ]}>
       <TopNavigation
@@ -830,23 +839,15 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 24,
     paddingTop: 48,
   },
+  // Product follow-up: solid brand blue (was a two-stop gradient — see the
+  // JSX comment above).
   emptyGlowWrap: {
     width: 88,
     height: 88,
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emptyGlow: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 44,
-  },
-  emptyGlowInner: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#0063f8',
   },
   emptyHeadline: {
     color: 'text-basic-color',
