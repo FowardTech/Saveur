@@ -31,31 +31,33 @@ import { globalStyle } from 'styles/globalStyle';
 // `wide` is gone; `tall` (see HomeSrc.tsx's quickActions -- now set on
 // Practice) drives this two-column bento layout below instead.
 //
-// BACKGROUND ILLUSTRATIONS -- round 4 (product follow-up history: "add
+// BACKGROUND ILLUSTRATIONS -- round 5 (product follow-up history: "add
 // illustrations" -> "it looks crowded and not professional" (screenshot
 // showed one illustration rendered OUTSIDE its own tile's rounded bounds)
 // -> "add the illustrations back but... give the 3 cards spacing from
 // each other" -> "remove the illustration from the other 2 cards and
 // leave [it] on the third one because the card title is covering the
-// illustration of the dream company dashboard card... make it more
-// visible and the text fully visible" -> "put back the illustrations of
-// the other 2 cards and... make the illustrations of the 3 cards subtle
-// and transparent the way you made them before"). All three tiles carry
-// an `art` again.
+// illustration of the dream company dashboard card" -> "put back the
+// illustrations of the other 2 cards and... make [them] subtle and
+// transparent the way you made them before" -> "place those illustrations
+// at the bottom right corner the way you did them before"). All three
+// tiles carry an `art` again, absolutely positioned in the tile's own
+// bottom-right corner (`artWrap`/`artWrapTall` below) -- back to the exact
+// mechanism from two rounds ago, per this round's explicit request.
 //
-// What's carried forward from the previous round rather than reverted:
-// `art` renders in normal document flow, stacked AFTER the title (see
-// `artRow`/`artRowTall` below), not absolutely positioned behind it. The
-// EARLIER "title covering the illustration" bug was a real text-paints-
-// over-art overlap from that absolute-corner version -- title spanned the
-// tile's FULL width above/over a corner-pinned illustration, and "Dream
-// Company Dashboard" wrapped tall/wide enough to paint straight over it.
-// Bringing that same mechanism back for all three tiles now would risk
-// reintroducing that exact bug on any card whose title happens to wrap
-// wide/tall enough, on any screen size -- so containment stays
-// structural (below the title, not behind it) even though the LOOK is
-// back to "subtle and transparent" (low opacity, small size) per this
-// round's request.
+// The corner-overlay version is what caused the real "title covering the
+// illustration" bug on Dream Company Dashboard's longer title (title
+// spanned the tile's full width above a corner-pinned illustration, and
+// the wrapped text painted straight over it). Rather than shrinking the
+// title's own width to dodge that (risks truncating longer titles instead
+// -- tried and discarded in an earlier round), `tile`/`tallTile` now
+// reserve extra `paddingBottom` on any tile carrying `art` (see
+// `tileArtBottom` below), so the title's own normal-flow text block ends
+// with real vertical clearance above the illustration's own corner
+// instead of the two zones overlapping. `overflow:'hidden'` (already on
+// `tile`) plus a non-negative `right`/`bottom` on the illustration itself
+// still keeps it fully inside the tile's own rounded bounds, the fix for
+// the earlier separate "illustration renders outside the tile" bug.
 export interface QuickAction {
   key: string;
   title: string;
@@ -69,8 +71,8 @@ export interface QuickAction {
   // match the combined height of the other (non-tall) tiles stacked in a
   // left column -- see the module comment above.
   tall?: boolean;
-  // Optional small illustration, rendered below this tile's title -- see
-  // the module comment above.
+  // Optional small illustration, rendered in this tile's bottom-right
+  // corner -- see the module comment above.
   art?: React.FC<{ size: number }>;
 }
 
@@ -146,19 +148,25 @@ const Tile = ({
   return (
     <TouchableOpacity
       activeOpacity={0.75}
-      style={[styles.tile, styles.tileVertical, style, { backgroundColor: `${item.tint}17` }]}
+      style={[
+        styles.tile,
+        styles.tileVertical,
+        style,
+        Art ? styles.tileArtBottom : null,
+        { backgroundColor: `${item.tint}17` },
+      ]}
       onPress={item.onPress}>
+      {Art ? (
+        <View style={styles.artWrap} pointerEvents="none">
+          <Art size={58} />
+        </View>
+      ) : null}
       <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
       <Text category="h8" bold numberOfLines={2} style={styles.titleVertical}>
         {item.title}
       </Text>
-      {Art ? (
-        <View style={styles.artRow} pointerEvents="none">
-          <Art size={58} />
-        </View>
-      ) : null}
     </TouchableOpacity>
   );
 };
@@ -175,17 +183,17 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
       activeOpacity={0.75}
       style={[styles.tile, styles.tallTile, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
+      {Art ? (
+        <View style={styles.artWrapTall} pointerEvents="none">
+          <Art size={104} />
+        </View>
+      ) : null}
       <View style={[styles.tallIconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon28, styles.icon]} />
       </View>
       <Text category="h7" bold numberOfLines={2} style={styles.tallTitle}>
         {item.title}
       </Text>
-      {Art ? (
-        <View style={styles.artRowTall} pointerEvents="none">
-          <Art size={104} />
-        </View>
-      ) : null}
     </TouchableOpacity>
   );
 };
@@ -262,6 +270,17 @@ const themedStyles = StyleService.create({
     alignItems: 'flex-start',
     justifyContent: 'flex-start',
   },
+  // Product follow-up: "place those illustrations at the bottom right
+  // corner the way you did them before" -- reserves extra room below the
+  // title (paddingBottom 30 -> 64, `tile`'s own paddingVertical still
+  // covers the top) so a worst-case 2-line title has real vertical
+  // clearance above `artWrap`'s corner instead of the two overlapping,
+  // the actual cause of the earlier "title covering the illustration" bug
+  // (see the module comment). Only applied to tiles that actually carry
+  // `art`, so tiles without one keep the shorter, tighter height.
+  tileArtBottom: {
+    paddingBottom: 64,
+  },
   tileHalf: {
     width: '48%',
   },
@@ -314,25 +333,27 @@ const themedStyles = StyleService.create({
   tallTitle: {
     lineHeight: 24,
   },
-  // Illustration accent, in normal document flow AFTER the title (see the
-  // module comment on why this stays structurally below the title instead
-  // of absolutely positioned behind it) -- `alignSelf:'flex-end'` right-
-  // aligns it within the tile's own column instead of stretching,
-  // `marginTop` gives it a clean gap below the title rather than touching
-  // it, and `pointerEvents:'none'` keeps it from intercepting the tile's
-  // own tap. Opacity back to a faint, low-contrast fade (product request:
-  // "make the illustrations... subtle and transparent the way you made
-  // them before") -- a real illustration would otherwise read as a second
-  // focal point competing with the icon/title, the same "too busy" problem
-  // an earlier saturated-gradient-tile pass already hit once.
-  artRow: {
-    alignSelf: 'flex-end',
-    marginTop: 10,
+  // Illustration accent -- pinned flush to the tile's own bottom-right
+  // corner (`right`/`bottom: 0`, never a negative bleed-past-the-edge
+  // offset -- the fix for the earlier "illustration renders outside the
+  // tile" bug), faded to a subtle, low-contrast fade (product request:
+  // "subtle and transparent the way you made them before") rather than a
+  // second focal point competing with the icon/title. Painted before the
+  // icon/title in the component above (so it sits underneath) and
+  // `pointerEvents:'none'` so it never intercepts the tile's own tap.
+  // `tile`'s own `overflow:'hidden'` plus `tileArtBottom`'s extra bottom
+  // clearance (see that style's own comment) are what keep this from
+  // overlapping the title above it.
+  artWrap: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
     opacity: 0.22,
   },
-  artRowTall: {
-    alignSelf: 'flex-end',
-    marginTop: 14,
+  artWrapTall: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
     opacity: 0.28,
   },
 });
