@@ -589,7 +589,7 @@ const Chat = memo(() => {
                     <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
                       <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
                       <View style={styles.emptyTopicMicBadge}>
-                        <Icon pack="eva" name="mic" style={{ width: 10, height: 10, tintColor: '#fff' }} />
+                        <Icon pack="eva" name="mic-outline" style={{ width: 10, height: 10, tintColor: '#fff' }} />
                       </View>
                     </View>
                     <Text category="h10" bold center numberOfLines={2} mt={8}>
