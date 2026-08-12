@@ -1,6 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, StyleSheet, TouchableOpacity, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -566,24 +565,14 @@ const HomeSrc = memo(() => {
             practice, but the null check here covers the same brief
             pre-auth frame everything else on this screen already guards
             against).
-            Product follow-up: "give it a linear gradient color of the
-            real default blue color and this subtle blue" -- a real
-            LinearGradient now (this app's own brand blue #0063f8 into the
-            softer #7EA8E2 tone the rest of this redesign uses), an
-            absolute-fill decorative layer behind the card's normal-flow
-            content rather than the gradient being the padded container
-            itself -- same fix FindScreen.tsx's own hero card history
-            documents for why a flex-sized LinearGradient used AS the
-            content container doesn't reliably grow to wrap its own
-            children's height on every layout pass. */}
+            Product follow-up (revert): "make the practice streak in the
+            homescreen the complete background color #0063f8 no more
+            linear gradient" -- the two-stop LinearGradient (#0063f8 ->
+            #7EA8E2) from the immediately preceding follow-up is gone
+            again; this is back to a single flat fill, this app's own
+            brand blue #0063f8. */}
         {streak ? (
           <View style={[styles.streakHero, styles.streakHeroOuter]}>
-            <LinearGradient
-              colors={['#0063f8', '#7EA8E2']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={StyleSheet.absoluteFillObject}
-            />
             <Flex justify="flex-start" itemsCenter mb={10}>
               <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
               <Text category="h10" bold ml={6} style={{ color: 'rgba(255,255,255,0.85)' }}>
@@ -873,13 +862,13 @@ const themedStyles = StyleService.create({
     borderRadius: 24,
     padding: 18,
     marginTop: 14,
-    // Opaque Android shadow fallback only — always fully covered by the
-    // absolute-fill LinearGradient rendered as this card's first child
-    // (see the JSX comment above).
-    backgroundColor: '#7EA8E2',
+    // Product follow-up (revert): flat fill again, no more gradient — this
+    // app's own brand blue.
+    backgroundColor: '#0063f8',
   },
-  // `overflow:'hidden'` is what actually clips the absolute-fill gradient
-  // layer to this card's own rounded corners.
+  // No longer clipping an absolute-fill gradient layer (see streakHero's
+  // own comment) — kept as its own style purely so the JSX above doesn't
+  // need to change shape if a decorative layer comes back later.
   streakHeroOuter: {
     overflow: 'hidden',
   },
