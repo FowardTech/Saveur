@@ -217,6 +217,29 @@ export async function regenerateUsername(): Promise<string> {
   return data.username;
 }
 
+// BUG FIX (product report: "the onboarding banner of the learning course
+// and job alert did not display the first time the user visited the
+// screen") — root cause: deleteAccount/clearCache below only ever cleared
+// `userProfile`. Every "shown once, ever" AsyncStorage flag
+// (learningCoursesOnboardingSeen, jobAlertsOnboardingSeen, and appTourSeen
+// — same pattern, see LearningCoursesOnboarding.tsx/JobAlertsOnboarding.tsx/
+// AppTour.tsx's own comments) lives in DEVICE storage, not scoped to the
+// signed-in account, and neither sign-out nor delete-account ever touched
+// any of them. So on any device that had already seen these banners under
+// a previous account (the overwhelmingly common case while testing: sign
+// out or delete the account, then sign up again with a new test account to
+// check "first-time" behavior), a genuinely brand-new account inherits the
+// previous account's "already seen" flags and never sees its own
+// first-time banners/tour — even though it's that account's real first
+// visit. Clearing these here means every sign-out/delete leaves the device
+// in the same state a real first-time installer would see the next time
+// someone signs in on it.
+const ACCOUNT_SCOPED_FIRST_TIME_FLAGS = [
+  EKeyAsyncStorage.learningCoursesOnboardingSeen,
+  EKeyAsyncStorage.jobAlertsOnboardingSeen,
+  EKeyAsyncStorage.appTourSeen,
+];
+
 /**
  * DELETE /api/users/me — permanently deletes the backend user row AND (as of
  * saveur-backend's account_deletion_service.py) the Firebase Auth account
@@ -227,10 +250,10 @@ export async function regenerateUsername(): Promise<string> {
  */
 export async function deleteAccount(): Promise<void> {
   await apiClient.delete('/api/users/me');
-  await AsyncStorage.removeItem(EKeyAsyncStorage.userProfile);
+  await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile, ...ACCOUNT_SCOPED_FIRST_TIME_FLAGS]);
 }
 
 /** Clears the local profile cache on sign-out. No network call needed. */
 export async function clearCache(): Promise<void> {
-  await AsyncStorage.removeItem(EKeyAsyncStorage.userProfile);
+  await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile, ...ACCOUNT_SCOPED_FIRST_TIME_FLAGS]);
 }
