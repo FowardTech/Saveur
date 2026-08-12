@@ -79,13 +79,24 @@ export default DailyTipsBanner;
 const themedStyles = StyleService.create({
   // Same compact single-row shape as ContinueLearningCard.tsx's own `card`
   // style, so this reads as a matching banner rather than a one-off design.
+  //
+  // BUG FIX (product report, with screenshot: "these cards should be
+  // white") — `background-basic-color-1` resolves to `#F6FAF8` (see
+  // constants/theme/light.json), a faint off-white nearly indistinguishable
+  // from Container's own `#F5F8FF` page background (see Container.tsx's
+  // `background-page-body`) — the two are close enough in lightness that
+  // this card barely showed up against the page at all, reading as a dull
+  // tint rather than a crisp white card. `background-basic-color-2`
+  // resolves to real `#FFFFFF`, the same token this app's own
+  // `heroCardWhite`/`verifyBanner` treatments already used for "a card
+  // that's actually white on this page" — this now matches that.
   card: {
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'background-basic-color-2',
     marginTop: 12,
   },
   iconWrap: {

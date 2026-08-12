@@ -120,14 +120,19 @@ const themedStyles = StyleService.create({
   section: {
     marginTop: 20,
   },
+  // BUG FIX (product report, with screenshot: "these cards should be
+  // white") — see src/home/DailyTipsBanner.tsx's own comment on this same
+  // fix: `background-basic-color-1` is a faint off-white almost invisible
+  // against the page background; `background-basic-color-2` is real
+  // `#FFFFFF`.
   listCard: {
     ...globalStyle.card,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'background-basic-color-2',
     paddingHorizontal: 14,
   },
   emptyCard: {
     ...globalStyle.card,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'background-basic-color-2',
     paddingVertical: 24,
     paddingHorizontal: 20,
   },

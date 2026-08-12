@@ -158,13 +158,20 @@ const themedStyles = StyleService.create({
   // here (not `level`) since this renders inside a plain TouchableOpacity,
   // same "card needs its own opaque fill for Android shadow" pattern this
   // app's other plain-View cards already follow.
+  //
+  // BUG FIX (product report, with screenshot: "these cards should be
+  // white") — see DailyTipsBanner.tsx's own comment on this exact same
+  // fix: `background-basic-color-1` (`#F6FAF8`) was nearly invisible
+  // against Container's `#F5F8FF` page background; `background-basic-
+  // color-2` (real `#FFFFFF`) is the token this app's other "actually
+  // white" cards already use.
   card: {
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: 'background-basic-color-1',
+    backgroundColor: 'background-basic-color-2',
   },
   iconWrap: {
     width: 30,
