@@ -287,13 +287,22 @@ const MyProgress = memo(() => {
               {roadmap ? (
                 <>
                   <Flex justify="flex-start" itemsCenter>
+                    {/* Reference-redesign follow-up ("I want this style of
+                        UI design to go across the whole app") — ring tone
+                        brought in line with the same soft blue Home's
+                        streak hero / Leaderboard's "Your standing" ring
+                        now use, rather than the old brand-blue -> sky-blue
+                        pair. This screen's stat tiles (tileColorAt below)
+                        and card shapes are untouched — they're already the
+                        app's own established colorful/rounded system, not
+                        something this redesign needs to replace. */}
                     <CircularProgress
                       progress={roadmapPercent}
                       size={72}
                       strokeWidth={7}
                       trackColor={theme['background-basic-color-3']}
-                      gradientFrom="#0063f8"
-                      gradientTo="#1DA1F2"
+                      gradientFrom="#9DBFEF"
+                      gradientTo="#7EA8E2"
                       style={{ marginRight: 16 }}>
                       <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
                         {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}

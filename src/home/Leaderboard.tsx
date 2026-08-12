@@ -285,13 +285,23 @@ const Leaderboard = memo(() => {
         {streak ? (
           <View style={[globalStyle.card, styles.yourStatsCard, { backgroundColor: theme['background-basic-color-2'] }]}>
             <Flex justify="flex-start" itemsCenter>
+              {/* Reference-redesign follow-up ("I want this style of UI
+                  design to go across the whole app") — this screen already
+                  has its own explicit "no color gradients, keep it flat
+                  and professional" history (see this file's header
+                  comment), so the rollout here is intentionally light-
+                  touch: just the ring's own stroke tone brought in line
+                  with the same soft blue (#7EA8E2) Home's streak hero,
+                  Daily Challenge, and the Coach tab now use, not a new
+                  gradient card fill or the mint/blue/orange podium palette
+                  (styles/tileColors.ts) being touched. */}
               <CircularProgress
                 progress={Math.min(100, (streak.streakDays / 7) * 100)}
                 size={60}
                 strokeWidth={6}
-                trackColor="#0063f81f"
-                gradientFrom="#1DA1F2"
-                gradientTo="#0063f8"
+                trackColor="#7EA8E21f"
+                gradientFrom="#9DBFEF"
+                gradientTo="#7EA8E2"
                 style={styles.yourStatsRing}>
                 <Text category="h9" bold style={{ color: theme['text-basic-color'] }}>
                   {streak.streakDays}
