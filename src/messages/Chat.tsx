@@ -214,13 +214,20 @@ const Chat = memo(() => {
       .catch(() => {});
   }, [profile?.goals, profile?.desiredRoles]);
 
-  // Tapping a topic button in the empty-state row below sends it straight
-  // into the real onSend pipeline, not a separate/fake preview — same
-  // effect as arriving with a pre-composed initialPrompt, just triggered
-  // from inside this screen instead of before it.
+  // Product follow-up: "[the suggested topics] should be in the screen
+  // that leads to the live conversation screen" — confirmed this means the
+  // live VOICE conversation specifically, not a text bubble in place.
+  // Tapping a topic switches into Voice mode and hands the title down as
+  // VoiceCoachView's initialTopic — see that component's own focus effect
+  // for what "starting the conversation with it" actually does (skips the
+  // usual "wait for the user to speak first" open and immediately sends it
+  // as the opening turn: thinking -> a real spoken reply -> live
+  // listening).
+  const [voiceInitialTopic, setVoiceInitialTopic] = React.useState<string | undefined>(undefined);
   const onTapTopic = React.useCallback((title: string) => {
-    onSend([{ _id: `topic_${Date.now()}`, text: title, createdAt: Date.now(), user: ME_USER }]);
-  }, [onSend]);
+    setVoiceInitialTopic(title);
+    setMode('voice');
+  }, []);
 
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
     return (
@@ -630,6 +637,8 @@ const Chat = memo(() => {
             preferredCountries: profile?.preferredCountries,
           }}
           onSuggestedAction={onRunSuggestedAction}
+          initialTopic={voiceInitialTopic}
+          onInitialTopicHandled={() => setVoiceInitialTopic(undefined)}
         />
       ) : (
         <>

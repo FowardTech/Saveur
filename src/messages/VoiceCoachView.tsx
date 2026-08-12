@@ -100,12 +100,26 @@ const isAffirmative = (text: string, language: string): boolean => {
 const VoiceCoachView = memo(({
   userContext,
   onSuggestedAction,
+  initialTopic,
+  onInitialTopicHandled,
 }: {
   userContext?: CoachUserContext;
   // Fired once the user affirms the coach's spoken offer — Chat.tsx passes
   // down the same handler its "Learn more about X"-style chip uses in Text
   // mode (onRunSuggestedAction), so both modes navigate identically.
   onSuggestedAction?: (action: SuggestedActionId) => void;
+  // Product follow-up: "[the suggested topics] should be in the screen
+  // that leads to the live conversation screen" / confirmed: tapping one
+  // should start a real spoken conversation about it, not just drop a
+  // text bubble. Chat.tsx's greeting screen switches into Voice mode and
+  // passes the tapped topic's title down here — see the focus effect
+  // below for what "starting the conversation with it" actually does.
+  initialTopic?: string;
+  // Fired once initialTopic has been consumed (sent as the opening turn)
+  // so Chat.tsx can clear it — otherwise a later remount of this view
+  // (e.g. toggling Text -> Voice again by hand) would replay the same
+  // stale topic as a new turn.
+  onInitialTopicHandled?: () => void;
 }) => {
   const { t } = useTranslation(['message']);
   const stt = speechService.useSpeechToText();
@@ -336,6 +350,22 @@ const VoiceCoachView = memo(({
     React.useCallback(() => {
       isActiveRef.current = true;
       (async () => {
+        // Product follow-up: a suggested topic tapped on the greeting
+        // screen switches Chat.tsx into Voice mode and hands the topic's
+        // title down as initialTopic — start the real live conversation
+        // with it immediately (thinking -> a real spoken reply -> back to
+        // listening, exactly like any other turn — see sendTurn below),
+        // instead of the usual "wait for the user to speak first" open.
+        // Skips the first-ever-visit intro entirely: sendTurn's own reply
+        // already gives the user something spoken to react to, so a
+        // separate generic greeting first would just be two lines of
+        // speech back to back before the user gets to the thing they
+        // actually tapped.
+        if (initialTopic) {
+          onInitialTopicHandled?.();
+          if (isActiveRef.current) await sendTurn(initialTopic);
+          return;
+        }
         // BUG FIX (product report: "I want the AI coach to always
         // introduce itself for the first time the user is coming to the
         // app... the AI should introduce itself as Saveur") — Text mode
