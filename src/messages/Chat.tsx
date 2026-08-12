@@ -486,6 +486,31 @@ const Chat = memo(() => {
     return null;
   }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse, onRunSuggestedAction, t]);
 
+  // BUG FIX (product report: "when I click the chat icon tab it's just
+  // taking me directly to the chat, instead of showing the suggested
+  // topics"): coachService.getChatHistory() always returns at least a
+  // client-side placeholder greeting bubble ('msg_greeting', see that
+  // file's buildGreetingMessage) when the real thread is genuinely empty —
+  // so `messages` here was NEVER actually empty, not even for a brand new
+  // user, and GiftedChat's renderChatEmpty (the greeting/topics screen
+  // below) could never fire; every visit landed straight on a one-bubble
+  // "chat" instead. GiftedChat itself decides whether to show
+  // renderChatEmpty purely off whether the `messages` array it's given is
+  // empty, so this filters that lone placeholder out of what's actually
+  // passed to it — once a real message exists (the placeholder is never
+  // itself a real, persisted exchange), the thread renders normally.
+  const giftedChatMessages = React.useMemo(
+    // `as any` here for the same reason renderCustomView/renderAvatar below
+    // type their own params `any` — react-native-gifted-chat's own IMessage
+    // type fails to import in this project's TS setup (see the pre-existing
+    // TS2305 "no exported member" errors on this file's gifted-chat import
+    // block), so CoachIMessage doesn't actually inherit `_id` as far as tsc
+    // is concerned even though it's a real field at runtime (see
+    // toGiftedMessage/ME_USER above, both of which set it).
+    () => (messages.length === 1 && (messages[0] as any)?._id === 'msg_greeting' ? [] : messages),
+    [messages],
+  );
+
   // Empty-thread greeting (reference-redesign: "I want the career coach
   // interface to look like the screenshot" — glowing avatar, headline,
   // suggested-topic chip grid, a "suggested for you" card, all above the
@@ -661,7 +686,7 @@ const Chat = memo(() => {
           <View style={styles.container}>
             <GiftedChat
               user={{ _id: 1 }}
-              messages={messages}
+              messages={giftedChatMessages}
               onSend={onSend}
               renderBubble={renderBubble}
               renderAvatar={renderAvatar}
