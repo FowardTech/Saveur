@@ -31,19 +31,35 @@ import { globalStyle } from 'styles/globalStyle';
 // `wide` is gone; `tall` (see HomeSrc.tsx's quickActions -- now set on
 // Practice) drives this two-column bento layout below instead.
 //
-// BACKGROUND ILLUSTRATIONS -- round 2 (product follow-up: first "add
-// illustrations", then, on seeing them, "it looks crowded and not
-// professional" with a screenshot showing one illustration rendered
-// OUTSIDE its own tile's rounded bounds, then "add the illustrations back
-// but... give the 3 cards spacing from each other"). Two things changed
-// from the reverted first attempt (see git history for that version):
-// (1) `art` is now positioned fully INSIDE each tile's own box (`right: 0,
-// bottom: 0`, no negative bleed-past-the-edge offset) so it can never
-// visually escape even if `overflow:'hidden'` fails to clip an absolutely-
-// positioned sibling on some RN/platform combination the way it silently
-// did last time -- containment no longer depends on that clip actually
-// working. (2) smaller + lower opacity than the first attempt, so it reads
-// as a faint corner texture instead of a second competing scene.
+// BACKGROUND ILLUSTRATIONS -- round 3 (product follow-up: first "add
+// illustrations", then "it looks crowded and not professional" with a
+// screenshot showing one illustration rendered OUTSIDE its own tile's
+// rounded bounds, then "add the illustrations back but... give the 3
+// cards spacing from each other", then "remove the illustration from the
+// other 2 cards and leave the illustration on the third one because the
+// card title is covering the illustration of the dream company dashboard
+// card... make it look better so the illustration will be more visible
+// and the dream company dashboard text can be fully visible"). Only Dream
+// Company Dashboard carries an `art` now (see HomeSrc.tsx's quickActions).
+//
+// The "title covering the illustration" bug was a real text-paints-over-
+// art overlap: `art` used to be absolutely positioned behind the icon/
+// title, pinned to the tile's bottom-right corner, with the title spanning
+// the tile's FULL width above it -- on a narrow ~48%-width tile, "Dream
+// Company Dashboard" wrapped across two lines tall/wide enough to paint
+// straight over that corner. Rather than trying to reserve just-enough
+// pixels for the art with padding (fragile -- the exact right number
+// depends on the tile's actual on-device width, which varies by screen
+// size, and guessing wrong either re-creates the overlap or squeezes the
+// title so narrow it truncates), `art` is now rendered in normal document
+// flow, stacked AFTER the title instead of positioned behind it. That
+// makes the overlap structurally impossible on any screen size -- the
+// title gets the tile's full width to wrap in exactly like every other
+// tile's title, and the illustration simply sits in its own space below
+// it, right-aligned. With nothing left to hide it behind, it's also drawn
+// larger and at full opacity now ("make the illustration more visible")
+// instead of the faint, semi-transparent corner texture the two earlier
+// rounds used.
 export interface QuickAction {
   key: string;
   title: string;
@@ -57,8 +73,8 @@ export interface QuickAction {
   // match the combined height of the other (non-tall) tiles stacked in a
   // left column -- see the module comment above.
   tall?: boolean;
-  // Optional small illustration, rendered as a faded corner accent fully
-  // inside this tile's own bounds -- see the module comment above.
+  // Optional small illustration, rendered below this tile's title -- see
+  // the module comment above.
   art?: React.FC<{ size: number }>;
 }
 
@@ -104,9 +120,10 @@ const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
 
 export default QuickActionGrid;
 
-// Normal (non-tall) tile -- icon pinned top-left, title below it. Shared
-// between the plain-grid fallback above and the bento layout's left-hand
-// stacked column.
+// Normal (non-tall) tile -- icon pinned top-left, title below it, then an
+// optional illustration below THAT (see module comment). Shared between
+// the plain-grid fallback above and the bento layout's left-hand stacked
+// column.
 //
 // REDESIGN (product follow-up: "increase the height of the other 2 cards
 // on the left, move their icons a little bit to the top left so that the
@@ -135,17 +152,17 @@ const Tile = ({
       activeOpacity={0.75}
       style={[styles.tile, styles.tileVertical, style, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
-      {Art ? (
-        <View style={styles.artWrap} pointerEvents="none">
-          <Art size={58} />
-        </View>
-      ) : null}
       <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
       <Text category="h8" bold numberOfLines={2} style={styles.titleVertical}>
         {item.title}
       </Text>
+      {Art ? (
+        <View style={styles.artRow} pointerEvents="none">
+          <Art size={64} />
+        </View>
+      ) : null}
     </TouchableOpacity>
   );
 };
@@ -162,17 +179,17 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
       activeOpacity={0.75}
       style={[styles.tile, styles.tallTile, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
-      {Art ? (
-        <View style={styles.artWrapTall} pointerEvents="none">
-          <Art size={104} />
-        </View>
-      ) : null}
       <View style={[styles.tallIconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon28, styles.icon]} />
       </View>
       <Text category="h7" bold numberOfLines={2} style={styles.tallTitle}>
         {item.title}
       </Text>
+      {Art ? (
+        <View style={styles.artRowTall} pointerEvents="none">
+          <Art size={92} />
+        </View>
+      ) : null}
     </TouchableOpacity>
   );
 };
@@ -225,11 +242,6 @@ const themedStyles = StyleService.create({
   // plain white cards. Radius 24 (vs. this app's usual 14px) and roomier
   // padding than the first pass -- Material You's own larger, softer
   // corner language, made a little bigger again per explicit follow-up.
-  // `overflow:'hidden'` keeps each tile's optional background
-  // illustration's own corners tucked under the tile's rounded shape --
-  // `art`/`artWrap` below no longer *depend* on this clip actually
-  // working (see the module comment on why), but it's kept as a belt-and-
-  // suspenders second layer of containment.
   //
   // Height follow-up, round 2 (product request: "increase the height of
   // the other 2 cards on the left... so that the card titles can be
@@ -295,8 +307,10 @@ const themedStyles = StyleService.create({
   },
   // `alignSelf: 'stretch'` (rather than `flex: 1`, which only matters in a
   // row) is what makes this Text wrap against the tile's actual width in
-  // its new vertical layout, instead of shrink-wrapping to its own
-  // unwrapped content width the way a plain flex-start column child would.
+  // its vertical layout, instead of shrink-wrapping to its own unwrapped
+  // content width the way a plain flex-start column child would. Gets the
+  // tile's FULL width to wrap in -- see the module comment on why an
+  // illustration no longer sits behind/competes with this.
   titleVertical: {
     alignSelf: 'stretch',
     lineHeight: 22,
@@ -304,22 +318,21 @@ const themedStyles = StyleService.create({
   tallTitle: {
     lineHeight: 24,
   },
-  // Background illustration accent -- pinned flush to the tile's own
-  // bottom-right corner (NOT bled past it -- see the module comment on why
-  // that changed from the first, reverted attempt), faded so it reads as a
-  // soft texture rather than a second focal point competing with the
-  // icon/title. Painted before the icon/title (so it sits underneath) and
-  // `pointerEvents:'none'` so it never intercepts the tile's own tap.
-  artWrap: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    opacity: 0.22,
+  // Illustration accent, in normal document flow AFTER the title (see the
+  // module comment on why this replaced the earlier absolutely-positioned
+  // corner version) -- `alignSelf:'flex-end'` right-aligns it within the
+  // tile's own column instead of stretching, `marginTop` gives it a clean
+  // gap below the title rather than touching it, and `pointerEvents:'none'`
+  // keeps it from intercepting the tile's own tap. No opacity fade here
+  // (unlike the reverted version) -- with the overlap risk gone, it's
+  // meant to read as a real, fully visible illustration, not a faint
+  // texture.
+  artRow: {
+    alignSelf: 'flex-end',
+    marginTop: 10,
   },
-  artWrapTall: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    opacity: 0.28,
+  artRowTall: {
+    alignSelf: 'flex-end',
+    marginTop: 14,
   },
 });

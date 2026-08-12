@@ -13,7 +13,7 @@ import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
+import { ArtGiftBox, ArtDreamCompany } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -127,11 +127,17 @@ const HomeSrc = memo(() => {
   // layout: Coach + Dream Company Dashboard stack in a left column,
   // Practice stretches to match their combined height on the right.
   //
-  // Background illustrations, round 2 (product follow-up: "add the
-  // illustrations back but... give the 3 cards spacing from each other")
-  // -- see QuickActionGrid.tsx's own comment for what changed from the
-  // first, reverted attempt (fully contained within each tile's own
-  // bounds now, smaller, fainter).
+  // Background illustrations, round 3 (product follow-up: "remove the
+  // illustration from the other 2 cards and leave the illustration on the
+  // third one because the card title is covering the illustration of the
+  // dream company dashboard card... make it look better so the
+  // illustration will be more visible and the dream company dashboard
+  // text can be fully visible") -- Coach/Practice no longer pass an `art`
+  // at all. Dream Company Dashboard keeps its illustration; the actual
+  // "title covering it" fix lives in QuickActionGrid.tsx (constraining the
+  // title's width so it wraps clear of the illustration's corner instead
+  // of painting over it, plus a bigger/more-opaque illustration now that
+  // it's the only one and has room to itself).
   const quickActions = React.useMemo<QuickAction[]>(() => [
     {
       key: 'coach',
@@ -139,7 +145,6 @@ const HomeSrc = memo(() => {
       icon: 'message-circle-outline',
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
-      art: ArtCareerCoach,
     },
     {
       key: 'practice',
@@ -148,7 +153,6 @@ const HomeSrc = memo(() => {
       tint: '#0063f8',
       onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
       tall: true,
-      art: ArtPractice,
     },
     {
       key: 'dreamCompanies',
