@@ -39,7 +39,19 @@ import InAppVideoPlayer from 'components/InAppVideoPlayer';
 //
 // Renders null entirely if there's nothing to resume, same "don't show an
 // empty card" convention every other self-contained Home card follows.
-const ContinueLearningCard = memo(({ style }: { style?: StyleProp<ViewStyle> }) => {
+const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
+  style?: StyleProp<ViewStyle>;
+  // BUG FIX (product report: "the Today's Plan section in the homescreen,
+  // nothing is there its empty") — this card (and UpcomingSessionHomeCard,
+  // its row partner) always rendered null on its own when it had nothing
+  // to show, which is correct, but HomeSrc.tsx's "Today's plan" section
+  // label above the row had no way to know that and rendered
+  // unconditionally — a heading sitting over an empty row on any account
+  // with no in-progress lesson AND no scheduled session. Reports whether
+  // this card actually has something to show so HomeSrc can hide the whole
+  // section (label included) when both cards in the row are empty.
+  onVisibilityChange?: (visible: boolean) => void;
+}) => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const { t } = useTranslation(['home', 'common']);
@@ -69,7 +81,15 @@ const ContinueLearningCard = memo(({ style }: { style?: StyleProp<ViewStyle> }) 
     return unsubscribe;
   }, [navigation, load]);
 
-  if (!course && !video) return null;
+  const hasContent = !!course || !!video;
+  // Hooks must run unconditionally (before the early `return null` below),
+  // so this reports visibility every render rather than only when there's
+  // something to show.
+  React.useEffect(() => {
+    onVisibilityChange?.(hasContent);
+  }, [hasContent, onVisibilityChange]);
+
+  if (!hasContent) return null;
 
   const videoProgressPct =
     video?.durationSeconds && video.durationSeconds > 0

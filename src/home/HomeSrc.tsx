@@ -116,6 +116,14 @@ const HomeSrc = memo(() => {
   // already uses, so the two don't disagree with each other.
   const streakRingPct = streak ? Math.min(100, (streak.streakDays / 7) * 100) : 0;
 
+  // BUG FIX (product report: "the Today's Plan section in the homescreen,
+  // nothing is there its empty") — see the "Today's plan" JSX below for
+  // the full story; these track whether ContinueLearningCard/
+  // UpcomingSessionHomeCard actually have anything to show, so the section
+  // label can hide along with them instead of floating above an empty row.
+  const [continuePlanVisible, setContinuePlanVisible] = React.useState(true);
+  const [upcomingPlanVisible, setUpcomingPlanVisible] = React.useState(true);
+
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
   const loadUnreadCount = React.useCallback(async () => {
@@ -648,15 +656,28 @@ const HomeSrc = memo(() => {
             and render null when they have nothing to show (see their own
             files) — a null child contributes no space in this row, so a
             single card naturally takes the full row width when only one
-            of the two has content, and neither renders at all when both
-            are empty. Labeled "Today's plan" (reference-redesign follow-up)
-            to match the new hero/section-label structure above/below it. */}
-        <Text category="h8" bold mt={18} mb={8}>
-          {t('home:todays_plan_label', { defaultValue: "Today's plan" })}
-        </Text>
+            of the two has content. Labeled "Today's plan"
+            (reference-redesign follow-up) to match the new hero/
+            section-label structure above/below it.
+            BUG FIX (product report: "the Today's Plan section in the
+            homescreen, nothing is there its empty") — the row itself
+            already correctly disappeared when both cards were empty, but
+            this label above it didn't know that and always rendered
+            regardless, leaving a bare heading over nothing on any account
+            with no in-progress lesson and no scheduled session. Both cards
+            now report their own visibility (see their own
+            onVisibilityChange prop) so the label can hide along with the
+            row instead of floating above an empty gap. Defaults to `true`
+            (assume visible) until each card's own fetch resolves, so this
+            doesn't flash-hide then reappear during the loading window. */}
+        {continuePlanVisible || upcomingPlanVisible ? (
+          <Text category="h8" bold mt={18} mb={8}>
+            {t('home:todays_plan_label', { defaultValue: "Today's plan" })}
+          </Text>
+        ) : null}
         <View style={styles.topCardsRow}>
-          <ContinueLearningCard style={styles.topCardHalf} />
-          <UpcomingSessionHomeCard style={styles.topCardHalf} />
+          <ContinueLearningCard style={styles.topCardHalf} onVisibilityChange={setContinuePlanVisible} />
+          <UpcomingSessionHomeCard style={styles.topCardHalf} onVisibilityChange={setUpcomingPlanVisible} />
         </View>
 
         {isSignedIn && !emailVerified ? (

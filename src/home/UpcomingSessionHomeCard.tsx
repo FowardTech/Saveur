@@ -29,7 +29,13 @@ import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 // ContinueLearningCard in a flex row; when only one of the two has
 // content, the other renders null and contributes no layout space, so this
 // naturally expands to fill the row on its own.
-const UpcomingSessionHomeCard = memo(({ style }: { style?: StyleProp<ViewStyle> }) => {
+const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
+  style?: StyleProp<ViewStyle>;
+  // BUG FIX (product report: "the Today's Plan section in the homescreen,
+  // nothing is there its empty") — same fix as ContinueLearningCard.tsx's
+  // own onVisibilityChange, see that file's comment for the full story.
+  onVisibilityChange?: (visible: boolean) => void;
+}) => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   // BUG FIX (product report: "the time and date in the upcoming schedule
@@ -61,6 +67,11 @@ const UpcomingSessionHomeCard = memo(({ style }: { style?: StyleProp<ViewStyle> 
       };
     }, []),
   );
+
+  // Hooks must run unconditionally (before the early `return null` below).
+  React.useEffect(() => {
+    onVisibilityChange?.(!!nextSession);
+  }, [nextSession, onVisibilityChange]);
 
   if (!nextSession) return null;
 
