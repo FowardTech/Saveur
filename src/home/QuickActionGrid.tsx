@@ -104,9 +104,20 @@ const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
 
 export default QuickActionGrid;
 
-// Normal (non-tall) tile -- icon left, title right, same row shape this
-// grid has always used. Shared between the plain-grid fallback above and
-// the bento layout's left-hand stacked column.
+// Normal (non-tall) tile -- icon pinned top-left, title below it. Shared
+// between the plain-grid fallback above and the bento layout's left-hand
+// stacked column.
+//
+// REDESIGN (product follow-up: "increase the height of the other 2 cards
+// on the left, move their icons a little bit to the top left so that the
+// card titles can be visible") -- was a horizontal row (icon left, title
+// vertically centered to its right); switched to the same icon-on-top/
+// title-below vertical block TallTile already uses (styles.tileVertical/
+// titleVertical below), which does two things at once: the icon sits at
+// the tile's actual top-left corner as asked, and stacking icon above
+// title (rather than centering them side by side) is what actually makes
+// the tile taller -- a bigger paddingVertical alone was tried in the
+// previous pass and wasn't enough on its own.
 const Tile = ({
   item,
   style,
@@ -122,7 +133,7 @@ const Tile = ({
   return (
     <TouchableOpacity
       activeOpacity={0.75}
-      style={[styles.tile, style, { backgroundColor: `${item.tint}17` }]}
+      style={[styles.tile, styles.tileVertical, style, { backgroundColor: `${item.tint}17` }]}
       onPress={item.onPress}>
       {Art ? (
         <View style={styles.artWrap} pointerEvents="none">
@@ -132,7 +143,7 @@ const Tile = ({
       <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
-      <Text category="h8" bold numberOfLines={2} style={styles.title}>
+      <Text category="h8" bold numberOfLines={2} style={styles.titleVertical}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -142,10 +153,8 @@ const Tile = ({
 // Tall tile -- the bento layout's right-hand column (see module comment).
 // Stretched via `flex:1`/`alignSelf:'stretch'` (bentoRow's own
 // `alignItems: 'stretch'`, the default) to match the left column's
-// combined stacked height, so its content is laid out as a vertical block
-// (icon, then title below it) rather than the horizontal icon-left/
-// title-right row the smaller tiles use -- a wide-but-short row would sit
-// awkwardly stranded inside a tall container.
+// combined stacked height. Same icon-on-top/title-below vertical block
+// Tile above now uses too, just bigger (see `tallIconWrap`/`tallTitle`).
 const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<typeof useStyleSheet> }) => {
   const Art = item.art;
   return (
@@ -222,19 +231,28 @@ const themedStyles = StyleService.create({
   // working (see the module comment on why), but it's kept as a belt-and-
   // suspenders second layer of containment.
   //
-  // Height follow-up (product request: "make the 2 horizontal cards have
-  // a little more height") -- paddingVertical 22 -> 28 on the two stacked
-  // tiles (Coach/Dream Company Dashboard); the tall tile (Practice) picks
-  // this up automatically since it's stretched to match their new,
-  // slightly taller combined height rather than having its own fixed size.
+  // Height follow-up, round 2 (product request: "increase the height of
+  // the other 2 cards on the left... so that the card titles can be
+  // visible") -- paddingVertical 28 -> 30, on top of the layout switch to
+  // `tileVertical` below (icon stacked above title, not beside it -- see
+  // Tile's own comment for why that's what actually drives most of the
+  // height increase). The tall tile (Practice) still picks this up
+  // automatically since it's stretched to match the stacked column's
+  // combined height rather than having its own fixed size.
   tile: {
     marginBottom: 16,
     borderRadius: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 28,
+    paddingVertical: 30,
     paddingHorizontal: 18,
     overflow: 'hidden',
+  },
+  // Overrides `tile`'s (now baseline-less) layout for the two stacked
+  // tiles -- icon pinned to the top-left corner, title below it, matching
+  // TallTile's own vertical block below (see Tile's own comment).
+  tileVertical: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
   },
   tileHalf: {
     width: '48%',
@@ -253,11 +271,13 @@ const themedStyles = StyleService.create({
     paddingVertical: 24,
     paddingHorizontal: 20,
   },
+  // marginBottom (not marginRight) now that Tile is a vertical block, icon
+  // above title, rather than a horizontal row.
   iconWrap: {
     width: 46,
     height: 46,
     borderRadius: 16,
-    marginRight: 14,
+    marginBottom: 12,
     flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
@@ -273,9 +293,12 @@ const themedStyles = StyleService.create({
   icon: {
     tintColor: '#fff',
   },
-  title: {
-    flex: 1,
-    flexShrink: 1,
+  // `alignSelf: 'stretch'` (rather than `flex: 1`, which only matters in a
+  // row) is what makes this Text wrap against the tile's actual width in
+  // its new vertical layout, instead of shrink-wrapping to its own
+  // unwrapped content width the way a plain flex-start column child would.
+  titleVertical: {
+    alignSelf: 'stretch',
     lineHeight: 22,
   },
   tallTitle: {
