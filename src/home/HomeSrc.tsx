@@ -9,6 +9,7 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
+import DailyChallengeCard from './DailyChallengeCard';
 import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
 import RecentActivityList from './RecentActivityList';
@@ -560,8 +561,12 @@ const HomeSrc = memo(() => {
             render null with nothing to show (DailyNewsBanner: non-Premium
             or no digest yet; DailyTipsBanner: no goals set yet), same
             convention as every other card on this screen, so neither one
-            reserves space or shows a placeholder when empty. */}
-        {/* <DailyNewsBanner /> */}
+            reserves space or shows a placeholder when empty.
+            BUG FIX (pre-launch redundancy/flow audit): DailyNewsBanner had
+            been left commented out from an earlier pass — the whole Daily
+            Industry News digest was invisible on Home even though the
+            component and its data source were fully built. Restored. */}
+        <DailyNewsBanner />
         <DailyTipsBanner />
 
         {/* Streak/XP hero (see this file's module comment above for the
@@ -580,6 +585,13 @@ const HomeSrc = memo(() => {
             again; this is back to a single flat fill, this app's own
             brand blue #0063f8. */}
         {streak ? (
+          // BUG FIX (pre-launch redundancy/flow audit): this card showed the
+          // exact same streak data as Leaderboard.tsx's own card, but had no
+          // onPress at all — a user seeing "Not yet" under Today's check-in
+          // had no way to act on it from here, only a trophy-icon detour
+          // elsewhere. Now tappable straight into Leaderboard, where the
+          // real Check-In/Badges buttons live.
+          <TouchableOpacity activeOpacity={0.85} onPress={() => navigate('Leaderboard')}>
           <View style={[styles.streakHero, styles.streakHeroOuter]}>
             <Flex justify="flex-start" itemsCenter mb={10}>
               <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
@@ -645,6 +657,7 @@ const HomeSrc = memo(() => {
               </View>
             </Flex>
           </View>
+          </TouchableOpacity>
         ) : null}
 
         {/* Product request: "remove the continue learning card in the My
@@ -679,6 +692,15 @@ const HomeSrc = memo(() => {
           <ContinueLearningCard style={styles.topCardHalf} onVisibilityChange={setContinuePlanVisible} />
           <UpcomingSessionHomeCard style={styles.topCardHalf} onVisibilityChange={setUpcomingPlanVisible} />
         </View>
+
+        {/* BUG FIX (pre-launch redundancy/flow audit): DailyChallengeCard
+            was a fully built, self-contained component ("HomeSrc.tsx just
+            renders <DailyChallengeCard />" per its own doc comment) that
+            was never actually added to this render tree — the whole daily
+            XP-challenge feature was invisible/unreachable. Restored here,
+            right after Today's plan; it renders null on its own whenever
+            there's nothing real to show or the feature is off. */}
+        <DailyChallengeCard />
 
         {isSignedIn && !emailVerified ? (
           <Flex
