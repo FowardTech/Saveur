@@ -40,6 +40,21 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 // ArtPractice/ArtDreamCompany's emerald/amber palettes would have clashed
 // with their own now-blue tile, so both are back to this app's one brand
 // blue (#0063f8) here too, matching ArtCareerCoach.
+//
+// ArtCareerCoach RETINTED A THIRD TIME, back to its ORIGINAL translucent-
+// white-on-saturated-blue palette (product follow-up: "give the career
+// coach card the default blue background and the text in it white",
+// followed by "you forgot the illustration in the career coach card...
+// its not visible") — QuickActionGrid.tsx's `solid` tile treatment made
+// this one card's own fill a full-strength blue again (see that file's
+// own comment), so the solid-`tint`-shapes-on-pale-backdrop construction
+// every OTHER illustration here uses would be invisible again on THIS
+// one card specifically, the exact problem the pale-background retint
+// above was originally solving in reverse. Back to the same translucent-
+// white shapes + brand-blue dots this app's very first gradient-era hero
+// cards used (see this file's own top comment) -- ArtPractice/
+// ArtDreamCompany/ArtLearningCourses are untouched, since their own tiles
+// are still the pale tonal look.
 
 interface ArtProps {
   size: number;
@@ -47,13 +62,13 @@ interface ArtProps {
 
 export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="58" r="48" fill="#0063f80f" />
-    <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.06)" />
-    <Path d="M38 78l-6 16 20-11z" fill="#0063f8" />
-    <Rect x="26" y="32" width="68" height="48" rx="18" fill="#0063f8" />
-    <Circle cx="45" cy="56" r="5.5" fill="#EAF2FF" />
-    <Circle cx="60" cy="56" r="5.5" fill="#EAF2FF" />
-    <Circle cx="75" cy="56" r="5.5" fill="#EAF2FF" />
+    <Circle cx="60" cy="58" r="48" fill="rgba(255,255,255,0.14)" />
+    <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.08)" />
+    <Path d="M38 78l-6 16 20-11z" fill="rgba(255,255,255,0.96)" />
+    <Rect x="26" y="32" width="68" height="48" rx="18" fill="rgba(255,255,255,0.96)" />
+    <Circle cx="45" cy="56" r="5.5" fill="#0063f8" />
+    <Circle cx="60" cy="56" r="5.5" fill="#0063f8" />
+    <Circle cx="75" cy="56" r="5.5" fill="#0063f8" />
   </Svg>
 );
 

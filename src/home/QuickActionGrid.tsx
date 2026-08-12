@@ -150,11 +150,22 @@ export default QuickActionGrid;
 // circle with a white glyph, would go invisible against a same-color
 // tile, so it becomes a translucent-white circle instead (the same
 // "frosted accent against a saturated fill" treatment this app's very
-// first hero cards used); (3) the title switches to white. `art` is
-// deliberately NOT rendered in solid mode -- the illustrations are drawn
-// in solid `tint` shapes meant to sit on a pale tonal background (see
-// HomeHeroArt.tsx), and would go equally invisible against a same-color
-// solid tile.
+// first hero cards used); (3) the title switches to white.
+//
+// `art` DOES still render in solid mode (product follow-up correction:
+// "you forgot the illustration in the career coach card... its not
+// visible" -- an earlier pass suppressed it here on the assumption the
+// solid-`tint`-colored shapes every other illustration uses would be
+// invisible against a same-color tile, which is true, but the fix is to
+// retint that ONE illustration, not drop it -- see HomeHeroArt.tsx's own
+// comment on ArtCareerCoach's third retint back to translucent-white
+// shapes, the same "frosted accent" construction the icon badge above
+// uses). Solid tiles use `artWrapSolid` (opacity 1) instead of `artWrap`
+// (opacity 0.22) -- that lower opacity was tuned for solid `tint` shapes
+// sitting on a near-white pale tile, and would fade an already-
+// translucent white illustration to near invisibility on a saturated
+// tile; the SVG's own internal rgba alphas already provide the subtlety
+// here.
 const Tile = ({
   item,
   style,
@@ -166,7 +177,7 @@ const Tile = ({
   styles: ReturnType<typeof useStyleSheet>;
   theme: ReturnType<typeof useTheme>;
 }) => {
-  const Art = item.solid ? undefined : item.art;
+  const Art = item.art;
   return (
     <TouchableOpacity
       activeOpacity={0.75}
@@ -179,7 +190,7 @@ const Tile = ({
       ]}
       onPress={item.onPress}>
       {Art ? (
-        <View style={styles.artWrap} pointerEvents="none">
+        <View style={item.solid ? styles.artWrapSolid : styles.artWrap} pointerEvents="none">
           <Art size={58} />
         </View>
       ) : null}
@@ -385,6 +396,17 @@ const themedStyles = StyleService.create({
     right: 0,
     bottom: 0,
     opacity: 0.22,
+  },
+  // `solid` tiles only (see Tile's own comment) -- full opacity, since
+  // ArtCareerCoach (the only illustration currently paired with a `solid`
+  // tile) is already built from translucent-white/rgba shapes with their
+  // own baked-in subtlety, unlike the solid-`tint`-colored shapes the
+  // pale tonal tiles' illustrations use.
+  artWrapSolid: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    opacity: 1,
   },
   artWrapTall: {
     position: 'absolute',
