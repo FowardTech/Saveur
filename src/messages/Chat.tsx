@@ -1,7 +1,8 @@
 import React, { memo } from "react";
-import { Alert, TouchableOpacity, View } from "react-native";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
+import LinearGradient from "react-native-linear-gradient";
 import {
   Bubble,
   GiftedChat,
@@ -38,6 +39,7 @@ import BrandWordmark from "components/BrandWordmark";
 import Text from "components/Text";
 import { CoachChatMessageProps, Practice_Mode_Enum, SuggestedActionId } from "constants/Types";
 import * as coachService from "services/coachService";
+import { SuggestedTopic } from "services/coachService";
 import { ACTION_META, actionTitle, runSuggestedAction } from "services/suggestedActions";
 import * as resumeService from "services/resumeService";
 import { ImportedFileInfo } from "services/resumeService";
@@ -76,6 +78,19 @@ interface CoachIMessage extends IMessage {
 // directly to avoid exporting a screen-local constant just for this;
 // keep the two in sync if that value ever changes.
 const COACH_SUGGESTED_COURSE_MODULES = 5;
+
+// Reference-redesign follow-up ("I want the career coach interface to look
+// like the screenshot") — this screen's blank/empty thread used to just be
+// an empty white GiftedChat list. Same pastel-tint chip palette
+// MessagesScreen.tsx's Suggested Topics grid and Home's "More for you" rows
+// already use, kept as its own module constant (rather than importing
+// MessagesScreen's) since these are two independent screens.
+const TOPIC_CHIP_STYLES: { bg: string; icon: string; iconColor: string }[] = [
+  { bg: 'rgba(139, 92, 246, 0.08)', icon: 'message-square-outline', iconColor: '#8B5CF6' },
+  { bg: 'rgba(126, 168, 226, 0.12)', icon: 'trending-up-outline', iconColor: '#7EA8E2' },
+  { bg: 'rgba(216, 90, 48, 0.08)', icon: 'bulb-outline', iconColor: '#D85A30' },
+  { bg: 'rgba(29, 158, 117, 0.08)', icon: 'briefcase-outline', iconColor: '#1D9E75' },
+];
 
 // Maps a persisted CoachChatMessageProps (see services/coachService.ts) to
 // the IMessage shape react-native-gifted-chat expects.
@@ -181,6 +196,26 @@ const Chat = memo(() => {
     onSend([{ _id: `topic_${Date.now()}`, text: initialPrompt, createdAt: Date.now(), user: ME_USER }]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt]);
+
+  // Empty-thread greeting state (renderChatEmpty below) — same suggested
+  // topics data source as MessagesScreen.tsx's chip grid
+  // (services/coachService.ts's getSuggestedTopics), fetched independently
+  // here since a user can land directly on an empty Chat thread without
+  // passing through that screen first.
+  const [topics, setTopics] = React.useState<SuggestedTopic[]>([]);
+  React.useEffect(() => {
+    coachService
+      .getSuggestedTopics({ goals: profile?.goals, desiredRoles: profile?.desiredRoles })
+      .then(setTopics)
+      .catch(() => {});
+  }, [profile?.goals, profile?.desiredRoles]);
+
+  // Tapping a chip in the empty-state grid below sends it the same way an
+  // initialPrompt from MessagesScreen.tsx does — straight into the real
+  // onSend pipeline, not a separate/fake preview.
+  const onTapTopic = React.useCallback((title: string) => {
+    onSend([{ _id: `topic_${Date.now()}`, text: title, createdAt: Date.now(), user: ME_USER }]);
+  }, [onSend]);
 
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
     return (
@@ -439,6 +474,89 @@ const Chat = memo(() => {
     return null;
   }, [styles.suggestedCourseChip, theme, onStartSuggestedCourse, onRunSuggestedAction, t]);
 
+  // Empty-thread greeting (reference-redesign: "I want the career coach
+  // interface to look like the screenshot" — glowing avatar, headline,
+  // suggested-topic chip grid, a "suggested for you" card, all above the
+  // real message input). Wired into GiftedChat's own renderChatEmpty prop
+  // below rather than replacing GiftedChat outright, so the same real
+  // input toolbar/composer/attach flow stays mounted and working — only
+  // the message-list area's content changes when there's no history yet.
+  // Suppressed while an initialPrompt is about to auto-send (see the
+  // effect above) so this doesn't flash for a frame before the real
+  // thread appears.
+  const renderChatEmpty = React.useCallback(() => {
+    if (initialPrompt) return null;
+    // BUG FIX: GiftedChat's own message list is `inverted` (default) — with
+    // renderChatEmpty, it hands this content straight to that flipped
+    // FlatList with no counter-transform of its own (RN's normal
+    // auto-compensation for ListEmptyComponent doesn't reach a
+    // no-props useCallback component like this one). Without the
+    // scaleY(-1) below, the whole greeting renders upside down.
+    return (
+      <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
+        <View style={styles.emptyGlowWrap}>
+          <LinearGradient
+            colors={['#9DBFEF', '#7EA8E2']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.emptyGlow}
+          />
+          <View style={styles.emptyGlowInner}>
+            <BrandWordmark markOnly size={34} markColor="#fff" />
+          </View>
+        </View>
+        <Text category="h5" bold center mt={18} style={styles.emptyHeadline}>
+          {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
+        </Text>
+        <View style={styles.emptySubtitleChip}>
+          <Text category="h10" style={{ color: theme['text-hint-color'] }}>
+            {t("message:coach_greeting_subtitle", { defaultValue: "Ask anything, or pick a topic below" })}
+          </Text>
+        </View>
+
+        {topics.length > 0 ? (
+          <View style={styles.emptyTopicGrid}>
+            {topics.slice(0, 4).map((item, i) => {
+              const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  activeOpacity={0.7}
+                  onPress={() => onTapTopic(item.title)}
+                  style={[styles.emptyTopicChip, { backgroundColor: chipStyle.bg }]}>
+                  <View style={styles.emptyTopicIconWrap}>
+                    <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon16, { tintColor: chipStyle.iconColor }]} />
+                  </View>
+                  <Text category="h10" bold numberOfLines={2} mt={8}>
+                    {item.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        ) : null}
+
+        {/* "Suggested for you" — a real existing feature (same Composer
+            action as "Start Video Practice" below, see onMakeCall), not a
+            fabricated content card. */}
+        <TouchableOpacity activeOpacity={0.7} onPress={onMakeCall} style={styles.emptySuggestedCard}>
+          <View style={styles.emptySuggestedIconWrap}>
+            <Icon pack="assets" name="call" style={[globalStyle.icon20, { tintColor: '#7EA8E2' }]} />
+          </View>
+          <View style={globalStyle.flexOne}>
+            <Text category="h9" bold>
+              {t("message:suggested_for_you_title", { defaultValue: "Start a video practice" })}
+            </Text>
+            <Text category="h10" status="placeholder" mt={2}>
+              {t("message:suggested_for_you_subtitle", { defaultValue: "Get real-time feedback on a mock interview" })}
+            </Text>
+          </View>
+          <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+        </TouchableOpacity>
+      </View>
+    );
+  }, [initialPrompt, topics, onTapTopic, onMakeCall, t, theme, styles]);
+
   // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
   // (no logo.png asset needed). Returns null for the current user's own
   // messages so GiftedChat falls back to its default (blank) treatment.
@@ -533,6 +651,7 @@ const Chat = memo(() => {
               renderTime={() => null}
               renderSend={renderSend}
               renderCustomView={renderCustomView}
+              renderChatEmpty={renderChatEmpty}
               messagesContainerStyle={{ paddingBottom: 32 }}
               renderInputToolbar={renderInputToolbar}
               // gifted-chat's Composer has its own hardcoded default text color
@@ -646,5 +765,80 @@ const themedStyles = StyleService.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     marginTop: 6,
+  },
+  // Empty-thread greeting (reference-redesign, see renderChatEmpty).
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 48,
+  },
+  emptyGlowWrap: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyGlow: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 44,
+  },
+  emptyGlowInner: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyHeadline: {
+    color: 'text-basic-color',
+    paddingHorizontal: 12,
+  },
+  emptySubtitleChip: {
+    backgroundColor: 'background-basic-color-2',
+    borderRadius: 99,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 28,
+  },
+  emptyTopicGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  emptyTopicChip: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+  },
+  emptyTopicIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  emptySuggestedCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 18,
+    backgroundColor: 'background-basic-color-2',
+  },
+  emptySuggestedIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(126, 168, 226, 0.14)',
+    marginRight: 12,
   },
 });

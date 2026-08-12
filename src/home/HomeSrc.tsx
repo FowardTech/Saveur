@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, InteractionManager, StyleSheet, TouchableOpacity, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -557,16 +558,32 @@ const HomeSrc = memo(() => {
         <DailyTipsBanner />
 
         {/* Streak/XP hero (see this file's module comment above for the
-            reference this redesign is based on) — a soft purple gradient
-            "score" card with a 7-day progress ring, same real streak data
-            src/home/Leaderboard.tsx's own card already shows. Hides itself
-            entirely rather than showing a zeroed-out ring on a failed
-            fetch or a signed-out visit (AuthContext gates this whole
-            screen behind sign-in in practice, but the null check here
-            covers the same brief pre-auth frame everything else on this
-            screen already guards against). */}
+            reference this redesign is based on) — a 7-day progress ring,
+            same real streak data src/home/Leaderboard.tsx's own card
+            already shows. Hides itself entirely rather than showing a
+            zeroed-out ring on a failed fetch or a signed-out visit
+            (AuthContext gates this whole screen behind sign-in in
+            practice, but the null check here covers the same brief
+            pre-auth frame everything else on this screen already guards
+            against).
+            Product follow-up: "give it a linear gradient color of the
+            real default blue color and this subtle blue" -- a real
+            LinearGradient now (this app's own brand blue #0063f8 into the
+            softer #7EA8E2 tone the rest of this redesign uses), an
+            absolute-fill decorative layer behind the card's normal-flow
+            content rather than the gradient being the padded container
+            itself -- same fix FindScreen.tsx's own hero card history
+            documents for why a flex-sized LinearGradient used AS the
+            content container doesn't reliably grow to wrap its own
+            children's height on every layout pass. */}
         {streak ? (
-          <View style={styles.streakHero}>
+          <View style={[styles.streakHero, styles.streakHeroOuter]}>
+            <LinearGradient
+              colors={['#0063f8', '#7EA8E2']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
             <Flex justify="flex-start" itemsCenter mb={10}>
               <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
               <Text category="h10" bold ml={6} style={{ color: 'rgba(255,255,255,0.85)' }}>
@@ -856,7 +873,15 @@ const themedStyles = StyleService.create({
     borderRadius: 24,
     padding: 18,
     marginTop: 14,
+    // Opaque Android shadow fallback only — always fully covered by the
+    // absolute-fill LinearGradient rendered as this card's first child
+    // (see the JSX comment above).
     backgroundColor: '#7EA8E2',
+  },
+  // `overflow:'hidden'` is what actually clips the absolute-fill gradient
+  // layer to this card's own rounded corners.
+  streakHeroOuter: {
+    overflow: 'hidden',
   },
   // Each of the 3 stat chips inside streakHero — no background of its own
   // (the hero's own blue fill is already the "card"), just centered
