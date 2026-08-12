@@ -67,18 +67,25 @@ import { globalStyle } from 'styles/globalStyle';
 // white card (`background-basic-color-2`, matching every other card in
 // the app) sitting on Container.tsx's gray page body -- the tint accent
 // now lives ONLY in the icon badge and the illustration, not the tile
-// fill itself. This also collapses `solid`/`titleSolid`/`artWrapSolid`
-// entirely: with a uniform white fill there's no more "will this text/
-// icon/illustration be legible against this tile's own color" branch to
-// carry, every tile renders exactly the same way.
+// fill itself.
+//
+// `solid` REINTRODUCED (immediate product follow-up: "give the career
+// [coach] card the default blue background") -- the white-card look
+// above stays as the default for every tile, but Career Coach opts back
+// into a full-strength `tint` fill via this one flag, same mechanism/
+// reasoning as the original `solid` implementation (see git history):
+// white title, translucent-white icon badge, and full-opacity
+// illustration instead of the faded corner accent every white tile uses
+// (HomeHeroArt.tsx's ArtCareerCoach is retinted back to translucent-
+// white-on-blue to match). Practice/Dream Company Dashboard/Learning
+// Courses are untouched, still plain white.
 export interface QuickAction {
   key: string;
   title: string;
   icon: string;
   // Single accent hex, e.g. '#0063f8' -- used at full strength for the
-  // icon badge and the illustration's shapes (see HomeHeroArt.tsx). The
-  // tile's own fill is a plain white card (see `tile`'s own comment) --
-  // this tint no longer touches the tile background itself.
+  // icon badge and the illustration's shapes (see HomeHeroArt.tsx) on a
+  // white tile, or as the tile's own fill on a `solid` tile.
   tint: string;
   onPress: () => void;
   // When true, this tile becomes a single right-hand column stretched to
@@ -88,6 +95,11 @@ export interface QuickAction {
   // Optional small illustration, rendered in this tile's bottom-right
   // corner -- see the module comment above.
   art?: React.FC<{ size: number }>;
+  // Product follow-up: "give the career [coach] card the default blue
+  // background" -- opts this one tile out of the white-card default back
+  // into a full-strength `tint` fill. See Tile's own comment for what
+  // else changes with it (icon badge, title color, illustration).
+  solid?: boolean;
 }
 
 const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
@@ -163,17 +175,31 @@ const Tile = ({
   return (
     <TouchableOpacity
       activeOpacity={0.75}
-      style={[styles.tile, styles.tileVertical, style, Art ? styles.tileArtBottom : null]}
+      style={[
+        styles.tile,
+        styles.tileVertical,
+        style,
+        Art ? styles.tileArtBottom : null,
+        item.solid ? { backgroundColor: item.tint } : null,
+      ]}
       onPress={item.onPress}>
       {Art ? (
-        <View style={styles.artWrap} pointerEvents="none">
+        <View style={item.solid ? styles.artWrapSolid : styles.artWrap} pointerEvents="none">
           <Art size={58} />
         </View>
       ) : null}
-      <View style={[styles.iconWrap, { backgroundColor: item.tint }]}>
+      <View
+        style={[
+          styles.iconWrap,
+          { backgroundColor: item.solid ? 'rgba(255,255,255,0.24)' : item.tint },
+        ]}>
         <Icon pack="eva" name={item.icon} style={[globalStyle.icon24, styles.icon]} />
       </View>
-      <Text category="h8" bold numberOfLines={2} style={styles.titleVertical}>
+      <Text
+        category="h8"
+        bold
+        numberOfLines={2}
+        style={[styles.titleVertical, item.solid ? styles.titleSolid : null]}>
         {item.title}
       </Text>
     </TouchableOpacity>
@@ -343,6 +369,12 @@ const themedStyles = StyleService.create({
     alignSelf: 'stretch',
     lineHeight: 22,
   },
+  // `solid` tiles only (see Tile's own comment) -- white title against a
+  // full-strength `tint` fill, since the default title color comes from
+  // the theme's dark body-text token, which would be unreadable there.
+  titleSolid: {
+    color: '#fff',
+  },
   tallTitle: {
     lineHeight: 24,
   },
@@ -362,6 +394,17 @@ const themedStyles = StyleService.create({
     right: 0,
     bottom: 0,
     opacity: 0.22,
+  },
+  // `solid` tiles only (see Tile's own comment) -- full opacity, since
+  // ArtCareerCoach (the only illustration currently paired with a `solid`
+  // tile) is translucent-white/rgba shapes with their own baked-in
+  // subtlety, unlike the solid-`tint`-colored shapes the white tiles'
+  // illustrations use.
+  artWrapSolid: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    opacity: 1,
   },
   artWrapTall: {
     position: 'absolute',
