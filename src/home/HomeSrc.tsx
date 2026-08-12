@@ -12,10 +12,8 @@ import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
-import QuickActionGrid, { QuickAction } from './QuickActionGrid';
 import RecentActivityList from './RecentActivityList';
-import { ArtGiftBox, ArtCareerCoach, ArtPractice, ArtDreamCompany } from './HomeHeroArt';
-import { IconChatBubble3D, IconMic3D } from './QuickActionIcons';
+import { ArtGiftBox, ArtCareerCoach, ArtDreamCompany } from './HomeHeroArt';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -94,46 +92,19 @@ const HomeSrc = memo(() => {
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
 
-  // The four quick-action tiles (see QuickActionGrid.tsx). History: this
-  // grid used to be a saturated-gradient hero-card stack, then a Material
-  // 3 tonal-surface pass (pale container fill + solid icon badge instead
-  // of a gradient), then all three tiles were unified onto this app's one
-  // brand blue instead of distinct per-card hues, with faint corner
-  // illustrations retinted to match (see HomeHeroArt.tsx's own comment).
-  // Full history in git log if any of that needs revisiting.
-  //
-  // PRODUCT FOLLOW-UP: "make the career coach card white background too
-  // like the other 3 cards" + "remove the dream company card and the
-  // learning course card from the grid, leaving just the career coach and
-  // the practice card" -- Career Coach drops `solid` (back to the plain
-  // white-tile default every tile now uses, see QuickActionGrid.tsx's own
-  // comment on that flag) and this grid goes back down to just 2 tiles.
-  // Dream Company Dashboard moves to its own standalone full-width card
-  // below this grid instead (see the JSX below, same pattern Refer & Earn
-  // already used) rather than disappearing; Learning Courses has no
-  // standalone replacement -- it's reachable from MoreSrc.tsx's own
-  // "Learning Courses" row same as before this tile ever existed. With
-  // only 2 tiles left, QuickActionGrid.tsx's bento layout still applies
-  // (Practice stays `tall`, Coach fills the stacked column beside it).
-  const quickActions = React.useMemo<QuickAction[]>(() => [
-    {
-      key: 'coach',
-      title: t('home:career_coach_card_title', { defaultValue: 'Career Coach' }),
-      icon: IconChatBubble3D,
-      tint: '#0063f8',
-      onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
-      art: ArtCareerCoach,
-    },
-    {
-      key: 'practice',
-      title: t('home:practice_card_title', { defaultValue: 'Practice' }),
-      icon: IconMic3D,
-      tint: '#0063f8',
-      onPress: () => navigate('MainBottomTab', { screen: 'Practice' }),
-      art: ArtPractice,
-      tall: true,
-    },
-  ], [t, navigate]);
+  // The quick-action grid (QuickActionGrid.tsx) that used to live here is
+  // gone -- history: a saturated-gradient hero-card stack, then a Material
+  // 3 tonal-surface pass, then a 3D-icon-badge pass, narrowed down over
+  // several follow-ups to just Career Coach + Practice. PRODUCT FOLLOW-UP:
+  // "remove the practice card and make the career coach card full width...
+  // black and purple linear gradient... the same style of illustration you
+  // gave to the referral card" -- Practice is removed outright (no
+  // replacement; still reachable from its own MainBottomTab.tsx tab), and
+  // Career Coach becomes its own standalone full-width gradient hero card
+  // below (same whiteCard/gradientCardOuter/LinearGradient shape Refer &
+  // Earn already established), leaving nothing left for QuickActionGrid to
+  // render -- see that component's own history if this grid layout is ever
+  // needed again.
 
   // Product follow-up: "place the dream company dashboard card below the
   // grid... place the 3 or 4 logos of the fortune 500 companies logo
@@ -632,13 +603,52 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* Quick-action grid (see this file's module comment above for the
-            full redesign context) — Career Coach -> navigation/
-            MainBottomTab.tsx's "Coach" tab; Practice -> that same file's
-            "Practice" tab; Dream Company Dashboard ->
-            src/more/DreamCompanies.tsx, which already enforces its own Pro
-            Premium gate server-side. See the quickActions useMemo above. */}
-        <QuickActionGrid items={quickActions} />
+        {/* Career Coach (product follow-up: "remove the practice card and
+            make the career coach card full width and give it a black and
+            purple linear gradient color and then write some content on the
+            card the way you did for referral card and then give the career
+            card the same style of illustration you gave to the referral
+            card") — same gradientCardOuter/LinearGradient/whiteCardContent
+            shape as the Refer & Earn card below (black -> purple fill,
+            white text/icons), navigating to navigation/MainBottomTab.tsx's
+            "Coach" tab exactly like the old grid tile did. ArtCareerCoach
+            (HomeHeroArt.tsx) is retinted to the same purple/gold solid-flat-
+            shape palette ArtGiftBox below uses, per "the same style of
+            illustration you gave to the referral card". */}
+        <TouchableOpacity activeOpacity={0.9} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
+          <View style={[styles.whiteCard, styles.gradientCardOuter]}>
+            <LinearGradient
+              colors={['#0A0A0A', '#8B5CF6']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <View style={styles.whiteCardContent}>
+              <View style={styles.whiteCardLeft}>
+                <View style={[styles.whiteCardIconWrap, { backgroundColor: 'rgba(255, 255, 255, 0.16)' }]}>
+                  <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]} />
+                </View>
+                <Text category="h6" bold mt={14} style={styles.gradientCardText}>
+                  {t('home:career_coach_card_title', { defaultValue: 'Career Coach' })}
+                </Text>
+                <Text category="h9-s" mt={4} numberOfLines={2} style={[styles.gradientCardText, styles.gradientCardSubtitle]}>
+                  {t('home:career_coach_card_subtitle', {
+                    defaultValue: 'Chat with your AI coach for real-time feedback, suggested topics, and career advice whenever you need it.',
+                  })}
+                </Text>
+                <Flex justify="flex-start" itemsCenter mt={14}>
+                  <Text category="h10" bold style={[styles.gradientCardText, { marginBottom: 5 }]}>
+                    {t('home:career_coach_card_cta', { defaultValue: 'Start chatting' })}
+                  </Text>
+                  <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF', marginLeft: 4 }]} />
+                </Flex>
+              </View>
+              <View style={styles.whiteCardArtWrap}>
+                <ArtCareerCoach size={92} />
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
 
         {/* Dream Company Dashboard (product follow-up: "remove the dream
             company card... from the grid. Place the dream company

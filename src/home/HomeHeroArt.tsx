@@ -80,6 +80,19 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 // good this time (see QuickActionGrid.tsx's own comment), so it converges
 // back onto the exact same construction ArtPractice/ArtDreamCompany below
 // use, matching every other white quick-action tile.
+//
+// ArtCareerCoach RETINTED A SEVENTH TIME, to ArtGiftBox's purple/gold
+// palette (product follow-up: "remove the practice card and make the
+// career coach card full width and give it a black and purple linear
+// gradient color... give the career card the same style of illustration
+// you gave to the referral card") — Career Coach is no longer a
+// QuickActionGrid tile at all (see HomeSrc.tsx's own history), it's its
+// own standalone black-to-purple gradient hero card, same shape as the
+// Refer & Earn card whose illustration (ArtGiftBox below) is this
+// construction's actual reference point: solid brand-purple/gold flat
+// shapes, not the brand-blue-on-pale-backdrop every remaining white tile
+// uses (that combination would have low contrast against a dark gradient
+// fill anyway).
 
 interface ArtProps {
   size: number;
@@ -87,13 +100,13 @@ interface ArtProps {
 
 export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="58" r="48" fill="#0063f80f" />
+    <Circle cx="60" cy="58" r="48" fill="#8B5CF60f" />
     <Ellipse cx="60" cy="96" rx="26" ry="5" fill="rgba(0,0,0,0.06)" />
-    <Path d="M38 78l-6 16 20-11z" fill="#0063f8" />
-    <Rect x="26" y="32" width="68" height="48" rx="18" fill="#0063f8" />
-    <Circle cx="45" cy="56" r="5.5" fill="#EAF2FF" />
-    <Circle cx="60" cy="56" r="5.5" fill="#EAF2FF" />
-    <Circle cx="75" cy="56" r="5.5" fill="#EAF2FF" />
+    <Path d="M38 78l-6 16 20-11z" fill="#7C4DEF" />
+    <Rect x="26" y="32" width="68" height="48" rx="18" fill="#8B5CF6" />
+    <Circle cx="45" cy="56" r="5.5" fill="#FFC94A" />
+    <Circle cx="60" cy="56" r="5.5" fill="#FFC94A" />
+    <Circle cx="75" cy="56" r="5.5" fill="#FFC94A" />
   </Svg>
 );
 
