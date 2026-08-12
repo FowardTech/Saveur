@@ -101,8 +101,26 @@ export const globalStyle = StyleSheet.create({
   // this one object is spread by ~60+ card styles app-wide, this single
   // change is what actually makes "every card" consistent, rather than
   // hunting down each screen's own copy of the number.
+  //
+  // GOOGLE-STYLE PASS, APP-WIDE (product request: "make sure that this
+  // google UI feel goes across the whole app" — asked twice; the first
+  // time, scoped to a screen-by-screen local-override pass instead of
+  // touching this shared token, per product's own choice at the time (see
+  // Home/Practice/Coach's own history for that narrower pass). Repeating
+  // it screen-by-screen for the ~60+ files that spread this one object
+  // would take many more passes to actually reach "whole app" — this is
+  // the single highest-leverage change that gets there immediately: 14 ->
+  // 20, the same Material 3/Material You rounder-corner language already
+  // used on Home/Practice/Coach's own local overrides (see
+  // src/home/QuickActionGrid.tsx's own comment on that design language).
+  // Superseded the earlier "13 or 14" standardization decision above with
+  // this one, more recent, more specific, more emphatic instruction from
+  // the same product owner. Any screen with its OWN explicit local
+  // `borderRadius` override (several exist — search for `borderRadius: 14`
+  // app-wide) still keeps its own value regardless of this change; those
+  // are follow-up candidates for a future pass, not touched here.
   card: {
-    borderRadius: 14,
+    borderRadius: 20,
     ...cardShadow,
     // Android has carried a subtle hairline border (not a shadow) here
     // since an earlier "remove the box shadow on Android" request, back
