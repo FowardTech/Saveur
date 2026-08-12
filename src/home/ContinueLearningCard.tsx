@@ -162,9 +162,11 @@ const themedStyles = StyleService.create({
   // BUG FIX (product report, with screenshot: "these cards should be
   // white") — see DailyTipsBanner.tsx's own comment on this exact same
   // fix: `background-basic-color-1` (`#F6FAF8`) was nearly invisible
-  // against Container's `#F5F8FF` page background; `background-basic-
-  // color-2` (real `#FFFFFF`) is the token this app's other "actually
-  // white" cards already use.
+  // against Container's page background (light blue at the time this fix
+  // shipped; since reverted to gray -- see Container.tsx's own comment
+  // history); `background-basic-color-2` (real `#FFFFFF`) is the token
+  // this app's other "actually white" cards already use, and reads even
+  // more clearly against the current gray page than it did against blue.
   // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language.

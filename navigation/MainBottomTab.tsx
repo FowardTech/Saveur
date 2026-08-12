@@ -381,11 +381,6 @@ const themedStyles = StyleService.create({
     fontSize: 11,
     lineHeight: 24,
   },
-  buttonTab: {
-    borderRadius: 12,
-    height: 40,
-    width: 40,
-  },
   notification: {
     // Was 16x16 with a 14px-font label -- larger counts had no room to
     // breathe. 20x20 + capped "9+" text (see render above) is the standard

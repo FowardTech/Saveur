@@ -83,13 +83,16 @@ const themedStyles = StyleService.create({
   // BUG FIX (product report, with screenshot: "these cards should be
   // white") — `background-basic-color-1` resolves to `#F6FAF8` (see
   // constants/theme/light.json), a faint off-white nearly indistinguishable
-  // from Container's own `#F5F8FF` page background (see Container.tsx's
-  // `background-page-body`) — the two are close enough in lightness that
-  // this card barely showed up against the page at all, reading as a dull
-  // tint rather than a crisp white card. `background-basic-color-2`
-  // resolves to real `#FFFFFF`, the same token this app's own
-  // `heroCardWhite`/`verifyBanner` treatments already used for "a card
-  // that's actually white on this page" — this now matches that.
+  // from Container's own page background at the time this fix shipped (a
+  // light blue, `#F5F8FF` -- since reverted to gray, `#F0F0F0`, see
+  // Container.tsx's `background-page-body` and its own comment history) —
+  // the two were close enough in lightness that this card barely showed up
+  // against the page at all, reading as a dull tint rather than a crisp
+  // white card. `background-basic-color-2` resolves to real `#FFFFFF`, the
+  // same token this app's own `heroCardWhite`/`verifyBanner` treatments
+  // already used for "a card that's actually white on this page" — this
+  // still matches that, and reads even more clearly against the current
+  // gray page than it did against the earlier light blue.
   // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language. Slightly smaller than the grid tiles'
