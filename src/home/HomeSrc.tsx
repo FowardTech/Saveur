@@ -848,14 +848,18 @@ const themedStyles = StyleService.create({
   // enough for a soft two-tone purple — the black->purple LinearGradient
   // the old cards used doesn't fit this softer "score card" look, so this
   // is a plain solid fill rather than reaching for that component again.
+  // Product follow-up: "I want the purple background color of the
+  // practice streak card in the homescreen to be blue but the same color
+  // tone but blue" -- same softness/lightness as the original #8B7FE0
+  // purple, hue rotated over to blue instead.
   streakHero: {
     borderRadius: 24,
     padding: 18,
     marginTop: 14,
-    backgroundColor: '#8B7FE0',
+    backgroundColor: '#7EA8E2',
   },
   // Each of the 3 stat chips inside streakHero — no background of its own
-  // (the hero's own purple fill is already the "card"), just centered
+  // (the hero's own blue fill is already the "card"), just centered
   // icon/value/label so the three sit evenly spaced in one row.
   streakChip: {
     flex: 1,

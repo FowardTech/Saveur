@@ -24,6 +24,17 @@ import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
 import ThemeContext from '../../ThemeContext';
 
+// Reference-redesign follow-up chip palette for the Suggested Topics grid
+// below — same small pastel-tint system Home's own "More for you" rows
+// use (see src/home/HomeSrc.tsx), cycled by index since a topic is just
+// dynamic AI-generated text with no icon/category of its own.
+const TOPIC_CHIP_STYLES: { bg: string; icon: string; iconColor: string }[] = [
+  { bg: 'rgba(139, 92, 246, 0.08)', icon: 'message-square-outline', iconColor: '#8B5CF6' },
+  { bg: 'rgba(126, 168, 226, 0.12)', icon: 'trending-up-outline', iconColor: '#7EA8E2' },
+  { bg: 'rgba(216, 90, 48, 0.08)', icon: 'bulb-outline', iconColor: '#D85A30' },
+  { bg: 'rgba(29, 158, 117, 0.08)', icon: 'briefcase-outline', iconColor: '#1D9E75' },
+];
+
 // "Coach" tab — the AI career coach is a single persistent contact, not a
 // caregiver-style inbox. Tapping the hero card or any suggested topic opens
 // the same Chat thread. Suggested topics are now real — see
@@ -87,7 +98,7 @@ const MessagesScreen = memo(() => {
             colors={
               isDarkMode
                 ? [theme['background-basic-color-2'], theme['background-basic-color-2']]
-                : [theme['color-primary-500'], theme['color-primary-500']]
+                : ['#9DBFEF', '#7EA8E2']
             }
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
@@ -158,22 +169,35 @@ const MessagesScreen = memo(() => {
         <Text category="h6" bold mt={32} mb={16}>
           {t('message:suggested_topics', { defaultValue: 'Suggested Topics' })}
         </Text>
-        {/* Was rendered via MessagesItem (an inbox-row component expecting
-            avatar/name/online-state/time fields that a suggested topic never
-            had — those were always blank/undefined). A topic is just a
-            question prompt, so it gets its own simple row instead. */}
-        {topics.map(item => (
-          <TouchableOpacity
-            key={item.id}
-            activeOpacity={0.7}
-            onPress={() => onOpenTopic(item.title)}
-            style={styles.topicRow}>
-            <Text category="h9" numberOfLines={2} style={globalStyle.flexOne}>
-              {item.title}
-            </Text>
-            <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
-          </TouchableOpacity>
-        ))}
+        {/* Reference-redesign follow-up ("the suggested topics should be
+            in the AI coach screen... leave salary negotiation simulator
+            card alone") — was a plain text-row list (see git history);
+            now a 2-up chip grid, each cycling through the same small
+            pastel-tint palette Home's own "More for you" rows use, so a
+            topic reads as a pickable suggestion chip instead of an inbox
+            row. Topics are dynamic AI-generated text with no icon of their
+            own (services/coachService.ts's SuggestedTopic is just
+            {id, title}), so the icon/tint cycles through a small fixed set
+            by index rather than trying to infer one per topic. */}
+        <View style={styles.topicGrid}>
+          {topics.map((item, i) => {
+            const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
+            return (
+              <TouchableOpacity
+                key={item.id}
+                activeOpacity={0.7}
+                onPress={() => onOpenTopic(item.title)}
+                style={[styles.topicChip, { backgroundColor: chipStyle.bg }]}>
+                <View style={[styles.topicChipIconWrap, { backgroundColor: '#fff' }]}>
+                  <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon16, { tintColor: chipStyle.iconColor }]} />
+                </View>
+                <Text category="h10" bold numberOfLines={2} mt={8}>
+                  {item.title}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </Content>
     </Container>
   );
@@ -218,11 +242,25 @@ const themedStyles = StyleService.create({
     // prop, so the fill has to live here.
     backgroundColor: 'background-basic-color-2',
   },
-  topicRow: {
+  // Suggested Topics chip grid (reference-redesign follow-up, see the
+  // module-scope TOPIC_CHIP_STYLES/JSX comment above) — replaces the old
+  // divider-separated topicRow list.
+  topicGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  topicChip: {
+    width: '48%',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+  },
+  topicChipIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     alignItems: 'center',
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'border-basic-color-3',
+    justifyContent: 'center',
   },
 });

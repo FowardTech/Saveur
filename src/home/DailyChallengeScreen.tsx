@@ -121,18 +121,43 @@ const DailyChallengeScreen = memo(() => {
             </Text>
           </Flex>
         ) : (
-          <View style={styles.card}>
-            <Flex justify="flex-start" itemsCenter mb={8}>
-              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
-              <Text category="h9" bold ml={8} style={globalStyle.flexOne}>
-                {t('home:daily_challenge_title', { defaultValue: "Today's Surprise Challenge" })}
-              </Text>
-              <View style={[styles.typeBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                <Text category="h10" bold status="link">{typeName}</Text>
+          // Reference-redesign follow-up ("make the todays challenge
+          // screen like the one in the screenshot") — the reference shows
+          // a LIST of challenges across active/upcoming/completed tabs
+          // with per-item progress bars and a reward badge; this app only
+          // ever has ONE challenge per day (see dailyChallengeService.ts),
+          // so rather than fabricating fake tabs/history this borrows the
+          // reference's actual per-card visual language instead: a soft
+          // color-tinted card, an icon-in-circle avatar, a progress bar
+          // (0% unanswered / 100% completed), and an XP reward pill in the
+          // corner, matching the same pastel-card system Home's streak
+          // hero / "More for you" rows now use.
+          <View style={[styles.card, { backgroundColor: 'rgba(126, 168, 226, 0.1)' }]}>
+            <Flex justify="space-between" itemsCenter mb={14}>
+              <Flex justify="flex-start" itemsCenter style={globalStyle.flexOne}>
+                <View style={styles.iconAvatar}>
+                  <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+                </View>
+                <View style={[globalStyle.flexOne, { marginLeft: 12 }]}>
+                  <Text category="h9" bold numberOfLines={1}>
+                    {t('home:daily_challenge_title', { defaultValue: "Today's Surprise Challenge" })}
+                  </Text>
+                  <Text category="h10" status="placeholder" mt={2}>{typeName}</Text>
+                </View>
+              </Flex>
+              <View style={[styles.rewardBadge, challenge.completed ? styles.rewardBadgeEarned : null]}>
+                <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+                <Text category="h10" bold ml={2} style={{ color: '#0063f8' }}>
+                  {challenge.completed ? challenge.xpAwarded : configService.getCachedConfig().daily_challenge.xp_reward}
+                </Text>
               </View>
             </Flex>
 
-            <Text category="h9-s">{challenge.promptText}</Text>
+            <View style={styles.progressTrack}>
+              <View style={[styles.progressFill, { width: challenge.completed ? '100%' : '4%' }]} />
+            </View>
+
+            <Text category="h9-s" mt={16}>{challenge.promptText}</Text>
 
             {challenge.completed ? (
               <View style={styles.feedbackBox}>
@@ -185,14 +210,45 @@ const themedStyles = StyleService.create({
     paddingVertical: 80,
   },
   card: {
-    ...globalStyle.card,
-    padding: 16,
-    backgroundColor: 'background-basic-color-2',
+    borderRadius: 24,
+    padding: 18,
   },
-  typeBadge: {
+  // Icon-in-circle avatar (reference-redesign follow-up) -- same soft
+  // blue this app's Home streak hero now uses (see HomeSrc.tsx's own
+  // streakHero comment on the purple -> blue tone change).
+  iconAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#7EA8E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rewardBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 999,
-    paddingVertical: 4,
+    paddingVertical: 6,
     paddingHorizontal: 10,
+    backgroundColor: 'rgba(0, 99, 248, 0.1)',
+  },
+  // Reward pill once the day's challenge is actually answered -- a
+  // stronger tint than the "still up for grabs" pill above, same
+  // completed/success-tinted convention this app's other progress pills
+  // already use (see LearningCourses.tsx's weekActionPill).
+  rewardBadgeEarned: {
+    backgroundColor: 'rgba(0, 99, 248, 0.18)',
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(0, 99, 248, 0.12)',
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#7EA8E2',
   },
   responseInput: {
     ...globalStyle.inputField,
