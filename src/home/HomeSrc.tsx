@@ -711,7 +711,7 @@ const HomeSrc = memo(() => {
               {t('home:career_coach_card_subtitle_short', { defaultValue: 'Ask anything, get feedback' })}
             </Text>
           </View>
-          <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon20, { tintColor: 'text-hint-color' }]} />
+          <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -729,7 +729,7 @@ const HomeSrc = memo(() => {
               {t('home:dream_company_card_subtitle_short', { defaultValue: 'Track the employers you want' })}
             </Text>
           </View>
-          <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon20, { tintColor: 'text-hint-color' }]} />
+          <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
         </TouchableOpacity>
 
         {configService.isFeatureEnabled('referral_program') ? (
@@ -748,7 +748,7 @@ const HomeSrc = memo(() => {
                 {t('home:referral_card_subtitle_short', { defaultValue: 'Invite a friend, get rewards' })}
               </Text>
             </View>
-            <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon20, { tintColor: 'text-hint-color' }]} />
+            <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
           </TouchableOpacity>
         ) : null}
 
