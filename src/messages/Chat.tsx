@@ -431,6 +431,18 @@ const Chat = memo(() => {
         {...props}
         containerStyle={{
           backgroundColor: theme["background-basic-color-2"],
+          // BUG FIX (product report, screenshot: "The dividing line at the
+          // top is too white make it a little faint") — gifted-chat's
+          // InputToolbar has its own default top border (a flat gray,
+          // #b2b2b2) that this screen never overrode, so it rendered at
+          // full opacity regardless of theme — glaringly bright against
+          // this screen's dark background-basic-color-2 fill. Same scoped
+          // `border-card-default` token every card border in the app
+          // already uses (light: a soft #E7E7F0 hairline; dark: #3A3A57) —
+          // a hairline width instead of gifted-chat's default 1pt reads as
+          // a faint seam instead of a hard line.
+          borderTopColor: theme["border-card-default"],
+          borderTopWidth: StyleSheet.hairlineWidth,
         }}
         primaryStyle={{
           alignItems: "center",
