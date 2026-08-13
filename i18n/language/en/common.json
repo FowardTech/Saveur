@@ -63,6 +63,7 @@
   "others": "Others",
   "password": "Password",
   "pets": "Pets",
+  "premium_feature_title": "Premium feature",
   "pro_feature_title": "Basic feature",
   "pro_gate_heading": "This is a Basic feature",
   "pro_premium_gate_heading": "This is a Premium feature",
@@ -86,6 +87,7 @@
   "review": "Review",
   "reviews": "reviews",
   "save": "Save",
+  "saving": "Saving…",
   "seeAll": "See All",
   "see_all": "See All",
   "see_pro_plans": "See Basic plans",
@@ -115,6 +117,5 @@
   "view_all": "View all",
   "view_details": "View Details",
   "warning": "Warning",
-  "yes": "Yes",
-  "premium_feature_title": "Premium feature"
+  "yes": "Yes"
 }

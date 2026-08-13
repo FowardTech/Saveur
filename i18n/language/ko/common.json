@@ -63,6 +63,7 @@
   "others": "기타",
   "password": "비밀번호",
   "pets": "반려동물",
+  "premium_feature_title": "Premium 기능",
   "pro_feature_title": "Basic 기능",
   "pro_gate_heading": "이것은 Basic 기능입니다",
   "pro_premium_gate_heading": "이것은 Premium 기능입니다",
@@ -86,6 +87,7 @@
   "review": "리뷰",
   "reviews": "개의 리뷰",
   "save": "저장",
+  "saving": "저장 중…",
   "seeAll": "모두 보기",
   "see_all": "모두 보기",
   "see_pro_plans": "Basic 요금제 보기",
@@ -115,6 +117,5 @@
   "view_all": "전체 보기",
   "view_details": "세부 정보 보기",
   "warning": "경고",
-  "yes": "예",
-  "premium_feature_title": "Premium 기능"
+  "yes": "예"
 }

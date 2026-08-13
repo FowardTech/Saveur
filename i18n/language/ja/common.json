@@ -63,6 +63,7 @@
   "others": "その他",
   "password": "パスワード",
   "pets": "ペット",
+  "premium_feature_title": "Premium機能",
   "pro_feature_title": "Basic機能",
   "pro_gate_heading": "これはBasic機能です",
   "pro_premium_gate_heading": "これはPremium機能です",
@@ -86,6 +87,7 @@
   "review": "レビュー",
   "reviews": "件のレビュー",
   "save": "保存",
+  "saving": "保存中…",
   "seeAll": "すべて見る",
   "see_all": "すべて見る",
   "see_pro_plans": "Basicプランを見る",
@@ -115,6 +117,5 @@
   "view_all": "すべて表示",
   "view_details": "詳細を見る",
   "warning": "警告",
-  "yes": "はい",
-  "premium_feature_title": "Premium機能"
+  "yes": "はい"
 }

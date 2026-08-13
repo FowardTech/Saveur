@@ -63,6 +63,7 @@
   "others": "अन्य",
   "password": "पासवर्ड",
   "pets": "पालतू जानवर",
+  "premium_feature_title": "Premium फीचर",
   "pro_feature_title": "Basic फीचर",
   "pro_gate_heading": "यह एक Basic फीचर है",
   "pro_premium_gate_heading": "यह एक Premium फीचर है",
@@ -86,6 +87,7 @@
   "review": "समीक्षा",
   "reviews": "समीक्षाएं",
   "save": "सहेजें",
+  "saving": "सहेजा जा रहा है…",
   "seeAll": "सभी देखें",
   "see_all": "सभी देखें",
   "see_pro_plans": "Basic प्लान देखें",
@@ -115,6 +117,5 @@
   "view_all": "सभी देखें",
   "view_details": "विवरण देखें",
   "warning": "चेतावनी",
-  "yes": "हाँ",
-  "premium_feature_title": "Premium फीचर"
+  "yes": "हाँ"
 }

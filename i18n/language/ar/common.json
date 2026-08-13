@@ -63,6 +63,7 @@
   "others": "أخرى",
   "password": "كلمة المرور",
   "pets": "الحيوانات الأليفة",
+  "premium_feature_title": "ميزة Premium",
   "pro_feature_title": "ميزة Basic",
   "pro_gate_heading": "هذه ميزة Basic",
   "pro_premium_gate_heading": "هذه ميزة حصرية لخطة Premium",
@@ -86,6 +87,7 @@
   "review": "تقييم",
   "reviews": "تقييمات",
   "save": "حفظ",
+  "saving": "جارٍ الحفظ…",
   "seeAll": "عرض الكل",
   "see_all": "عرض الكل",
   "see_pro_plans": "عرض خطط Basic",
@@ -115,6 +117,5 @@
   "view_all": "عرض الكل",
   "view_details": "عرض التفاصيل",
   "warning": "تحذير",
-  "yes": "نعم",
-  "premium_feature_title": "ميزة Premium"
+  "yes": "نعم"
 }

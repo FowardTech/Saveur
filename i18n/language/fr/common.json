@@ -63,6 +63,7 @@
   "others": "Autres",
   "password": "Mot de passe",
   "pets": "Animaux",
+  "premium_feature_title": "Fonctionnalité Premium",
   "pro_feature_title": "Fonctionnalité Basic",
   "pro_gate_heading": "Ceci est une fonctionnalité Basic",
   "pro_premium_gate_heading": "Ceci est une fonctionnalité Premium",
@@ -86,6 +87,7 @@
   "review": "Avis",
   "reviews": "avis",
   "save": "Enregistrer",
+  "saving": "Enregistrement…",
   "seeAll": "Tout voir",
   "see_all": "Tout voir",
   "see_pro_plans": "Voir les forfaits Basic",
@@ -115,6 +117,5 @@
   "view_all": "Tout voir",
   "view_details": "Voir les détails",
   "warning": "Attention",
-  "yes": "Oui",
-  "premium_feature_title": "Fonctionnalité Premium"
+  "yes": "Oui"
 }

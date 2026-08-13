@@ -63,6 +63,7 @@
   "others": "Другое",
   "password": "Пароль",
   "pets": "Питомцы",
+  "premium_feature_title": "Функция Premium",
   "pro_feature_title": "Функция Basic",
   "pro_gate_heading": "Это функция Basic",
   "pro_premium_gate_heading": "Это функция Premium",
@@ -86,6 +87,7 @@
   "review": "Отзыв",
   "reviews": "отзывов",
   "save": "Сохранить",
+  "saving": "Сохранение…",
   "seeAll": "Смотреть все",
   "see_all": "Смотреть все",
   "see_pro_plans": "Посмотреть тарифы Basic",
@@ -115,6 +117,5 @@
   "view_all": "Смотреть все",
   "view_details": "Посмотреть подробности",
   "warning": "Предупреждение",
-  "yes": "Да",
-  "premium_feature_title": "Функция Premium"
+  "yes": "Да"
 }

@@ -63,6 +63,7 @@
   "others": "其他",
   "password": "密码",
   "pets": "宠物",
+  "premium_feature_title": "Premium功能",
   "pro_feature_title": "Basic功能",
   "pro_gate_heading": "这是Basic功能",
   "pro_premium_gate_heading": "这是Premium功能",
@@ -86,6 +87,7 @@
   "review": "评价",
   "reviews": "条评价",
   "save": "保存",
+  "saving": "保存中…",
   "seeAll": "查看全部",
   "see_all": "查看全部",
   "see_pro_plans": "查看Basic套餐",
@@ -115,6 +117,5 @@
   "view_all": "查看全部",
   "view_details": "查看详情",
   "warning": "警告",
-  "yes": "是",
-  "premium_feature_title": "Premium功能"
+  "yes": "是"
 }

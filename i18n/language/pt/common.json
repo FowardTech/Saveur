@@ -63,6 +63,7 @@
   "others": "Outros",
   "password": "Senha",
   "pets": "Animais de estimação",
+  "premium_feature_title": "Recurso Premium",
   "pro_feature_title": "Recurso Basic",
   "pro_gate_heading": "Este é um recurso Basic",
   "pro_premium_gate_heading": "Este é um recurso Premium",
@@ -86,6 +87,7 @@
   "review": "Avaliação",
   "reviews": "avaliações",
   "save": "Salvar",
+  "saving": "Salvando…",
   "seeAll": "Ver tudo",
   "see_all": "Ver tudo",
   "see_pro_plans": "Ver planos Basic",
@@ -115,6 +117,5 @@
   "view_all": "Ver tudo",
   "view_details": "Ver detalhes",
   "warning": "Aviso",
-  "yes": "Sim",
-  "premium_feature_title": "Recurso Premium"
+  "yes": "Sim"
 }

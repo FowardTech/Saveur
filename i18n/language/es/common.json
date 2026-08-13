@@ -63,6 +63,7 @@
   "others": "Otros",
   "password": "Contraseña",
   "pets": "Mascotas",
+  "premium_feature_title": "Función Premium",
   "pro_feature_title": "Función Basic",
   "pro_gate_heading": "Esta es una función Basic",
   "pro_premium_gate_heading": "Esta es una función Premium",
@@ -86,6 +87,7 @@
   "review": "Reseña",
   "reviews": "reseñas",
   "save": "Guardar",
+  "saving": "Guardando…",
   "seeAll": "Ver todo",
   "see_all": "Ver todo",
   "see_pro_plans": "Ver planes Basic",
@@ -115,6 +117,5 @@
   "view_all": "Ver todo",
   "view_details": "Ver detalles",
   "warning": "Advertencia",
-  "yes": "Sí",
-  "premium_feature_title": "Función Premium"
+  "yes": "Sí"
 }
