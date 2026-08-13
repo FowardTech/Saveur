@@ -33,6 +33,7 @@ import { AppConfig } from 'services/configService';
 import AppGateScreen from 'components/AppGateScreen';
 import BootSplash from 'react-native-bootsplash';
 import { useTranslation } from 'react-i18next';
+import * as crashReportingService from 'services/crashReportingService';
 
 LogBox.ignoreLogs([
   "[react-native-gesture-handler] Seems like you're using an old API with gesture components, check out new Gestures system!",
@@ -42,7 +43,7 @@ LogBox.ignoreLogs([
 ]);
 LogBox.ignoreLogs(['Constants.installationId has been deprecated']);
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
-export default function App() {
+function App() {
   const { t } = useTranslation();
   // Defaults to the device's own current appearance (Settings > Display,
   // which on iOS/Android can itself already be set to auto-switch by time of
@@ -355,3 +356,9 @@ export default function App() {
     </GestureHandlerRootView>
   );
 }
+
+// Sentry's error boundary + native-crash-handling wrapper (see
+// services/crashReportingService.ts's own comment for why this has to be
+// applied here, at export time, rather than inside App() itself). A no-op
+// passthrough — export default App unchanged — while SENTRY_DSN is unset.
+export default crashReportingService.wrap(App);

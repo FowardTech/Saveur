@@ -16,6 +16,7 @@ import {isProTier, isPremiumTier} from 'services/entitlementsService';
 import {registerForPushNotifications} from 'services/pushNotificationService';
 import * as linkedinAuthService from 'services/linkedinAuthService';
 import * as twoFactorService from 'services/twoFactorService';
+import * as crashReportingService from 'services/crashReportingService';
 import {resetToMainAfterExternalSignIn} from 'navigation/navigationRef';
 
 // The account's `locale` (set at signup or from Settings → Language, see
@@ -266,6 +267,11 @@ export const AuthProvider: React.FC = ({children}) => {
         setProfile(nextProfile);
         setSignedIn(true);
         setEmailVerified(firebaseUser.emailVerified);
+        // Crash/error reporting (see services/crashReportingService.ts) —
+        // attaches this user to any Sentry event this session produces, so
+        // a crash report is reproducible/attributable instead of anonymous.
+        // A no-op call when SENTRY_DSN is unset.
+        crashReportingService.setUser(firebaseUser.uid, firebaseUser.email);
 
         // 2FA gate — see the TWO_FACTOR_TRUST_DAYS comment above. Checked
         // here (not inside signIn/signInWithGoogle/etc.) because this
@@ -319,6 +325,7 @@ export const AuthProvider: React.FC = ({children}) => {
         setSubscription(null);
         setTwoFactorPending(false);
         setTwoFactorEmailHint(null);
+        crashReportingService.clearUser();
       }
       setInitialized(true);
     });

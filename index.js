@@ -23,6 +23,12 @@ import messaging from '@react-native-firebase/messaging';
 import notifee from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
+import * as crashReportingService from 'services/crashReportingService';
+
+// As early as possible, before anything else can throw — a true no-op
+// while constants/env.ts's SENTRY_DSN is blank (the default). See
+// services/crashReportingService.ts's own comment for the full rationale.
+crashReportingService.init();
 
 // Must be registered here, outside any component, before
 // AppRegistry.registerComponent — @react-native-firebase/messaging requires
