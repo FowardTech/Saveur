@@ -1,5 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Application_Stage_Enum, EKeyAsyncStorage, JobApplicationProps} from 'constants/Types';
+import {
+  Application_Stage_Enum,
+  ApplicationAnalyticsProps,
+  EKeyAsyncStorage,
+  FollowupDraftProps,
+  JobApplicationProps,
+  ParsedEmailResultProps,
+} from 'constants/Types';
 import {Images} from 'assets/images';
 import apiClient from './apiClient';
 import {notifyJobApplicationTracked} from 'utils/appRating';
@@ -39,6 +46,11 @@ interface JobApplicationWire {
   apply_url?: string | null;
   source?: string | null;
   company_logo_url?: string | null;
+  status_changed_at?: number | null;
+  detected_from_email?: boolean;
+  offer_amount?: number | null;
+  offer_currency?: string | null;
+  offer_deadline?: number | null;
 }
 
 function fromWire(wire: JobApplicationWire): JobApplicationProps {
@@ -54,6 +66,11 @@ function fromWire(wire: JobApplicationWire): JobApplicationProps {
     nextStep: wire.next_step ?? wire.nextStep,
     applyUrl: wire.apply_url ?? undefined,
     companyLogoUrl: wire.company_logo_url ?? undefined,
+    statusChangedAt: wire.status_changed_at ?? undefined,
+    detectedFromEmail: wire.detected_from_email ?? undefined,
+    offerAmount: wire.offer_amount ?? undefined,
+    offerCurrency: wire.offer_currency ?? undefined,
+    offerDeadline: wire.offer_deadline ?? undefined,
   };
 }
 
@@ -79,6 +96,9 @@ function toWirePatch(partial: Partial<Omit<JobApplicationProps, 'id'>>): Record<
   if (partial.role !== undefined) wire.role = partial.role;
   if (partial.location !== undefined) wire.location = partial.location;
   if (partial.appliedDate !== undefined) wire.applied_date = Number(partial.appliedDate);
+  if (partial.offerAmount !== undefined) wire.offer_amount = partial.offerAmount;
+  if (partial.offerCurrency !== undefined) wire.offer_currency = partial.offerCurrency;
+  if (partial.offerDeadline !== undefined) wire.offer_deadline = partial.offerDeadline;
   return wire;
 }
 
@@ -176,4 +196,96 @@ export async function deleteApplication(id: JobApplicationProps['id']): Promise<
   await apiClient.delete(`/api/v1/tracker/applications/${id}`);
   const cached = await readCache();
   await writeCache(cached.filter(item => item.id !== id));
+}
+
+// ---------------------------------------------------------------------------
+// Premium Job Tracker features (product follow-up: "what more features can
+// we add to the Job application tracker that can make it worth being added
+// as a premium plan"). See Saveur-Backend's app/api/tracker.py's own module
+// comment for the fuller design rationale (esp. why parse-email is a
+// forward/paste flow rather than a live Gmail/Outlook inbox scan).
+// ---------------------------------------------------------------------------
+
+interface ParsedEmailWire {
+  application: JobApplicationWire;
+  matched_existing: boolean;
+}
+
+/**
+ * POST /api/v1/tracker/applications/parse-email — the user forwards or
+ * pastes an application-related email (confirmation, interview invite,
+ * rejection, offer); the AI extracts company/role/stage and either updates
+ * their existing tracked application for that company or creates a new one.
+ * Throws with a user-facing `message` on the backend's own 422s (not job-
+ * related, couldn't tell the company, etc.) — same axios error shape every
+ * other service call in this app already surfaces via `e?.message` /
+ * `e?.response?.data?.message`.
+ */
+export async function parseEmailAndTrack(emailText: string): Promise<ParsedEmailResultProps> {
+  const {data} = await apiClient.post<ParsedEmailWire>(
+    '/api/v1/tracker/applications/parse-email',
+    {email_text: emailText},
+  );
+  const application = fromWire(data.application);
+  const cached = await readCache();
+  const exists = cached.some(item => item.id === application.id);
+  await writeCache(
+    exists ? cached.map(item => (item.id === application.id ? application : item)) : [application, ...cached],
+  );
+  if (!data.matched_existing) {
+    notifyJobApplicationTracked().catch(() => {});
+  }
+  return {application, matchedExisting: data.matched_existing};
+}
+
+interface AnalyticsWire {
+  total: number;
+  by_stage: {applied: number; interviewing: number; offer: number; rejected: number};
+  response_rate: number | null;
+  avg_days_to_interview: number | null;
+  stale_after_days: number;
+  stale_applications: Array<{
+    id: number | string;
+    company: string;
+    role: string;
+    stage: Application_Stage_Enum;
+    days_stale: number;
+  }>;
+}
+
+/**
+ * GET /api/v1/tracker/analytics — pipeline stats (response rate, rough
+ * time-to-interview, which applications have gone stale) computed
+ * server-side over the user's full tracked list.
+ */
+export async function getAnalytics(): Promise<ApplicationAnalyticsProps> {
+  const {data} = await apiClient.get<AnalyticsWire>('/api/v1/tracker/analytics');
+  return {
+    total: data.total,
+    byStage: data.by_stage,
+    responseRate: data.response_rate,
+    avgDaysToInterview: data.avg_days_to_interview,
+    staleAfterDays: data.stale_after_days,
+    staleApplications: (data.stale_applications ?? []).map(s => ({
+      id: s.id, company: s.company, role: s.role, stage: s.stage, daysStale: s.days_stale,
+    })),
+  };
+}
+
+interface FollowupDraftWire {
+  subject: string;
+  body: string;
+}
+
+/**
+ * POST /api/v1/tracker/applications/{id}/draft-followup — AI-drafted
+ * follow-up email for an application that's gone quiet. Returned text is
+ * NOT sent by Saveur — the user reviews/edits/sends it themselves (see
+ * ApplicationDetails.tsx's "Draft follow-up" flow).
+ */
+export async function draftFollowup(id: JobApplicationProps['id']): Promise<FollowupDraftProps> {
+  const {data} = await apiClient.post<FollowupDraftWire>(
+    `/api/v1/tracker/applications/${id}/draft-followup`,
+  );
+  return {subject: data.subject, body: data.body};
 }

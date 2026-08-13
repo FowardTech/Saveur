@@ -345,6 +345,12 @@ export type RootStackParamList = {
   // list of target companies with cached research + prep progress. See
   // services/dreamCompaniesService.ts.
   DreamCompanies: undefined;
+  // Premium Job Tracker features (product follow-up item — see
+  // src/requests/Applications/AddFromEmail.tsx, ApplicationAnalytics.tsx,
+  // CompareOffers.tsx for each screen's own design-rationale comment).
+  AddFromEmail: undefined;
+  ApplicationAnalytics: undefined;
+  CompareOffers: undefined;
   // Paid Add-ons (product request item) — "for the coding practice and
   // system design whiteboard I want them to be in a separate screen called
   // add-ons and they should be paid for." Browse/purchase catalog; an

@@ -102,6 +102,9 @@ const ApplicationsTab = memo(() => {
   );
   const isFiltering = q.length > 0;
   const hasAnyApplications = applications.length > 0;
+  // "Compare offers" only makes sense with 2+ live offers to actually
+  // compare — see CompareOffers.tsx's own comment.
+  const offerCount = applications.filter(item => item.stage === Application_Stage_Enum.Offer).length;
 
   const onSeeAllPast = () => {
     navigate('Interviews', {
@@ -160,6 +163,44 @@ const ApplicationsTab = memo(() => {
 
   return (
     <View style={styles.container}>
+      {/* Premium Job Tracker feature entry points (product follow-up: "what
+          more features can we add to the Job application tracker that can
+          make it worth being added as a premium plan"). Shown even with an
+          empty list — "Add from email" in particular is a second on-ramp
+          into tracking alongside the existing WebView auto-detect flow. */}
+      <Flex justify="flex-start" wrap mb={hasAnyApplications ? 16 : 0}>
+        <Button
+          size="small"
+          appearance="outline"
+          status="basic"
+          style={{marginRight: 10, marginBottom: 10}}
+          accessoryLeft={props => <Icon {...props} pack="eva" name="email-outline" />}
+          onPress={() => navigate('AddFromEmail')}>
+          {t('request:add_from_email_cta', {defaultValue: 'Add from email'})}
+        </Button>
+        {hasAnyApplications ? (
+          <Button
+            size="small"
+            appearance="outline"
+            status="basic"
+            style={{marginRight: 10, marginBottom: 10}}
+            accessoryLeft={props => <Icon {...props} pack="eva" name="bar-chart-2-outline" />}
+            onPress={() => navigate('ApplicationAnalytics')}>
+            {t('request:analytics_cta', {defaultValue: 'Analytics'})}
+          </Button>
+        ) : null}
+        {offerCount >= 2 ? (
+          <Button
+            size="small"
+            appearance="outline"
+            status="basic"
+            style={{marginBottom: 10}}
+            accessoryLeft={props => <Icon {...props} pack="eva" name="award-outline" />}
+            onPress={() => navigate('CompareOffers')}>
+            {t('request:compare_offers_cta', {defaultValue: 'Compare offers'})}
+          </Button>
+        ) : null}
+      </Flex>
       {hasAnyApplications ? (
         <Input
           placeholder={t('request:search_applications', {defaultValue: 'Search by company, role, or location…'})}

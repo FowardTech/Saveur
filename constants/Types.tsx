@@ -423,6 +423,56 @@ export interface JobApplicationProps {
   // components/CompanyLogoAvatar.tsx (which is what should render this
   // instead of `logo` above when present).
   companyLogoUrl?: string;
+
+  // Premium Job Tracker features (product follow-up: "what more features
+  // can we add to the Job application tracker that can make it worth being
+  // added as a premium plan"). See services/applicationsService.ts and
+  // Saveur-Backend's app/api/tracker.py.
+  //
+  // Last time `stage` actually changed value — ms epoch, undefined for
+  // rows created before this field existed. Used client-side to compute
+  // "how long has this been sitting here" for the stale-follow-up prompt
+  // on ApplicationDetails (same STALE_AFTER_DAYS threshold the backend's
+  // analytics endpoint and stale-reminder push use).
+  statusChangedAt?: number;
+  // True if this row was created or most recently updated via the
+  // forward/paste-an-email flow (applicationsService.parseEmailAndTrack)
+  // rather than typed in by hand or the WebView auto-detector.
+  detectedFromEmail?: boolean;
+  // Multi-offer comparison fields — only meaningful once stage is Offer.
+  // offerAmount is a plain number as typed by the user (e.g. 95000 for
+  // "$95,000"), not cents.
+  offerAmount?: number;
+  offerCurrency?: string;
+  offerDeadline?: number; // ms epoch
+}
+
+// GET /api/v1/tracker/analytics response — see tracker.py's analytics().
+export interface ApplicationAnalyticsProps {
+  total: number;
+  byStage: {applied: number; interviewing: number; offer: number; rejected: number};
+  responseRate: number | null; // 0-100, null if no applications yet
+  avgDaysToInterview: number | null;
+  staleAfterDays: number;
+  staleApplications: Array<{
+    id: JobApplicationProps['id'];
+    company: string;
+    role: string;
+    stage: Application_Stage_Enum;
+    daysStale: number;
+  }>;
+}
+
+// POST /api/v1/tracker/applications/parse-email response.
+export interface ParsedEmailResultProps {
+  application: JobApplicationProps;
+  matchedExisting: boolean;
+}
+
+// POST /api/v1/tracker/applications/:id/draft-followup response.
+export interface FollowupDraftProps {
+  subject: string;
+  body: string;
 }
 
 export enum Practice_Mode_Enum {
