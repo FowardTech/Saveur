@@ -25,6 +25,8 @@ import Leaderboard from 'src/home/Leaderboard';
 import ScheduleInterview from 'src/practice/ScheduleInterview';
 import LiveInterviewSession from 'src/practice/LiveInterviewSession';
 import CodingInterview from 'src/practice/CodingInterview';
+import CodingPracticeHub from 'src/practice/CodingPracticeHub';
+import CodingProblemSolve from 'src/practice/CodingProblemSolve';
 import InterviewFeedback from 'src/practice/InterviewFeedback';
 import ResumeBuilder from 'src/more/ResumeBuilder';
 import MyDocuments from 'src/more/MyDocuments';
@@ -200,6 +202,8 @@ const AppContainer = () => {
         <Stack.Screen name="ScheduleInterview" component={ScheduleInterview} />
         <Stack.Screen name="LiveInterviewSession" component={LiveInterviewSession} />
         <Stack.Screen name="CodingInterview" component={CodingInterview} />
+        <Stack.Screen name="CodingPracticeHub" component={CodingPracticeHub} />
+        <Stack.Screen name="CodingProblemSolve" component={CodingProblemSolve} />
         <Stack.Screen name="InterviewFeedback" component={InterviewFeedback} />
         <Stack.Screen name="ResumeBuilder" component={ResumeBuilder} />
         <Stack.Screen name="MyDocuments" component={MyDocuments} />

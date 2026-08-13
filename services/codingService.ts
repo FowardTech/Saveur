@@ -108,11 +108,35 @@ export interface CodingProblem {
   slug: string;
   title: string;
   difficulty?: string;
+  /** Filter-chip category on the free-practice hub (e.g. "arrays",
+   * "dynamic_programming") — see Saveur-Backend's coding_problems.py. */
+  category?: string;
   description: string;
   testCases: TestCase[];
   /** Per-language starter code, keyed by the same `language.id` values
    * getLanguages()/DEFAULT_LANGUAGES use (e.g. "javascript", "python"). */
   starterCode: Record<string, string>;
+}
+
+/** One row on the free-practice hub's browse list — lightweight, no
+ * description/test_cases/starter_code (see GET /coding/problems). */
+export interface CodingProblemSummary {
+  slug: string;
+  title: string;
+  difficulty: string;
+  category: string;
+  /** null = never attempted, "attempted" = ran tests but not all passing
+   * yet, "solved" = a full-pass run was recorded at least once. */
+  status: 'attempted' | 'solved' | null;
+  bookmarked: boolean;
+}
+
+export interface CodingStats {
+  solvedTotal: number;
+  attemptedTotal: number;
+  totalProblems: number;
+  solvedByDifficulty: Record<string, number>;
+  solvedByCategory: Record<string, number>;
 }
 
 // Two Sum, in the CodingProblem shape — used only if GET /coding/problem
@@ -135,6 +159,7 @@ interface ProblemWire {
   slug?: string;
   title?: string;
   difficulty?: string;
+  category?: string;
   description?: string;
   test_cases?: Array<{stdin?: string; expected_output?: string}>;
   starter_code?: Record<string, string>;
@@ -144,7 +169,7 @@ interface ProblemWire {
  * GET /api/v1/coding/problem — fixes the product report: "the coding
  * practice problems are not diverse... always the same Two Sum problem
  * with the same test cases regardless of the session." Backed by a real
- * ~8-problem bank on the backend (see Saveur-Backend's
+ * ~24-problem bank on the backend (see Saveur-Backend's
  * app/services/coding_problems.py), selected deterministically per
  * `sessionId` — the same session always sees the same problem (so
  * backgrounding the app or revisiting InterviewFeedback.tsx afterward
@@ -152,11 +177,18 @@ interface ProblemWire {
  * problems across the bank. Falls back to the old hardcoded Two Sum
  * problem (FALLBACK_PROBLEM above) if the request fails, so a backend
  * hiccup degrades to the previous behavior rather than an empty screen.
+ *
+ * `slug`, when given, takes priority over `sessionId` — backs the
+ * free-practice hub (CodingPracticeHub.tsx) opening one SPECIFIC problem
+ * a user picked off the browse list, rather than a session-hash pick.
  */
-export async function getProblem(sessionId?: string | null): Promise<CodingProblem> {
+export async function getProblem(
+  sessionId?: string | null,
+  slug?: string | null,
+): Promise<CodingProblem> {
   try {
     const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
-      params: sessionId ? {session_id: sessionId} : undefined,
+      params: slug ? {slug} : sessionId ? {session_id: sessionId} : undefined,
     });
     const testCases = (data.test_cases ?? []).map(c => ({
       input: c.stdin ?? '',
@@ -167,6 +199,7 @@ export async function getProblem(sessionId?: string | null): Promise<CodingProbl
       slug: data.slug ?? 'problem',
       title: data.title,
       difficulty: data.difficulty,
+      category: data.category,
       description: data.description ?? '',
       testCases,
       starterCode: data.starter_code ?? {},
@@ -174,6 +207,96 @@ export async function getProblem(sessionId?: string | null): Promise<CodingProbl
   } catch {
     return FALLBACK_PROBLEM;
   }
+}
+
+interface ProblemSummaryWire {
+  slug: string;
+  title: string;
+  difficulty: string;
+  category: string;
+  status: 'attempted' | 'solved' | null;
+  bookmarked: boolean;
+}
+
+/**
+ * GET /api/v1/coding/problems — the free-practice hub's browse list
+ * (product follow-up: "add more features to the coding tool so that its
+ * worth the amount its paid for" — there was previously no way to see
+ * the whole problem bank or pick a specific problem at all, only whatever
+ * a timed mock-interview session happened to assign). Optional filters
+ * mirror the backend's query params 1:1.
+ */
+export async function listProblems(filters?: {
+  difficulty?: string;
+  category?: string;
+  bookmarkedOnly?: boolean;
+}): Promise<CodingProblemSummary[]> {
+  const {data} = await apiClient.get<ProblemSummaryWire[]>('/api/v1/coding/problems', {
+    params: {
+      difficulty: filters?.difficulty,
+      category: filters?.category,
+      bookmarked_only: filters?.bookmarkedOnly ? 1 : undefined,
+    },
+  });
+  return (data ?? []).map(p => ({
+    slug: p.slug,
+    title: p.title,
+    difficulty: p.difficulty,
+    category: p.category,
+    status: p.status,
+    bookmarked: !!p.bookmarked,
+  }));
+}
+
+/** POST/DELETE /api/v1/coding/problems/<slug>/bookmark — toggles a
+ * problem's "revisit later" bookmark on the hub. */
+export async function setBookmark(slug: string, bookmarked: boolean): Promise<boolean> {
+  const {data} = bookmarked
+    ? await apiClient.post<{bookmarked?: boolean}>(`/api/v1/coding/problems/${slug}/bookmark`)
+    : await apiClient.delete<{bookmarked?: boolean}>(`/api/v1/coding/problems/${slug}/bookmark`);
+  return !!data.bookmarked;
+}
+
+/**
+ * POST /api/v1/coding/problems/<slug>/attempt — records a Run Tests
+ * result against a specific problem so solved/attempted status persists
+ * on the hub (CodingProgress on the backend). Called right after Run
+ * Tests resolves on CodingProblemSolve.tsx — unlike the old
+ * CodingInterview.tsx flow, there's no "Finish" step required for this to
+ * be recorded.
+ */
+export async function recordAttempt(
+  slug: string,
+  language: string,
+  passed: number,
+  total: number,
+): Promise<{status: 'attempted' | 'solved'}> {
+  const {data} = await apiClient.post<{status?: 'attempted' | 'solved'}>(
+    `/api/v1/coding/problems/${slug}/attempt`,
+    {language, passed, total},
+  );
+  return {status: data.status ?? 'attempted'};
+}
+
+interface StatsWire {
+  solved_total?: number;
+  attempted_total?: number;
+  total_problems?: number;
+  solved_by_difficulty?: Record<string, number>;
+  solved_by_category?: Record<string, number>;
+}
+
+/** GET /api/v1/coding/stats — the hub's header summary (solved/attempted
+ * counts, broken down by difficulty and category). */
+export async function getStats(): Promise<CodingStats> {
+  const {data} = await apiClient.get<StatsWire>('/api/v1/coding/stats');
+  return {
+    solvedTotal: data.solved_total ?? 0,
+    attemptedTotal: data.attempted_total ?? 0,
+    totalProblems: data.total_problems ?? 0,
+    solvedByDifficulty: data.solved_by_difficulty ?? {},
+    solvedByCategory: data.solved_by_category ?? {},
+  };
 }
 
 interface LanguageWire {

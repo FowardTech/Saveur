@@ -5,6 +5,7 @@
   "add-document": "문서 추가",
   "add-document-title": "이력서, 자기소개서, 자격증 또는 성적표를 업로드하면 AI 코치가 맞춤형 피드백을 제공합니다.",
   "add_contact": "연락처 추가",
+  "addon_practice_now_cta": "지금 연습하기",
   "addon_purchase_cta": "{{price}}에 잠금 해제",
   "addon_purchase_failed_title": "구매를 완료하지 못했습니다",
   "addon_purchase_pending_body": "결제는 완료되었지만 활성화가 평소보다 조금 더 걸리고 있습니다. 잠시 후 아래로 당겨서 새로고침해 주세요.",

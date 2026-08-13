@@ -5,6 +5,7 @@
   "add-document": "書類を追加",
   "add-document-title": "履歴書、カバーレター、証明書、成績証明書をアップロードすると、AIコーチがあなたに合わせたフィードバックを提供できます。",
   "add_contact": "連絡先を追加",
+  "addon_practice_now_cta": "今すぐ練習する",
   "addon_purchase_cta": "{{price}} でアンロック",
   "addon_purchase_failed_title": "購入を完了できませんでした",
   "addon_purchase_pending_body": "お支払いは完了しましたが、有効化に通常より少し時間がかかっています。しばらくしてから下に引っ張って更新してください。",

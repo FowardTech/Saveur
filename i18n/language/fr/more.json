@@ -5,6 +5,7 @@
   "add-document": "Ajouter un document",
   "add-document-title": "Téléversez votre CV, lettre de motivation, certificats ou relevé de notes afin que votre coach IA puisse personnaliser ses retours.",
   "add_contact": "Ajouter un contact",
+  "addon_practice_now_cta": "Pratiquer maintenant",
   "addon_purchase_cta": "Débloquer pour {{price}}",
   "addon_purchase_failed_title": "Impossible de finaliser l'achat",
   "addon_purchase_pending_body": "Votre paiement a bien été effectué, mais l'activation prend un peu plus de temps que d'habitude. Tirez vers le bas pour actualiser dans un instant.",

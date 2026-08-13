@@ -99,6 +99,16 @@ export type RootStackParamList = {
     // hard time limit.
     durationMin?: number;
   };
+  // Free-practice Coding Practice hub (product follow-up: "add more
+  // features to the coding tool so that its worth the amount its paid
+  // for") — a browsable problem list + per-problem solve screen, separate
+  // from the timed-mock-interview CodingInterview flow above (which is
+  // unchanged). See services/codingService.ts's listProblems/getProblem
+  // (slug variant)/recordAttempt/setBookmark/getStats.
+  CodingPracticeHub: undefined;
+  CodingProblemSolve: {
+    slug: string;
+  };
   InterviewFeedback: {
     sessionId?: string;
     interviewType?: Interview_Type_Enum;

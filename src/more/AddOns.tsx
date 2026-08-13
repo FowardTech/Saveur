@@ -203,6 +203,20 @@ const AddOns = memo(() => {
                   })}
                 </CtaButton>
               ) : null}
+              {/* Product follow-up ("add more features to the coding
+                  tool so that its worth the amount its paid for" -- this
+                  screen previously had NO way to actually start using an
+                  unlocked add-on once purchased, just the "Unlocked"
+                  pill above with nothing to press). Straight into the
+                  new browsable problem hub (CodingPracticeHub.tsx).
+                  coding_practice specifically -- other future addon
+                  codes don't get this button since there's no generic
+                  screen to route them to. */}
+              {addon.unlocked && addon.code === 'coding_practice' ? (
+                <CtaButton onPress={() => navigate('CodingPracticeHub')}>
+                  {t('more:addon_practice_now_cta', {defaultValue: 'Practice now'})}
+                </CtaButton>
+              ) : null}
             </Layout>
           ))
         )}
