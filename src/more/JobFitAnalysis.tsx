@@ -9,7 +9,6 @@ import Flex from 'components/Flex';
 import CtaButton from 'components/CtaButton';
 import StatusBadge from 'components/StatusBadge';
 import DocumentPickerModal from 'components/DocumentPickerModal';
-import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import * as jdService from 'services/jdService';
 import {DocumentRecord} from 'services/documentsService';
@@ -261,8 +260,18 @@ const themedStyles = StyleService.create({
   loadingRow: {
     paddingVertical: 16,
   },
+  // BUG FIX (product report, round 2: "still looking bad... remove the
+  // shadow in the pill"): the pills themselves never had a shadow (see
+  // qualificationChip below) -- this OUTER section was the real source.
+  // It spread globalStyle.card (padding + a real drop shadow) but never
+  // set a backgroundColor, so it never actually looked like a card -- no
+  // visible white/gray fill, no rounded edge -- yet it still cast the
+  // shadow around its whole bounding box (iOS shadows render regardless of
+  // fill opacity). The result was a shadow with no visible card to justify
+  // it, floating around the pill list. Dropped the card spread entirely;
+  // this was never meant to read as its own card in the first place, it
+  // sits inside JobAlertDetails' own page content, not as a nested card.
   section: {
-    ...globalStyle.card,
     padding: 20,
     marginBottom: 24,
   },
