@@ -699,10 +699,23 @@ const Chat = memo(() => {
         // far enough to render partly behind the tab bar instead. Removed;
         // Container's normal safe-area padding is correct here now, same
         // as every other tab screen (Home, Practice, Interviews, Menu).
-        isVoiceMode && { backgroundColor: theme['color-primary-500'] },
+        // BUG FIX (product report, screenshot: "you need to implement the
+        // dark mode of this screen") — this used to be a literal
+        // `color-primary-500`, which is defined once in appTheme.json and
+        // never overridden per theme (see constants/theme/light.json /
+        // dark.json), so Voice mode rendered the exact same bright brand
+        // blue in dark mode as in light mode — the one screen in the app
+        // that never actually changed with the theme toggle. New
+        // `voice-mode-background` token: unchanged brand blue (#0063f8) in
+        // light mode, a deep navy (#16273F, the same dark-mode "tint"
+        // color background-tint-primary already uses) in dark mode — still
+        // reads as "the full-bleed colored voice-call screen," just fitting
+        // this app's actual dark palette instead of a jarring bright blue
+        // against everything else being dark.
+        isVoiceMode && { backgroundColor: theme['voice-mode-background'] },
       ]}>
       <TopNavigation
-        style={isVoiceMode ? { backgroundColor: theme['color-primary-500'] } : undefined}
+        style={isVoiceMode ? { backgroundColor: theme['voice-mode-background'] } : undefined}
         title={renderProps => (
           <Text
             {...renderProps}
