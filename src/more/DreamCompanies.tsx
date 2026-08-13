@@ -22,6 +22,7 @@ import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import InfoBox from 'components/InfoBox';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import {accentColorForKey, accentTintBg} from 'utils/accentPalette';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as dreamCompaniesService from 'services/dreamCompaniesService';
@@ -299,6 +300,13 @@ const DreamCompanies = memo(() => {
             {companies.map(c => {
             const expanded = expandedId === c.id;
             const tier = readinessTier(c.readinessScore);
+            // Product follow-up ("the color style and blend is not
+            // consistent throughout the app... use it in certain other
+            // places too") — same pastel-icon-badge treatment as
+            // Home/JobAlerts.tsx, on the no-logo fallback circle. Hashed
+            // on company name so it stays the same color across
+            // re-sorts/expand-collapse rather than shifting by row index.
+            const accent = accentColorForKey(c.company);
             return (
               <Layout
                 key={c.id}
@@ -320,7 +328,14 @@ const DreamCompanies = memo(() => {
                             identify this company anywhere" — same
                             CompanyLogoAvatar (real logo, or initials when
                             unavailable) Job Alerts already uses. */}
-                        <CompanyLogoAvatar logoUrl={c.logoUrl} companyName={c.company} size="small" style={{ marginRight: 10 }} />
+                        <CompanyLogoAvatar
+                          logoUrl={c.logoUrl}
+                          companyName={c.company}
+                          size="small"
+                          fallbackTintColor={accent}
+                          fallbackBgColor={accentTintBg(accent)}
+                          style={{ marginRight: 10 }}
+                        />
                         <Text category="h7" bold numberOfLines={1} style={globalStyle.flexOne}>{c.company}</Text>
                       </Flex>
                       {c.targetRole ? (

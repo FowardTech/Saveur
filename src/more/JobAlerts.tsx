@@ -47,6 +47,7 @@ import JobAlertsOnboarding from './JobAlertsOnboarding';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import {isRemoteLocation} from 'utils/jobLocation';
 import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
+import {accentColorForKey, accentTintBg} from 'utils/accentPalette';
 
 // Mirrors app_config_service's "job_alerts"."max_desired_roles"/
 // "max_preferred_countries" defaults (see saveur-backend's own comment on
@@ -692,7 +693,16 @@ const JobAlerts = memo(() => {
             })}
           />
         ) : (
-          filteredAlerts.map(alert => (
+          filteredAlerts.map(alert => {
+            // Product follow-up ("the color style and blend is not
+            // consistent throughout the app... use it in certain other
+            // places too") — same pastel-icon-badge treatment
+            // RecentActivityList.tsx uses on Home, applied to the
+            // no-logo fallback circle here. Hashed on company name (not
+            // list index) so the same company keeps the same color across
+            // re-sorts/re-filters/pagination rather than shifting rows.
+            const accent = accentColorForKey(alert.company || alert.title);
+            return (
             <TouchableOpacity key={alert.id} activeOpacity={0.8} onPress={() => onOpenAlert(alert)}>
               <Layout
                 level="2"
@@ -714,6 +724,8 @@ const JobAlerts = memo(() => {
                     companyName={alert.company}
                     size="small"
                     fallbackIcon="briefcase-outline"
+                    fallbackTintColor={accent}
+                    fallbackBgColor={accentTintBg(accent)}
                     style={{marginRight: 10, marginTop: 2}}
                   />
                   <View style={globalStyle.flexOne}>
@@ -780,7 +792,8 @@ const JobAlerts = memo(() => {
                 </Flex>
               </Layout>
             </TouchableOpacity>
-          ))
+            );
+          })
         )}
 
         {isLoadingMore ? (

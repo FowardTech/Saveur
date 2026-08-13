@@ -58,10 +58,29 @@ interface Props {
    * job-listing context (Job Alerts, Applications), which explicitly asked
    * for that icon specifically. */
   fallbackIcon?: 'building-outline' | 'briefcase-outline';
+  /** Product follow-up ("the color style and blend is not consistent
+   * throughout the app... use it in certain other places too"): lets a
+   * list row (Job Alerts, Dream Companies) tint the no-logo fallback circle
+   * with the same pastel-icon-badge palette Home/AI Coach already use
+   * (light rgba tint bg + solid icon color — see home/RecentActivityList.tsx's
+   * COLOR_BY_TYPE), instead of the flat gray every fallback used before.
+   * Omit both for the original flat-gray look (still used where no per-row
+   * identity color makes sense, e.g. the mock-interview company picker). */
+  fallbackTintColor?: string;
+  fallbackBgColor?: string;
 }
 
 const CompanyLogoAvatar = memo(
-  ({logoUrl, companyName, size = 'medium', shape = 'rounded', style, fallbackIcon = 'building-outline'}: Props) => {
+  ({
+    logoUrl,
+    companyName,
+    size = 'medium',
+    shape = 'rounded',
+    style,
+    fallbackIcon = 'building-outline',
+    fallbackTintColor,
+    fallbackBgColor,
+  }: Props) => {
     const theme = useTheme();
     const [failed, setFailed] = useState(false);
 
@@ -91,7 +110,7 @@ const CompanyLogoAvatar = memo(
             width: px,
             height: px,
             borderRadius: shape === 'round' ? px / 2 : px / 4,
-            backgroundColor: theme['background-basic-color-3'],
+            backgroundColor: fallbackBgColor ?? theme['background-basic-color-3'],
             alignItems: 'center',
             justifyContent: 'center',
             overflow: 'hidden',
@@ -106,7 +125,7 @@ const CompanyLogoAvatar = memo(
             {
               width: ICON_SIZE_PX[size],
               height: ICON_SIZE_PX[size],
-              tintColor: theme['text-hint-color'],
+              tintColor: fallbackTintColor ?? theme['text-hint-color'],
             },
           ]}
         />
