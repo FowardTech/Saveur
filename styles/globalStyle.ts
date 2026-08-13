@@ -22,21 +22,56 @@ import {Platform, StyleSheet} from 'react-native';
 // CourseSession.tsx certCard) — that workaround is back in play now that
 // `card` uses elevation again.
 //
-// BUG FIX (product request follow-up: "remove box shadows from every card
-// in the app"): this used to carry a real soft shadow on iOS/default (and
-// had already had Android's `elevation` stripped per an earlier, narrower
-// "remove the box shadow on Android only" request — see this comment's own
-// git history). Now zeroed out on every platform branch, so every card app-
-// wide (`card`/`shadow`/`shadowFade`/`shadowFilter` below all share this
-// one object) renders with no shadow at all, iOS included. Kept as a named,
-// still-`Platform.select`-shaped constant (rather than deleted outright) so
-// nothing that spreads it breaks, and so a future "bring shadows back"
-// request has one single object to restore instead of re-deriving values
-// across every consuming file again.
+// RESTORED (product follow-up: "now that we changed the app background
+// back to white you will have to give the white cards box shadow to show
+// that they are cards"). This had been zeroed out on every platform (see
+// this comment's own git history for the "remove box shadows from every
+// card" request) on the reasoning that Container.tsx's gray page (level=3)
+// against each card's white fill (level=2) already gave enough color
+// contrast without needing a shadow at all. That reasoning no longer holds
+// — Container.tsx's `background-page-body` is back to #FFFFFF (see its own
+// comment), the SAME color as a level=2 card, so with cardShadow still
+// zeroed cards would be 100% invisible against the page, not just
+// under-defined.
+//
+// iOS/default reuse the exact opacity/radius this app had already tuned by
+// eye and shipped right before the later full-removal request (see
+// 309f5d2/c60b5b3's own history) — NOT the softer/lower-opacity guess a
+// fresh "add some shadow" pass might reach for, since back then a card
+// still had gray-page contrast to lean on too; now, with zero color
+// contrast left, under-tuning this again would repeat the same
+// invisible-card problem this whole restore is fixing.
+//
+// Android gets `elevation: 3` (Material's own resting-card spec) rather
+// than reusing this same object's old `elevation: 4` — see 1f6e1b3's own
+// history: `elevation: 12` had read as a heavy dialog-sized halo there,
+// not a resting card, and 3 was the fix. Android's box shadow was later
+// separately zeroed by an explicit "Android only" removal request before
+// the full cross-platform removal landed, so `elevation: 3` (not 4) is
+// the actual last-known-good Android value to restore.
 const cardShadow = Platform.select({
-  ios: {},
-  android: {},
-  default: {},
+  ios: {
+    shadowColor: 'rgba(31, 41, 84, 0.35)',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10.0,
+  },
+  android: {
+    elevation: 3,
+  },
+  default: {
+    shadowColor: 'rgba(31, 41, 84, 0.35)',
+    shadowOffset: {
+      width: 0,
+      height: 6,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 10.0,
+    elevation: 3,
+  },
 }) as object;
 
 export const globalStyle = StyleSheet.create({
