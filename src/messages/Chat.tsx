@@ -780,11 +780,24 @@ const Chat = memo(() => {
                 <Icon
                   pack="eva"
                   name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
-                  style={[globalStyle.icon16, { tintColor: isVoiceMode ? '#FFFFFF' : theme['color-primary-100'] }]}
+                  // BUG FIX (app-wide sweep, product report: "this button
+                  // is not looking good in light mode... there are so
+                  // many buttons like that in the app that the text are
+                  // in white in light mode") — this icon/label pair was
+                  // using `color-primary-100`/status="primary", a token
+                  // that's only correct on a SOLID colored fill (see
+                  // Leaderboard.tsx's own header comment on this exact bug
+                  // class) — this pill's non-voice-mode fill is
+                  // `background-tint-primary`, a light tint, not a solid
+                  // fill, so the icon/label went near-invisible. Switched
+                  // to `text-link-color` (this app's established fix for
+                  // "accent text on a light background", already scoped
+                  // per theme unlike color-primary-100).
+                  style={[globalStyle.icon16, { tintColor: isVoiceMode ? '#FFFFFF' : theme['text-link-color'] }]}
                 />
                 <Text
                   category="h9"
-                  status={isVoiceMode ? undefined : 'primary'}
+                  status={isVoiceMode ? undefined : 'link'}
                   style={[styles.modeToggleLabel, isVoiceMode && { color: '#FFFFFF' }]}>
                   {mode === 'voice'
                     ? t("message:mode_text", { defaultValue: "Text" })

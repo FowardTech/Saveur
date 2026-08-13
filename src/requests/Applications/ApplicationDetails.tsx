@@ -140,9 +140,17 @@ const ApplicationDetails = memo(() => {
   if (isLoading) {
     return (
       <Container style={styles.container}>
+        {/* BUG FIX (app-wide sweep, product report: "so many buttons...
+            the text are in white in light mode") — status="primary"
+            resolves to text-primary-color, near-white, only correct for
+            text on a SOLID colored surface. This TopNavigation title
+            sits on the plain page background, not a colored bar, so it
+            rendered effectively invisible in light mode. Default status
+            (basic ink color) is what every other TopNavigation title in
+            the app already uses. */}
         <TopNavigation
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
-          title={<Text status={'primary'} center category="h6" bold>{t('request:requestDetails')}</Text>}
+          title={<Text center category="h6" bold>{t('request:requestDetails')}</Text>}
         />
         <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
           <Text category="h9-s" status="placeholder" center>{t('common:loading', {defaultValue: 'Loading…'})}</Text>
@@ -156,7 +164,7 @@ const ApplicationDetails = memo(() => {
       <Container style={styles.container}>
         <TopNavigation
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
-          title={<Text status={'primary'} center category="h6" bold>{t('request:requestDetails')}</Text>}
+          title={<Text center category="h6" bold>{t('request:requestDetails')}</Text>}
         />
         <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
           <Text category="h9-s" status="danger" center mh={24}>
@@ -175,7 +183,7 @@ const ApplicationDetails = memo(() => {
       <TopNavigation
         accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
         title={
-          <Text status={'primary'} center category="h6" bold>
+          <Text center category="h6" bold>
             {t('request:requestDetails')}
           </Text>
         }

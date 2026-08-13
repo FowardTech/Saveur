@@ -111,7 +111,17 @@ const EmotionalCoach = memo(() => {
               ]}
             >
               <Text category="h6" center>{MOOD_EMOJI[mood]}</Text>
-              <Text category="h10" status={selectedMood === mood ? 'primary' : 'placeholder'} center mt={4}>
+              {/* BUG FIX (app-wide sweep, product report: "buttons... the
+                  text are in white in light mode") — status="primary"
+                  resolves to text-primary-color, a near-white token only
+                  correct for text drawn on a solid colored surface (see
+                  Leaderboard.tsx's own header comment on this exact class
+                  of bug). This chip's selected background is a light,
+                  transparent primary tint, not a solid fill, so the label
+                  went invisible. status="link" (this app's other
+                  established fix for "selected accent text on a light
+                  background") reads as this app's blue in both themes. */}
+              <Text category="h10" status={selectedMood === mood ? 'link' : 'placeholder'} center mt={4}>
                 {moodLabel(mood, t)}
               </Text>
             </TouchableOpacity>

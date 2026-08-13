@@ -400,7 +400,15 @@ const StudentVerification = memo(() => {
                     yearOfStudy === opt.value ? { backgroundColor: theme['color-primary-transparent-200'] } : null,
                   ]}
                 >
-                  <Text category="h10" status={yearOfStudy === opt.value ? 'primary' : 'basic'} center>
+                  {/* BUG FIX (app-wide sweep, product report: "so many
+                      buttons... the text are in white in light mode") —
+                      same status="primary"-on-a-light-tint-fill bug as
+                      Leaderboard.tsx/EmotionalCoach.tsx: this chip's
+                      selected background is a light, transparent primary
+                      tint, not a solid fill. status="link" reads as this
+                      app's blue in both themes instead of going near-
+                      invisible white. */}
+                  <Text category="h10" status={yearOfStudy === opt.value ? 'link' : 'basic'} center>
                     {yearLabel(opt.value, t)}
                   </Text>
                 </TouchableOpacity>
