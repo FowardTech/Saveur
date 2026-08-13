@@ -25,6 +25,13 @@ export enum EKeyAsyncStorage {
   // shown once from HomeSrc.tsx) has already been dismissed. Cleared by
   // MoreSrc.tsx's "Show app tour" row so a user can replay it any time.
   appTourSeen = 'appTourSeen',
+  // Product request ("the AI career coach should be the entering point
+  // anytime users open the app... the app should only take the user to
+  // the homescreen the first time they are entering the app") — set the
+  // first time MainBottomTab ever resolves its starting tab for a signed-
+  // in user, never cleared. See MainBottomTab.tsx's own comment for the
+  // full first-open-vs-returning decision.
+  hasOpenedAppOnce = 'hasOpenedAppOnce',
   // Referenced by services/codingService.ts's language-list offline cache
   // but never added here — a real pre-existing compile error
   // ("Property 'codingLanguages' does not exist"), just never surfaced

@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { AppState, View } from "react-native";
+import { ActivityIndicator, AppState, View } from "react-native";
 import {
   useTheme,
   useStyleSheet,
@@ -15,9 +15,13 @@ import useLayout from "hooks/useLayout";
 import ModalRequest from "components/ModalRequest";
 import useModal from "hooks/useModal";
 import { Images } from "assets/images";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as notificationService from "services/notificationService";
 import { getMoreMenuBadges } from "services/moreMenuBadgesService";
-import { NotificationProps } from "constants/Types";
+import * as dailyChallengeService from "services/dailyChallengeService";
+import * as goalTipsService from "services/goalTipsService";
+import * as configService from "services/configService";
+import { EKeyAsyncStorage, NotificationProps } from "constants/Types";
 import HomeStackNavigator from "./HomeStackNavigator";
 // "Find" is repurposed as the Practice hub (pick interview type / mode / difficulty).
 import FindScreen from "src/find/FindScreen";
@@ -84,6 +88,76 @@ const MainBottomTab = memo(() => {
   // Was previously not enforced at all beyond a dismissible Home banner.
   const { isSignedIn, emailVerified, isPro } = React.useContext(AuthContext);
   const isGated = isSignedIn && !emailVerified;
+
+  // Product request: "the AI career coach should be the entering point
+  // anytime users open the app... the app should only take the user to
+  // the homescreen the first time they are entering the app but after
+  // that anytime the users enter the app it should always take them to
+  // the AI career coach screen... the only time the homescreen should
+  // show is when there are new surprise challenge, new daily tips."
+  //
+  // Resolved once, before this tab navigator's first render, into a
+  // starting tab name — `initialRouteName` (see the Navigator below) is
+  // only ever honored on first mount, same caveat AppContainer.tsx's own
+  // isSignedIn/Intro choice already documents, so this can't be decided
+  // reactively after the fact; it has to be known before `<BottomTab.
+  // Navigator>` mounts at all. Gated behind a brief spinner (same
+  // pattern AppContainer.tsx already uses for its own isInitialized/
+  // biometric checks) rather than the alternative of mounting straight
+  // to a guess and imperatively redirecting — a guess-then-redirect would
+  // flash the wrong tab for a beat on every cold start, which is worse
+  // than a short spinner for something this navigation-defining.
+  const [initialTab, setInitialTab] = React.useState<"Home" | "Coach" | null>(null);
+  React.useEffect(() => {
+    if (!isSignedIn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const openedBefore = await AsyncStorage.getItem(EKeyAsyncStorage.hasOpenedAppOnce);
+        if (!openedBefore) {
+          // First time this account has ever resolved a starting tab —
+          // Home, and never re-evaluate this branch again for this device.
+          AsyncStorage.setItem(EKeyAsyncStorage.hasOpenedAppOnce, "1").catch(() => {});
+          if (!cancelled) setInitialTab("Home");
+          return;
+        }
+        // Returning — Coach, unless there's something genuinely new
+        // waiting on Home (today's Surprise Challenge not yet done/
+        // skipped, or a fresh daily tip). Both checks are best-effort:
+        // a failed/offline fetch just means "nothing new to show",
+        // never blocks landing on Coach.
+        let hasNewChallenge = false;
+        let hasNewTip = false;
+        await Promise.all([
+          (async () => {
+            if (!configService.isFeatureEnabled("daily_challenge")) return;
+            try {
+              const challenge = await dailyChallengeService.getTodayChallenge();
+              hasNewChallenge = !challenge.completed && !challenge.skipped;
+            } catch {
+              // Offline or no challenge today — doesn't count as "new".
+            }
+          })(),
+          (async () => {
+            try {
+              const tips = await goalTipsService.getTodayTips();
+              hasNewTip = tips.length > 0;
+            } catch {
+              // Offline or no goals set — doesn't count as "new".
+            }
+          })(),
+        ]);
+        if (!cancelled) setInitialTab(hasNewChallenge || hasNewTip ? "Home" : "Coach");
+      } catch {
+        // Any unexpected failure in the AsyncStorage read itself — fall
+        // back to Home rather than leave the spinner up forever.
+        if (!cancelled) setInitialTab("Home");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isSignedIn]);
 
   // Was an unconditional 1200ms timer that popped this modal up with a
   // hardcoded "has feedback ready" message every single time the Interviews
@@ -216,9 +290,22 @@ const MainBottomTab = memo(() => {
     []
   );
 
+  // Spinner gate for the initialTab resolution above — see its own
+  // comment. isSignedIn is always true by the time this component ever
+  // mounts (AppContainer only routes here once signed in), so this only
+  // ever blocks on the real async check, never indefinitely.
+  if (isSignedIn && !initialTab) {
+    return (
+      <View style={[styles.container, globalStyle.center]}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <BottomTab.Navigator
+        initialRouteName={initialTab ?? "Home"}
         screenOptions={{
           headerShown: false,
           tabBarLabelStyle: styles.styleLabel,
