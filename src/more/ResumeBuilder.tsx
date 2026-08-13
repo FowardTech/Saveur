@@ -30,6 +30,7 @@ import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
+import { accentColorForKey, accentTintBg } from 'utils/accentPalette';
 
 // BUG FIX (product report: "resume builder screen — some content still in
 // English regardless of language"): these titles were plain hardcoded
@@ -232,21 +233,26 @@ const ResumeBuilder = memo(() => {
           {t('more:import_from', { defaultValue: 'Import from' })}
         </Text>
         <View style={styles.importGrid}>
-          {IMPORT_OPTIONS.map(opt => (
+          {IMPORT_OPTIONS.map(opt => {
+            // Product follow-up ("the color style and blend is not
+            // consistent throughout the app... use it in certain other
+            // places too") — same pastel-icon-badge treatment
+            // RecentActivityList.tsx uses on Home, keyed on opt.key so
+            // each import source keeps a stable color.
+            const accent = accentColorForKey(opt.key);
+            return (
             <TouchableOpacity
               key={opt.key}
               activeOpacity={0.7}
               onPress={() => onImport(opt.key)}
               style={styles.importCard}>
-              {/* Was a hardcoded tintColor: '#181b22' (near-black) --
-                 invisible against a dark card background in dark mode.
-                 theme['text-basic-color'] tracks the theme correctly (dark
-                 text in light mode, light text in dark mode). */}
-              <Icon
-                pack="assets"
-                name={opt.icon}
-                style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
-              />
+              <View style={[styles.importIconWrap, { backgroundColor: accentTintBg(accent) }]}>
+                <Icon
+                  pack="assets"
+                  name={opt.icon}
+                  style={[globalStyle.icon24, { tintColor: accent }]}
+                />
+              </View>
               <Text category="h9" mt={8} bold center>
                 {t(opt.titleKey, { defaultValue: opt.titleDefault })}
               </Text>
@@ -258,7 +264,8 @@ const ResumeBuilder = memo(() => {
                   : t('more:tap_to_upload', { defaultValue: 'Tap to upload' })}
               </Text>
             </TouchableOpacity>
-          ))}
+            );
+          })}
         </View>
 
         <CtaButton
@@ -424,6 +431,16 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     paddingVertical: 16,
     marginBottom: 12,
+  },
+  // Same pastel-icon-badge circle RecentActivityList.tsx's iconWrap uses
+  // on Home (38x38/radius 13) — sized down slightly to fit these narrower
+  // 30%-width cards.
+  importIconWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tipRow: {
     flexDirection: 'row',

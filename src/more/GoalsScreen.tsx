@@ -18,6 +18,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
+import { accentTintBg } from 'utils/accentPalette';
 import EmptyState from 'components/EmptyState';
 import { globalStyle } from 'styles/globalStyle';
 import dayjs from 'utils/dayjs';
@@ -164,9 +165,21 @@ const GoalsScreen = memo(() => {
           />
         ) : (
           <>
-            <Text category="h6" bold mb={12}>
-              {t('more:goals_section_career', { defaultValue: 'Career' })}
-            </Text>
+            {/* Product follow-up ("the color style and blend is not
+                consistent throughout the app... use it in certain other
+                places too") — same pastel-icon-badge header treatment
+                RecentActivityList.tsx uses on Home ("Recent activity"),
+                one fixed accent per section rather than a hashed/cycled
+                color, since these are 3 fixed, semantically distinct
+                sections (not a repeating list). */}
+            <Flex justify="flex-start" itemsCenter mb={12}>
+              <View style={[styles.sectionIconWrap, { backgroundColor: accentTintBg('#0063f8') }]}>
+                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+              </View>
+              <Text category="h6" bold ml={10}>
+                {t('more:goals_section_career', { defaultValue: 'Career' })}
+              </Text>
+            </Flex>
             <Layout level="2" style={styles.card}>
               <TouchableOpacity
                 style={styles.row}
@@ -236,9 +249,14 @@ const GoalsScreen = memo(() => {
               </TouchableOpacity>
             </Layout>
 
-            <Text category="h6" bold mt={28} mb={12}>
-              {t('more:goals_section_weekly_targets', { defaultValue: 'Weekly targets' })}
-            </Text>
+            <Flex justify="flex-start" itemsCenter mt={28} mb={12}>
+              <View style={[styles.sectionIconWrap, { backgroundColor: accentTintBg('#F59E0B') }]}>
+                <Icon pack="eva" name="flag-outline" style={[globalStyle.icon16, { tintColor: '#F59E0B' }]} />
+              </View>
+              <Text category="h6" bold ml={10}>
+                {t('more:goals_section_weekly_targets', { defaultValue: 'Weekly targets' })}
+              </Text>
+            </Flex>
             <Layout level="2" style={styles.card}>
               <View style={styles.targetRow}>
                 <View style={globalStyle.flexOne}>
@@ -324,9 +342,14 @@ const GoalsScreen = memo(() => {
               </TouchableOpacity>
             </Layout>
 
-            <Text category="h6" bold mt={28} mb={12}>
-              {t('more:goals_section_progress', { defaultValue: 'Progress' })}
-            </Text>
+            <Flex justify="flex-start" itemsCenter mt={28} mb={12}>
+              <View style={[styles.sectionIconWrap, { backgroundColor: accentTintBg('#10B981') }]}>
+                <Icon pack="eva" name="trending-up-outline" style={[globalStyle.icon16, { tintColor: '#10B981' }]} />
+              </View>
+              <Text category="h6" bold ml={10}>
+                {t('more:goals_section_progress', { defaultValue: 'Progress' })}
+              </Text>
+            </Flex>
             <Layout level="2" style={styles.card}>
               <Flex justify="space-between">
                 <View style={globalStyle.flexOne}>
@@ -403,6 +426,15 @@ const themedStyles = StyleService.create({
   card: {
     ...globalStyle.card,
     padding: 16,
+  },
+  // Same pastel-icon-badge header treatment as RecentActivityList.tsx's
+  // headerIconWrap on Home's "Recent activity" section (28x28/radius 9).
+  sectionIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',
