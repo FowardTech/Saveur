@@ -634,40 +634,70 @@ const HomeSrc = memo(() => {
                 </Text>
               </CircularProgress>
             </Flex>
+          </View>
+          </TouchableOpacity>
+        ) : null}
 
-            <Flex justify="space-between" itemsCenter mt={10}>
-              <View style={styles.streakChip}>
-                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
-                <Text category="h9" bold mt={4} style={{ color: '#fff' }}>{streak.xp}</Text>
-                <Text category="h10" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {t('home:streak_chip_xp', { defaultValue: 'Total XP' })}
-                </Text>
+        {/* Product request: "bring out the total XP, Best Streak and
+            Today's check-in out of the card and make them individual cards
+            in grid form" -- these 3 stats used to be inline `streakChip`
+            columns painted directly on the blue hero card's own fill (no
+            background of their own, see git history). Now their own white
+            globalStyle.card tiles in a 3-up row below the hero card, each
+            with a small pastel icon badge (same tint-circle convention as
+            Job Alerts/Dream Companies/Resume Builder's rows this session)
+            instead of a plain white-on-blue icon, since these badges now
+            sit on a white card instead of the blue hero fill. Same
+            underlying `streak` fields and translation keys as before --
+            only the container changed, not the data or copy. Kept inside
+            the same `{streak ? ... : null}` gate as the hero card (via a
+            second top-level fragment child below) since these 3 stats have
+            no meaning without `streak` loaded either. */}
+        {streak ? (
+          <View style={styles.streakStatsGrid}>
+            <View style={[globalStyle.card, styles.streakStatCard]}>
+              <View style={[styles.streakStatIconWrap, { backgroundColor: '#F59E0B1F' }]}>
+                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#F59E0B' }]} />
               </View>
-              <View style={styles.streakChip}>
-                <Icon pack="eva" name="award-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
-                <Text category="h9" bold mt={4} style={{ color: '#fff' }}>{streak.longestStreak ?? streak.streakDays}</Text>
-                <Text category="h10" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {t('home:streak_chip_best', { defaultValue: 'Best streak' })}
-                </Text>
+              <Text category="h8" bold mt={8}>{streak.xp}</Text>
+              <Text category="h10" status="placeholder" center>
+                {t('home:streak_chip_xp', { defaultValue: 'Total XP' })}
+              </Text>
+            </View>
+            <View style={[globalStyle.card, styles.streakStatCard]}>
+              <View style={[styles.streakStatIconWrap, { backgroundColor: '#8B5CF61F' }]}>
+                <Icon pack="eva" name="award-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6' }]} />
               </View>
-              <View style={styles.streakChip}>
+              <Text category="h8" bold mt={8}>{streak.longestStreak ?? streak.streakDays}</Text>
+              <Text category="h10" status="placeholder" center>
+                {t('home:streak_chip_best', { defaultValue: 'Best streak' })}
+              </Text>
+            </View>
+            <View style={[globalStyle.card, styles.streakStatCard]}>
+              <View
+                style={[
+                  styles.streakStatIconWrap,
+                  { backgroundColor: streak.checkedInToday ? '#10B9811F' : '#94A3B81F' },
+                ]}>
                 <Icon
                   pack="eva"
                   name={streak.checkedInToday ? 'checkmark-circle-2' : 'checkmark-circle-2-outline'}
-                  style={[globalStyle.icon16, { tintColor: '#fff' }]}
+                  style={[
+                    globalStyle.icon16,
+                    { tintColor: streak.checkedInToday ? '#10B981' : '#94A3B8' },
+                  ]}
                 />
-                <Text category="h9" bold mt={4} style={{ color: '#fff' }}>
-                  {streak.checkedInToday
-                    ? t('home:streak_chip_checked_in', { defaultValue: 'Done' })
-                    : t('home:streak_chip_not_checked_in', { defaultValue: 'Not yet' })}
-                </Text>
-                <Text category="h10" style={{ color: 'rgba(255,255,255,0.7)' }}>
-                  {t('home:streak_chip_checkin', { defaultValue: "Today's check-in" })}
-                </Text>
               </View>
-            </Flex>
+              <Text category="h8" bold mt={8}>
+                {streak.checkedInToday
+                  ? t('home:streak_chip_checked_in', { defaultValue: 'Done' })
+                  : t('home:streak_chip_not_checked_in', { defaultValue: 'Not yet' })}
+              </Text>
+              <Text category="h10" status="placeholder" center>
+                {t('home:streak_chip_checkin', { defaultValue: "Today's check-in" })}
+              </Text>
+            </View>
           </View>
-          </TouchableOpacity>
         ) : null}
 
         {/* Product request: "remove the continue learning card in the My
@@ -981,9 +1011,41 @@ const themedStyles = StyleService.create({
   // Each of the 3 stat chips inside streakHero — no background of its own
   // (the hero's own blue fill is already the "card"), just centered
   // icon/value/label so the three sit evenly spaced in one row.
+  // NOTE: no longer used inside streakHero itself (see the product request
+  // "bring these out into individual cards" above the JSX) — kept as the
+  // base layout streakStatCard extends below, so the actual card look only
+  // needs to add background/border/padding on top of this same centered
+  // icon/value/label shape.
   streakChip: {
     flex: 1,
     alignItems: 'center',
+  },
+  // The 3 stat tiles pulled out of streakHero (product request: "bring out
+  // the total XP, Best Streak and Today's check-in... and make them
+  // individual cards in grid form"). Plain row of 3 equal-width white
+  // globalStyle.card tiles below the hero card — `gap` isn't used (same
+  // cross-RN-version caution as QuickActionGrid's own `grid` style) in
+  // favor of each tile's own `marginHorizontal` canceled out by the
+  // container's negative margin, the standard even-gutter trick.
+  streakStatsGrid: {
+    flexDirection: 'row',
+    marginTop: 10,
+    marginHorizontal: -5,
+  },
+  streakStatCard: {
+    ...globalStyle.center,
+    flex: 1,
+    marginHorizontal: 5,
+    paddingVertical: 14,
+    paddingHorizontal: 6,
+    backgroundColor: 'background-basic-color-2',
+  },
+  streakStatIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // "More for you" rows (product follow-up: "use this UI and layout" --
   // the reference's compact icon/title/subtitle/chevron list rows, one
