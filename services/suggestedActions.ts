@@ -60,7 +60,7 @@ export const ACTION_META: Record<SuggestedActionId, ActionMeta> = {
   company_intelligence: {title: 'Company Intelligence', titleKey: 'message:suggested_action_title_company_intelligence', icon: 'briefcase-outline'},
   student_verification: {title: 'Student Verification', titleKey: 'message:suggested_action_title_student_verification', icon: 'checkmark-circle-2-outline'},
   salary_negotiation: {title: 'Salary Negotiation practice', titleKey: 'message:suggested_action_title_salary_negotiation', icon: 'trending-up-outline'},
-  system_design_whiteboard: {title: 'the System Design Whiteboard', titleKey: 'message:suggested_action_title_system_design_whiteboard', icon: 'grid-outline'},
+  system_design_whiteboard: {title: 'System Design Practice', titleKey: 'message:suggested_action_title_system_design_whiteboard', icon: 'grid-outline'},
   learning_courses: {title: 'Learning Courses', titleKey: 'message:suggested_action_title_learning_courses', icon: 'book-open-outline'},
   career_diary: {title: 'your Career Diary', titleKey: 'message:suggested_action_title_career_diary', icon: 'edit-2-outline'},
   my_ratings: {title: 'My Ratings', titleKey: 'message:suggested_action_title_my_ratings', icon: 'star-outline'},
@@ -257,7 +257,13 @@ export async function runSuggestedAction(id: SuggestedActionId, navigate: Nav['n
   }
 
   if (id === 'system_design_whiteboard') {
-    if (!(await gateAddonAction(ADDON_CODES.systemDesignWhiteboard, nav))) return;
+    // No longer an add-on (product decision, once the broken freehand
+    // canvas that used to justify a paid add-on was removed — see
+    // SystemDesignWhiteboard.tsx's header comment): "let it just be a
+    // regular tool like the resume builder." No gate needed anymore, same
+    // as every other plain interview type. No standalone params-free entry
+    // point exists (same reasoning as coding_practice just above), so this
+    // lands on the Practice tab's own System Design tile instead.
     nav('MainBottomTab', {screen: 'Practice'});
     return;
   }

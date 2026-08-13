@@ -205,11 +205,13 @@ const MockInterviewSetup = memo(() => {
         );
         return;
       }
-      // Paid Add-on gate (product request: "for the coding practice and
-      // system design whiteboard I want them to be in a separate screen
-      // called add-ons and they should be paid for") — same mapping/pattern
-      // as FindScreen.tsx's Tools-tile shortcuts. Every other interviewType
-      // is unaffected (addonCodeForInterviewType returns null for them).
+      // Paid Add-on gate (product request: "for the coding practice ... I
+      // want them to be in a separate screen called add-ons and they
+      // should be paid for") — same mapping/pattern as FindScreen.tsx's
+      // Tools-tile shortcuts. Only Coding is gated now — System Design was
+      // un-gated once its paid feature (the drawing canvas) was removed,
+      // see entitlementsService.ts's addonCodeForInterviewType comment.
+      // Every other interviewType is unaffected either way (returns null).
       const requiredAddon = addonCodeForInterviewType(interviewType);
       if (requiredAddon && !(await hasAddon(requiredAddon))) {
         Alert.alert(

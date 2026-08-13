@@ -159,25 +159,12 @@ const FindScreen = memo(() => {
         );
         return;
       }
-      // Paid Add-on gate — see onStartCodingPractice above for the full
-      // reasoning; same insertion point, same pattern, different add-on.
-      const systemDesignUnlocked = await hasAddon(ADDON_CODES.systemDesignWhiteboard);
-      if (!systemDesignUnlocked) {
-        Alert.alert(
-          t('find:addon_required_title_system_design', { defaultValue: 'System Design Practice is a paid add-on' }),
-          t('find:addon_required_body', {
-            defaultValue: 'Purchase the System Design Practice add-on once to unlock it for good.',
-          }),
-          [
-            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
-            {
-              text: t('more:addons_title', { defaultValue: 'Add-ons' }),
-              onPress: () => navigate('AddOns', { highlightCode: ADDON_CODES.systemDesignWhiteboard }),
-            },
-          ],
-        );
-        return;
-      }
+      // No longer a paid add-on (product decision, once the broken
+      // freehand drawing canvas that used to justify charging for this was
+      // removed — see SystemDesignWhiteboard.tsx's header comment): "let it
+      // just be a regular tool like the resume builder since there is no
+      // more hands on drawing." Only the free-session cap above applies now,
+      // same as every other Tools-tile shortcut.
       const { sessionId } = await interviewService.startSession({
         interviewType: Interview_Type_Enum.SystemDesign,
         mode: Practice_Mode_Enum.Text,

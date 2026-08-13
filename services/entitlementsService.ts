@@ -107,20 +107,26 @@ export async function getSessionEntitlement(
 }
 
 // ---------------------------------------------------------------------------
-// Paid Add-ons (Coding Practice / System Design Whiteboard) — "for the
-// coding practice and system design whiteboard I want them to be in a
-// separate screen called add-ons and they should be paid for." Independent
-// of subscription tier entirely (a free-tier user can buy just one add-on
-// without touching Pro/Premium, and a Pro/Premium subscriber still has to
-// buy it separately) — see saveur-backend/app/services/
-// entitlements_service.py's "Paid Add-ons" section for the mirrored
-// backend-side check. The AI coach (services/suggestedActions.ts) also
-// reads this before auto-navigating someone into either screen.
+// Paid Add-ons (Coding Practice) — "for the coding practice ... I want them
+// to be in a separate screen called add-ons and they should be paid for."
+// Independent of subscription tier entirely (a free-tier user can buy just
+// the add-on without touching Basic/Premium, and a Basic/Premium
+// subscriber still has to buy it separately) — see saveur-backend/app/
+// services/entitlements_service.py's "Paid Add-ons" section for the
+// mirrored backend-side check. The AI coach (services/suggestedActions.ts)
+// also reads this before auto-navigating someone into this screen.
+//
+// System Design used to be a second add-on here (systemDesignWhiteboard)
+// but is no longer gated at all (product decision, once the freehand
+// drawing canvas that used to justify charging for it was removed for
+// being unreliable — see SystemDesignWhiteboard.tsx's header comment):
+// "let it just be a regular tool like the resume builder since there is no
+// more hands on drawing." It's now a plain interview type, same as
+// behavioral/technical/consulting/etc. — no purchase required.
 // ---------------------------------------------------------------------------
 
 export const ADDON_CODES = {
   codingPractice: 'coding_practice',
-  systemDesignWhiteboard: 'system_design_whiteboard',
 } as const;
 
 export type AddonCode = (typeof ADDON_CODES)[keyof typeof ADDON_CODES];
@@ -141,14 +147,14 @@ export async function hasAddon(addonCode: string): Promise<boolean> {
 }
 
 /**
- * Maps an Interview_Type_Enum value (Coding / System Design) to the add-on
- * code that gates it, or `null` for every other type (not gated by an
- * add-on at all). Kept here as the single mapping every gating call site
+ * Maps an Interview_Type_Enum value (only Coding, now) to the add-on code
+ * that gates it, or `null` for every other type (not gated by an add-on at
+ * all — includes System Design, see ADDON_CODES's own comment above for
+ * why). Kept here as the single mapping every gating call site
  * (FindScreen.tsx, MockInterviewSetup.tsx, suggestedActions.ts) shares, so
  * the two never drift apart.
  */
 export function addonCodeForInterviewType(interviewType: string): AddonCode | null {
   if (interviewType === 'Coding') return ADDON_CODES.codingPractice;
-  if (interviewType === 'System Design') return ADDON_CODES.systemDesignWhiteboard;
   return null;
 }
