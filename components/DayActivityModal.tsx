@@ -34,7 +34,7 @@ const ICON_BY_TYPE: Record<DayActivityItemType, string> = {
 // rounded top corners, flex-end backdrop).
 const DayActivityModal = memo(({ visible, date, onClose }: Props) => {
   const theme = useTheme();
-  const { t } = useTranslation(['home', 'common']);
+  const { t, i18n } = useTranslation(['home', 'common']);
   const [items, setItems] = React.useState<DayActivityItem[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -61,8 +61,15 @@ const DayActivityModal = memo(({ visible, date, onClose }: Props) => {
     };
   }, [visible, date, t]);
 
+  // BUG FIX (product report, screenshot: modal header "Thursday, August 13"
+  // still English regardless of in-app language) — `undefined` locale makes
+  // toLocaleDateString fall back to the device's system locale instead of
+  // the language picked inside the app; same root cause already fixed in
+  // UpcomingSessionHomeCard.tsx (see its own comment) — i18n.language is
+  // the same "es"/"fr"/"zh" code used elsewhere and is valid directly as a
+  // BCP-47 locale here.
   const dateLabel = date
-    ? date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })
+    ? date.toLocaleDateString(i18n.language, { weekday: 'long', month: 'long', day: 'numeric' })
     : '';
 
   return (
