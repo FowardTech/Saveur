@@ -758,17 +758,27 @@ const HomeSrc = memo(() => {
         {/* Product request: "I want this card background to be the default
             blue and the text white" — breaks from the other three rows'
             shared light-pastel-tint treatment on purpose (Career Coach is
-            the one row here the product wants to stand out); icon wrap
-            below is left on its own light-circle style (matches the
-            existing icon-badge look elsewhere) since white-on-white icon/
-            wrap would be invisible — only the row bg + title/subtitle/
-            chevron flip to blue/white. */}
+            the one row here the product wants to stand out).
+            BUG FIX ("the chat icon is not looking good in dark mode"): the
+            icon wrap originally stayed on styles.actionRowIconWrap's shared
+            background-basic-color-2 token (reasoning at the time: a plain
+            white wrap would be invisible against the row's own white text).
+            That token is theme-aware for the OTHER three rows' pastel-tint
+            cards (light gray in light mode, works fine there) but this
+            row's background is hardcoded solid blue in both themes — in
+            dark mode background-basic-color-2 resolves to near-black
+            (#1B1B2E), which read as a muddy dark blob on the blue card
+            instead of a clean badge. Fixed wrap bg to a fixed translucent
+            white (not a theme token) plus a white icon tint (was an
+            unrelated purple, #8B5CF6, that didn't match the row's
+            blue/white palette either) — looks the same and reads clearly
+            in both themes since the card's own blue never changes. */}
         <TouchableOpacity
           activeOpacity={0.7}
           style={[styles.actionRow, { backgroundColor: '#0063f8' }]}
           onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-          <View style={styles.actionRowIconWrap}>
-            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#8B5CF6' }]} />
+          <View style={[styles.actionRowIconWrap, { backgroundColor: 'rgba(255, 255, 255, 0.18)' }]}>
+            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#FFFFFF' }]} />
           </View>
           <View style={globalStyle.flexOne}>
             <Text category="h9" bold status="control">
