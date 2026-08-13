@@ -90,10 +90,6 @@ const DailyChallengeCard = memo(() => {
 
   if (!enabled || !challenge || challenge.skipped) return null;
 
-  const typeName =
-    configService.getCachedConfig().daily_challenge.types.find(tt => tt.id === challenge.challengeType)?.name
-    ?? challenge.challengeType;
-
   return (
     <TouchableOpacity
       activeOpacity={0.7}
@@ -104,9 +100,6 @@ const DailyChallengeCard = memo(() => {
         <Text category="h9" bold ml={8} style={globalStyle.flexOne}>
           {t('home:daily_challenge_title', { defaultValue: "Today's Surprise Challenge" })}
         </Text>
-        <View style={[styles.typeBadge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-          <Text category="h10" bold status="link">{typeName}</Text>
-        </View>
       </Flex>
 
       <Text category="h9-s" numberOfLines={2}>
@@ -134,10 +127,5 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginTop: 24,
     backgroundColor: 'background-basic-color-2',
-  },
-  typeBadge: {
-    borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
   },
 });
