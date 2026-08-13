@@ -26,6 +26,23 @@ import {AutofillProfile} from 'services/autofillProfileService';
 // major ATS platforms like Greenhouse/Lever/Workday/LinkedIn Easy Apply,
 // since they all use standard autocomplete attributes and conventional
 // field naming — it just isn't hand-tuned to any one of them specifically).
+//
+// BUG FIX (product report: "the auto application filler should always be
+// accurate and auto fill majority of the application form based on the
+// informations the user has provided"). Two real coverage gaps fixed:
+// 1) `<select>` dropdowns were never touched at all — only `input`/
+//    `textarea` were queried — even though country, state, years of
+//    experience, and education-level pickers on real ATS pages are
+//    overwhelmingly rendered as <select>, not free-text inputs. Now
+//    matched the same way, then filled by picking the best-matching
+//    <option> (exact text/value match, then substring match, then — for
+//    yearsExperience specifically — parsing numeric ranges like "3-5
+//    years" or "5+ years" out of the option text).
+// 2) yearsExperience, highestDegree, skills, and summary were already
+//    being extracted into AutofillProfile by the backend (see
+//    services/autofillProfileService.ts) but had no FIELD_RULES entry at
+//    all, so that real user-provided data could never actually reach the
+//    page even when a matching field existed. Added rules for all four.
 // ---------------------------------------------------------------------------
 
 export interface AutofillFieldResult {
@@ -63,6 +80,10 @@ export function buildAutofillScript(profile: AutofillProfile): string {
           {key: 'currentTitle', patterns: [/current\\s*title/i, /job\\s*title/i, /\\bposition\\b/i, /\\brole\\b/i]},
           {key: 'currentCompany', patterns: [/current\\s*(company|employer)/i, /\\bemployer\\b/i]},
           {key: 'school', patterns: [/school/i, /university/i, /college/i]},
+          {key: 'yearsExperience', patterns: [/years?\\s*(of)?\\s*experience/i, /experience\\s*\\(?years\\)?/i, /how\\s*many\\s*years/i]},
+          {key: 'highestDegree', patterns: [/highest\\s*(level\\s*of\\s*)?(education|degree)/i, /education\\s*level/i, /degree\\s*level/i, /\\blevel\\s*of\\s*education\\b/i]},
+          {key: 'summary', patterns: [/professional\\s*summary/i, /about\\s*you(rself)?/i, /tell\\s*us\\s*about\\s*yourself/i, /additional\\s*information/i, /\\bbio\\b/i]},
+          {key: 'skills', patterns: [/\\bskills\\b/i, /key\\s*skills/i, /core\\s*competenc/i]},
         ];
         var SKIP_TYPES = {password: 1, file: 1, hidden: 1, submit: 1, button: 1, checkbox: 1, radio: 1, image: 1, reset: 1};
 
@@ -130,23 +151,82 @@ export function buildAutofillScript(profile: AutofillProfile): string {
           el.dispatchEvent(new Event('blur', {bubbles: true}));
         }
 
+        // Finds the best <option> for a <select> given the profile's raw
+        // value. Exact text/value match first, then a substring match
+        // either direction (e.g. profile "United States" vs. option "US -
+        // United States of America"), then — only for yearsExperience — a
+        // numeric-range parse so values like "3-5 years" or "5+ years" can
+        // be matched against a plain number. Returns -1 if nothing usable
+        // was found (caller leaves the field untouched rather than guess).
+        function selectMatchingOptionIndex(el, rawValue, key) {
+          var value = String(rawValue).trim();
+          var lowerValue = value.toLowerCase();
+          var options = el.options;
+          var i, optText, optValue;
+          for (i = 0; i < options.length; i++) {
+            optText = (options[i].textContent || '').trim().toLowerCase();
+            optValue = (options[i].value || '').trim().toLowerCase();
+            if (optText === lowerValue || optValue === lowerValue) return i;
+          }
+          for (i = 0; i < options.length; i++) {
+            optText = (options[i].textContent || '').trim().toLowerCase();
+            if (!optText || optText.length < 2) continue;
+            if (optText.indexOf(lowerValue) !== -1 || lowerValue.indexOf(optText) !== -1) return i;
+          }
+          if (key === 'yearsExperience') {
+            var numValue = parseFloat(value);
+            if (!isNaN(numValue)) {
+              var bestIdx = -1;
+              var bestDiff = Infinity;
+              for (i = 0; i < options.length; i++) {
+                optText = options[i].textContent || '';
+                var nums = optText.match(/\\d+(\\.\\d+)?/g);
+                if (!nums) continue;
+                var diff;
+                if (nums.length === 1) {
+                  var n = parseFloat(nums[0]);
+                  var isPlus = /\\+/.test(optText);
+                  if (isPlus && numValue < n) continue;
+                  diff = Math.abs(numValue - n);
+                } else {
+                  var lo = parseFloat(nums[0]);
+                  var hi = parseFloat(nums[1]);
+                  if (numValue >= lo && numValue <= hi) return i;
+                  diff = Math.min(Math.abs(numValue - lo), Math.abs(numValue - hi));
+                }
+                if (diff < bestDiff) { bestDiff = diff; bestIdx = i; }
+              }
+              return bestIdx;
+            }
+          }
+          return -1;
+        }
+
         var filled = [];
-        var candidates = document.querySelectorAll('input, textarea');
+        var candidates = document.querySelectorAll('input, textarea, select');
         for (var i = 0; i < candidates.length; i++) {
           var el = candidates[i];
-          var type = (el.type || 'text').toLowerCase();
+          var isSelect = el.tagName === 'SELECT';
+          var type = isSelect ? 'select' : (el.type || 'text').toLowerCase();
           if (SKIP_TYPES[type]) continue;
           if (el.disabled || el.readOnly) continue;
-          if (el.value && String(el.value).trim()) continue; // never overwrite something already filled
+          if (el.value && String(el.value).trim()) continue; // never overwrite something already filled/selected
           if (!isVisible(el)) continue;
           var key = matchField(el, type);
           if (!key) continue;
           var value = profile[key];
           if (value == null || value === '') continue;
           if (Array.isArray(value)) value = value.join(', ');
-          value = String(value);
           try {
-            setNativeValue(el, value);
+            if (isSelect) {
+              var idx = selectMatchingOptionIndex(el, value, key);
+              if (idx === -1) continue;
+              el.selectedIndex = idx;
+              el.dispatchEvent(new Event('input', {bubbles: true}));
+              el.dispatchEvent(new Event('change', {bubbles: true}));
+            } else {
+              setNativeValue(el, String(value));
+            }
             el.style.outline = '2px solid #0063f8';
             el.style.outlineOffset = '2px';
             filled.push({key: key, label: el.name || el.id || key});
