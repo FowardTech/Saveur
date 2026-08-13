@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {View} from 'react-native';
+import {View, Alert} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Spinner} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -8,9 +8,11 @@ import Text from 'components/Text';
 import Flex from 'components/Flex';
 import CtaButton from 'components/CtaButton';
 import StatusBadge from 'components/StatusBadge';
+import DocumentPickerModal from 'components/DocumentPickerModal';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import * as jdService from 'services/jdService';
+import {DocumentRecord} from 'services/documentsService';
 
 // Product request item: "on the job detail screen, show qualification pills
 // and a resume gap analysis" — this reuses the exact same analysis pipeline
@@ -54,6 +56,14 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
   const [gaps, setGaps] = React.useState<string[]>([]);
   const [score, setScore] = React.useState<number | null>(null);
   const [failed, setFailed] = React.useState(false);
+  // "Tailor an existing resume" flow (product request: "give the user
+  // option to either build a fresh resume or tailor the resume already in
+  // the app... just the way it does in the JD Analyzer screen") — mirrors
+  // JDAnalyzer.tsx's onBuildResume exactly (same nested Alert.alert idiom,
+  // same DocumentPickerModal for the "My Documents" sub-choice), just
+  // sourced from this screen's own jdText/qualifications/gaps/jobTitle
+  // instead of JDAnalyzer's pasted-JD result.
+  const [showDocumentPicker, setShowDocumentPicker] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -91,7 +101,7 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
     };
   }, [applyUrl]);
 
-  const onBuildResume = React.useCallback(() => {
+  const buildFresh = React.useCallback(() => {
     if (!jdText) return;
     navigate('GenerateResume', {
       keywordSuggestions: qualifications,
@@ -100,6 +110,68 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
       role: jobTitle,
     });
   }, [navigate, jdText, qualifications, gaps, jobTitle]);
+
+  const tailorFromStoredResume = React.useCallback(() => {
+    if (!jdText) return;
+    navigate('GenerateResume', {
+      keywordSuggestions: qualifications,
+      missingSkills: gaps,
+      jdText,
+      role: jobTitle,
+      useStoredResume: true,
+    });
+  }, [navigate, jdText, qualifications, gaps, jobTitle]);
+
+  const onPickedDocumentToTailor = React.useCallback(
+    (doc: DocumentRecord) => {
+      setShowDocumentPicker(false);
+      if (!jdText) return;
+      navigate('GenerateResume', {
+        keywordSuggestions: qualifications,
+        missingSkills: gaps,
+        jdText,
+        role: jobTitle,
+        existingResumeDocumentId: doc.id,
+      });
+    },
+    [navigate, jdText, qualifications, gaps, jobTitle],
+  );
+
+  const onBuildResume = React.useCallback(() => {
+    if (!jdText) return;
+    Alert.alert(
+      t('more:build_matching_resume_cta', {defaultValue: 'Build Resume'}),
+      t('more:build_resume_choice_description', {
+        defaultValue: 'Tailor a resume you already have to this job, or build a brand-new one from scratch.',
+      }),
+      [
+        {text: t('common:cancel', {defaultValue: 'Cancel'}).toString(), style: 'cancel'},
+        {
+          text: t('more:build_resume_fresh', {defaultValue: 'Build a fresh one'}).toString(),
+          onPress: buildFresh,
+        },
+        {
+          text: t('more:build_resume_tailor', {defaultValue: 'Tailor an existing resume'}).toString(),
+          onPress: () =>
+            Alert.alert(
+              t('more:build_resume_tailor', {defaultValue: 'Tailor an existing resume'}),
+              undefined,
+              [
+                {text: t('common:cancel', {defaultValue: 'Cancel'}).toString(), style: 'cancel'},
+                {
+                  text: t('more:tailor_my_generated_resume', {defaultValue: 'My generated resume'}).toString(),
+                  onPress: tailorFromStoredResume,
+                },
+                {
+                  text: t('more:choose_from_my_documents', {defaultValue: 'Choose from My Documents'}).toString(),
+                  onPress: () => setShowDocumentPicker(true),
+                },
+              ],
+            ),
+        },
+      ],
+    );
+  }, [jdText, t, buildFresh, tailorFromStoredResume]);
 
   if (failed) return null;
 
@@ -117,7 +189,8 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
   if (!qualifications.length && !gaps.length) return null;
 
   return (
-    <View style={styles.section}>
+    <>
+      <View style={styles.section}>
       {qualifications.length ? (
         <>
           <Flex justify="space-between" itemsCenter mb={12}>
@@ -171,7 +244,14 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
           style={{marginTop: 20}}
         />
       ) : null}
-    </View>
+      </View>
+      <DocumentPickerModal
+        visible={showDocumentPicker}
+        onClose={() => setShowDocumentPicker(false)}
+        onSelect={onPickedDocumentToTailor}
+        title={t('more:build_resume_tailor', {defaultValue: 'Tailor an existing resume'}).toString()}
+      />
+    </>
   );
 });
 
