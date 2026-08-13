@@ -376,7 +376,13 @@ export type RootStackParamList = {
   ReferralProgram: undefined;
   // Biometric unlock + 2FA toggles — see src/more/SecuritySettings.tsx.
   SecuritySettings: undefined;
-  JobAlerts: undefined;
+  // `companyFilter` (product request, from DreamCompanies.tsx's "{n} open
+  // jobs" badge): pre-seeds this screen's existing client-side search box
+  // (see JobAlerts.tsx's `searchQuery`) with a company name, so tapping the
+  // badge lands directly on that company's already-fetched alerts instead
+  // of the unfiltered full list. Optional — every other entry point (tab
+  // bar, suggested actions) still navigates here with no params at all.
+  JobAlerts: {companyFilter?: string} | undefined;
   // Reached from JobAlerts (tapping a card), the bell notification list
   // (tapping a "job_alert" notification), and, once push notifications are
   // wired, an OS push tap too — all three hand this the same JobAlertProps

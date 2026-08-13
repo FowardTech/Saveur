@@ -24,7 +24,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import Slider from '@react-native-community/slider';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
@@ -79,6 +79,7 @@ const JobAlerts = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['more', 'common', 'countries', 'auth']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'JobAlerts'>>();
   const {profile, updateProfile, isPremium} = React.useContext(AuthContext);
 
   // Product request: "I also want an onboarding illustration for Job
@@ -128,7 +129,12 @@ const JobAlerts = memo(() => {
   // location string — see that util's own comment — there's no
   // structured remote flag anywhere in this data model to filter on
   // instead).
-  const [searchQuery, setSearchQuery] = React.useState('');
+  // Product request (DreamCompanies.tsx's "{n} open jobs" badge): seeded
+  // from route.params.companyFilter when present, so navigating here from
+  // that badge lands pre-filtered to that company's alerts instead of the
+  // full unfiltered list — reuses this existing text-search box rather
+  // than building a second, parallel filtering path.
+  const [searchQuery, setSearchQuery] = React.useState(route.params?.companyFilter ?? '');
   const [remoteOnly, setRemoteOnly] = React.useState(false);
   const filteredAlerts = React.useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

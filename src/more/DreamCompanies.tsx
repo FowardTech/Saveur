@@ -345,6 +345,25 @@ const DreamCompanies = memo(() => {
                         ]}
                       />
                     </TouchableOpacity>
+                    {/* Product request: "add a delete icon beside the pin
+                        icon so that users can delete the company" — the
+                        only way to remove a company used to be the
+                        "Remove" text action buried inside the expanded
+                        research view below (easy to miss, and required
+                        expanding the card first). Reuses the exact same
+                        onRemove confirm-alert flow that action already
+                        calls, just exposed here too for a one-tap delete
+                        without expanding. */}
+                    <TouchableOpacity
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      onPress={() => onRemove(c.id)}
+                      style={{ marginRight: 4 }}>
+                      <Icon
+                        pack="eva"
+                        name="trash-2-outline"
+                        style={[globalStyle.icon20, { tintColor: theme['color-danger-500'] }]}
+                      />
+                    </TouchableOpacity>
                     <Icon
                       pack="eva"
                       name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
@@ -383,11 +402,25 @@ const DreamCompanies = memo(() => {
                       </View>
                     ) : null}
                     {c.openJobsCount > 0 ? (
-                      <View style={[styles.badge, { backgroundColor: theme['color-success-transparent-200'] }]}>
+                      // Product request: "users should be able to click on
+                      // the job pill and it should take the user to a page
+                      // that lists the number of jobs fetched for that
+                      // company" — navigates to JobAlerts pre-filtered to
+                      // this company (see navigation/types.tsx's
+                      // JobAlerts.companyFilter and JobAlerts.tsx's
+                      // searchQuery seeding), reusing that screen's existing
+                      // company-matching alerts rather than building a
+                      // second jobs-list screen. A nested TouchableOpacity
+                      // inside the outer expand-toggle one, same pattern the
+                      // bookmark/delete icons already use on this row.
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={() => navigation.navigate('JobAlerts', { companyFilter: c.company })}
+                        style={[styles.badge, { backgroundColor: theme['color-success-transparent-200'] }]}>
                         <Text category="h10" bold status="success">
                           {t('more:dream_company_open_jobs', { defaultValue: '{{count}} open jobs', count: c.openJobsCount })}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                     ) : null}
                     {c.prepProgress.sessionsPracticed > 0 ? (
                       <View style={[styles.badge, { backgroundColor: theme['color-primary-transparent-200'] }]}>
