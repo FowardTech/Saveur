@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageStyle, StyleSheet, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
 import {
@@ -45,6 +45,8 @@ import { ImportedFileInfo } from "services/resumeService";
 import { AuthContext } from "../../AuthContext";
 import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
+import * as notificationService from "services/notificationService";
+import { Images } from "assets/images";
 import i18n from "i18next";
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
@@ -136,6 +138,25 @@ const Chat = memo(() => {
   // Turning "voice_coach" off hides the toggle entirely, same as before.
   const voiceCoachEnabled = configService.isFeatureEnabled('voice_coach');
   const [mode, setMode] = React.useState<'voice' | 'text'>('text');
+
+  // Trophy (Leaderboard) + notification bell in this screen's header —
+  // product request: "the AI career coach should be the entering point
+  // anytime users open the app... that also means that the trophy icon
+  // and the notification icon should also be in the AI career coach
+  // screen because that screen will be the entry point all the time."
+  // Same GET /api/v1/notifications unread-count fetch HeaderHome.tsx
+  // already runs for Home's own bell badge.
+  const [unreadCount, setUnreadCount] = React.useState(0);
+  React.useEffect(() => {
+    notificationService
+      .listNotifications()
+      .then(list => setUnreadCount(list.filter(n => !n.read).length))
+      .catch(() => {
+        // Non-critical — the badge just stays at its last-known count.
+      });
+  }, []);
+  const onNotification = React.useCallback(() => navigate('Notification'), [navigate]);
+  const onLeaderboard = React.useCallback(() => navigate('Leaderboard'), [navigate]);
 
   // BUG FIX (product report, twice now: "it's just automatically going to
   // the chat screen instead of letting the user see the suggested
@@ -690,20 +711,47 @@ const Chat = memo(() => {
           </Text>
         )}
         accessoryLeft={<NavigationAction status={isVoiceMode ? 'white' : 'basic'} />}
-        accessoryRight={
-          voiceCoachEnabled ? (
-            <NavigationAction
-              title={
-                mode === 'voice'
-                  ? t("message:mode_text", { defaultValue: "Text" })
-                  : t("message:mode_voice", { defaultValue: "Voice" })
-              }
-              titleStatus={isVoiceMode ? undefined : "link"}
-              titleColor={isVoiceMode ? '#FFFFFF' : undefined}
-              onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
-            />
-          ) : undefined
-        }
+        accessoryRight={() => (
+          <Flex justify="flex-start" itemsCenter>
+            {/* Trophy (Leaderboard) + notification bell — product request:
+                "the AI career coach should be the entering point anytime
+                users open the app... the trophy icon and the notification
+                icon should also be in the AI career coach screen because
+                that screen will be the entry point all the time." Same
+                two destinations/badge HeaderHome.tsx already exposes on
+                Home, just laid out as compact nav-bar accessories here
+                instead of Home's larger circular buttons. */}
+            <TouchableOpacity activeOpacity={0.7} onPress={onLeaderboard} style={styles.headerIconButton}>
+              <Image source={Images.trophy} style={styles.headerTrophyIcon as ImageStyle} resizeMode="contain" />
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} onPress={onNotification} style={styles.headerIconButton}>
+              <Icon
+                pack="assets"
+                name="notification"
+                style={[globalStyle.icon20, { tintColor: isVoiceMode ? '#FFFFFF' : theme['icon-basic-color'] }]}
+              />
+              {unreadCount ? (
+                <View style={styles.headerNotifBadge}>
+                  <Text category="h9" status="primary" fontSize={11} lineHeight={13}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Text>
+                </View>
+              ) : null}
+            </TouchableOpacity>
+            {voiceCoachEnabled ? (
+              <NavigationAction
+                title={
+                  mode === 'voice'
+                    ? t("message:mode_text", { defaultValue: "Text" })
+                    : t("message:mode_voice", { defaultValue: "Voice" })
+                }
+                titleStatus={isVoiceMode ? undefined : "link"}
+                titleColor={isVoiceMode ? '#FFFFFF' : undefined}
+                onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
+              />
+            ) : null}
+          </Flex>
+        )}
       />
       {mode === 'voice' ? (
         <VoiceCoachView
@@ -818,6 +866,31 @@ export default Chat;
 const themedStyles = StyleService.create({
   container: {
     flex: 1,
+  },
+  // Trophy/notification header accessories (see accessoryRight above) —
+  // compact nav-bar-scale hit targets, unlike HeaderHome.tsx's larger
+  // 40x40 circular buttons which are sized for a full dashboard header
+  // row rather than a TopNavigation accessory slot.
+  headerIconButton: {
+    width: 32,
+    height: 32,
+    marginRight: 4,
+    ...globalStyle.center,
+  },
+  headerTrophyIcon: {
+    width: 20,
+    height: 20,
+  },
+  headerNotifBadge: {
+    position: "absolute",
+    borderRadius: 99,
+    backgroundColor: "button-basic-color",
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
+    top: 0,
+    right: 0,
   },
   composer: {
     position: "absolute",
