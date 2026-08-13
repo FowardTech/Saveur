@@ -442,7 +442,27 @@ i18n.use(initReactI18next).init({
     escapeValue: false,
   },
   react: {
-    useSuspense: true,
+    // BUG FIX (product report: "anytime i change language it just reload
+    // [and] some of the content of the app just refuse to load"): with
+    // useSuspense true, react-i18next's useTranslation() hook SUSPENDS
+    // every mounted consumer for the duration of i18n.changeLanguage()
+    // (it listens for the 'languageChanging' event, which fires before
+    // the switch completes, specifically to avoid a flash of mixed-
+    // language content). Suspending requires an ancestor <Suspense>
+    // boundary to catch it -- this app has none anywhere (grepped the
+    // whole repo), so every language switch threw an uncaught suspend
+    // across the entire component tree. That's the "reload": an
+    // unhandled crash, not an intentional one. Screens that had already
+    // fetched data before the crash, in a useEffect with an empty/already
+    // -satisfied dependency array, never got a chance to re-fetch once
+    // things recovered -- that's the "content just refuses to load".
+    // react-i18next's own docs call this out explicitly for React Native:
+    // "you should set useSuspense to false as Suspense is not supported
+    // yet on React Native." All translation resources are already
+    // bundled synchronously via `resources` above (no backend, nothing
+    // ever actually loads async), so turning this off costs nothing --
+    // t() just returns synchronously either way.
+    useSuspense: false,
   },
 });
 
