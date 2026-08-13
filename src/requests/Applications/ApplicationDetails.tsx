@@ -26,6 +26,7 @@ import NavigationAction from 'components/NavigationAction';
 import Content from 'components/Content';
 import dayjs from 'dayjs';
 import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
+import * as configService from 'services/configService';
 
 const STAGE_ORDER = [
   Application_Stage_Enum.Applied,
@@ -288,7 +289,14 @@ const ApplicationDetails = memo(() => {
           </>
         ) : null}
 
-        {stage === Application_Stage_Enum.Offer ? (
+        {/* Gated on post_offer_plan (product request: "all those new
+            features I asked you to implement newly I want all of them to be
+            configurable in the admin") — this button used to show
+            unconditionally for every Offer-stage application regardless of
+            the flag, even though the flag's own backend comment already
+            claimed it hid this CTA. See MoreSrc.tsx's More-menu row for the
+            same flag's other, already-correct gate. */}
+        {stage === Application_Stage_Enum.Offer && configService.isFeatureEnabled('post_offer_plan') ? (
           <Button
             children={t('request:whats_next_cta', {defaultValue: "What's Next?"})}
             status="success"

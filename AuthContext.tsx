@@ -353,7 +353,12 @@ export const AuthProvider: React.FC = ({children}) => {
         if (result.error && !/cancel/i.test(result.error)) {
           Alert.alert(
             i18n.t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-            i18n.t('auth:linkedin_failed', {defaultValue: 'LinkedIn sign-in failed. Please try again.'}),
+            // Reuses the existing err_linkedin_failed key (already translated
+            // in all 12 languages) instead of a new ad-hoc key — this used to
+            // be 'auth:linkedin_failed', which doesn't exist in any language
+            // file, so every user saw the English defaultValue regardless of
+            // app language.
+            i18n.t('auth:err_linkedin_failed', {defaultValue: 'LinkedIn sign-in failed. Please try again.'}),
           );
         }
         return;
@@ -367,7 +372,7 @@ export const AuthProvider: React.FC = ({children}) => {
       } catch (e: any) {
         Alert.alert(
           i18n.t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
-          e?.message ?? i18n.t('auth:linkedin_failed', {defaultValue: 'LinkedIn sign-in failed. Please try again.'}),
+          e?.message ?? i18n.t('auth:err_linkedin_failed', {defaultValue: 'LinkedIn sign-in failed. Please try again.'}),
         );
       }
     });
