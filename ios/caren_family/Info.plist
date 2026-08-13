@@ -4,6 +4,17 @@
 <dict>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<!-- Stripe's PaymentSheet checkout (initPaymentSheet in Subscription.tsx/
+	     AddOns.tsx/PaymentMethod.tsx) has no locale parameter of its own;
+	     on iOS it only localizes if the app itself declares mixed-locale
+	     support here. Without these two keys it silently defaults to
+	     English regardless of device language. This does NOT make the
+	     sheet follow the in-app language switcher (same inherent
+	     before-JS-loads limitation as the splash screen); it only makes
+	     it follow the device's system language, matching what Android
+	     already does automatically. -->
+	<key>CFBundleAllowMixedLocalizations</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
@@ -14,6 +25,21 @@
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>ar</string>
+		<string>de</string>
+		<string>es</string>
+		<string>fr</string>
+		<string>hi</string>
+		<string>it</string>
+		<string>ja</string>
+		<string>ko</string>
+		<string>pt</string>
+		<string>ru</string>
+		<string>zh</string>
+	</array>
 	<key>CFBundleName</key>
 	<string>$(PRODUCT_NAME)</string>
 	<key>CFBundlePackageType</key>
