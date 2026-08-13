@@ -164,9 +164,9 @@ const FindScreen = memo(() => {
       const systemDesignUnlocked = await hasAddon(ADDON_CODES.systemDesignWhiteboard);
       if (!systemDesignUnlocked) {
         Alert.alert(
-          t('find:addon_required_title_system_design', { defaultValue: 'System Design Whiteboard is a paid add-on' }),
+          t('find:addon_required_title_system_design', { defaultValue: 'System Design Practice is a paid add-on' }),
           t('find:addon_required_body', {
-            defaultValue: 'Purchase the System Design Whiteboard add-on once to unlock it for good.',
+            defaultValue: 'Purchase the System Design Practice add-on once to unlock it for good.',
           }),
           [
             { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
