@@ -486,6 +486,7 @@ interface PaymentHistoryWire {
   description: string | null;
   card_brand: string | null;
   card_last4: string | null;
+  discount_amount: number | null;
   receipt_sent_at: string | null;
   created_at: string | null;
 }
@@ -499,6 +500,7 @@ function fromPaymentWire(wire: PaymentHistoryWire): PaymentHistoryItemProps {
     description: wire.description,
     cardBrand: wire.card_brand,
     cardLast4: wire.card_last4,
+    discountAmount: wire.discount_amount ?? null,
     receiptSentAt: wire.receipt_sent_at ? new Date(wire.receipt_sent_at).getTime() : null,
     createdAt: wire.created_at ? new Date(wire.created_at).getTime() : Date.now(),
   };

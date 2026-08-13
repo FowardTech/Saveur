@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, Platform, Share} from 'react-native';
+import {Alert, Platform, Share, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -156,6 +156,43 @@ const PaymentHistory = memo(() => {
                 <Text category="h10" status="placeholder" mt={4}>
                   {new Date(payment.createdAt).toLocaleDateString(i18n.language, {year: 'numeric', month: 'long', day: 'numeric'})}
                 </Text>
+                {/* Product report: "why are we having $69.00/month and then
+                    $66.93. The user needs to know which is the discount and
+                    which is the normal price" — payment.description already
+                    carries Stripe's list-price string (e.g. "Saveur Pro
+                    Premium (at $69.00 / month)"), but nothing explained why
+                    the amount charged, above, was a different number. When a
+                    coupon actually applied (discountAmount > 0), spell out
+                    the breakdown instead of leaving the two numbers to
+                    speak for themselves. */}
+                {payment.discountAmount ? (
+                  <View style={styles.discountBreakdown}>
+                    <Flex justify="space-between" mt={2}>
+                      <Text category="h10" status="placeholder">
+                        {t('more:receipt_list_price', {defaultValue: 'List price'})}
+                      </Text>
+                      <Text category="h10" status="placeholder">
+                        {formatAmount(payment.amount + payment.discountAmount, payment.currency)}
+                      </Text>
+                    </Flex>
+                    <Flex justify="space-between" mt={2}>
+                      <Text category="h10" status="success">
+                        {t('more:receipt_discount_applied', {defaultValue: 'Discount applied'})}
+                      </Text>
+                      <Text category="h10" status="success">
+                        -{formatAmount(payment.discountAmount, payment.currency)}
+                      </Text>
+                    </Flex>
+                    <Flex justify="space-between" mt={4}>
+                      <Text category="h10" bold>
+                        {t('more:receipt_total_charged', {defaultValue: 'Total charged'})}
+                      </Text>
+                      <Text category="h10" bold>
+                        {formatAmount(payment.amount, payment.currency)}
+                      </Text>
+                    </Flex>
+                  </View>
+                ) : null}
                 {payment.cardBrand && payment.cardLast4 ? (
                   <Flex justify="flex-start" itemsCenter mt={10}>
                     <Icon pack="assets" name={BRAND_ICON[payment.cardBrand.toLowerCase()] ?? 'master'} style={styles.cardIcon} />
@@ -234,5 +271,11 @@ const themedStyles = StyleService.create({
   cardIcon: {
     width: 28,
     height: 20,
+  },
+  discountBreakdown: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'border-basic-color-3',
   },
 });

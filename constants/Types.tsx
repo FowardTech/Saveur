@@ -697,6 +697,12 @@ export interface PaymentHistoryItemProps {
   description: string | null;
   cardBrand: string | null;
   cardLast4: string | null;
+  // Product report: "why are we having $69.00/month and then $66.93. The
+  // user needs to know which is the discount and which is the normal
+  // price" — minor currency unit (cents), null/0 for a payment with no
+  // coupon applied (e.g. no student discount) — see app/models/payment.py's
+  // own comment on the backend.
+  discountAmount: number | null;
   receiptSentAt: number | null; // ms epoch, null if never sent
   createdAt: number; // ms epoch
 }
