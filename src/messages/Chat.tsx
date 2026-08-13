@@ -284,7 +284,11 @@ const Chat = memo(() => {
         }}
       />
     );
-  }, []);
+    // BUG FIX (same stale-closure class as renderInputToolbar's own fix
+    // just above): `theme` was read here but missing from this callback's
+    // deps, so message bubble backgrounds froze at whatever theme was
+    // active on first mount too.
+  }, [theme, width]);
   const renderSend = (props: SendProps<IMessage>) => (
     <Send {...props} containerStyle={styles.containerSend}>
       <Icon pack="assets" name="send" style={styles.iconSend} />
@@ -435,7 +439,17 @@ const Chat = memo(() => {
         )}
       />
     ),
-    [showAction, Platform.OS, keyboardShow, onCamera, onPhotoLibrary]
+    // BUG FIX (product report, screenshot: "This is displaying as dark
+    // mode in light mode"): `theme` was missing from this dependency
+    // list, so this callback's colors were frozen at whatever theme was
+    // active the moment the Coach tab first mounted. Bottom-tab screens
+    // stay mounted across tab switches (they aren't remounted every time
+    // you come back to this tab), so a user who mounted this screen once
+    // in dark mode and later switched the app to light mode (see
+    // ThemeContext's toggleTheme) kept seeing the old dark
+    // background-basic-color-2/3 fill on this input row forever, even
+    // though every other theme-aware surface on the screen updated fine.
+    [showAction, Platform.OS, keyboardShow, onCamera, onPhotoLibrary, theme]
   );
 
   // Tapping a coach reply's "Learn more about X" chip (see renderCustomView
