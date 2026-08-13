@@ -36,7 +36,7 @@ import EmptyState from 'components/EmptyState';
 import StatusBadge from 'components/StatusBadge';
 import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
-import {EKeyAsyncStorage, JobAlertProps} from 'constants/Types';
+import {EKeyAsyncStorage, JobAlertProps, accountScopedKey} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import * as jobAlertsService from 'services/jobAlertsService';
 import * as configService from 'services/configService';
@@ -81,14 +81,14 @@ const JobAlerts = memo(() => {
       setShowOnboarding(false);
       return;
     }
-    AsyncStorage.getItem(EKeyAsyncStorage.jobAlertsOnboardingSeen).then(seen => {
+    AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.jobAlertsOnboardingSeen, profile?.uid)).then(seen => {
       setShowOnboarding(!seen);
     });
-  }, [onboardingBannerEnabled]);
+  }, [onboardingBannerEnabled, profile?.uid]);
   const onGetStartedOnboarding = React.useCallback(() => {
     setShowOnboarding(false);
-    AsyncStorage.setItem(EKeyAsyncStorage.jobAlertsOnboardingSeen, '1').catch(() => {});
-  }, []);
+    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.jobAlertsOnboardingSeen, profile?.uid), '1').catch(() => {});
+  }, [profile?.uid]);
 
   const [alerts, setAlerts] = React.useState<JobAlertProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);

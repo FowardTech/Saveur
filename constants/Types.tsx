@@ -154,6 +154,30 @@ export enum EKeyAsyncStorage {
   // "shown once" pattern as learningCoursesOnboardingSeen above).
   jobAlertsOnboardingSeen = 'jobAlertsOnboardingSeen',
 }
+
+// BUG FIX (product report: "the tour guide always shows every time the
+// user login. It should only display once and thats the first time the
+// user is entering the app for the first time") — appTourSeen (and the
+// same "shown once" flags for jobAlertsOnboardingSeen/
+// learningCoursesOnboardingSeen) used to be a single flat device-wide
+// key. authService.ts's clearCache()/deleteAccount() explicitly wiped
+// all three on every sign-out (see that file's own comment for why —
+// originally to stop a SECOND, genuinely different account signing in
+// on the same device from inheriting the first account's "already seen"
+// state), but that meant the SAME account signing back out and back in
+// also lost its "already seen" flag every time, so the tour (and the two
+// onboarding banners) reshowed on every login instead of just once ever.
+//
+// Scoping the storage key itself to the signed-in account's Firebase uid
+// fixes both cases at once: a returning account's own key is untouched
+// by anyone else's sign-out, and a different account signing in next
+// gets its own fresh key with nothing "seen" yet — no explicit clearing
+// on sign-out needed at all anymore, see authService.ts's own updated
+// comment.
+export function accountScopedKey(base: EKeyAsyncStorage, uid?: string | null): string {
+  return uid ? `${base}:${uid}` : base;
+}
+
 export enum Animation_Types_Enum {
   SlideTop,
   SlideBottom,

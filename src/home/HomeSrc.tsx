@@ -19,7 +19,7 @@ import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, accountScopedKey } from 'constants/Types';
 import * as notificationService from 'services/notificationService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
@@ -202,19 +202,19 @@ const HomeSrc = memo(() => {
   const [showTour, setShowTour] = React.useState(false);
   useFocusEffect(
     React.useCallback(() => {
-      AsyncStorage.getItem(EKeyAsyncStorage.appTourSeen).then(seen => {
+      AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.appTourSeen, profile?.uid)).then(seen => {
         if (!seen) {
           setShowTour(true);
           requestOverlay('tour'); // see OVERLAY_PRIORITY's own comment above
         }
       });
-    }, [requestOverlay]),
+    }, [requestOverlay, profile?.uid]),
   );
   const onCloseTour = React.useCallback(() => {
     setShowTour(false);
     releaseOverlay('tour');
-    AsyncStorage.setItem(EKeyAsyncStorage.appTourSeen, '1').catch(() => { });
-  }, [releaseOverlay]);
+    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.appTourSeen, profile?.uid), '1').catch(() => { });
+  }, [releaseOverlay, profile?.uid]);
 
   // Regular QA rating prompt (product request item: "a regular if not
   // weekly or monthly app rating that will pop up as modal... for quality

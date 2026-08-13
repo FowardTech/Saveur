@@ -9,7 +9,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import {NavigationProp, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
-import {EKeyAsyncStorage} from 'constants/Types';
+import {EKeyAsyncStorage, accountScopedKey} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
 import ThemeContext from '../../ThemeContext';
@@ -130,9 +130,9 @@ const MoreSrc = memo(() => {
   // already active. Explicitly targeting the Home tab forces the actual
   // tab switch, which is what made "Show app tour" look like a dead button.
   const onReplayTour = React.useCallback(async () => {
-    await AsyncStorage.removeItem(EKeyAsyncStorage.appTourSeen).catch(() => {});
+    await AsyncStorage.removeItem(accountScopedKey(EKeyAsyncStorage.appTourSeen, profile?.uid)).catch(() => {});
     navigate('MainBottomTab', {screen: 'Home'});
-  }, [navigate]);
+  }, [navigate, profile?.uid]);
 
   // Account & career-prep tools. `featureKey` (when present) gates the row
   // behind the admin dashboard's Feature Flags page (see

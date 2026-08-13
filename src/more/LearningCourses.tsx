@@ -22,7 +22,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
-import { EKeyAsyncStorage } from 'constants/Types';
+import { EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
 import { DATA_COURSES } from 'constants/Data';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
@@ -78,14 +78,14 @@ const LearningCourses = memo(() => {
       setShowOnboarding(false);
       return;
     }
-    AsyncStorage.getItem(EKeyAsyncStorage.learningCoursesOnboardingSeen).then(seen => {
+    AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.learningCoursesOnboardingSeen, profile?.uid)).then(seen => {
       setShowOnboarding(!seen);
     });
-  }, [onboardingBannerEnabled]);
+  }, [onboardingBannerEnabled, profile?.uid]);
   const onGetStartedOnboarding = React.useCallback(() => {
     setShowOnboarding(false);
-    AsyncStorage.setItem(EKeyAsyncStorage.learningCoursesOnboardingSeen, '1').catch(() => {});
-  }, []);
+    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.learningCoursesOnboardingSeen, profile?.uid), '1').catch(() => {});
+  }, [profile?.uid]);
 
   // "Start a course" now asks for a career path first (required — a fixed
   // list, see learningService.CAREER_PATHS) and a specific topic under it

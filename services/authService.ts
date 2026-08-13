@@ -217,28 +217,29 @@ export async function regenerateUsername(): Promise<string> {
   return data.username;
 }
 
-// BUG FIX (product report: "the onboarding banner of the learning course
-// and job alert did not display the first time the user visited the
-// screen") — root cause: deleteAccount/clearCache below only ever cleared
-// `userProfile`. Every "shown once, ever" AsyncStorage flag
-// (learningCoursesOnboardingSeen, jobAlertsOnboardingSeen, and appTourSeen
-// — same pattern, see LearningCoursesOnboarding.tsx/JobAlertsOnboarding.tsx/
-// AppTour.tsx's own comments) lives in DEVICE storage, not scoped to the
-// signed-in account, and neither sign-out nor delete-account ever touched
-// any of them. So on any device that had already seen these banners under
-// a previous account (the overwhelmingly common case while testing: sign
-// out or delete the account, then sign up again with a new test account to
-// check "first-time" behavior), a genuinely brand-new account inherits the
-// previous account's "already seen" flags and never sees its own
-// first-time banners/tour — even though it's that account's real first
-// visit. Clearing these here means every sign-out/delete leaves the device
-// in the same state a real first-time installer would see the next time
-// someone signs in on it.
-const ACCOUNT_SCOPED_FIRST_TIME_FLAGS = [
-  EKeyAsyncStorage.learningCoursesOnboardingSeen,
-  EKeyAsyncStorage.jobAlertsOnboardingSeen,
-  EKeyAsyncStorage.appTourSeen,
-];
+// BUG FIX HISTORY (product report: "the onboarding banner of the learning
+// course and job alert did not display the first time the user visited the
+// screen") — the original fix here cleared 3 "shown once, ever" flags
+// (learningCoursesOnboardingSeen, jobAlertsOnboardingSeen, appTourSeen) on
+// every sign-out/delete-account, because they lived in flat DEVICE storage
+// and a brand-new account could otherwise inherit a previous account's
+// "already seen" state on a shared device.
+//
+// That over-corrected: it also wiped a RETURNING account's own "already
+// seen" flag on every sign-out, so the same account saw the tour/banners
+// again on every single login (product report: "the tour guide always
+// shows every time the user login. It should only display once and thats
+// the first time the user is entering the app for the first time").
+//
+// Fixed properly now via per-account key scoping instead of clearing —
+// see constants/Types.tsx's `accountScopedKey(base, uid)` helper (same
+// pattern as this file's sibling AuthContext.tsx's `twoFactorTrustKey`).
+// HomeSrc.tsx/MoreSrc.tsx/JobAlerts.tsx/LearningCourses.tsx now read/write
+// these 3 flags under a key suffixed with the signed-in account's Firebase
+// uid, so a returning account's "seen" state survives its own sign-outs,
+// and a different account signing in next gets its own fresh, unseen key
+// with nothing to explicitly clear. No `multiRemove` of these flags needed
+// here anymore.
 
 /**
  * DELETE /api/users/me — permanently deletes the backend user row AND (as of
@@ -250,10 +251,10 @@ const ACCOUNT_SCOPED_FIRST_TIME_FLAGS = [
  */
 export async function deleteAccount(): Promise<void> {
   await apiClient.delete('/api/users/me');
-  await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile, ...ACCOUNT_SCOPED_FIRST_TIME_FLAGS]);
+  await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile]);
 }
 
 /** Clears the local profile cache on sign-out. No network call needed. */
 export async function clearCache(): Promise<void> {
-  await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile, ...ACCOUNT_SCOPED_FIRST_TIME_FLAGS]);
+  await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile]);
 }
