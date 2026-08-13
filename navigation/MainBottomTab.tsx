@@ -18,9 +18,6 @@ import { Images } from "assets/images";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as notificationService from "services/notificationService";
 import { getMoreMenuBadges } from "services/moreMenuBadgesService";
-import * as dailyChallengeService from "services/dailyChallengeService";
-import * as goalTipsService from "services/goalTipsService";
-import * as configService from "services/configService";
 import { EKeyAsyncStorage, NotificationProps } from "constants/Types";
 import HomeStackNavigator from "./HomeStackNavigator";
 // "Find" is repurposed as the Practice hub (pick interview type / mode / difficulty).
@@ -93,8 +90,19 @@ const MainBottomTab = memo(() => {
   // anytime users open the app... the app should only take the user to
   // the homescreen the first time they are entering the app but after
   // that anytime the users enter the app it should always take them to
-  // the AI career coach screen... the only time the homescreen should
-  // show is when there are new surprise challenge, new daily tips."
+  // the AI career coach screen."
+  //
+  // Follow-up correction (product report: "What i said is that the
+  // homescreen should only display once and then after that every time
+  // the user lunches or open the app it should take them to the AI
+  // career coach screen") — an earlier version of this also routed back
+  // to Home whenever there was a new Surprise Challenge or daily tip
+  // waiting. That's not what was asked for: Home is strictly a
+  // one-time, first-ever-open destination now. Every open after that
+  // first one goes to Coach, full stop, regardless of what's new on
+  // Home — the new-content indicators still exist ON Home itself for
+  // whenever the user does visit it via the tab bar, they just no
+  // longer redirect the user there.
   //
   // Resolved once, before this tab navigator's first render, into a
   // starting tab name — `initialRouteName` (see the Navigator below) is
@@ -121,33 +129,8 @@ const MainBottomTab = memo(() => {
           if (!cancelled) setInitialTab("Home");
           return;
         }
-        // Returning — Coach, unless there's something genuinely new
-        // waiting on Home (today's Surprise Challenge not yet done/
-        // skipped, or a fresh daily tip). Both checks are best-effort:
-        // a failed/offline fetch just means "nothing new to show",
-        // never blocks landing on Coach.
-        let hasNewChallenge = false;
-        let hasNewTip = false;
-        await Promise.all([
-          (async () => {
-            if (!configService.isFeatureEnabled("daily_challenge")) return;
-            try {
-              const challenge = await dailyChallengeService.getTodayChallenge();
-              hasNewChallenge = !challenge.completed && !challenge.skipped;
-            } catch {
-              // Offline or no challenge today — doesn't count as "new".
-            }
-          })(),
-          (async () => {
-            try {
-              const tips = await goalTipsService.getTodayTips();
-              hasNewTip = tips.length > 0;
-            } catch {
-              // Offline or no goals set — doesn't count as "new".
-            }
-          })(),
-        ]);
-        if (!cancelled) setInitialTab(hasNewChallenge || hasNewTip ? "Home" : "Coach");
+        // Every other open — always Coach.
+        if (!cancelled) setInitialTab("Coach");
       } catch {
         // Any unexpected failure in the AsyncStorage read itself — fall
         // back to Home rather than leave the spinner up forever.

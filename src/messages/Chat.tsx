@@ -752,16 +752,33 @@ const Chat = memo(() => {
               ) : null}
             </TouchableOpacity>
             {voiceCoachEnabled ? (
-              <NavigationAction
-                title={
-                  mode === 'voice'
-                    ? t("message:mode_text", { defaultValue: "Text" })
-                    : t("message:mode_voice", { defaultValue: "Voice" })
-                }
-                titleStatus={isVoiceMode ? undefined : "link"}
-                titleColor={isVoiceMode ? '#FFFFFF' : undefined}
+              // BUG FIX (product report: "the voice text in the AI career
+              // coach should be like a button not a text. It should be
+              // like button") — this used to be a bare NavigationAction
+              // with just a `title` (see that component's own render
+              // logic: passing `title` with no `icon` renders nothing but
+              // plain Text in a TouchableOpacity, no button chrome at
+              // all). Now a real pill button: icon + label on a filled
+              // background, so it reads as a tappable mode switch instead
+              // of a stray blue link floating in the header.
+              <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
-              />
+                style={[styles.modeToggleButton, isVoiceMode && styles.modeToggleButtonOnVoice]}>
+                <Icon
+                  pack="eva"
+                  name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
+                  style={[globalStyle.icon16, { tintColor: isVoiceMode ? '#FFFFFF' : theme['color-primary-100'] }]}
+                />
+                <Text
+                  category="h9"
+                  status={isVoiceMode ? undefined : 'primary'}
+                  style={[styles.modeToggleLabel, isVoiceMode && { color: '#FFFFFF' }]}>
+                  {mode === 'voice'
+                    ? t("message:mode_text", { defaultValue: "Text" })
+                    : t("message:mode_voice", { defaultValue: "Voice" })}
+                </Text>
+              </TouchableOpacity>
             ) : null}
           </Flex>
         )}
@@ -904,6 +921,24 @@ const themedStyles = StyleService.create({
     alignItems: "center",
     top: 0,
     right: 0,
+  },
+  // Voice/Text mode pill button (see accessoryRight above) — a light tint
+  // fill in normal (text) mode; on the full-bleed voice-mode-background
+  // screen a translucent white fill reads better than the light tint
+  // would against that darker/colored backdrop.
+  modeToggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
+    backgroundColor: "background-tint-primary",
+  },
+  modeToggleButtonOnVoice: {
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+  },
+  modeToggleLabel: {
+    marginLeft: 4,
   },
   composer: {
     position: "absolute",
