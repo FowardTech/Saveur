@@ -290,11 +290,11 @@ const WebViewScreen = memo(() => {
       setIsFillingApplication(false);
       if (e?.status === 402 || e?.error === 'pro_required') {
         Alert.alert(
-          t('more:autofill_pro_required_title', { defaultValue: 'Pro feature' }),
-          t('more:autofill_pro_required_body', { defaultValue: 'Autofill is a Pro feature.' }),
+          t('more:autofill_pro_required_title', { defaultValue: 'Basic feature' }),
+          t('more:autofill_pro_required_body', { defaultValue: 'Autofill is a Basic feature.' }),
           [
             { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
-            { text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }), onPress: () => navigation.navigate('Subscription') },
+            { text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }), onPress: () => navigation.navigate('Subscription') },
           ],
         );
         return;

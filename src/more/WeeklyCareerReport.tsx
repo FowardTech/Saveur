@@ -57,7 +57,7 @@ const WeeklyCareerReport = memo(() => {
       <ProLockGate
         title={t('more:weekly_career_report_title', { defaultValue: 'Weekly Career Report' })}
         description={t('more:weekly_report_pro_gate_description', {
-          defaultValue: 'A weekly AI-written recap of your interview practice, applications, and progress, with tips for the week ahead — a Pro feature.',
+          defaultValue: 'A weekly AI-written recap of your interview practice, applications, and progress, with tips for the week ahead — a Basic feature.',
         })}
       />
     );

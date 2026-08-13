@@ -128,7 +128,7 @@ const JDCoverLetterGenerator = memo(() => {
       <ProLockGate
         title={t('more:jd_cover_letter_title', { defaultValue: 'Cover Letter' })}
         description={t('more:cover_letter_pro_gate_description', {
-          defaultValue: 'AI writes a tailored cover letter from your resume for any company and role — a Pro feature.',
+          defaultValue: 'AI writes a tailored cover letter from your resume for any company and role — a Basic feature.',
         })}
       />
     );

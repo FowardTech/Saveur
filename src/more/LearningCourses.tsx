@@ -346,7 +346,7 @@ const LearningCourses = memo(() => {
         variant="premium"
         title={t('more:learning_courses', { defaultValue: 'Learning Courses' })}
         description={t('more:learning_courses_pro_gate_description', {
-          defaultValue: 'AI-taught, module-by-module courses on any career topic, with a badge on completion — Learning Courses is a Pro Premium feature.',
+          defaultValue: 'AI-taught, module-by-module courses on any career topic, with a badge on completion — Learning Courses is a Premium feature.',
         })}
       />
     );

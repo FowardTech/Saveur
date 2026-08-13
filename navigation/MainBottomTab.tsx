@@ -57,7 +57,7 @@ const CoachProLockGate = () => {
     <ProLockGate
       title={t('message:ai_coach_name', { defaultValue: 'AI Career Coach' })}
       description={t('common:coach_prolock_description', {
-        defaultValue: 'Chat with your AI coach, get personalized suggested topics, and practice salary negotiations — all on the Pro plan.',
+        defaultValue: 'Chat with your AI coach, get personalized suggested topics, and practice salary negotiations — all on the Basic plan.',
       })}
     />
   );

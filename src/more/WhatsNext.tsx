@@ -208,7 +208,7 @@ const WhatsNext = memo(() => {
         variant="premium"
         title={t('more:whats_next_title', { defaultValue: "What's Next" })}
         description={t('more:whats_next_pro_gate_description', {
-          defaultValue: 'Negotiation talking points, a pre-start checklist, and a plan for settling in and succeeding with your new team — a Pro Premium feature.',
+          defaultValue: 'Negotiation talking points, a pre-start checklist, and a plan for settling in and succeeding with your new team — a Premium feature.',
         })}
       />
     );

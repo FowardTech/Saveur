@@ -129,7 +129,7 @@ const SalaryNegotiation = memo(() => {
       <ProLockGate
         title={t('find:salary_negotiation', { defaultValue: 'Salary Negotiation' })}
         description={t('find:salary_negotiation_pro_gate_description', {
-          defaultValue: 'Practice real salary negotiations against an AI recruiter, with a coaching critique at the end — a Pro feature.',
+          defaultValue: 'Practice real salary negotiations against an AI recruiter, with a coaching critique at the end — a Basic feature.',
         })}
       />
     );

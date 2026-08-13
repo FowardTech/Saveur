@@ -112,7 +112,7 @@ const JobAlertDetails = memo(() => {
         variant="premium"
         title={t('more:job_details_title', {defaultValue: 'Job Details'})}
         description={t('more:job_details_premium_gate_description', {
-          defaultValue: 'Viewing full job alert details is a Pro Premium feature.',
+          defaultValue: 'Viewing full job alert details is a Premium feature.',
         })}
       />
     );

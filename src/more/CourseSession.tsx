@@ -354,7 +354,7 @@ const CourseSession = memo(() => {
         title={t('more:learning_courses', { defaultValue: 'Learning Courses' })}
         description={t('more:learning_courses_premium_gate_description', {
           defaultValue:
-            'Structured courses with badges to sharpen your interview skills — Learning Courses is a Pro Premium feature.',
+            'Structured courses with badges to sharpen your interview skills — Learning Courses is a Premium feature.',
         })}
       />
     );

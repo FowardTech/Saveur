@@ -141,9 +141,9 @@ const MockInterviewSetup = memo(() => {
   const onSelectMode = (selected: Practice_Mode_Enum) => {
     if (selected === Practice_Mode_Enum.Video && !isPremium) {
       Alert.alert(
-        t('find:video_premium_gate_title', { defaultValue: 'Video is a Pro Premium feature' }),
+        t('find:video_premium_gate_title', { defaultValue: 'Video is a Premium feature' }),
         t('find:video_premium_gate_body', {
-          defaultValue: 'Practicing on camera with video analysis needs Saveur Pro Premium or Pro (Yearly).',
+          defaultValue: 'Practicing on camera with video analysis needs Saveur Premium or Premium (Yearly).',
         }),
         [
           { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
@@ -162,9 +162,9 @@ const MockInterviewSetup = memo(() => {
     if (isStarting) return;
     if (mode === Practice_Mode_Enum.Video && !isPremium) {
       Alert.alert(
-        t('find:video_premium_gate_title', { defaultValue: 'Video is a Pro Premium feature' }),
+        t('find:video_premium_gate_title', { defaultValue: 'Video is a Premium feature' }),
         t('find:video_premium_gate_body', {
-          defaultValue: 'Practicing on camera with video analysis needs Saveur Pro Premium or Pro (Yearly).',
+          defaultValue: 'Practicing on camera with video analysis needs Saveur Premium or Premium (Yearly).',
         }),
         [
           { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
@@ -193,12 +193,12 @@ const MockInterviewSetup = memo(() => {
           t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
           t('find:free_limit_reached_body', {
             limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
           }),
           [
             { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
             {
-              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }),
               onPress: () => navigate('Subscription'),
             },
           ],

@@ -81,7 +81,7 @@ const EmotionalCoach = memo(() => {
         variant="premium"
         title={t('more:emotional_coach', { defaultValue: 'Emotional Coach' })}
         description={t('more:emotional_coach_pro_gate_description', {
-          defaultValue: 'Check in on how the job search is affecting you and get real, supportive AI coaching — a Pro Premium feature.',
+          defaultValue: 'Check in on how the job search is affecting you and get real, supportive AI coaching — a Premium feature.',
         })}
       />
     );

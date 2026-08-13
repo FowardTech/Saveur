@@ -72,7 +72,7 @@ const ReferralProgram = memo(() => {
         // inside this text, once as the separate preview card for `url`.
         message: t('more:referral_share_message', {
           defaultValue:
-            "Join me on Saveur and get {{reward}} off your first Pro subscription — I'll get {{reward}} off mine too!",
+            "Join me on Saveur and get {{reward}} off your first Basic subscription — I'll get {{reward}} off mine too!",
           reward: rewardLabel,
         }),
         url: summary.shareUrl,

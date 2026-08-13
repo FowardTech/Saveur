@@ -207,7 +207,7 @@ const JDAnalyzer = memo(() => {
       <ProLockGate
         title={t('more:jd_analyzer', { defaultValue: 'JD Analyzer' })}
         description={t('more:jd_analyzer_pro_gate_description', {
-          defaultValue: "Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Pro feature.",
+          defaultValue: "Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Basic feature.",
         })}
       />
     );

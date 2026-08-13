@@ -56,7 +56,7 @@ const DailyIndustryNews = memo(() => {
         variant="premium"
         title={t('more:daily_industry_news', { defaultValue: 'Daily Industry News' })}
         description={t('more:news_pro_gate_description', {
-          defaultValue: 'A real, AI-curated daily digest of news relevant to your industry and target roles — a Pro Premium feature.',
+          defaultValue: 'A real, AI-curated daily digest of news relevant to your industry and target roles — a Premium feature.',
         })}
       />
     );

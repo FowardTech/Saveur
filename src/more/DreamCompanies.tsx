@@ -191,7 +191,7 @@ const DreamCompanies = memo(() => {
         variant="premium"
         title={t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' })}
         description={t('more:dream_companies_premium_gate_description', {
-          defaultValue: 'Track your target companies with real research, matching job alerts, and prep progress — a Pro Premium feature.',
+          defaultValue: 'Track your target companies with real research, matching job alerts, and prep progress — a Premium feature.',
         })}
       />
     );

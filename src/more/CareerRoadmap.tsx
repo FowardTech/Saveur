@@ -147,7 +147,7 @@ const CareerRoadmap = memo(() => {
         variant="premium"
         title={t('more:career_roadmap', { defaultValue: 'AI Career Roadmap' })}
         description={t('more:career_roadmap_pro_gate_description', {
-          defaultValue: 'Tell the AI the role you want and it plans the real, step-by-step path to get there — a Pro Premium feature.',
+          defaultValue: 'Tell the AI the role you want and it plans the real, step-by-step path to get there — a Premium feature.',
         })}
       />
     );

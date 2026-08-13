@@ -50,7 +50,9 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
       <TopNavigation
         title={
           <Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">
-            {title ?? t('common:pro_feature_title', { defaultValue: 'Pro feature' })}
+            {title ?? (isPremiumVariant
+              ? t('common:premium_feature_title', { defaultValue: 'Premium feature' })
+              : t('common:pro_feature_title', { defaultValue: 'Basic feature' }))}
           </Text>
         }
         accessoryLeft={<NavigationAction />}
@@ -92,7 +94,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
               for the full illustration-sweep context. */}
           <ArtLockedGift size={104} />
           <Text category="h3" bold center mt={20}>
-            {isPremiumVariant ? t('common:pro_premium_gate_heading', { defaultValue: 'This is a Pro Premium feature' }) : t('common:pro_gate_heading', { defaultValue: 'This is a Pro feature' })}
+            {isPremiumVariant ? t('common:pro_premium_gate_heading', { defaultValue: 'This is a Premium feature' }) : t('common:pro_gate_heading', { defaultValue: 'This is a Basic feature' })}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={12} maxWidth={320}>
             {description}
@@ -102,7 +104,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
-            {renderCenteredLabel(isPremiumVariant ? t('common:see_pro_premium_plans', { defaultValue: 'See Pro Premium plans' }) : t('common:see_pro_plans', { defaultValue: 'See Pro plans' }), {stretch: false})}
+            {renderCenteredLabel(isPremiumVariant ? t('common:see_pro_premium_plans', { defaultValue: 'See Premium plans' }) : t('common:see_pro_plans', { defaultValue: 'See Basic plans' }), {stretch: false})}
           </CtaButton>
         </Flex>
       </Content>

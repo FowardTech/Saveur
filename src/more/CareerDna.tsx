@@ -137,7 +137,7 @@ const CareerDna = memo(() => {
         variant="premium"
         title={t('more:career_dna', { defaultValue: 'Career DNA' })}
         description={t('more:career_dna_premium_gate_description', {
-          defaultValue: 'A living profile the AI builds from your real activity — interviews, courses, progress — and refines every week. A Pro Premium feature.',
+          defaultValue: 'A living profile the AI builds from your real activity — interviews, courses, progress — and refines every week. A Premium feature.',
         })}
       />
     );

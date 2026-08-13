@@ -53,7 +53,7 @@ const SavedVideos = memo(() => {
         variant="premium"
         title={t('more:saved_videos', { defaultValue: 'Saved Videos' })}
         description={t('more:saved_videos_pro_gate_description', {
-          defaultValue: 'Bookmark Learning Course videos to come back to later — Saved Videos is a Pro Premium feature.',
+          defaultValue: 'Bookmark Learning Course videos to come back to later — Saved Videos is a Premium feature.',
         })}
       />
     );

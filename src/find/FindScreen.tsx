@@ -71,12 +71,12 @@ const FindScreen = memo(() => {
           t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
           t('find:free_limit_reached_body', {
             limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
           }),
           [
             { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
             {
-              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }),
               onPress: () => navigate('Subscription'),
             },
           ],
@@ -147,12 +147,12 @@ const FindScreen = memo(() => {
           t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
           t('find:free_limit_reached_body', {
             limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Pro for unlimited practice.`,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
           }),
           [
             { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
             {
-              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Pro' }),
+              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }),
               onPress: () => navigate('Subscription'),
             },
           ],

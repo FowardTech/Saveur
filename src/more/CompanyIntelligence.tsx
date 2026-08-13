@@ -119,7 +119,7 @@ const CompanyIntelligence = memo(() => {
       <ProLockGate
         title={t('more:company_intelligence', { defaultValue: 'Company Intelligence' })}
         description={t('more:company_intel_pro_gate_description', {
-          defaultValue: 'Real, AI-researched company facts and likely interview questions before you walk in — a Pro feature.',
+          defaultValue: 'Real, AI-researched company facts and likely interview questions before you walk in — a Basic feature.',
         })}
       />
     );

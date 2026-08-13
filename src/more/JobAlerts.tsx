@@ -334,7 +334,7 @@ const JobAlerts = memo(() => {
         variant="premium"
         title={t('more:job_alerts', {defaultValue: 'Job Alerts'})}
         description={t('more:job_alerts_premium_gate_description', {
-          defaultValue: 'Get notified the moment a real job posting matches your profile — Job Alerts is a Pro Premium feature.',
+          defaultValue: 'Get notified the moment a real job posting matches your profile — Job Alerts is a Premium feature.',
         })}
       />
     );

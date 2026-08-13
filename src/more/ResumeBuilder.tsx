@@ -215,7 +215,7 @@ const ResumeBuilder = memo(() => {
       <ProLockGate
         title={t('more:resume_builder', { defaultValue: 'Resume Builder' })}
         description={t('more:resume_builder_pro_gate_description', {
-          defaultValue: 'Import your resume, get AI bullet rewrites, and build an ATS-ready document — Resume Builder is a Pro feature.',
+          defaultValue: 'Import your resume, get AI bullet rewrites, and build an ATS-ready document — Resume Builder is a Basic feature.',
         })}
       />
     );

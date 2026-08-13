@@ -92,7 +92,7 @@ const LinkedInOptimizer = memo(() => {
         variant="premium"
         title={t('more:linkedin_optimizer', { defaultValue: 'LinkedIn Optimizer' })}
         description={t('more:linkedin_optimizer_pro_gate_description', {
-          defaultValue: 'AI rewrites your LinkedIn headline, about section, and bullet points to stand out to recruiters — a Pro Premium feature.',
+          defaultValue: 'AI rewrites your LinkedIn headline, about section, and bullet points to stand out to recruiters — a Premium feature.',
         })}
       />
     );

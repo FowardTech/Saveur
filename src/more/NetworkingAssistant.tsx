@@ -171,7 +171,7 @@ const NetworkingAssistant = memo(() => {
       <ProLockGate
         title={t('more:networking_assistant_title', { defaultValue: 'Networking Assistant' })}
         description={t('more:networking_assistant_pro_gate_description', {
-          defaultValue: 'Track contacts, log outreach, and get AI-drafted messages tailored to each one — Networking Assistant is a Pro feature.',
+          defaultValue: 'Track contacts, log outreach, and get AI-drafted messages tailored to each one — Networking Assistant is a Basic feature.',
         })}
       />
     );

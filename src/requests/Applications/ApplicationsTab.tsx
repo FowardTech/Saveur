@@ -120,18 +120,18 @@ const ApplicationsTab = memo(() => {
             style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
           <Text category="h6" bold center mt={16}>
-            {t('request:application_tracker_pro_gate_title', {defaultValue: 'This is a Pro Premium feature'})}
+            {t('request:application_tracker_pro_gate_title', {defaultValue: 'This is a Premium feature'})}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={8} mb={24}>
             {t('request:application_tracker_pro_gate_body', {
-              defaultValue: "Track every job you've applied for, all the way to offer — Application Tracker is a Pro Premium feature.",
+              defaultValue: "Track every job you've applied for, all the way to offer — Application Tracker is a Premium feature.",
             })}
           </Text>
           <CtaButton
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
-            {renderCenteredLabel(t('request:see_pro_premium_plans', {defaultValue: 'See Pro Premium plans'}), {stretch: false})}
+            {renderCenteredLabel(t('request:see_pro_premium_plans', {defaultValue: 'See Premium plans'}), {stretch: false})}
           </CtaButton>
         </Flex>
       </View>

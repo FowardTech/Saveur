@@ -55,7 +55,7 @@ function studentPerks(t: TFunction, discountPercent: number): {icon: string; tit
   return [
     {
       icon: 'percent-outline',
-      title: t('more:student_perk_discount_title', {defaultValue: '{{percent}}% off Saveur Pro', percent: discountPercent}),
+      title: t('more:student_perk_discount_title', {defaultValue: '{{percent}}% off Saveur Basic', percent: discountPercent}),
       body: t('more:student_perk_discount_body', {defaultValue: 'Discounted pricing for as long as you’re a final-year student — until your graduation date.'}),
     },
     {
@@ -318,11 +318,11 @@ const StudentVerification = memo(() => {
             <Text category="h9-s" status="placeholder" mb={20}>
               {fromSignup
                 ? t('more:student_verification_signup_description', {
-                    defaultValue: "Are you a final-year student? Get {{percent}}% off Saveur Pro until graduation — verify your school email to unlock it. You can always do this later from Settings.",
+                    defaultValue: "Are you a final-year student? Get {{percent}}% off Saveur Basic until graduation — verify your school email to unlock it. You can always do this later from Settings.",
                     percent: discountPercent,
                   })
                 : t('more:student_verification_description', {
-                    defaultValue: 'Final-year students get {{percent}}% off Saveur Pro until graduation. Verify your school email to unlock it.',
+                    defaultValue: 'Final-year students get {{percent}}% off Saveur Basic until graduation. Verify your school email to unlock it.',
                     percent: discountPercent,
                   })}
             </Text>

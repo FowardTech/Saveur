@@ -107,9 +107,9 @@ const ScheduleInterview = memo(() => {
   const onSelectMode = (selected: Practice_Mode_Enum) => {
     if (selected === Practice_Mode_Enum.Video && !isPremium) {
       Alert.alert(
-        t('find:video_premium_gate_title', { defaultValue: 'Video is a Pro Premium feature' }),
+        t('find:video_premium_gate_title', { defaultValue: 'Video is a Premium feature' }),
         t('find:video_premium_gate_body', {
-          defaultValue: 'Practicing on camera with video analysis needs Saveur Pro Premium or Pro (Yearly).',
+          defaultValue: 'Practicing on camera with video analysis needs Saveur Premium or Premium (Yearly).',
         }),
         [
           { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },

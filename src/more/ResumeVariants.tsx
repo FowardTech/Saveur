@@ -129,7 +129,7 @@ const ResumeVariants = memo(() => {
         variant="premium"
         title={t('more:resume_evolution', { defaultValue: 'Resume Evolution' })}
         description={t('more:resume_evolution_pro_gate_description', {
-          defaultValue: 'Keep multiple AI-tailored resume variants side by side, one per target role or company — a Pro Premium feature.',
+          defaultValue: 'Keep multiple AI-tailored resume variants side by side, one per target role or company — a Premium feature.',
         })}
       />
     );

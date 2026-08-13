@@ -129,7 +129,7 @@ const CoverLetterGenerator = memo(() => {
       <ProLockGate
         title={t('more:cover_letter_generator', { defaultValue: 'Cover Letter Generator' })}
         description={t('more:cover_letter_pro_gate_description', {
-          defaultValue: 'AI writes a tailored cover letter from your resume for any company and role — a Pro feature.',
+          defaultValue: 'AI writes a tailored cover letter from your resume for any company and role — a Basic feature.',
         })}
       />
     );
