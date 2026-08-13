@@ -630,6 +630,8 @@
   "resume_field_start_date": "Inizio (es. gen 2022)",
   "resume_gen_error": "Impossibile generare il contenuto del curriculum.",
   "resume_languages": "Lingue",
+  "resume_nothing_to_tailor_message": "Non c'è ancora nulla nell'app da personalizzare, quindi ne abbiamo creato uno da zero. Puoi modificarlo qui sotto, oppure tornare indietro e scegliere un file da I miei documenti da personalizzare la prossima volta.",
+  "resume_nothing_to_tailor_title": "Non hai ancora un curriculum salvato",
   "resume_preparing": "Preparazione…",
   "resume_preview_cv": "Anteprima CV",
   "resume_preview_resume": "Anteprima curriculum",

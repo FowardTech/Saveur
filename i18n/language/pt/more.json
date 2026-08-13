@@ -630,6 +630,8 @@
   "resume_field_start_date": "Início (ex. jan. 2022)",
   "resume_gen_error": "Não foi possível gerar o conteúdo do currículo.",
   "resume_languages": "Idiomas",
+  "resume_nothing_to_tailor_message": "Ainda não há nada no app para adaptar, então criamos este do zero. Você pode editá-lo abaixo, ou voltar e escolher um arquivo em Meus Documentos para adaptar da próxima vez.",
+  "resume_nothing_to_tailor_title": "Você ainda não tem um currículo salvo",
   "resume_preparing": "Preparando…",
   "resume_preview_cv": "Pré-visualizar currículo",
   "resume_preview_resume": "Pré-visualizar currículo",

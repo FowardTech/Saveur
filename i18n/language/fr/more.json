@@ -630,6 +630,8 @@
   "resume_field_start_date": "Début (ex. janv. 2022)",
   "resume_gen_error": "Impossible de générer le contenu du CV.",
   "resume_languages": "Langues",
+  "resume_nothing_to_tailor_message": "Il n'y a encore rien dans l'application à adapter, nous avons donc créé celui-ci à partir de zéro. Vous pouvez le modifier ci-dessous, ou revenir en arrière et choisir un fichier dans Mes Documents à adapter la prochaine fois.",
+  "resume_nothing_to_tailor_title": "Vous n'avez pas encore de CV enregistré",
   "resume_preparing": "Préparation…",
   "resume_preview_cv": "Aperçu du CV",
   "resume_preview_resume": "Aperçu du CV",

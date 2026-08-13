@@ -182,6 +182,17 @@ const GenerateResume = memo(() => {
           // button) always tailors against the CURRENT stored resume.
           existingResume = await resumeService.getStoredResumeSections();
         }
+        // BUG FIX (product report: "the build resume button should still
+        // ask... instead of just building a new one instead of giving the
+        // user options"): the choice dialog itself was already correct
+        // (see JDAnalyzer.tsx's onBuildResume) — but a user who picked
+        // "My generated resume" while having no resume saved in the app
+        // yet (getStoredResumeSections() returns null with nothing to
+        // tailor) silently got a plain fresh build with zero indication
+        // anything different happened, which reads exactly like the
+        // "tailor" choice did nothing. Now surfaced explicitly.
+        const requestedTailorButNothingToTailor =
+          !!route.params?.useStoredResume && !existingResume && !route.params?.existingResumeDocumentId;
         const generated = await resumeGenerationService.generateResumeContent({
           role: targetRole,
           jdText: route.params?.jdText,
@@ -189,6 +200,14 @@ const GenerateResume = memo(() => {
           existingResumeDocumentId: existingResume ? undefined : route.params?.existingResumeDocumentId,
         });
         setContent(generated);
+        if (requestedTailorButNothingToTailor) {
+          Alert.alert(
+            t('more:resume_nothing_to_tailor_title', { defaultValue: "You don't have a saved resume yet" }),
+            t('more:resume_nothing_to_tailor_message', {
+              defaultValue: "There's nothing in the app yet to tailor, so we built this one from scratch instead. You can edit it below, or go back and choose a file from My Documents to tailor next time.",
+            }),
+          );
+        }
       } catch (e: any) {
         setGenError(e?.message ?? t('more:resume_gen_error', { defaultValue: 'Could not generate resume content.' }));
       } finally {

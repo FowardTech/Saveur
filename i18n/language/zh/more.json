@@ -630,6 +630,8 @@
   "resume_field_start_date": "开始时间(例如 2022年1月)",
   "resume_gen_error": "无法生成简历内容。",
   "resume_languages": "语言能力",
+  "resume_nothing_to_tailor_message": "应用中还没有可供调整的简历，因此我们为你从头创建了这份简历。你可以在下方编辑，或返回从「我的文档」中选择一个文件以便下次调整。",
+  "resume_nothing_to_tailor_title": "你还没有保存的简历",
   "resume_preparing": "准备中…",
   "resume_preview_cv": "预览简历",
   "resume_preview_resume": "预览简历",

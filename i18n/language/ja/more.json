@@ -630,6 +630,8 @@
   "resume_field_start_date": "開始(例: 2022年1月)",
   "resume_gen_error": "履歴書の内容を生成できませんでした。",
   "resume_languages": "言語",
+  "resume_nothing_to_tailor_message": "アプリ内に調整できるものがまだないため、代わりにゼロから作成しました。以下で編集するか、戻って「マイドキュメント」からファイルを選び、次回調整することもできます。",
+  "resume_nothing_to_tailor_title": "保存された履歴書がまだありません",
   "resume_preparing": "準備中…",
   "resume_preview_cv": "履歴書をプレビュー",
   "resume_preview_resume": "レジュメをプレビュー",

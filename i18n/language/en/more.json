@@ -630,6 +630,8 @@
   "resume_field_start_date": "Start (e.g. Jan 2022)",
   "resume_gen_error": "Could not generate resume content.",
   "resume_languages": "Languages",
+  "resume_nothing_to_tailor_message": "There's nothing in the app yet to tailor, so we built this one from scratch instead. You can edit it below, or go back and choose a file from My Documents to tailor next time.",
+  "resume_nothing_to_tailor_title": "You don't have a saved resume yet",
   "resume_preparing": "Preparing…",
   "resume_preview_cv": "Preview CV",
   "resume_preview_resume": "Preview Resume",

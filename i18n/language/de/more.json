@@ -630,6 +630,8 @@
   "resume_field_start_date": "Beginn (z. B. Jan. 2022)",
   "resume_gen_error": "Der Lebenslaufinhalt konnte nicht erstellt werden.",
   "resume_languages": "Sprachen",
+  "resume_nothing_to_tailor_message": "Es gibt in der App noch nichts zum Anpassen, deshalb haben wir diesen Lebenslauf stattdessen von Grund auf erstellt. Du kannst ihn unten bearbeiten oder zurückgehen und eine Datei aus Meine Dokumente auswählen, um sie das nächste Mal anzupassen.",
+  "resume_nothing_to_tailor_title": "Du hast noch keinen gespeicherten Lebenslauf",
   "resume_preparing": "Wird vorbereitet…",
   "resume_preview_cv": "Lebenslauf ansehen",
   "resume_preview_resume": "Lebenslauf ansehen",
