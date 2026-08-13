@@ -593,7 +593,7 @@ const HomeSrc = memo(() => {
           // real Check-In/Badges buttons live.
           <TouchableOpacity activeOpacity={0.85} onPress={() => navigate('Leaderboard')}>
           <View style={[styles.streakHero, styles.streakHeroOuter]}>
-            <Flex justify="flex-start" itemsCenter mb={10}>
+            <Flex justify="flex-start" itemsCenter mb={6}>
               <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
               <Text category="h10" bold ml={6} style={{ color: 'rgba(255,255,255,0.85)' }}>
                 {t('home:streak_hero_label', { defaultValue: 'Practice streak' })}
@@ -601,10 +601,10 @@ const HomeSrc = memo(() => {
             </Flex>
             <Flex justify="space-between" itemsCenter>
               <View style={globalStyle.flexOne}>
-                <Text category="h2" bold style={{ color: '#fff' }}>
+                <Text category="h3" bold style={{ color: '#fff' }}>
                   {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak.streakDays })}
                 </Text>
-                <Text category="h10" mt={6} style={{ color: 'rgba(255,255,255,0.75)' }}>
+                <Text category="h10" mt={4} style={{ color: 'rgba(255,255,255,0.75)' }}>
                   {streak.longestStreak && streak.longestStreak > streak.streakDays
                     ? t('home:streak_hero_subtitle_chasing', {
                         defaultValue: 'Best is {{best}} days — keep going!',
@@ -615,17 +615,17 @@ const HomeSrc = memo(() => {
               </View>
               <CircularProgress
                 progress={streakRingPct}
-                size={64}
-                strokeWidth={7}
+                size={50}
+                strokeWidth={6}
                 trackColor="rgba(255,255,255,0.25)"
                 color="#fff">
-                <Text category="h9" bold style={{ color: '#fff' }}>
+                <Text category="h10" bold style={{ color: '#fff' }}>
                   {Math.round(streakRingPct)}%
                 </Text>
               </CircularProgress>
             </Flex>
 
-            <Flex justify="space-between" itemsCenter mt={16}>
+            <Flex justify="space-between" itemsCenter mt={10}>
               <View style={styles.streakChip}>
                 <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
                 <Text category="h9" bold mt={4} style={{ color: '#fff' }}>{streak.xp}</Text>
@@ -931,9 +931,14 @@ const themedStyles = StyleService.create({
   // practice streak card in the homescreen to be blue but the same color
   // tone but blue" -- same softness/lightness as the original #8B7FE0
   // purple, hue rotated over to blue instead.
+  // Product follow-up: "reduce the height of the practice streak card to
+  // medium size" — padding/borderRadius trimmed and the internal spacing
+  // (icon/ring sizes, row margins, up in the JSX) tightened to match, so
+  // the whole card reads noticeably shorter without losing any of its
+  // three stat chips.
   streakHero: {
-    borderRadius: 24,
-    padding: 18,
+    borderRadius: 20,
+    padding: 14,
     marginTop: 14,
     // Product follow-up (revert): flat fill again, no more gradient — this
     // app's own brand blue.
