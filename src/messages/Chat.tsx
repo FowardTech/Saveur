@@ -780,25 +780,21 @@ const Chat = memo(() => {
                 <Icon
                   pack="eva"
                   name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
-                  // BUG FIX (app-wide sweep, product report: "this button
-                  // is not looking good in light mode... there are so
-                  // many buttons like that in the app that the text are
-                  // in white in light mode") — this icon/label pair was
-                  // using `color-primary-100`/status="primary", a token
-                  // that's only correct on a SOLID colored fill (see
-                  // Leaderboard.tsx's own header comment on this exact bug
-                  // class) — this pill's non-voice-mode fill is
-                  // `background-tint-primary`, a light tint, not a solid
-                  // fill, so the icon/label went near-invisible. Switched
-                  // to `text-link-color` (this app's established fix for
-                  // "accent text on a light background", already scoped
-                  // per theme unlike color-primary-100).
-                  style={[globalStyle.icon16, { tintColor: isVoiceMode ? '#FFFFFF' : theme['text-link-color'] }]}
+                  // Product request: "bake the button background the
+                  // default blue color" — the pill's normal (non-voice-
+                  // mode) fill is now this app's standard solid brand blue
+                  // (`button-basic-color`, same token every other filled
+                  // CTA button reads) instead of a light tint, so the icon/
+                  // label go white for contrast — the same solid-fill/
+                  // white-text pairing already correct everywhere else in
+                  // the app (see Leaderboard.tsx's own header comment on
+                  // why that pairing only holds on a SOLID fill, which this
+                  // now genuinely is).
+                  style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]}
                 />
                 <Text
                   category="h9"
-                  status={isVoiceMode ? undefined : 'link'}
-                  style={[styles.modeToggleLabel, isVoiceMode && { color: '#FFFFFF' }]}>
+                  style={[styles.modeToggleLabel, { color: '#FFFFFF' }]}>
                   {mode === 'voice'
                     ? t("message:mode_text", { defaultValue: "Text" })
                     : t("message:mode_voice", { defaultValue: "Voice" })}
@@ -947,17 +943,19 @@ const themedStyles = StyleService.create({
     top: 0,
     right: 0,
   },
-  // Voice/Text mode pill button (see accessoryRight above) — a light tint
-  // fill in normal (text) mode; on the full-bleed voice-mode-background
-  // screen a translucent white fill reads better than the light tint
-  // would against that darker/colored backdrop.
+  // Voice/Text mode pill button (see accessoryRight above) — product
+  // request: "bake the button background the default blue color", the
+  // app's standard solid brand-blue fill in normal (text) mode; on the
+  // full-bleed voice-mode-background screen (already that same blue in
+  // light mode) a translucent white fill instead, so the button still
+  // reads as a distinct control against its own background there.
   modeToggleButton: {
     flexDirection: "row",
     alignItems: "center",
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 16,
-    backgroundColor: "background-tint-primary",
+    backgroundColor: "button-basic-color",
   },
   modeToggleButtonOnVoice: {
     backgroundColor: "rgba(255, 255, 255, 0.18)",
