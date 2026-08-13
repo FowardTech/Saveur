@@ -21,6 +21,16 @@ import {RootStackParamList} from 'navigation/types';
 import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
 import {AuthContext} from '../../AuthContext';
 
+// Same cap, same reasoning, as src/more/JobAlerts.tsx's identical constants
+// (see that file's fuller comment) — this screen edits the exact same two
+// profile fields, so it needs the exact same client-side guard against a
+// user piling up roles/countries that each become their own live Firecrawl/
+// Perplexity discovery pass. Server-side enforcement (app/api/users.py's
+// update_me, truncating to whatever app_config_service's "job_alerts"
+// section has these set to) is the real backstop either screen goes through.
+const MAX_DESIRED_ROLES = 5;
+const MAX_PREFERRED_COUNTRIES = 3;
+
 // "Change it later" equivalent of src/auth/Signup/SignupSecondStep.tsx — was
 // previously only collected once, at signup, with no way for a user to add a
 // new target role or open up to a new country afterward without deleting and
@@ -62,6 +72,16 @@ const JobPreferences = memo(() => {
   const addRole = () => {
     const trimmed = roleDraft.trim();
     if (!trimmed) return;
+    if (desiredRoles.length >= MAX_DESIRED_ROLES && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())) {
+      Alert.alert(
+        t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
+        t('more:job_alerts_max_roles_body', {
+          count: MAX_DESIRED_ROLES,
+          defaultValue: `You can target up to ${MAX_DESIRED_ROLES} roles at once. Remove one to add another.`,
+        }).toString(),
+      );
+      return;
+    }
     setDesiredRoles(prev => (prev.some(r => r.toLowerCase() === trimmed.toLowerCase()) ? prev : [...prev, trimmed]));
     setRoleDraft('');
   };
@@ -78,9 +98,20 @@ const JobPreferences = memo(() => {
   );
 
   const toggleCountry = (country: string) => {
-    setPreferredCountries(prev =>
-      prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country],
-    );
+    setPreferredCountries(prev => {
+      if (prev.includes(country)) return prev.filter(c => c !== country);
+      if (prev.length >= MAX_PREFERRED_COUNTRIES) {
+        Alert.alert(
+          t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
+          t('more:job_alerts_max_countries_body', {
+            count: MAX_PREFERRED_COUNTRIES,
+            defaultValue: `You can pick up to ${MAX_PREFERRED_COUNTRIES} countries at once. Remove one to add another.`,
+          }).toString(),
+        );
+        return prev;
+      }
+      return [...prev, country];
+    });
   };
 
   const onSave = React.useCallback(async () => {

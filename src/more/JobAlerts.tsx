@@ -46,6 +46,25 @@ import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import JobAlertsOnboarding from './JobAlertsOnboarding';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import {isRemoteLocation} from 'utils/jobLocation';
+import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
+
+// Mirrors app_config_service's "job_alerts"."max_desired_roles"/
+// "max_preferred_countries" defaults (see saveur-backend's own comment on
+// that section) — hardcoded here rather than fetched live, same convention
+// this screen's dailyLimit slider already uses for its 15-50 bounds. The
+// real enforcement is server-side (app/api/users.py's update_me, which
+// truncates to whatever the admin has these set to); this is just what
+// stops a user from adding past the cap in the UI in the first place.
+// Every desired_role x preferred_country combo becomes its own live
+// Firecrawl/Perplexity discovery pass in job_search_service.py's global
+// batch unless another user happens to share the exact combo — this bounds
+// how much any single account can multiply that fan-out. Deliberately does
+// NOT apply to Dream Companies (DreamCompanies.tsx) — those are already
+// capped separately (app_config_service's "dream_companies"."max_per_user")
+// and each one is only ever a single role/country combo, not a cross
+// product, so there's no equivalent fan-out risk to guard against there.
+const MAX_DESIRED_ROLES = 5;
+const MAX_PREFERRED_COUNTRIES = 3;
 
 // "Like a Google Alert, but for jobs" — matches new postings found online
 // against profile.preferredCountries + profile.desiredRoles (see
@@ -58,7 +77,7 @@ import {isRemoteLocation} from 'utils/jobLocation';
 const JobAlerts = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const {t} = useTranslation(['more', 'common']);
+  const {t} = useTranslation(['more', 'common', 'countries', 'auth']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const {profile, updateProfile, isPremium} = React.useContext(AuthContext);
 
@@ -127,9 +146,34 @@ const JobAlerts = memo(() => {
 
   const [isPrefsOpen, setIsPrefsOpen] = React.useState(false);
   const [roleDraft, setRoleDraft] = React.useState('');
-  const [countryDraft, setCountryDraft] = React.useState('');
+  // BUG FIX (credit-usage audit — Firecrawl/Perplexity overuse investigation):
+  // this used to be a plain free-text country Input. Two users who both
+  // wanted "United States" but one typed "USA" never shared the discovery
+  // cache in job_search_service.py, so each independently triggered a full
+  // live search for what's really the same query. Replaced with the same
+  // fixed-list, searchable multi-select COUNTRIES already used by
+  // src/more/JobPreferences.tsx (that screen edits these exact same two
+  // profile fields) — countryQuery now just filters that list rather than
+  // being free text that gets added as-is. See countryLabel/filteredCountries
+  // below, ported from JobPreferences.tsx's identical helpers.
+  const [countryQuery, setCountryQuery] = React.useState('');
   const [desiredRoles, setDesiredRoles] = React.useState<string[]>(profile?.desiredRoles ?? []);
   const [preferredCountries, setPreferredCountries] = React.useState<string[]>(profile?.preferredCountries ?? []);
+  // See JobPreferences.tsx's identical helper — COUNTRIES stays a fixed
+  // list of stable English canonical values (what's actually stored/synced
+  // via updateProfile), this just looks up a display label for the active
+  // language, falling back to the English name itself when untranslated.
+  const countryLabel = React.useCallback(
+    (country: string) => t(country, {ns: 'countries', defaultValue: country}),
+    [t],
+  );
+  const filteredCountries = React.useMemo(
+    () => COUNTRIES.filter(c => {
+      const q = countryQuery.toLowerCase();
+      return c.toLowerCase().includes(q) || countryLabel(c).toLowerCase().includes(q);
+    }),
+    [countryQuery, countryLabel],
+  );
   // Max NEW alerts created per calendar day — enforced server-side in
   // job_search_service.refresh_alerts_for_user (User.job_alert_daily_limit).
   // A free-text field here let someone type "1" or "2" and end up thinking
@@ -266,14 +310,34 @@ const JobAlerts = memo(() => {
   const addRole = () => {
     const trimmed = roleDraft.trim();
     if (!trimmed) return;
+    if (desiredRoles.length >= MAX_DESIRED_ROLES && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())) {
+      Alert.alert(
+        t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
+        t('more:job_alerts_max_roles_body', {
+          count: MAX_DESIRED_ROLES,
+          defaultValue: `You can target up to ${MAX_DESIRED_ROLES} roles at once. Remove one to add another.`,
+        }).toString(),
+      );
+      return;
+    }
     setDesiredRoles(prev => (prev.some(r => r.toLowerCase() === trimmed.toLowerCase()) ? prev : [...prev, trimmed]));
     setRoleDraft('');
   };
-  const addCountry = () => {
-    const trimmed = countryDraft.trim();
-    if (!trimmed) return;
-    setPreferredCountries(prev => (prev.some(c => c.toLowerCase() === trimmed.toLowerCase()) ? prev : [...prev, trimmed]));
-    setCountryDraft('');
+  const toggleCountry = (country: string) => {
+    setPreferredCountries(prev => {
+      if (prev.includes(country)) return prev.filter(c => c !== country);
+      if (prev.length >= MAX_PREFERRED_COUNTRIES) {
+        Alert.alert(
+          t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
+          t('more:job_alerts_max_countries_body', {
+            count: MAX_PREFERRED_COUNTRIES,
+            defaultValue: `You can pick up to ${MAX_PREFERRED_COUNTRIES} countries at once. Remove one to add another.`,
+          }).toString(),
+        );
+        return prev;
+      }
+      return [...prev, country];
+    });
   };
 
   const onSavePrefs = async () => {
@@ -491,31 +555,54 @@ const JobAlerts = memo(() => {
               {t('more:job_alerts_targeted_countries_label', {defaultValue: "Countries you'd work in"})}
             </Text>
             <Input
-              placeholder={t('more:job_alerts_country_placeholder', {defaultValue: 'e.g. United States'})}
-              value={countryDraft}
-              onChangeText={setCountryDraft}
-              onSubmitEditing={addCountry}
-              returnKeyType="done"
-              accessoryRight={props => (
-                <TouchableOpacity onPress={addCountry} disabled={!countryDraft.trim()}>
-                  <Icon {...props} pack="eva" name="plus-outline" />
-                </TouchableOpacity>
-              )}
+              placeholder={t('auth:enter_address_zip_code_', {defaultValue: 'Search countries'}).toString()}
+              value={countryQuery}
+              onChangeText={setCountryQuery}
+              accessoryLeft={props => <Icon {...props} pack="eva" name="search-outline" />}
               style={styles.prefsInput}
               textStyle={globalStyle.inputText}
             />
-            <View style={styles.chipsWrap}>
-              {preferredCountries.map(country => (
-                <TouchableOpacity
-                  key={country}
-                  onPress={() => setPreferredCountries(prev => prev.filter(c => c !== country))}
-                  style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
-                  <Text category="h10" bold>
-                    {country}
-                  </Text>
-                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, {tintColor: theme['text-basic-color'], marginLeft: 6}]} />
-                </TouchableOpacity>
-              ))}
+            {preferredCountries.length > 0 ? (
+              <View style={styles.chipsWrap}>
+                {preferredCountries.map(country => (
+                  <TouchableOpacity
+                    key={country}
+                    onPress={() => toggleCountry(country)}
+                    style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
+                    <Text category="h10" bold>
+                      {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
+                    </Text>
+                    <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, {tintColor: theme['text-basic-color'], marginLeft: 6}]} />
+                  </TouchableOpacity>
+                ))}
+              </View>
+            ) : null}
+            {/* Same fixed COUNTRIES list JobPreferences.tsx uses, filtered
+                by countryQuery — bounded by MAX_PREFERRED_COUNTRIES above,
+                so this stays a short, scrollable-within-the-sheet list even
+                with the search box empty (COUNTRIES itself is only ~65
+                entries, and this sheet's ScrollView already handles taller
+                content — see modalSheet's own comment). */}
+            <View style={styles.list}>
+              {filteredCountries.map(country => {
+                const selected = preferredCountries.includes(country);
+                return (
+                  <TouchableOpacity
+                    key={country}
+                    activeOpacity={0.7}
+                    onPress={() => toggleCountry(country)}
+                    style={styles.countryRow}>
+                    <Text category="h9" status={selected ? 'link' : 'basic'}>
+                      {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
+                    </Text>
+                    {selected ? (
+                      <Icon pack="eva" name="checkmark-circle-2" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
+                    ) : (
+                      <Icon pack="eva" name="radio-button-off-outline" style={[globalStyle.icon20, {tintColor: theme['text-placeholder-color']}]} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             <Flex justify="space-between" itemsCenter mb={4} mt={16}>
@@ -778,6 +865,20 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+  },
+  // Country picker list — same shape as JobPreferences.tsx's list/row, just
+  // named countryRow here since this file's chip/row vocabulary is already
+  // used elsewhere for other things.
+  list: {
+    marginTop: 8,
+  },
+  countryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'background-basic-color-3',
   },
   alertCard: {
     ...globalStyle.card,
