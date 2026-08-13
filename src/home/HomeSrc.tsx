@@ -594,7 +594,7 @@ const HomeSrc = memo(() => {
             #7EA8E2) from the immediately preceding follow-up is gone
             again; this is back to a single flat fill, this app's own
             brand blue #0063f8. */}
-        {/* {streak ? (
+        {streak ? (
           // BUG FIX (pre-launch redundancy/flow audit): this card showed the
           // exact same streak data as Leaderboard.tsx's own card, but had no
           // onPress at all — a user seeing "Not yet" under Today's check-in
@@ -668,7 +668,7 @@ const HomeSrc = memo(() => {
             </Flex>
           </View>
           </TouchableOpacity>
-        ) : null} */}
+        ) : null}
 
         {/* Product request: "remove the continue learning card in the My
             Progress screen and then place it at the top in the homescreen
