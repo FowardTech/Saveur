@@ -164,6 +164,7 @@
   "load_languages_failed": "デフォルトの言語リストを使用しています — サーバーに接続できませんでした。",
   "load_languages_generic_failed": "対応言語を読み込めませんでした。",
   "loading_languages": "言語を読み込み中…",
+  "loading_problem": "問題を読み込み中…",
   "loading_scenario": "シナリオを読み込み中…",
   "location": "場所",
   "mic_permission_required": "回答を話すにはマイクの許可が必要です。",

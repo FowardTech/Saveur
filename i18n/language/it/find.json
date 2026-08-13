@@ -164,6 +164,7 @@
   "load_languages_failed": "Sto usando un elenco di linguaggi predefinito — non è stato possibile contattare il server.",
   "load_languages_generic_failed": "Impossibile caricare le lingue supportate.",
   "loading_languages": "Caricamento linguaggi…",
+  "loading_problem": "Caricamento del problema…",
   "loading_scenario": "Caricamento di uno scenario…",
   "location": "Posizione",
   "mic_permission_required": "È necessaria l'autorizzazione del microfono per parlare la tua risposta.",

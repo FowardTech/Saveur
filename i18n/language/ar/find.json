@@ -164,6 +164,7 @@
   "load_languages_failed": "يُستخدم الآن قائمة لغات افتراضية — تعذّر الوصول إلى الخادم.",
   "load_languages_generic_failed": "تعذّر تحميل اللغات المدعومة.",
   "loading_languages": "جارٍ تحميل اللغات…",
+  "loading_problem": "جارٍ تحميل المسألة…",
   "loading_scenario": "جارٍ تحميل سيناريو…",
   "location": "الموقع",
   "mic_permission_required": "إذن الميكروفون مطلوب للتحدث بإجابتك.",

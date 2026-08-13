@@ -164,6 +164,7 @@
   "load_languages_failed": "서버에 연결할 수 없어 기본 언어 목록을 사용합니다.",
   "load_languages_generic_failed": "지원되는 언어를 불러올 수 없습니다.",
   "loading_languages": "언어 목록을 불러오는 중…",
+  "loading_problem": "문제를 불러오는 중…",
   "loading_scenario": "시나리오 로딩 중…",
   "location": "위치",
   "mic_permission_required": "답변을 말하려면 마이크 권한이 필요합니다.",

@@ -164,6 +164,7 @@
   "load_languages_failed": "Utilisation d'une liste de langues par défaut — impossible de joindre le serveur.",
   "load_languages_generic_failed": "Impossible de charger les langues prises en charge.",
   "loading_languages": "Chargement des langues…",
+  "loading_problem": "Chargement du problème…",
   "loading_scenario": "Chargement d'un scénario…",
   "location": "Lieu",
   "mic_permission_required": "L'autorisation du microphone est requise pour parler votre réponse.",

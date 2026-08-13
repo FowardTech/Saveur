@@ -164,6 +164,7 @@
   "load_languages_failed": "डिफ़ॉल्ट भाषा सूची का उपयोग किया जा रहा है — सर्वर तक नहीं पहुंचा जा सका।",
   "load_languages_generic_failed": "समर्थित भाषाएं लोड नहीं हो सकीं।",
   "loading_languages": "भाषाएं लोड हो रही हैं…",
+  "loading_problem": "समस्या लोड हो रही है…",
   "loading_scenario": "परिदृश्य लोड हो रहा है…",
   "location": "स्थान",
   "mic_permission_required": "अपना जवाब बोलने के लिए माइक्रोफ़ोन की अनुमति आवश्यक है।",

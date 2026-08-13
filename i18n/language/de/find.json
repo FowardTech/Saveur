@@ -164,6 +164,7 @@
   "load_languages_failed": "Standard-Sprachliste wird verwendet — der Server war nicht erreichbar.",
   "load_languages_generic_failed": "Unterstützte Sprachen konnten nicht geladen werden.",
   "loading_languages": "Sprachen werden geladen…",
+  "loading_problem": "Aufgabe wird geladen…",
   "loading_scenario": "Szenario wird geladen…",
   "location": "Standort",
   "mic_permission_required": "Mikrofonberechtigung ist erforderlich, um deine Antwort zu sprechen.",

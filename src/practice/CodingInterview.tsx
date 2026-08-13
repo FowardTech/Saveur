@@ -121,7 +121,26 @@ const CodingInterview = memo(() => {
 
   const [isFinishing, setIsFinishing] = React.useState(false);
 
-  const problemStatement = `${t('find:coding_prompt_title')}\n\n${t('find:coding_prompt_description')}`;
+  // Fixes the product report: "the coding practice problems are not
+  // diverse... it's always the same Two Sum problem with the same test
+  // cases regardless of the session." See codingService.getProblem() for
+  // the real ~8-problem bank this now pulls from — selected deterministically
+  // per sessionId, so the SAME session always shows the SAME problem (no
+  // surprise change on a re-render/resume) while DIFFERENT sessions land on
+  // different problems. `problem` starts null; every render below falls
+  // back to the old static Two Sum i18n strings/TEST_CASES until it loads,
+  // so this never shows a blank problem panel.
+  const [problem, setProblem] = React.useState<codingService.CodingProblem | null>(null);
+  const [problemLoading, setProblemLoading] = React.useState(true);
+  // Tracks whether the user has actually typed in the code editor, so the
+  // problem-load effect below (which can resolve slightly after the editor
+  // already has default starter code showing) never clobbers real work —
+  // only auto-fills starter code while the user hasn't touched it yet.
+  const codeEditedRef = React.useRef(false);
+
+  const problemStatement = problem
+    ? `${problem.title}\n\n${problem.description}`
+    : `${t('find:coding_prompt_title')}\n\n${t('find:coding_prompt_description')}`;
 
   // Session Length countdown (product report: "the selected session length
   // should be followed in the coding session time length... once the time
@@ -161,12 +180,45 @@ const CodingInterview = memo(() => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadProblem = React.useCallback(async () => {
+    setProblemLoading(true);
+    try {
+      const p = await codingService.getProblem(sessionId);
+      setProblem(p);
+    } finally {
+      setProblemLoading(false);
+    }
+  }, [sessionId]);
+
+  React.useEffect(() => {
+    loadProblem();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Once the real problem loads, swap the editor's starter code from the
+  // generic Two-Sum-shaped default (set by loadLanguages above, which
+  // resolves independently and can land first) to the actual assigned
+  // problem's starter code for whichever language is currently selected —
+  // but only if the user hasn't started typing yet (codeEditedRef).
+  React.useEffect(() => {
+    if (!problem || codeEditedRef.current) return;
+    const starter = problem.starterCode[language.id] ?? language.starterCode ?? '';
+    if (starter) setCode(starter);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [problem]);
+
   const onSelectLanguage = (lang: CodingLanguage) => {
     setLanguage(lang);
-    setCode(lang.starterCode ?? '');
+    codeEditedRef.current = false;
+    setCode(problem?.starterCode[lang.id] ?? lang.starterCode ?? '');
     setRunResult(null);
     setTestResults(null);
     setTestEngine(undefined);
+  };
+
+  const onChangeCode = (v: string) => {
+    codeEditedRef.current = true;
+    setCode(v);
   };
 
   const onRun = async () => {
@@ -191,7 +243,11 @@ const CodingInterview = memo(() => {
     setRunningTests(true);
     setTestResults(null);
     try {
-      const { results, engine } = await codingService.runTests(language.id, code);
+      const { results, engine } = await codingService.runTests(
+        language.id,
+        code,
+        problem?.testCases ?? codingService.TEST_CASES,
+      );
       setTestResults(results);
       setTestEngine(engine);
     } catch (e: any) {
@@ -314,14 +370,23 @@ const CodingInterview = memo(() => {
             like LeetCode/HackerRank use (light "read" panel vs dark "write"
             panel) so the two are never confused at a glance. */}
         <SectionHeader icon="message-square-outline" label={t('find:coding_problem_label', { defaultValue: 'Problem' })} />
-        <View style={styles.problemCard}>
-          <Text category="h7" bold mb={8}>
-            {t('find:coding_prompt_title')}
-          </Text>
-          <Text category="h9-s" status="placeholder">
-            {t('find:coding_prompt_description')}
-          </Text>
-        </View>
+        {problemLoading ? (
+          <Flex justify="flex-start" itemsCenter mb={24}>
+            <Spinner size="small" />
+            <Text category="h9-s" status="placeholder" ml={8}>
+              {t('find:loading_problem', { defaultValue: 'Loading problem…' })}
+            </Text>
+          </Flex>
+        ) : (
+          <View style={styles.problemCard}>
+            <Text category="h7" bold mb={8}>
+              {problem?.title ?? t('find:coding_prompt_title')}
+            </Text>
+            <Text category="h9-s" status="placeholder">
+              {problem?.description ?? t('find:coding_prompt_description')}
+            </Text>
+          </View>
+        )}
 
         <Text category="h8" bold status="placeholder" mt={24} mb={12}>
           {t('find:language')}
@@ -374,7 +439,7 @@ const CodingInterview = memo(() => {
             textStyle={styles.editorText}
             style={styles.editorInput}
             value={code}
-            onChangeText={setCode}
+            onChangeText={onChangeCode}
             autoCapitalize="none"
             autoCorrect={false}
             placeholderTextColor="#6B6B85"
@@ -441,7 +506,7 @@ const CodingInterview = memo(() => {
         ) : null}
 
         <SectionHeader icon="checkmark-square-2-outline" label={t('find:test_cases', { defaultValue: 'Test Cases' })} />
-        {codingService.TEST_CASES.map((tc, i) => {
+        {(problem?.testCases ?? codingService.TEST_CASES).map((tc, i) => {
           const outcome = testResults?.[i];
           return (
             <Layout key={i} level="2" style={styles.testCaseRow}>

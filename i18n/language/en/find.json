@@ -164,6 +164,7 @@
   "load_languages_failed": "Using a default language list — could not reach the server.",
   "load_languages_generic_failed": "Could not load supported languages.",
   "loading_languages": "Loading languages…",
+  "loading_problem": "Loading problem…",
   "loading_scenario": "Loading a scenario…",
   "location": "Location",
   "mic_permission_required": "Microphone permission is required to speak your answer.",

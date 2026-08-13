@@ -76,19 +76,26 @@ export interface SystemDesignFeedbackResult {
   feedback: string[];
 }
 
-// Test cases for the "Two Sum" prompt CodingInterview.tsx currently shows.
-// TODO (BACKEND): a real implementation would key this off the actual
-// problem assigned for the session (see interviewService.startSession).
+// Two Sum's test cases — kept only as the last-resort fallback if
+// GET /coding/problem fails outright (see getProblem() below), so the
+// screen still renders something familiar/working rather than an empty
+// problem panel. The real, varied problem bank now lives entirely on the
+// backend (Saveur-Backend's app/services/coding_problems.py) — see
+// CodingProblem/getProblem() below for the fix to the product report
+// "the coding practice problems are not diverse... always the same Two
+// Sum problem with the same test cases regardless of the session."
 export const TEST_CASES: TestCase[] = [
   {input: 'nums = [2,7,11,15], target = 9', expectedOutput: '[0,1]'},
   {input: 'nums = [3,2,4], target = 6', expectedOutput: '[1,2]'},
   {input: 'nums = [3,3], target = 6', expectedOutput: '[0,1]'},
 ];
 
-// Local fallback so the language picker + editor still render something
-// useful if GET /coding/languages fails (first launch offline, backend
-// hiccup, etc). Mirrors the display names the screen showed before this was
-// backend-driven.
+// Local fallback so the language picker still renders something useful if
+// GET /coding/languages fails (first launch offline, backend hiccup,
+// etc). `starterCode` here is now only a last-resort per-language default
+// (a generic Two Sum stub) — the real, problem-specific starter code comes
+// from getProblem()'s own `starterCode` map once it loads (see
+// CodingInterview.tsx's onSelectLanguage/loadProblem).
 export const DEFAULT_LANGUAGES: CodingLanguage[] = [
   {id: 'javascript', name: 'JavaScript', starterCode: `function twoSum(nums, target) {\n  // your code here\n}`},
   {id: 'python', name: 'Python', starterCode: `def two_sum(nums, target):\n    # your code here\n    pass`},
@@ -96,6 +103,78 @@ export const DEFAULT_LANGUAGES: CodingLanguage[] = [
   {id: 'cpp', name: 'C++', starterCode: `vector<int> twoSum(vector<int>& nums, int target) {\n    // your code here\n}`},
   {id: 'go', name: 'Go', starterCode: `func twoSum(nums []int, target int) []int {\n\t// your code here\n}`},
 ];
+
+export interface CodingProblem {
+  slug: string;
+  title: string;
+  difficulty?: string;
+  description: string;
+  testCases: TestCase[];
+  /** Per-language starter code, keyed by the same `language.id` values
+   * getLanguages()/DEFAULT_LANGUAGES use (e.g. "javascript", "python"). */
+  starterCode: Record<string, string>;
+}
+
+// Two Sum, in the CodingProblem shape — used only if GET /coding/problem
+// fails outright (network error, backend down), so the screen degrades to
+// exactly its old pre-problem-bank behavior instead of showing nothing.
+const FALLBACK_PROBLEM: CodingProblem = {
+  slug: 'two_sum',
+  title: 'Two Sum',
+  difficulty: 'easy',
+  description:
+    'Given an array of integers nums and an integer target, return the indices of the two numbers that add up to target. Each input has exactly one solution, and you may not use the same element twice.',
+  testCases: TEST_CASES,
+  starterCode: DEFAULT_LANGUAGES.reduce((acc, l) => {
+    if (l.starterCode) acc[l.id] = l.starterCode;
+    return acc;
+  }, {} as Record<string, string>),
+};
+
+interface ProblemWire {
+  slug?: string;
+  title?: string;
+  difficulty?: string;
+  description?: string;
+  test_cases?: Array<{stdin?: string; expected_output?: string}>;
+  starter_code?: Record<string, string>;
+}
+
+/**
+ * GET /api/v1/coding/problem — fixes the product report: "the coding
+ * practice problems are not diverse... always the same Two Sum problem
+ * with the same test cases regardless of the session." Backed by a real
+ * ~8-problem bank on the backend (see Saveur-Backend's
+ * app/services/coding_problems.py), selected deterministically per
+ * `sessionId` — the same session always sees the same problem (so
+ * backgrounding the app or revisiting InterviewFeedback.tsx afterward
+ * never shows a different one), but different sessions land on different
+ * problems across the bank. Falls back to the old hardcoded Two Sum
+ * problem (FALLBACK_PROBLEM above) if the request fails, so a backend
+ * hiccup degrades to the previous behavior rather than an empty screen.
+ */
+export async function getProblem(sessionId?: string | null): Promise<CodingProblem> {
+  try {
+    const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
+      params: sessionId ? {session_id: sessionId} : undefined,
+    });
+    const testCases = (data.test_cases ?? []).map(c => ({
+      input: c.stdin ?? '',
+      expectedOutput: c.expected_output ?? '',
+    }));
+    if (!data.title || !testCases.length) throw new Error('Incomplete problem response');
+    return {
+      slug: data.slug ?? 'problem',
+      title: data.title,
+      difficulty: data.difficulty,
+      description: data.description ?? '',
+      testCases,
+      starterCode: data.starter_code ?? {},
+    };
+  } catch {
+    return FALLBACK_PROBLEM;
+  }
+}
 
 interface LanguageWire {
   id?: string;

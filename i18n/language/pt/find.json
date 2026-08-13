@@ -164,6 +164,7 @@
   "load_languages_failed": "Usando uma lista padrão de idiomas — não foi possível conectar ao servidor.",
   "load_languages_generic_failed": "Não foi possível carregar os idiomas suportados.",
   "loading_languages": "Carregando idiomas…",
+  "loading_problem": "Carregando o problema…",
   "loading_scenario": "Carregando um cenário…",
   "location": "Localização",
   "mic_permission_required": "É necessária permissão do microfone para falar sua resposta.",
