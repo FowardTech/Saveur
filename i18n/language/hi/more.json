@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "बिलिंग प्रबंधन नहीं खोला जा सका",
   "subscription_refresh_failed_body": "फिर से प्रयास करने के लिए नीचे खींचें या इस स्क्रीन को फिर से खोलें।",
   "subscription_refresh_failed_title": "आपकी सदस्यता रिफ्रेश नहीं हो सकी",
+  "subscription_refresh_status_cta": "अपना सही प्लान नहीं दिख रहा? स्थिति रिफ्रेश करें",
   "subscription_renews_on": "{{date}} को नवीनीकृत होगी",
   "subscription_status_label": "स्थिति: {{status}}",
   "summary": "सारांश",

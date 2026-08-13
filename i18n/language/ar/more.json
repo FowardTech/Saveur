@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "تعذّر فتح إدارة الفوترة",
   "subscription_refresh_failed_body": "اسحب للأسفل أو أعد فتح هذه الشاشة للمحاولة مرة أخرى.",
   "subscription_refresh_failed_title": "تعذّر تحديث اشتراكك",
+  "subscription_refresh_status_cta": "لا ترى خطتك الصحيحة؟ حدّث الحالة",
   "subscription_renews_on": "يتجدد في {{date}}",
   "subscription_status_label": "الحالة: {{status}}",
   "summary": "الملخص",

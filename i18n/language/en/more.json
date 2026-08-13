@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "Couldn't open billing management",
   "subscription_refresh_failed_body": "Pull down or reopen this screen to try again.",
   "subscription_refresh_failed_title": "Couldn't refresh your subscription",
+  "subscription_refresh_status_cta": "Not seeing your correct plan? Refresh status",
   "subscription_renews_on": "Renews on {{date}}",
   "subscription_status_label": "Status: {{status}}",
   "summary": "Summary",

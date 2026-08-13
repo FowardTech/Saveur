@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "No se pudo abrir la administración de facturación",
   "subscription_refresh_failed_body": "Desliza hacia abajo o vuelve a abrir esta pantalla para intentarlo de nuevo.",
   "subscription_refresh_failed_title": "No se pudo actualizar tu suscripción",
+  "subscription_refresh_status_cta": "¿No ves tu plan correcto? Actualizar estado",
   "subscription_renews_on": "Se renueva el {{date}}",
   "subscription_status_label": "Estado: {{status}}",
   "summary": "Resumen",

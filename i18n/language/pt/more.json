@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "Não foi possível abrir o gerenciamento de cobrança",
   "subscription_refresh_failed_body": "Puxe para baixo ou reabra esta tela para tentar novamente.",
   "subscription_refresh_failed_title": "Não foi possível atualizar sua assinatura",
+  "subscription_refresh_status_cta": "Não está vendo seu plano correto? Atualizar status",
   "subscription_renews_on": "Renova em {{date}}",
   "subscription_status_label": "Status: {{status}}",
   "summary": "Resumo",

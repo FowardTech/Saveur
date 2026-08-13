@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "결제 관리를 열 수 없습니다",
   "subscription_refresh_failed_body": "아래로 당기거나 이 화면을 다시 열어 다시 시도하세요.",
   "subscription_refresh_failed_title": "구독을 새로고침할 수 없습니다",
+  "subscription_refresh_status_cta": "올바른 플랜이 보이지 않나요? 상태 새로고침",
   "subscription_renews_on": "{{date}}에 갱신됩니다",
   "subscription_status_label": "상태: {{status}}",
   "summary": "요약",

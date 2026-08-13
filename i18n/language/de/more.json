@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "Abrechnungsverwaltung konnte nicht geöffnet werden",
   "subscription_refresh_failed_body": "Ziehe nach unten oder öffne diesen Bildschirm erneut, um es noch einmal zu versuchen.",
   "subscription_refresh_failed_title": "Dein Abonnement konnte nicht aktualisiert werden",
+  "subscription_refresh_status_cta": "Siehst du nicht deinen richtigen Plan? Status aktualisieren",
   "subscription_renews_on": "Verlängert sich am {{date}}",
   "subscription_status_label": "Status: {{status}}",
   "summary": "Zusammenfassung",

@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "Impossible d'ouvrir la gestion de la facturation",
   "subscription_refresh_failed_body": "Tirez vers le bas ou rouvrez cet écran pour réessayer.",
   "subscription_refresh_failed_title": "Impossible d'actualiser votre abonnement",
+  "subscription_refresh_status_cta": "Vous ne voyez pas votre bon forfait ? Actualiser le statut",
   "subscription_renews_on": "Se renouvelle le {{date}}",
   "subscription_status_label": "Statut : {{status}}",
   "summary": "Résumé",

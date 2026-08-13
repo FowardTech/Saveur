@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "請求管理を開けませんでした",
   "subscription_refresh_failed_body": "下に引くか、この画面を再度開いてもう一度お試しください。",
   "subscription_refresh_failed_title": "サブスクリプションを更新できませんでした",
+  "subscription_refresh_status_cta": "正しいプランが表示されていませんか？ ステータスを更新",
   "subscription_renews_on": "{{date}} に更新されます",
   "subscription_status_label": "ステータス：{{status}}",
   "summary": "要約",

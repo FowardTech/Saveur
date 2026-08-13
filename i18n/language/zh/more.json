@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "无法打开账单管理",
   "subscription_refresh_failed_body": "请下拉或重新打开此屏幕以重试。",
   "subscription_refresh_failed_title": "无法刷新您的订阅",
+  "subscription_refresh_status_cta": "没看到正确的套餐？刷新状态",
   "subscription_renews_on": "将于 {{date}} 续订",
   "subscription_status_label": "状态：{{status}}",
   "summary": "摘要",

@@ -172,6 +172,45 @@ const Subscription = memo(() => {
     loadAll();
   }, [loadAll]);
 
+  // BUG FIX (product report: "Dream Company Dashboard says I need Premium
+  // — I'm subscribed to Premium"): traced to Saveur-Backend's
+  // price_to_plan_tier() silently downgrading a subscriber's stored plan
+  // to "pro" whenever their Stripe price_id no longer matches the CURRENT
+  // pricing catalog (happens to every existing subscriber the next time
+  // their subscription resyncs after an admin reprices that plan — see
+  // that function's own comment for the full mechanism). That backend fix
+  // stops it from happening again, but it only self-corrects on the NEXT
+  // resync (a webhook renewal, which can be weeks away) — there was no
+  // way for an affected user to force one from inside the app. This
+  // screen's own `loadAll` above only ever calls the PASSIVE
+  // GET /subscription (a raw read of whatever's already cached in our
+  // DB), never the reconciling POST /subscription/confirm — that endpoint
+  // was only ever wired to fire once, automatically, right after a fresh
+  // purchase (see payWithPaymentSheet below). This is that same endpoint,
+  // exposed as a manual action so anyone in this exact situation (or any
+  // other stale-plan-cache case) has a real, immediate fix instead of
+  // waiting on the next billing cycle.
+  const [isRefreshingStatus, setIsRefreshingStatus] = React.useState(false);
+  const onRefreshStatus = React.useCallback(async () => {
+    if (isRefreshingStatus) return;
+    setIsRefreshingStatus(true);
+    try {
+      const fresh = await billingService.confirmSubscription();
+      setSubscription(fresh);
+      // Same reasoning as payWithPaymentSheet's own refreshAuthSubscription
+      // call below — keeps every OTHER premium-gated screen in sync too,
+      // not just this one, without requiring a full app relaunch.
+      refreshAuthSubscription();
+    } catch (error: any) {
+      Alert.alert(
+        t('more:subscription_refresh_failed_title', { defaultValue: "Couldn't refresh your subscription" }),
+        error?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+      );
+    } finally {
+      setIsRefreshingStatus(false);
+    }
+  }, [isRefreshingStatus, refreshAuthSubscription, t]);
+
   // Fired when the user returns to the app after being sent to Stripe
   // Checkout/Portal in the system browser. There's no deep link telling us
   // *how* they left (paid vs. backed out), so we just refetch and compare
@@ -515,6 +554,26 @@ const Subscription = memo(() => {
               })}
         </Text>
 
+        {/* Manual resync action (see onRefreshStatus's own comment) —
+            only shown for an already-paying user, since a Free-tier
+            account has no Stripe subscription to reconcile against. */}
+        {!fromOnboarding && currentTier !== 'free' ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={isRefreshingStatus}
+            onPress={onRefreshStatus}
+            style={styles.refreshStatusLink}>
+            {isRefreshingStatus ? (
+              <Spinner size="tiny" />
+            ) : (
+              <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+            )}
+            <Text category="h10" bold status="primary" ml={6}>
+              {t('more:subscription_refresh_status_cta', { defaultValue: "Not seeing your correct plan? Refresh status" })}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
         {/* Vertical stack — each card shows its own feature list, and
             exactly one card carries a "Popular" badge: whichever plan the
             backend flags (BillingPlanProps.recommended — see
@@ -747,6 +806,12 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  refreshStatusLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    marginBottom: 14,
   },
   planCard: {
     ...globalStyle.card,

@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "Impossibile aprire la gestione fatturazione",
   "subscription_refresh_failed_body": "Trascina verso il basso o riapri questa schermata per riprovare.",
   "subscription_refresh_failed_title": "Impossibile aggiornare il tuo abbonamento",
+  "subscription_refresh_status_cta": "Non vedi il tuo piano corretto? Aggiorna lo stato",
   "subscription_renews_on": "Si rinnova il {{date}}",
   "subscription_status_label": "Stato: {{status}}",
   "summary": "Riepilogo",

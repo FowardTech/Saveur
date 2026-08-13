@@ -778,6 +778,7 @@
   "subscription_portal_failed_title": "Не удалось открыть управление платежами",
   "subscription_refresh_failed_body": "Потяните вниз или откройте этот экран заново, чтобы повторить попытку.",
   "subscription_refresh_failed_title": "Не удалось обновить вашу подписку",
+  "subscription_refresh_status_cta": "Не видите свой правильный план? Обновить статус",
   "subscription_renews_on": "Продлевается {{date}}",
   "subscription_status_label": "Статус: {{status}}",
   "summary": "Итог",
