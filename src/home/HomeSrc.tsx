@@ -594,7 +594,7 @@ const HomeSrc = memo(() => {
             #7EA8E2) from the immediately preceding follow-up is gone
             again; this is back to a single flat fill, this app's own
             brand blue #0063f8. */}
-        {streak ? (
+        {/* {streak ? (
           // BUG FIX (pre-launch redundancy/flow audit): this card showed the
           // exact same streak data as Leaderboard.tsx's own card, but had no
           // onPress at all — a user seeing "Not yet" under Today's check-in
@@ -668,7 +668,7 @@ const HomeSrc = memo(() => {
             </Flex>
           </View>
           </TouchableOpacity>
-        ) : null}
+        ) : null} */}
 
         {/* Product request: "remove the continue learning card in the My
             Progress screen and then place it at the top in the homescreen
@@ -755,22 +755,30 @@ const HomeSrc = memo(() => {
         <Text category="h8" bold mt={22} mb={8}>
           {t('home:more_for_you_label', { defaultValue: 'More for you' })}
         </Text>
+        {/* Product request: "I want this card background to be the default
+            blue and the text white" — breaks from the other three rows'
+            shared light-pastel-tint treatment on purpose (Career Coach is
+            the one row here the product wants to stand out); icon wrap
+            below is left on its own light-circle style (matches the
+            existing icon-badge look elsewhere) since white-on-white icon/
+            wrap would be invisible — only the row bg + title/subtitle/
+            chevron flip to blue/white. */}
         <TouchableOpacity
           activeOpacity={0.7}
-          style={[styles.actionRow, { backgroundColor: 'rgba(139, 92, 246, 0.08)' }]}
+          style={[styles.actionRow, { backgroundColor: '#0063f8' }]}
           onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
           <View style={styles.actionRowIconWrap}>
             <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#8B5CF6' }]} />
           </View>
           <View style={globalStyle.flexOne}>
-            <Text category="h9" bold>
+            <Text category="h9" bold status="control">
               {t('home:career_coach_card_title', { defaultValue: 'Career Coach' })}
             </Text>
-            <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
+            <Text category="h10" status="control" mt={2} numberOfLines={1} style={{ opacity: 0.85 }}>
               {t('home:career_coach_card_subtitle_short', { defaultValue: 'Ask anything, get feedback' })}
             </Text>
           </View>
-          <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
+          <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#FFFFFF' }]} />
         </TouchableOpacity>
 
         <TouchableOpacity

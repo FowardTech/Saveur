@@ -198,12 +198,37 @@ const FindScreen = memo(() => {
   // eva outline icons (see constants/Data.ts's DATA_INTERVIEW_TYPES comment
   // for why — same reasoning applies here, this row used to mix the custom
   // "assets" pack's filled 'myPost' badge icon with thinner line-art ones).
-  const TOOLS = [
+  // `tint` is optional per-tool — undefined for every tool below except
+  // Coding Practice (see its own comment) means those keep the shared flat
+  // gray row style they've always had.
+  const TOOLS: Array<{
+    title: string;
+    icon: string;
+    onPress: () => void;
+    loading: boolean;
+    tint?: { bg: string; fg: string };
+  }> = [
     { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder'), loading: false },
     { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer'), loading: false },
     // Admin-configurable — see the Feature Flags page / services/configService.ts.
+    // Product request: "I want the Coding tool card in the practice screen
+    // to have the subtle color background of one of the cards in the more
+    // for you section in the homescreen" — every row in this list used to
+    // share one flat gray tint with no distinction between tools; this one
+    // now carries a `tint` (see the render loop below), reusing the exact
+    // purple HomeSrc.tsx's "More for you" rows used (rgba(139, 92, 246,
+    // 0.08) bg / #8B5CF6 icon) — also the same purple this screen's own
+    // "AI-graded result" badge inside Coding Practice itself already uses
+    // (CodingInterview.tsx), so the color reads as this tool's own accent
+    // rather than an arbitrary pick.
     ...(configService.isFeatureEnabled('coding_practice')
-      ? [{ title: t('more:coding_practice', { defaultValue: 'Coding Practice' }), icon: 'code-outline', onPress: onStartCodingPractice, loading: isStartingCoding }]
+      ? [{
+          title: t('more:coding_practice', { defaultValue: 'Coding Practice' }),
+          icon: 'code-outline',
+          onPress: onStartCodingPractice,
+          loading: isStartingCoding,
+          tint: { bg: 'rgba(139, 92, 246, 0.08)', fg: '#8B5CF6' },
+        }]
       : []),
     { title: t('find:system_design_whiteboard', { defaultValue: 'System Design' }), icon: 'grid-outline', onPress: onStartSystemDesignPractice, loading: isStartingSystemDesign },
     // Practical Scenarios (product request) — the hands-on equivalent of
@@ -315,7 +340,13 @@ const FindScreen = memo(() => {
             TOOLS above). */}
         <View style={{marginTop: 10,}}>
           {TOOLS.map((tool, i) => {
-            const bg = theme['background-basic-color-2'];
+            // Default flat gray row, unless this tool carries its own
+            // `tint` (currently just Coding Practice — see TOOLS above).
+            // Only the row bg + icon pick up the tint, same as HomeSrc.tsx's
+            // "More for you" rows this is matching — the label text stays
+            // the default color in both places.
+            const bg = tool.tint?.bg ?? theme['background-basic-color-2'];
+            const iconFg = tool.tint?.fg ?? theme['text-basic-color'];
             const fg = theme['text-basic-color'];
             return (
               <TouchableOpacity
@@ -331,7 +362,7 @@ const FindScreen = memo(() => {
                     <Icon
                       pack="eva"
                       name={tool.icon}
-                      style={[globalStyle.icon20, { tintColor: fg }]}
+                      style={[globalStyle.icon20, { tintColor: iconFg }]}
                     />
                   )}
                 </View>
