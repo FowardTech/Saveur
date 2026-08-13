@@ -204,9 +204,9 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
               />
             ) : null}
           </Flex>
-          <View style={styles.chipsWrap}>
+          <View style={styles.chipsStack}>
             {qualifications.map((q, i) => (
-              <View key={i} style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
+              <View key={i} style={[styles.qualificationChip, {backgroundColor: theme['background-basic-color-3']}]}>
                 <Text category="h9" bold>
                   {q}
                 </Text>
@@ -270,11 +270,34 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  // Qualifications pills (product report: "not looking nice in light mode
+  // -- stacked too close and the box shadow is too much... since they're
+  // gray there's no need for a shadow, the app background is already
+  // white"). These used to share chipsWrap/chip with the Missing Skills
+  // chips below, but real qualification strings pulled from a job posting
+  // ("Ability to work flexible shifts including overtime and weekends in
+  // December/January") are full sentences, not short skill words -- inside
+  // a flexWrap row they were never actually sitting side by side, just
+  // incidentally landing one per line because each one was too wide to
+  // share a row. Making that an explicit vertical stack (rather than a
+  // wrapping row that happens to behave like one) with real spacing between
+  // items and a plainer rounded-box shape (not a 99-radius capsule, which
+  // on a two-line pill just reads as an odd shape) fixes both complaints at
+  // once. No shadow -- the gray fill (background-basic-color-3) is already
+  // enough contrast against the white page.
+  chipsStack: {
+    gap: 10,
+  },
   chip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+  },
+  qualificationChip: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 16,
   },
 });
