@@ -74,6 +74,23 @@ export interface MaintenanceConfig {
   message: string;
 }
 
+// Product request: "add a banner in the homescreen at the top top for
+// regular informations like policy change, change in terms and conditions
+// etc." — a small, dismissible strip pinned above the Home greeting (see
+// src/home/AnnouncementBanner.tsx), NOT the same thing as maintenance
+// above (that's a full-screen blocking gate for outages). No id/version
+// field — the banner component itself fingerprints title+message+link_url
+// and remembers that exact combination as dismissed per account, so
+// editing the copy here automatically re-shows it once, with nothing for
+// an admin to remember to bump.
+export interface HomeBannerConfig {
+  enabled: boolean;
+  title: string;
+  message: string;
+  link_url: string;
+  link_label: string;
+}
+
 // AppsFlyer deferred deep linking — "share a job" (see services/
 // jobShareService.ts and App.tsx's onInstallConversionData/
 // onAppOpenAttribution listeners). A dev key alone is enough to init the
@@ -200,6 +217,7 @@ export interface AppConfig {
   feature_flags: FeatureFlags;
   release: ReleaseConfig;
   maintenance: MaintenanceConfig;
+  home_banner: HomeBannerConfig;
   appsflyer: AppsFlyerConfig;
   faq: FaqConfig;
   about: AboutConfig;
@@ -261,6 +279,7 @@ const DEFAULT_CONFIG: AppConfig = {
     update_url_android: '',
   },
   maintenance: {enabled: false, title: '', message: ''},
+  home_banner: {enabled: false, title: '', message: '', link_url: '', link_label: ''},
   appsflyer: {enabled: false, dev_key: '', ios_dev_key: '', onelink_id: '', onelink_subdomain: '', ios_app_id: ''},
   faq: {items: []},
   about: {tagline: '', description: '', contact_email: '', website_url: ''},
@@ -394,6 +413,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
       interview_personas: {...DEFAULT_CONFIG.interview_personas, ...data.interview_personas},
       daily_challenge: {...DEFAULT_CONFIG.daily_challenge, ...data.daily_challenge},
       signup_onboarding_images: {...DEFAULT_CONFIG.signup_onboarding_images, ...data.signup_onboarding_images},
+      home_banner: {...DEFAULT_CONFIG.home_banner, ...data.home_banner},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {

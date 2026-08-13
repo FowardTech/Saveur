@@ -12,6 +12,7 @@ import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import DailyNewsBanner from './DailyNewsBanner';
 import DailyTipsBanner from './DailyTipsBanner';
+import AnnouncementBanner from './AnnouncementBanner';
 import RecentActivityList from './RecentActivityList';
 import CircularProgress from 'components/CircularProgress';
 import { useTranslation } from 'react-i18next';
@@ -547,6 +548,15 @@ const HomeSrc = memo(() => {
 
   return (
     <Container style={styles.container}>
+      {/* Product request: "add a banner in the homescreen at the top top
+          for regular informations like policy change, change in terms and
+          conditions etc." — literally above HeaderHome, not inside the
+          scrollable Content below (where DailyNewsBanner/DailyTipsBanner
+          live), so it's the very first thing visible with no scrolling.
+          Self-contained: renders null on its own whenever the admin hasn't
+          published anything, or the current user already dismissed this
+          exact content — see that component's own doc comment. */}
+      <AnnouncementBanner />
       <HeaderHome
         name={profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
         username={profile?.username}

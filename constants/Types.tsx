@@ -153,6 +153,13 @@ export enum EKeyAsyncStorage {
   // src/more/JobAlertsOnboarding.tsx (shown once from JobAlerts.tsx, same
   // "shown once" pattern as learningCoursesOnboardingSeen above).
   jobAlertsOnboardingSeen = 'jobAlertsOnboardingSeen',
+  // Product request: "add a banner in the homescreen at the top top for
+  // regular informations like policy change, change in terms and
+  // conditions etc." — see src/home/AnnouncementBanner.tsx. Stores the
+  // fingerprint (not just a boolean) of whichever banner content the user
+  // last dismissed, so a NEW announcement (different title/message) always
+  // reappears even though this same key was already written once.
+  homeBannerDismissed = 'homeBannerDismissed',
 }
 
 // BUG FIX (product report: "the tour guide always shows every time the
