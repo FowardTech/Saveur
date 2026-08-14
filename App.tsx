@@ -25,6 +25,8 @@ import LocationLanguageGate from 'components/LocationLanguageGate';
 import { EKeyAsyncStorage } from 'constants/Types';
 import * as referralService from 'services/referralService';
 import * as linkedinAuthService from 'services/linkedinAuthService';
+import * as emailConnectionService from 'services/emailConnectionService';
+import * as calendarConnectionService from 'services/calendarConnectionService';
 import * as jobShareService from 'services/jobShareService';
 import * as appsFlyerService from 'services/appsFlyerService';
 import * as configService from 'services/configService';
@@ -217,6 +219,12 @@ function App() {
   // callback from the LinkedIn OAuth flow (see services/linkedinAuthService.ts)
   // — handleIncomingUrl there is a no-op for any URL that isn't that specific
   // redirect, so it's safe to always call alongside the referral handler.
+  // Also carries saveur://gmail-connected?... / saveur://outlook-connected?...
+  // from the Job Tracker's "Connect Gmail"/"Connect Outlook" OAuth flows
+  // (see services/emailConnectionService.ts), and
+  // saveur://google-calendar-connected?... / saveur://outlook-calendar-connected?...
+  // from the calendar-connect equivalents (services/calendarConnectionService.ts)
+  // — same no-op-unless-matching convention.
   // Also carries the saveur://job?id=X fallback link jobShareService.ts
   // hands the share sheet when OneLink isn't configured yet — only useful
   // for an already-installed app (no deferred resolution, unlike the
@@ -226,6 +234,8 @@ function App() {
   const handleIncomingUrl = React.useCallback((url: string | null | undefined) => {
     referralService.handleIncomingUrl(url);
     linkedinAuthService.handleIncomingUrl(url);
+    emailConnectionService.handleIncomingUrl(url);
+    calendarConnectionService.handleIncomingUrl(url);
     const jobId = jobShareService.extractJobIdFromUrl(url);
     if (jobId) jobShareService.setPendingJobId(jobId).catch(() => {});
   }, []);

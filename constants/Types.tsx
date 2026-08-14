@@ -734,6 +734,34 @@ export interface SavedPaymentMethodProps {
   isDefault: boolean;
 }
 
+// A connected Gmail/Outlook inbox for the Job Tracker's auto-scan feature
+// (see services/emailConnectionService.ts, Saveur-Backend's
+// app/models/email_connection.py). Never carries the OAuth tokens
+// themselves — those stay server-side, encrypted — this is purely the
+// "Connected: you@gmail.com [Disconnect]" display state.
+export interface EmailConnectionProps {
+  provider: 'gmail' | 'outlook';
+  emailAddress: string | null;
+  isActive: boolean;
+  connectedAt: number | null;
+  lastSyncedAt: number | null;
+  lastSyncError: string | null;
+}
+
+// A connected Google/Outlook Calendar for the Job Tracker's inbox-free
+// Interviewing-stage auto-detect (see services/calendarConnectionService.ts,
+// Saveur-Backend's app/models/calendar_connection.py). Same shape as
+// EmailConnectionProps above, kept as a separate type since the two are
+// genuinely different connections a user can hold independently.
+export interface CalendarConnectionProps {
+  provider: 'google' | 'outlook';
+  emailAddress: string | null;
+  isActive: boolean;
+  connectedAt: number | null;
+  lastSyncedAt: number | null;
+  lastSyncError: string | null;
+}
+
 // One row in Payment History (src/more/PaymentHistory.tsx) — a successfully
 // captured Stripe charge, per GET /api/v1/billing/payments. Card brand/last4
 // are a snapshot taken at capture time server-side (app/models/payment.py),

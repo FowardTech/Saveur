@@ -56,6 +56,15 @@ export interface FeatureFlags {
   learning_course_onboarding_banner: boolean;
   job_alerts_onboarding_banner: boolean;
   post_offer_plan: boolean;
+  // Job Tracker inbox/calendar auto-scan (product follow-up: "build the
+  // calendar-connect one for both and then we can activate and deactivate
+  // any from the admin dashboard"). See DEFAULT_CONFIG below for why these
+  // four deliberately default to false instead of following this file's
+  // usual "fail open" convention.
+  gmail_inbox_scan: boolean;
+  outlook_inbox_scan: boolean;
+  google_calendar_scan: boolean;
+  outlook_calendar_scan: boolean;
 }
 
 export interface ReleaseConfig {
@@ -261,6 +270,17 @@ const DEFAULT_CONFIG: AppConfig = {
     learning_course_onboarding_banner: true,
     job_alerts_onboarding_banner: true,
     post_offer_plan: true,
+    // Deliberately false, unlike every flag above — these gate real
+    // external OAuth connections that don't work at all until an admin
+    // both registers credentials AND flips the flag on (see the backend
+    // DEFAULTS' own comment). "Fail open" is the right call for a flag
+    // that just hides an otherwise-working feature during a network
+    // hiccup; showing a "Connect Gmail" button that's guaranteed to fail
+    // isn't a better fallback than hiding it, so these fail closed instead.
+    gmail_inbox_scan: false,
+    outlook_inbox_scan: false,
+    google_calendar_scan: false,
+    outlook_calendar_scan: false,
   },
   release: {
     ios_min_version: '',
