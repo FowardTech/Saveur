@@ -11,7 +11,7 @@ import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { IconMic3D } from './QuickActionIcons';
+import { ArtPractice } from './HomeHeroArt';
 import CircularProgress from 'components/CircularProgress';
 import ProgressBar from 'components/ProgressBar';
 import { useTranslation } from 'react-i18next';
@@ -656,23 +656,23 @@ const HomeSrc = memo(() => {
         </Text>
         <TouchableOpacity activeOpacity={0.85} style={[globalStyle.card, styles.focusCard]} onPress={() => navigate('Leaderboard')}>
           <Flex justify="flex-start" itemsCenter>
-            {/* Product follow-up, round 2: "replace that image... to an
-                illustration icon i dont like that image you placed
-                there" -- onboardingInterview (a full scene illustration --
-                phone mockup, floating cards, sourced as marketing/
-                onboarding art, see assets/images/index.ts) wasn't the
-                right register for a small card thumbnail. IconMic3D
-                (src/home/QuickActionIcons.tsx) is a proper "illustration
-                icon": a small glossy 3D-style SVG badge (gradient body +
-                highlight + ground shadow, this app's own brand blue),
-                purpose-built for exactly this kind of compact spot --
-                originally built for the old QuickActionGrid tiles, unused
-                since that grid isn't part of this v3 layout, and mic ==
-                practice/interview, the same theme this card's streak data
-                already carries. No image asset at all -- it's a plain SVG
-                component, not a require()'d file. */}
+            {/* Product follow-up, round 3: "I dont like it, I want you to
+                use the illustration style you used in the referral screen
+                i.e the gift box kind of illustration style" -- IconMic3D
+                (round 2's pick, a glossy 3D-style SVG badge) still wasn't
+                the right register. ArtGiftBox (ReferralProgram.tsx) and
+                ArtPractice both live in src/home/HomeHeroArt.tsx and share
+                one construction: a soft brand-tint backdrop circle, solid
+                (not gradient/glossy) flat-colored shapes, and a small
+                ground-shadow ellipse for a touch of depth -- that's the
+                actual "illustration style" being asked for here.
+                ArtPractice is the practice/mic scene in that exact family
+                (see HomeHeroArt.tsx's own history -- it's the same
+                illustration this app's OLD quick-action tiles used for
+                their Practice card), so it's both the right style AND the
+                right subject for this streak/practice card. */}
             <View style={styles.focusIconWrap}>
-              <IconMic3D size={40} />
+              <ArtPractice size={64} />
             </View>
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
               <Text category="h9" bold numberOfLines={1}>
