@@ -177,7 +177,7 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
   if (isLoading) {
     return (
       <Flex justify="flex-start" itemsCenter style={styles.loadingRow}>
-        <Spinner size="small" status="basic" />
+        <Spinner size="" status="basic" />
         <Text category="h9" status="placeholder" ml={10}>
           {t('more:job_fit_analyzing', {defaultValue: "Analyzing this role's requirements…"})}
         </Text>
