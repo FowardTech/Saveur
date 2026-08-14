@@ -21,15 +21,18 @@ import CircularProgress from 'components/CircularProgress';
 import { globalStyle } from 'styles/globalStyle';
 import * as linkedinOptimizerService from 'services/linkedinOptimizerService';
 import { OptimizationResult, OptimizationHistoryEntry } from 'services/linkedinOptimizerService';
+import * as resumeService from 'services/resumeService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import dayjs from 'utils/dayjs';
 import CtaButton from 'components/CtaButton';
 
-// AI LinkedIn Optimizer — product request item, Pro Premium feature. Paste
-// your current headline/about/bullets, get AI-rewritten versions + feedback.
-// See services/linkedinOptimizerService.ts for why this is paste-based
-// rather than reading a connected LinkedIn profile automatically.
+// AI LinkedIn Optimizer — product request item, Pro Premium feature. Fields
+// auto-fill from any resume the user has already uploaded/generated
+// (including a LinkedIn profile PDF export via ResumeBuilder's "LinkedIn"
+// import slot -- see the prefilledFromResume effect below), and are always
+// editable/pasteable from there. See services/linkedinOptimizerService.ts
+// for why this can't instead read a connected LinkedIn profile live.
 const LinkedInOptimizer = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
@@ -57,6 +60,44 @@ const LinkedInOptimizer = memo(() => {
   React.useEffect(() => {
     loadHistory();
   }, [loadHistory]);
+
+  // Product report: "The LinkedIn optimizer should also auto fetch details
+  // from the system. For example it should be able to fetch from the
+  // uploaded LinkedIn profile." LinkedIn's own API doesn't let this screen
+  // read a live profile automatically -- the app's LinkedIn integration is
+  // "Sign in with LinkedIn" (OIDC) only, which returns name/email/picture,
+  // not headline/about/experience content; LinkedIn gates that behind a
+  // separate partner application most apps don't have (see
+  // services/linkedinOptimizerService.ts's module comment and
+  // app/api/linkedin_optimizer.py's docstring). What the app DOES already
+  // have is ResumeBuilder's "LinkedIn" import slot (src/more/ResumeBuilder.tsx)
+  // -- users can upload their LinkedIn profile as a PDF export there, which
+  // the backend parses into the same structured resume sections as every
+  // other resume source. So "fetch from the uploaded LinkedIn profile" is
+  // real and buildable: pre-fill this screen's fields from whatever's
+  // already stored (a LinkedIn export, another resume upload, or an
+  // AI-generated resume -- getStoredResumeSections() doesn't distinguish
+  // the source), still fully editable, so the user isn't starting from a
+  // blank paste box when the app already knows this about them.
+  const [prefilledFromResume, setPrefilledFromResume] = React.useState(false);
+  React.useEffect(() => {
+    if (!isPremium) return;
+    resumeService.getStoredResumeSections().then(sections => {
+      if (!sections) return;
+      if (headline.trim() || about.trim() || bulletsText.trim()) return;
+      const latestRole = sections.experience?.[0];
+      const derivedHeadline = latestRole?.title
+        ? (latestRole.company ? `${latestRole.title} at ${latestRole.company}` : latestRole.title)
+        : '';
+      if (derivedHeadline) setHeadline(derivedHeadline);
+      if (sections.summary) setAbout(sections.summary);
+      if (latestRole?.bullets?.length) setBulletsText(latestRole.bullets.join('\n'));
+      if (derivedHeadline || sections.summary || latestRole?.bullets?.length) {
+        setPrefilledFromResume(true);
+      }
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPremium]);
 
   const onOptimize = async () => {
     const bullets = bulletsText.split('\n').map(b => b.trim()).filter(Boolean);
@@ -105,11 +146,18 @@ const LinkedInOptimizer = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        <Text category="h9-s" status="placeholder" mb={20}>
+        <Text category="h9-s" status="placeholder" mb={prefilledFromResume ? 8 : 20}>
           {t('more:linkedin_optimizer_description', {
             defaultValue: "Paste any part of your current LinkedIn profile below — the AI will rewrite what you give it and explain why.",
           })}
         </Text>
+        {prefilledFromResume ? (
+          <Text category="h10" status="primary" mb={20}>
+            {t('more:linkedin_optimizer_prefilled_notice', {
+              defaultValue: 'Filled in from your uploaded resume/LinkedIn profile — edit anything below before optimizing.',
+            })}
+          </Text>
+        ) : null}
 
         {history.length > 0 ? (
           <Layout level="2" style={[styles.card, { marginBottom: 20 }]}>

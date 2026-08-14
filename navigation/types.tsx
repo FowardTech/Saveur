@@ -342,11 +342,12 @@ export type RootStackParamList = {
   // "What's Next" post-offer guided journey (product request, Pro Premium)
   // — negotiation talking points + a pre-start checklist + a 90-day success
   // plan, generated together for one specific offer. Reached from the Offer
-  // stage of the Application Tracker (company/role pre-filled from that
-  // application) and from the More menu (both fields blank, filled in on
-  // this screen's own form instead). See services/whatsNextService.ts and
+  // stage of the Application Tracker (company/role/currentOffer pre-filled
+  // from that application) and from the More menu (auto-detected from an
+  // Offer-stage tracker entry when there's exactly one, else filled in on
+  // this screen's own form). See services/whatsNextService.ts and
   // src/more/WhatsNext.tsx.
-  WhatsNext: {company?: string; role?: string} | undefined;
+  WhatsNext: {company?: string; role?: string; currentOffer?: string} | undefined;
   // Career DNA (product request item — merges what was pitched separately
   // as "Career DNA" and "Career Genome") — a living behavioral profile the
   // AI builds from real usage signals. See services/careerDnaService.ts.

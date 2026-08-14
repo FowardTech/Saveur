@@ -260,8 +260,19 @@ const ApplicationDetails = memo(() => {
   // stage of this tracker is the natural moment to surface it (a user just
   // reached the point this feature exists for), pre-filled with the real
   // company/role from this application rather than making them retype it
-  // on WhatsNext's own form. See src/more/WhatsNext.tsx.
-  const onWhatsNext = () => navigate('WhatsNext', {company: application?.company, role: application?.role});
+  // on WhatsNext's own form. Also carries the tracked offer amount/currency
+  // (product report: "What's Next should also auto detect apart from users
+  // manually entering details") — this application already has that data
+  // (set from the Offer-stage editor), so there's no reason to make the
+  // user retype it a second time on WhatsNext's own form. See
+  // src/more/WhatsNext.tsx.
+  const onWhatsNext = () => navigate('WhatsNext', {
+    company: application?.company,
+    role: application?.role,
+    currentOffer: application?.offerAmount != null
+      ? `${application?.offerCurrency ?? ''} ${application.offerAmount}`.trim()
+      : undefined,
+  });
 
   if (isLoading) {
     return (

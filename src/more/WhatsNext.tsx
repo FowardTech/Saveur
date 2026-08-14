@@ -29,6 +29,8 @@ import ProLockGate from 'components/ProLockGate';
 import { ArtWorkplaceCompass } from 'src/home/HomeHeroArt';
 import * as whatsNextService from 'services/whatsNextService';
 import { PostOfferPlan, PlanStep, PostOfferCheckIn } from 'services/whatsNextService';
+import * as applicationsService from 'services/applicationsService';
+import { Application_Stage_Enum } from 'constants/Types';
 
 // "What's Next" — Pro Premium post-offer guided journey (product request:
 // once a user gets an offer, one feature should cover negotiation help, a
@@ -61,8 +63,14 @@ const WhatsNext = memo(() => {
 
   const [company, setCompany] = React.useState(route.params?.company ?? '');
   const [role, setRole] = React.useState(route.params?.role ?? '');
-  const [currentOffer, setCurrentOffer] = React.useState('');
+  const [currentOffer, setCurrentOffer] = React.useState(route.params?.currentOffer ?? '');
   const [targetAsk, setTargetAsk] = React.useState('');
+  // Product report: "I thought the What's Next also auto detect apart from
+  // users manually entering details" -- true when the form below was
+  // silently pre-filled from a tracked application rather than typed in,
+  // so the intro/form copy can tell the user what happened instead of
+  // presenting pre-filled fields with no explanation.
+  const [autoDetectedFrom, setAutoDetectedFrom] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -79,6 +87,37 @@ const WhatsNext = memo(() => {
       .then(setPlan)
       .finally(() => setPlanLoaded(true));
   }, []);
+
+  // Product report: "I thought the What's Next also auto detect apart from
+  // users manually entering details" -- this screen only ever pre-filled
+  // company/role when reached from a specific Offer-stage application's own
+  // "What's Next?" button (ApplicationDetails.tsx passing them via route
+  // params, see onWhatsNext there). Opened from the More menu instead,
+  // every field was blank even though the app's own Application Tracker
+  // very possibly already has an Offer-stage entry with this exact
+  // information. Auto-detect that case: once the saved plan has loaded (so
+  // this doesn't race it) and no plan/route params/typed-in values already
+  // cover it, check the tracker for a single Offer-stage application and
+  // silently pre-fill the form sheet from it. Deliberately does nothing
+  // when there are zero or multiple Offer-stage applications -- guessing
+  // wrong would be worse than leaving the form blank, and picking "most
+  // recent" among several offers isn't obviously correct either.
+  React.useEffect(() => {
+    if (!planLoaded || plan) return;
+    if (route.params?.company || route.params?.role) return;
+    applicationsService.listApplications().then(apps => {
+      const offers = apps.filter(a => a.stage === Application_Stage_Enum.Offer);
+      if (offers.length !== 1) return;
+      const offer = offers[0];
+      setCompany(offer.company ?? '');
+      setRole(offer.role ?? '');
+      if (offer.offerAmount != null) {
+        setCurrentOffer(`${offer.offerCurrency ?? ''} ${offer.offerAmount}`.trim());
+      }
+      setAutoDetectedFrom(true);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [planLoaded, plan]);
 
   // Weekly "how's it going?" check-in (product request: "always check up
   // on the user regularly to know how they are doing at the new role until
@@ -436,9 +475,16 @@ const WhatsNext = memo(() => {
               <Flex center mb={12}>
                 <ArtWorkplaceCompass size={72} />
               </Flex>
-              <Text category="h7" bold center mb={20}>
+              <Text category="h7" bold center mb={autoDetectedFrom ? 4 : 20}>
                 {t('more:whats_next_form_sheet_title', { defaultValue: 'Tell us about your offer' })}
               </Text>
+              {autoDetectedFrom ? (
+                <Text category="h10" status="primary" center mb={20}>
+                  {t('more:whats_next_autodetected_notice', {
+                    defaultValue: 'Filled in from your Offer-stage application — edit anything below before building your plan.',
+                  })}
+                </Text>
+              ) : null}
               <Text category="h10" status="placeholder" mb={6}>
                 {t('more:whats_next_company_label', { defaultValue: 'Company' })}
               </Text>

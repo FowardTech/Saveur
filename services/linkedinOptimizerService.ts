@@ -8,9 +8,12 @@ function currentLanguage(): string {
 // ---------------------------------------------------------------------------
 // linkedinOptimizerService — AI LinkedIn Optimizer (product request item,
 // Pro Premium). The app's LinkedIn integration is sign-in only (no profile
-// content access), so this critiques/rewrites whatever profile text the
-// user pastes in themselves — see app/api/linkedin_optimizer.py's module
-// docstring for the full reasoning.
+// content access), so this critiques/rewrites profile text the screen
+// pre-fills from the user's already-uploaded resume/LinkedIn export
+// (src/more/LinkedInOptimizer.tsx's prefilledFromResume effect, backed by
+// resumeService.getStoredResumeSections()) or that the user pastes/edits in
+// themselves — see app/api/linkedin_optimizer.py's module docstring for the
+// full reasoning on why this can't read a live LinkedIn profile instead.
 // ---------------------------------------------------------------------------
 
 export interface SuggestionField {
