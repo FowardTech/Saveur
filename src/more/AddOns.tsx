@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, RefreshControl, View} from 'react-native';
+import {Alert, Platform, RefreshControl, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Layout, Icon} from '@ui-kitten/components';
 import {NavigationProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -15,12 +15,18 @@ import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
 import * as billingService from 'services/billingService';
 import {AddonProps} from 'services/billingService';
+import * as iapService from 'services/iapService';
 import {RootStackParamList} from 'navigation/types';
 import {stripeAppearance} from 'utils/stripeAppearance';
 
 // Matches Subscription.tsx's own STRIPE_RETURN_URL — same urlScheme:
 // 'saveur' registered natively (ios/Info.plist, AndroidManifest.xml).
 const STRIPE_RETURN_URL = 'saveur://stripe-redirect';
+
+// Same reasoning as Subscription.tsx's own IS_NATIVE_IAP_PLATFORM — Apple
+// Guideline 3.1.1 / Google Payments Policy require these one-time add-on
+// unlocks to go through each store's own IAP on iOS/Android, not Stripe.
+const IS_NATIVE_IAP_PLATFORM = Platform.OS === 'ios' || Platform.OS === 'android';
 
 // Paid Add-ons screen — product request item: "for the coding practice and
 // system design whiteboard I want them to be in a separate screen called
@@ -66,10 +72,41 @@ const AddOns = memo(() => {
     load();
   }, [load]);
 
+  // Apple/Google IAP path — the iOS/Android counterpart to the Stripe flow
+  // below. iapService.purchaseAddon already verifies the real transaction
+  // against the backend and grants the unlock before resolving (see that
+  // file's own comment), so there's no separate confirm call needed here
+  // the way the Stripe path's confirmAddonPurchase is.
+  const purchaseWithIAP = async (addon: AddonProps) => {
+    const result = await iapService.purchaseAddon(addon.code);
+    if (result.kind === 'error') {
+      throw new Error(result.error);
+    }
+    if (result.kind !== 'addon') {
+      throw new Error('Unexpected purchase result for an add-on SKU.');
+    }
+    setAddons(prev =>
+      prev ? prev.map(item => (item.code === addon.code ? {...item, unlocked: result.unlocked} : item)) : prev,
+    );
+    if (result.unlocked) {
+      Alert.alert(
+        t('more:addon_purchase_success_title', {defaultValue: 'Add-on activated'}),
+        t('more:addon_purchase_success_body', {
+          defaultValue: '{{name}} is now unlocked — head back and start practicing.',
+          name: addon.name,
+        }),
+      );
+    }
+  };
+
   const onPurchase = async (addon: AddonProps) => {
     if (purchasingCode) return;
     setPurchasingCode(addon.code);
     try {
+      if (IS_NATIVE_IAP_PLATFORM) {
+        await purchaseWithIAP(addon);
+        return;
+      }
       const sheet = await billingService.createPaymentSheet({mode: 'payment', addonCode: addon.code});
       await initStripe({publishableKey: sheet.publishableKey, urlScheme: 'saveur'});
       const {error: initError} = await initPaymentSheet({

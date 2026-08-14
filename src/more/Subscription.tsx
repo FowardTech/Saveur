@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Linking, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Linking, Platform, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -22,6 +22,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { BillingPlanProps, SubscriptionStatusProps, UserProfileProps } from 'constants/Types';
 import * as billingService from 'services/billingService';
+import * as iapService from 'services/iapService';
 import { RootStackParamList, SubscriptionScreenNavigationProp } from 'navigation/types';
 import { stripeAppearance } from 'utils/stripeAppearance';
 import { getSessionEntitlement } from 'services/entitlementsService';
@@ -32,6 +33,14 @@ import CtaButton from 'components/CtaButton';
 // CFBundleURLTypes/intent-filter registered natively for it (ios/Info.plist,
 // AndroidManifest.xml) — see those files for why this exact string.
 const STRIPE_RETURN_URL = 'saveur://stripe-redirect';
+
+// Apple Guideline 3.1.1 (and Google's own Payments Policy) require digital
+// subscriptions to go through each store's own In-App Purchase system on
+// iOS/Android — see services/iapService.ts's module comment. The Stripe
+// Payment Sheet path below is kept intact (not deleted) since it's still
+// the correct flow for any non-iOS/Android build of this codebase (e.g. a
+// future web/desktop target), but on an actual phone this is always true.
+const IS_NATIVE_IAP_PLATFORM = Platform.OS === 'ios' || Platform.OS === 'android';
 
 type PlanId = UserProfileProps['subscriptionTier'];
 
@@ -387,6 +396,90 @@ const Subscription = memo(() => {
     }
   };
 
+  // Paid plan -> Apple/Google native In-App Purchase (services/iapService.ts)
+  // — the iOS/Android counterpart to payWithPaymentSheet above. Unlike
+  // Stripe, the store itself collects payment and reports success/failure
+  // synchronously via the purchase listener inside iapService.purchase();
+  // by the time this resolves, the backend has already verified the real
+  // transaction against Apple/Google's own servers and granted the
+  // entitlement (see apple_iap_service.py / google_play_iap_service.py) —
+  // no webhook-lag polling needed the way the Stripe path requires.
+  const payWithIAP = async (plan: BillingPlanProps) => {
+    if (!plan.code) return;
+    const result = await iapService.purchaseSubscription(plan.code);
+    if (result.kind === 'error') {
+      throw new Error(result.error);
+    }
+    if (result.kind !== 'subscription') {
+      // Shouldn't happen for a plan SKU, but fail loudly rather than
+      // silently treating an unexpected shape as success.
+      throw new Error('Unexpected purchase result for a subscription SKU.');
+    }
+    setSubscription(result);
+    refreshAuthSubscription();
+    setJustSubscribedTier(result.tier);
+    if (fromOnboarding) {
+      onContinueOnboarding();
+    } else {
+      navigate('SuccessScr', {
+        successScr: {
+          title: t('more:payment_success_title', { defaultValue: 'Payment successful' }),
+          description: t('more:payment_success_body', {
+            defaultValue: 'Your payment for {{plan}} was successful. A receipt has been sent to your email.',
+            plan: plan.title,
+          }),
+          logo: true,
+          children: [
+            {
+              title: t('more:view_payment_history', { defaultValue: 'View Payment History' }),
+              onPress: () => navigate('PaymentHistory'),
+              status: 'basic',
+            },
+            {
+              title: t('common:done', { defaultValue: 'Done' }),
+              onPress: () => navigate('MainBottomTab'),
+              status: 'outline',
+            },
+          ],
+          buttonsViewStyle: { marginHorizontal: 32 },
+        },
+      });
+    }
+  };
+
+  // "Restore Purchases" — required by Apple (Guideline 3.1.2) for any app
+  // with non-consumable/subscription IAP, since a reinstalled app or a new
+  // device has no local record of a prior purchase. Not gated behind
+  // isPremium/plan state — always visible on iOS/Android so it's reachable
+  // exactly when someone actually needs it (right after reinstalling,
+  // before any subscription data has loaded from this app's own backend).
+  const [isRestoring, setIsRestoring] = React.useState(false);
+  const onRestorePurchases = React.useCallback(async () => {
+    if (isRestoring) return;
+    setIsRestoring(true);
+    try {
+      const { restoredCount } = await iapService.restorePurchases();
+      const fresh = await billingService.getSubscription();
+      setSubscription(fresh);
+      refreshAuthSubscription();
+      Alert.alert(
+        restoredCount > 0
+          ? t('more:restore_purchases_success_title', { defaultValue: 'Purchases restored' })
+          : t('more:restore_purchases_none_title', { defaultValue: 'Nothing to restore' }),
+        restoredCount > 0
+          ? t('more:restore_purchases_success_body', { defaultValue: 'Your previous purchases have been restored.' })
+          : t('more:restore_purchases_none_body', { defaultValue: "We couldn't find any previous purchases on this account." }),
+      );
+    } catch (error: any) {
+      Alert.alert(
+        t('more:restore_purchases_failed_title', { defaultValue: "Couldn't restore purchases" }),
+        error?.message ?? t('common:try_again_later', { defaultValue: 'Please try again in a moment.' }),
+      );
+    } finally {
+      setIsRestoring(false);
+    }
+  }, [isRestoring, refreshAuthSubscription, t]);
+
   // No-code plan (free tier / downgrade) -> Stripe Customer Portal in the
   // system browser, same as before — see the AppState listener above for
   // how the return trip is detected.
@@ -414,6 +507,15 @@ const Subscription = memo(() => {
     if (isOpeningPortal) return;
     setIsOpeningPortal(true);
     try {
+      // A subscription billed through Apple/Google has no Stripe customer
+      // to open a portal for — send the user to the OS's own subscription
+      // management instead (App Store's "Manage Subscriptions" / Play
+      // Store's subscription center), the only place that billing can
+      // actually be changed/cancelled from.
+      if (subscription?.provider === 'apple' || subscription?.provider === 'google') {
+        await iapService.openNativeSubscriptionManagement();
+        return;
+      }
       const url = await billingService.createPortalSession();
       const canOpen = await Linking.canOpenURL(url);
       if (!canOpen) {
@@ -445,6 +547,13 @@ const Subscription = memo(() => {
 
   const onCancelSubscription = React.useCallback(() => {
     if (isCancelling) return;
+    // Apple/Google own the renewal toggle for their own billed
+    // subscriptions — there's no Stripe subscription row to schedule a
+    // cancellation on. Same native-management redirect as onManageBilling.
+    if (subscription?.provider === 'apple' || subscription?.provider === 'google') {
+      iapService.openNativeSubscriptionManagement();
+      return;
+    }
     Alert.alert(
       t('more:cancel_subscription_confirm_title', { defaultValue: 'Cancel subscription?' }),
       t('more:cancel_subscription_confirm_body', {
@@ -473,10 +582,14 @@ const Subscription = memo(() => {
         },
       ],
     );
-  }, [isCancelling, refreshAuthSubscription, t]);
+  }, [isCancelling, refreshAuthSubscription, subscription, t]);
 
   const onResumeSubscription = React.useCallback(async () => {
     if (isResuming) return;
+    if (subscription?.provider === 'apple' || subscription?.provider === 'google') {
+      iapService.openNativeSubscriptionManagement();
+      return;
+    }
     setIsResuming(true);
     try {
       const updated = await billingService.resumeSubscription();
@@ -490,7 +603,7 @@ const Subscription = memo(() => {
     } finally {
       setIsResuming(false);
     }
-  }, [isResuming, refreshAuthSubscription, t]);
+  }, [isResuming, refreshAuthSubscription, subscription, t]);
 
   const onSelectPlan = async (plan: BillingPlanProps, planKey: string) => {
     if (checkoutPlanId) return;
@@ -498,7 +611,19 @@ const Subscription = memo(() => {
     setJustSubscribedTier(null);
     try {
       if (plan.code) {
-        await payWithPaymentSheet(plan);
+        // Apple Guideline 3.1.1 / Google Payments Policy: subscriptions must
+        // be sold through each store's own IAP on iOS/Android — see
+        // IS_NATIVE_IAP_PLATFORM's own comment above.
+        if (IS_NATIVE_IAP_PLATFORM) {
+          await payWithIAP(plan);
+        } else {
+          await payWithPaymentSheet(plan);
+        }
+      } else if (subscription?.provider === 'apple' || subscription?.provider === 'google') {
+        // "Switch to Free" from an Apple/Google-billed plan isn't a
+        // purchase to make — it's letting the current subscription lapse,
+        // which only the OS's own subscription management can do.
+        await iapService.openNativeSubscriptionManagement();
       } else {
         await manageInPortal(plan);
       }
@@ -566,14 +691,18 @@ const Subscription = memo(() => {
                 defaultValue: 'Pick a plan to unlock more of the AI coach — or start free and upgrade anytime.',
               })
             : t('more:subscription_description', {
-                defaultValue: "Pick a plan to unlock more of the AI coach. You'll pay securely right here via Stripe.",
+                defaultValue: IS_NATIVE_IAP_PLATFORM
+                  ? `Pick a plan to unlock more of the AI coach. You'll pay securely through your ${Platform.OS === 'ios' ? 'App Store' : 'Google Play'} account.`
+                  : "Pick a plan to unlock more of the AI coach. You'll pay securely right here via Stripe.",
               })}
         </Text>
 
-        {/* Manual resync action (see onRefreshStatus's own comment) —
-            only shown for an already-paying user, since a Free-tier
-            account has no Stripe subscription to reconcile against. */}
-        {!fromOnboarding && currentTier !== 'free' ? (
+        {/* Manual resync action (see onRefreshStatus's own comment) — only
+            shown for an already-paying Stripe subscriber; the backend call
+            this makes (POST /subscription/confirm) re-reads a live Stripe
+            subscription, which an Apple/Google-billed subscriber doesn't
+            have — "Restore Purchases" below is that case's real equivalent. */}
+        {!fromOnboarding && currentTier !== 'free' && (!subscription?.provider || subscription.provider === 'stripe') ? (
           <TouchableOpacity
             activeOpacity={0.7}
             disabled={isRefreshingStatus}
@@ -586,6 +715,28 @@ const Subscription = memo(() => {
             )}
             <Text category="h10" bold status="primary" ml={6}>
               {t('more:subscription_refresh_status_cta', { defaultValue: "Not seeing your correct plan? Refresh status" })}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
+
+        {/* "Restore Purchases" — required by Apple (Guideline 3.1.2) for any
+            app selling non-consumable/subscription IAP. Always visible on
+            iOS/Android (not gated on tier) — a reinstall/new device has no
+            local record of a prior purchase, so this needs to be reachable
+            before this screen even knows the user was ever subscribed. */}
+        {IS_NATIVE_IAP_PLATFORM ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={isRestoring}
+            onPress={onRestorePurchases}
+            style={styles.refreshStatusLink}>
+            {isRestoring ? (
+              <Spinner size="tiny" />
+            ) : (
+              <Icon pack="eva" name="undo-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+            )}
+            <Text category="h10" bold status="primary" ml={6}>
+              {t('more:restore_purchases_cta', { defaultValue: 'Restore purchases' })}
             </Text>
           </TouchableOpacity>
         ) : null}

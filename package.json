@@ -40,6 +40,7 @@
     "card-validator": "^8.1.1",
     "compare-versions": "^6.0.0-rc.1",
     "i18next": "^22.4.9",
+    "react-native-iap": "16.3.1",
     "lottie-ios": "4.5.0",
     "lottie-react-native": "7.3.4",
     "lucide-react-native": "^1.28.0",

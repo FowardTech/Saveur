@@ -813,6 +813,14 @@ export interface BillingPlanProps {
 export interface SubscriptionStatusProps {
   tier: UserProfileProps['subscriptionTier'];
   status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'none';
+  // "stripe" | "apple" | "google" | null (free / never subscribed) — which
+  // biller this subscription runs through. Subscription.tsx uses this to
+  // route "Manage Billing"/cancel/resume to Stripe's portal only when
+  // provider === "stripe"; an apple/google subscription instead opens the
+  // OS's native subscription management (services/iapService.ts's
+  // openNativeSubscriptionManagement) since neither store lets this app's
+  // own backend cancel/change that billing directly.
+  provider?: 'stripe' | 'apple' | 'google' | null;
   periodEnd?: number; // ms epoch — normalized from the backend's unix-seconds `period_end`
   cancelAtPeriodEnd?: boolean;
   // The specific Stripe Price the user is actually subscribed to — lets

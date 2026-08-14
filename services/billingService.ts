@@ -83,6 +83,14 @@ interface BillingPlanWire {
 interface SubscriptionWire {
   tier: 'free' | 'premium' | 'premium_plus';
   status: 'active' | 'trialing' | 'past_due' | 'canceled' | 'incomplete' | 'none';
+  // "stripe" | "apple" | "google" | undefined (never-subscribed/free) — which
+  // biller this subscription actually runs through. Subscription.tsx needs
+  // this to know whether "Manage Billing"/cancel/resume should talk to
+  // Stripe's portal (only meaningful for provider === "stripe") or send the
+  // user to the OS's native subscription management instead (apple/google —
+  // neither store lets a third-party backend cancel/change their billing
+  // directly).
+  provider?: 'stripe' | 'apple' | 'google' | null;
   price_id?: string | null;
   period_end?: number | null; // unix seconds
   cancel_at_period_end?: boolean;
@@ -137,6 +145,7 @@ function fromSubscriptionWire(wire: SubscriptionWire): SubscriptionStatusProps {
   return {
     tier: wire.tier ?? 'free',
     status: wire.status ?? 'none',
+    provider: wire.provider ?? null,
     periodEnd: wire.period_end ? wire.period_end * 1000 : undefined,
     cancelAtPeriodEnd: wire.cancel_at_period_end ?? false,
     sessionsUsed: typeof wire.sessions_used === 'number' ? wire.sessions_used : undefined,
@@ -608,6 +617,75 @@ function fromAddonWire(wire: AddonWire): AddonProps {
     currency: wire.currency ?? 'usd',
     unlocked: !!wire.unlocked,
   };
+}
+
+// ---- Apple / Google In-App Purchase (iOS/Android, replaces the Stripe
+// Payment Sheet flow above for subscriptions/add-ons on mobile — Apple
+// Guideline 3.1.1 requires digital subscriptions to go through Apple's own
+// IAP, not a third-party processor). See services/iapService.ts for the
+// actual react-native-iap purchase flow that calls these; this file only
+// wraps the two backend verify endpoints. ----
+
+// Discriminated on `kind` so a single call site (iapService.ts) can handle
+// whichever shape came back without knowing in advance — Apple's verify
+// endpoint in particular doesn't know upfront whether a transaction_id is a
+// subscription or an add-on (see backend's apple_iap_service.
+// grant_from_transaction).
+export type IapVerifyResult =
+  | (SubscriptionStatusProps & {kind: 'subscription'})
+  | {kind: 'addon'; addonCode: string; unlocked: boolean; unlockedAddons: string[]}
+  | {kind: 'error'; error: string};
+
+interface IapVerifyWire {
+  error?: string;
+  kind?: 'subscription' | 'addon';
+  addon_code?: string;
+  unlocked?: boolean;
+  unlocked_addons?: string[];
+  // ...plus every SubscriptionWire field when kind === 'subscription'.
+  [key: string]: unknown;
+}
+
+function fromIapVerifyWire(wire: IapVerifyWire): IapVerifyResult {
+  if (wire.error) return {kind: 'error', error: wire.error};
+  if (wire.kind === 'addon') {
+    return {
+      kind: 'addon',
+      addonCode: wire.addon_code ?? '',
+      unlocked: !!wire.unlocked,
+      unlockedAddons: wire.unlocked_addons ?? [],
+    };
+  }
+  return {kind: 'subscription', ...fromSubscriptionWire(wire as unknown as SubscriptionWire)};
+}
+
+/** POST /api/v1/billing/iap/apple/verify — {transaction_id}. Apple's own
+ * single verify endpoint figures out subscription-vs-add-on itself from
+ * the transaction's product id, so there's only one call here (unlike the
+ * Google functions below, which need two — see google_play_iap_service.py's
+ * module docstring for why the Play Developer API doesn't unify those). */
+export async function verifyAppleTransaction(transactionId: string): Promise<IapVerifyResult> {
+  const {data} = await apiClient.post<IapVerifyWire>('/api/v1/billing/iap/apple/verify', {
+    transaction_id: transactionId,
+  });
+  return fromIapVerifyWire(data);
+}
+
+/** POST /api/v1/billing/iap/google/verify — {mode:"subscription", product_id, purchase_token}. */
+export async function verifyGoogleSubscription(productId: string, purchaseToken: string): Promise<IapVerifyResult> {
+  const {data} = await apiClient.post<IapVerifyWire>('/api/v1/billing/iap/google/verify', {
+    mode: 'subscription', product_id: productId, purchase_token: purchaseToken,
+  });
+  return fromIapVerifyWire(data);
+}
+
+/** POST /api/v1/billing/iap/google/verify — {mode:"product", product_id, purchase_token}
+ * (the one-time-purchase / add-on counterpart to verifyGoogleSubscription above). */
+export async function verifyGoogleAddon(productId: string, purchaseToken: string): Promise<IapVerifyResult> {
+  const {data} = await apiClient.post<IapVerifyWire>('/api/v1/billing/iap/google/verify', {
+    mode: 'product', product_id: productId, purchase_token: purchaseToken,
+  });
+  return fromIapVerifyWire(data);
 }
 
 /** GET /api/v1/billing/addons — the Add-ons screen's catalog, each entry
