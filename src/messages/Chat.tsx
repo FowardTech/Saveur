@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Alert, Image, ImageStyle, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageStyle, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
 import {
@@ -254,6 +254,14 @@ const Chat = memo(() => {
       .catch(() => {});
   }, [profile?.goals, profile?.desiredRoles]);
 
+  // Product follow-up: "move the suggested topic to be in a bottom sheet so
+  // the suggested topic text will be like a button pill... so that the
+  // screen will be more clean and tidy" — the topics card (see
+  // renderChatEmpty below) used to sit permanently on the greeting screen;
+  // now it only opens on demand, and the greeting screen's default state is
+  // just the headline + the "Start a video practice" row + this one pill.
+  const [topicsSheetVisible, setTopicsSheetVisible] = React.useState(false);
+
   // Product follow-up: "[the suggested topics] should be in the screen
   // that leads to the live conversation screen" — confirmed this means the
   // live VOICE conversation specifically, not a text bubble in place.
@@ -265,6 +273,10 @@ const Chat = memo(() => {
   // listening).
   const [voiceInitialTopic, setVoiceInitialTopic] = React.useState<string | undefined>(undefined);
   const onTapTopic = React.useCallback((title: string) => {
+    // Only ever called from inside the topics bottom sheet now — close it
+    // on the way out so it isn't still sitting open once Voice mode takes
+    // over the screen.
+    setTopicsSheetVisible(false);
     setVoiceInitialTopic(title);
     setMode('voice');
     // A topic tap starts the conversation just as much as typing a real
@@ -603,55 +615,27 @@ const Chat = memo(() => {
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
         </Text>
 
-        {/* Product report: "too many content... make the suggested topic
-            in a card form." This used to be 3 separate floating pieces
-            stacked between the headline and the topics themselves (a
-            pill-shaped subtitle chip, then a standalone one-line voice
-            hint, then the bare row of circles) -- consolidated into ONE
-            card: the subtitle chip is gone entirely (the headline plus
-            this card's own presence already carry enough context without
-            it), and the voice hint moved from a floating paragraph to a
-            small subtitle inside the card's own header, right above the
-            row it explains. Net result: 3 loose elements -> 1 card, same
-            real topics/palette/mic-badge/onTapTopic behavior as before,
-            nothing removed except the redundant standalone chip. */}
+        {/* Product follow-up: "move the suggested topic to be in a bottom
+            sheet so the suggested topic text will be like a button pill at
+            the center down a little bit so that the screen will be more
+            clean and tidy." Was a permanently-visible card (a header, a
+            voice hint, and the 4-circle row all stacked on the greeting
+            screen itself — see this block's own git history for that
+            "too many content, card-ify it" pass). Now just this one pill;
+            the actual card content moved into topicsSheet, rendered
+            outside this scaleY-flipped view further down (see that
+            Modal's own comment). */}
         {topics.length > 0 ? (
-          <View style={styles.emptyTopicsCard}>
-            <Text category="h9" bold>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => setTopicsSheetVisible(true)}
+            style={styles.suggestedTopicsPill}>
+            <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+            <Text category="h9" bold ml={6} style={{ color: theme['color-primary-500'] }}>
               {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
             </Text>
-            {/* BUG FIX (pre-launch redundancy/flow audit): tapping a topic
-                here silently leaves text mode and starts a live spoken
-                voice call (see onTapTopic below) — nothing previously told
-                the user that would happen, which read as a surprising mode
-                switch for anyone expecting a text reply. This hint plus a
-                small mic badge on each circle (below) signal it up front. */}
-            <Text category="h10" mt={2} mb={14} style={{ color: theme['text-hint-color'] }}>
-              {t("message:topics_start_voice_hint", { defaultValue: "Tap a topic to start a voice conversation" })}
-            </Text>
-            <View style={styles.emptyTopicRow}>
-              {topics.slice(0, 4).map((item, i) => {
-                const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
-                return (
-                  <TouchableOpacity
-                    key={item.id}
-                    activeOpacity={0.7}
-                    onPress={() => onTapTopic(item.title)}
-                    style={styles.emptyTopicButton}>
-                    <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
-                      <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
-                      <View style={styles.emptyTopicMicBadge}>
-                        <Icon pack="eva" name="mic-outline" style={{ width: 10, height: 10, tintColor: '#fff' }} />
-                      </View>
-                    </View>
-                    <Text category="h10" bold center numberOfLines={2} mt={8}>
-                      {item.title}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
+            <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
+          </TouchableOpacity>
         ) : null}
 
         {/* "Suggested for you" — a real existing feature (same Composer
@@ -673,7 +657,7 @@ const Chat = memo(() => {
         </TouchableOpacity>
       </View>
     );
-  }, [initialPrompt, topics, onTapTopic, onMakeCall, t, theme, styles]);
+  }, [initialPrompt, topics, onMakeCall, t, theme, styles]);
 
   // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
   // (no logo.png asset needed). Returns null for the current user's own
@@ -907,6 +891,76 @@ const Chat = memo(() => {
                 </Flex>
               </Layout>
             ) : null}
+            {/* Suggested-topics bottom sheet (product follow-up: "move the
+                suggested topic to be in a bottom sheet... so that the
+                screen will be more clean and tidy") — same Modal/backdrop/
+                sheet idiom components/DocumentPickerModal.tsx already uses
+                elsewhere in this app (slide-up, rounded top corners,
+                tap-outside-to-dismiss). Rendered here rather than inside
+                renderChatEmpty's returned tree because that tree is
+                wrapped in a `scaleY(-1)` counter-transform (see its own
+                comment) to compensate for GiftedChat's inverted message
+                list — a Modal doesn't participate in that layout at all
+                (it mounts at the native root), so keeping it outside
+                avoids having to fight that transform. Same real
+                topics/palette/mic-badge/onTapTopic behavior as the old
+                inline card, just opened on demand instead of always
+                taking up space on the greeting screen. */}
+            <Modal
+              visible={topicsSheetVisible}
+              animationType="slide"
+              transparent
+              onRequestClose={() => setTopicsSheetVisible(false)}>
+              <TouchableOpacity
+                activeOpacity={1}
+                style={styles.topicsSheetBackdrop}
+                onPress={() => setTopicsSheetVisible(false)}>
+                <TouchableOpacity activeOpacity={1} style={styles.topicsSheet}>
+                  <Flex justify="space-between" itemsCenter mb={4}>
+                    <Text category="h8" bold>
+                      {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => setTopicsSheetVisible(false)}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+                    </TouchableOpacity>
+                  </Flex>
+                  {/* BUG FIX (pre-launch redundancy/flow audit): tapping a
+                      topic here silently leaves text mode and starts a live
+                      spoken voice call (see onTapTopic) — nothing previously
+                      told the user that would happen, which read as a
+                      surprising mode switch for anyone expecting a text
+                      reply. This hint plus a small mic badge on each circle
+                      (below) signal it up front. */}
+                  <Text category="h10" mt={2} mb={18} style={{ color: theme['text-hint-color'] }}>
+                    {t("message:topics_start_voice_hint", { defaultValue: "Tap a topic to start a voice conversation" })}
+                  </Text>
+                  <View style={styles.emptyTopicRow}>
+                    {topics.slice(0, 4).map((item, i) => {
+                      const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          activeOpacity={0.7}
+                          onPress={() => onTapTopic(item.title)}
+                          style={styles.emptyTopicButton}>
+                          <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
+                            <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
+                            <View style={styles.emptyTopicMicBadge}>
+                              <Icon pack="eva" name="mic-outline" style={{ width: 10, height: 10, tintColor: '#fff' }} />
+                            </View>
+                          </View>
+                          <Text category="h10" bold center numberOfLines={2} mt={8}>
+                            {item.title}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </Modal>
           </View>
         </>
       )}
@@ -1050,19 +1104,42 @@ const themedStyles = StyleService.create({
     fontFamily: 'PlusJakartaSans-Medium',
     fontWeight: 'normal',
   },
-  // Product report: "too many content... make the suggested topic in a
-  // card form" (see the JSX comment above for the full before/after).
-  // Flat fill + radius, no shadow -- same convention emptySuggestedCard
-  // below already uses for this screen's cards.
-  emptyTopicsCard: {
-    width: '100%',
-    marginTop: 24,
-    padding: 16,
-    borderRadius: 18,
+  // Product follow-up: "move the suggested topic to be in a bottom sheet
+  // so the suggested topic text will be like a button pill at the center
+  // down a little bit" — replaces the old always-visible emptyTopicsCard
+  // (see this style's own git history) with just this trigger. Centered
+  // via emptyState's own `alignItems: 'center'`, `marginTop` is the "down
+  // a little bit" from the headline above it.
+  suggestedTopicsPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 28,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 99,
+    backgroundColor: 'rgba(0, 99, 248, 0.08)',
+  },
+  suggestedTopicsPillChevron: {
+    marginLeft: 2,
+  },
+  // Bottom sheet the pill above opens (see that TouchableOpacity's own
+  // comment + the Modal further down this file for the full "why"). Same
+  // backdrop/sheet idiom components/DocumentPickerModal.tsx already uses.
+  topicsSheetBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  topicsSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 32,
     backgroundColor: 'background-basic-color-2',
   },
   // Reference-redesign follow-up: a single row of 4 round icon buttons
-  // (was a 2x2 card grid — see the JSX comment above).
+  // (was a 2x2 card grid — see the JSX comment above where this renders,
+  // now inside topicsSheet instead of the old inline emptyTopicsCard).
   emptyTopicRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
