@@ -269,7 +269,7 @@ const MyProgress = memo(() => {
                   {t('find:no_career_goal_set', { defaultValue: "You haven't set a career goal yet." })}
                 </Text>
               )}
-              <Button
+              {/* <Button
                 size="small"
                 appearance="ghost"
                 style={{ marginTop: 12, alignSelf: 'flex-start' }}
@@ -277,7 +277,7 @@ const MyProgress = memo(() => {
                 {goals.length > 0
                   ? t('find:change_goal', { defaultValue: 'Change goal' })
                   : t('find:set_a_goal', { defaultValue: 'Set a goal' })}
-              </Button>
+              </Button> */}
             </Layout>
 
             <Layout level="2" style={[styles.goalCard, { marginTop: 16 }]}>
