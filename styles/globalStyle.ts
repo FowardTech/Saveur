@@ -247,20 +247,22 @@ export const globalStyle = StyleSheet.create({
   // inputField` into its own `StyleService.create({...})`, which resolves
   // theme-token strings in the final merged style regardless of which layer
   // contributed the key.
-  // Product request: "All input fields in the app should have a border
-  // radius of 5, background color of gray." Radius dropped from 12 -> 5.
-  // Background switched from `background-basic-color-2` (this app's white/
-  // dark-card surface token, used for every plain card) to
-  // `background-basic-color-3` (this app's actual gray fill token --
-  // resolves to #F0F0F0 in light mode / #2A2A42 in dark mode, see
-  // constants/theme/{light,dark}.json -- already used as the gray fill for
-  // badges, chip tracks, and borders elsewhere in this app), so a field now
-  // visibly reads as a distinct gray input against the white cards around
-  // it instead of blending in as another white surface.
+  // Product request (follow-up, reversed): "All input fields in the app
+  // should have a border radius of 5, background color of gray" gave this
+  // `background-basic-color-3` (this app's actual gray fill token). Later
+  // product follow-up: "remove the gray background from the input fields
+  // but leave the borders on them" -- back to `background-basic-color-2`
+  // (this app's white/dark-card surface token, used for every plain card),
+  // the same token this field used before the gray request, kept for the
+  // same dark-mode-legibility reason documented above (resolves to white
+  // in light mode, the correct dark card surface in dark mode, so typed
+  // text -- which follows `text-basic-color`, near-white in dark mode --
+  // stays legible against it). borderWidth/borderColor/borderRadius all
+  // untouched, so the visible border stays exactly as it was.
   inputField: {
     borderWidth: 1,
     borderColor: 'rgba(39, 39, 85, 0.15)',
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-2',
     borderRadius: 5,
   },
   // Follow-up correction: paddingHorizontal/paddingVertical used to live on
