@@ -73,16 +73,25 @@ export const Images = {
   // with the GIF image" — a rotating/animated version of the same glassy
   // blue sphere concept). The user's original upload was an 800x800, 181-
   // frame, 23MB GIF — far too large to bundle as a repeatedly-rendered UI
-  // element (app size + decode memory), so this is a re-encoded version
-  // (ffmpeg, palette-optimized, 360x360 @ 15fps @ 160 colors) at ~2.7MB —
-  // big enough to stay crisp at this orb's largest on-screen size (up to
-  // 200pt, i.e. 600px at @3x) without shipping 3 separate per-density GIF
-  // files (which would have roughly tripled total size for a soft gradient
-  // image that doesn't need pixel-perfect density matching to look good).
-  // See android/app/build.gradle's animated-gif Fresco dependency comment —
-  // Android's <Image> needs that native module to actually animate a GIF
-  // instead of freezing on its first frame; iOS animates GIFs via <Image>
-  // with no extra config needed.
+  // element (app size + decode memory), so this was re-encoded (ffmpeg,
+  // palette-optimized, 360x360 @ 15fps @ 160 colors) at ~2.7MB.
+  //
+  // THIRD replacement (product follow-up, screenshot + a new reference
+  // image: "change the round gif to this second gif also change the round
+  // ball stuff in the interview screen too") — a swirled iridescent
+  // blue/purple/pink liquid-glass shape, same "real rendered orb image,
+  // not a hand-rolled gradient" idea as the first replacement, just a
+  // different piece of source art. Same re-encode treatment as the
+  // previous GIF: user's upload was 800x800 @ ~30fps/120 frames/20.3MB,
+  // re-encoded (ffmpeg, palette-optimized, 360x360 @ 15fps @ 160 colors)
+  // down to ~2.3MB. Swapped in place (same filename, same require() call
+  // site) rather than adding a new asset + touching call sites — both
+  // VoiceCoachView.tsx (AI Coach voice mode) and
+  // src/practice/LiveInterviewSession.tsx's Voice-mode orb already share
+  // this exact same `Images.voiceOrb` reference (see each file's own
+  // comment on reusing "the exact same pulsing orb"), so this one file
+  // swap updates both screens at once, no code changes needed for the
+  // "interview screen too" half of that request.
   voiceOrb: require('./orb_gradient.gif'),
   // Product-supplied replacement for the homescreen XP check-in card's
   // gamification badge (was the eva "award" icon, tinted gold) — a real

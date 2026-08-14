@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { AppState, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import LinearGradient from 'react-native-linear-gradient';
@@ -19,6 +20,7 @@ import { CoachUserContext } from 'services/coachService';
 import * as speechService from 'services/speechService';
 import { actionTitle } from 'services/suggestedActions';
 import { SuggestedActionId } from 'constants/Types';
+import ThemeContext from '../../ThemeContext';
 
 // Live, continuous voice conversation with the AI coach — replaces the
 // text-chat box as the default way to talk to the coach (see Chat.tsx's
@@ -122,6 +124,9 @@ const VoiceCoachView = memo(({
   onInitialTopicHandled?: () => void;
 }) => {
   const { t } = useTranslation(['message']);
+  const theme = useTheme();
+  const { theme: appTheme } = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
   const stt = speechService.useSpeechToText();
 
   const [phase, setPhase] = React.useState<Phase>('idle');
@@ -498,13 +503,20 @@ const VoiceCoachView = memo(({
         onPress={onInterrupt}
         style={styles.orbWrap}>
         <Animated.View style={[styles.halo, haloStyle]}>
-          {/* Was a blue-tinted glow (rgba(90,150,255,...)) — against the
-              new solid blue page background (see this file's own comment
-              above) that nearly blended into the fill instead of reading as
-              a halo. A soft white glow gives the orb real visual separation
-              from the background it now sits on. */}
+          {/* Product follow-up (screenshot): "change the background of this
+              AI coach from blue to white" (see Chat.tsx's isVoiceMode
+              comment for the full history) -- back to a blue-tinted glow in
+              light mode (the ORIGINAL treatment, from before the
+              screen-went-blue request that made a white glow necessary),
+              since a white glow would now blend straight into the white
+              page it sits on. Dark mode keeps a soft white glow -- Voice
+              mode's background is a dark card surface there, so a white
+              glow still reads as a halo the way it did against the old
+              navy fill. */}
           <LinearGradient
-            colors={['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)']}
+            colors={isDarkMode
+              ? ['rgba(255,255,255,0.30)', 'rgba(255,255,255,0.04)']
+              : ['rgba(90,150,255,0.35)', 'rgba(90,150,255,0.05)']}
             style={styles.haloFill}
           />
         </Animated.View>
@@ -520,14 +532,15 @@ const VoiceCoachView = memo(({
         </Animated.View>
       </TouchableOpacity>
 
-      {/* Product request: "make the background of this screen the default
-          blue and the text white" — this view is only ever rendered on
-          that blue background (see src/messages/Chat.tsx's Voice-mode
-          Container/TopNavigation override), so every text color below is
-          now a literal white/translucent-white instead of the theme's
-          normal dark ink, which would be unreadable against a solid blue
-          fill. */}
-      <Text category="h7" bold center mt={24} style={styles.whiteText}>
+      {/* Product follow-up: "change the background of this AI coach from
+          blue to white and its text to black" -- this view is only ever
+          rendered on Chat.tsx's Voice-mode Container/TopNavigation
+          background (see that file's isVoiceMode comment), which now
+          matches the app's normal white-card/dark-ink pair instead of a
+          solid blue fill, so text colors below follow the theme
+          (text-basic-color/text-hint-color) instead of a literal
+          hardcoded white/translucent-white. */}
+      <Text category="h7" bold center mt={24} style={{ color: theme['text-basic-color'] }}>
         {statusLabel}
       </Text>
 
@@ -538,12 +551,12 @@ const VoiceCoachView = memo(({
         maxWidth={300}
         numberOfLines={4}
         ellipsizeMode="tail"
-        style={styles.translucentWhiteText}>
+        style={{ color: theme['text-hint-color'] }}>
         {displayLine}
       </Text>
 
       {errorMsg ? (
-        <Text category="h10" center mt={16} maxWidth={280} style={styles.errorText}>
+        <Text category="h10" center mt={16} maxWidth={280} style={{ color: theme['color-danger-500'] }}>
           {errorMsg}
         </Text>
       ) : null}
@@ -552,8 +565,8 @@ const VoiceCoachView = memo(({
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onInterrupt}
-          style={styles.interruptPill}>
-          <Text category="h10" bold style={styles.whiteText}>
+          style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,99,248,0.10)' }]}>
+          <Text category="h10" bold style={{ color: theme['text-basic-color'] }}>
             {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap to interrupt' })}
           </Text>
         </TouchableOpacity>
@@ -602,29 +615,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // backgroundColor applied inline per isDarkMode at the JSX call site (see
+  // that render's own comment) -- everything else about the pill's shape
+  // stays here.
   interruptPill: {
     marginTop: 28,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 99,
-    // Was `background-basic-color-2` (a theme token meant to sit on a
-    // neutral page background) — against the new solid-blue background
-    // (see this file's own comment above) that read as a jarring light-gray
-    // patch. A translucent white pill reads as "a control sitting on a
-    // colored surface", the same convention CtaButton-adjacent controls
-    // elsewhere in this app already use on colored fills.
-    backgroundColor: 'rgba(255,255,255,0.22)',
-  },
-  whiteText: {
-    color: '#FFFFFF',
-  },
-  translucentWhiteText: {
-    color: 'rgba(255,255,255,0.85)',
-  },
-  // Errors still need to read as "something's wrong", but a saturated red
-  // on top of solid brand blue is harsh — a soft warm-white/pink reads as
-  // an alert without clashing the way `status="danger"`'s normal red would.
-  errorText: {
-    color: '#FFE1E1',
   },
 });

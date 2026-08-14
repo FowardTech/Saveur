@@ -689,13 +689,18 @@ const Chat = memo(() => {
     );
   }, [styles.coachAvatar]);
 
-  // Product request: "make the background of this screen the default blue
-  // and the text white" (Voice mode's full-screen listening/thinking/
-  // speaking view — see VoiceCoachView.tsx, rendered below when
-  // mode==='voice'). Scoped to voice mode only — Text mode keeps the
-  // normal page background/ink, this is purely a Voice-mode visual
-  // treatment. `color-primary-500` is the same brand blue CtaButton.tsx and
-  // every other "default blue" surface in this app already uses.
+  // Product follow-up (screenshot, reversing the earlier blue treatment):
+  // "change the background of this AI coach from blue to white and its
+  // text to black." Was a literal `voice-mode-background` token (brand
+  // blue in light mode, navy in dark mode — see this const's own git
+  // history above for that earlier request). Now just
+  // `background-basic-color-2`/`text-basic-color`, the same white-card/
+  // dark-ink pair every other screen in this app already uses — resolves
+  // to literal white + this app's standard near-black ink in light mode
+  // (exactly the ask), and the correct dark card surface + near-white ink
+  // in dark mode, with no extra hardcoding needed to keep dark mode
+  // legible. Still scoped to Voice mode only via `isVoiceMode` (Text mode
+  // already uses the plain page background/ink with no override at all).
   const isVoiceMode = mode === 'voice';
 
   return (
@@ -716,31 +721,19 @@ const Chat = memo(() => {
         // far enough to render partly behind the tab bar instead. Removed;
         // Container's normal safe-area padding is correct here now, same
         // as every other tab screen (Home, Practice, Interviews, Menu).
-        // BUG FIX (product report, screenshot: "you need to implement the
-        // dark mode of this screen") — this used to be a literal
-        // `color-primary-500`, which is defined once in appTheme.json and
-        // never overridden per theme (see constants/theme/light.json /
-        // dark.json), so Voice mode rendered the exact same bright brand
-        // blue in dark mode as in light mode — the one screen in the app
-        // that never actually changed with the theme toggle. New
-        // `voice-mode-background` token: unchanged brand blue (#0063f8) in
-        // light mode, a deep navy (#16273F, the same dark-mode "tint"
-        // color background-tint-primary already uses) in dark mode — still
-        // reads as "the full-bleed colored voice-call screen," just fitting
-        // this app's actual dark palette instead of a jarring bright blue
-        // against everything else being dark.
-        isVoiceMode && { backgroundColor: theme['voice-mode-background'] },
+        // See isVoiceMode's own comment above for the current white-bg/
+        // black-ink reasoning (was blue in light mode / navy in dark mode
+        // before this follow-up).
+        isVoiceMode && { backgroundColor: theme['background-basic-color-2'] },
       ]}>
       <TopNavigation
-        style={isVoiceMode ? { backgroundColor: theme['voice-mode-background'] } : undefined}
+        style={isVoiceMode ? { backgroundColor: theme['background-basic-color-2'] } : undefined}
         title={renderProps => (
-          <Text
-            {...renderProps}
-            style={[renderProps?.style, isVoiceMode && { color: '#FFFFFF' }]}>
+          <Text {...renderProps}>
             {t("message:ai_coach_name", { defaultValue: "AI Career Coach" })}
           </Text>
         )}
-        accessoryLeft={<NavigationAction status={isVoiceMode ? 'white' : 'basic'} />}
+        accessoryLeft={<NavigationAction status="basic" />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
             {/* Trophy (Leaderboard) + notification bell — product request:
@@ -758,7 +751,7 @@ const Chat = memo(() => {
               <Icon
                 pack="assets"
                 name="notification"
-                style={[globalStyle.icon20, { tintColor: isVoiceMode ? '#FFFFFF' : theme['icon-basic-color'] }]}
+                style={[globalStyle.icon20, { tintColor: theme['icon-basic-color'] }]}
               />
               {unreadCount ? (
                 <View style={styles.headerNotifBadge}>
@@ -781,20 +774,24 @@ const Chat = memo(() => {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
-                style={[styles.modeToggleButton, isVoiceMode && styles.modeToggleButtonOnVoice]}>
+                style={styles.modeToggleButton}>
                 <Icon
                   pack="eva"
                   name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
                   // Product request: "bake the button background the
-                  // default blue color" — the pill's normal (non-voice-
-                  // mode) fill is now this app's standard solid brand blue
-                  // (`button-basic-color`, same token every other filled
-                  // CTA button reads) instead of a light tint, so the icon/
-                  // label go white for contrast — the same solid-fill/
+                  // default blue color" — this pill's fill is this app's
+                  // standard solid brand blue (`button-basic-color`, same
+                  // token every other filled CTA button reads), so the
+                  // icon/label go white for contrast — the same solid-fill/
                   // white-text pairing already correct everywhere else in
                   // the app (see Leaderboard.tsx's own header comment on
                   // why that pairing only holds on a SOLID fill, which this
-                  // now genuinely is).
+                  // is). Used to swap to a translucent-white variant in
+                  // Voice mode (modeToggleButtonOnVoice, since a solid blue
+                  // pill would've blended into the old solid-blue Voice-mode
+                  // background) -- no longer needed now that Voice mode's
+                  // own background is white/normal, same as Text mode (see
+                  // isVoiceMode's own comment further up this file).
                   style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]}
                 />
                 <Text
@@ -961,9 +958,6 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 10,
     borderRadius: 16,
     backgroundColor: "button-basic-color",
-  },
-  modeToggleButtonOnVoice: {
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
   },
   modeToggleLabel: {
     marginLeft: 4,
