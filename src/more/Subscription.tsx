@@ -843,10 +843,18 @@ const themedStyles = StyleService.create({
   // Flat solid-blue hero card (gradient fill removed) — the ribbon flips to
   // a white fill/blue text (`popularRibbonHero`) since the original
   // solid-blue ribbon would blend into this card's own blue fill.
+  // Product report: "colored cards like this are not supposed to have box
+  // shadows" -- this hero card fills solid brand blue, and globalStyle.
+  // card's dark neutral shadow (tuned for a plain white card) reads as a
+  // muddy halo behind a saturated color fill instead of a crisp colored
+  // card. shadowOpacity/elevation explicitly zeroed to cancel out the
+  // shadow half of globalStyle.card's spread.
   planCardHero: {
     ...globalStyle.card,
     marginBottom: 16,
     backgroundColor: 'color-primary-500',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   planCardHeroInner: {
     padding: 20,

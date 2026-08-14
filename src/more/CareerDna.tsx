@@ -499,10 +499,17 @@ const themedStyles = StyleService.create({
   // Slightly smaller than the full 24 (these are small individual trait
   // rows, not the main narrative card) but still noticeably rounder than
   // the pre-reskin 12.
+  // Product report: "colored cards like this are not supposed to have box
+  // shadows" -- same fix as MyProgress.tsx's statCard (see that file's own
+  // comment): this card fills with a pastel tileColorAt() color (see the
+  // JSX below), and globalStyle.card's dark neutral shadow reads as a
+  // muddy halo on a pastel fill instead of a crisp colored tile.
   traitCard: {
     ...globalStyle.card,
     padding: 14,
     marginBottom: 12,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   chip: {
     borderRadius: 999,

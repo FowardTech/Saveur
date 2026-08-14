@@ -302,9 +302,16 @@ const themedStyles = StyleService.create({
     padding: 20,
   },
   // Flat solid-blue hero card (gradient fill removed).
+  // Product report: "colored cards like this are not supposed to have box
+  // shadows" -- same fix as Subscription.tsx's planCardHero (see that
+  // file's own comment): this hero card fills solid brand blue, and
+  // globalStyle.card's dark neutral shadow reads as a muddy halo behind a
+  // saturated fill instead of a crisp colored card.
   heroOfferCard: {
     ...globalStyle.card,
     backgroundColor: 'color-primary-500',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   offerCardInner: {
     padding: 20,

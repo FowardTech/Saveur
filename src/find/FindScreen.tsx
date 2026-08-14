@@ -461,11 +461,18 @@ const themedStyles = StyleService.create({
   // globalStyle.card's own comment on why that needs a real color); it's
   // always fully covered by the gradient, so its exact value doesn't
   // matter.
+  // Product report: "colored cards like this are not supposed to have box
+  // shadows" -- same fix as Subscription.tsx's planCardHero (see that
+  // file's own comment): this hero card fills solid brand blue, and
+  // globalStyle.card's dark neutral shadow reads as a muddy halo behind a
+  // saturated fill instead of a crisp colored card.
   hero: {
     ...globalStyle.card,
     marginTop: 16,
     borderRadius: 14,
     backgroundColor: 'color-primary-500',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   // Plain View, NOT a LinearGradient — the gradient is a decorative
   // absoluteFillObject layer behind this box's normal-flow text content

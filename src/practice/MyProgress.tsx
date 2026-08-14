@@ -613,12 +613,24 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     marginBottom: 8,
   },
+  // Product report: "colored cards like this are not supposed to have box
+  // shadows" -- these three tiles fill with a pastel tileColorAt() color
+  // (see the JSX below), and globalStyle.card's shadow (a dark, neutral
+  // rgba(31,41,84,...) tuned for a plain white card against the page) reads
+  // as a muddy halo on a pastel fill instead of the crisp colored tile this
+  // is meant to be. shadowOpacity/elevation explicitly zeroed to cancel out
+  // the shadow half of globalStyle.card's spread -- setting both
+  // unconditionally is safe cross-platform, RN just ignores whichever one
+  // doesn't apply on the current OS -- while keeping its borderRadius/
+  // Android hairline border untouched.
   statCard: {
     ...globalStyle.card,
     flex: 1,
     padding: 16,
     marginRight: 12,
     alignItems: 'center',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   chartCard: {
     ...globalStyle.card,

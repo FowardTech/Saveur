@@ -214,11 +214,18 @@ const themedStyles = StyleService.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
+  // Product report: "colored cards like this are not supposed to have box
+  // shadows" -- same fix as MyProgress.tsx's own statCard (see that file's
+  // comment): these three tiles fill with a pastel tileColorAt() color, and
+  // globalStyle.card's dark neutral shadow reads as a muddy halo on a
+  // pastel fill instead of a crisp colored tile.
   statCard: {
     ...globalStyle.card,
     flex: 1,
     paddingVertical: 16,
     marginHorizontal: 4,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   secondaryStatsRow: {
     marginBottom: 20,
