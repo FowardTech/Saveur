@@ -23,10 +23,10 @@ import { AuthContext } from '../../AuthContext';
 // Deliberately its own section, not a reuse of "maintenance" — maintenance
 // is a full-screen BLOCKING gate (components/AppGateScreen.tsx) meant for
 // real outages; this is a small, non-blocking strip meant for "FYI,
-// nothing's broken" notices. Rendered ABOVE HeaderHome in HomeSrc.tsx (not
-// inside the scrollable Content, unlike DailyNewsBanner/DailyTipsBanner
-// just below it) — "top top" per the product request — so it's visible the
-// instant Home loads, with no scrolling required.
+// nothing's broken" notices. Rendered in HomeSrc.tsx just below HeaderHome
+// and above the scrollable Content (unlike DailyNewsBanner/DailyTipsBanner,
+// which live inside Content) — so it's visible the instant Home loads, with
+// no scrolling required, without floating above the greeting header itself.
 //
 // Dismissible, per account, until the CONTENT changes: fingerprints
 // title+message+link_url and remembers that exact combination in
