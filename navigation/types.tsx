@@ -464,7 +464,18 @@ export type RootStackParamList = {
 export type MainBottomTabStackParamList = {
   Home: undefined;
   Practice: undefined;
-  Coach: undefined;
+  // Was plain `undefined` -- product follow-up: Home's "Today's Career
+  // Focus" card used to just navigate('Leaderboard'), which was redundant
+  // with the header's own trophy icon (see HeaderHome.tsx) already
+  // covering that destination. It now deep-links into this tab's nested
+  // Chat screen instead (see MessagesStackParamList.Chat's own
+  // `openTopicsSheet` param below) -- going through the real Coach tab
+  // route (not the separate top-level `MessagesStack` in
+  // RootStackParamList) so the tab bar highlights Coach like any other
+  // way into this screen, and the existing VerifyEmailGate/
+  // CoachProLockGate gating on this tab (see MainBottomTab.tsx) still
+  // applies.
+  Coach: NavigatorScreenParams<MessagesStackParamList> | undefined;
   Interviews: NavigatorScreenParams<RequestsBottomStackParamList>;
   Profile: NavigatorScreenParams<MoreStackParamList>;
 };
@@ -489,7 +500,13 @@ export type MessagesStackParamList = {
   // tab — see src/messages/MessagesScreen.tsx), Chat.tsx auto-sends this as
   // the first message once chat history has loaded, instead of opening to a
   // blank thread regardless of which topic was tapped.
-  Chat: {initialPrompt?: string} | undefined;
+  //
+  // openTopicsSheet: when true (Home's "Today's Career Focus" card, see
+  // MainBottomTabStackParamList.Coach's own comment), Chat.tsx opens
+  // straight onto the greeting screen with the Suggested Topics bottom
+  // sheet already popped up, instead of requiring a tap on the pill first.
+  // Mutually exclusive with initialPrompt in practice (nothing sets both).
+  Chat: {initialPrompt?: string; openTopicsSheet?: boolean} | undefined;
 };
 export type RequestsBottomStackParamList = {
   RequestsSrc: undefined;

@@ -33,7 +33,13 @@ const TitleList = ({
           {dataLength > 0 ? dataLength : null}
         </Text>
       </Flex>
-      {current === false ? (
+      {/* Product follow-up ("arrange this interview screen well and make
+          it professional"): "See All" used to render unconditionally on
+          the Past section, even with zero past applications -- a live,
+          tappable link into a screen that would just show its own "no
+          applications" empty state. Gated on dataLength so it only shows
+          up once there's actually somewhere to see. */}
+      {current === false && dataLength > 0 ? (
         <Flex itemsCenter mb={24}>
           <Text category="h8" status={'link'} mr={4} onPress={onSeeAll} bold>
             {t('common:seeAll')}

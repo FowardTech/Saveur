@@ -219,11 +219,26 @@ const ApplicationsTab = memo(() => {
         </Text>
       ) : (
         <>
+          {/* Product follow-up ("arrange this interview screen well and
+              make it professional"): each section used to render just its
+              TitleList header and then nothing at all when empty -- with no
+              tracked applications yet, "Current"/"Past" sat back-to-back
+              with no content between them, reading as broken/unfinished
+              rather than a real empty state. Each section now falls back to
+              its own short placeholder line (same pattern RequestsInPast.tsx
+              already uses for its own empty states) instead of just
+              trailing off. */}
           <>
             <TitleList current dataLength={activeApplications.length} />
-            {activeApplications.map((item, i) => {
-              return <ApplicationItem item={item} key={i} />;
-            })}
+            {activeApplications.length === 0 ? (
+              <Text category="h9-s" status="placeholder" mb={24}>
+                {t('request:no_current_applications', {defaultValue: 'No active applications right now.'})}
+              </Text>
+            ) : (
+              activeApplications.map((item, i) => {
+                return <ApplicationItem item={item} key={i} />;
+              })
+            )}
           </>
           <>
             <TitleList
@@ -231,9 +246,15 @@ const ApplicationsTab = memo(() => {
               current={false}
               onSeeAll={onSeeAllPast}
             />
-            {closedApplications.map((item, i) => {
-              return <ApplicationItem item={item} key={i} />;
-            })}
+            {closedApplications.length === 0 ? (
+              <Text category="h9-s" status="placeholder" mb={24}>
+                {t('request:no_past_applications', {defaultValue: 'Applications that reach an offer or rejection will show up here.'})}
+              </Text>
+            ) : (
+              closedApplications.map((item, i) => {
+                return <ApplicationItem item={item} key={i} />;
+              })
+            )}
           </>
         </>
       )}

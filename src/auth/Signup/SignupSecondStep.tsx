@@ -186,14 +186,23 @@ const SignupSecondStep = memo(() => {
                 key={country}
                 activeOpacity={0.7}
                 onPress={() => toggleCountry(country)}
-                style={[styles.chip, {backgroundColor: theme['color-primary-500'], borderColor: theme['color-primary-600']}]}>
-                <Text category="h9" status="control" bold>
+                // Product report ("the country flags won't be visible on
+                // the blue country pills, use a better color like the one
+                // in the job alert preference") — same fix as
+                // JobPreferences.tsx's "Change it later" equivalent of
+                // this exact screen (see that file's own comment for the
+                // full reasoning: most flag emoji are mostly white/pale,
+                // which washes out against the solid brand blue this used
+                // to be). Neutral background-basic-color-3 instead, same
+                // as JobAlerts.tsx's own preferred-countries chips.
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-3'], borderColor: theme['background-basic-color-4']}]}>
+                <Text category="h9" bold>
                   {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
                 <Icon
                   pack="eva"
                   name="close-outline"
-                  style={[globalStyle.icon16, {tintColor: theme['text-control-color'], marginLeft: 6}]}
+                  style={[globalStyle.icon16, {tintColor: theme['text-basic-color'], marginLeft: 6}]}
                 />
               </TouchableOpacity>
             ))}

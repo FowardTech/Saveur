@@ -640,14 +640,15 @@ const MoreSrc = memo(() => {
               name="log-out-outline"
               style={{width: 22, height: 22, tintColor: theme['text-basic-color']}}
             />
-            {/* opacity 0.75 matches ButtonOptional.tsx's own row-label
-                softening (product follow-up: "reduce the blackness of the
-                menu items texts") -- this is the one row on this screen
-                that renders its own Text directly instead of going through
-                ButtonOptional (see the comment above), so it needs the
-                same treatment applied by hand to stay consistent with
-                every row above it. */}
-            <Text ml={16} category="para-m" opacity={0.75}>
+            {/* Matches ButtonOptional.tsx's own row-label treatment -- this
+                is the one row on this screen that renders its own Text
+                directly instead of going through ButtonOptional (see the
+                comment above), so it needs the same by-hand treatment to
+                stay consistent with every row above it. Latest follow-up
+                ("revert the blackness... back to normal but reduce the
+                font weight"): full-strength text-basic-color again (no
+                opacity), `medium` weight instead. */}
+            <Text ml={16} category="para-m" medium>
               {isSigningOut
                 ? t('more:logging_out', {defaultValue: 'Logging out…'})
                 : t('more:logout', {defaultValue: 'Log out'})}

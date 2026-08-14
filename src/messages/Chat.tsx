@@ -110,7 +110,7 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
 // read/clear stay local for now).
 const Chat = memo(() => {
   const styles = useStyleSheet(themedStyles);
-  const { t } = useTranslation(["message", "common", "more"]);
+  const { t, i18n: i18nInstance } = useTranslation(["message", "common", "more"]);
   const { width, bottom } = useLayout();
   const { keyboardShow } = useKeyboard();
   const [messages, setMessages] = React.useState<CoachIMessage[]>([]);
@@ -118,7 +118,7 @@ const Chat = memo(() => {
   const theme = useTheme();
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MessagesStackParamList, 'Chat'>>();
-  const { initialPrompt } = route.params ?? {};
+  const { initialPrompt, openTopicsSheet } = route.params ?? {};
   const { profile } = React.useContext(AuthContext);
 
   const [showAction, setShowAction] = React.useState(false);
@@ -244,13 +244,28 @@ const Chat = memo(() => {
   // topics (services/coachService.ts's getSuggestedTopics), same data this
   // screen's now-removed MessagesScreen.tsx menu used to show in its own
   // grid before this screen absorbed it.
+  // BUG FIX (product report: "when I change from one language to the
+  // other, some part of the app still display in the former language...
+  // imagine i change from french to chinese and then some places still
+  // display in french"): getSuggestedTopics resolves this text server-side
+  // in whatever language was active AT FETCH TIME (see coachService.ts's
+  // own `language: currentLanguage()` param) and this effect's dep array
+  // used to only track profile.goals/desiredRoles -- so switching the
+  // app's language while sitting on the Coach tab (a bottom-tab screen,
+  // never unmounted just by switching tabs) left these topics frozen in
+  // whatever language was active when this screen first mounted, even
+  // though the Suggested Topics pill/sheet stayed fully interactive and
+  // looked like current content. i18nInstance.language (from this file's
+  // own useTranslation() call above) re-runs this fetch on every real
+  // language change, same as any other language-reactive data load in
+  // this app.
   const [topics, setTopics] = React.useState<SuggestedTopic[]>([]);
   React.useEffect(() => {
     coachService
       .getSuggestedTopics({ goals: profile?.goals, desiredRoles: profile?.desiredRoles })
       .then(setTopics)
       .catch(() => {});
-  }, [profile?.goals, profile?.desiredRoles]);
+  }, [profile?.goals, profile?.desiredRoles, i18nInstance.language]);
 
   // Product follow-up: "move the suggested topic to be in a bottom sheet so
   // the suggested topic text will be like a button pill... so that the
@@ -259,6 +274,23 @@ const Chat = memo(() => {
   // now it only opens on demand, and the greeting screen's default state is
   // just the headline + the "Start a video practice" row + this one pill.
   const [topicsSheetVisible, setTopicsSheetVisible] = React.useState(false);
+  // Product follow-up: Home's "Today's Career Focus" card now deep-links
+  // here with openTopicsSheet=true (see HomeSrc.tsx / navigation/types.tsx's
+  // MessagesStackParamList.Chat comment) instead of navigating to the
+  // Leaderboard — pops the sheet open automatically once real topics have
+  // actually loaded, rather than opening on to an empty sheet the instant
+  // the screen mounts. The ref guards this to firing once per screen visit:
+  // route.params keeps openTopicsSheet=true for as long as this screen
+  // instance is mounted (react-navigation doesn't clear params on its own),
+  // and topics re-fetches if profile.goals/desiredRoles change (see the
+  // effect above) — without the ref, either of those would silently
+  // re-open a sheet the user had already closed.
+  const hasAutoOpenedTopicsSheetRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!openTopicsSheet || hasAutoOpenedTopicsSheetRef.current || topics.length === 0) return;
+    hasAutoOpenedTopicsSheetRef.current = true;
+    setTopicsSheetVisible(true);
+  }, [openTopicsSheet, topics]);
 
   // Product follow-up: "[the suggested topics] should be in the screen
   // that leads to the live conversation screen" — confirmed this means the
@@ -947,7 +979,21 @@ const Chat = memo(() => {
                               <Icon pack="eva" name="mic-outline" style={{ width: 10, height: 10, tintColor: '#fff' }} />
                             </View>
                           </View>
-                          <Text category="h10" bold center numberOfLines={2} mt={8}>
+                          {/* Product report: "some of the suggested topic
+                              texts are truncated with ellipses -- they
+                              should be fully visible so users know the
+                              topic before they click on them." numberOfLines
+                              was capping real topics (up to 60 chars per the
+                              backend's own suggested-topics prompt -- see
+                              coachService.ts) at 2 lines with a trailing
+                              "...", hiding exactly the words a user needs to
+                              decide whether to tap into a live voice call.
+                              No numberOfLines here now -- see
+                              emptyTopicButton's own comment for the wider
+                              2-column layout that goes with this, so a
+                              longer title has real room to wrap instead of
+                              cramming into a narrow 72px column. */}
+                          <Text category="h10" bold center mt={8}>
                             {item.title}
                           </Text>
                         </TouchableOpacity>
@@ -1068,11 +1114,17 @@ const themedStyles = StyleService.create({
   // card + composer below it. 24 shifts that whole cluster up as one
   // group (alignItems:'center' keeps it centered either way) without
   // touching the spacing between the pieces themselves.
+  // Follow-up round 2 ("still move [it] up more"): 24 -> 8, same group,
+  // same reasoning, just a further nudge in the same direction.
+  // Follow-up round 3 (same ask again): 8 -> 0. This is flex:1 with
+  // alignItems:'center' and the default justifyContent:'flex-start', so
+  // paddingTop is the only thing holding the cluster down at all -- 0 is
+  // as far up as this one property can push it without going negative.
   emptyState: {
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 24,
+    paddingTop: 0,
   },
   // Product follow-up: solid brand blue (was a two-stop gradient — see the
   // JSX comment above).
@@ -1139,14 +1191,21 @@ const themedStyles = StyleService.create({
   // Reference-redesign follow-up: a single row of 4 round icon buttons
   // (was a 2x2 card grid — see the JSX comment above where this renders,
   // now inside topicsSheet instead of the old inline emptyTopicsCard).
+  // Product follow-up (see the JSX comment at the Text above): switched
+  // from a single row of 4 narrow (72px) columns to a 2-column wrapping
+  // grid, now that topic titles render in full instead of truncating to 2
+  // lines -- a real topic (up to 60 chars) needs meaningfully more than
+  // 72px of width to wrap into something readable.
   emptyTopicRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
     width: '100%',
   },
   emptyTopicButton: {
     alignItems: 'center',
-    width: 72,
+    width: '47%',
+    marginBottom: 20,
   },
   emptyTopicCircle: {
     width: 56,

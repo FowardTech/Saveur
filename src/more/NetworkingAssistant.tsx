@@ -198,11 +198,23 @@ const NetworkingAssistant = memo(() => {
         <Modal visible={isFormOpen} transparent animationType="slide" onRequestClose={onCancelForm}>
           <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Layout level="1" style={styles.modalSheet}>
-              <Text category="h7" bold mb={12}>
-                {editingId != null
-                  ? t('more:edit_contact', { defaultValue: 'Edit Contact' })
-                  : t('more:add_contact', { defaultValue: 'Add Contact' })}
-              </Text>
+              {/* Product request: "all bottom sheets should have a close
+                  button" -- this sheet's only dismiss affordance used to be
+                  the "Cancel" button at the very bottom, past two-plus
+                  screens' worth of fields on a long contact form. A close
+                  X next to the title, same header pattern every other
+                  bottom sheet in the app uses, gives an immediate way out
+                  without scrolling down first. */}
+              <Flex justify="space-between" itemsCenter mb={12}>
+                <Text category="h7" bold>
+                  {editingId != null
+                    ? t('more:edit_contact', { defaultValue: 'Edit Contact' })
+                    : t('more:add_contact', { defaultValue: 'Add Contact' })}
+                </Text>
+                <TouchableOpacity onPress={onCancelForm} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+                </TouchableOpacity>
+              </Flex>
               <Input
                 placeholder={t('more:contact_name', { defaultValue: 'Name' })}
                 value={form.name}

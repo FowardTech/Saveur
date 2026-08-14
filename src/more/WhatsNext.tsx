@@ -422,6 +422,17 @@ const WhatsNext = memo(() => {
                 so without this the last field/button could render off the
                 bottom of the screen unreachable. */}
             <Content style={{ flexGrow: 0, flexShrink: 1 }} showsVerticalScrollIndicator={false}>
+              {/* Product request: "all bottom sheets should have a close
+                  button" -- this sheet's heading is centered under the
+                  illustration rather than in a left-aligned title row like
+                  most other sheets, so there's no natural spot for an
+                  inline X next to a title. A standalone top-right close
+                  button above the illustration instead. */}
+              <Flex justify="flex-end" mb={4}>
+                <TouchableOpacity onPress={() => setShowFormSheet(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+                </TouchableOpacity>
+              </Flex>
               <Flex center mb={12}>
                 <ArtWorkplaceCompass size={72} />
               </Flex>

@@ -574,9 +574,17 @@ const DreamCompanies = memo(() => {
       <Modal visible={showAddSheet} transparent animationType="slide" onRequestClose={() => setShowAddSheet(false)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Layout level="1" style={styles.modalSheet}>
-            <Text category="h7" bold mb={16}>
-              {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
-            </Text>
+            {/* Product request: "all bottom sheets should have a close
+                button" -- see NetworkingAssistant.tsx's identical fix for
+                the fuller reasoning; same header-row treatment here. */}
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>
+                {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
+              </Text>
+              <TouchableOpacity onPress={() => setShowAddSheet(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </Flex>
             <Input
               placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
               value={newCompany}

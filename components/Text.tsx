@@ -43,6 +43,16 @@ export interface MyTextProps extends TextProps {
   center?: boolean;
   underline?: boolean;
   bold?: boolean;
+  // Mid-weight option (PlusJakartaSans-Medium, already bundled — see the
+  // fontFamily switch below) for text that should read a touch heavier
+  // than Regular without going all the way to Bold. Added for the Menu
+  // list rows (see ButtonOptional.tsx/MoreSrc.tsx): product asked for the
+  // label color to go back to full-strength text-basic-color (no more
+  // opacity softening) but for the weight itself to come down a notch —
+  // Bold read too heavy once the color was full-strength again, and plain
+  // Regular read too light for a settings-row label, so Medium is the
+  // actual middle ground. Ignored if `bold` is also passed (bold wins).
+  medium?: boolean;
   italic?: boolean;
 }
 const getLineHeight = (
@@ -117,6 +127,7 @@ export default memo(
     center,
     underline,
     bold,
+    medium,
     italic,
     category = 'para-m',
     status = 'basic',
@@ -211,7 +222,11 @@ export default memo(
             // the actual bold *look* still comes from loading the real
             // PlusJakartaSans-Bold.ttf file by name, not from the weight
             // flag.
-            fontFamily: bold ? 'PlusJakartaSans-Bold' : 'PlusJakartaSans-Regular',
+            fontFamily: bold
+              ? 'PlusJakartaSans-Bold'
+              : medium
+              ? 'PlusJakartaSans-Medium'
+              : 'PlusJakartaSans-Regular',
             fontWeight: 'normal',
           },
           style,

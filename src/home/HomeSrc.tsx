@@ -12,7 +12,7 @@ import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { ArtGiftBox, ArtPractice } from './HomeHeroArt';
+import { ArtGiftBox, ArtPractice, ArtWorkplaceCompass } from './HomeHeroArt';
 import CircularProgress from 'components/CircularProgress';
 import ProgressBar from 'components/ProgressBar';
 import { useTranslation } from 'react-i18next';
@@ -57,7 +57,10 @@ const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 // mechanism (this file used to have several dashboard widgets whose data-
 // loading useCallbacks fed straight into mount effects with `t` in their own
 // dependency arrays — the exact loop that made this matter).
-const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
+// 'more' added for whats_next_title -- the "What's Next" link card in the
+// "Next Steps" section reuses that screen's own translated title rather
+// than duplicating a fresh Home-specific string for the exact same name.
+const HOME_I18N_NAMESPACES = ['home', 'common', 'more'] as const;
 
 // This screen has been through several redesigns (v1: "two-big-card 'what
 // do you want to do' landing screen"; v2: greeting header + QuickActionGrid
@@ -148,12 +151,19 @@ const HomeSrc = memo(() => {
     return 0;
   }, [avgInterviewScore, streak, streakRingPct]);
 
-  // BUG FIX (product report: "the Today's Plan section in the homescreen,
-  // nothing is there its empty") — see the "Today's plan" JSX below for
-  // the full story; these track whether ContinueLearningCard/
-  // UpcomingSessionHomeCard actually have anything to show, so the section
-  // label can hide along with them instead of floating above an empty row.
-  const [continuePlanVisible, setContinuePlanVisible] = React.useState(true);
+  // Was also tracking continuePlanVisible here (ContinueLearningCard's own
+  // onVisibilityChange) alongside upcomingPlanVisible, to hide the "Next
+  // Steps" section label when both cards under it had nothing to show (bug
+  // report: "the Today's Plan section in the homescreen, nothing is there
+  // its empty"). ContinueLearningCard has since moved to the top of Home
+  // (product follow-up: "the continue learning card should be at the top
+  // of the homescreen... since it does not appear all the time" — see the
+  // JSX right under the verify-email banner below), and the row this state
+  // used to gate now always has the static "What's Next" link card in it
+  // (see below), so the label can no longer end up floating over a
+  // genuinely empty row — upcomingPlanVisible is unused for that purpose
+  // now too, but UpcomingSessionHomeCard still reports through it in case
+  // a future pass wants it back.
   const [upcomingPlanVisible, setUpcomingPlanVisible] = React.useState(true);
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
@@ -700,6 +710,20 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
+        {/* Product follow-up: "the continue learning card should be at the
+            top of the homescreen... since it does not appear all the time"
+            — this used to live at the very bottom, inside the "Next Steps"
+            stack (see that section further down, now a "What's Next" link
+            instead). A card that only shows up sometimes (self-hides when
+            there's nothing in-progress to resume — see its own
+            `hasContent` check) is easy to miss buried under 4+ other
+            sections; up here, right after the time-sensitive verify-email
+            banner and before the admin banner, it's the first real content
+            a returning user sees on the rare screens it has something to
+            show. Self-contained/self-hiding as always — renders nothing at
+            all (no gap, no label) when there's no course/video to resume. */}
+        <ContinueLearningCard />
+
         {/* Admin-configured Home banner (see the effect above for the full
             "why" + how this differs from AnnouncementBanner). Deliberately
             rendered above "Today's Career Focus" per explicit product
@@ -786,7 +810,29 @@ const HomeSrc = memo(() => {
         <Text category="h8" bold mt={4} mb={12}>
           {t('home:todays_focus_label', { defaultValue: "Today's Career Focus" })}
         </Text>
-        <TouchableOpacity activeOpacity={0.85} style={[globalStyle.card, styles.focusCard]} onPress={() => navigate('Leaderboard')}>
+        {/* Product report: "the Today's Career Focus card should not
+            navigate to the leaderboard when clicked since the trophy cup
+            icon [already] navigates there" (see HeaderHome.tsx's own
+            trophy button) -- this was a duplicate entry point to the same
+            screen. Now routes into the Coach tab's Chat screen instead,
+            landing on the same greeting screen every other way into Coach
+            shows but with the Suggested Topics bottom sheet already popped
+            open (openTopicsSheet -- see Chat.tsx's own effect for this and
+            MainBottomTabStackParamList.Coach's comment for why this goes
+            through the real tab route rather than the separate top-level
+            MessagesStack). Those topics are already a live, personalized
+            GET /api/v1/coach/suggested-topics call built from the user's
+            real recent activity (interview scores/weak spots, streak,
+            learning progress -- see Saveur-Backend's coach.py
+            _activity_snippet) generated fresh on every request, not a
+            static list on a timer -- so "today's focus" tapping through to
+            it is already the dynamic, mastery-aware surface this button
+            was asking for, no separate day/week rotation needed on top of
+            it. */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[globalStyle.card, styles.focusCard]}
+          onPress={() => navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { openTopicsSheet: true } } })}>
           <Flex justify="flex-start" itemsCenter>
             {/* Product follow-up, round 3: "I dont like it, I want you to
                 use the illustration style you used in the referral screen
@@ -980,18 +1026,43 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         ) : null}
 
-        {/* "Recommended for You" -- reuses ContinueLearningCard/
-            UpcomingSessionHomeCard exactly as before (same data, same
-            self-hide-when-empty behavior, same onVisibilityChange
-            reporting), just stacked vertically under this section's own
-            label instead of side by side under "Today's plan". */}
-        {continuePlanVisible || upcomingPlanVisible ? (
-          <Text category="h8" bold mt={24} mb={12}>
-            {t('home:recommended_for_you_label', { defaultValue: 'Next Steps' })}
-          </Text>
-        ) : null}
+        {/* "Next Steps" -- product follow-up: "the next step section at
+            the bottom should still be there but it should lead to the
+            what's next screen." ContinueLearningCard moved out of this
+            stack (now at the top of Home, see above); its old slot here is
+            now a permanent link into src/more/WhatsNext.tsx -- the app's
+            actual "What's Next" feature (post-offer negotiation talking
+            points, a pre-start checklist, and a 90-day settling-in plan).
+            Unlike ContinueLearningCard/UpcomingSessionHomeCard, this card
+            doesn't self-hide (it's a standing entry point, not a resume-
+            where-you-left-off surface -- WhatsNext.tsx's own intro screen
+            and ProLockGate handle the "nothing built yet" / "not Premium"
+            states once tapped through), so the section label above it no
+            longer needs the visibility-gating the old ContinueLearningCard/
+            UpcomingSessionHomeCard pairing needed -- always renders now. */}
+        <Text category="h8" bold mt={24} mb={12}>
+          {t('home:recommended_for_you_label', { defaultValue: 'Next Steps' })}
+        </Text>
         <View style={styles.recommendedStack}>
-          <ContinueLearningCard onVisibilityChange={setContinuePlanVisible} />
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.whatsNextCard}
+            onPress={() => navigate('WhatsNext')}>
+            <View style={styles.whatsNextIconWrap}>
+              <ArtWorkplaceCompass size={30} />
+            </View>
+            <View style={globalStyle.flexOne}>
+              <Text category="h10" bold numberOfLines={1}>
+                {t('more:whats_next_title', { defaultValue: "What's Next" })}
+              </Text>
+              <Text category="h10" status="placeholder" numberOfLines={1} mt={1}>
+                {t('home:whats_next_home_card_subtitle', {
+                  defaultValue: 'Negotiation, pre-start checklist, and your first 90 days',
+                })}
+              </Text>
+            </View>
+            <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+          </TouchableOpacity>
           <UpcomingSessionHomeCard style={styles.recommendedItemSpacing} onVisibilityChange={setUpcomingPlanVisible} />
         </View>
       </Content>
@@ -1200,14 +1271,35 @@ const themedStyles = StyleService.create({
   progressTextWrap: {
     marginLeft: 14,
   },
-  // "Recommended for You" -- ContinueLearningCard/UpcomingSessionHomeCard
-  // stacked vertically (see the JSX comment above) instead of the old
-  // side-by-side topCardsRow. Each card supplies its own marginTop:0 by
-  // default (see their own files) -- recommendedItemSpacing adds the gap
-  // between them here, only applied to the second card so a single-card
-  // state (the other one empty/hidden) doesn't carry a stray top gap.
+  // "Next Steps" -- the What's Next link card + UpcomingSessionHomeCard
+  // stacked vertically (see the JSX comment above). Each card supplies its
+  // own marginTop:0 by default -- recommendedItemSpacing adds the gap
+  // between them here, only applied to the second card. The What's Next
+  // card above it is never hidden (unlike the old ContinueLearningCard it
+  // replaced), so this spacing is always meaningful now regardless of
+  // whether UpcomingSessionHomeCard itself has anything to show.
   recommendedStack: {},
   recommendedItemSpacing: {
     marginTop: 10,
+  },
+  // Same compact single-row white card shape as ContinueLearningCard.tsx/
+  // UpcomingSessionHomeCard.tsx's own `card` style (see those files'
+  // comments for the full "why white/why this radius" history) -- kept as
+  // a plain inline style here rather than a shared import since this is
+  // the only place on Home that needs this exact look for a static (never
+  // self-hiding) link card.
+  whatsNextCard: {
+    ...globalStyle.card,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: 'background-basic-color-2',
+  },
+  whatsNextIconWrap: {
+    marginRight: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

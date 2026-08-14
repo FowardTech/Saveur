@@ -122,20 +122,19 @@ const ButtonOptional = ({
             <View style={styles.badgeDot} />
           ) : null}
         </View>
-        {/* Product request: bold + a touch smaller than the previous
-            para-m default, matching the reference settings list's text
-            weight/size.
-            Product follow-up ("reduce the blackness of the menu items
-            texts"): opacity 0.75 on top of the default text-basic-color
-            softens the label without picking a different, non-theme-aware
-            color token -- text-basic-color itself IS theme-aware (near-
+        {/* Product request: a touch smaller than the previous para-m
+            default, matching the reference settings list's text size.
+            Weight/color history: first went bold + opacity 0.75 (a
+            follow-up: "reduce the blackness of the menu items texts").
+            Latest follow-up reverses the color half of that and asks for
+            weight instead: "revert the blackness... back to normal but
+            reduce the font weight" -- so opacity is gone (back to
+            full-strength text-basic-color, already theme-aware: near-
             black in light mode, near-white in dark mode, see constants/
-            theme/{light,dark}.json), so reducing ITS opacity keeps the
-            same correct light/dark behavior, just a touch softer in both,
-            rather than e.g. color-basic-700 (a fixed translucent-dark-navy
-            token that's never overridden per theme and would go
-            low-contrast in dark mode). */}
-        <Text ml={16} category="para-s" bold opacity={0.75}>
+            theme/{light,dark}.json) and `bold` is swapped for `medium`
+            (PlusJakartaSans-Medium -- see components/Text.tsx), a step
+            down from Bold without dropping all the way to plain Regular. */}
+        <Text ml={16} category="para-s" medium>
           {title}
         </Text>
       </Flex>

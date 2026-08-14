@@ -179,9 +179,17 @@ const CareerDiary = memo(() => {
         <Modal visible={showComposer} transparent animationType="slide" onRequestClose={() => setShowComposer(false)}>
           <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <Layout level="1" style={styles.modalSheet}>
-              <Text category="h7" bold mb={16}>
-                {t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
-              </Text>
+              {/* Product request: "all bottom sheets should have a close
+                  button" -- see NetworkingAssistant.tsx's identical fix for
+                  the fuller reasoning; same header-row treatment here. */}
+              <Flex justify="space-between" itemsCenter mb={16}>
+                <Text category="h7" bold>
+                  {t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
+                </Text>
+                <TouchableOpacity onPress={() => setShowComposer(false)} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
+                </TouchableOpacity>
+              </Flex>
               <Input
                 multiline
                 placeholder={t('more:career_diary_composer_placeholder', {defaultValue: 'What did you do, learn, or achieve today?'})}

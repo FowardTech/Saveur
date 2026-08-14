@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, Platform, Share, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, Share, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -196,7 +196,15 @@ const ResumeVariants = memo(() => {
             when the keyboard opens, same issue as ShareToUserModal.tsx. */}
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <Layout level="1" style={styles.modalSheet}>
-            <Text category="h7" bold mb={16}>{t('more:new_variant', { defaultValue: '+ New Variant' })}</Text>
+            {/* Product request: "all bottom sheets should have a close
+                button" -- see NetworkingAssistant.tsx's identical fix for
+                the fuller reasoning; same header-row treatment here. */}
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>{t('more:new_variant', { defaultValue: '+ New Variant' })}</Text>
+              <TouchableOpacity onPress={() => setShowCreate(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </Flex>
             <Input
               placeholder={t('more:variant_label_placeholder', { defaultValue: 'e.g. Fintech Backend Roles' })}
               value={label}

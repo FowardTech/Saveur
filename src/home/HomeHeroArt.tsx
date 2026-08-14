@@ -110,11 +110,27 @@ export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
   </Svg>
 );
 
+// Product follow-up: "I want the today's career focus mic icon to be a
+// line illustration icon not a filled one" -- the mic body (the Rect
+// below) was the one solid-fill shape in this illustration; every other
+// piece (pickup arc + stand) was already stroke-only. Switched the Rect
+// to fill="none" + the same stroke treatment as the rest so the whole mic
+// reads as one consistent outline drawing, not a filled glyph with
+// stroked accents around it.
 export const ArtPractice: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
     <Circle cx="60" cy="60" r="48" fill="#0063f80f" />
     <Ellipse cx="60" cy="98" rx="22" ry="5" fill="rgba(0,0,0,0.06)" />
-    <Rect x="47" y="24" width="26" height="44" rx="13" fill="#0063f8" />
+    <Rect
+      x="47"
+      y="24"
+      width="26"
+      height="44"
+      rx="13"
+      fill="none"
+      stroke="#0063f8"
+      strokeWidth={5.5}
+    />
     <Path
       d="M36 56a24 24 0 0 0 48 0"
       stroke="#0063f8"

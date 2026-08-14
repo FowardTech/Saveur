@@ -526,6 +526,23 @@ const JobAlerts = memo(() => {
               already handles long content correctly
               (SystemDesignWhiteboard.tsx's notes sheet). */}
           <Layout level="1" style={styles.modalSheet}>
+          {/* Product request: "all bottom sheets should have a close
+              button" -- this sheet previously had no title/header row at
+              all (it opened straight into the first field, inside the
+              ScrollView below), so its only dismiss affordance was the
+              "Cancel" button all the way at the bottom, past two chip
+              lists and a slider. A non-scrolling header (title + close X,
+              same pattern every other bottom sheet in the app uses) sits
+              above the ScrollView so it's always visible regardless of
+              scroll position, not just when scrolled to the top. */}
+          <Flex justify="space-between" itemsCenter mb={16}>
+            <Text category="h7" bold>
+              {t('more:job_alerts_preferences_sheet_title', {defaultValue: 'Alert Preferences'})}
+            </Text>
+            <TouchableOpacity onPress={() => setIsPrefsOpen(false)} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+              <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
+            </TouchableOpacity>
+          </Flex>
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Text category="h8" bold mb={4}>
               {t('more:job_alerts_targeted_roles_label', {defaultValue: "Roles you're targeting"})}

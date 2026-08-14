@@ -181,9 +181,19 @@ const RequestsInPast = memo(() => {
           activeOpacity={1}
           onPress={() => setIsFilterVisible(false)}>
           <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
-            <Text category="h7" bold mb={16}>
-              {t('request:filter_by', {defaultValue: 'Filter by'})}
-            </Text>
+            {/* Product request: "all bottom sheets should have a close
+                button" -- this one already closes on backdrop tap and has
+                a "Done" link at the bottom, but neither is the explicit
+                close-X affordance every other sheet in the app uses. Same
+                header-row treatment added here for consistency. */}
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>
+                {t('request:filter_by', {defaultValue: 'Filter by'})}
+              </Text>
+              <TouchableOpacity onPress={() => setIsFilterVisible(false)} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
+              </TouchableOpacity>
+            </Flex>
             {(request_type === Request_Type_Enum.Application
               ? stageOptions
               : modeOptions

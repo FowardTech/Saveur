@@ -414,9 +414,19 @@ const CareerDna = memo(() => {
           activeOpacity={1}
           onPress={() => setIsHistoryVisible(false)}>
           <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
-            <Text category="h7" bold mb={16}>
-              {t('more:career_dna_history_title', { defaultValue: 'How your profile has changed' })}
-            </Text>
+            {/* Product request: "all bottom sheets should have a close
+                button" -- this one already closes on backdrop tap and has
+                a "Done" CTA at the bottom, but neither is the explicit
+                close-X affordance every other sheet in the app uses. Same
+                header-row treatment added here for consistency. */}
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>
+                {t('more:career_dna_history_title', { defaultValue: 'How your profile has changed' })}
+              </Text>
+              <TouchableOpacity onPress={() => setIsHistoryVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </Flex>
             {isLoadingHistory ? (
               <Flex center style={{ paddingVertical: 24 }}>
                 <Spinner size="small" />

@@ -216,14 +216,26 @@ const JobPreferences = memo(() => {
                 key={country}
                 activeOpacity={0.7}
                 onPress={() => toggleCountry(country)}
-                style={[styles.chip, {backgroundColor: theme['color-primary-500'], borderColor: theme['color-primary-600']}]}>
-                <Text category="h9" status="control" bold>
+                // Product report: "the country flags won't be visible on
+                // the blue country pills... maybe you should make it a
+                // more better color just like the one in the job alert
+                // preference" — was theme['color-primary-500'] (solid
+                // brand blue), which most flag emoji glyphs (a lot of them
+                // are mostly white/pale — the US's white stars/stripes,
+                // Canada's white field, the UK's white cross, etc.) read as
+                // low-contrast or nearly invisible against. JobAlerts.tsx's
+                // own preferred-countries chips already solved this with a
+                // neutral background-basic-color-3 fill instead of the
+                // brand color — same fix here, same border tone the role
+                // chips above already use on this screen.
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-3'], borderColor: theme['background-basic-color-4']}]}>
+                <Text category="h9" bold>
                   {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
                 <Icon
                   pack="eva"
                   name="close-outline"
-                  style={[globalStyle.icon16, {tintColor: theme['text-control-color'], marginLeft: 6}]}
+                  style={[globalStyle.icon16, {tintColor: theme['text-basic-color'], marginLeft: 6}]}
                 />
               </TouchableOpacity>
             ))}

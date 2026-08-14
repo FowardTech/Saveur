@@ -25,17 +25,27 @@ import InAppVideoPlayer from 'components/InAppVideoPlayer';
 // let the background be white and the height be very small like an info
 // card") — this used to live on src/practice/MyProgress.tsx as a padded,
 // pink-gradient card that could show up to two full rows (course AND
-// video). Moved to the top of src/home/HomeSrc.tsx (see that file, right
-// under the header) and shrunk to a single compact white row: whichever ONE
-// resume target is more specific wins (a video mid-playback is a more
-// precise "pick up exactly here" moment than a course module, so video
-// takes priority when both exist) rather than stacking both — a true
-// "very small info card" doesn't have room for two rows. `style` is
-// accepted so HomeSrc can lay this out side-by-side with the "already
-// scheduled" upcoming-session card (see UpcomingSessionHomeCard.tsx) in a
-// flex row — when only one of the two has content the other renders `null`
-// and contributes no layout space, so this naturally expands to full width
-// on its own.
+// video). Shrunk to a single compact white row: whichever ONE resume
+// target is more specific wins (a video mid-playback is a more precise
+// "pick up exactly here" moment than a course module, so video takes
+// priority when both exist) rather than stacking both — a true "very small
+// info card" doesn't have room for two rows. `style` is accepted so a
+// caller can lay this out side-by-side with another card in a flex row (it
+// no longer is — see below — but the prop is harmless to keep) — when this
+// card has nothing to show it renders `null` and contributes no layout
+// space either way.
+//
+// POSITION HISTORY: despite the "place it at the top in the homescreen"
+// wording above, this actually ended up living at the very BOTTOM of Home,
+// inside the "Next Steps" stack alongside UpcomingSessionHomeCard (see
+// HomeSrc.tsx's own git history) — this comment just never got updated to
+// match. Product follow-up caught the drift ("the continue learning card
+// should be at the top of the homescreen... since it does not appear all
+// the time" — a card that only sometimes has content is easy to miss
+// buried under 4+ other sections at the bottom): actually moved to the top
+// now, right after the verify-email banner and before the admin banner —
+// see HomeSrc.tsx's own JSX comment at that call site. Its old bottom slot
+// is now a permanent "What's Next" link card instead (HomeSrc.tsx again).
 //
 // Renders null entirely if there's nothing to resume, same "don't show an
 // empty card" convention every other self-contained Home card follows.
@@ -190,6 +200,14 @@ const themedStyles = StyleService.create({
   // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language.
+  //
+  // Product follow-up ("remove the box shadow and give it a border"), now
+  // that this card sits right at the top of Home under the header rather
+  // than buried at the bottom: shadowOpacity/elevation explicitly zeroed
+  // to cancel out globalStyle.card's own shadow (spread above) -- setting
+  // both unconditionally is safe cross-platform, RN just ignores whichever
+  // one doesn't apply on the current OS -- and a real hairline border
+  // takes its place, same neutral tone as globalStyle.divider.
   card: {
     ...globalStyle.card,
     borderRadius: 20,
@@ -198,6 +216,10 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: 'background-basic-color-2',
+    shadowOpacity: 0,
+    elevation: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.15)',
   },
   iconWrap: {
     width: 30,

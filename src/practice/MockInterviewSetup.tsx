@@ -74,9 +74,25 @@ const MockInterviewSetup = memo(() => {
   // same app-launch config fetch every other feature flag/catalog in this
   // app reads, so there's no extra network call just for this picker.
   const [persona, setPersona] = React.useState<string | undefined>(undefined);
+  // BUG FIX (product report: "when I change from one language to another,
+  // some parts of the app still display in the former language"): this
+  // memo's empty dep array meant the persona name/description text --
+  // already translated server-side per-language, see the comment above --
+  // was computed ONCE at this screen's first mount and then frozen for the
+  // rest of its lifetime, even after configService.loadAppConfig() re-fetches
+  // a freshly-translated catalog on a mid-session language switch (see
+  // i18n/config.ts's 'languageChanged' listener). forceRerender + the
+  // subscribe() below is the same fix already used by FaqScreen/AboutScreen/
+  // AnnouncementBanner/DailyChallengeCard for this exact class of bug --
+  // it just forces this component to re-render (and this memo to
+  // re-derive) when the cache actually refreshes, instead of only picking
+  // up new text on a future unmount/remount.
+  const [, forceRerender] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => configService.subscribe(forceRerender), []);
   const enabledPersonas = React.useMemo(
     () => configService.getCachedConfig().interview_personas.items.filter(p => p.enabled),
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [configService.getCachedConfig()],
   );
   // Product correction: "The interviewer personality feature should be a
   // pro premium plan not pro plan" — this used to only check the admin
@@ -387,6 +403,7 @@ const MockInterviewSetup = memo(() => {
                   styles.chip,
                   {
                     backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
+                    borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'],
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
@@ -471,6 +488,7 @@ const MockInterviewSetup = memo(() => {
                   isRealCompany && styles.chipWithLogo,
                   {
                     backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
+                    borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'],
                   },
                 ]}>
                 {/* Product report: "in the company list in the interview
@@ -693,10 +711,22 @@ const themedStyles = StyleService.create({
   accessoryLeftSpacing: {
     marginLeft: 14,
   },
+  // Product report: "did you remove the border from some of the button
+  // pills in Mock Interview Setup? People might not know that they are
+  // buttons" — this style never had a borderWidth (it's been background-
+  // color-only since it was first added), unlike every other pill/card on
+  // this screen (modeCard, personaCard, difficultyPill, the duration
+  // pills all carry a real border in both their active and inactive
+  // states). Used by the Interview Type row and the Company row — both
+  // now get the same borderWidth 1 + a per-state borderColor (brand blue
+  // when selected, the same neutral background-basic-color-3 outline
+  // difficultyPill uses when not) at their call sites, so an unselected
+  // chip reads as a real tappable pill instead of a plain gray label.
   chip: {
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 99,
+    borderWidth: 1,
     marginRight: 8,
     marginBottom: 8,
   },
