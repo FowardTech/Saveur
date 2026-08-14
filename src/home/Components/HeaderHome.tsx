@@ -109,15 +109,17 @@ const themedStyles = StyleService.create({
   },
   // Google-style furnishing pass (see src/home/QuickActionGrid.tsx's own
   // comment on this app-wide direction) -- was a white square with a
-  // hairline border; Material 3's own icon buttons are fully rounded
-  // tonal-fill circles with no border at all (the tonal fill itself is
-  // what reads as "a button," the same "color contrast, not an outline"
-  // idea now used throughout this screen). `border-radius: width/2`
-  // makes this a true circle regardless of future size tweaks.
+  // hairline border, then a Material 3 tonal-fill circle (gray
+  // background-basic-color-3, no border). Product follow-up: "remove the
+  // gray background from the notification bell and trophy icon" -- back
+  // to a plain, unfilled tap target: just the icon itself, sized/centered
+  // the same as before so the touch target doesn't shrink. `border-radius:
+  // width/2` kept (harmless with no visible fill) in case a future pass
+  // wants a fill or ripple back.
   button: {
     width: 40,
     height: 40,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'transparent',
     ...globalStyle.center,
     borderRadius: 20,
   },
