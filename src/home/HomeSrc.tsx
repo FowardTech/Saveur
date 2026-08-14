@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Image, ImageStyle, InteractionManager, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -9,7 +9,9 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
+import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
+import { IconMic3D } from './QuickActionIcons';
 import CircularProgress from 'components/CircularProgress';
 import ProgressBar from 'components/ProgressBar';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +37,6 @@ import * as studentCheckinService from 'services/studentCheckinService';
 import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
-import { Images } from 'assets/images';
 import * as configService from 'services/configService';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
@@ -588,25 +589,28 @@ const HomeSrc = memo(() => {
       />
       <Content contentContainerStyle={styles.content} padder>
         {/* Home redesign v3 (see this file's module comment + the effects
-            above for the full "why"). Five sections, top to bottom: a
-            verify-email banner (unchanged, time-sensitive account action,
-            not a content card), "Today's Focus" (practice streak, always
+            above for the full "why"), section titles renamed in a later
+            follow-up to read as this app's own career-coaching vocabulary
+            rather than generic dashboard labels. Top to bottom: a verify-
+            email banner (unchanged, time-sensitive account action, not a
+            content card), "Today's Career Focus" (practice streak, always
             visible -- the wireframe's anchor card, not a self-hiding one
-            like the sections it replaces), "Quick Actions" (4 shortcuts),
-            "Your Progress" (Job Readiness ring), "Recommended for You"
-            (reusing ContinueLearningCard/UpcomingSessionHomeCard's own
-            data/logic, just re-laid-out as a vertical stack instead of a
-            side-by-side row).
-            REMOVED from Home in this pass (still reachable elsewhere, not
-            deleted from the app): DailyNewsBanner/DailyTipsBanner, the old
-            streak-stats grid, the Career Coach/Dream Company Dashboard/
-            Refer & Earn/Salary Negotiation action rows (Coach has its own
-            bottom tab; the other three are still reachable from the
-            Profile tab -- see MoreSrc.tsx -- and WhatsNext.tsx for Salary
-            Negotiation), and RecentActivityList. DailyChallengeCard is
-            ALSO removed and, unlike the others, has no other entry point
-            left in the app right now -- flagged to product rather than
-            silently dropped. */}
+            like the sections it replaces), "Career Toolkit" (4
+            shortcuts), "Career Progress" (Job Readiness ring),
+            DailyChallengeCard (self-contained, own doc comment), "Next
+            Steps" (reusing ContinueLearningCard/UpcomingSessionHomeCard's
+            own data/logic, just re-laid-out as a vertical stack instead
+            of a side-by-side row).
+            REMOVED from Home in the original v3 pass (still reachable
+            elsewhere, not deleted from the app): DailyNewsBanner/
+            DailyTipsBanner, the old streak-stats grid, the Career Coach/
+            Dream Company Dashboard/Refer & Earn/Salary Negotiation action
+            rows (now back as "Career Toolkit"'s 4 shortcuts instead, see
+            below), and RecentActivityList. DailyChallengeCard was ALSO
+            removed in that pass with no other entry point left anywhere
+            in the app -- restored here (product follow-up: "add more
+            content after the your progress card") rather than staying
+            orphaned. */}
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -648,26 +652,28 @@ const HomeSrc = memo(() => {
             leaving a gap at the very top of the screen while the fetch is
             in flight or if it fails. */}
         <Text category="h8" bold mt={4} mb={12}>
-          {t('home:todays_focus_label', { defaultValue: "Today's Focus" })}
+          {t('home:todays_focus_label', { defaultValue: "Today's Career Focus" })}
         </Text>
         <TouchableOpacity activeOpacity={0.85} style={[globalStyle.card, styles.focusCard]} onPress={() => navigate('Leaderboard')}>
           <Flex justify="flex-start" itemsCenter>
-            {/* Product follow-up: "that image you used in the today's focus
-                should be changed to an illustration image" -- was
-                homeBannerAiCoach (a real product-supplied photo/marketing
-                banner, .jpg). onboardingInterview is one of this app's
-                actual flat-style, transparent-background illustration
-                assets (see assets/images/index.ts's own long comment
-                history on how these were sourced/built) -- practice-
-                interview themed, which fits Today's Focus (streak/next
-                practice session) better than the other 4 onboarding
-                illustrations (feedback/job-alert/resume-scan/learning),
-                which are topically tied to other features. `contain`
-                instead of `cover` -- these illustrations have real
-                transparent backgrounds and their own baked-in composition
-                (phone mockup, floating cards), so cropping into them like
-                a photo would cut off part of the artwork. */}
-            <Image source={Images.onboardingInterview} style={styles.focusImage as ImageStyle} resizeMode="contain" />
+            {/* Product follow-up, round 2: "replace that image... to an
+                illustration icon i dont like that image you placed
+                there" -- onboardingInterview (a full scene illustration --
+                phone mockup, floating cards, sourced as marketing/
+                onboarding art, see assets/images/index.ts) wasn't the
+                right register for a small card thumbnail. IconMic3D
+                (src/home/QuickActionIcons.tsx) is a proper "illustration
+                icon": a small glossy 3D-style SVG badge (gradient body +
+                highlight + ground shadow, this app's own brand blue),
+                purpose-built for exactly this kind of compact spot --
+                originally built for the old QuickActionGrid tiles, unused
+                since that grid isn't part of this v3 layout, and mic ==
+                practice/interview, the same theme this card's streak data
+                already carries. No image asset at all -- it's a plain SVG
+                component, not a require()'d file. */}
+            <View style={styles.focusIconWrap}>
+              <IconMic3D size={40} />
+            </View>
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
               <Text category="h9" bold numberOfLines={1}>
                 {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
@@ -708,7 +714,7 @@ const HomeSrc = memo(() => {
             reuse here. Refer & Earn / Salary Negotiation stay behind the
             same admin feature flags the old rows checked. */}
         <Text category="h8" bold mt={24} mb={12}>
-          {t('home:quick_actions_label', { defaultValue: 'Quick Actions' })}
+          {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
         </Text>
         <View style={styles.quickActionsRow}>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
@@ -754,7 +760,7 @@ const HomeSrc = memo(() => {
             Always rendered, same "honest zero state instead of a gap"
             reasoning as Today's Focus above. */}
         <Text category="h8" bold mt={24} mb={12}>
-          {t('home:your_progress_label', { defaultValue: 'Your Progress' })}
+          {t('home:your_progress_label', { defaultValue: 'Career Progress' })}
         </Text>
         <View style={[globalStyle.card, styles.progressCard]}>
           <CircularProgress progress={jobReadinessPct} size={64} strokeWidth={7}>
@@ -782,6 +788,17 @@ const HomeSrc = memo(() => {
           </View>
         </View>
 
+        {/* Product follow-up: "add more content after the your progress
+            card" -- DailyChallengeCard specifically (product's own choice
+            among a few options offered): it was removed from Home in the
+            v3 redesign and, unlike the other removed rows, had ended up
+            with NO other entry point anywhere in the app (flagged in that
+            redesign's own commit) -- restoring it here both adds real
+            content and closes that gap. Self-contained, renders null on
+            its own when there's nothing real to show or the feature is
+            off -- same convention as everything else on this screen. */}
+        <DailyChallengeCard />
+
         {/* "Recommended for You" -- reuses ContinueLearningCard/
             UpcomingSessionHomeCard exactly as before (same data, same
             self-hide-when-empty behavior, same onVisibilityChange
@@ -789,7 +806,7 @@ const HomeSrc = memo(() => {
             label instead of side by side under "Today's plan". */}
         {continuePlanVisible || upcomingPlanVisible ? (
           <Text category="h8" bold mt={24} mb={12}>
-            {t('home:recommended_for_you_label', { defaultValue: 'Recommended for You' })}
+            {t('home:recommended_for_you_label', { defaultValue: 'Next Steps' })}
           </Text>
         ) : null}
         <View style={styles.recommendedStack}>
@@ -878,10 +895,14 @@ const themedStyles = StyleService.create({
     marginBottom: 4,
     backgroundColor: 'background-basic-color-2',
   },
-  focusImage: {
+  // IconMic3D (see the JSX comment above) is a self-sized SVG component,
+  // not an Image needing explicit width/height/borderRadius -- this wrap
+  // just centers it in the same footprint the old image occupied.
+  focusIconWrap: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   focusTextWrap: {
     marginLeft: 12,
