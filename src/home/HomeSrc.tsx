@@ -12,7 +12,7 @@ import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { ArtPractice } from './HomeHeroArt';
+import { ArtGiftBox, ArtPractice } from './HomeHeroArt';
 import CircularProgress from 'components/CircularProgress';
 import ProgressBar from 'components/ProgressBar';
 import { useTranslation } from 'react-i18next';
@@ -843,8 +843,13 @@ const HomeSrc = memo(() => {
             (wireframe shows these directly on the page, not inside tiles)
             instead of full-width rows -- see src/home/QuickActionGrid.tsx
             for the heavier bento-tile version this deliberately does NOT
-            reuse here. Refer & Earn / Salary Negotiation stay behind the
-            same admin feature flags the old rows checked. */}
+            reuse here. Learning Courses / Salary Negotiation stay behind
+            the same admin feature flags the old rows checked.
+            Refer & Earn REMOVED from here (product follow-up: "Remove
+            refer from the career toolkit and replace it with Courses") --
+            it now has its own full promo card below DailyChallengeCard
+            instead (more room for the actual pitch than a small icon
+            label ever had). */}
         <Text category="h8" bold mt={24} mb={12}>
           {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
         </Text>
@@ -865,13 +870,13 @@ const HomeSrc = memo(() => {
               {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
             </Text>
           </TouchableOpacity>
-          {configService.isFeatureEnabled('referral_program') ? (
-            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('ReferralProgram')}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(216, 90, 48, 0.1)' }]}>
-                <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: '#D85A30' }]} />
+          {configService.isFeatureEnabled('learning_courses') ? (
+            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('LearningCourses')}>
+              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(124, 92, 252, 0.1)' }]}>
+                <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon20, { tintColor: '#7C5CFC' }]} />
               </View>
               <Text category="h10" center mt={6} numberOfLines={1}>
-                {t('home:quick_action_refer', { defaultValue: 'Refer' })}
+                {t('home:quick_action_courses', { defaultValue: 'Courses' })}
               </Text>
             </TouchableOpacity>
           ) : null}
@@ -930,6 +935,40 @@ const HomeSrc = memo(() => {
             its own when there's nothing real to show or the feature is
             off -- same convention as everything else on this screen. */}
         <DailyChallengeCard />
+
+        {/* Refer & Earn promo card (product follow-up: "Remove refer from
+            the career toolkit and replace it with Courses... the referral
+            card should be placed after the today's challenge card. Let
+            the referral card have a subtle light pink color and the text
+            on it be black") -- ArtGiftBox is the same illustration
+            ReferralProgram.tsx's own header uses, so this card previews
+            the destination it links to. Colors are fixed (not theme
+            tokens) on purpose -- a deliberately light, single-purpose
+            promo card rather than one that flips to a dark tonal surface
+            in dark mode, same "fixed card, not theme-driven" choice
+            homeBannerFallback above already makes for its own gradient.
+            Reuses referral_card_title/subtitle/cta -- already fully
+            translated across all 12 languages from an earlier, now-
+            orphaned Home layout, so no new i18n work needed here. */}
+        {configService.isFeatureEnabled('referral_program') ? (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={styles.referralCard}
+            onPress={() => navigate('ReferralProgram')}>
+            <View style={[globalStyle.flexOne, styles.referralTextWrap]}>
+              <Text category="h9" bold style={styles.referralText}>
+                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
+              </Text>
+              <Text category="h10" mt={2} style={styles.referralText}>
+                {t('home:referral_card_subtitle_short', { defaultValue: 'Invite a friend, get rewards' })}
+              </Text>
+              <Text category="h10" bold mt={8} style={styles.referralText}>
+                {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
+              </Text>
+            </View>
+            <ArtGiftBox size={56} />
+          </TouchableOpacity>
+        ) : null}
 
         {/* "Recommended for You" -- reuses ContinueLearningCard/
             UpcomingSessionHomeCard exactly as before (same data, same
@@ -1067,6 +1106,29 @@ const themedStyles = StyleService.create({
   homeBannerIcon: {
     width: 40,
     height: 40,
+  },
+  // Refer & Earn promo card (see the JSX comment above where this
+  // renders). Fixed light-pink fill + fixed black text, not theme tokens
+  // -- product asked for this specific look regardless of light/dark
+  // mode, same reasoning as homeBannerFallback's own fixed white-on-color
+  // text above. No `globalStyle.card` spread (product follow-up: "remove
+  // the box shadow from the referral card") -- this pink fill is already
+  // opaque and visually distinct from the screen background on its own,
+  // so the shadow was pure extra weight, not something covering an
+  // invisible-card gap like JobFitAnalysis.tsx's own earlier fix.
+  referralCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    padding: 16,
+    marginTop: 16,
+    backgroundColor: '#FDECEF',
+  },
+  referralTextWrap: {
+    marginRight: 14,
+  },
+  referralText: {
+    color: '#000000',
   },
   // Home redesign v3 -- "Today's Focus" card (see the JSX comment above
   // where this renders). `globalStyle.card` supplies the shape/shadow;
