@@ -157,25 +157,18 @@ export const globalStyle = StyleSheet.create({
   card: {
     borderRadius: 20,
     ...cardShadow,
-    // Android has carried a subtle hairline border (not a shadow) here
-    // since an earlier "remove the box shadow on Android" request, back
-    // when Android had no elevation to fall back on for separating a card
-    // from the page. Now that cardShadow is `{}` on every platform (see
-    // its own comment above — "remove box shadows from every card in the
-    // app"), the page-vs-card separation on ALL platforms comes from
-    // Container.tsx's gray page (level="3") against each card's white
-    // fill (level="2") — real color contrast, not a shadow or border. This
-    // Android-only hairline is left in place as a small extra definition
-    // aid rather than removed outright (it's a border, not the box shadow
-    // the request was about), same neutral tone as globalStyle.divider's
-    // existing hairline color.
-    ...Platform.select({
-      android: {
-        borderWidth: 1,
-        borderColor: 'rgba(128,128,128,0.15)',
-      },
-      default: {},
-    }),
+    // Product ask: "give all the white cards a border and let's see how
+    // they look" — this hairline used to be Android-only (elevation
+    // already gave iOS a visible edge, so a border felt redundant there at
+    // the time — see this comment's own git history). Since `card` is the
+    // one shared object ~60+ card styles app-wide spread, applying the
+    // border on every platform here is what actually makes it "all the
+    // white cards" in one change rather than a per-screen hunt. Same
+    // neutral hairline tone as globalStyle.divider's own border color —
+    // easy to revert to the old Platform.select-gated version if the
+    // combined border+shadow look reads as too busy once seen live.
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.15)',
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient
   // lift as cards now, tinted toward the brand blue instead of the

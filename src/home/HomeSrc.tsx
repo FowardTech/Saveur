@@ -20,12 +20,13 @@ import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, MockInterviewSessionProps, accountScopedKey } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, accountScopedKey } from 'constants/Types';
 import * as notificationService from 'services/notificationService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
 import * as gamificationService from 'services/gamificationService';
-import * as interviewService from 'services/interviewService';
+import * as roadmapService from 'services/roadmapService';
+import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
@@ -113,43 +114,37 @@ const HomeSrc = memo(() => {
   // already uses, so the two don't disagree with each other.
   const streakRingPct = streak ? Math.min(100, (streak.streakDays / 7) * 100) : 0;
 
-  // Home redesign v3 (product request: simplified wireframe -- "Today's
-  // Focus" hero, a 4-icon "Quick Actions" row, a "Your Progress" Job
-  // Readiness ring, and a "Recommended for You" list, replacing the
-  // previous streak-stats-grid/action-rows/RecentActivityList layout;
-  // "structure first, colors later"). Job Readiness is a real composite,
-  // not a fabricated number -- same "compute a derived score client-side
-  // from real fetched data" pattern src/practice/MyProgress.tsx's own
-  // avgScore already uses, just combining two existing real signals
-  // instead of one: 60% the average score across real scored practice
-  // sessions (interviewService.getPracticeHistory, same field/filter
-  // MyProgress.tsx's skill-breakdown section uses) + 40% streak
-  // consistency (streakRingPct above) -- consistent practice is itself a
-  // real readiness signal, and covers a user with zero scored sessions yet
-  // (a pure-score metric would floor them at 0% despite showing up daily).
-  // Falls back to whichever ONE signal is actually available if the other
-  // isn't yet (no scored sessions yet, or streak still loading/failed) so
-  // this doesn't understate an otherwise-real number.
-  const [interviewHistory, setInterviewHistory] = React.useState<MockInterviewSessionProps[] | null>(null);
+  // Product report: "the Today's Career Focus card progress bar is
+  // displaying the same value as the Job Readiness [ring below] ... Users
+  // need to know the difference" -- and on discussion, the fix isn't just
+  // making the two numbers different, it's putting the RIGHT metric in
+  // each spot given what this app is actually for (helping someone reach
+  // their target role, not just log a streak):
+  //   - Today's Career Focus (top hero, mic icon, "X days" headline) stays
+  //     100% about the daily practice habit -- streakRingPct below is the
+  //     only number that belongs in a card framed entirely around "what
+  //     should I do today."
+  //   - Career Progress (this section) is the north-star, longer-horizon
+  //     metric: concrete milestone progress toward the user's actual
+  //     target role, not an abstract skill/consistency score -- see
+  //     roadmapPercent below.
+  //   - The old Job Readiness composite (60% avg interview score + 40%
+  //     streak) is dropped from Home entirely rather than becoming a third
+  //     competing headline number -- it still lives on Practice/My
+  //     Progress, the screen someone actually goes to for a performance
+  //     diagnostic, which is the right depth level for it.
+  const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
   React.useEffect(() => {
     if (!isSignedIn) return;
-    interviewService.getPracticeHistory().then(setInterviewHistory).catch(() => {
-      // Non-critical -- Job Readiness just falls back to streak-only below.
+    roadmapService.getSavedRoadmap().then(setRoadmap).catch(() => {
+      // Non-critical -- "Progress Toward Goal" just falls back to an
+      // honest 0% / "build your roadmap" nudge below, same fail-open
+      // convention as streak above.
     });
   }, [isSignedIn]);
-  const avgInterviewScore = React.useMemo(() => {
-    const scored = (interviewHistory ?? []).filter(s => typeof s.overallScore === 'number');
-    if (!scored.length) return null;
-    return Math.round(scored.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) / scored.length);
-  }, [interviewHistory]);
-  const jobReadinessPct = React.useMemo(() => {
-    if (avgInterviewScore != null && streak) {
-      return Math.round(avgInterviewScore * 0.6 + streakRingPct * 0.4);
-    }
-    if (avgInterviewScore != null) return avgInterviewScore;
-    if (streak) return Math.round(streakRingPct);
-    return 0;
-  }, [avgInterviewScore, streak, streakRingPct]);
+  const roadmapPercent = roadmap && roadmap.totalCount > 0
+    ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
+    : 0;
 
   // Was also tracking continuePlanVisible here (ContinueLearningCard's own
   // onVisibilityChange) alongside upcomingPlanVisible, to hide the "Next
@@ -849,8 +844,13 @@ const HomeSrc = memo(() => {
                 illustration this app's OLD quick-action tiles used for
                 their Practice card), so it's both the right style AND the
                 right subject for this streak/practice card. */}
+            {/* Product report: "reduce the size of the mic icon in the
+                Today's Career Focus card" — was 64 (the same footprint
+                as the old image it replaced), sized down to read more like
+                an accent icon next to the streak text than a co-equal
+                visual block. */}
             <View style={styles.focusIconWrap}>
-              <ArtPractice size={64} />
+              <ArtPractice size={44} />
             </View>
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
               <Text category="h9" bold numberOfLines={1}>
@@ -866,6 +866,12 @@ const HomeSrc = memo(() => {
                   ? t('home:streak_hero_subtitle_best', { defaultValue: "That's your best run yet!" })
                   : t('home:todays_focus_zero_state', { defaultValue: 'Start a practice session today' })}
               </Text>
+              {/* Kept as the plain streak-toward-7-days bar (see the
+                  "which metric belongs where" comment above where
+                  streakRingPct/roadmapPercent are computed) -- this card's
+                  whole narrative (headline, subtitle) is the daily practice
+                  habit, so the bar underneath stays that same story instead
+                  of switching metrics mid-card. */}
               <Flex justify="flex-start" itemsCenter mt={8}>
                 <ProgressBar
                   style={styles.focusProgressBar}
@@ -938,34 +944,47 @@ const HomeSrc = memo(() => {
           ) : null}
         </View>
 
-        {/* "Your Progress" -- Job Readiness ring (see the effects above for
-            the exact composite formula + the real data it's built from).
-            Always rendered, same "honest zero state instead of a gap"
-            reasoning as Today's Focus above. */}
+        {/* "Your Progress" -- Progress Toward Goal ring (see the "which
+            metric belongs where" comment above where streakRingPct/
+            roadmapPercent are computed for the full reasoning). A
+            genuinely distinct metric from Today's Focus: concrete
+            milestone progress through
+            the user's real AI Career Roadmap (completedCount/totalCount),
+            the same source src/practice/MyProgress.tsx's own "Progress
+            toward your goal" card already reads from. Always rendered,
+            same "honest zero state instead of a gap" reasoning as Today's
+            Focus above -- a user with no roadmap yet just sees 0% and a
+            nudge to build one, not a hidden section. */}
         <Text category="h8" bold mt={24} mb={12}>
           {t('home:your_progress_label', { defaultValue: 'Career Progress' })}
         </Text>
         <View style={[globalStyle.card, styles.progressCard]}>
-          <CircularProgress progress={jobReadinessPct} size={64} strokeWidth={7}>
-            <Text category="h9" bold>{jobReadinessPct}%</Text>
+          <CircularProgress progress={roadmapPercent} size={64} strokeWidth={7}>
+            <Text category="h9" bold>{roadmapPercent}%</Text>
           </CircularProgress>
           <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
             <Text category="h9" bold>
-              {t('home:job_readiness_title', { defaultValue: 'Job Readiness' })}
+              {t('home:goal_progress_title', { defaultValue: 'Progress Toward Goal' })}
             </Text>
             <Text category="h10" status="placeholder" mt={4}>
-              {t('home:job_readiness_hint', {
-                defaultValue: 'Based on your practice sessions and consistency',
-              })}
+              {roadmap
+                ? t('home:goal_progress_hint_role', {
+                    defaultValue: 'Your roadmap to {{role}}',
+                    role: roadmap.targetRole,
+                  })
+                : t('home:goal_progress_hint_no_roadmap', {
+                    defaultValue: 'Based on your AI Career Roadmap milestones',
+                  })}
             </Text>
             <Text category="h10" status="placeholder" mt={2}>
-              {avgInterviewScore != null
-                ? t('home:job_readiness_avg_score', {
-                    defaultValue: 'Average interview score: {{score}}%',
-                    score: avgInterviewScore,
+              {roadmap
+                ? t('home:goal_progress_steps_of', {
+                    defaultValue: '{{completed}} of {{total}} steps complete',
+                    completed: roadmap.completedCount,
+                    total: roadmap.totalCount,
                   })
-                : t('home:job_readiness_no_sessions', {
-                    defaultValue: 'Complete a practice session to see your score',
+                : t('home:goal_progress_no_roadmap', {
+                    defaultValue: 'Build a roadmap to track progress toward your goal',
                   })}
             </Text>
           </View>
@@ -1223,8 +1242,8 @@ const themedStyles = StyleService.create({
   // not an Image needing explicit width/height/borderRadius -- this wrap
   // just centers it in the same footprint the old image occupied.
   focusIconWrap: {
-    width: 64,
-    height: 64,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1259,9 +1278,9 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // "Your Progress" Job Readiness card -- ring on the left, title + two
-  // lines of real supporting copy on the right (see the effects above for
-  // where jobReadinessPct/avgInterviewScore actually come from).
+  // "Your Progress" Progress Toward Goal card -- ring on the left, title +
+  // two lines of real supporting copy on the right (see the effects above
+  // for where roadmapPercent actually comes from).
   progressCard: {
     flexDirection: 'row',
     alignItems: 'center',
