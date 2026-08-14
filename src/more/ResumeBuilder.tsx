@@ -365,8 +365,8 @@ const ResumeBuilder = memo(() => {
           )}
           disabled={isRewriting || !bulletText.trim()}
           onPress={onRewriteBullet}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="quote" />}
-          style={{ marginTop: 12 }}
+          accessoryLeft={props => <Icon {...props} pack="assets" name="quote" style={{color:'#fff'}} />}
+          style={{ marginTop: 12, }}
         />
         {rewriteResult && rewriteResult.rewritten ? (
           <View style={{ marginTop: 20 }}>
