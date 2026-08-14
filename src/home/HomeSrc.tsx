@@ -36,6 +36,7 @@ import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
 import { Images } from 'assets/images';
+import * as configService from 'services/configService';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -651,7 +652,22 @@ const HomeSrc = memo(() => {
         </Text>
         <TouchableOpacity activeOpacity={0.85} style={[globalStyle.card, styles.focusCard]} onPress={() => navigate('Leaderboard')}>
           <Flex justify="flex-start" itemsCenter>
-            <Image source={Images.homeBannerAiCoach} style={styles.focusImage as ImageStyle} resizeMode="cover" />
+            {/* Product follow-up: "that image you used in the today's focus
+                should be changed to an illustration image" -- was
+                homeBannerAiCoach (a real product-supplied photo/marketing
+                banner, .jpg). onboardingInterview is one of this app's
+                actual flat-style, transparent-background illustration
+                assets (see assets/images/index.ts's own long comment
+                history on how these were sourced/built) -- practice-
+                interview themed, which fits Today's Focus (streak/next
+                practice session) better than the other 4 onboarding
+                illustrations (feedback/job-alert/resume-scan/learning),
+                which are topically tied to other features. `contain`
+                instead of `cover` -- these illustrations have real
+                transparent backgrounds and their own baked-in composition
+                (phone mockup, floating cards), so cropping into them like
+                a photo would cut off part of the artwork. */}
+            <Image source={Images.onboardingInterview} style={styles.focusImage as ImageStyle} resizeMode="contain" />
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
               <Text category="h9" bold numberOfLines={1}>
                 {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
@@ -681,49 +697,56 @@ const HomeSrc = memo(() => {
           </Flex>
         </TouchableOpacity>
 
-        {/* "Quick Actions" -- 4 shortcuts, per the wireframe: Roadmap,
-            Resume, Practice, Jobs. Plain icon-in-a-circle + label, no card
-            background (wireframe shows these directly on the page, not
-            inside tiles) -- see src/home/QuickActionGrid.tsx for the
-            heavier bento-tile version this deliberately does NOT reuse
-            here, that's a different, more decorated layout than this
-            wireframe's plain 4-in-a-row asks for. */}
+        {/* "Quick Actions" (product follow-up: "replace the 4 quick actions
+            you put there with: Career Coach, Dream Company Dashboard,
+            Refer & Earn, and Salary Negotiation") -- same 4 destinations/
+            icon colors the old "More for you" action rows used before this
+            redesign, just laid out as plain icon-in-a-circle + label
+            (wireframe shows these directly on the page, not inside tiles)
+            instead of full-width rows -- see src/home/QuickActionGrid.tsx
+            for the heavier bento-tile version this deliberately does NOT
+            reuse here. Refer & Earn / Salary Negotiation stay behind the
+            same admin feature flags the old rows checked. */}
         <Text category="h8" bold mt={24} mb={12}>
           {t('home:quick_actions_label', { defaultValue: 'Quick Actions' })}
         </Text>
         <View style={styles.quickActionsRow}>
-          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('CareerRoadmap')}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
             <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
-              <Icon pack="eva" name="map-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+              <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
             </View>
             <Text category="h10" center mt={6} numberOfLines={1}>
-              {t('home:quick_action_roadmap', { defaultValue: 'Roadmap' })}
+              {t('home:quick_action_coach', { defaultValue: 'Coach' })}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('ResumeBuilder')}>
-            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
-              <Icon pack="eva" name="file-text-outline" style={[globalStyle.icon20, { tintColor: '#8B5CF6' }]} />
+          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
+            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
+              <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
             </View>
             <Text category="h10" center mt={6} numberOfLines={1}>
-              {t('home:quick_action_resume', { defaultValue: 'Resume' })}
+              {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Practice' })}>
-            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(29, 158, 117, 0.1)' }]}>
-              <Icon pack="eva" name="activity-outline" style={[globalStyle.icon20, { tintColor: '#1D9E75' }]} />
-            </View>
-            <Text category="h10" center mt={6} numberOfLines={1}>
-              {t('home:quick_action_practice', { defaultValue: 'Practice' })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('JobAlerts')}>
-            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(216, 90, 48, 0.1)' }]}>
-              <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#D85A30' }]} />
-            </View>
-            <Text category="h10" center mt={6} numberOfLines={1}>
-              {t('home:quick_action_jobs', { defaultValue: 'Jobs' })}
-            </Text>
-          </TouchableOpacity>
+          {configService.isFeatureEnabled('referral_program') ? (
+            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('ReferralProgram')}>
+              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(216, 90, 48, 0.1)' }]}>
+                <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: '#D85A30' }]} />
+              </View>
+              <Text category="h10" center mt={6} numberOfLines={1}>
+                {t('home:quick_action_refer', { defaultValue: 'Refer' })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+          {configService.isFeatureEnabled('salary_negotiation') ? (
+            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('SalaryNegotiation')}>
+              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(29, 158, 117, 0.1)' }]}>
+                <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#1D9E75' }]} />
+              </View>
+              <Text category="h10" center mt={6} numberOfLines={1}>
+                {t('home:quick_action_salary', { defaultValue: 'Salary' })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         {/* "Your Progress" -- Job Readiness ring (see the effects above for
