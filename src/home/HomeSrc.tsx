@@ -571,6 +571,15 @@ const HomeSrc = memo(() => {
 
   return (
     <Container style={styles.container}>
+      {/* Product request: "add a banner in the homescreen at the top top
+          for regular informations like policy change, change in terms and
+          conditions etc." — literally above HeaderHome, not inside the
+          scrollable Content below, so it's the very first thing visible
+          with no scrolling. Self-contained: renders null on its own
+          whenever the admin hasn't published anything, or the current
+          user already dismissed this exact content — see that
+          component's own doc comment. */}
+      <AnnouncementBanner />
       <HeaderHome
         name={profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
         username={profile?.username}
@@ -578,18 +587,6 @@ const HomeSrc = memo(() => {
         email={profile?.email ?? ''}
         notification={unreadCount}
       />
-      {/* Product request: "add a banner in the homescreen at the top top
-          for regular informations like policy change, change in terms and
-          conditions etc." Sits below the greeting header but still above
-          Today's Career Focus (product follow-up: "I want the home banner
-          to be above the Today's Career Focus card") and outside the
-          scrollable Content below, so it's visible the instant Home loads
-          with no scrolling, just no longer floating above the greeting
-          itself. Self-contained: renders null on its own whenever the
-          admin hasn't published anything, or the current user already
-          dismissed this exact content — see that component's own doc
-          comment. */}
-      <AnnouncementBanner />
       <Content contentContainerStyle={styles.content} padder>
         {/* Home redesign v3 (see this file's module comment + the effects
             above for the full "why"), section titles renamed in a later
