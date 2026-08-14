@@ -1,8 +1,9 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Image, ImageStyle, InteractionManager, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Content from 'components/Content';
 import Container from 'components/Container';
@@ -36,6 +37,8 @@ import * as dailyCheckinService from 'services/dailyCheckinService';
 import * as studentCheckinService from 'services/studentCheckinService';
 import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
+import { Images } from 'assets/images';
+import ThemeContext from '../../ThemeContext';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
 
@@ -72,6 +75,10 @@ const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
 const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
+  const { theme: appTheme } = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
+  const { width } = useWindowDimensions();
   const { t } = useTranslation(HOME_I18N_NAMESPACES);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
     React.useContext(AuthContext);
@@ -569,6 +576,58 @@ const HomeSrc = memo(() => {
     }
   }, [hideAd, releaseOverlay, navigate]);
 
+  // Admin-configured Home banner — GET /api/v1/ads/banner (see
+  // services/adsService.ts's getHomeBanner, backend's app/api/ads.py). This
+  // is the OTHER "home banner" in this codebase, distinct from
+  // AnnouncementBanner above: an admin uploads a real marketing image per
+  // language (the backend's image_urls_i18n column, edited from Admin >
+  // Advertisements) rather than typing plain text. Rendered as a
+  // persistent card inside Content (see styles.homeBannerCard below), not
+  // a modal, and never impression-capped — it just shows for as long as
+  // the admin leaves an active placement="home_banner" ad. Dropped
+  // entirely during the v3 wireframe rewrite (2d8e4b2) along with most of
+  // the old cards; restored here per explicit product follow-up ("I was
+  // talking about the homebanner that we implemented the different
+  // language upload version of it in the admin"), placed directly above
+  // Today's Career Focus per that same request.
+  //
+  // Refetches on mount AND every foreground return (AppState 'active'),
+  // same pattern as the unread-count/email-verification effects above —
+  // history here (see old commits) showed a mount-only fetch could go
+  // stale or lose a race on cold start and never recover for the rest of
+  // the session.
+  const [homeBanner, setHomeBanner] = React.useState<AdvertisementProps | null>(null);
+  const loadHomeBanner = React.useCallback(() => {
+    adsService.getHomeBanner().then(banner => {
+      setHomeBanner(banner);
+    }).catch(() => {
+      // Offline or the request failed — leave whatever's currently shown
+      // (or not shown) alone; the next foreground/retry will try again.
+    });
+  }, []);
+  React.useEffect(() => {
+    loadHomeBanner();
+  }, [loadHomeBanner]);
+  React.useEffect(() => {
+    const listener = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') loadHomeBanner();
+    });
+    return () => listener.remove();
+  }, [loadHomeBanner]);
+  const onOpenHomeBanner = React.useCallback(() => {
+    if (homeBanner) {
+      navigate('AdDetails', { ad: homeBanner });
+    }
+  }, [homeBanner, navigate]);
+  // A bad/unreachable admin-uploaded image URL degrades to the code-drawn
+  // fallback card below (same imageFailed pattern AdPopupModal.tsx already
+  // uses) instead of the whole card going blank.
+  const [homeBannerImageFailed, setHomeBannerImageFailed] = React.useState(false);
+  React.useEffect(() => {
+    setHomeBannerImageFailed(false);
+  }, [homeBanner?.imageUrl]);
+  const homeBannerWidth = width - 48;
+
   return (
     <Container style={styles.container}>
       {/* Product request: "add a banner in the homescreen at the top top
@@ -639,6 +698,79 @@ const HomeSrc = memo(() => {
               {t('home:resend', { defaultValue: 'Resend' })}
             </Button>
           </Flex>
+        ) : null}
+
+        {/* Admin-configured Home banner (see the effect above for the full
+            "why" + how this differs from AnnouncementBanner). Deliberately
+            rendered above "Today's Career Focus" per explicit product
+            placement. Only shows once a real, active placement="home_banner"
+            ad exists — no banner at all until the admin creates one, and a
+            tap always has real content to navigate AdDetails to. */}
+        {homeBanner ? (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={[styles.homeBannerCard, { width: homeBannerWidth }]}
+            onPress={onOpenHomeBanner}>
+            {homeBanner.imageUrl && !homeBannerImageFailed ? (
+              // The real admin-uploaded (and, per-locale, admin-translated)
+              // image, shown as-is with no caption overlay drawn over it —
+              // tapping the card (already wired on the outer
+              // TouchableOpacity above) is the only affordance, matching a
+              // real native ad banner.
+              <View style={styles.homeBannerImageWrap}>
+                <Image
+                  source={{ uri: homeBanner.imageUrl }}
+                  style={styles.homeBannerImage as ImageStyle}
+                  resizeMode="cover"
+                  onError={() => setHomeBannerImageFailed(true)}
+                />
+              </View>
+            ) : (
+              // No admin image (or it failed to load) — a code-drawn
+              // fallback card, still using the ad's real title/body text.
+              <View style={styles.homeBannerFallback}>
+                <LinearGradient
+                  colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : [theme['color-primary-500'], theme['color-primary-500']]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.homeBannerIconWrap}>
+                  <Image
+                    source={Images.logoMark}
+                    style={styles.homeBannerIcon as ImageStyle}
+                    resizeMode="contain"
+                    tintColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
+                  />
+                </View>
+                <View style={globalStyle.flexOne}>
+                  {homeBanner.title ? (
+                    <Text
+                      category="h9"
+                      bold
+                      numberOfLines={1}
+                      style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
+                      {homeBanner.title}
+                    </Text>
+                  ) : null}
+                  {homeBanner.body ? (
+                    <Text
+                      category="h10"
+                      numberOfLines={2}
+                      mt={homeBanner.title ? 2 : 0}
+                      style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
+                      {homeBanner.body}
+                    </Text>
+                  ) : null}
+                </View>
+                <Icon
+                  pack="assets"
+                  name="arrowRight"
+                  style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
+                />
+              </View>
+            )}
+          </TouchableOpacity>
         ) : null}
 
         {/* "Today's Focus" -- wireframe's top card: a square image, a bold
@@ -884,6 +1016,49 @@ const themedStyles = StyleService.create({
   },
   verifyBannerText: {
     marginHorizontal: 10,
+  },
+  // Admin-configured Home banner (see the JSX comment above where this
+  // renders). No `globalStyle.card` spread here -- no shadow, no opaque
+  // backing fill -- since the real fill is either the admin's own image or
+  // the code-drawn gradient inside homeBannerFallback below.
+  homeBannerCard: {
+    // width is computed per-render from actual screen width (see
+    // homeBannerWidth above the component's return statement) and applied
+    // inline, not here. No height here either -- either sub-variant
+    // (homeBannerImageWrap or homeBannerFallback) sizes itself.
+    marginTop: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  // Real admin-uploaded image variant. Fixed aspect ratio rather than an
+  // intrinsic-size Image so this card's height doesn't jump around between
+  // an admin's differently-shaped uploads.
+  homeBannerImageWrap: {
+    width: '100%',
+    aspectRatio: 2.4,
+  },
+  homeBannerImage: {
+    width: '100%',
+    height: '100%',
+  },
+  // Code-drawn fallback banner (see the JSX comment where this renders) --
+  // a plain View, NOT a LinearGradient: the gradient is a decorative
+  // absoluteFillObject layer behind this box's normal-flow content
+  // instead, so this sizes correctly to wrap its real content height.
+  homeBannerFallback: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 14,
+    overflow: 'hidden',
+    position: 'relative',
+    padding: 16,
+  },
+  homeBannerIconWrap: {
+    marginRight: 12,
+  },
+  homeBannerIcon: {
+    width: 40,
+    height: 40,
   },
   // Home redesign v3 -- "Today's Focus" card (see the JSX comment above
   // where this renders). `globalStyle.card` supplies the shape/shadow;
