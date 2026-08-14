@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Alert, Image, ImageStyle, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
 import {
@@ -46,7 +46,6 @@ import { AuthContext } from "../../AuthContext";
 import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
 import * as notificationService from "services/notificationService";
-import { Images } from "assets/images";
 import i18n from "i18next";
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
@@ -139,13 +138,13 @@ const Chat = memo(() => {
   const voiceCoachEnabled = configService.isFeatureEnabled('voice_coach');
   const [mode, setMode] = React.useState<'voice' | 'text'>('text');
 
-  // Trophy (Leaderboard) + notification bell in this screen's header —
-  // product request: "the AI career coach should be the entering point
-  // anytime users open the app... that also means that the trophy icon
-  // and the notification icon should also be in the AI career coach
-  // screen because that screen will be the entry point all the time."
-  // Same GET /api/v1/notifications unread-count fetch HeaderHome.tsx
-  // already runs for Home's own bell badge.
+  // Notification bell in this screen's header — product request: "the AI
+  // career coach should be the entering point anytime users open the
+  // app... that also means that the trophy icon and the notification icon
+  // should also be in the AI career coach screen." Same GET
+  // /api/v1/notifications unread-count fetch HeaderHome.tsx already runs
+  // for Home's own bell badge. (Trophy/Leaderboard REMOVED per a later
+  // follow-up — see the header JSX's own comment further down.)
   const [unreadCount, setUnreadCount] = React.useState(0);
   React.useEffect(() => {
     notificationService
@@ -156,7 +155,6 @@ const Chat = memo(() => {
       });
   }, []);
   const onNotification = React.useCallback(() => navigate('Notification'), [navigate]);
-  const onLeaderboard = React.useCallback(() => navigate('Leaderboard'), [navigate]);
 
   // BUG FIX (product report, twice now: "it's just automatically going to
   // the chat screen instead of letting the user see the suggested
@@ -720,17 +718,15 @@ const Chat = memo(() => {
         accessoryLeft={<NavigationAction status="basic" />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
-            {/* Trophy (Leaderboard) + notification bell — product request:
-                "the AI career coach should be the entering point anytime
-                users open the app... the trophy icon and the notification
-                icon should also be in the AI career coach screen because
-                that screen will be the entry point all the time." Same
-                two destinations/badge HeaderHome.tsx already exposes on
-                Home, just laid out as compact nav-bar accessories here
-                instead of Home's larger circular buttons. */}
-            <TouchableOpacity activeOpacity={0.7} onPress={onLeaderboard} style={styles.headerIconButton}>
-              <Image source={Images.trophy} style={styles.headerTrophyIcon as ImageStyle} resizeMode="contain" />
-            </TouchableOpacity>
+            {/* Notification bell — product request: "the AI career coach
+                should be the entering point anytime users open the app...
+                the trophy icon and the notification icon should also be in
+                the AI career coach screen." Same badge HeaderHome.tsx
+                already exposes on Home, just laid out as a compact nav-bar
+                accessory here instead of Home's larger circular button.
+                Trophy (Leaderboard) REMOVED from here (product follow-up:
+                "remove the trophy icon from the AI career coach") --
+                Leaderboard is still reachable from Home's own header. */}
             <TouchableOpacity activeOpacity={0.7} onPress={onNotification} style={styles.headerIconButton}>
               <Icon
                 pack="assets"
@@ -974,19 +970,15 @@ const themedStyles = StyleService.create({
   container: {
     flex: 1,
   },
-  // Trophy/notification header accessories (see accessoryRight above) —
-  // compact nav-bar-scale hit targets, unlike HeaderHome.tsx's larger
-  // 40x40 circular buttons which are sized for a full dashboard header
-  // row rather than a TopNavigation accessory slot.
+  // Notification header accessory (see accessoryRight above) — compact
+  // nav-bar-scale hit target, unlike HeaderHome.tsx's larger 40x40
+  // circular buttons which are sized for a full dashboard header row
+  // rather than a TopNavigation accessory slot.
   headerIconButton: {
     width: 32,
     height: 32,
     marginRight: 4,
     ...globalStyle.center,
-  },
-  headerTrophyIcon: {
-    width: 20,
-    height: 20,
   },
   headerNotifBadge: {
     position: "absolute",
@@ -1069,11 +1061,18 @@ const themedStyles = StyleService.create({
     marginTop: 6,
   },
   // Empty-thread greeting (reference-redesign, see renderChatEmpty).
+  // Product follow-up: "The Saveur icon, the headline text and the
+  // suggested topic button should move a little bit up so that there can
+  // be space" -- paddingTop was 48, pushing the whole orb/headline/pill
+  // cluster down and leaving little room before the "Suggested for you"
+  // card + composer below it. 24 shifts that whole cluster up as one
+  // group (alignItems:'center' keeps it centered either way) without
+  // touching the spacing between the pieces themselves.
   emptyState: {
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 24,
-    paddingTop: 48,
+    paddingTop: 24,
   },
   // Product follow-up: solid brand blue (was a two-stop gradient — see the
   // JSX comment above).
