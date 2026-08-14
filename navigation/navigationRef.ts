@@ -85,6 +85,19 @@ type PendingNavigation =
   // src/more/NextStepRecommendation.tsx, which fetches the AI-authored
   // recommendation itself; nothing to parse out of the payload.
   | {name: 'NextStepRecommendation'}
+  // stale_applications push tap (Saveur-Backend's job_tracker_service.py) —
+  // previously fell through entirely to the generic notification list (see
+  // the audit that also caught GoalTipDetail/DailyChallenge's missing
+  // runNavigation branches below). Single stale application -> straight to
+  // its detail screen; multiple -> the Application Tracker list tab, same
+  // "one item goes to its detail, several go to the list" pattern as every
+  // other multi-item push in this file.
+  | {name: 'ApplicationDetails'; params: {id: string | number}}
+  | {name: 'ApplicationsList'}
+  // post_offer_step_unlocked / post_offer_plan_complete push taps
+  // (Saveur-Backend's roadmap_progress_service.py) — same gap as
+  // stale_applications above; both reuse the existing WhatsNext
+  // destination post_offer_checkin already lands on.
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
   // matters on first mount, so simply flipping `isSignedIn` to true after
@@ -134,6 +147,23 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('WhatsNext');
   } else if (nav.name === 'NextStepRecommendation') {
     navigationRef.navigate('NextStepRecommendation');
+  } else if (nav.name === 'GoalTipDetail') {
+    // BUG FIX (product report: "I clicked the today's challenge and it's
+    // navigating me to the homescreen instead of its screen" — same gap
+    // affected GoalTipDetail): both were declared in the PendingNavigation
+    // union above but never matched by any branch here, so both silently
+    // fell through to the final `else` below — which is meant ONLY for
+    // 'ResetToMain' and does a full stack reset to MainBottomTab (Home).
+    // A goal-tip/daily-challenge push tap was therefore indistinguishable
+    // from a full app reset to Home, even though handleDataTap and the
+    // PendingNavigation type both correctly identified the destination.
+    navigationRef.navigate('GoalTipDetail');
+  } else if (nav.name === 'DailyChallenge') {
+    navigationRef.navigate('DailyChallenge');
+  } else if (nav.name === 'ApplicationDetails') {
+    navigationRef.navigate('RequestStack', {screen: 'ApplicationDetails', params: nav.params});
+  } else if (nav.name === 'ApplicationsList') {
+    navigationRef.navigate('MainBottomTab', {screen: 'Interviews', params: {screen: 'RequestsSrc'}});
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -306,6 +336,19 @@ export function navigateToGoalTipDetail(): void {
  * navigateToGoalTipDetail above. */
 export function navigateToDailyChallenge(): void {
   queueOrNavigate({name: 'DailyChallenge'});
+}
+
+/** stale_applications push tap (Saveur-Backend's job_tracker_service.py
+ * sends data.type = "stale_applications" + data.application_ids, a
+ * comma-separated list). One stale application -> its detail screen
+ * directly; more than one -> the Application Tracker list tab, since
+ * there's no single detail screen to land on. */
+export function navigateToApplicationDetails(id: string | number): void {
+  queueOrNavigate({name: 'ApplicationDetails', params: {id}});
+}
+
+export function navigateToApplicationsList(): void {
+  queueOrNavigate({name: 'ApplicationsList'});
 }
 
 /** Content-shared push tap (Saveur-Backend's shares_service sends

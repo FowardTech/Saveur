@@ -14,6 +14,7 @@ import Text from "components/Text";
 import Flex from "components/Flex";
 import SegmentedTabBar from "components/SegmentedTabBar";
 import { useTranslation } from "react-i18next";
+import i18n from "i18next";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import NavigationAction from "components/NavigationAction";
 import * as contentService from "services/contentService";
@@ -131,6 +132,27 @@ const PolicyScreen = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  // BUG FIX (pre-launch i18n staleness audit — "once language changes all
+  // content must change to that language whether the content was there
+  // before language switch or not"): contentService.getLegalContent(slug)
+  // is translated server-side per the current language, but once a slug
+  // was cached in `content[slug]` above the `if (!content[activeTab])`
+  // guard just above meant it was NEVER re-fetched again for the rest of
+  // this screen's lifetime — switching language while already on this
+  // screen (or having visited it earlier this session) left the Privacy
+  // Policy/Terms text stuck in whatever language was active on first
+  // fetch. Clearing the whole cache on a language change lets that same
+  // guard naturally re-fetch both tabs the next time each is viewed.
+  React.useEffect(() => {
+    const onLanguageChanged = () => {
+      setContent({ privacy_policy: null, terms_of_service: null });
+    };
+    i18n.on("languageChanged", onLanguageChanged);
+    return () => {
+      i18n.off("languageChanged", onLanguageChanged);
+    };
+  }, []);
 
   const current = content[activeTab];
 

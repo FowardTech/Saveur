@@ -10,6 +10,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -48,6 +49,18 @@ const DailyIndustryNews = memo(() => {
   React.useEffect(() => {
     if (isPremium) load();
     else setIsLoading(false);
+  }, [isPremium, load]);
+
+  // BUG FIX (pre-launch i18n staleness audit): newsService.getTodayNews()
+  // is AI-curated per the user's language, but only ever ran once at
+  // mount — a mid-session language switch left the digest stale until the
+  // next cold start.
+  React.useEffect(() => {
+    if (!isPremium) return;
+    i18n.on('languageChanged', load);
+    return () => {
+      i18n.off('languageChanged', load);
+    };
   }, [isPremium, load]);
 
   if (!isPremium) {

@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
@@ -49,6 +50,18 @@ const DailyTipsBanner = memo(() => {
     const unsubscribe = navigation.addListener('focus', load);
     return unsubscribe;
   }, [navigation, load]);
+
+  // BUG FIX (pre-launch i18n staleness audit): goalTipsService.getTodayTips()
+  // sends `language` and comes back translated server-side, but this only
+  // ever ran on mount/focus — a mid-session language switch left the tip
+  // text stale until the next focus. Same i18n.on('languageChanged', ...)
+  // pattern as DailyChallengeCard.tsx.
+  React.useEffect(() => {
+    i18n.on('languageChanged', load);
+    return () => {
+      i18n.off('languageChanged', load);
+    };
+  }, [load]);
 
   if (!tips || tips.length === 0) return null;
   const primary = tips[0];

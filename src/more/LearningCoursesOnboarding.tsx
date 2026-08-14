@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import CtaButton from 'components/CtaButton';
 import useLayout from 'hooks/useLayout';
@@ -45,11 +46,22 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
 
   useEffect(() => {
     let cancelled = false;
-    getOnboardingImage('learning_courses').then(url => {
-      if (!cancelled) setRemoteImage(url);
-    });
+    const load = () => {
+      getOnboardingImage('learning_courses').then(url => {
+        if (!cancelled) setRemoteImage(url);
+      });
+    };
+    load();
+    // BUG FIX (pre-launch i18n staleness audit): this per-language admin
+    // override was only ever fetched once at mount — switching language
+    // while this onboarding screen happens to still be mounted left the
+    // old language's image up. Low practical odds (this is a one-time
+    // interstitial dismissed by "Get Started"), but the fix is cheap and
+    // matches every other dynamic-content screen's convention.
+    i18n.on('languageChanged', load);
     return () => {
       cancelled = true;
+      i18n.off('languageChanged', load);
     };
   }, []);
 

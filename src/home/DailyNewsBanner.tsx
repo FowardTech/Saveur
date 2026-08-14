@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
@@ -49,6 +50,16 @@ const DailyNewsBanner = memo(() => {
     const unsubscribe = navigation.addListener('focus', load);
     return unsubscribe;
   }, [navigation, load]);
+
+  // BUG FIX (pre-launch i18n staleness audit) — same gap as
+  // src/more/DailyIndustryNews.tsx's full-screen version of this same
+  // digest.
+  React.useEffect(() => {
+    i18n.on('languageChanged', load);
+    return () => {
+      i18n.off('languageChanged', load);
+    };
+  }, [load]);
 
   if (!isPremium || !headline) return null;
 

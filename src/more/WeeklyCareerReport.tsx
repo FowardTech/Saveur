@@ -10,6 +10,7 @@ import {
   Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -50,6 +51,19 @@ const WeeklyCareerReport = memo(() => {
   React.useEffect(() => {
     if (isPro) load();
     else setIsLoading(false);
+  }, [isPro, load]);
+
+  // BUG FIX (pre-launch i18n staleness audit): the AI-written weekly report
+  // is generated per the user's language and cached server-side per ISO
+  // week regardless of language — a mid-session language switch left this
+  // stuck in whatever language was active on first fetch, with no way to
+  // recover until the following week's report generates.
+  React.useEffect(() => {
+    if (!isPro) return;
+    i18n.on('languageChanged', load);
+    return () => {
+      i18n.off('languageChanged', load);
+    };
   }, [isPro, load]);
 
   if (!isPro) {

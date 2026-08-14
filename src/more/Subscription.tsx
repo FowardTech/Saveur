@@ -172,6 +172,22 @@ const Subscription = memo(() => {
     loadAll();
   }, [loadAll]);
 
+  // BUG FIX (pre-launch i18n staleness audit — "once language changes all
+  // content must change to that language whether the content was there
+  // before language switch or not"): billingService.getPlans() sends
+  // `language: i18n.language` and the backend translates plan name/
+  // description/features server-side, but this only ever ran once at
+  // mount — a mid-session language switch left the plan cards in whatever
+  // language was active when this screen first loaded. Same
+  // i18n.on('languageChanged', ...) re-fetch pattern already used by
+  // DailyChallengeCard.tsx/DailyChallengeScreen.tsx.
+  React.useEffect(() => {
+    i18n.on('languageChanged', loadAll);
+    return () => {
+      i18n.off('languageChanged', loadAll);
+    };
+  }, [loadAll, i18n]);
+
   // BUG FIX (product report: "Dream Company Dashboard says I need Premium
   // — I'm subscribed to Premium"): traced to Saveur-Backend's
   // price_to_plan_tier() silently downgrading a subscriber's stored plan

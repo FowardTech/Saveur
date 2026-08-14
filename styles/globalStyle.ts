@@ -156,7 +156,15 @@ export const globalStyle = StyleSheet.create({
   // are follow-up candidates for a future pass, not touched here.
   card: {
     borderRadius: 20,
-    ...cardShadow,
+    // Product ask: "remove the box shadow from the white cards and let's
+    // see how it looks" — cardShadow (the soft ambient shadow/elevation
+    // object above) was removed from this spread. Definition against the
+    // white page now comes entirely from the hairline border below (added
+    // in the previous "give all the white cards a border" pass), same as
+    // this app's earlier flat-bordered ZipRecruiter-style direction before
+    // shadows were restored — see cardShadow's own comment for that full
+    // back-and-forth history. Easy to re-add `...cardShadow` here if the
+    // border-only look reads as too flat once seen live.
     // Product ask: "give all the white cards a border and let's see how
     // they look" — this hairline used to be Android-only (elevation
     // already gave iOS a visible edge, so a border felt redundant there at

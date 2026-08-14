@@ -1235,7 +1235,14 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
-    marginTop: 12,
+    // Product follow-up: "move the logo, headline, and suggested topics
+    // pill up — they're too close to the Start a video practice card."
+    // The cluster above (emptyGlowWrap/emptyHeadline/suggestedTopicsPill)
+    // is already pinned as high as it can go (emptyState's paddingTop: 0,
+    // flex-start), so the only lever that actually reads as "more space
+    // above this card" is this card's own top margin — was 12, reads as
+    // one connected block with the pill right above it.
+    marginTop: 84,
     padding: 16,
     borderRadius: 18,
     backgroundColor: 'background-basic-color-2',

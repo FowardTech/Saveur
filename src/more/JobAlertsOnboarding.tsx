@@ -1,6 +1,7 @@
 import React, { memo, useEffect, useState } from 'react';
 import { Image, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import CtaButton from 'components/CtaButton';
 import useLayout from 'hooks/useLayout';
@@ -41,11 +42,18 @@ const JobAlertsOnboarding = memo(({ onGetStarted }: JobAlertsOnboardingProps) =>
 
   useEffect(() => {
     let cancelled = false;
-    getOnboardingImage('job_alerts').then(url => {
-      if (!cancelled) setRemoteImage(url);
-    });
+    const load = () => {
+      getOnboardingImage('job_alerts').then(url => {
+        if (!cancelled) setRemoteImage(url);
+      });
+    };
+    load();
+    // BUG FIX (pre-launch i18n staleness audit) — same fix as the identical
+    // pattern in LearningCoursesOnboarding.tsx, see that file's own comment.
+    i18n.on('languageChanged', load);
     return () => {
       cancelled = true;
+      i18n.off('languageChanged', load);
     };
   }, []);
 

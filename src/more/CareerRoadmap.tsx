@@ -1,11 +1,10 @@
 import React, { memo } from 'react';
-import { View } from 'react-native';
+import { Modal, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
   useStyleSheet,
   useTheme,
-  Layout,
   Button,
   Input,
   Icon,
@@ -13,6 +12,7 @@ import {
 } from '@ui-kitten/components';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -57,6 +57,13 @@ const CareerRoadmap = memo(() => {
   const [targetRole, setTargetRole] = React.useState(route.params?.targetRole ?? '');
   const [currentRole, setCurrentRole] = React.useState('');
   const [isGenerating, setIsGenerating] = React.useState(false);
+  // Product ask: "all forms in the dashboard should be bottom sheets" —
+  // this one was still rendered inline in the content flow (see this
+  // block's own git history). Same Modal/backdrop/sheet idiom as
+  // components/DocumentPickerModal.tsx and Chat.tsx's topicsSheet: the
+  // main screen now just shows the illustration/description + a CTA, and
+  // this form only exists inside the sheet that CTA opens.
+  const [formSheetVisible, setFormSheetVisible] = React.useState(false);
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
   const [roadmapLoaded, setRoadmapLoaded] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -65,11 +72,28 @@ const CareerRoadmap = memo(() => {
   // spinner while the request is out.
   const [completingOrder, setCompletingOrder] = React.useState<number | null>(null);
 
-  React.useEffect(() => {
+  const loadRoadmap = React.useCallback(() => {
     roadmapService.getSavedRoadmap()
       .then(setRoadmap)
       .finally(() => setRoadmapLoaded(true));
   }, []);
+
+  React.useEffect(() => {
+    loadRoadmap();
+  }, [loadRoadmap]);
+
+  // BUG FIX (pre-launch i18n staleness audit): GET /api/v1/roadmap already
+  // translates saved steps on read whenever the caller's current language
+  // differs from whatever language the roadmap was originally generated in
+  // (see career_roadmap.py's get_roadmap docstring) — but this screen only
+  // ever called it once at mount, so a mid-session language switch never
+  // triggered the re-fetch needed to actually see that translation.
+  React.useEffect(() => {
+    i18n.on('languageChanged', loadRoadmap);
+    return () => {
+      i18n.off('languageChanged', loadRoadmap);
+    };
+  }, [loadRoadmap]);
 
   const onGenerate = async () => {
     const role = targetRole.trim();
@@ -79,6 +103,7 @@ const CareerRoadmap = memo(() => {
     try {
       const plan = await roadmapService.generateRoadmap(role, currentRole.trim());
       setRoadmap(plan);
+      setFormSheetVisible(false);
     } catch {
       setError(t('more:roadmap_generate_failed', {
         defaultValue: "Couldn't build your roadmap right now. Please try again.",
@@ -181,37 +206,12 @@ const CareerRoadmap = memo(() => {
         {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
 
         {roadmapLoaded && !roadmap ? (
-          <Layout level="2" style={styles.formCard}>
-            <Text category="h10" status="placeholder" mb={6}>
-              {t('more:roadmap_target_role_label', { defaultValue: 'Role you want' })}
-            </Text>
-            <Input
-              placeholder={t('more:roadmap_target_role_placeholder', { defaultValue: 'e.g. Senior Backend Engineer' })}
-              value={targetRole}
-              onChangeText={setTargetRole}
-              style={[styles.input, { marginBottom: 16 }]}
-              textStyle={globalStyle.inputText}
-            />
-            <Text category="h10" status="placeholder" mb={6}>
-              {t('more:roadmap_current_role_label', { defaultValue: 'Your current role (optional)' })}
-            </Text>
-            <Input
-              placeholder={t('more:roadmap_current_role_placeholder', { defaultValue: 'e.g. Backend Engineer' })}
-              value={currentRole}
-              onChangeText={setCurrentRole}
-              style={styles.input}
-              textStyle={globalStyle.inputText}
-            />
-            <CtaButton
-              style={[globalStyle.shadowBtn, { marginTop: 20 }]}
-              disabled={!targetRole.trim() || isGenerating}
-              onPress={onGenerate}
-            >
-              {isGenerating
-                ? () => <Spinner size="small" status="control" />
-                : t('more:roadmap_build_cta', { defaultValue: 'Plan my roadmap' })}
-            </CtaButton>
-          </Layout>
+          <CtaButton
+            style={globalStyle.shadowBtn}
+            onPress={() => setFormSheetVisible(true)}
+          >
+            {t('more:roadmap_build_cta', { defaultValue: 'Plan my roadmap' })}
+          </CtaButton>
         ) : null}
 
         {roadmap ? (
@@ -322,6 +322,50 @@ const CareerRoadmap = memo(() => {
           </View>
         ) : null}
       </Content>
+
+      <Modal visible={formSheetVisible} animationType="slide" transparent onRequestClose={() => setFormSheetVisible(false)}>
+        <View style={styles.sheetBackdrop}>
+          <View style={styles.sheet}>
+            <View style={styles.sheetHeaderRow}>
+              <Text category="h7" bold>
+                {t('more:roadmap_build_cta', { defaultValue: 'Plan my roadmap' })}
+              </Text>
+              <TouchableOpacity onPress={() => setFormSheetVisible(false)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </View>
+            <Text category="h10" status="placeholder" mb={6}>
+              {t('more:roadmap_target_role_label', { defaultValue: 'Role you want' })}
+            </Text>
+            <Input
+              placeholder={t('more:roadmap_target_role_placeholder', { defaultValue: 'e.g. Senior Backend Engineer' })}
+              value={targetRole}
+              onChangeText={setTargetRole}
+              style={[styles.input, { marginBottom: 16 }]}
+              textStyle={globalStyle.inputText}
+            />
+            <Text category="h10" status="placeholder" mb={6}>
+              {t('more:roadmap_current_role_label', { defaultValue: 'Your current role (optional)' })}
+            </Text>
+            <Input
+              placeholder={t('more:roadmap_current_role_placeholder', { defaultValue: 'e.g. Backend Engineer' })}
+              value={currentRole}
+              onChangeText={setCurrentRole}
+              style={styles.input}
+              textStyle={globalStyle.inputText}
+            />
+            <CtaButton
+              style={[globalStyle.shadowBtn, { marginTop: 20 }]}
+              disabled={!targetRole.trim() || isGenerating}
+              onPress={onGenerate}
+            >
+              {isGenerating
+                ? () => <Spinner size="small" status="control" />
+                : t('more:roadmap_build_cta', { defaultValue: 'Plan my roadmap' })}
+            </CtaButton>
+          </View>
+        </View>
+      </Modal>
     </Container>
   );
 });
@@ -332,12 +376,25 @@ const themedStyles = StyleService.create({
   container: { flex: 1 },
   content: { paddingBottom: 80 },
   input: { ...globalStyle.inputField },
-  formCard: {
-    ...globalStyle.card,
+  // Same Modal/backdrop/sheet idiom as components/DocumentPickerModal.tsx
+  // and Chat.tsx's topicsSheet — see formSheetVisible's own comment above.
+  sheetBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  sheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 20,
-    // Redesign v2 (full reskin): `card` carries a real shadow again, which
-    // needs an opaque fill on Android — dropped the 'transparent' override
-    // so this Layout's own `level="2"` background shows through instead.
+    paddingBottom: 32,
+    backgroundColor: 'background-basic-color-2',
+  },
+  sheetHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
   headerRow: {
     flexDirection: 'row',

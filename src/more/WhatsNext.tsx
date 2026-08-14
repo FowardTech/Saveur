@@ -484,7 +484,7 @@ const WhatsNext = memo(() => {
               <Text category="h10" status="placeholder" mb={6}>
                 {t('more:whats_next_start_date_label', { defaultValue: 'Start date (optional)' })}
               </Text>
-              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, styles.dateInput]}>
+              <TouchableOpacity onPress={() => setShowDatePicker(true)} style={[styles.input, styles.dateInput, styles.multilineInput,]}>
                 <Text category="h9" status={startDate ? 'basic' : 'placeholder'}>
                   {startDate
                     ? startDate.toLocaleDateString(i18n.language)

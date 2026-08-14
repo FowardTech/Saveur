@@ -24,6 +24,8 @@ import {
   navigateToLearningCourses,
   navigateToWhatsNext,
   navigateToNextStepRecommendation,
+  navigateToApplicationDetails,
+  navigateToApplicationsList,
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 import * as scheduledInterviewService from './scheduledInterviewService';
@@ -242,6 +244,27 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // as goal_tip above) — the detail screen fetches today's challenge itself.
   if (data?.type === 'daily_challenge') {
     navigateToDailyChallenge();
+    return;
+  }
+  // Stale applications nudge (Saveur-Backend's job_tracker_service.py sends
+  // data.type = "stale_applications" + data.application_ids, a comma-
+  // separated list) — previously unhandled entirely, same gap the audit
+  // pass before launch caught. One application -> its detail screen
+  // directly; more than one -> the Application Tracker list tab.
+  if (data?.type === 'stale_applications') {
+    const ids = (data.application_ids ?? '').split(',').map((s: string) => s.trim()).filter(Boolean);
+    if (ids.length === 1) {
+      navigateToApplicationDetails(ids[0]);
+    } else {
+      navigateToApplicationsList();
+    }
+    return;
+  }
+  // post_offer_step_unlocked / post_offer_plan_complete (Saveur-Backend's
+  // roadmap_progress_service.py) — same What's Next destination
+  // post_offer_checkin above already lands on; previously unhandled.
+  if (data?.type === 'post_offer_step_unlocked' || data?.type === 'post_offer_plan_complete') {
+    navigateToWhatsNext();
     return;
   }
   // Daily career-goal check-in evening reflection push (product request
