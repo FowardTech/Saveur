@@ -602,26 +602,31 @@ const Chat = memo(() => {
         <Text category="h6" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
         </Text>
-        <View style={styles.emptySubtitleChip}>
-          <Text category="h10" style={{ color: theme['text-hint-color'] }}>
-            {t("message:coach_greeting_subtitle", { defaultValue: "Ask anything, or pick a topic below" })}
-          </Text>
-        </View>
 
-        {/* Reference-redesign follow-up: was a 2x2 card grid — the new
-            reference shows a single row of 4 round icon buttons with the
-            label underneath each one, more compact and icon-forward. Same
-            real topics/palette, just a different shape. */}
+        {/* Product report: "too many content... make the suggested topic
+            in a card form." This used to be 3 separate floating pieces
+            stacked between the headline and the topics themselves (a
+            pill-shaped subtitle chip, then a standalone one-line voice
+            hint, then the bare row of circles) -- consolidated into ONE
+            card: the subtitle chip is gone entirely (the headline plus
+            this card's own presence already carry enough context without
+            it), and the voice hint moved from a floating paragraph to a
+            small subtitle inside the card's own header, right above the
+            row it explains. Net result: 3 loose elements -> 1 card, same
+            real topics/palette/mic-badge/onTapTopic behavior as before,
+            nothing removed except the redundant standalone chip. */}
         {topics.length > 0 ? (
-          <>
+          <View style={styles.emptyTopicsCard}>
+            <Text category="h9" bold>
+              {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
+            </Text>
             {/* BUG FIX (pre-launch redundancy/flow audit): tapping a topic
                 here silently leaves text mode and starts a live spoken
                 voice call (see onTapTopic below) — nothing previously told
                 the user that would happen, which read as a surprising mode
-                switch for anyone expecting a text reply. A one-line hint
-                plus a small mic badge on each circle (below) now signal it
-                up front. */}
-            <Text category="h10" center mb={10} style={{ color: theme['text-hint-color'] }}>
+                switch for anyone expecting a text reply. This hint plus a
+                small mic badge on each circle (below) signal it up front. */}
+            <Text category="h10" mt={2} mb={14} style={{ color: theme['text-hint-color'] }}>
               {t("message:topics_start_voice_hint", { defaultValue: "Tap a topic to start a voice conversation" })}
             </Text>
             <View style={styles.emptyTopicRow}>
@@ -646,7 +651,7 @@ const Chat = memo(() => {
                 );
               })}
             </View>
-          </>
+          </View>
         ) : null}
 
         {/* "Suggested for you" — a real existing feature (same Composer
@@ -1051,13 +1056,16 @@ const themedStyles = StyleService.create({
     fontFamily: 'PlusJakartaSans-Medium',
     fontWeight: 'normal',
   },
-  emptySubtitleChip: {
+  // Product report: "too many content... make the suggested topic in a
+  // card form" (see the JSX comment above for the full before/after).
+  // Flat fill + radius, no shadow -- same convention emptySuggestedCard
+  // below already uses for this screen's cards.
+  emptyTopicsCard: {
+    width: '100%',
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 18,
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 99,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 28,
   },
   // Reference-redesign follow-up: a single row of 4 round icon buttons
   // (was a 2x2 card grid — see the JSX comment above).
@@ -1065,7 +1073,6 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
-    marginBottom: 8,
   },
   emptyTopicButton: {
     alignItems: 'center',
