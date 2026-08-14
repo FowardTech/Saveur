@@ -599,7 +599,7 @@ const Chat = memo(() => {
         <View style={styles.emptyGlowWrap}>
           <BrandWordmark markOnly size={34} markColor="#fff" />
         </View>
-        <Text category="h5" bold center mt={18} style={styles.emptyHeadline}>
+        <Text category="h6" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
         </Text>
         <View style={styles.emptySubtitleChip}>
@@ -1032,9 +1032,24 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
     backgroundColor: '#0063f8',
   },
+  // BUG FIX (product report: "too bold", "reduce the size"): `category`
+  // was "h5" with the `bold` prop -- h5 was never actually added to this
+  // app's own typography scale (constants/theme/mapping.json's category
+  // block jumps straight from h3 to h6), so it was silently falling back
+  // to Eva's stock default h5 size (22px), and `bold` swaps in
+  // PlusJakartaSans-Bold (see components/Text.tsx), the heaviest cut this
+  // app ships. "h6" (18px) IS part of this app's real scale, and an
+  // explicit fontFamily/fontWeight override below gives an actual
+  // medium (500-equivalent) weight instead of Bold -- same
+  // fontFamily-swap + `fontWeight: 'normal'` convention CtaButton.tsx
+  // already uses, since Android's font resolver needs the exact filename
+  // (PlusJakartaSans-Medium.ttf), not a numeric weight, to find a custom
+  // font's medium cut.
   emptyHeadline: {
     color: 'text-basic-color',
     paddingHorizontal: 12,
+    fontFamily: 'PlusJakartaSans-Medium',
+    fontWeight: 'normal',
   },
   emptySubtitleChip: {
     backgroundColor: 'background-basic-color-2',
