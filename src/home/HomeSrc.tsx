@@ -1026,7 +1026,15 @@ const themedStyles = StyleService.create({
     // homeBannerWidth above the component's return statement) and applied
     // inline, not here. No height here either -- either sub-variant
     // (homeBannerImageWrap or homeBannerFallback) sizes itself.
+    // marginBottom (product report: "too close to the homebanner" --
+    // the "Today's Career Focus" label right below only had its own
+    // mt={4}, which is fine as top-of-screen spacing after the
+    // verify-email banner but too tight once a real image/card sits
+    // directly above it) gives this card its own breathing room
+    // regardless of what follows, rather than bumping that label's mt
+    // and disturbing the no-banner-shown spacing too.
     marginTop: 16,
+    marginBottom: 16,
     borderRadius: 14,
     overflow: 'hidden',
   },
