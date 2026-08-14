@@ -942,27 +942,37 @@ const HomeSrc = memo(() => {
             the referral card have a subtle light pink color and the text
             on it be black") -- ArtGiftBox is the same illustration
             ReferralProgram.tsx's own header uses, so this card previews
-            the destination it links to. Colors are fixed (not theme
-            tokens) on purpose -- a deliberately light, single-purpose
-            promo card rather than one that flips to a dark tonal surface
-            in dark mode, same "fixed card, not theme-driven" choice
-            homeBannerFallback above already makes for its own gradient.
+            the destination it links to.
+            BUG FIX (product follow-up: "work on the dark mode for the
+            referral card" -- the original fixed light-pink/black-text
+            combo, correct for light mode, went low-contrast/looked out
+            of place once the rest of the screen switched to dark
+            surfaces): colors are still fixed (not theme tokens) rather
+            than flipping to a dark tonal surface, per the original ask,
+            but now with an explicit isDarkMode-picked pair for each mode
+            -- same inline isDarkMode ? darkValue : lightValue pattern
+            homeBannerFallback above already uses for its own gradient/
+            text. Dark mode gets a muted plum/rose fill (reads as the
+            same "pink" family as light mode without glowing against a
+            dark screen) + a pale pink-white text, instead of black text
+            on a bright pink card that would otherwise sit awkwardly next
+            to the rest of dark mode's low-brightness surfaces.
             Reuses referral_card_title/subtitle/cta -- already fully
             translated across all 12 languages from an earlier, now-
             orphaned Home layout, so no new i18n work needed here. */}
         {configService.isFeatureEnabled('referral_program') ? (
           <TouchableOpacity
             activeOpacity={0.85}
-            style={styles.referralCard}
+            style={[styles.referralCard, { backgroundColor: isDarkMode ? '#3D2530' : '#FDECEF' }]}
             onPress={() => navigate('ReferralProgram')}>
             <View style={[globalStyle.flexOne, styles.referralTextWrap]}>
-              <Text category="h9" bold style={styles.referralText}>
+              <Text category="h9" bold style={{ color: isDarkMode ? '#F5E3EA' : '#000000' }}>
                 {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
               </Text>
-              <Text category="h10" mt={2} style={styles.referralText}>
+              <Text category="h10" mt={2} style={{ color: isDarkMode ? '#F5E3EA' : '#000000' }}>
                 {t('home:referral_card_subtitle_short', { defaultValue: 'Invite a friend, get rewards' })}
               </Text>
-              <Text category="h10" bold mt={8} style={styles.referralText}>
+              <Text category="h10" bold mt={8} style={{ color: isDarkMode ? '#F5E3EA' : '#000000' }}>
                 {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
               </Text>
             </View>
@@ -1108,27 +1118,25 @@ const themedStyles = StyleService.create({
     height: 40,
   },
   // Refer & Earn promo card (see the JSX comment above where this
-  // renders). Fixed light-pink fill + fixed black text, not theme tokens
-  // -- product asked for this specific look regardless of light/dark
-  // mode, same reasoning as homeBannerFallback's own fixed white-on-color
-  // text above. No `globalStyle.card` spread (product follow-up: "remove
-  // the box shadow from the referral card") -- this pink fill is already
-  // opaque and visually distinct from the screen background on its own,
-  // so the shadow was pure extra weight, not something covering an
-  // invisible-card gap like JobFitAnalysis.tsx's own earlier fix.
+  // renders). Fixed colors, not theme tokens -- product asked for this
+  // specific "pink card" look, same reasoning as homeBannerFallback's own
+  // fixed white-on-color text above -- but backgroundColor/text color are
+  // applied inline per isDarkMode at the JSX call site (not here) since
+  // each mode needs its own fixed pair. No `globalStyle.card` spread
+  // (product follow-up: "remove the box shadow from the referral card")
+  // -- the fill is already opaque and visually distinct from the screen
+  // background on its own, so the shadow was pure extra weight, not
+  // something covering an invisible-card gap like JobFitAnalysis.tsx's
+  // earlier fix.
   referralCard: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 20,
     padding: 16,
     marginTop: 16,
-    backgroundColor: '#FDECEF',
   },
   referralTextWrap: {
     marginRight: 14,
-  },
-  referralText: {
-    color: '#000000',
   },
   // Home redesign v3 -- "Today's Focus" card (see the JSX comment above
   // where this renders). `globalStyle.card` supplies the shape/shadow;
