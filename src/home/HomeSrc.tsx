@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, InteractionManager, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Image, ImageStyle, InteractionManager, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -9,22 +9,20 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
-import DailyChallengeCard from './DailyChallengeCard';
-import DailyNewsBanner from './DailyNewsBanner';
-import DailyTipsBanner from './DailyTipsBanner';
 import AnnouncementBanner from './AnnouncementBanner';
-import RecentActivityList from './RecentActivityList';
 import CircularProgress from 'components/CircularProgress';
+import ProgressBar from 'components/ProgressBar';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, accountScopedKey } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, MockInterviewSessionProps, accountScopedKey } from 'constants/Types';
 import * as notificationService from 'services/notificationService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
 import * as gamificationService from 'services/gamificationService';
+import * as interviewService from 'services/interviewService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
@@ -37,7 +35,7 @@ import * as studentCheckinService from 'services/studentCheckinService';
 import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
 import { AuthContext } from '../../AuthContext';
-import * as configService from 'services/configService';
+import { Images } from 'assets/images';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -56,34 +54,19 @@ const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
 // dependency arrays — the exact loop that made this matter).
 const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
 
-// Home redesign v2 (product request: "restructure the homescreen UI of
-// this app to be like the layout in the [reference] screenshots... I just
-// want the kind of layout and the look and feel not the texts" — two
-// reference screenshots were provided, a light healthcare-app mockup and a
-// dark "Sundae" AI-voice-assistant mockup; user explicitly picked the
-// second one's STRUCTURE while confirming "layout only, keep light theme"
-// when asked — so this adopts that mockup's four structural building
-// blocks (a greeting header, a grid of square quick-action tiles, a
-// recent-activity list, and a floating center nav button — the last of
-// those lives in navigation/MainBottomTab.tsx since the bottom nav is
-// shared chrome, not something owned by this screen) using Saveur's own
-// existing light color palette, icons, and copy throughout — none of the
-// reference mockup's own dark theme, iconography, or text made it in).
-//
-// This is actually the SECOND redesign of this screen (see git history for
-// the original "two-big-card 'what do you want to do' landing screen" this
-// replaces) — the underlying content is unchanged from that pass (header,
-// verify-email banner, Continue Learning/Upcoming Session compact row, then
-// Career Coach / Practice / Dream Company Dashboard / Refer & Earn as the
-// four things to do), just re-laid-out: those four now render as
-// QuickActionGrid tiles instead of stacked full-width cards, and a new
-// RecentActivityList (reusing the same GET /api/v1/activity/day data
-// components/DayActivityModal.tsx already shows behind a calendar-day tap)
-// sits underneath, giving the screen the mockup's "here's what to do, here's
-// what you've been doing" two-part read. The four auto-triggered overlays
-// (App Tour, daily check-in sheet, rating prompt, ad popup) and their shared
-// one-at-a-time arbitration queue are UNCHANGED — app-wide engagement
-// mechanisms triggered independently of what's laid out on screen.
+// This screen has been through several redesigns (v1: "two-big-card 'what
+// do you want to do' landing screen"; v2: greeting header + QuickActionGrid
+// bento tiles + RecentActivityList, modeled on a reference "Sundae"
+// AI-voice-assistant mockup's structure — see git history for both). The
+// CURRENT layout (v3) is a deliberately simplified 5-section structure from
+// a product-supplied wireframe: Today's Focus / Quick Actions / Your
+// Progress / Recommended for You, plus the verify-email banner — see the
+// JSX's own comment right where the Content body starts for the actual
+// section-by-section breakdown and what got removed/kept from v2. The four
+// auto-triggered overlays (App Tour, daily check-in sheet, rating prompt, ad
+// popup) and their shared one-at-a-time arbitration queue below are
+// UNCHANGED across all three versions — app-wide engagement mechanisms
+// triggered independently of what's laid out on screen.
 const HomeSrc = memo(() => {
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
@@ -117,6 +100,44 @@ const HomeSrc = memo(() => {
   // Same "streak toward a 7-day week" framing Leaderboard.tsx's own ring
   // already uses, so the two don't disagree with each other.
   const streakRingPct = streak ? Math.min(100, (streak.streakDays / 7) * 100) : 0;
+
+  // Home redesign v3 (product request: simplified wireframe -- "Today's
+  // Focus" hero, a 4-icon "Quick Actions" row, a "Your Progress" Job
+  // Readiness ring, and a "Recommended for You" list, replacing the
+  // previous streak-stats-grid/action-rows/RecentActivityList layout;
+  // "structure first, colors later"). Job Readiness is a real composite,
+  // not a fabricated number -- same "compute a derived score client-side
+  // from real fetched data" pattern src/practice/MyProgress.tsx's own
+  // avgScore already uses, just combining two existing real signals
+  // instead of one: 60% the average score across real scored practice
+  // sessions (interviewService.getPracticeHistory, same field/filter
+  // MyProgress.tsx's skill-breakdown section uses) + 40% streak
+  // consistency (streakRingPct above) -- consistent practice is itself a
+  // real readiness signal, and covers a user with zero scored sessions yet
+  // (a pure-score metric would floor them at 0% despite showing up daily).
+  // Falls back to whichever ONE signal is actually available if the other
+  // isn't yet (no scored sessions yet, or streak still loading/failed) so
+  // this doesn't understate an otherwise-real number.
+  const [interviewHistory, setInterviewHistory] = React.useState<MockInterviewSessionProps[] | null>(null);
+  React.useEffect(() => {
+    if (!isSignedIn) return;
+    interviewService.getPracticeHistory().then(setInterviewHistory).catch(() => {
+      // Non-critical -- Job Readiness just falls back to streak-only below.
+    });
+  }, [isSignedIn]);
+  const avgInterviewScore = React.useMemo(() => {
+    const scored = (interviewHistory ?? []).filter(s => typeof s.overallScore === 'number');
+    if (!scored.length) return null;
+    return Math.round(scored.reduce((sum, s) => sum + (s.overallScore ?? 0), 0) / scored.length);
+  }, [interviewHistory]);
+  const jobReadinessPct = React.useMemo(() => {
+    if (avgInterviewScore != null && streak) {
+      return Math.round(avgInterviewScore * 0.6 + streakRingPct * 0.4);
+    }
+    if (avgInterviewScore != null) return avgInterviewScore;
+    if (streak) return Math.round(streakRingPct);
+    return 0;
+  }, [avgInterviewScore, streak, streakRingPct]);
 
   // BUG FIX (product report: "the Today's Plan section in the homescreen,
   // nothing is there its empty") — see the "Today's plan" JSX below for
@@ -551,11 +572,11 @@ const HomeSrc = memo(() => {
       {/* Product request: "add a banner in the homescreen at the top top
           for regular informations like policy change, change in terms and
           conditions etc." — literally above HeaderHome, not inside the
-          scrollable Content below (where DailyNewsBanner/DailyTipsBanner
-          live), so it's the very first thing visible with no scrolling.
-          Self-contained: renders null on its own whenever the admin hasn't
-          published anything, or the current user already dismissed this
-          exact content — see that component's own doc comment. */}
+          scrollable Content below, so it's the very first thing visible
+          with no scrolling. Self-contained: renders null on its own
+          whenever the admin hasn't published anything, or the current
+          user already dismissed this exact content — see that
+          component's own doc comment. */}
       <AnnouncementBanner />
       <HeaderHome
         name={profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
@@ -565,183 +586,26 @@ const HomeSrc = memo(() => {
         notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
-        {/* Product request: "Daily News and daily tips banners should
-            display at the top of the HomeScreen." Placed as the very first
-            content below the greeting header — both are self-contained and
-            render null with nothing to show (DailyNewsBanner: non-Premium
-            or no digest yet; DailyTipsBanner: no goals set yet), same
-            convention as every other card on this screen, so neither one
-            reserves space or shows a placeholder when empty.
-            BUG FIX (pre-launch redundancy/flow audit): DailyNewsBanner had
-            been left commented out from an earlier pass — the whole Daily
-            Industry News digest was invisible on Home even though the
-            component and its data source were fully built. Restored. */}
-        <DailyNewsBanner />
-        <DailyTipsBanner />
-
-        {/* Streak/XP hero (see this file's module comment above for the
-            reference this redesign is based on) — a 7-day progress ring,
-            same real streak data src/home/Leaderboard.tsx's own card
-            already shows. Hides itself entirely rather than showing a
-            zeroed-out ring on a failed fetch or a signed-out visit
-            (AuthContext gates this whole screen behind sign-in in
-            practice, but the null check here covers the same brief
-            pre-auth frame everything else on this screen already guards
-            against).
-            Product follow-up (revert): "make the practice streak in the
-            homescreen the complete background color #0063f8 no more
-            linear gradient" -- the two-stop LinearGradient (#0063f8 ->
-            #7EA8E2) from the immediately preceding follow-up is gone
-            again; this is back to a single flat fill, this app's own
-            brand blue #0063f8. */}
-        {streak ? (
-          // BUG FIX (pre-launch redundancy/flow audit): this card showed the
-          // exact same streak data as Leaderboard.tsx's own card, but had no
-          // onPress at all — a user seeing "Not yet" under Today's check-in
-          // had no way to act on it from here, only a trophy-icon detour
-          // elsewhere. Now tappable straight into Leaderboard, where the
-          // real Check-In/Badges buttons live.
-          <TouchableOpacity activeOpacity={0.85} onPress={() => navigate('Leaderboard')}>
-          <View style={[styles.streakHero, styles.streakHeroOuter]}>
-            <Flex justify="flex-start" itemsCenter mb={6}>
-              <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
-              <Text category="h10" bold ml={6} style={{ color: 'rgba(255,255,255,0.85)' }}>
-                {t('home:streak_hero_label', { defaultValue: 'Practice streak' })}
-              </Text>
-            </Flex>
-            <Flex justify="space-between" itemsCenter>
-              <View style={globalStyle.flexOne}>
-                <Text category="h3" bold style={{ color: '#fff' }}>
-                  {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak.streakDays })}
-                </Text>
-                <Text category="h10" mt={4} style={{ color: 'rgba(255,255,255,0.75)' }}>
-                  {streak.longestStreak && streak.longestStreak > streak.streakDays
-                    ? t('home:streak_hero_subtitle_chasing', {
-                        defaultValue: 'Best is {{best}} days — keep going!',
-                        best: streak.longestStreak,
-                      })
-                    : t('home:streak_hero_subtitle_best', { defaultValue: "That's your best run yet!" })}
-                </Text>
-              </View>
-              <CircularProgress
-                progress={streakRingPct}
-                size={50}
-                strokeWidth={6}
-                trackColor="rgba(255,255,255,0.25)"
-                color="#fff">
-                <Text category="h10" bold style={{ color: '#fff' }}>
-                  {Math.round(streakRingPct)}%
-                </Text>
-              </CircularProgress>
-            </Flex>
-          </View>
-          </TouchableOpacity>
-        ) : null}
-
-        {/* Product request: "bring out the total XP, Best Streak and
-            Today's check-in out of the card and make them individual cards
-            in grid form" -- these 3 stats used to be inline `streakChip`
-            columns painted directly on the blue hero card's own fill (no
-            background of their own, see git history). Now their own white
-            globalStyle.card tiles in a 3-up row below the hero card, each
-            with a small pastel icon badge (same tint-circle convention as
-            Job Alerts/Dream Companies/Resume Builder's rows this session)
-            instead of a plain white-on-blue icon, since these badges now
-            sit on a white card instead of the blue hero fill. Same
-            underlying `streak` fields and translation keys as before --
-            only the container changed, not the data or copy. Kept inside
-            the same `{streak ? ... : null}` gate as the hero card (via a
-            second top-level fragment child below) since these 3 stats have
-            no meaning without `streak` loaded either. */}
-        {streak ? (
-          <View style={styles.streakStatsGrid}>
-            <View style={[globalStyle.card, styles.streakStatCard]}>
-              <View style={[styles.streakStatIconWrap, { backgroundColor: '#F59E0B1F' }]}>
-                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#F59E0B' }]} />
-              </View>
-              <Text category="h8" bold mt={8}>{streak.xp}</Text>
-              <Text category="h10" status="placeholder" center>
-                {t('home:streak_chip_xp', { defaultValue: 'Total XP' })}
-              </Text>
-            </View>
-            <View style={[globalStyle.card, styles.streakStatCard]}>
-              <View style={[styles.streakStatIconWrap, { backgroundColor: '#8B5CF61F' }]}>
-                <Icon pack="eva" name="award-outline" style={[globalStyle.icon16, { tintColor: '#8B5CF6' }]} />
-              </View>
-              <Text category="h8" bold mt={8}>{streak.longestStreak ?? streak.streakDays}</Text>
-              <Text category="h10" status="placeholder" center>
-                {t('home:streak_chip_best', { defaultValue: 'Best streak' })}
-              </Text>
-            </View>
-            <View style={[globalStyle.card, styles.streakStatCard]}>
-              <View
-                style={[
-                  styles.streakStatIconWrap,
-                  { backgroundColor: streak.checkedInToday ? '#10B9811F' : '#94A3B81F' },
-                ]}>
-                <Icon
-                  pack="eva"
-                  name={streak.checkedInToday ? 'checkmark-circle-2' : 'checkmark-circle-2-outline'}
-                  style={[
-                    globalStyle.icon16,
-                    { tintColor: streak.checkedInToday ? '#10B981' : '#94A3B8' },
-                  ]}
-                />
-              </View>
-              <Text category="h8" bold mt={8}>
-                {streak.checkedInToday
-                  ? t('home:streak_chip_checked_in', { defaultValue: 'Done' })
-                  : t('home:streak_chip_not_checked_in', { defaultValue: 'Not yet' })}
-              </Text>
-              <Text category="h10" status="placeholder" center>
-                {t('home:streak_chip_checkin', { defaultValue: "Today's check-in" })}
-              </Text>
-            </View>
-          </View>
-        ) : null}
-
-        {/* Product request: "remove the continue learning card in the My
-            Progress screen and then place it at the top in the homescreen
-            but let the background be white and the height be very small
-            like an info card" + "the upcoming session already scheduled
-            should be placed side by side with the continue learning card
-            at the top in the homescreen." Both cards are self-contained
-            and render null when they have nothing to show (see their own
-            files) — a null child contributes no space in this row, so a
-            single card naturally takes the full row width when only one
-            of the two has content. Labeled "Today's plan"
-            (reference-redesign follow-up) to match the new hero/
-            section-label structure above/below it.
-            BUG FIX (product report: "the Today's Plan section in the
-            homescreen, nothing is there its empty") — the row itself
-            already correctly disappeared when both cards were empty, but
-            this label above it didn't know that and always rendered
-            regardless, leaving a bare heading over nothing on any account
-            with no in-progress lesson and no scheduled session. Both cards
-            now report their own visibility (see their own
-            onVisibilityChange prop) so the label can hide along with the
-            row instead of floating above an empty gap. Defaults to `true`
-            (assume visible) until each card's own fetch resolves, so this
-            doesn't flash-hide then reappear during the loading window. */}
-        {continuePlanVisible || upcomingPlanVisible ? (
-          <Text category="h8" bold mt={18} mb={8}>
-            {t('home:todays_plan_label', { defaultValue: "Today's plan" })}
-          </Text>
-        ) : null}
-        <View style={styles.topCardsRow}>
-          <ContinueLearningCard style={styles.topCardHalf} onVisibilityChange={setContinuePlanVisible} />
-          <UpcomingSessionHomeCard style={styles.topCardHalf} onVisibilityChange={setUpcomingPlanVisible} />
-        </View>
-
-        {/* BUG FIX (pre-launch redundancy/flow audit): DailyChallengeCard
-            was a fully built, self-contained component ("HomeSrc.tsx just
-            renders <DailyChallengeCard />" per its own doc comment) that
-            was never actually added to this render tree — the whole daily
-            XP-challenge feature was invisible/unreachable. Restored here,
-            right after Today's plan; it renders null on its own whenever
-            there's nothing real to show or the feature is off. */}
-        <DailyChallengeCard />
-
+        {/* Home redesign v3 (see this file's module comment + the effects
+            above for the full "why"). Five sections, top to bottom: a
+            verify-email banner (unchanged, time-sensitive account action,
+            not a content card), "Today's Focus" (practice streak, always
+            visible -- the wireframe's anchor card, not a self-hiding one
+            like the sections it replaces), "Quick Actions" (4 shortcuts),
+            "Your Progress" (Job Readiness ring), "Recommended for You"
+            (reusing ContinueLearningCard/UpcomingSessionHomeCard's own
+            data/logic, just re-laid-out as a vertical stack instead of a
+            side-by-side row).
+            REMOVED from Home in this pass (still reachable elsewhere, not
+            deleted from the app): DailyNewsBanner/DailyTipsBanner, the old
+            streak-stats grid, the Career Coach/Dream Company Dashboard/
+            Refer & Earn/Salary Negotiation action rows (Coach has its own
+            bottom tab; the other three are still reachable from the
+            Profile tab -- see MoreSrc.tsx -- and WhatsNext.tsx for Salary
+            Negotiation), and RecentActivityList. DailyChallengeCard is
+            ALSO removed and, unlike the others, has no other entry point
+            left in the app right now -- flagged to product rather than
+            silently dropped. */}
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -772,124 +636,143 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* "More for you" (reference-redesign follow-up: "use this UI and
-            layout") — Career Coach / Dream Company Dashboard / Refer & Earn
-            were three full-width dark-gradient hero cards (see git history);
-            replaced with a stack of compact rows, each icon-tinted with its
-            own soft pastel wash instead of one repeated dark gradient, so
-            the three read as a grouped list of secondary actions rather
-            than three competing focal points. Dream Company's icon/tint use
-            this app's actual brand blue (#0063f8, product follow-up: "for
-            the light blue in the design use the default blue color of the
-            app"), not the softer reference blue. */}
-        <Text category="h8" bold mt={22} mb={8}>
-          {t('home:more_for_you_label', { defaultValue: 'More for you' })}
+        {/* "Today's Focus" -- wireframe's top card: a square image, a bold
+            title, two lines of real streak copy (same fields/keys the old
+            hero card used), and a horizontal progress bar toward a 7-day
+            week (same streakRingPct the old ring used, just a bar instead
+            of a ring here -- the ring moves down to "Your Progress"
+            below). Always rendered (not gated on `streak` loaded) since
+            this is the wireframe's anchor card, not a self-hiding one --
+            falls back to a real, honest 0%/0-days zero state rather than
+            leaving a gap at the very top of the screen while the fetch is
+            in flight or if it fails. */}
+        <Text category="h8" bold mt={4} mb={12}>
+          {t('home:todays_focus_label', { defaultValue: "Today's Focus" })}
         </Text>
-        {/* Product request: "I want this card background to be the default
-            blue and the text white" — breaks from the other three rows'
-            shared light-pastel-tint treatment on purpose (Career Coach is
-            the one row here the product wants to stand out).
-            BUG FIX ("the chat icon is not looking good in dark mode"): the
-            icon wrap originally stayed on styles.actionRowIconWrap's shared
-            background-basic-color-2 token (reasoning at the time: a plain
-            white wrap would be invisible against the row's own white text).
-            That token is theme-aware for the OTHER three rows' pastel-tint
-            cards (light gray in light mode, works fine there) but this
-            row's background is hardcoded solid blue in both themes — in
-            dark mode background-basic-color-2 resolves to near-black
-            (#1B1B2E), which read as a muddy dark blob on the blue card
-            instead of a clean badge. Fixed wrap bg to a fixed translucent
-            white (not a theme token) plus a white icon tint (was an
-            unrelated purple, #8B5CF6, that didn't match the row's
-            blue/white palette either) — looks the same and reads clearly
-            in both themes since the card's own blue never changes. */}
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={[styles.actionRow, { backgroundColor: '#0063f8' }]}
-          onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-          <View style={[styles.actionRowIconWrap, { backgroundColor: 'rgba(255, 255, 255, 0.18)' }]}>
-            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#FFFFFF' }]} />
-          </View>
-          <View style={globalStyle.flexOne}>
-            <Text category="h9" bold status="control">
-              {t('home:career_coach_card_title', { defaultValue: 'Career Coach' })}
-            </Text>
-            <Text category="h10" status="control" mt={2} numberOfLines={1} style={{ opacity: 0.85 }}>
-              {t('home:career_coach_card_subtitle_short', { defaultValue: 'Ask anything, get feedback' })}
-            </Text>
-          </View>
-          <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#FFFFFF' }]} />
+        <TouchableOpacity activeOpacity={0.85} style={[globalStyle.card, styles.focusCard]} onPress={() => navigate('Leaderboard')}>
+          <Flex justify="flex-start" itemsCenter>
+            <Image source={Images.homeBannerAiCoach} style={styles.focusImage as ImageStyle} resizeMode="cover" />
+            <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
+              <Text category="h9" bold numberOfLines={1}>
+                {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
+              </Text>
+              <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
+                {streak && streak.longestStreak && streak.longestStreak > streak.streakDays
+                  ? t('home:streak_hero_subtitle_chasing', {
+                      defaultValue: 'Best is {{best}} days — keep going!',
+                      best: streak.longestStreak,
+                    })
+                  : streak
+                  ? t('home:streak_hero_subtitle_best', { defaultValue: "That's your best run yet!" })
+                  : t('home:todays_focus_zero_state', { defaultValue: 'Start a practice session today' })}
+              </Text>
+              <Flex justify="flex-start" itemsCenter mt={8}>
+                <ProgressBar
+                  style={styles.focusProgressBar}
+                  didDone={streak?.streakDays ?? 0}
+                  total={7}
+                  minimumTrackTintColor="#0063f8"
+                />
+                <Text category="h10" bold ml={8}>
+                  {Math.round(streakRingPct)}%
+                </Text>
+              </Flex>
+            </View>
+          </Flex>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={[styles.actionRow, { backgroundColor: 'rgba(0, 99, 248, 0.08)' }]}
-          onPress={() => navigate('DreamCompanies')}>
-          <View style={styles.actionRowIconWrap}>
-            <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
-          </View>
-          <View style={globalStyle.flexOne}>
+        {/* "Quick Actions" -- 4 shortcuts, per the wireframe: Roadmap,
+            Resume, Practice, Jobs. Plain icon-in-a-circle + label, no card
+            background (wireframe shows these directly on the page, not
+            inside tiles) -- see src/home/QuickActionGrid.tsx for the
+            heavier bento-tile version this deliberately does NOT reuse
+            here, that's a different, more decorated layout than this
+            wireframe's plain 4-in-a-row asks for. */}
+        <Text category="h8" bold mt={24} mb={12}>
+          {t('home:quick_actions_label', { defaultValue: 'Quick Actions' })}
+        </Text>
+        <View style={styles.quickActionsRow}>
+          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('CareerRoadmap')}>
+            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
+              <Icon pack="eva" name="map-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+            </View>
+            <Text category="h10" center mt={6} numberOfLines={1}>
+              {t('home:quick_action_roadmap', { defaultValue: 'Roadmap' })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('ResumeBuilder')}>
+            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
+              <Icon pack="eva" name="file-text-outline" style={[globalStyle.icon20, { tintColor: '#8B5CF6' }]} />
+            </View>
+            <Text category="h10" center mt={6} numberOfLines={1}>
+              {t('home:quick_action_resume', { defaultValue: 'Resume' })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Practice' })}>
+            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(29, 158, 117, 0.1)' }]}>
+              <Icon pack="eva" name="activity-outline" style={[globalStyle.icon20, { tintColor: '#1D9E75' }]} />
+            </View>
+            <Text category="h10" center mt={6} numberOfLines={1}>
+              {t('home:quick_action_practice', { defaultValue: 'Practice' })}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('JobAlerts')}>
+            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(216, 90, 48, 0.1)' }]}>
+              <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#D85A30' }]} />
+            </View>
+            <Text category="h10" center mt={6} numberOfLines={1}>
+              {t('home:quick_action_jobs', { defaultValue: 'Jobs' })}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* "Your Progress" -- Job Readiness ring (see the effects above for
+            the exact composite formula + the real data it's built from).
+            Always rendered, same "honest zero state instead of a gap"
+            reasoning as Today's Focus above. */}
+        <Text category="h8" bold mt={24} mb={12}>
+          {t('home:your_progress_label', { defaultValue: 'Your Progress' })}
+        </Text>
+        <View style={[globalStyle.card, styles.progressCard]}>
+          <CircularProgress progress={jobReadinessPct} size={64} strokeWidth={7}>
+            <Text category="h9" bold>{jobReadinessPct}%</Text>
+          </CircularProgress>
+          <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
             <Text category="h9" bold>
-              {t('home:dream_company_card_title', { defaultValue: 'Dream Company Dashboard' })}
+              {t('home:job_readiness_title', { defaultValue: 'Job Readiness' })}
             </Text>
-            <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
-              {t('home:dream_company_card_subtitle_short', { defaultValue: 'Track the employers you want' })}
+            <Text category="h10" status="placeholder" mt={4}>
+              {t('home:job_readiness_hint', {
+                defaultValue: 'Based on your practice sessions and consistency',
+              })}
+            </Text>
+            <Text category="h10" status="placeholder" mt={2}>
+              {avgInterviewScore != null
+                ? t('home:job_readiness_avg_score', {
+                    defaultValue: 'Average interview score: {{score}}%',
+                    score: avgInterviewScore,
+                  })
+                : t('home:job_readiness_no_sessions', {
+                    defaultValue: 'Complete a practice session to see your score',
+                  })}
             </Text>
           </View>
-          <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
-        </TouchableOpacity>
+        </View>
 
-        {configService.isFeatureEnabled('referral_program') ? (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={[styles.actionRow, { backgroundColor: 'rgba(216, 90, 48, 0.08)' }]}
-            onPress={() => navigate('ReferralProgram')}>
-            <View style={styles.actionRowIconWrap}>
-              <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: '#D85A30' }]} />
-            </View>
-            <View style={globalStyle.flexOne}>
-              <Text category="h9" bold>
-                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
-              </Text>
-              <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
-                {t('home:referral_card_subtitle_short', { defaultValue: 'Invite a friend, get rewards' })}
-              </Text>
-            </View>
-            <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
-          </TouchableOpacity>
+        {/* "Recommended for You" -- reuses ContinueLearningCard/
+            UpcomingSessionHomeCard exactly as before (same data, same
+            self-hide-when-empty behavior, same onVisibilityChange
+            reporting), just stacked vertically under this section's own
+            label instead of side by side under "Today's plan". */}
+        {continuePlanVisible || upcomingPlanVisible ? (
+          <Text category="h8" bold mt={24} mb={12}>
+            {t('home:recommended_for_you_label', { defaultValue: 'Recommended for You' })}
+          </Text>
         ) : null}
-
-        {/* Product follow-up: "remove [the AI Career Coach hero card on the
-            Coach tab] totally and then the Salary Negotiation Simulator
-            should be a card in the homescreen that leads to the simulation
-            screen" — same compact pastel-row treatment as the three rows
-            above (teal, the one color in this row family not already used
-            here), rather than reviving a full-width hero card. Gated the
-            same way the Coach tab's own entry point was
-            (configService.isFeatureEnabled('salary_negotiation')) — the
-            destination screen itself (SalaryNegotiation.tsx) still shows
-            its own ProLockGate for non-Pro users, same as always. */}
-        {configService.isFeatureEnabled('salary_negotiation') ? (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={[styles.actionRow, { backgroundColor: 'rgba(29, 158, 117, 0.08)' }]}
-            onPress={() => navigate('SalaryNegotiation')}>
-            <View style={styles.actionRowIconWrap}>
-              <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#1D9E75' }]} />
-            </View>
-            <View style={globalStyle.flexOne}>
-              <Text category="h9" bold>
-                {t('home:salary_negotiation_card_title', { defaultValue: 'Salary Negotiation Simulator' })}
-              </Text>
-              <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
-                {t('home:salary_negotiation_card_subtitle_short', { defaultValue: 'Practice countering a mock offer' })}
-              </Text>
-            </View>
-            <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: '#5C5C78' }]} />
-          </TouchableOpacity>
-        ) : null}
-
-        <RecentActivityList />
+        <View style={styles.recommendedStack}>
+          <ContinueLearningCard onVisibilityChange={setContinuePlanVisible} />
+          <UpcomingSessionHomeCard style={styles.recommendedItemSpacing} onVisibilityChange={setUpcomingPlanVisible} />
+        </View>
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
@@ -947,24 +830,6 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 40,
   },
-  // Top-of-Home compact card row (see the JSX comment above where this
-  // renders) — both children are self-contained and render null when
-  // empty, so this row costs nothing (zero height, no visible gap) on a
-  // user with neither an in-progress lesson nor a scheduled session.
-  topCardsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    // DailyNewsBanner/DailyTipsBanner above already carry their own
-    // marginTop:12 (each self-contained, same convention as every other
-    // card here), so this row needs its own matching gap in case either or
-    // both banners are hidden (non-Premium, or no goals set) and this row
-    // ends up sitting directly under the header/Content padding instead.
-    marginTop: 12,
-  },
-  topCardHalf: {
-    flex: 1,
-    marginTop: 0,
-  },
   // Google-style pass: converted from a white card with a colored border
   // to a real Material 3 "error/warning container" -- a pale flat tonal
   // fill in the warning hue, no border at all -- the same tonal-surface
@@ -980,91 +845,72 @@ const themedStyles = StyleService.create({
   verifyBannerText: {
     marginHorizontal: 10,
   },
-  // Streak/XP hero (reference-redesign follow-up — see this file's module
-  // comment). A flat gradient background color (not LinearGradient) is
-  // enough for a soft two-tone purple — the black->purple LinearGradient
-  // the old cards used doesn't fit this softer "score card" look, so this
-  // is a plain solid fill rather than reaching for that component again.
-  // Product follow-up: "I want the purple background color of the
-  // practice streak card in the homescreen to be blue but the same color
-  // tone but blue" -- same softness/lightness as the original #8B7FE0
-  // purple, hue rotated over to blue instead.
-  // Product follow-up: "reduce the height of the practice streak card to
-  // medium size" — padding/borderRadius trimmed and the internal spacing
-  // (icon/ring sizes, row margins, up in the JSX) tightened to match, so
-  // the whole card reads noticeably shorter without losing any of its
-  // three stat chips.
-  streakHero: {
-    borderRadius: 20,
+  // Home redesign v3 -- "Today's Focus" card (see the JSX comment above
+  // where this renders). `globalStyle.card` supplies the shape/shadow;
+  // this just adds the padding/fill on top, same "spread card + add
+  // padding/background locally" pattern every other card on this screen
+  // already follows.
+  focusCard: {
     padding: 14,
-    marginTop: 14,
-    // Product follow-up (revert): flat fill again, no more gradient — this
-    // app's own brand blue.
-    backgroundColor: '#0063f8',
+    marginBottom: 4,
+    backgroundColor: 'background-basic-color-2',
   },
-  // No longer clipping an absolute-fill gradient layer (see streakHero's
-  // own comment) — kept as its own style purely so the JSX above doesn't
-  // need to change shape if a decorative layer comes back later.
-  streakHeroOuter: {
-    overflow: 'hidden',
+  focusImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
   },
-  // Each of the 3 stat chips inside streakHero — no background of its own
-  // (the hero's own blue fill is already the "card"), just centered
-  // icon/value/label so the three sit evenly spaced in one row.
-  // NOTE: no longer used inside streakHero itself (see the product request
-  // "bring these out into individual cards" above the JSX) — kept as the
-  // base layout streakStatCard extends below, so the actual card look only
-  // needs to add background/border/padding on top of this same centered
-  // icon/value/label shape.
-  streakChip: {
+  focusTextWrap: {
+    marginLeft: 12,
+  },
+  // `flex: 1` so the bar fills the remaining row width next to its %
+  // label (matches ProgressBar's own "measure my own width via onLayout"
+  // design -- it needs a bounded parent, which flex:1 in a row provides).
+  focusProgressBar: {
     flex: 1,
-    alignItems: 'center',
   },
-  // The 3 stat tiles pulled out of streakHero (product request: "bring out
-  // the total XP, Best Streak and Today's check-in... and make them
-  // individual cards in grid form"). Plain row of 3 equal-width white
-  // globalStyle.card tiles below the hero card — `gap` isn't used (same
-  // cross-RN-version caution as QuickActionGrid's own `grid` style) in
-  // favor of each tile's own `marginHorizontal` canceled out by the
-  // container's negative margin, the standard even-gutter trick.
-  streakStatsGrid: {
+  // "Quick Actions" row -- 4 plain icon-in-a-circle + label items, no card
+  // background (see the JSX comment above for why this deliberately
+  // doesn't reuse QuickActionGrid.tsx's heavier bento tiles).
+  // `justifyContent: 'space-between'` rather than `gap` -- same
+  // cross-RN-version caution QuickActionGrid.tsx's own `grid` style
+  // documents (gap inside a flex row isn't guaranteed on every Yoga
+  // version this app has shipped with).
+  quickActionsRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  quickActionItem: {
+    alignItems: 'center',
+    width: '22%',
+  },
+  quickActionIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // "Your Progress" Job Readiness card -- ring on the left, title + two
+  // lines of real supporting copy on the right (see the effects above for
+  // where jobReadinessPct/avgInterviewScore actually come from).
+  progressCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: 'background-basic-color-2',
+  },
+  progressTextWrap: {
+    marginLeft: 14,
+  },
+  // "Recommended for You" -- ContinueLearningCard/UpcomingSessionHomeCard
+  // stacked vertically (see the JSX comment above) instead of the old
+  // side-by-side topCardsRow. Each card supplies its own marginTop:0 by
+  // default (see their own files) -- recommendedItemSpacing adds the gap
+  // between them here, only applied to the second card so a single-card
+  // state (the other one empty/hidden) doesn't carry a stray top gap.
+  recommendedStack: {},
+  recommendedItemSpacing: {
     marginTop: 10,
-    marginHorizontal: -5,
-  },
-  streakStatCard: {
-    ...globalStyle.center,
-    flex: 1,
-    marginHorizontal: 5,
-    paddingVertical: 14,
-    paddingHorizontal: 6,
-    backgroundColor: 'background-basic-color-2',
-  },
-  streakStatIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // "More for you" rows (product follow-up: "use this UI and layout" --
-  // the reference's compact icon/title/subtitle/chevron list rows, one
-  // per secondary action, each tinted with its own soft pastel wash --
-  // see the JSX above for the actual per-row backgroundColor/icon tint).
-  actionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 8,
-  },
-  actionRowIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'background-basic-color-2',
   },
 });
