@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, Image, View} from 'react-native';
+import {Alert, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -20,7 +20,7 @@ import {globalStyle} from 'styles/globalStyle';
 import SwiperCard from 'components/SwiperCard';
 import * as billingService from 'services/billingService';
 import {stripeAppearance} from 'utils/stripeAppearance';
-import {Icons} from 'assets/icons';
+import CardBrandLogo from 'components/CardBrandLogo';
 
 // Matches Subscription.tsx's STRIPE_RETURN_URL — required by initPaymentSheet
 // even in setup mode, in case a saved card's verification redirects out
@@ -208,21 +208,17 @@ const PaymentMethod = memo(() => {
                   {borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
                   item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined,
                 ]}>
-                {/* Bug report: this used to be a real colored card-brand
-                    logo — went through <Icon pack="assets" name="master"/>
-                    (assets/AssetIconsPack.tsx) after the app-wide PNG ->
-                    lucide-vector icon migration, which maps "master" to a
-                    plain Crown glyph (lucide dropped brand marks; Crown was
-                    a placeholder, not an actual card logo) and gets tinted
-                    like every other themed icon — unreadable in both light
-                    and dark mode, and not a card logo at all. Rendering the
-                    original ic_master.png directly (assets/icons/index.ts)
-                    bypasses the icon pack's tinting entirely, so the real
-                    colored Mastercard mark shows as designed, same in both
-                    themes. Only one brand-logo asset exists (no separate
-                    Visa PNG), so every card shows it, same as before this
-                    regression. */}
-                <Image source={Icons.master} style={styles.iconLogoBank} resizeMode="contain" />
+                {/* Product report (screenshot: a card labeled "Visa"
+                    rendering a Mastercard-style logo): this used to always
+                    render assets/icons/ic_master.png directly, regardless of
+                    `item.brand` — the app only ever shipped one brand PNG,
+                    so every saved card showed Mastercard's mark even when
+                    it was actually a Visa/Amex/Verve/etc. card. CardBrandLogo
+                    (components/CardBrandLogo.tsx) picks the real brand mark
+                    off `item.brand` (Stripe's own card.brand string) and
+                    only falls back to the generic Crown placeholder glyph
+                    for a brand it doesn't recognize. */}
+                <CardBrandLogo brand={item.brand} width={48} height={30} style={styles.iconLogoBank} />
                 <View style={globalStyle.flexOne}>
                   <Flex justify="flex-start" itemsCenter>
                     <Text category="h6" style={{textTransform: 'capitalize'}}>
@@ -262,8 +258,10 @@ const themedStyles = StyleService.create({
     paddingTop: 32,
   },
   iconLogoBank: {
-    width: 48,
-    height: 48,
+    // Sizing now comes from CardBrandLogo's own width/height props (48x30 —
+    // a card-shaped ratio, not the square 48x48 this used to force on the
+    // single Mastercard PNG it always rendered) — this style only handles
+    // layout, not dimensions, so it doesn't fight those props.
     alignSelf: 'center',
     marginHorizontal: 16,
   },

@@ -108,8 +108,7 @@ const SignupFirstStep = memo(() => {
                 }}
                 onPress={onChoose(i)}
                 activeOpacity={0.54}>
-                <View
-                  style={[isChoose === i ? globalStyle.shadowBtn : undefined]}>
+                <View>
                   {/* Was an ImageBackground over assets/images/img_fill.png /
                       img_fillActive.png — flat PNGs with the "unselected"
                       one baked in as light gray, which never adapted to
@@ -119,6 +118,17 @@ const SignupFirstStep = memo(() => {
                       tokens directly, so it actually flips with the theme. */}
                   <View
                     style={{
+                      // Product report: "these cards don't have box shadow.
+                      // They should. How does users know they are cards?"
+                      // -- this chip only ever got a shadow (shadowBtn, a
+                      // colored blue glow meant for primary CTA buttons)
+                      // while selected; every unselected chip had none at
+                      // all. globalStyle.card's own shadow spread here
+                      // instead, unconditionally, on the same View as the
+                      // fill/radius below (not the old outer wrapper) so
+                      // Android's elevation computes a correctly-rounded
+                      // shadow off this View's own opaque backgroundColor.
+                      ...globalStyle.card,
                       width: sizeBG,
                       height: sizeBG,
                       // App-wide card standardization (product request:

@@ -18,6 +18,7 @@ import { Alert, Pressable, View } from "react-native";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "navigation/types";
 import { AuthContext } from "../../../AuthContext";
+import { globalStyle } from "styles/globalStyle";
 
 // Same 6 goals + same eva outline icons as src/auth/Signup/SignupFirstStep.tsx
 // (the goal picker shown once, at signup) — this screen is the "change it
@@ -201,6 +202,14 @@ const themedStyles = StyleService.create({
     flexGrow: 1,
   },
   background: {
+    // Product report: "these cards don't have box shadow. They should.
+    // How does users know they are cards?" -- this chip never carried
+    // globalStyle.card's shadow at all (it's a plain themed View, not a
+    // card style spread -- see this file's own history on why it was
+    // rebuilt that way). Spread in now so these read as real, tappable
+    // cards against the page the same way every other card in the app
+    // does, in both the unselected (white) and selected (blue) fill.
+    ...globalStyle.card,
     // Product report: "reduce the size of this goal cards" — was a fixed
     // 120x120. Shrunk to 84x84 (see the icon's own comment above for the
     // matching icon-size reduction).

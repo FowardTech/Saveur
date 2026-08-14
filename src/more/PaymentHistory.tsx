@@ -6,7 +6,6 @@ import {
   useStyleSheet,
   useTheme,
   Layout,
-  Icon,
   Button,
   Spinner,
 } from '@ui-kitten/components';
@@ -21,6 +20,7 @@ import EmptyState from 'components/EmptyState';
 import {globalStyle} from 'styles/globalStyle';
 import {PaymentHistoryItemProps} from 'constants/Types';
 import * as billingService from 'services/billingService';
+import CardBrandLogo from 'components/CardBrandLogo';
 
 const CURRENCY_SYMBOLS: Record<string, string> = {usd: '$', eur: '€', gbp: '£'};
 
@@ -28,11 +28,6 @@ function formatAmount(amount: number, currency: string): string {
   const symbol = CURRENCY_SYMBOLS[currency?.toLowerCase()] ?? '';
   return `${symbol}${(amount / 100).toFixed(2)}${symbol ? '' : ` ${currency?.toUpperCase()}`}`;
 }
-
-const BRAND_ICON: Record<string, string> = {
-  visa: 'master',
-  mastercard: 'master',
-};
 
 // Payment History — GET /api/v1/billing/payments (see services/
 // billingService.ts and app/api/billing.py's list_payments/download_receipt/
@@ -195,7 +190,17 @@ const PaymentHistory = memo(() => {
                 ) : null}
                 {payment.cardBrand && payment.cardLast4 ? (
                   <Flex justify="flex-start" itemsCenter mt={10}>
-                    <Icon pack="assets" name={BRAND_ICON[payment.cardBrand.toLowerCase()] ?? 'master'} style={styles.cardIcon} />
+                    {/* Product report: "in the payment history it should
+                        also display the logo of the card used instead of
+                        displaying the crown icon. The crown icon should be
+                        a fallback" — BRAND_ICON used to map every brand
+                        (only visa/mastercard were even listed) to the same
+                        "master" asset key, which resolves to a plain tinted
+                        Crown glyph (see assets/AssetIconsPack.tsx), not a
+                        real card logo. CardBrandLogo renders the actual
+                        brand mark for payment.cardBrand and only falls back
+                        to that Crown glyph when the brand isn't recognized. */}
+                    <CardBrandLogo brand={payment.cardBrand} width={28} height={18} style={styles.cardIcon} />
                     <Text category="h10" status="placeholder" ml={8} style={{textTransform: 'capitalize'}}>
                       {payment.cardBrand} •••• {payment.cardLast4}
                     </Text>
@@ -269,8 +274,10 @@ const themedStyles = StyleService.create({
     // background-basic-color-2's own value, not about the card's fill.
   },
   cardIcon: {
-    width: 28,
-    height: 20,
+    // Sizing comes from CardBrandLogo's own width/height props now (see the
+    // call site above) — left empty rather than removed so a future tweak
+    // has an obvious place to add layout-only styling (margins, etc.)
+    // without fighting those props the way a width/height here would.
   },
   discountBreakdown: {
     marginTop: 10,
