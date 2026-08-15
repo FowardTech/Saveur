@@ -65,16 +65,17 @@ const GradientIconBadge: React.FC<GradientIconBadgeProps> = ({
         { width: size, height: size, borderRadius, overflow: 'hidden' },
         style,
       ]}>
-      {/* Product follow-up, round 2: "remove the darker color of the icons
-          linear gradient" -- round 1 dropped the artificially darkened end
-          (shadeColor(color, -22)) but kept the caller's true base color as
-          the other stop, which still read as "the darker one" next to the
-          lighter tint beside it. Neither stop is the true base color now --
-          both are light tints of it (shadeColor at +34/+14), so the
-          gradient is a subtle light-to-lighter sheen instead of ever
-          landing on (or going past) the color's own real saturation. */}
+      {/* REVERTED (product follow-up: "I asked you to remove the darker
+          color of the icons right. Sorry for that please revert back. Its
+          a mistake") -- two earlier passes tried removing/lightening this
+          gradient's darker stop (first swapping it for the caller's true
+          base color, then for a second light tint), both since walked back
+          as a mistake. Back to the original two-tone gloss: a lighter tint
+          on one corner, a genuinely darker shade on the other
+          (shadeColor at +22/-22) -- the real "light source from
+          upper-left" glossy badge look this component was first built for. */}
       <LinearGradient
-        colors={[shadeColor(color, 34), shadeColor(color, 14)]}
+        colors={[shadeColor(color, 22), shadeColor(color, -22)]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
