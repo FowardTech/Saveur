@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Alert, StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -64,6 +64,10 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
     Awaited<ReturnType<typeof scheduledInterviewService.listUpcoming>>[number] | undefined
   >(undefined);
 
+  const load = React.useCallback(() => {
+    return scheduledInterviewService.listUpcoming().then(list => setNextSession(list[0]));
+  }, []);
+
   useFocusEffect(
     React.useCallback(() => {
       let cancelled = false;
@@ -81,22 +85,82 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
     onVisibilityChange?.(!!nextSession);
   }, [nextSession, onVisibilityChange]);
 
+  // Product report: "The upcoming interview should not navigate anywhere
+  // until the date of the session reaches." This card used to navigate
+  // straight into MockInterviewSetup the instant it was tapped, any time
+  // before the scheduled moment — letting someone start the "scheduled"
+  // interview early defeats the point of scheduling it for a specific
+  // time (e.g. a mock interview meant to simulate a real one at a set
+  // time). Gated on the actual scheduled instant (not just the calendar
+  // date) — `scheduledAt` is a precise timestamp, and comparing at
+  // day-granularity would let someone jump in hours early on the
+  // scheduled day itself.
+  const isSessionReady = !!nextSession && Date.now() >= nextSession.scheduledAt;
+
+  const onPress = () => {
+    if (!nextSession) return;
+    if (!isSessionReady) {
+      Alert.alert(
+        t('home:upcoming_session_not_ready_title', { defaultValue: 'Not quite time yet' }),
+        t('home:upcoming_session_not_ready_body', {
+          defaultValue: 'This session unlocks at {{time}}.',
+          time: new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+        }),
+      );
+      return;
+    }
+    navigate('MockInterviewSetup', {
+      interviewType: nextSession.interviewType,
+      mode: nextSession.mode,
+      difficulty: nextSession.difficulty,
+      role: nextSession.role,
+      company: nextSession.company,
+      durationMin: nextSession.durationMin,
+    });
+  };
+
+  // Product report: "User should be able to delete an upcoming interview
+  // session if they want to." Same confirm-then-optimistically-remove
+  // flow DreamCompanies.tsx's own delete button already uses — clears the
+  // card immediately (removeScheduled always clears the local cache even
+  // if the network call fails), re-syncing from the server only if the
+  // delete actually failed, so a real failure doesn't leave a card the
+  // user already dismissed silently reappearing without explanation.
+  const onDelete = () => {
+    if (!nextSession) return;
+    const id = nextSession.id;
+    Alert.alert(
+      t('home:upcoming_session_delete_confirm_title', { defaultValue: 'Cancel this session?' }),
+      t('home:upcoming_session_delete_confirm_body', { defaultValue: 'You can always schedule a new one later.' }),
+      [
+        { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+        {
+          text: t('common:delete', { defaultValue: 'Delete' }),
+          style: 'destructive',
+          onPress: async () => {
+            setNextSession(undefined);
+            try {
+              await scheduledInterviewService.removeScheduled(id);
+              load();
+            } catch {
+              load(); // resync if the delete actually failed server-side
+            }
+          },
+        },
+      ],
+    );
+  };
+
   if (!nextSession) return null;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.8}
-      style={[styles.card, style]}
-      onPress={() =>
-        navigate('MockInterviewSetup', {
-          interviewType: nextSession.interviewType,
-          mode: nextSession.mode,
-          difficulty: nextSession.difficulty,
-          role: nextSession.role,
-          company: nextSession.company,
-          durationMin: nextSession.durationMin,
-        })
-      }>
+    <TouchableOpacity activeOpacity={0.8} style={[styles.card, style]} onPress={onPress}>
       <View style={styles.iconWrap}>
         <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
       </View>
@@ -114,7 +178,27 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
           })}
         </Text>
       </View>
-      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+      {/* Not-ready-yet indicator (see isSessionReady's own comment) — a
+          locked padlock in place of the usual "go" arrow, so the card
+          visually signals it isn't tappable-through yet before the user
+          even taps it and hits the alert. */}
+      <Icon
+        pack="eva"
+        name={isSessionReady ? 'arrow-forward-outline' : 'lock-outline'}
+        style={[globalStyle.icon16, { tintColor: '#fff' }]}
+      />
+      {/* Delete button — a small translucent-white circle overlaid on the
+          card's top-right corner (same "chip against a solid color fill"
+          treatment as iconWrap below) rather than a third icon squeezed
+          into the already-compact main row, and separate from the main
+          onPress so tapping it never also triggers navigation/the
+          not-ready alert. */}
+      <TouchableOpacity
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        onPress={onDelete}
+        style={styles.deleteButton}>
+        <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+      </TouchableOpacity>
     </TouchableOpacity>
   );
 });
@@ -158,6 +242,20 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  // Delete button — see the "User should be able to delete an upcoming
+  // interview session" comment at the call site. Overlaid on the card's
+  // top-right corner rather than sitting inline in the row.
+  deleteButton: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
   },
   titleText: {
     color: '#fff',
