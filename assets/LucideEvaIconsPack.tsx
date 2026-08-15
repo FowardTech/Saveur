@@ -68,6 +68,7 @@ import {
   Radio,
   RefreshCw,
   Rocket,
+  RotateCcw,
   Search,
   Send,
   Settings2,
@@ -276,6 +277,13 @@ const LucideEvaIconsPack: IconPack<any> = {
     // there to show who is leading").
     trophy: lucideIcon(Trophy, true),
     'trophy-outline': lucideIcon(Trophy),
+    // BUG FIX (crash report, screenshot: "Icon: 'undo-outline' icon is not
+    // registered in pack 'eva'") — Subscription.tsx's "Restore purchases"
+    // link (Apple Guideline 3.1.2 requirement for IAP apps, added this
+    // session) used this name but it was never added here, same "screen
+    // added after this pass" gap this file's own header comment warns
+    // about. RotateCcw is the standard "restore/undo" glyph.
+    'undo-outline': lucideIcon(RotateCcw),
     'upload-outline': lucideIcon(Upload),
     'video-off-outline': lucideIcon(VideoOff),
     'video-outline': lucideIcon(Video),
