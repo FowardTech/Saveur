@@ -27,6 +27,7 @@ import {
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
+import CopyButton from 'components/CopyButton';
 
 // AI Cover Letter Generator — product request item. Reuses the caller's
 // already-stored resume server-side (see services/coverLetterService.ts /
@@ -199,6 +200,13 @@ const CoverLetterGenerator = memo(() => {
 
         {letter ? (
           <View style={styles.letterBox}>
+            {/* Plain-text copy alongside the PDF/DOCX downloads below —
+                users often want to paste the letter straight into an email
+                or an application portal's text field rather than attach a
+                file. */}
+            <Flex justify="flex-end" mb={8}>
+              <CopyButton text={letter} label={t('common:copy', { defaultValue: 'Copy' })} />
+            </Flex>
             {/* Product request: "Users should be able to... edit the
                 content of the... cover letter generated in the JD analyzer
                 screen... and cover letter generated in the resume builder

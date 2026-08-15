@@ -24,6 +24,7 @@ import * as practicalService from 'services/practicalService';
 import { PracticalSessionDetail } from 'services/practicalService';
 import CtaButton from 'components/CtaButton';
 import StarRating, { percentToStars } from 'components/StarRating';
+import CopyButton from 'components/CopyButton';
 
 // Judgment scoring across the whole decision path — generated in the
 // background right after the scenario's final choice (see
@@ -147,7 +148,10 @@ const PracticalScenarioFeedback = memo(() => {
           </View>
 
           {feedback?.summary ? (
-            <Text category="h9-s" mt={20} style={{ lineHeight: 22 }}>{feedback.summary}</Text>
+            <Flex justify="space-between" style={{ alignItems: 'flex-start' }} mt={20}>
+              <Text category="h9-s" style={[{ lineHeight: 22 }, globalStyle.flexOne]}>{feedback.summary}</Text>
+              <CopyButton text={feedback.summary} style={{ marginLeft: 10, marginTop: 2 }} />
+            </Flex>
           ) : null}
 
           {feedback?.strengths?.length ? (

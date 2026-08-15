@@ -23,6 +23,7 @@ import * as careerReportService from 'services/careerReportService';
 import { WeeklyReport } from 'services/careerReportService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import CopyButton from 'components/CopyButton';
 
 // AI Weekly Career Report — product request item. Lazy-generated server-side
 // (GET /api/v1/career-report) the first time it's opened in a given ISO
@@ -116,7 +117,10 @@ const WeeklyCareerReport = memo(() => {
               // gradient fill is reserved for the homescreen XP check-in
               // card only (explicit product direction), not used elsewhere.
               <Layout level="2" style={[styles.summaryCard, styles.summaryCardInner]}>
-                <Text category="h9" style={styles.summaryCardText}>{report.summary}</Text>
+                <Flex justify="space-between" style={{ alignItems: 'flex-start' }}>
+                  <Text category="h9" style={[styles.summaryCardText, globalStyle.flexOne]}>{report.summary}</Text>
+                  <CopyButton text={report.summary} style={{ marginLeft: 10, marginTop: 2 }} />
+                </Flex>
               </Layout>
             ) : null}
 

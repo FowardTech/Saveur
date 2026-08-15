@@ -18,6 +18,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CircularProgress from 'components/CircularProgress';
+import CopyButton from 'components/CopyButton';
 import { globalStyle } from 'styles/globalStyle';
 import * as linkedinOptimizerService from 'services/linkedinOptimizerService';
 import { OptimizationResult, OptimizationHistoryEntry } from 'services/linkedinOptimizerService';
@@ -243,13 +244,19 @@ const LinkedInOptimizer = memo(() => {
 
             {result.overallFeedback ? (
               <Layout level="2" style={styles.card}>
-                <Text category="h9-s">{result.overallFeedback}</Text>
+                <Flex justify="space-between" style={{ alignItems: 'flex-start' }}>
+                  <Text category="h9-s" style={globalStyle.flexOne}>{result.overallFeedback}</Text>
+                  <CopyButton text={result.overallFeedback} style={{ marginLeft: 10, marginTop: 2 }} />
+                </Flex>
               </Layout>
             ) : null}
 
             {result.headline ? (
               <Layout level="2" style={styles.card}>
-                <Text category="h9" bold mb={6}>{t('more:linkedin_headline_label', { defaultValue: 'Headline' })}</Text>
+                <Flex justify="space-between" itemsCenter mb={6}>
+                  <Text category="h9" bold>{t('more:linkedin_headline_label', { defaultValue: 'Headline' })}</Text>
+                  <CopyButton text={result.headline.suggestion} label={t('common:copy', { defaultValue: 'Copy' })} />
+                </Flex>
                 <Text category="h9-s" mb={8}>{result.headline.suggestion}</Text>
                 <Text category="h10" status="placeholder">{result.headline.feedback}</Text>
               </Layout>
@@ -257,7 +264,10 @@ const LinkedInOptimizer = memo(() => {
 
             {result.about ? (
               <Layout level="2" style={styles.card}>
-                <Text category="h9" bold mb={6}>{t('more:linkedin_about_label', { defaultValue: 'About section' })}</Text>
+                <Flex justify="space-between" itemsCenter mb={6}>
+                  <Text category="h9" bold>{t('more:linkedin_about_label', { defaultValue: 'About section' })}</Text>
+                  <CopyButton text={result.about.suggestion} label={t('common:copy', { defaultValue: 'Copy' })} />
+                </Flex>
                 <Text category="h9-s" mb={8}>{result.about.suggestion}</Text>
                 <Text category="h10" status="placeholder">{result.about.feedback}</Text>
               </Layout>
@@ -265,11 +275,26 @@ const LinkedInOptimizer = memo(() => {
 
             {result.experienceBullets.length ? (
               <Layout level="2" style={styles.card}>
-                <Text category="h9" bold mb={10}>{t('more:linkedin_bullets_label_short', { defaultValue: 'Bullet points' })}</Text>
+                <Flex justify="space-between" itemsCenter mb={10}>
+                  <Text category="h9" bold>{t('more:linkedin_bullets_label_short', { defaultValue: 'Bullet points' })}</Text>
+                  {/* "Copy all" joins every rewritten bullet as its own line
+                      so pasting straight into LinkedIn's Experience editor
+                      gives one bullet per line, same as the input format
+                      this screen already asks for above. */}
+                  <CopyButton
+                    text={result.experienceBullets.map(b => b.suggestion).join('\n')}
+                    label={t('more:copy_all', { defaultValue: 'Copy all' })}
+                  />
+                </Flex>
                 {result.experienceBullets.map((b, i) => (
                   <View key={i} style={{ marginBottom: 12 }}>
-                    <Text category="h10" status="placeholder" style={{ textDecorationLine: 'line-through' }}>{b.original}</Text>
-                    <Text category="h9-s" mt={2}>{b.suggestion}</Text>
+                    <Flex justify="space-between" style={{ alignItems: 'flex-start' }}>
+                      <View style={globalStyle.flexOne}>
+                        <Text category="h10" status="placeholder" style={{ textDecorationLine: 'line-through' }}>{b.original}</Text>
+                        <Text category="h9-s" mt={2}>{b.suggestion}</Text>
+                      </View>
+                      <CopyButton text={b.suggestion} style={{ marginLeft: 10, marginTop: 2 }} />
+                    </Flex>
                   </View>
                 ))}
               </Layout>

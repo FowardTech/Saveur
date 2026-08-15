@@ -30,6 +30,7 @@ import { actionTitle, ACTION_META, runSuggestedAction } from 'services/suggested
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
+import CopyButton from 'components/CopyButton';
 
 // Career DNA (product request item — merges what was pitched separately as
 // "Career DNA" and "Career Genome", the exact same concept). Unlike a
@@ -199,11 +200,14 @@ const CareerDna = memo(() => {
         ) : (
           <>
             <Layout level="2" style={styles.narrativeCard}>
-              <Flex justify="flex-start" itemsCenter mb={10}>
-                <Icon pack="eva" name="activity-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
-                <Text category="h8" bold ml={8}>
-                  {t('more:career_dna_narrative_title', { defaultValue: 'What we’ve learned about you' })}
-                </Text>
+              <Flex justify="space-between" itemsCenter mb={10}>
+                <Flex justify="flex-start" itemsCenter>
+                  <Icon pack="eva" name="activity-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                  <Text category="h8" bold ml={8}>
+                    {t('more:career_dna_narrative_title', { defaultValue: 'What we’ve learned about you' })}
+                  </Text>
+                </Flex>
+                <CopyButton text={profile.narrative} />
               </Flex>
               <Text category="h9">{profile.narrative}</Text>
               <Flex justify="space-between" itemsCenter mt={12}>
@@ -374,7 +378,10 @@ const CareerDna = memo(() => {
                       {t('more:career_dna_fit_score_label', { defaultValue: 'style fit' })}
                     </Text>
                   </Flex>
-                  <Text category="h9-s" mb={12}>{fitResult.fitSummary}</Text>
+                  <Flex justify="space-between" style={{ alignItems: 'flex-start' }} mb={12}>
+                    <Text category="h9-s" style={globalStyle.flexOne}>{fitResult.fitSummary}</Text>
+                    <CopyButton text={fitResult.fitSummary} style={{ marginLeft: 10, marginTop: 2 }} />
+                  </Flex>
                   {fitResult.styleStrengths.length ? (
                     <View style={{ marginBottom: 12 }}>
                       <Text category="h10" bold status="success" mb={6}>

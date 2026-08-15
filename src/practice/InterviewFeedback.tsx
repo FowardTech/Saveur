@@ -28,6 +28,7 @@ import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import ShareToUserModal from 'components/ShareToUserModal';
 import CtaButton from 'components/CtaButton';
 import StarRating, { percentToStars } from 'components/StarRating';
+import CopyButton from 'components/CopyButton';
 import { lightenColor } from 'utils/color';
 
 // Redesign v2 (full reskin) — this screen has 5 separate ProgressCard
@@ -492,9 +493,15 @@ const InterviewFeedback = memo(() => {
               />
               {codeReview ? (
                 <Layout level="2" style={styles.codingSummaryCard}>
-                  <Text category="h9" bold status="link" mb={8}>
-                    {codeReview.complexityNote}
-                  </Text>
+                  <Flex justify="space-between" style={{ alignItems: 'flex-start' }} mb={8}>
+                    <Text category="h9" bold status="link" style={globalStyle.flexOne}>
+                      {codeReview.complexityNote}
+                    </Text>
+                    <CopyButton
+                      text={[codeReview.complexityNote, ...codeReview.feedback].join('\n')}
+                      style={{ marginLeft: 10, marginTop: 2 }}
+                    />
+                  </Flex>
                   {codeReview.feedback.map((line, i) => (
                     <Flex key={i} justify="flex-start" itemsCenter mt={i === 0 ? 0 : 8}>
                       <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
