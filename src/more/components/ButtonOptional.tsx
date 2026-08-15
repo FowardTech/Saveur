@@ -11,6 +11,7 @@ import {
   useTheme,
 } from '@ui-kitten/components';
 import Flex from 'components/Flex';
+import GradientIconBadge from 'components/GradientIconBadge';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {MainBottomTabStackParamList} from 'navigation/types';
@@ -33,6 +34,13 @@ export interface ButtonOptionalProps {
   // squircle originally, then dropped entirely for a flat no-chip glyph —
   // and is back in real use again now, this time as a small square badge
   // rather than a big circle. See the render below.
+  // REDESIGN follow-up (product report: "the icon background in screenshot
+  // i showed you are glossy gradient") — this used to be applied as a flat
+  // `backgroundColor` directly; it's now handed to GradientIconBadge
+  // (components/GradientIconBadge.tsx) as its base color instead, which
+  // derives a glossy two-tone gradient + highlight sheen from it. Callers
+  // (MoreSrc.tsx's STATUS_COLORS map) didn't need to change at all — same
+  // single hex per row, just rendered differently underneath.
   iconBackgroundColor?: string;
   // No longer applied — the icon badge's glyph is always white now (see
   // iconBackgroundColor above), so a separate glyph tint has nothing left
@@ -112,10 +120,16 @@ const ButtonOptional = ({
               passes a distinct color per row instead of the old uniform
               gray) — the glyph itself is always white now, matching every
               icon in the reference screenshot regardless of the badge's
-              own color. */}
-          <View style={[styles.iconWrap, {backgroundColor: iconBackgroundColor ?? theme['color-primary-500']}]}>
+              own color.
+              REDESIGN follow-up ("the icon background... is glossy
+              gradient") — GradientIconBadge in place of a flat-colored
+              View, see iconBackgroundColor's own comment above. */}
+          <GradientIconBadge
+            color={iconBackgroundColor ?? theme['color-primary-500']}
+            size={32}
+            radius={9}>
             <Icon pack="assets" name={icon} style={{width: 18, height: 18, tintColor: '#fff'}} />
-          </View>
+          </GradientIconBadge>
           {badgeCount ? (
             <View style={styles.badgeCount}>
               <Text category="h9" status="control" fontSize={11} lineHeight={13}>
@@ -201,17 +215,6 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginTop: 2,
-  },
-  // iOS-Settings-style icon badge — a small flat-colored rounded square
-  // (not a full circle; a squircle-ish radius, same ~26% of side length
-  // proportion the reference screenshot's own app icons use) behind each
-  // row's glyph. See the REDESIGN comment at the render call site above.
-  iconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   // Same corner-badge idea as HeaderHome.tsx's bell badge, re-tuned for the
   // new 32x32 icon badge (was tuned for a plain 22x22 glyph before this

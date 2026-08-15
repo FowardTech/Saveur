@@ -12,6 +12,7 @@ import {RootStackParamList} from 'navigation/types';
 import {EKeyAsyncStorage, accountScopedKey} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
+import GradientIconBadge from 'components/GradientIconBadge';
 import ThemeContext from '../../ThemeContext';
 import {AuthContext} from '../../AuthContext';
 import * as configService from 'services/configService';
@@ -663,14 +664,16 @@ const MoreSrc = memo(() => {
                 row on this screen rendering its own icon by hand instead of
                 through ButtonOptional (see the comment above), so it needs
                 the same colored-badge treatment applied manually to stay
-                consistent with every row above it. */}
-            <View style={[styles.logoutIconWrap, {backgroundColor: STATUS_COLORS.danger}]}>
+                consistent with every row above it. Now GradientIconBadge
+                (product follow-up: "the icon background... is glossy
+                gradient" — same fix as ButtonOptional.tsx's own icon). */}
+            <GradientIconBadge color={STATUS_COLORS.danger} size={32} radius={9}>
               <Icon
                 pack="eva"
                 name="log-out-outline"
                 style={{width: 18, height: 18, tintColor: '#fff'}}
               />
-            </View>
+            </GradientIconBadge>
             {/* Matches ButtonOptional.tsx's own row-label treatment -- this
                 is the one row on this screen that renders its own Text
                 directly instead of going through ButtonOptional (see the
@@ -743,14 +746,5 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginTop: 2,
-  },
-  // Same size/radius as ButtonOptional.tsx's own iconWrap — see that
-  // file's REDESIGN comment for the full reasoning.
-  logoutIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

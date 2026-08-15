@@ -96,6 +96,16 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 
 interface ArtProps {
   size: number;
+  // ArtPractice only (product follow-up: "why did you leave... the mic
+  // icon in the career focus card?" / "the icon background... is glossy
+  // gradient") -- HomeSrc.tsx now wraps this illustration in a
+  // GradientIconBadge (components/GradientIconBadge.tsx) instead of
+  // sitting bare on the page, so its own soft brand-tint backdrop circle
+  // would double up against (and clash color-wise with) that new colored
+  // badge behind it. `light` swaps the mic to a white stroke (matching
+  // every other glyph on a colored badge app-wide) and drops the redundant
+  // backdrop circle, letting the badge itself be the only background.
+  light?: boolean;
 }
 
 export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
@@ -117,31 +127,34 @@ export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
 // to fill="none" + the same stroke treatment as the rest so the whole mic
 // reads as one consistent outline drawing, not a filled glyph with
 // stroked accents around it.
-export const ArtPractice: React.FC<ArtProps> = ({ size }) => (
-  <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="60" r="48" fill="#0063f80f" />
-    <Ellipse cx="60" cy="98" rx="22" ry="5" fill="rgba(0,0,0,0.06)" />
-    <Rect
-      x="47"
-      y="24"
-      width="26"
-      height="44"
-      rx="13"
-      fill="none"
-      stroke="#0063f8"
-      strokeWidth={5.5}
-    />
-    <Path
-      d="M36 56a24 24 0 0 0 48 0"
-      stroke="#0063f8"
-      strokeWidth={5.5}
-      fill="none"
-      strokeLinecap="round"
-    />
-    <Line x1="60" y1="80" x2="60" y2="90" stroke="#0063f8" strokeWidth={5.5} strokeLinecap="round" />
-    <Line x1="45" y1="90" x2="75" y2="90" stroke="#0063f8" strokeWidth={5.5} strokeLinecap="round" />
-  </Svg>
-);
+export const ArtPractice: React.FC<ArtProps> = ({ size, light }) => {
+  const strokeColor = light ? '#FFFFFF' : '#0063f8';
+  return (
+    <Svg width={size} height={size} viewBox="0 0 120 120">
+      {!light && <Circle cx="60" cy="60" r="48" fill="#0063f80f" />}
+      <Ellipse cx="60" cy="98" rx="22" ry="5" fill="rgba(0,0,0,0.06)" />
+      <Rect
+        x="47"
+        y="24"
+        width="26"
+        height="44"
+        rx="13"
+        fill="none"
+        stroke={strokeColor}
+        strokeWidth={5.5}
+      />
+      <Path
+        d="M36 56a24 24 0 0 0 48 0"
+        stroke={strokeColor}
+        strokeWidth={5.5}
+        fill="none"
+        strokeLinecap="round"
+      />
+      <Line x1="60" y1="80" x2="60" y2="90" stroke={strokeColor} strokeWidth={5.5} strokeLinecap="round" />
+      <Line x1="45" y1="90" x2="75" y2="90" stroke={strokeColor} strokeWidth={5.5} strokeLinecap="round" />
+    </Svg>
+  );
+};
 
 export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">

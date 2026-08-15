@@ -7,6 +7,7 @@ import LinearGradient from 'react-native-linear-gradient';
 
 import Content, { CONTENT_PADDER } from 'components/Content';
 import Container from 'components/Container';
+import GradientIconBadge from 'components/GradientIconBadge';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
@@ -918,10 +919,21 @@ const HomeSrc = memo(() => {
                 Today's Career Focus card" — was 64 (the same footprint
                 as the old image it replaced), sized down to read more like
                 an accent icon next to the streak text than a co-equal
-                visual block. */}
-            <View style={styles.focusIconWrap}>
-              <ArtPractice size={44} />
-            </View>
+                visual block.
+                REDESIGN (product follow-up: "I asked you to change the
+                icons too in the homescreen why did you leave... the mic
+                icon in the career focus card?") — was a bare ArtPractice
+                sitting directly on the page with its own faint brand-tint
+                backdrop wash; now wrapped in the same GradientIconBadge
+                every other icon in the app just moved to (Menu screen rows,
+                Career Toolkit below), so this card gets the iOS-Settings
+                glossy badge treatment too. ArtPractice's `light` prop swaps
+                the mic to a white stroke and drops its own now-redundant
+                backdrop circle, since the badge behind it is the
+                background now. */}
+            <GradientIconBadge color="#0063f8" size={48} radius={16}>
+              <ArtPractice size={28} light />
+            </GradientIconBadge>
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
               <Text category="h9" bold numberOfLines={1}>
                 {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
@@ -991,29 +1003,37 @@ const HomeSrc = memo(() => {
             background show through) so this card reads as a plain section
             in dark mode instead of a boxed-in one, while light mode keeps
             the bordered look from the previous pass untouched. */}
+        {/* REDESIGN (product follow-up: "I asked you to change the icons
+            too in the homescreen why did you leave the career tool
+            icons...?" / "the icon background... is glossy gradient") --
+            each icon was a light rgba-tint circle behind a solid-colored
+            glyph; now a GradientIconBadge squircle (same component/effect
+            as the Menu screen rows and the mic icon above) with a white
+            glyph on top, matching the iOS Settings reference across the
+            whole app instead of just one screen. */}
         <View style={[globalStyle.card, styles.toolkitCard, isDarkMode && styles.toolkitCardDark]}>
           <View style={styles.quickActionsRow}>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
-              <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
-            </View>
+            <GradientIconBadge color="#0063f8" size={48} radius={14}>
+              <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+            </GradientIconBadge>
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_coach', { defaultValue: 'Coach' })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
-            <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
-              <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
-            </View>
+            <GradientIconBadge color="#0063f8" size={48} radius={14}>
+              <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+            </GradientIconBadge>
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
             </Text>
           </TouchableOpacity>
           {configService.isFeatureEnabled('learning_courses') ? (
             <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('LearningCourses')}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(124, 92, 252, 0.1)' }]}>
-                <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon20, { tintColor: '#7C5CFC' }]} />
-              </View>
+              <GradientIconBadge color="#7C5CFC" size={48} radius={14}>
+                <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+              </GradientIconBadge>
               <Text category="h10" center mt={6} numberOfLines={1}>
                 {t('home:quick_action_courses', { defaultValue: 'Courses' })}
               </Text>
@@ -1021,9 +1041,9 @@ const HomeSrc = memo(() => {
           ) : null}
           {configService.isFeatureEnabled('salary_negotiation') ? (
             <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('SalaryNegotiation')}>
-              <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(29, 158, 117, 0.1)' }]}>
-                <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#1D9E75' }]} />
-              </View>
+              <GradientIconBadge color="#1D9E75" size={48} radius={14}>
+                <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+              </GradientIconBadge>
               <Text category="h10" center mt={6} numberOfLines={1}>
                 {t('home:quick_action_salary', { defaultValue: 'Salary' })}
               </Text>
@@ -1322,15 +1342,6 @@ const themedStyles = StyleService.create({
     marginBottom: 4,
     backgroundColor: 'background-basic-color-2',
   },
-  // IconMic3D (see the JSX comment above) is a self-sized SVG component,
-  // not an Image needing explicit width/height/borderRadius -- this wrap
-  // just centers it in the same footprint the old image occupied.
-  focusIconWrap: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   focusTextWrap: {
     marginLeft: 12,
   },
@@ -1369,13 +1380,6 @@ const themedStyles = StyleService.create({
   quickActionItem: {
     alignItems: 'center',
     width: '22%',
-  },
-  quickActionIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   // "Your Progress" Progress Toward Goal card -- ring on the left, title +
   // two lines of real supporting copy on the right (see the effects above
