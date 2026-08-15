@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 
@@ -26,9 +26,18 @@ import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 // ContinueLearningCard/DailyChallengeCard) — renders null when there's
 // nothing scheduled, so it's always safe to mount unconditionally.
 // `style` is accepted so HomeSrc can lay this out side-by-side with
-// ContinueLearningCard in a flex row; when only one of the two has
+// ContinueLearningCard in a horizontal row (see HomeSrc.tsx's own comment
+// at that call site for exactly how); when only one of the two has
 // content, the other renders null and contributes no layout space, so this
 // naturally expands to fill the row on its own.
+//
+// REDESIGN (product follow-up: "The upcoming session card background
+// should be the default blue background and font color should be white.
+// No borders") — was the same white/bordered compact row as
+// ContinueLearningCard; now solid brand-blue (color-primary-500, the same
+// blue this app's icon tints/CTAs already use) with white text/icons and
+// no hairline border, so the two cards read as visually distinct at a
+// glance now that they sit side by side.
 const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
   style?: StyleProp<ViewStyle>;
   // BUG FIX (product report: "the Today's Plan section in the homescreen,
@@ -37,7 +46,6 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
   onVisibilityChange?: (visible: boolean) => void;
 }) => {
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   // BUG FIX (product report: "the time and date in the upcoming schedule
   // need to be translated too") — this card's date/time text was never
   // missing an i18n key, it was passing `undefined` as the locale to
@@ -90,13 +98,13 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
         })
       }>
       <View style={styles.iconWrap}>
-        <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+        <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
       </View>
       <View style={globalStyle.flexOne}>
-        <Text category="h10" bold numberOfLines={1}>
+        <Text category="h10" bold numberOfLines={1} style={styles.titleText}>
           {getInterviewTypeLabel(nextSession.interviewType, t)}
         </Text>
-        <Text category="h10" status="placeholder" numberOfLines={1} mt={1}>
+        <Text category="h10" numberOfLines={1} mt={1} style={styles.subtitleText}>
           {new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
             weekday: 'short',
             month: 'short',
@@ -106,7 +114,7 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
           })}
         </Text>
       </View>
-      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
     </TouchableOpacity>
   );
 });
@@ -114,13 +122,17 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
 export default UpcomingSessionHomeCard;
 
 const themedStyles = StyleService.create({
-  // Same compact single-row white treatment as ContinueLearningCard.tsx's
-  // own card style, so the two read as a matching pair when they sit
-  // side by side on Home.
+  // Same compact single-row shape as ContinueLearningCard.tsx's own card
+  // style (radius, padding, row layout), so the two still read as a
+  // matching pair size/shape-wise when they sit side by side on Home.
   //
-  // BUG FIX (product report, with screenshot: "these cards should be
-  // white") — see ContinueLearningCard.tsx's own comment on this exact
-  // same fix.
+  // REDESIGN (product follow-up: "The upcoming session card background
+  // should be the default blue background and font color should be
+  // white. No borders") — solid color-primary-500 fill instead of the
+  // white/bordered look ContinueLearningCard keeps; borderWidth explicitly
+  // zeroed to cancel out globalStyle.card's own hairline border (spread
+  // above) since a border reads as unnecessary/muddy on top of a solid
+  // color fill.
   // Radius bumped 14 -> 20 (Google-style furnishing pass -- see
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language.
@@ -131,8 +143,13 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'color-primary-500',
+    borderWidth: 0,
   },
+  // Translucent white circle (rather than the light-blue tint
+  // ContinueLearningCard's matching iconWrap uses) so the icon behind it
+  // still reads as a distinct "chip" against the now-solid-blue card
+  // instead of nearly disappearing into it.
   iconWrap: {
     width: 30,
     height: 30,
@@ -140,6 +157,16 @@ const themedStyles = StyleService.create({
     marginRight: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'color-primary-transparent-100',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  titleText: {
+    color: '#fff',
+  },
+  // Slightly translucent white (not full-strength) so the bold white title
+  // above it stays the clear visual anchor of the two, same "translucent
+  // white for secondary text on a solid color fill" convention already
+  // used elsewhere in this app (e.g. AddOns.tsx's colored promo cards).
+  subtitleText: {
+    color: 'rgba(255,255,255,0.85)',
   },
 });
