@@ -125,6 +125,7 @@ export default memo(
     none,
     left,
     lineHeight,
+    fontSize,
     right,
     center,
     underline,
@@ -187,6 +188,28 @@ export default memo(
             opacity: opacity,
             textAlign: textAlign,
             maxWidth: maxWidth,
+            // BUG FIX (product report: "the count digits are truncated
+            // inside the rounded count container" after the app-wide
+            // font-size increase): `fontSize` was declared on MyTextProps
+            // but never actually applied to the style — it fell into
+            // `...rest` and was spread as a bare, non-style prop onto the
+            // underlying <Text>, which RN silently ignores. So every call
+            // site passing an explicit `fontSize` override (e.g. the small
+            // fixed-size notification/count badges across the app, which
+            // pass fontSize={11} specifically to stay compact) was always
+            // rendering at the full category size instead, while their
+            // paired `lineHeight` override DID apply (that prop was always
+            // wired correctly below). Before the font-size bump this went
+            // unnoticed because category sizes happened to be close enough
+            // to the intended override not to visibly clip; once category
+            // sizes grew, the (still-ignored) fontSize override no longer
+            // matched the shrunk `lineHeight` those badges pass alongside
+            // it, so the now-larger glyphs no longer fit the smaller forced
+            // line height — the actual clipping mechanism. Wiring fontSize
+            // through here restores every existing explicit override
+            // app-wide to what it always should have done, with no changes
+            // needed at any individual badge/call site.
+            fontSize: fontSize,
             lineHeight: lineHeight || getLineHeight(category),
             textTransform: textTransform,
             textDecorationLine: textDecorationLine,
