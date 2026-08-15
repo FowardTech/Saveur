@@ -17,6 +17,13 @@ interface ContentProps extends ScrollViewProps {
   avoidKeyboard?: boolean;
 }
 
+// Exported so screens that need to compute a width alongside Content's
+// padded container (e.g. HomeSrc.tsx's banner card, which needs its own
+// explicit `width` rather than just flowing) can derive it from the same
+// single source of truth instead of hardcoding a number that silently goes
+// stale the next time this value changes (bug fix — see HomeSrc.tsx).
+export const CONTENT_PADDER = 16;
+
 const Content: React.FC<ContentProps> = ({
   style,
   contentContainerStyle,
@@ -49,7 +56,7 @@ const Content: React.FC<ContentProps> = ({
         // still-comfortable safe margin, same minimum most polished apps
         // use) rather than removing the inset entirely, which would run
         // content right up to the edges.
-        padder && { paddingHorizontal: 16 },
+        padder && { paddingHorizontal: CONTENT_PADDER },
       ]}
       {...(avoidKeyboard ? { enableOnAndroid: true, extraScrollHeight: 20 } : {})}
     >

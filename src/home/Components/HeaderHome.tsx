@@ -59,7 +59,13 @@ const HeaderHome = memo(
             h3/h4 gap to fill, h1 at 34px reads too large for a two-line
             wrapped greeting on a narrow screen). */}
         <View style={globalStyle.flexOne}>
-          <Text category="h2" bold>
+          {/* Bug fix: an app-wide font-size pass bumped h2 26->30px, but this
+              greeting was already sized right at 26px (see comment above) —
+              pinned back to its original size/line-height with an explicit
+              override rather than reverting h2 globally, since h2 is also
+              used by onboarding/login/signup/feedback screens that DO want
+              the larger size. */}
+          <Text category="h2" bold fontSize={26} lineHeight={38}>
             {t(greetingKey())}
             {name ? `, ${name}` : ''}
           </Text>

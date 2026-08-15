@@ -5,7 +5,7 @@ import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@u
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 
-import Content from 'components/Content';
+import Content, { CONTENT_PADDER } from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
@@ -631,7 +631,14 @@ const HomeSrc = memo(() => {
   React.useEffect(() => {
     setHomeBannerImageFailed(false);
   }, [homeBanner?.imageUrl]);
-  const homeBannerWidth = width - 48;
+  // Bug fix: this used to be a hardcoded `width - 48`, a stand-in for
+  // "Content's old 24px padder x 2 sides" that never actually read from
+  // Content — so when Content's padder was changed to 16px, this card fell
+  // out of sync with every sibling card (which just flows to fill Content's
+  // padded container and tracks the real value automatically). Deriving it
+  // from the same padder constant keeps this card's width identical to the
+  // others no matter what that constant is set to.
+  const homeBannerWidth = width - CONTENT_PADDER * 2;
 
   return (
     <Container style={styles.container}>
