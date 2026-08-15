@@ -24,7 +24,7 @@ import { renderCenteredLabel } from 'utils/buttonLabel';
 import { CodingInterviewScreenNavigationProp, RootStackParamList } from 'navigation/types';
 import * as interviewService from 'services/interviewService';
 import * as codingService from 'services/codingService';
-import { CodingLanguage, RunResult, TestRunResult } from 'services/codingService';
+import { CodingAttempt, CodingLanguage, RunResult, TestRunResult } from 'services/codingService';
 import CtaButton from 'components/CtaButton';
 
 // Cross-platform monospace — no monospace font asset is bundled in this app
@@ -145,6 +145,12 @@ const CodingInterview = memo(() => {
   // repeating a problem while cycling through the bank.
   const [seenSlugs, setSeenSlugs] = React.useState<string[]>([]);
   const [isLoadingNextProblem, setIsLoadingNextProblem] = React.useState(false);
+  // Product follow-up ("build [scoring across multiple problems] out
+  // too"): every problem's final code/test outcome once the user moves
+  // PAST it via Next Problem — the one still on screen at Finish time is
+  // added separately there (see onFinish below), so this only ever holds
+  // problems the user is actually done with.
+  const [priorAttempts, setPriorAttempts] = React.useState<CodingAttempt[]>([]);
 
   const problemStatement = problem
     ? `${problem.title}\n\n${problem.description}`
@@ -215,6 +221,20 @@ const CodingInterview = memo(() => {
     setIsLoadingNextProblem(true);
     try {
       const next = await codingService.getNextProblem(seenSlugs);
+      // Bank the problem being left behind — whatever code/test outcome it
+      // has right now is its FINAL state as far as this session's overall
+      // score is concerned (see priorAttempts' own comment).
+      if (problem) {
+        setPriorAttempts(prev => [...prev, {
+          problemSlug: problem.slug,
+          problemTitle: problem.title,
+          problemStatement,
+          language: language.id,
+          code,
+          testsPassed: testResults ? testResults.filter(r => r.passed).length : undefined,
+          testsTotal: testResults ? testResults.length : undefined,
+        }]);
+      }
       setSeenSlugs(prev => [...prev, next.slug]);
       codeEditedRef.current = false;
       setProblem(next);
@@ -314,12 +334,32 @@ const CodingInterview = memo(() => {
     // navigate() call below (unchanged — InterviewFeedback's non-QA branch
     // already reads this straight from route params for its own local
     // test-summary display).
+    //
+    // Product follow-up ("build [scoring across multiple problems] out
+    // too"): the top-level language/code/problemStatement/tests* fields
+    // stay exactly what they always were (the CURRENT/last problem on
+    // screen) for backward compatibility with anything only reading those
+    // flat fields — `attempts` is the additive part, every problem
+    // attempted this session INCLUDING this final one, only present at all
+    // once there's more than one (a plain single-problem session sends
+    // exactly the same wire shape as before this feature existed).
+    const finalAttempt: codingService.CodingAttempt = {
+      problemSlug: problem?.slug,
+      problemTitle: problem?.title,
+      problemStatement,
+      language: language.id,
+      code,
+      testsPassed: testResults ? testResults.filter(r => r.passed).length : undefined,
+      testsTotal: testResults ? testResults.length : undefined,
+    };
+    const allAttempts = [...priorAttempts, finalAttempt];
     const codingResult = {
       language: language.id,
       code,
       problemStatement,
-      testsPassed: testResults ? testResults.filter(r => r.passed).length : undefined,
-      testsTotal: testResults ? testResults.length : undefined,
+      testsPassed: finalAttempt.testsPassed,
+      testsTotal: finalAttempt.testsTotal,
+      attempts: allAttempts.length > 1 ? allAttempts : undefined,
     };
     try {
       if (sessionId) {

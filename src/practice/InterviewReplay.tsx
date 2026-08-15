@@ -381,35 +381,78 @@ const InterviewReplay = memo(() => {
               all. */}
           {replay.sessionType === 'coding' ? (
             <View style={{ marginTop: 24 }}>
-              <Text category="h7" bold mb={12}>{t('practice:coding_replay_problem', { defaultValue: 'Problem' })}</Text>
-              {replay.codingResult?.problemStatement ? (
-                <View style={styles.problemCard}>
-                  <Text category="h9-s">{replay.codingResult.problemStatement}</Text>
-                </View>
-              ) : (
+              {!replay.codingResult?.problemStatement && !replay.codingResult?.attempts?.length ? (
                 <Text category="h9-s" status="placeholder">
                   {t('practice:coding_replay_no_submission', {
                     defaultValue: 'No code was submitted before this session ended.',
                   })}
                 </Text>
-              )}
-              {replay.codingResult?.code ? (
-                <>
-                  <Flex justify="space-between" itemsCenter mt={20} mb={12}>
-                    <Text category="h7" bold>{t('practice:coding_replay_your_code', { defaultValue: 'Your Code' })}</Text>
-                    {typeof replay.codingResult.testsTotal === 'number' && replay.codingResult.testsTotal > 0 ? (
-                      <Text category="h10" bold status={replay.codingResult.testsPassed === replay.codingResult.testsTotal ? 'success' : 'warning'}>
-                        {t('practice:coding_replay_tests_passed', {
-                          defaultValue: `${replay.codingResult.testsPassed ?? 0} / ${replay.codingResult.testsTotal} tests passed`,
-                          passed: replay.codingResult.testsPassed ?? 0,
-                          total: replay.codingResult.testsTotal,
-                        })}
-                      </Text>
+              ) : replay.codingResult?.attempts?.length ? (
+                // Product follow-up ("build [scoring across multiple
+                // problems] out too") — a session that cycled through
+                // several problems via "Next Problem" gets one Problem +
+                // Your Code section per problem attempted, in order,
+                // instead of only ever showing the last one.
+                replay.codingResult.attempts.map((a, i) => (
+                  <View key={i} style={i > 0 ? { marginTop: 28 } : undefined}>
+                    <Text category="h7" bold mb={12}>
+                      {t('practice:coding_replay_problem_numbered', {
+                        defaultValue: 'Problem {{n}}{{title}}',
+                        n: i + 1,
+                        title: a.problemTitle ? ` — ${a.problemTitle}` : '',
+                      })}
+                    </Text>
+                    {a.problemStatement ? (
+                      <View style={styles.problemCard}>
+                        <Text category="h9-s">{a.problemStatement}</Text>
+                      </View>
                     ) : null}
-                  </Flex>
-                  <CodeBlock code={replay.codingResult.code} language={replay.codingResult.language ?? undefined} />
+                    {a.code ? (
+                      <>
+                        <Flex justify="space-between" itemsCenter mt={16} mb={12}>
+                          <Text category="h8" bold>{t('practice:coding_replay_your_code', { defaultValue: 'Your Code' })}</Text>
+                          {typeof a.testsTotal === 'number' && a.testsTotal > 0 ? (
+                            <Text category="h10" bold status={a.testsPassed === a.testsTotal ? 'success' : 'warning'}>
+                              {t('practice:coding_replay_tests_passed', {
+                                defaultValue: `${a.testsPassed ?? 0} / ${a.testsTotal} tests passed`,
+                                passed: a.testsPassed ?? 0,
+                                total: a.testsTotal,
+                              })}
+                            </Text>
+                          ) : null}
+                        </Flex>
+                        <CodeBlock code={a.code} language={a.language ?? undefined} />
+                      </>
+                    ) : null}
+                  </View>
+                ))
+              ) : (
+                <>
+                  <Text category="h7" bold mb={12}>{t('practice:coding_replay_problem', { defaultValue: 'Problem' })}</Text>
+                  {replay.codingResult?.problemStatement ? (
+                    <View style={styles.problemCard}>
+                      <Text category="h9-s">{replay.codingResult.problemStatement}</Text>
+                    </View>
+                  ) : null}
+                  {replay.codingResult?.code ? (
+                    <>
+                      <Flex justify="space-between" itemsCenter mt={20} mb={12}>
+                        <Text category="h7" bold>{t('practice:coding_replay_your_code', { defaultValue: 'Your Code' })}</Text>
+                        {typeof replay.codingResult.testsTotal === 'number' && replay.codingResult.testsTotal > 0 ? (
+                          <Text category="h10" bold status={replay.codingResult.testsPassed === replay.codingResult.testsTotal ? 'success' : 'warning'}>
+                            {t('practice:coding_replay_tests_passed', {
+                              defaultValue: `${replay.codingResult.testsPassed ?? 0} / ${replay.codingResult.testsTotal} tests passed`,
+                              passed: replay.codingResult.testsPassed ?? 0,
+                              total: replay.codingResult.testsTotal,
+                            })}
+                          </Text>
+                        ) : null}
+                      </Flex>
+                      <CodeBlock code={replay.codingResult.code} language={replay.codingResult.language ?? undefined} />
+                    </>
+                  ) : null}
                 </>
-              ) : null}
+              )}
             </View>
           ) : (
             <View style={{ marginTop: 24 }}>

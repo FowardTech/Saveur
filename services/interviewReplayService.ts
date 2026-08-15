@@ -47,6 +47,22 @@ export interface ReplayCodingResult {
   problemStatement: string | null;
   testsPassed: number | null;
   testsTotal: number | null;
+  /** Product follow-up ("build [scoring across multiple problems] out
+   * too"): every problem attempted this session (including the one
+   * already described by the flat fields above), when the "Next Problem"
+   * button was used to cycle through more than one. Null for a plain
+   * single-problem session. */
+  attempts: ReplayCodingAttempt[] | null;
+}
+
+export interface ReplayCodingAttempt {
+  problemSlug: string | null;
+  problemTitle: string | null;
+  problemStatement: string | null;
+  language: string | null;
+  code: string | null;
+  testsPassed: number | null;
+  testsTotal: number | null;
 }
 
 export interface SessionReplay {
@@ -88,6 +104,15 @@ interface WireReplay {
     problem_statement?: string | null;
     tests_passed?: number | null;
     tests_total?: number | null;
+    attempts?: Array<{
+      problem_slug?: string | null;
+      problem_title?: string | null;
+      problem_statement?: string | null;
+      language?: string | null;
+      code?: string | null;
+      tests_passed?: number | null;
+      tests_total?: number | null;
+    }> | null;
   } | null;
   voice_metrics?: { words_per_minute?: number; filler_count?: number; long_pauses?: number } | null;
   annotations?: Array<{ t_ms?: number; type?: string; label?: string }>;
@@ -111,6 +136,17 @@ export async function getSessionReplay(sessionId: string | number): Promise<Sess
           problemStatement: data.coding_result.problem_statement ?? null,
           testsPassed: data.coding_result.tests_passed ?? null,
           testsTotal: data.coding_result.tests_total ?? null,
+          attempts: data.coding_result.attempts
+            ? data.coding_result.attempts.map(a => ({
+                problemSlug: a.problem_slug ?? null,
+                problemTitle: a.problem_title ?? null,
+                problemStatement: a.problem_statement ?? null,
+                language: a.language ?? null,
+                code: a.code ?? null,
+                testsPassed: a.tests_passed ?? null,
+                testsTotal: a.tests_total ?? null,
+              }))
+            : null,
         }
       : null,
     voiceMetrics: data.voice_metrics

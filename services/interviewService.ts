@@ -398,10 +398,36 @@ export async function completeSession(
       problemStatement?: string;
       testsPassed?: number;
       testsTotal?: number;
+      // Product follow-up ("build [scoring across multiple problems] out
+      // too" — see CodingInterview.tsx's "Next Problem" feature): every
+      // problem attempted this session, in order, INCLUDING the one still
+      // on screen when Finish was pressed. Omitted (undefined) for a
+      // plain single-problem session — the flat fields above stay the
+      // single source of truth in that case, same wire shape as before
+      // this existed, so old sessions/any code only reading the flat
+      // fields keeps working unchanged. See Saveur-Backend's
+      // feedback_job.generate_coding for the aggregation this enables.
+      attempts?: Array<{
+        problemSlug?: string;
+        problemTitle?: string;
+        problemStatement: string;
+        language: string;
+        code: string;
+        testsPassed?: number;
+        testsTotal?: number;
+      }>;
     };
     designNotes?: string;
   },
 ): Promise<void> {
+  // NOTE: coding_result is sent through as-is (camelCase field names, e.g.
+  // `testsPassed` not `tests_passed`) rather than converted to this app's
+  // usual snake_case wire convention — that's an existing established
+  // exception (feedback_job.py's generate_coding already reads
+  // coding_result.get("testsPassed")/.get("problemStatement") etc.
+  // directly), kept as-is here rather than introducing a mismatch. `attempts`
+  // (new) follows the exact same camelCase-passthrough convention as every
+  // other field on this object, for consistency.
   await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/end`, {
     asked_questions: askedQuestions,
     coding_result: extra?.codingResult,

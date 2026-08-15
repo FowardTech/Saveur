@@ -21,7 +21,6 @@ import CircularProgress from 'components/CircularProgress';
 import { globalStyle } from 'styles/globalStyle';
 import * as linkedinOptimizerService from 'services/linkedinOptimizerService';
 import { OptimizationResult, OptimizationHistoryEntry } from 'services/linkedinOptimizerService';
-import * as resumeService from 'services/resumeService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import dayjs from 'utils/dayjs';
@@ -71,30 +70,33 @@ const LinkedInOptimizer = memo(() => {
   // services/linkedinOptimizerService.ts's module comment and
   // app/api/linkedin_optimizer.py's docstring). What the app DOES already
   // have is ResumeBuilder's "LinkedIn" import slot (src/more/ResumeBuilder.tsx)
-  // -- users can upload their LinkedIn profile as a PDF export there, which
-  // the backend parses into the same structured resume sections as every
-  // other resume source. So "fetch from the uploaded LinkedIn profile" is
-  // real and buildable: pre-fill this screen's fields from whatever's
-  // already stored (a LinkedIn export, another resume upload, or an
-  // AI-generated resume -- getStoredResumeSections() doesn't distinguish
-  // the source), still fully editable, so the user isn't starting from a
-  // blank paste box when the app already knows this about them.
+  // -- users can upload their LinkedIn profile as a PDF export there.
+  //
+  // BUG FIX (follow-up product report: "I thought i asked to auto populate
+  // the linkedIn optimizer by extracting the linkedin portfolio that the
+  // user uploads. You did not do that") — this used to call
+  // resumeService.getStoredResumeSections(), which only reads STRUCTURED
+  // resume sections (populated by the AI resume generator or a manual
+  // section edit), not a bare uploaded file. A raw LinkedIn PDF export only
+  // ever gets best-effort EXTRACTED TEXT stored server-side (see
+  // app/api/resume.py's upload()), so a user who'd only ever uploaded their
+  // LinkedIn export (never run the AI generator) got no prefill at all —
+  // exactly this report. Now calls the new GET /api/v1/linkedin/prefill,
+  // which looks specifically for that LinkedIn upload first and, when it's
+  // raw unstructured text, runs a real LLM extraction pass to actually pull
+  // a headline/about/bullets out of it (falls back to structured sections
+  // directly, no AI call, when those already exist) — see that endpoint's
+  // own docstring for the full reasoning. Still fully editable either way.
   const [prefilledFromResume, setPrefilledFromResume] = React.useState(false);
   React.useEffect(() => {
     if (!isPremium) return;
-    resumeService.getStoredResumeSections().then(sections => {
-      if (!sections) return;
+    linkedinOptimizerService.getPrefill().then(prefill => {
+      if (!prefill) return;
       if (headline.trim() || about.trim() || bulletsText.trim()) return;
-      const latestRole = sections.experience?.[0];
-      const derivedHeadline = latestRole?.title
-        ? (latestRole.company ? `${latestRole.title} at ${latestRole.company}` : latestRole.title)
-        : '';
-      if (derivedHeadline) setHeadline(derivedHeadline);
-      if (sections.summary) setAbout(sections.summary);
-      if (latestRole?.bullets?.length) setBulletsText(latestRole.bullets.join('\n'));
-      if (derivedHeadline || sections.summary || latestRole?.bullets?.length) {
-        setPrefilledFromResume(true);
-      }
+      if (prefill.headline) setHeadline(prefill.headline);
+      if (prefill.about) setAbout(prefill.about);
+      if (prefill.experienceBullets.length) setBulletsText(prefill.experienceBullets.join('\n'));
+      setPrefilledFromResume(true);
     }).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPremium]);
@@ -152,7 +154,13 @@ const LinkedInOptimizer = memo(() => {
           })}
         </Text>
         {prefilledFromResume ? (
-          <Text category="h10" status="primary" mb={20}>
+          // BUG FIX (same recurring bug already fixed elsewhere this
+          // session — status="primary" resolves to text-primary-color,
+          // near-white in light mode, meant for text ON a solid
+          // primary-colored fill, not as plain colored text on this
+          // screen's normal background). Explicit color-primary-500
+          // instead, visible in both themes.
+          <Text category="h10" mb={20} style={{ color: theme['color-primary-500'] }}>
             {t('more:linkedin_optimizer_prefilled_notice', {
               defaultValue: 'Filled in from your uploaded resume/LinkedIn profile — edit anything below before optimizing.',
             })}

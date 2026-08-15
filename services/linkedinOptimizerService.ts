@@ -63,6 +63,50 @@ interface WireHistoryEntry {
   created_at: string | null;
 }
 
+export interface PrefillResult {
+  headline: string;
+  about: string;
+  experienceBullets: string[];
+}
+
+interface WirePrefill {
+  headline?: string;
+  about?: string;
+  experience_bullets?: string[];
+}
+
+/**
+ * GET /api/v1/linkedin/prefill — bug fix (product report: "I thought i
+ * asked to auto populate the linkedIn optimizer by extracting the
+ * linkedin portfolio that the user uploads. You did not do that").
+ * LinkedInOptimizer.tsx previously prefilled itself from
+ * resumeService.getStoredResumeSections(), which only reads STRUCTURED
+ * resume sections (populated by the AI resume generator or a manual
+ * section edit) — a raw file uploaded via ResumeBuilder's "LinkedIn"
+ * import slot never populates those, only best-effort extracted text, so
+ * that prefill silently did nothing for anyone who'd only ever uploaded
+ * their LinkedIn export. This endpoint is the real fix: the backend looks
+ * specifically for that LinkedIn upload first, and if it's raw
+ * (unstructured) extracted text, runs a real LLM extraction pass to pull
+ * a headline/about/bullets out of it — see app/api/linkedin_optimizer.py's
+ * prefill() docstring for the full reasoning.
+ *
+ * Returns null when the user has no LinkedIn upload and no other resume
+ * on file yet (real 204, not an error) — the screen falls back to a
+ * blank paste box in that case, same as before this existed.
+ */
+export async function getPrefill(): Promise<PrefillResult | null> {
+  const { data, status } = await apiClient.get<WirePrefill>('/api/v1/linkedin/prefill', {
+    validateStatus: s => s === 200 || s === 204,
+  });
+  if (status === 204 || !data) return null;
+  const headline = data.headline ?? '';
+  const about = data.about ?? '';
+  const experienceBullets = data.experience_bullets ?? [];
+  if (!headline && !about && !experienceBullets.length) return null;
+  return { headline, about, experienceBullets };
+}
+
 /** Throws on failure so the screen can show a real error. */
 export async function getHistory(): Promise<OptimizationHistoryEntry[]> {
   const { data } = await apiClient.get<{history: WireHistoryEntry[]}>('/api/v1/linkedin/history');

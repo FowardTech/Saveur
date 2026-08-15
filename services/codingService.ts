@@ -104,6 +104,25 @@ export const DEFAULT_LANGUAGES: CodingLanguage[] = [
   {id: 'go', name: 'Go', starterCode: `func twoSum(nums []int, target int) []int {\n\t// your code here\n}`},
 ];
 
+/**
+ * One problem's worth of submitted work inside a timed session that may
+ * have cycled through several problems via "Next Problem" (product report:
+ * "the AI interviewer is not supposed to give just one problem it's
+ * supposed to be random problems until the time elapses" — this is the
+ * follow-up: "build [scoring across multiple problems] out too", so a
+ * session's feedback covers everything attempted, not just whichever
+ * problem happened to be on screen when Finish was pressed).
+ */
+export interface CodingAttempt {
+  problemSlug?: string;
+  problemTitle?: string;
+  problemStatement: string;
+  language: string;
+  code: string;
+  testsPassed?: number;
+  testsTotal?: number;
+}
+
 export interface CodingProblem {
   slug: string;
   title: string;
