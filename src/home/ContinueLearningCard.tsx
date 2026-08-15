@@ -218,13 +218,13 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     shadowOpacity: 0,
     elevation: 0,
-    // Product ask: "increase the grayness of the border of the white
-    // cards" — matches globalStyle.card's own border, which this style
-    // already spreads above; restated explicitly here just to keep this
-    // card's full border definition visible in one place rather than
-    // relying on the reader to cross-check the spread.
-    borderWidth: 1.5,
-    borderColor: 'rgba(128,128,128,0.3)',
+    // REMOVED (product ask: "remove the border from all the white
+    // cards") — matches globalStyle.card's own border removal; this style
+    // no longer restates a border of its own either. See that style's
+    // comment for the full reasoning (color-contrast-only definition
+    // against Container's gray page now that it isn't the same white as
+    // the card).
+    borderWidth: 0,
   },
   iconWrap: {
     width: 30,

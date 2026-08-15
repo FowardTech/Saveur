@@ -872,33 +872,46 @@ const HomeSrc = memo(() => {
             this is the wireframe's anchor card, not a self-hiding one --
             falls back to a real, honest 0%/0-days zero state rather than
             leaving a gap at the very top of the screen while the fetch is
-            in flight or if it fails. */}
+            in flight or if it fails.
+            MERGE (product ask: "place the career toolkit card and the
+            today's career focus card to be in one container. So just one
+            container should house them") -- these used to be two separate
+            globalStyle.card boxes, each with its own top-level section
+            title. Now one outer card (focusToolkitCard) houses both;
+            "Career Toolkit" becomes a smaller inner subheading instead of
+            its own section, and "Today's Career Focus" is the one title
+            that still sits above the whole merged container. */}
         <Text category="h8" bold mt={4} mb={12}>
           {t('home:todays_focus_label', { defaultValue: "Today's Career Focus" })}
         </Text>
-        {/* Product report: "the Today's Career Focus card should not
-            navigate to the leaderboard when clicked since the trophy cup
-            icon [already] navigates there" (see HeaderHome.tsx's own
-            trophy button) -- this was a duplicate entry point to the same
-            screen. Now routes into the Coach tab's Chat screen instead,
-            landing on the same greeting screen every other way into Coach
-            shows but with the Suggested Topics bottom sheet already popped
-            open (openTopicsSheet -- see Chat.tsx's own effect for this and
-            MainBottomTabStackParamList.Coach's comment for why this goes
-            through the real tab route rather than the separate top-level
-            MessagesStack). Those topics are already a live, personalized
-            GET /api/v1/coach/suggested-topics call built from the user's
-            real recent activity (interview scores/weak spots, streak,
-            learning progress -- see Saveur-Backend's coach.py
-            _activity_snippet) generated fresh on every request, not a
-            static list on a timer -- so "today's focus" tapping through to
-            it is already the dynamic, mastery-aware surface this button
-            was asking for, no separate day/week rotation needed on top of
-            it. */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={[globalStyle.card, styles.focusCard]}
-          onPress={() => navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { openTopicsSheet: true } } })}>
+        {/* Product ask: "In dark mode remove the border and background from
+            the career toolkit and the today's Surprise challenge. Only in
+            dark mode" — focusToolkitCardDark zeroes out backgroundColor
+            (transparent, letting the page's own dark background show
+            through) for the WHOLE merged container now, same treatment
+            both halves already had separately before the merge. */}
+        <View style={[globalStyle.card, styles.focusToolkitCard, isDarkMode && styles.focusToolkitCardDark]}>
+          {/* Product report: "the Today's Career Focus card should not
+              navigate to the leaderboard when clicked since the trophy cup
+              icon [already] navigates there" (see HeaderHome.tsx's own
+              trophy button) -- this was a duplicate entry point to the same
+              screen, originally fixed by routing the whole card into the
+              Coach tab's Chat screen with the Suggested Topics bottom sheet
+              already popped open instead (openTopicsSheet -- see Chat.tsx's
+              own effect for this).
+              REDESIGN (product follow-up: "there should be a button in that
+              card that will now trigger the suggested topic in the AI
+              career coach screen instead of the whole card to now be the
+              one to trigger it") -- that TouchableOpacity used to wrap this
+              entire streak block; it's a plain View now, and the dedicated
+              "Ask Your Career Coach" button below (askCoachButton) is the
+              only thing in this container that navigates into Coach/Chat
+              with the Suggested Topics sheet open. Those topics are still
+              the same live, personalized GET /api/v1/coach/suggested-topics
+              call built from the user's real recent activity (interview
+              scores/weak spots, streak, learning progress -- see
+              Saveur-Backend's coach.py _activity_snippet), just reached via
+              an explicit tap target now instead of the whole card. */}
           <Flex justify="flex-start" itemsCenter>
             {/* Product follow-up, round 3: "I dont like it, I want you to
                 use the illustration style you used in the referral screen
@@ -930,8 +943,12 @@ const HomeSrc = memo(() => {
                 glossy badge treatment too. ArtPractice's `light` prop swaps
                 the mic to a white stroke and drops its own now-redundant
                 backdrop circle, since the badge behind it is the
-                background now. */}
-            <GradientIconBadge color="#0063f8" size={48} radius={16}>
+                background now.
+                RETINTED (product follow-up: "the mic icon background in
+                the homescreen should be orange gradient") — was the same
+                brand blue every other badge on this screen uses; this one
+                now stands out from the Career Toolkit icons below it. */}
+            <GradientIconBadge color="#FF9500" size={48} radius={16}>
               <ArtPractice size={28} light />
             </GradientIconBadge>
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
@@ -953,10 +970,18 @@ const HomeSrc = memo(() => {
                   streakRingPct/roadmapPercent are computed) -- this card's
                   whole narrative (headline, subtitle) is the daily practice
                   habit, so the bar underneath stays that same story instead
-                  of switching metrics mid-card. */}
+                  of switching metrics mid-card.
+                  Product report: "the height of the progress bar... is too
+                  tiny" — was the component's bare 4px default on both the
+                  outer track (`style`) and the inner fill (previously
+                  unset, so it fell back to that same hardcoded 4 inside
+                  ProgressBar.tsx); focusProgressBar/focusProgressBarFill
+                  now both explicitly set height: 8 so the fill actually
+                  grows along with its own track. */}
               <Flex justify="flex-start" itemsCenter mt={8}>
                 <ProgressBar
                   style={styles.focusProgressBar}
+                  styleBar={styles.focusProgressBarFill}
                   didDone={streak?.streakDays ?? 0}
                   total={7}
                   minimumTrackTintColor="#0063f8"
@@ -967,51 +992,56 @@ const HomeSrc = memo(() => {
               </Flex>
             </View>
           </Flex>
-        </TouchableOpacity>
 
-        {/* "Quick Actions" (product follow-up: "replace the 4 quick actions
-            you put there with: Career Coach, Dream Company Dashboard,
-            Refer & Earn, and Salary Negotiation") -- same 4 destinations/
-            icon colors the old "More for you" action rows used before this
-            redesign, just laid out as plain icon-in-a-circle + label
-            (wireframe shows these directly on the page, not inside tiles)
-            instead of full-width rows -- see src/home/QuickActionGrid.tsx
-            for the heavier bento-tile version this deliberately does NOT
-            reuse here. Learning Courses / Salary Negotiation stay behind
-            the same admin feature flags the old rows checked.
-            Refer & Earn REMOVED from here (product follow-up: "Remove
-            refer from the career toolkit and replace it with Courses") --
-            it now has its own full promo card below DailyChallengeCard
-            instead (more room for the actual pitch than a small icon
-            label ever had). */}
-        <Text category="h8" bold mt={24} mb={12}>
-          {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
-        </Text>
-        {/* Product ask: "give the container the card covering the career
-            toolkit a border" — this row had no wrapping card at all before
-            (just the 4 shortcuts laid directly on the page background), so
-            it read as un-contained next to every other section on this
-            screen. globalStyle.card is the shared bordered-card look
-            ~60+ cards app-wide already use (see its own comment — hairline
-            border + 20px radius); same padding/background treatment as the
-            "Career Progress" card right below for visual consistency
-            between the two. */}
-        {/* Product ask: "In dark mode remove the border and background from
-            the career toolkit and the today's Surprise challenge. Only in
-            dark mode" — toolkitCardDark zeroes out both borderWidth and
-            backgroundColor (transparent, letting the page's own dark
-            background show through) so this card reads as a plain section
-            in dark mode instead of a boxed-in one, while light mode keeps
-            the bordered look from the previous pass untouched. */}
-        {/* REDESIGN (product follow-up: "I asked you to change the icons
-            too in the homescreen why did you leave the career tool
-            icons...?" / "the icon background... is glossy gradient") --
-            each icon was a light rgba-tint circle behind a solid-colored
-            glyph; now a GradientIconBadge squircle (same component/effect
-            as the Menu screen rows and the mic icon above) with a white
-            glyph on top, matching the iOS Settings reference across the
-            whole app instead of just one screen. */}
-        <View style={[globalStyle.card, styles.toolkitCard, isDarkMode && styles.toolkitCardDark]}>
+          {/* New dedicated tap target (see the REDESIGN comment above) --
+              a compact pill/row rather than a big CTA button, since this
+              sits inside an already-busy card alongside the streak block
+              and the Career Toolkit icons below it. */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.askCoachButton}
+            onPress={() => navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { openTopicsSheet: true } } })}>
+            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+            <Text category="h10" bold ml={6} style={styles.askCoachButtonText}>
+              {t('home:ask_coach_button', { defaultValue: 'Ask Your Career Coach' })}
+            </Text>
+            <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, styles.askCoachButtonArrow]} />
+          </TouchableOpacity>
+
+          {/* Separates the streak block above from the Career Toolkit
+              icons below now that both live inside one container -- an
+              internal section divider, not a card border (see globalStyle.
+              card's own "remove the border from all the white cards"
+              comment for why that's gone from the outer card itself). */}
+          <View style={styles.toolkitDivider} />
+
+          {/* "Quick Actions" (product follow-up: "replace the 4 quick
+              actions you put there with: Career Coach, Dream Company
+              Dashboard, Refer & Earn, and Salary Negotiation") -- same 4
+              destinations/icon colors the old "More for you" action rows
+              used before this redesign, just laid out as plain
+              icon-in-a-badge + label (wireframe shows these directly on
+              the page, not inside tiles) instead of full-width rows -- see
+              src/home/QuickActionGrid.tsx for the heavier bento-tile
+              version this deliberately does NOT reuse here. Learning
+              Courses / Salary Negotiation stay behind the same admin
+              feature flags the old rows checked.
+              Refer & Earn REMOVED from here (product follow-up: "Remove
+              refer from the career toolkit and replace it with Courses")
+              -- it now has its own full promo card below DailyChallengeCard
+              instead (more room for the actual pitch than a small icon
+              label ever had).
+              REDESIGN (product follow-up: "I asked you to change the icons
+              too in the homescreen why did you leave the career tool
+              icons...?" / "the icon background... is glossy gradient") --
+              each icon was a light rgba-tint circle behind a solid-colored
+              glyph; now a GradientIconBadge squircle (same component/effect
+              as the Menu screen rows and the mic icon above) with a white
+              glyph on top, matching the iOS Settings reference across the
+              whole app instead of just one screen. */}
+          <Text category="h9" bold mb={12}>
+            {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
+          </Text>
           <View style={styles.quickActionsRow}>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
             <GradientIconBadge color="#0063f8" size={48} radius={14}>
@@ -1332,15 +1362,22 @@ const themedStyles = StyleService.create({
   referralTextWrap: {
     marginRight: 14,
   },
-  // Home redesign v3 -- "Today's Focus" card (see the JSX comment above
-  // where this renders). `globalStyle.card` supplies the shape/shadow;
-  // this just adds the padding/fill on top, same "spread card + add
-  // padding/background locally" pattern every other card on this screen
-  // already follows.
-  focusCard: {
-    padding: 14,
-    marginBottom: 4,
+  // MERGE (see the "place the career toolkit card and the today's career
+  // focus card... in one container" comment at the call site) -- one
+  // outer card now houses both the streak block and the Career Toolkit
+  // icon row that each used to have their own separate `focusCard`/
+  // `toolkitCard`. `globalStyle.card` supplies the shape (border is gone
+  // app-wide now -- see that style's own "remove the border from all the
+  // white cards" comment); this just adds the padding/fill on top.
+  focusToolkitCard: {
+    padding: 16,
     backgroundColor: 'background-basic-color-2',
+  },
+  // Dark-mode-only override (see the "remove the border and background...
+  // Only in dark mode" comment at the call site) — light mode keeps the
+  // tinted look above untouched.
+  focusToolkitCardDark: {
+    backgroundColor: 'transparent',
   },
   focusTextWrap: {
     marginLeft: 12,
@@ -1348,31 +1385,59 @@ const themedStyles = StyleService.create({
   // `flex: 1` so the bar fills the remaining row width next to its %
   // label (matches ProgressBar's own "measure my own width via onLayout"
   // design -- it needs a bounded parent, which flex:1 in a row provides).
+  // height: 8 (up from the component's bare 4px default) -- product
+  // report: "the height of the progress bar... is too tiny."
   focusProgressBar: {
     flex: 1,
+    height: 8,
+    borderRadius: 4,
   },
-  // "Quick Actions" row -- 4 plain icon-in-a-circle + label items, no card
-  // background (see the JSX comment above for why this deliberately
-  // doesn't reuse QuickActionGrid.tsx's heavier bento tiles).
+  // Matches focusProgressBar's own new height -- ProgressBar.tsx's inner
+  // fill only picks this up via the separate `styleBar` prop, its own
+  // `style` prop only reaches the outer track.
+  focusProgressBarFill: {
+    height: 8,
+    borderRadius: 4,
+  },
+  // Dedicated tap target (product ask: "there should be a button in that
+  // card that will now trigger the suggested topic in the AI career coach
+  // screen instead of the whole card") -- a light brand-blue-tinted pill,
+  // same `color-primary-transparent-100` tint the old icon badges used to
+  // use before the gradient redesign, now repurposed here as a button
+  // background instead of an icon backdrop.
+  askCoachButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: 'color-primary-transparent-100',
+  },
+  askCoachButtonText: {
+    color: '#0063f8',
+  },
+  askCoachButtonArrow: {
+    tintColor: '#0063f8',
+    marginLeft: 'auto',
+  },
+  // Internal section break between the streak block and the Career
+  // Toolkit icons now that both live inside one merged container -- a
+  // plain hairline, not a card border (see globalStyle.card's own border
+  // removal comment for why the outer card itself doesn't use one).
+  toolkitDivider: {
+    height: 1,
+    backgroundColor: 'rgba(128,128,128,0.15)',
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  // "Quick Actions" row -- 4 plain icon-in-a-badge + label items (see the
+  // JSX comment above for why this deliberately doesn't reuse
+  // QuickActionGrid.tsx's heavier bento tiles).
   // `justifyContent: 'space-between'` rather than `gap` -- same
   // cross-RN-version caution QuickActionGrid.tsx's own `grid` style
   // documents (gap inside a flex row isn't guaranteed on every Yoga
   // version this app has shipped with).
-  // Wraps quickActionsRow in the same bordered-card look as every other
-  // section on this screen (see the "give the career toolkit a border"
-  // comment at the call site) — same padding/background as progressCard
-  // just below it.
-  toolkitCard: {
-    padding: 16,
-    backgroundColor: 'background-basic-color-2',
-  },
-  // Dark-mode-only override (see the "remove the border and background...
-  // Only in dark mode" comment at the call site) — light mode keeps the
-  // bordered/tinted look above untouched.
-  toolkitCardDark: {
-    borderWidth: 0,
-    backgroundColor: 'transparent',
-  },
   quickActionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

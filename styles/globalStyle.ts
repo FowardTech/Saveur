@@ -183,7 +183,19 @@ export const globalStyle = StyleSheet.create({
     // gray reads as a genuinely more visible border instead of a nearly-
     // invisible hairline, while staying the same hue as
     // globalStyle.divider's own border color.
-    borderWidth: 1.5,
+    //
+    // REMOVED (product ask: "remove the border from all the white cards")
+    // — borderWidth back to 0. Definition against Container's own gray
+    // page (`background-page-body: #F2F2F7`, see Container.tsx's comment)
+    // now comes entirely from the color contrast between that gray page
+    // and each card's own white/dark-surface fill, the same "no border, no
+    // shadow, just a fill-color difference" convention this app's earlier
+    // ZipRecruiter-flat and reskin passes both cycled through before
+    // (see this comment's own git history) — no longer needed now that
+    // the page itself isn't the exact same white as the cards. borderColor
+    // is left in place (inert at borderWidth: 0) so a border is one-line
+    // easy to bring back if this reads as too flat once seen live.
+    borderWidth: 0,
     borderColor: 'rgba(128,128,128,0.3)',
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient
