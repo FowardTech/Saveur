@@ -678,9 +678,12 @@ const HomeSrc = memo(() => {
             like the sections it replaces), "Career Toolkit" (4
             shortcuts), "Career Progress" (Job Readiness ring),
             DailyChallengeCard (self-contained, own doc comment), "Next
-            Steps" (reusing ContinueLearningCard/UpcomingSessionHomeCard's
-            own data/logic, just re-laid-out as a vertical stack instead
-            of a side-by-side row).
+            Steps" (a standing link into WhatsNext.tsx). NOTE: this list is
+            top-to-bottom as of the ORIGINAL v3 pass -- see the "Continue &
+            Upcoming" section's own comment further down for where
+            ContinueLearningCard/UpcomingSessionHomeCard actually live now
+            (a horizontal row right below the Home banner, own section
+            title, not inside "Next Steps" anymore).
             REMOVED from Home in the original v3 pass (still reachable
             elsewhere, not deleted from the app): DailyNewsBanner/
             DailyTipsBanner, the old streak-stats grid, the Career Coach/
@@ -720,47 +723,6 @@ const HomeSrc = memo(() => {
             </Button>
           </Flex>
         ) : null}
-
-        {/* Product follow-up: "the continue learning card should be at the
-            top of the homescreen... since it does not appear all the time"
-            — this used to live at the very bottom, inside the "Next Steps"
-            stack (see that section further down, now a "What's Next" link
-            instead). Up here, right after the time-sensitive verify-email
-            banner and before the admin banner, it's the first real content
-            a returning user sees on the rare screens it has something to
-            show.
-            Product follow-up: "place [the upcoming interview session] at
-            the top beside the continue learning. So both cards will be a
-            grid of 2 and scrolling horizontal items" — UpcomingSessionHomeCard
-            joined it here in a horizontal row (a real ScrollView so a
-            future 3rd card would scroll instead of squeezing everyone
-            thinner, though with just these two it fits without needing to
-            actually scroll). Each card is given an explicit width computed
-            above (topCardWidth) rather than flex, since flex basis isn't
-            respected inside a horizontal ScrollView's content the way it
-            is in a normal row — that's also what makes the "stretch to
-            fill when the other disappears" follow-up work: topCardWidth
-            recomputes to the full row width the moment either card reports
-            (via onVisibilityChange) that it has nothing to show. Both
-            individually self-contained/self-hiding as always — a card with
-            nothing to resume/nothing scheduled renders null and reports
-            false, contributing no visible content even though its slot in
-            the row still exists. */}
-        {/* Always mounted (both cards already self-hide internally by
-            returning null when they have nothing to show — no need to
-            conditionally swap the wrapper itself), so when both, one, or
-            neither has content, topCardWidth above already resolves to the
-            right value for whichever card(s) actually render something. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <ContinueLearningCard
-            style={{ width: topCardWidth, marginRight: topCardsBothVisible ? topCardsGap : 0 }}
-            onVisibilityChange={setContinuePlanVisible}
-          />
-          <UpcomingSessionHomeCard
-            style={{ width: topCardWidth }}
-            onVisibilityChange={setUpcomingPlanVisible}
-          />
-        </ScrollView>
 
         {/* Admin-configured Home banner (see the effect above for the full
             "why" + how this differs from AnnouncementBanner). Deliberately
@@ -834,6 +796,44 @@ const HomeSrc = memo(() => {
             )}
           </TouchableOpacity>
         ) : null}
+
+        {/* Product follow-up: "I want you to place the 2 cards below the
+            homebanner and give them a section name just like the other
+            sections in the homescreen" -- ContinueLearningCard +
+            UpcomingSessionHomeCard's horizontal row moved from right above
+            the home banner to right below it, now with its own section
+            title (same `<Text category="h8" bold>` treatment as "Career
+            Toolkit"/"Career Progress" below), instead of being the one
+            section-less block on this screen.
+            Product follow-up: "the upcoming session should be on the left
+            while the continue learning be on the right" -- swapped order
+            (UpcomingSessionHomeCard first, ContinueLearningCard second);
+            topCardsGap now applies to whichever card renders FIRST in the
+            row, so it still only shows a gap when both cards actually have
+            something to show. */}
+        <Text category="h8" bold mt={4} mb={12}>
+          {t('home:continue_and_upcoming_label', { defaultValue: 'Continue & Upcoming' })}
+        </Text>
+        {/* Always mounted (both cards already self-hide internally by
+            returning null when they have nothing to show — no need to
+            conditionally swap the wrapper itself), so when both, one, or
+            neither has content, topCardWidth above already resolves to the
+            right value for whichever card(s) actually render something. */}
+        {/* marginBottom here (same reasoning as homeBannerCard's own —
+            see that style's comment) gives this row its own breathing
+            room before "Today's Career Focus" regardless of what's above
+            it, rather than bumping that title's mt and disturbing its
+            no-banner-shown spacing. */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+          <UpcomingSessionHomeCard
+            style={{ width: topCardWidth, marginRight: topCardsBothVisible ? topCardsGap : 0 }}
+            onVisibilityChange={setUpcomingPlanVisible}
+          />
+          <ContinueLearningCard
+            style={{ width: topCardWidth }}
+            onVisibilityChange={setContinuePlanVisible}
+          />
+        </ScrollView>
 
         {/* "Today's Focus" -- wireframe's top card: a square image, a bold
             title, two lines of real streak copy (same fields/keys the old
@@ -957,7 +957,14 @@ const HomeSrc = memo(() => {
             border + 20px radius); same padding/background treatment as the
             "Career Progress" card right below for visual consistency
             between the two. */}
-        <View style={[globalStyle.card, styles.toolkitCard]}>
+        {/* Product ask: "In dark mode remove the border and background from
+            the career toolkit and the today's Surprise challenge. Only in
+            dark mode" — toolkitCardDark zeroes out both borderWidth and
+            backgroundColor (transparent, letting the page's own dark
+            background show through) so this card reads as a plain section
+            in dark mode instead of a boxed-in one, while light mode keeps
+            the bordered look from the previous pass untouched. */}
+        <View style={[globalStyle.card, styles.toolkitCard, isDarkMode && styles.toolkitCardDark]}>
           <View style={styles.quickActionsRow}>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
             <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
@@ -1320,6 +1327,13 @@ const themedStyles = StyleService.create({
   toolkitCard: {
     padding: 16,
     backgroundColor: 'background-basic-color-2',
+  },
+  // Dark-mode-only override (see the "remove the border and background...
+  // Only in dark mode" comment at the call site) — light mode keeps the
+  // bordered/tinted look above untouched.
+  toolkitCardDark: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   quickActionsRow: {
     flexDirection: 'row',

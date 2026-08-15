@@ -12,6 +12,7 @@ import { RootStackParamList } from 'navigation/types';
 import * as configService from 'services/configService';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
+import ThemeContext from '../../ThemeContext';
 
 // Surprise Daily Challenge (product request item) — one unexpected practice
 // challenge a day (elevator pitch, coding problem, salary negotiation,
@@ -36,6 +37,10 @@ const DailyChallengeCard = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  // Product ask: "In dark mode remove the border and background from the
+  // career toolkit and the today's Surprise challenge. Only in dark mode."
+  const { theme: appTheme } = React.useContext(ThemeContext);
+  const isDarkMode = appTheme === 'dark';
 
   const [challenge, setChallenge] = React.useState<DailyChallenge | null>(null);
   // BUG FIX ("the content of this refused to translate" — the type badge,
@@ -93,7 +98,7 @@ const DailyChallengeCard = memo(() => {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={styles.card}
+      style={[styles.card, isDarkMode && styles.cardDark]}
       onPress={() => navigate('DailyChallenge')}>
       <Flex justify="flex-start" itemsCenter mb={8}>
         <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
@@ -127,5 +132,13 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginTop: 24,
     backgroundColor: 'background-basic-color-2',
+  },
+  // Dark-mode-only override (product ask: "In dark mode remove the border
+  // and background from the career toolkit and the today's Surprise
+  // challenge. Only in dark mode") — light mode keeps the bordered/tinted
+  // card above untouched.
+  cardDark: {
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
 });
