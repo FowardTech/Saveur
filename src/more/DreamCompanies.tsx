@@ -376,7 +376,7 @@ const DreamCompanies = memo(() => {
                       <Icon
                         pack="eva"
                         name="trash-2-outline"
-                        style={[globalStyle.icon20, { tintColor: theme['color-danger-500'] }]}
+                        style={[globalStyle.icon20, { tintColor: theme['text-placeholder-color'] }]}
                       />
                     </TouchableOpacity>
                     <Icon

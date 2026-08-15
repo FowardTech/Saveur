@@ -132,8 +132,10 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     shadowOpacity: 0,
     elevation: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
+    // Matches globalStyle.card's own border (see that style's "increase
+    // the grayness of the border" comment).
+    borderWidth: 1.5,
+    borderColor: 'rgba(128,128,128,0.3)',
   },
   iconWrap: {
     width: 30,

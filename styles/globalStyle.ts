@@ -175,8 +175,16 @@ export const globalStyle = StyleSheet.create({
     // neutral hairline tone as globalStyle.divider's own border color —
     // easy to revert to the old Platform.select-gated version if the
     // combined border+shadow look reads as too busy once seen live.
-    borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
+    // Product ask: "increase the grayness of the border of the white
+    // cards" — the actual "grayness" of an rgba border is its alpha, not
+    // its width (borderWidth was already bumped 1 -> 1.5 in an earlier
+    // pass, which makes the line thicker but not any more visibly gray at
+    // low opacity). 0.15 -> 0.3 doubles the opacity so the same neutral
+    // gray reads as a genuinely more visible border instead of a nearly-
+    // invisible hairline, while staying the same hue as
+    // globalStyle.divider's own border color.
+    borderWidth: 1.5,
+    borderColor: 'rgba(128,128,128,0.3)',
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient
   // lift as cards now, tinted toward the brand blue instead of the

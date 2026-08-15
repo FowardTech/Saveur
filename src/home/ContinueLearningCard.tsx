@@ -218,8 +218,13 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     shadowOpacity: 0,
     elevation: 0,
-    borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
+    // Product ask: "increase the grayness of the border of the white
+    // cards" — matches globalStyle.card's own border, which this style
+    // already spreads above; restated explicitly here just to keep this
+    // card's full border definition visible in one place rather than
+    // relying on the reader to cross-check the spread.
+    borderWidth: 1.5,
+    borderColor: 'rgba(128,128,128,0.3)',
   },
   iconWrap: {
     width: 30,
