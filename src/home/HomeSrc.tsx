@@ -1049,14 +1049,16 @@ const HomeSrc = memo(() => {
               (and as most other blue accents on this screen), so the row
               read as three colorful icons (blue, blue, purple, green) with
               two indistinguishable twins at the front. Coach picks up a
-              teal/cyan (#06B6D4) and Companies a rich indigo (#6366F1) --
-              both pulled from the same vivid palette RecentActivityList.tsx's
-              COLOR_BY_TYPE already uses elsewhere on this screen, so all 4
-              Career Toolkit icons are now distinct hues (teal, indigo,
-              purple, green) without introducing a new, unrelated palette.
-              Courses (#7C5CFC) and Salary (#1D9E75) untouched per explicit
-              ask ("you can leave the courses and salary colors they are
-              fine"). */}
+              teal/cyan (#06B6D4); both pulled from the same vivid palette
+              RecentActivityList.tsx's COLOR_BY_TYPE already uses elsewhere
+              on this screen. Courses (#7C5CFC) and Salary (#1D9E75)
+              untouched per explicit ask ("you can leave the courses and
+              salary colors they are fine").
+              RETINTED AGAIN (immediate follow-up: "one of them should be
+              orange") -- Companies swapped from indigo to the same orange
+              (#F97316) COLOR_BY_TYPE uses for career_diary, so all 4
+              Career Toolkit icons are now distinct hues (teal, orange,
+              purple, green). */}
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
             <GradientIconBadge color="#06B6D4" size={48} radius={14}>
               <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
@@ -1066,7 +1068,7 @@ const HomeSrc = memo(() => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
-            <GradientIconBadge color="#6366F1" size={48} radius={14}>
+            <GradientIconBadge color="#F97316" size={48} radius={14}>
               <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
             </GradientIconBadge>
             <Text category="h10" center mt={6} numberOfLines={1}>
