@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
+import GradientIconBadge from 'components/GradientIconBadge';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { DATA_INTERVIEW_TYPES } from 'constants/Data';
@@ -255,9 +256,19 @@ const FindScreen = memo(() => {
           activeOpacity={0.8}
           style={[styles.scheduleCard, { backgroundColor: theme['background-basic-color-2'] }]}
           onPress={() => navigate('ScheduleInterview')}>
-          <View style={[styles.scheduleIconWrap, { backgroundColor: theme['color-primary-transparent-100'] }]}>
-            <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
-          </View>
+          {/* REDESIGN (product ask: "change the icon style in the schedule
+              a session card in the practice screen to the icon style used
+              in the homescreen and menu items... a yellow background just
+              like the mic in the homescreen") -- was a light-blue rgba
+              tint circle behind a solid blue glyph, the same older pattern
+              Home's Career Toolkit icons used before their own redesign.
+              Now GradientIconBadge with the exact same orange (#FF9500)
+              Home's Today's Career Focus mic icon uses, white glyph on
+              top, matching the iOS-Settings badge style everywhere else in
+              the app. */}
+          <GradientIconBadge color="#FF9500" size={36} radius={12} style={{ marginRight: 12 }}>
+            <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+          </GradientIconBadge>
           <View style={globalStyle.flexOne}>
             <Text category="h9" bold numberOfLines={1}>
               {t('find:schedule_session_card_title', { defaultValue: 'Schedule a session' })}
@@ -446,14 +457,6 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginTop: 8,
-  },
-  scheduleIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   // Purely a shadow-casting shell — the real fill lives on heroInner's
   // absolute-positioned LinearGradient (see the JSX comment). Static

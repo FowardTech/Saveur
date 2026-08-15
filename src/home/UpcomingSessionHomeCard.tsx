@@ -246,16 +246,28 @@ const themedStyles = StyleService.create({
   // Delete button — see the "User should be able to delete an upcoming
   // interview session" comment at the call site. Overlaid on the card's
   // top-right corner rather than sitting inline in the row.
+  // BUG FIX (product report: "the cancel icon on the upcoming session
+  // card... is not visible well enough") -- was a translucent WHITE circle
+  // (rgba(255,255,255,0.25)) behind a solid white glyph, which barely
+  // differs in tone from its own backdrop and reads as a faint smudge
+  // rather than a clear tap target against the card's blue fill. A
+  // translucent BLACK circle behind the same white glyph gives real
+  // contrast against both the icon on top of it and the blue card behind
+  // it, plus a thin white ring (borderWidth/borderColor below) so the
+  // whole chip stays legible even in the lightest corner of the card's
+  // fill. Also a hair bigger (22 -> 24) for a slightly easier tap target.
   deleteButton: {
     position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    top: -7,
+    right: -7,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(0,0,0,0.32)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   titleText: {
     color: '#fff',

@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
+import GradientIconBadge from 'components/GradientIconBadge';
 import { globalStyle } from 'styles/globalStyle';
 import * as dayActivityService from 'services/dayActivityService';
 import { DayActivityItem, DayActivityItemType } from 'services/dayActivityService';
@@ -88,9 +89,14 @@ const RecentActivityList = memo(() => {
   return (
     <View style={styles.section}>
       <Flex justify="flex-start" itemsCenter mb={14}>
-        <View style={styles.headerIconWrap}>
-          <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, styles.headerIcon]} />
-        </View>
+        {/* REDESIGN (product ask: "use that same icon style in some other
+            key notable screens in the app") -- was a flat
+            color-primary-transparent-100 tint circle, the same older
+            pattern Home's own Career Toolkit icons used before their own
+            redesign. Now the same GradientIconBadge used everywhere else. */}
+        <GradientIconBadge color="#0063f8" size={28} radius={9}>
+          <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+        </GradientIconBadge>
         <Text category="h7" bold ml={10}>
           {t('home:recent_activity_title', { defaultValue: 'Recent activity' })}
         </Text>
@@ -113,13 +119,22 @@ const RecentActivityList = memo(() => {
               <View
                 key={`${item.type}-${i}`}
                 style={[styles.row, i === items.length - 1 ? styles.rowLast : null]}>
-                <View style={[styles.iconWrap, { backgroundColor: `${color}1F` }]}>
+                {/* REDESIGN (product ask: "use that same icon style in some
+                    other key notable screens in the app") -- was a light
+                    per-type color tint (`${color}1F`, ~12% alpha) behind a
+                    solid-colored glyph; now the same GradientIconBadge
+                    every other icon badge in the app uses, fed the exact
+                    same per-type `color` this row already computed above
+                    (COLOR_BY_TYPE) -- the color-coding-by-activity-type
+                    idea is untouched, just rendered as a glossy badge with
+                    a white glyph instead of a flat tint circle. */}
+                <GradientIconBadge color={color} size={38} radius={13} style={styles.iconWrap}>
                   <Icon
                     pack="eva"
                     name={ICON_BY_TYPE[item.type] ?? 'checkmark-circle-2-outline'}
-                    style={[globalStyle.icon20, { tintColor: color }]}
+                    style={[globalStyle.icon20, { tintColor: '#fff' }]}
                   />
-                </View>
+                </GradientIconBadge>
                 <View style={globalStyle.flexOne}>
                   <Text category="h9" bold numberOfLines={1}>
                     {item.title}
@@ -149,17 +164,6 @@ export default RecentActivityList;
 const themedStyles = StyleService.create({
   section: {
     marginTop: 22,
-  },
-  headerIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'color-primary-transparent-100',
-  },
-  headerIcon: {
-    tintColor: 'color-primary-500',
   },
   // BUG FIX (product report, with screenshot: "these cards should be
   // white") — see src/home/DailyTipsBanner.tsx's own comment on this same
@@ -195,13 +199,10 @@ const themedStyles = StyleService.create({
   rowLast: {
     paddingBottom: 16,
   },
+  // Just the spacing now -- GradientIconBadge owns its own size/shape via
+  // its `size`/`radius` props at the call site.
   iconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
     marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   time: {
     marginLeft: 8,

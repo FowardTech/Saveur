@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
+import GradientIconBadge from 'components/GradientIconBadge';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as learningService from 'services/learningService';
@@ -139,9 +140,13 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
   return (
     <>
       <TouchableOpacity activeOpacity={0.8} style={[styles.card, style]} onPress={primary.onPress}>
-        <View style={styles.iconWrap}>
-          <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
-        </View>
+        {/* REDESIGN (product ask: "use that same icon style in some other
+            key notable screens in the app") -- was a flat
+            color-primary-transparent-100 tint circle; now the same
+            GradientIconBadge every other icon badge in the app uses. */}
+        <GradientIconBadge color="#0063f8" size={30} radius={10} style={styles.iconWrap}>
+          <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+        </GradientIconBadge>
         <View style={globalStyle.flexOne}>
           <Text category="h10" bold numberOfLines={1}>
             {primary.title}
@@ -226,13 +231,9 @@ const themedStyles = StyleService.create({
     // the card).
     borderWidth: 0,
   },
+  // Just the spacing now -- GradientIconBadge owns its own size/shape via
+  // its `size`/`radius` props at the call site.
   iconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
     marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'color-primary-transparent-100',
   },
 });

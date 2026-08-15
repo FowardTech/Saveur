@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { View } from 'react-native';
-import { StyleService, TopNavigation, useStyleSheet, useTheme, Layout, Icon } from '@ui-kitten/components';
+import { StyleService, TopNavigation, useStyleSheet, Layout, Icon } from '@ui-kitten/components';
 import Container from 'components/Container';
 import Content from 'components/Content';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
+import GradientIconBadge from 'components/GradientIconBadge';
 import NavigationAction from 'components/NavigationAction';
 import { useTranslation } from 'react-i18next';
 import { globalStyle } from 'styles/globalStyle';
@@ -21,7 +22,6 @@ import * as configService from 'services/configService';
 // like FAQ — there's no separate "answer" to reveal, the description is
 // short enough to always show.
 const UpcomingFeatures = () => {
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
   const [, forceRerender] = React.useReducer(x => x + 1, 0);
@@ -43,13 +43,18 @@ const UpcomingFeatures = () => {
           items.map((item, index) => (
             <Layout key={item.id || index} level="2" style={styles.card}>
               <Flex justify="flex-start" itemsCenter>
-                <View style={styles.iconWrap}>
+                {/* REDESIGN (product ask: "use that same icon style in some
+                    other key notable screens in the app") -- was a flat
+                    color-primary-transparent-100 tint circle; now the same
+                    GradientIconBadge every other icon badge in the app
+                    uses. */}
+                <GradientIconBadge color="#0063f8" size={40} radius={14} style={styles.iconWrap}>
                   <Icon
                     pack="eva"
                     name={item.icon || 'rocket-outline'}
-                    style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]}
+                    style={[globalStyle.icon20, { tintColor: '#fff' }]}
                   />
-                </View>
+                </GradientIconBadge>
                 <View style={globalStyle.flexOne}>
                   <Text category="h9" bold>{item.title}</Text>
                   {item.description ? (
@@ -78,13 +83,9 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginBottom: 12,
   },
+  // Just the spacing now -- GradientIconBadge owns its own size/shape via
+  // its `size`/`radius` props at the call site.
   iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
     marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'color-primary-transparent-100',
   },
 });

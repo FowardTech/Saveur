@@ -17,6 +17,7 @@ import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
+import GradientIconBadge from 'components/GradientIconBadge';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import { globalStyle } from 'styles/globalStyle';
@@ -167,9 +168,13 @@ const CareerDiary = memo(() => {
           activeOpacity={0.85}
           style={styles.addTrigger}
           onPress={() => setShowComposer(true)}>
-          <View style={[styles.addTriggerIconWrap, { backgroundColor: theme['color-primary-transparent-100'] }]}>
-            <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
-          </View>
+          {/* REDESIGN (product ask: "use that same icon style in some other
+              key notable screens in the app") -- was a flat
+              color-primary-transparent-100 tint circle; now the same
+              GradientIconBadge every other icon badge in the app uses. */}
+          <GradientIconBadge color="#0063f8" size={36} radius={12}>
+            <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
+          </GradientIconBadge>
           <Text category="h9" bold style={globalStyle.flexOne} ml={12}>
             {t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
           </Text>
@@ -318,13 +323,6 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     padding: 16,
     marginBottom: 16,
-  },
-  addTriggerIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   modalOverlay: {
     flex: 1,
