@@ -19,6 +19,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import CodeBlock from 'components/CodeBlock';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as interviewReplayService from 'services/interviewReplayService';
@@ -288,7 +289,11 @@ const InterviewReplay = memo(() => {
                 onError={() => setVideoError(true)}
               />
             </View>
-          ) : (
+          ) : replay.sessionType === 'coding' ? null : (
+            // BUG FIX: this generic "no video was recorded" note doesn't
+            // make sense on a coding session (no video is ever expected
+            // there, not a limitation worth noting) — the Problem/Your
+            // Code section below already says everything there is to say.
             <Text category="h9-s" status="placeholder" mb={16}>
               {noVideoReason ?? t('practice:replay_scope_note', {
                 defaultValue: 'A timeline of your transcript and in-session metrics — no video was recorded for this session.',
@@ -362,25 +367,71 @@ const InterviewReplay = memo(() => {
             </View>
           ) : null}
 
-          <View style={{ marginTop: 24 }}>
-            <Text category="h7" bold mb={12}>{t('practice:transcript', { defaultValue: 'Transcript' })}</Text>
-            <ScrollView ref={scrollRef} style={{ maxHeight: 400 }} nestedScrollEnabled>
-              {replay.transcript.map((entry, i) => (
-                <View
-                  key={i}
-                  onLayout={e => { rowOffsets.current[i] = e.nativeEvent.layout.y; }}
-                  style={[styles.transcriptRow, globalStyle.divider]}
-                >
-                  <Text category="h10" status="placeholder" mb={2}>
-                    {formatMs(entry.tMs)} · {entry.role === 'interviewer'
-                      ? t('practice:interviewer', { defaultValue: 'Interviewer' })
-                      : t('practice:you', { defaultValue: 'You' })}
-                  </Text>
-                  <Text category="h9-s">{entry.text}</Text>
+          {/* BUG FIX (mobile bug report: "when users view the interview
+              replay of coding interview instead of them seeing the
+              practice problem they are seeing the transcript of the AI
+              interview as if they did voice interview... the user's
+              answer and code they wrote to solve the problem should also
+              be in the replay") — a coding session never has a real Q&A
+              transcript (see interviewReplayService.ts's ReplayCodingResult
+              comment for the backend-side reasoning), so this renders the
+              actual problem + submitted code instead of the generic
+              Interviewer/You transcript rows below, which would otherwise
+              either show a leftover unrelated AI question or nothing at
+              all. */}
+          {replay.sessionType === 'coding' ? (
+            <View style={{ marginTop: 24 }}>
+              <Text category="h7" bold mb={12}>{t('practice:coding_replay_problem', { defaultValue: 'Problem' })}</Text>
+              {replay.codingResult?.problemStatement ? (
+                <View style={styles.problemCard}>
+                  <Text category="h9-s">{replay.codingResult.problemStatement}</Text>
                 </View>
-              ))}
-            </ScrollView>
-          </View>
+              ) : (
+                <Text category="h9-s" status="placeholder">
+                  {t('practice:coding_replay_no_submission', {
+                    defaultValue: 'No code was submitted before this session ended.',
+                  })}
+                </Text>
+              )}
+              {replay.codingResult?.code ? (
+                <>
+                  <Flex justify="space-between" itemsCenter mt={20} mb={12}>
+                    <Text category="h7" bold>{t('practice:coding_replay_your_code', { defaultValue: 'Your Code' })}</Text>
+                    {typeof replay.codingResult.testsTotal === 'number' && replay.codingResult.testsTotal > 0 ? (
+                      <Text category="h10" bold status={replay.codingResult.testsPassed === replay.codingResult.testsTotal ? 'success' : 'warning'}>
+                        {t('practice:coding_replay_tests_passed', {
+                          defaultValue: `${replay.codingResult.testsPassed ?? 0} / ${replay.codingResult.testsTotal} tests passed`,
+                          passed: replay.codingResult.testsPassed ?? 0,
+                          total: replay.codingResult.testsTotal,
+                        })}
+                      </Text>
+                    ) : null}
+                  </Flex>
+                  <CodeBlock code={replay.codingResult.code} language={replay.codingResult.language ?? undefined} />
+                </>
+              ) : null}
+            </View>
+          ) : (
+            <View style={{ marginTop: 24 }}>
+              <Text category="h7" bold mb={12}>{t('practice:transcript', { defaultValue: 'Transcript' })}</Text>
+              <ScrollView ref={scrollRef} style={{ maxHeight: 400 }} nestedScrollEnabled>
+                {replay.transcript.map((entry, i) => (
+                  <View
+                    key={i}
+                    onLayout={e => { rowOffsets.current[i] = e.nativeEvent.layout.y; }}
+                    style={[styles.transcriptRow, globalStyle.divider]}
+                  >
+                    <Text category="h10" status="placeholder" mb={2}>
+                      {formatMs(entry.tMs)} · {entry.role === 'interviewer'
+                        ? t('practice:interviewer', { defaultValue: 'Interviewer' })
+                        : t('practice:you', { defaultValue: 'You' })}
+                    </Text>
+                    <Text category="h9-s">{entry.text}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
         </Content>
       )}
     </Container>
@@ -420,6 +471,14 @@ const themedStyles = StyleService.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
+  },
+  // Same plain-readable-card treatment CodingInterview.tsx's own
+  // problemCard uses — distinct from CodeBlock's dark editor-style chrome
+  // below it, same "what to read" vs "what was written" visual split.
+  problemCard: {
+    ...globalStyle.card,
+    padding: 16,
+    backgroundColor: 'background-basic-color-2',
   },
   // borderBottom comes from the shared globalStyle.divider at the usage
   // site instead of a duplicated inline rgba value.

@@ -209,6 +209,43 @@ export async function getProblem(
   }
 }
 
+/**
+ * GET /api/v1/coding/problem?next=1 — the other half of the fix for
+ * "the AI interviewer is not supposed to give just one problem it's
+ * supposed to be random problems until the time elapses". Called by
+ * CodingInterview.tsx's "Next Problem" button once the candidate is ready
+ * to move on and there's still time left on the session clock —
+ * `excludeSlugs` (every slug already seen this session, tracked client-
+ * side) is sent back so a single timed session cycles through DIFFERENT
+ * problems instead of repeating. Falls back to plain getProblem(undefined)
+ * (a fresh session-less random pick) if this specific call fails, so a
+ * transient network hiccup degrades to "still get a new problem" rather
+ * than leaving the button stuck.
+ */
+export async function getNextProblem(excludeSlugs: string[]): Promise<CodingProblem> {
+  try {
+    const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
+      params: {next: 1, exclude: excludeSlugs.join(',')},
+    });
+    const testCases = (data.test_cases ?? []).map(c => ({
+      input: c.stdin ?? '',
+      expectedOutput: c.expected_output ?? '',
+    }));
+    if (!data.title || !testCases.length) throw new Error('Incomplete problem response');
+    return {
+      slug: data.slug ?? 'problem',
+      title: data.title,
+      difficulty: data.difficulty,
+      category: data.category,
+      description: data.description ?? '',
+      testCases,
+      starterCode: data.starter_code ?? {},
+    };
+  } catch {
+    return getProblem(undefined, undefined);
+  }
+}
+
 interface ProblemSummaryWire {
   slug: string;
   title: string;

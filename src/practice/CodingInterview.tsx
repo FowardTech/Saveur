@@ -138,6 +138,14 @@ const CodingInterview = memo(() => {
   // only auto-fills starter code while the user hasn't touched it yet.
   const codeEditedRef = React.useRef(false);
 
+  // "Next Problem" (product report: "the AI interviewer is not supposed to
+  // give just one problem it's supposed to be random problems until the
+  // time elapses") — every slug served THIS session so far, so
+  // getNextProblem's exclude list keeps a single timed session from
+  // repeating a problem while cycling through the bank.
+  const [seenSlugs, setSeenSlugs] = React.useState<string[]>([]);
+  const [isLoadingNextProblem, setIsLoadingNextProblem] = React.useState(false);
+
   const problemStatement = problem
     ? `${problem.title}\n\n${problem.description}`
     : `${t('find:coding_prompt_title')}\n\n${t('find:coding_prompt_description')}`;
@@ -185,6 +193,7 @@ const CodingInterview = memo(() => {
     try {
       const p = await codingService.getProblem(sessionId);
       setProblem(p);
+      setSeenSlugs([p.slug]);
     } finally {
       setProblemLoading(false);
     }
@@ -194,6 +203,34 @@ const CodingInterview = memo(() => {
     loadProblem();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // "Next Problem" — see seenSlugs' own comment above. Only meaningful once
+  // a timer is actually running (durationMin was passed in) — the
+  // untimed free-practice hub (CodingPracticeHub.tsx/CodingProblemSolve.tsx)
+  // is its own separate screen with its own browse-and-pick flow, this is
+  // specifically for cycling through MULTIPLE problems inside one timed
+  // mock-interview session instead of being locked to a single one.
+  const onNextProblem = async () => {
+    if (isLoadingNextProblem) return;
+    setIsLoadingNextProblem(true);
+    try {
+      const next = await codingService.getNextProblem(seenSlugs);
+      setSeenSlugs(prev => [...prev, next.slug]);
+      codeEditedRef.current = false;
+      setProblem(next);
+      setStdin('');
+      setRunResult(null);
+      setTestResults(null);
+      setTestEngine(undefined);
+    } catch (e: any) {
+      Alert.alert(
+        t('find:next_problem_failed', { defaultValue: 'Could not load next problem' }),
+        e?.message ?? t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }),
+      );
+    } finally {
+      setIsLoadingNextProblem(false);
+    }
+  };
 
   // Once the real problem loads, swap the editor's starter code from the
   // generic Two-Sum-shaped default (set by loadLanguages above, which
@@ -387,6 +424,46 @@ const CodingInterview = memo(() => {
             </Text>
           </View>
         )}
+
+        {/* "Next Problem" / "More Practice" row (product report: "the AI
+            interviewer is not supposed to give just one problem it's
+            supposed to be random problems until the time elapses" +
+            "why are you separating [the free-practice hub] from the main
+            coding interface... A button 'More Practice' should be in the
+            main coding screen that navigates there"). Next Problem only
+            shows in the timed mock-interview flow (durationMin present) --
+            cycles through the bank without touching the countdown. More
+            Practice is always available and is the one link into the
+            untimed browse-all-problems hub, so that screen is reachable
+            FROM the main coding screen instead of only from the Add-ons
+            page. */}
+        <Flex justify="space-between" itemsCenter mt={12}>
+          {durationMin ? (
+            <TouchableOpacity
+              activeOpacity={0.7}
+              disabled={isLoadingNextProblem || problemLoading}
+              onPress={onNextProblem}
+              style={styles.inlineLinkRow}>
+              {isLoadingNextProblem ? (
+                <Spinner size="tiny" />
+              ) : (
+                <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+              )}
+              <Text category="h10" bold ml={6} style={{ color: theme['color-primary-500'] }}>
+                {t('find:next_problem_cta', { defaultValue: 'Next Problem' })}
+              </Text>
+            </TouchableOpacity>
+          ) : <View />}
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => navigate('CodingPracticeHub')}
+            style={styles.inlineLinkRow}>
+            <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
+              {t('find:more_practice_cta', { defaultValue: 'More Practice' })}
+            </Text>
+            <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, { marginLeft: 4 }]} />
+          </TouchableOpacity>
+        </Flex>
 
         <Text category="h8" bold status="placeholder" mt={24} mb={12}>
           {t('find:language')}
@@ -655,6 +732,10 @@ const themedStyles = StyleService.create({
   },
   timerPillUrgent: {
     backgroundColor: 'rgba(255, 107, 107, 0.12)',
+  },
+  inlineLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

@@ -33,6 +33,22 @@ export interface ReplayVoiceMetrics {
   longPauses: number | null;
 }
 
+/** Bug fix (mobile bug report: "when users view the interview replay of
+ * coding interview instead of them seeing the practice problem they are
+ * seeing the transcript of the AI interview... the user's answer and code
+ * they wrote to solve the problem should also be in the replay"). A
+ * "coding" session never has a real Q&A transcript to begin with — see
+ * Saveur-Backend's app/api/feedback.py _replay_payload for the full
+ * explanation — this is what shows INSTEAD, sourced from the same
+ * submission the mock-interview screen sent at Finish. */
+export interface ReplayCodingResult {
+  language: string | null;
+  code: string | null;
+  problemStatement: string | null;
+  testsPassed: number | null;
+  testsTotal: number | null;
+}
+
 export interface SessionReplay {
   durationMs: number;
   /** Playable URL for the real recorded video, or null if this session has
@@ -47,7 +63,14 @@ export interface SessionReplay {
    * it to a short human sentence rather than ever showing it verbatim (same
    * mistake, same fix, as the "raw provider error in an Alert" bug). */
   videoError: string | null;
+  /** Backs InterviewReplay.tsx's branch between the generic
+   * transcript/video view (everything else) and a dedicated Problem +
+   * Your Code view (sessionType === 'coding'). */
+  sessionType: string | null;
   transcript: ReplayTranscriptEntry[];
+  /** Only non-null when sessionType === 'coding' and the candidate actually
+   * submitted something before Finish. */
+  codingResult: ReplayCodingResult | null;
   voiceMetrics: ReplayVoiceMetrics | null;
   annotations: ReplayAnnotation[];
 }
@@ -57,7 +80,15 @@ interface WireReplay {
   video_url?: string | null;
   video_duration_sec?: number | null;
   video_error?: string | null;
+  session_type?: string | null;
   transcript?: Array<{ role?: string; text?: string; t_ms?: number }>;
+  coding_result?: {
+    language?: string | null;
+    code?: string | null;
+    problem_statement?: string | null;
+    tests_passed?: number | null;
+    tests_total?: number | null;
+  } | null;
   voice_metrics?: { words_per_minute?: number; filler_count?: number; long_pauses?: number } | null;
   annotations?: Array<{ t_ms?: number; type?: string; label?: string }>;
 }
@@ -69,9 +100,19 @@ export async function getSessionReplay(sessionId: string | number): Promise<Sess
     videoUrl: data.video_url ?? null,
     videoDurationSec: data.video_duration_sec ?? null,
     videoError: data.video_error ?? null,
+    sessionType: data.session_type ?? null,
     transcript: (data.transcript ?? []).map(m => ({
       role: m.role ?? '', text: m.text ?? '', tMs: m.t_ms ?? 0,
     })),
+    codingResult: data.coding_result
+      ? {
+          language: data.coding_result.language ?? null,
+          code: data.coding_result.code ?? null,
+          problemStatement: data.coding_result.problem_statement ?? null,
+          testsPassed: data.coding_result.tests_passed ?? null,
+          testsTotal: data.coding_result.tests_total ?? null,
+        }
+      : null,
     voiceMetrics: data.voice_metrics
       ? {
           wordsPerMinute: data.voice_metrics.words_per_minute ?? null,

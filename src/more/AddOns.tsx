@@ -16,8 +16,12 @@ import {globalStyle} from 'styles/globalStyle';
 import * as billingService from 'services/billingService';
 import {AddonProps} from 'services/billingService';
 import * as iapService from 'services/iapService';
+import * as interviewService from 'services/interviewService';
+import {getSessionEntitlement} from 'services/entitlementsService';
+import {Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import {stripeAppearance} from 'utils/stripeAppearance';
+import {AuthContext} from '../../AuthContext';
 
 // Matches Subscription.tsx's own STRIPE_RETURN_URL — same urlScheme:
 // 'saveur' registered natively (ios/Info.plist, AndroidManifest.xml).
@@ -45,6 +49,7 @@ const AddOns = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<any>();
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
+  const {subscription} = React.useContext(AuthContext);
 
   const highlightCode: string | undefined = route.params?.highlightCode;
 
@@ -52,6 +57,56 @@ const AddOns = memo(() => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [purchasingCode, setPurchasingCode] = React.useState<string | null>(null);
+  const [isStartingCoding, setIsStartingCoding] = React.useState(false);
+
+  // Product report: "why are you separating [the free-practice hub] from
+  // the main coding interface... And then the practice button in the
+  // add-ons screen should also lead to the main coding screen" — this
+  // used to jump straight to CodingPracticeHub (the untimed browse-all-
+  // problems list), a second, disconnected entry point into "coding" next
+  // to the real main screen (CodingInterview, reached from the Find tab's
+  // Coding Practice tile). Now starts a real timed session and lands on
+  // that same main screen instead — same call FindScreen.tsx's own
+  // onStartCodingPractice makes (minus the addon check: this button only
+  // ever renders once `addon.unlocked` is already true, see the render
+  // below). CodingInterview.tsx itself now has the "More Practice" link
+  // into CodingPracticeHub, so that hub is still reachable, just from the
+  // main screen rather than from here directly.
+  const onOpenCodingPractice = async () => {
+    if (isStartingCoding) return;
+    setIsStartingCoding(true);
+    try {
+      const entitlement = await getSessionEntitlement(subscription);
+      if (!entitlement.canStart) {
+        Alert.alert(
+          t('find:free_limit_reached_title', {defaultValue: "You've used your free sessions"}),
+          t('find:free_limit_reached_body', {
+            limit: entitlement.sessionsLimit ?? 5,
+            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
+          }),
+          [
+            {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
+            {text: t('find:upgrade_to_pro', {defaultValue: 'Upgrade to Basic'}), onPress: () => navigate('Subscription')},
+          ],
+        );
+        return;
+      }
+      const {sessionId} = await interviewService.startSession({
+        interviewType: Interview_Type_Enum.Coding,
+        mode: Practice_Mode_Enum.Text,
+        difficulty: Difficulty_Enum.Intermediate,
+        timed: true,
+      });
+      navigate('CodingInterview', {sessionId, interviewType: Interview_Type_Enum.Coding});
+    } catch (e: any) {
+      Alert.alert(
+        t('find:start_interview_failed', {defaultValue: 'Could not start interview'}),
+        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+      );
+    } finally {
+      setIsStartingCoding(false);
+    }
+  };
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -244,13 +299,15 @@ const AddOns = memo(() => {
                   tool so that its worth the amount its paid for" -- this
                   screen previously had NO way to actually start using an
                   unlocked add-on once purchased, just the "Unlocked"
-                  pill above with nothing to press). Straight into the
-                  new browsable problem hub (CodingPracticeHub.tsx).
-                  coding_practice specifically -- other future addon
-                  codes don't get this button since there's no generic
-                  screen to route them to. */}
+                  pill above with nothing to press). Now starts a real
+                  session and lands on the main coding screen
+                  (CodingInterview) -- see onOpenCodingPractice's own
+                  comment for why this no longer jumps straight to
+                  CodingPracticeHub. coding_practice specifically -- other
+                  future addon codes don't get this button since there's no
+                  generic screen to route them to. */}
               {addon.unlocked && addon.code === 'coding_practice' ? (
-                <CtaButton onPress={() => navigate('CodingPracticeHub')}>
+                <CtaButton loading={isStartingCoding} disabled={isStartingCoding} onPress={onOpenCodingPractice}>
                   {t('more:addon_practice_now_cta', {defaultValue: 'Practice now'})}
                 </CtaButton>
               ) : null}
