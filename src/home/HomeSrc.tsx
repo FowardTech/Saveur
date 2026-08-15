@@ -1077,7 +1077,6 @@ const HomeSrc = memo(() => {
             </Text>
           </View>
         </View>
-
         {/* Product follow-up: "add more content after the your progress
             card" -- DailyChallengeCard specifically (product's own choice
             among a few options offered): it was removed from Home in the
@@ -1088,6 +1087,7 @@ const HomeSrc = memo(() => {
             its own when there's nothing real to show or the feature is
             off -- same convention as everything else on this screen. */}
         <DailyChallengeCard />
+
 
         {/* Refer & Earn promo card (product follow-up: "Remove refer from
             the career toolkit and replace it with Courses... the referral
