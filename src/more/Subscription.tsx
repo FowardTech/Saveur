@@ -713,7 +713,16 @@ const Subscription = memo(() => {
             ) : (
               <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
             )}
-            <Text category="h10" bold status="primary" ml={6}>
+            {/* BUG FIX (screenshot: link text invisible in light mode) —
+                was status="primary", which resolves to text-primary-color
+                (constants/theme/light.json: near-white $color-basic-100,
+                meant for text ON a solid primary-colored fill like a
+                button, not as colored link text on the plain background
+                here) — same recurring bug already fixed this way across
+                the app (CareerDiary.tsx, PracticalScenarioSession.tsx,
+                etc). Explicit color-primary-500 matches the Icon above and
+                is visible in both themes. */}
+            <Text category="h10" bold ml={6} style={{color: theme['color-primary-500']}}>
               {t('more:subscription_refresh_status_cta', { defaultValue: "Not seeing your correct plan? Refresh status" })}
             </Text>
           </TouchableOpacity>
@@ -735,7 +744,9 @@ const Subscription = memo(() => {
             ) : (
               <Icon pack="eva" name="undo-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
             )}
-            <Text category="h10" bold status="primary" ml={6}>
+            {/* Same status="primary" -> invisible-in-light-mode fix as the
+                refresh-status link above. */}
+            <Text category="h10" bold ml={6} style={{color: theme['color-primary-500']}}>
               {t('more:restore_purchases_cta', { defaultValue: 'Restore purchases' })}
             </Text>
           </TouchableOpacity>
