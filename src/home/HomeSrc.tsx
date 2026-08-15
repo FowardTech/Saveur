@@ -912,7 +912,17 @@ const HomeSrc = memo(() => {
         <Text category="h8" bold mt={24} mb={12}>
           {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
         </Text>
-        <View style={styles.quickActionsRow}>
+        {/* Product ask: "give the container the card covering the career
+            toolkit a border" — this row had no wrapping card at all before
+            (just the 4 shortcuts laid directly on the page background), so
+            it read as un-contained next to every other section on this
+            screen. globalStyle.card is the shared bordered-card look
+            ~60+ cards app-wide already use (see its own comment — hairline
+            border + 20px radius); same padding/background treatment as the
+            "Career Progress" card right below for visual consistency
+            between the two. */}
+        <View style={[globalStyle.card, styles.toolkitCard]}>
+          <View style={styles.quickActionsRow}>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
             <View style={[styles.quickActionIconWrap, { backgroundColor: 'rgba(0, 99, 248, 0.1)' }]}>
               <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
@@ -949,6 +959,7 @@ const HomeSrc = memo(() => {
               </Text>
             </TouchableOpacity>
           ) : null}
+          </View>
         </View>
 
         {/* "Your Progress" -- Progress Toward Goal ring (see the "which
@@ -1270,6 +1281,14 @@ const themedStyles = StyleService.create({
   // cross-RN-version caution QuickActionGrid.tsx's own `grid` style
   // documents (gap inside a flex row isn't guaranteed on every Yoga
   // version this app has shipped with).
+  // Wraps quickActionsRow in the same bordered-card look as every other
+  // section on this screen (see the "give the career toolkit a border"
+  // comment at the call site) — same padding/background as progressCard
+  // just below it.
+  toolkitCard: {
+    padding: 16,
+    backgroundColor: 'background-basic-color-2',
+  },
   quickActionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
