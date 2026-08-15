@@ -828,22 +828,6 @@ const HomeSrc = memo(() => {
           activeOpacity={0.85}
           style={[globalStyle.card, styles.focusCard]}
           onPress={() => navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { openTopicsSheet: true } } })}>
-          {/* EXPERIMENTAL (product ask: "give the today's career Focus card
-              linear gradient of orange and subtle light orange and the
-              texts white including the icons too ... will revert back if
-              its not look good") -- orange -> soft light-orange diagonal
-              wash behind the card's normal content, same
-              absoluteFillObject-behind-content approach as the
-              homeBannerFallback gradient above. Easy single block to
-              delete (this LinearGradient) + revert the text/ProgressBar/
-              ArtPractice color overrides below if it doesn't read well
-              live. */}
-          <LinearGradient
-            colors={['#FF7A18', '#FFD9A6']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={StyleSheet.absoluteFillObject}
-          />
           <Flex justify="flex-start" itemsCenter>
             {/* Product follow-up, round 3: "I dont like it, I want you to
                 use the illustration style you used in the referral screen
@@ -866,20 +850,13 @@ const HomeSrc = memo(() => {
                 an accent icon next to the streak text than a co-equal
                 visual block. */}
             <View style={styles.focusIconWrap}>
-              {/* Product ask (round 2 of the orange-gradient request):
-                  "...including the icons too" -- ArtPractice's default
-                  brand-blue stroke + pale-blue backdrop circle clashed on
-                  this card's orange background, so it takes an explicit
-                  white override here only (every other ArtPractice call
-                  site keeps the default blue -- see HomeHeroArt.tsx's
-                  ArtProps comment). */}
-              <ArtPractice size={44} color="#FFFFFF" />
+              <ArtPractice size={44} />
             </View>
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
-              <Text category="h9" bold numberOfLines={1} style={styles.focusTextWhite}>
+              <Text category="h9" bold numberOfLines={1}>
                 {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
               </Text>
-              <Text category="h10" mt={2} numberOfLines={1} style={styles.focusSubtextWhite}>
+              <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
                 {streak && streak.longestStreak && streak.longestStreak > streak.streakDays
                   ? t('home:streak_hero_subtitle_chasing', {
                       defaultValue: 'Best is {{best}} days — keep going!',
@@ -894,19 +871,15 @@ const HomeSrc = memo(() => {
                   streakRingPct/roadmapPercent are computed) -- this card's
                   whole narrative (headline, subtitle) is the daily practice
                   habit, so the bar underneath stays that same story instead
-                  of switching metrics mid-card. Track/fill colors swapped
-                  to white-on-translucent-white for the orange-gradient
-                  experiment above -- the old blue fill disappeared against
-                  orange. */}
+                  of switching metrics mid-card. */}
               <Flex justify="flex-start" itemsCenter mt={8}>
                 <ProgressBar
                   style={styles.focusProgressBar}
                   didDone={streak?.streakDays ?? 0}
                   total={7}
-                  minimumTrackTintColor="#FFFFFF"
-                  maximumTrackTintColor="rgba(255,255,255,0.3)"
+                  minimumTrackTintColor="#0063f8"
                 />
-                <Text category="h10" bold ml={8} style={styles.focusTextWhite}>
+                <Text category="h10" bold ml={8}>
                   {Math.round(streakRingPct)}%
                 </Text>
               </Flex>
@@ -1264,21 +1237,6 @@ const themedStyles = StyleService.create({
     padding: 14,
     marginBottom: 4,
     backgroundColor: 'background-basic-color-2',
-    // EXPERIMENTAL orange-gradient ask (see JSX comment) -- the gradient is
-    // an absoluteFillObject layer behind the content, so this needs
-    // overflow:'hidden' or it'd spill past the card's own 20px
-    // globalStyle.card border radius as a visible square edge.
-    overflow: 'hidden',
-  },
-  // Same experimental gradient ask -- plain white here reads best against
-  // the orange->light-orange background; revert to removing these two
-  // style props (back to default basic-color / status="placeholder") if
-  // the gradient itself gets reverted.
-  focusTextWhite: {
-    color: '#FFFFFF',
-  },
-  focusSubtextWhite: {
-    color: 'rgba(255,255,255,0.85)',
   },
   // IconMic3D (see the JSX comment above) is a self-sized SVG component,
   // not an Image needing explicit width/height/borderRadius -- this wrap
