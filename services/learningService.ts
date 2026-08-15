@@ -252,6 +252,60 @@ export function deriveContinueCourse(allProgress: AllProgress): ContinueCourseSu
   return {courseId, topic, level, totalModules, completedModules: entry.completedModules};
 }
 
+// Product request item: "add another card in the scroll item of upcoming
+// and thats the next lesson to be taken and if the user have finished all
+// the curriculums then the next card... is a card that navigates to a
+// screen that display upcoming features." Powers src/home/NextLessonHomeCard.tsx.
+//
+// Deliberately distinct from ContinueCourseSummary/deriveContinueCourse
+// above — that's "resume wherever I last touched anything" (any course or
+// video, not necessarily part of a structured plan); this is the
+// CURRICULUM-directed next step: the first not-yet-completed module of the
+// learner's current unlocked week in their saved AI Curriculum. A learner
+// can have one, both, or neither showing at once — they answer different
+// questions ("where did I leave off" vs. "what does my plan say is next").
+export interface NextLessonInfo {
+  courseId: string;
+  topic: string;
+  level: CourseLevel;
+  moduleIndex: number;
+  moduleTitle: string;
+  totalModules: number;
+  week: number | null;
+}
+
+/**
+ * GET /api/v1/learning/next-lesson. Returns null when there's no curriculum
+ * yet, every week is already completed, or the current week's syllabus
+ * hasn't been generated — NextLessonHomeCard.tsx treats all of these the
+ * same way: fall back to the Upcoming Features teaser instead.
+ */
+export async function getNextLesson(): Promise<NextLessonInfo | null> {
+  try {
+    const {data} = await apiClient.get<{
+      course_id?: string;
+      topic?: string;
+      level?: CourseLevel;
+      module_index?: number;
+      module_title?: string;
+      total_modules?: number;
+      week?: number | null;
+    }>('/api/v1/learning/next-lesson');
+    if (!data.course_id) return null;
+    return {
+      courseId: data.course_id,
+      topic: data.topic ?? '',
+      level: data.level ?? 'basic',
+      moduleIndex: data.module_index ?? 0,
+      moduleTitle: data.module_title ?? '',
+      totalModules: data.total_modules ?? 0,
+      week: data.week ?? null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * POST /api/v1/learning/progress — marks a module completed as the learner
  * finishes it. Best-effort: a save hiccup shouldn't block moving on to the

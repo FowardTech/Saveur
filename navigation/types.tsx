@@ -313,6 +313,10 @@ export type RootStackParamList = {
     level: 'basic' | 'intermediate' | 'advanced';
     coreSubtopics?: string[];
   };
+  // Upcoming Features teaser (product request item — see
+  // src/home/NextLessonHomeCard.tsx). Admin-configured, no params — content
+  // comes from configService's cached app config.
+  UpcomingFeatures: undefined;
   NetworkingAssistant: undefined;
   // Career Diary — log what the user did/learned/achieved day-to-day
   // regarding a role, career, or job. See services/careerDiaryService.ts

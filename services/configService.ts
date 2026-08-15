@@ -203,6 +203,25 @@ export interface DailyChallengeConfig {
   types: DailyChallengeType[];
 }
 
+// Upcoming Features teaser (product request item — see
+// src/home/NextLessonHomeCard.tsx and src/more/UpcomingFeatures.tsx). Shown
+// on Home in place of the "Next Lesson" card once a learner has no next
+// curriculum lesson to take (see learningService.getNextLesson()), and
+// listed in full on the screen that card navigates into. Same
+// {id, enabled, name/description, icon} passthrough shape as
+// InterviewPersona above, just with `title` in place of `name`.
+export interface UpcomingFeatureItem {
+  id: string;
+  enabled: boolean;
+  title: string;
+  description: string;
+  icon: string;
+}
+
+export interface UpcomingFeaturesConfig {
+  items: UpcomingFeatureItem[];
+}
+
 // Pre-signup onboarding carousel illustrations (product request:
 // "implement the ability to upload the app onboarding images i.e the one
 // at signup... single image upload for the 4 onboarding screen that is in
@@ -235,6 +254,7 @@ export interface AppConfig {
   interview_personas: InterviewPersonasConfig;
   daily_challenge: DailyChallengeConfig;
   signup_onboarding_images: SignupOnboardingImagesConfig;
+  upcoming_features: UpcomingFeaturesConfig;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -308,6 +328,7 @@ const DEFAULT_CONFIG: AppConfig = {
   interview_personas: {items: []},
   daily_challenge: {enabled: true, xp_reward: 30, types: []},
   signup_onboarding_images: {interview: '', feedback: '', job_alert: '', resume_scan: '', learning: ''},
+  upcoming_features: {items: []},
 };
 
 // The JS-bundle-declared app version (package.json). Good enough to gate a
@@ -434,6 +455,7 @@ export async function loadAppConfig(): Promise<AppConfig> {
       daily_challenge: {...DEFAULT_CONFIG.daily_challenge, ...data.daily_challenge},
       signup_onboarding_images: {...DEFAULT_CONFIG.signup_onboarding_images, ...data.signup_onboarding_images},
       home_banner: {...DEFAULT_CONFIG.home_banner, ...data.home_banner},
+      upcoming_features: {...DEFAULT_CONFIG.upcoming_features, ...data.upcoming_features},
     };
     AsyncStorage.setItem(EKeyAsyncStorage.appConfigCache, JSON.stringify(cached)).catch(() => {});
   } catch {

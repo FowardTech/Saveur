@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
+import NextLessonHomeCard from './NextLessonHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
 import { ArtGiftBox, ArtPractice, ArtWorkplaceCompass } from './HomeHeroArt';
@@ -169,6 +170,18 @@ const HomeSrc = memo(() => {
   const topCardWidth = topCardsBothVisible
     ? (width - CONTENT_PADDER * 2 - topCardsGap) / 2
     : width - CONTENT_PADDER * 2;
+  // Product follow-up: "add another card in the scroll item of upcoming...
+  // the next lesson to be taken [or, once finished,] a card that navigates
+  // to a screen that display upcoming features." NextLessonHomeCard is a
+  // permanent THIRD item in the same row — exactly the "a future 3rd card
+  // would scroll instead of squeezing everyone thinner" scenario topCardWidth's
+  // own comment already anticipated. Deliberately NOT part of the
+  // topCardsBothVisible stretch calculation above (that's still only about
+  // UpcomingSessionHomeCard/ContinueLearningCard relative to each other) —
+  // always sized at the "grid of 2" half-width regardless of whether those
+  // two are stretched, so the row still reads as same-sized cards you
+  // scroll through rather than one giant card swallowing the whole screen.
+  const halfCardWidth = (width - CONTENT_PADDER * 2 - topCardsGap) / 2;
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -810,7 +823,13 @@ const HomeSrc = memo(() => {
             (UpcomingSessionHomeCard first, ContinueLearningCard second);
             topCardsGap now applies to whichever card renders FIRST in the
             row, so it still only shows a gap when both cards actually have
-            something to show. */}
+            something to show.
+            Product follow-up: "add another card in the scroll item of
+            upcoming and thats the next lesson to be taken and if the user
+            have finished all the curriculums then the next card... is a
+            card that navigates to a screen that display upcoming
+            features" -- NextLessonHomeCard joined as a permanent third
+            item (see halfCardWidth's own comment above for its sizing). */}
         <Text category="h8" bold mt={4} mb={12}>
           {t('home:continue_and_upcoming_label', { defaultValue: 'Continue & Upcoming' })}
         </Text>
@@ -825,14 +844,22 @@ const HomeSrc = memo(() => {
             it, rather than bumping that title's mt and disturbing its
             no-banner-shown spacing. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+          {/* NextLessonHomeCard is a permanent third item (see halfCardWidth's
+              own comment above), so something always follows both of these
+              now — marginRight is unconditional on both rather than only
+              when topCardsBothVisible, which used to matter for avoiding a
+              dangling margin on whichever card became the sole, full-width
+              one. An invisible (null-rendering) card's own marginRight is
+              harmless either way. */}
           <UpcomingSessionHomeCard
-            style={{ width: topCardWidth, marginRight: topCardsBothVisible ? topCardsGap : 0 }}
+            style={{ width: topCardWidth, marginRight: topCardsGap }}
             onVisibilityChange={setUpcomingPlanVisible}
           />
           <ContinueLearningCard
-            style={{ width: topCardWidth }}
+            style={{ width: topCardWidth, marginRight: topCardsGap }}
             onVisibilityChange={setContinuePlanVisible}
           />
+          <NextLessonHomeCard style={{ width: halfCardWidth }} />
         </ScrollView>
 
         {/* "Today's Focus" -- wireframe's top card: a square image, a bold
