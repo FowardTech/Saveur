@@ -96,6 +96,15 @@ import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
 
 interface ArtProps {
   size: number;
+  // Optional stroke/backdrop tint override (product ask: "the [Today's
+  // Career Focus] icons white too" once that card got its orange gradient
+  // -- ArtPractice's default brand-blue stroke + pale-blue backdrop circle
+  // would clash on an orange background). Only ArtPractice reads this so
+  // far; every other Art* component ignores the extra prop and keeps its
+  // own fixed illustration-style palette (see this file's own header
+  // comment on why those are deliberately NOT the brand-blue-on-pale-
+  // backdrop treatment ArtPractice uses).
+  color?: string;
 }
 
 export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
@@ -117,9 +126,15 @@ export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
 // to fill="none" + the same stroke treatment as the rest so the whole mic
 // reads as one consistent outline drawing, not a filled glyph with
 // stroked accents around it.
-export const ArtPractice: React.FC<ArtProps> = ({ size }) => (
+export const ArtPractice: React.FC<ArtProps> = ({ size, color = '#0063f8' }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="60" r="48" fill="#0063f80f" />
+    {/* Backdrop circle stays a very-low-opacity tint of whatever stroke
+        color is in use (hex + appended alpha, same trick the default blue
+        already used -- same "0f" suffix so the default blue case renders
+        pixel-identical to before) so a white override reads as a soft
+        translucent white disc instead of the pale-blue backdrop clashing
+        on an orange card. */}
+    <Circle cx="60" cy="60" r="48" fill={`${color}0f`} />
     <Ellipse cx="60" cy="98" rx="22" ry="5" fill="rgba(0,0,0,0.06)" />
     <Rect
       x="47"
@@ -128,18 +143,18 @@ export const ArtPractice: React.FC<ArtProps> = ({ size }) => (
       height="44"
       rx="13"
       fill="none"
-      stroke="#0063f8"
+      stroke={color}
       strokeWidth={5.5}
     />
     <Path
       d="M36 56a24 24 0 0 0 48 0"
-      stroke="#0063f8"
+      stroke={color}
       strokeWidth={5.5}
       fill="none"
       strokeLinecap="round"
     />
-    <Line x1="60" y1="80" x2="60" y2="90" stroke="#0063f8" strokeWidth={5.5} strokeLinecap="round" />
-    <Line x1="45" y1="90" x2="75" y2="90" stroke="#0063f8" strokeWidth={5.5} strokeLinecap="round" />
+    <Line x1="60" y1="80" x2="60" y2="90" stroke={color} strokeWidth={5.5} strokeLinecap="round" />
+    <Line x1="45" y1="90" x2="75" y2="90" stroke={color} strokeWidth={5.5} strokeLinecap="round" />
   </Svg>
 );
 
