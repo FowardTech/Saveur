@@ -368,31 +368,31 @@ export const globalStyle = StyleSheet.create({
     borderRadius: 99,
   },
   icon8: {
-    width: 8,
-    height: 8,
+    width: 9,
+    height: 9,
   },
   icon16: {
-    width: 16,
-    height: 16,
+    width: 18,
+    height: 18,
   },
   icon20: {
-    width: 25,
-    height: 25,
+    width: 28,
+    height: 28,
   },
   icon24: {
-    width: 24,
-    height: 24,
+    width: 27,
+    height: 27,
   },
   // Home dashboard's nav tiles + stat cards (product request item — those
   // icons were "too small" at icon20/icon24) — see src/home/HomeSrc.tsx.
   icon28: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
   },
   icon40: {
-    width: 40,
-    height: 40,
-    
+    width: 45,
+    height: 45,
+
   },
   // The exact same `rgba(128,128,128,0.15)` bottom-border was independently
   // hand-rolled in several unrelated screens (InterviewReplay, Student

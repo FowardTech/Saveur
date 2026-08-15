@@ -40,7 +40,16 @@ const Content: React.FC<ContentProps> = ({
       showsVerticalScrollIndicator={false}
       contentContainerStyle={[
         contentContainerStyle,
-        padder && { paddingHorizontal: 24 },
+        // Product ask: "increase the containers width in each screen to
+        // take a little more space. But not too close to the screen
+        // edges" — Content's `padder` is the one shared horizontal-inset
+        // token ~40+ screens across the app opt into (instead of each
+        // screen picking its own number), so this single change is what
+        // actually widens "each screen" at once. 24 -> 16 (a standard,
+        // still-comfortable safe margin, same minimum most polished apps
+        // use) rather than removing the inset entirely, which would run
+        // content right up to the edges.
+        padder && { paddingHorizontal: 16 },
       ]}
       {...(avoidKeyboard ? { enableOnAndroid: true, extraScrollHeight: 20 } : {})}
     >
