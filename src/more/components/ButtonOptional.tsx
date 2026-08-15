@@ -27,19 +27,18 @@ export interface ButtonOptionalProps {
     | 'MoreSrc';
   withToggle?: boolean;
   checked?: boolean;
-  // REDESIGN (product reference — a plain flat icon-list settings screen,
-  // no colored circle/chip behind each row's icon at all, matching the
-  // "iconBackgroundColor"/"iconBorderColor" era's opposite direction). This
-  // row used to render its icon inside ButtonFill's circular, shadowed
-  // squircle background — iconBackgroundColor/iconBorderColor controlled
-  // that circle's fill/ring color. The circle is gone entirely now (see the
-  // render below, a plain <Icon> with no wrapping container); these two
-  // props are kept in the type (and MoreSrc.tsx's DATA_DETAILS/
-  // DATA_APPLICATION entries still pass them) purely so that file didn't
-  // need a separate sweep to strip 30+ now-inert values — they're simply
-  // unused here now.
+  // REDESIGN (product reference — iOS Settings app: a colored rounded-
+  // square badge behind each row's icon, white glyph on top). This prop
+  // had a long back-and-forth history — ButtonFill's circular shadowed
+  // squircle originally, then dropped entirely for a flat no-chip glyph —
+  // and is back in real use again now, this time as a small square badge
+  // rather than a big circle. See the render below.
   iconBackgroundColor?: string;
-  // Still meaningful — the plain icon's own tint color.
+  // No longer applied — the icon badge's glyph is always white now (see
+  // iconBackgroundColor above), so a separate glyph tint has nothing left
+  // to vary against. Kept in the type only so MoreSrc.tsx's DATA_DETAILS/
+  // DATA_APPLICATION entries (which still pass it) don't need a separate
+  // sweep to strip a now-inert value.
   iconColor?: string;
   iconBorderColor?: string;
   // Small unread indicator on the icon's top-right corner (product request
@@ -76,7 +75,7 @@ const ButtonOptional = ({
   withToggle,
   checked,
   navigateSrc,
-  iconColor,
+  iconBackgroundColor,
   badgeCount,
   badgeDot,
 }: ButtonOptionalProps) => {
@@ -103,15 +102,20 @@ const ButtonOptional = ({
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
         <View>
-          {/* REDESIGN — was ButtonFill (a 40x40 shadowed circle behind the
-              icon); now a plain, unwrapped icon glyph directly next to the
-              label, matching the reference settings-list look (flat icon +
-              text rows, no chip/background). */}
-          <Icon
-            pack="assets"
-            name={icon}
-            style={{width: 22, height: 22, tintColor: iconColor ?? theme['text-basic-color']}}
-          />
+          {/* REDESIGN (product reference — iOS Settings app: each row's
+              icon sits inside a small colored rounded-square badge, white
+              glyph on top, instead of a bare tinted icon). Was a plain,
+              unwrapped icon glyph directly next to the label (see this
+              comment's own git history for the two earlier redesigns that
+              led here — a shadowed circle, then a flat no-chip glyph).
+              iconBackgroundColor is finally used again (MoreSrc.tsx now
+              passes a distinct color per row instead of the old uniform
+              gray) — the glyph itself is always white now, matching every
+              icon in the reference screenshot regardless of the badge's
+              own color. */}
+          <View style={[styles.iconWrap, {backgroundColor: iconBackgroundColor ?? theme['color-primary-500']}]}>
+            <Icon pack="assets" name={icon} style={{width: 18, height: 18, tintColor: '#fff'}} />
+          </View>
           {badgeCount ? (
             <View style={styles.badgeCount}>
               <Text category="h9" status="control" fontSize={11} lineHeight={13}>
@@ -198,13 +202,20 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     marginTop: 2,
   },
-  // Same 20x20/count-badge shape as HeaderHome.tsx's bell badge (see that
-  // file's own sizing comment) — a small colored circle sitting on the
-  // icon's top-right corner, offset just enough to look like it's
-  // "attached" to the icon rather than floating. Offsets pushed out a
-  // little further than before (-4/-4 -> -6/-8) now that the icon itself
-  // shrank from a 40x40 circle to a plain 22x22 glyph — same relative
-  // "corner badge" look on the smaller icon instead of swallowing half of it.
+  // iOS-Settings-style icon badge — a small flat-colored rounded square
+  // (not a full circle; a squircle-ish radius, same ~26% of side length
+  // proportion the reference screenshot's own app icons use) behind each
+  // row's glyph. See the REDESIGN comment at the render call site above.
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Same corner-badge idea as HeaderHome.tsx's bell badge, re-tuned for the
+  // new 32x32 icon badge (was tuned for a plain 22x22 glyph before this
+  // redesign — see iconWrap's own comment).
   badgeCount: {
     position: 'absolute',
     top: -6,
@@ -222,8 +233,8 @@ const themedStyles = StyleService.create({
   // JobAlerts.tsx's unread-item dot.
   badgeDot: {
     position: 'absolute',
-    top: -2,
-    right: -3,
+    top: -3,
+    right: -4,
     width: 12,
     height: 12,
     borderRadius: 6,

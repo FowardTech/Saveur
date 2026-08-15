@@ -65,6 +65,15 @@ const Container: React.FC<ContainerProps> = ({
   // recolor just the page body without touching the shared badge-pill/
   // date-circle uses of `background-basic-color-3` -- only the color value
   // in the theme JSON changed.
+  //
+  // REDESIGN (product reference — an iOS Settings app screenshot: "I want
+  // us to use that type of gray background for the app background... and
+  // lets see how it looks like") — `background-page-body` is now #F2F2F7,
+  // the real iOS systemGroupedBackground light color the reference
+  // screenshot itself uses, in place of the flatter #F0F0F0 gray above.
+  // Same token/mechanism, just a different value again — trivial to revert
+  // to #F0F0F0 (or back to #FFFFFF, this app's most recent prior value) if
+  // this doesn't read well once seen live.
   const bodyBackgroundOverride =
     level === undefined && appTheme !== "dark" ? { backgroundColor: theme["background-page-body"] } : null;
   return (

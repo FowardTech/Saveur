@@ -158,6 +158,32 @@ const MoreSrc = memo(() => {
   // as well — see those three below).
   const ICON_BG = theme['background-basic-color-2'];
   const ICON_GLYPH = theme['text-basic-color'];
+  // REDESIGN (product reference — iOS Settings app screenshot: "lets use
+  // that type of icon style for the icons in app including the menu
+  // icons"): each row's `status` field (declared per-entry below, and
+  // already threaded through to ButtonOptional either way) used to only
+  // matter to ButtonFill's old circular-icon design, back before this
+  // screen went flat/no-chip — see ButtonOptional.tsx's own REDESIGN
+  // comment for that history. Repurposed here as the badge-color lookup
+  // for the new colored-square icon treatment, so the ~30 existing
+  // DATA_DETAILS/DATA_APPLICATION entries don't each need a new explicit
+  // color field — their existing `status` values already vary sensibly
+  // row to row and just needed a real color mapped to them again.
+  const STATUS_COLORS: Record<string, string> = {
+    facebook: '#0063f8',
+    primary: '#0063f8',
+    twitter: '#1DA1F2',
+    'twitter-3': '#5AC8FA',
+    green: '#34C759',
+    success: '#34C759',
+    warning: '#FF9500',
+    danger: '#FF3B30',
+    basic: '#8E8E93',
+    neutral: '#8E8E93',
+    placeholder: '#AEAEB2',
+    white: '#8E8E93',
+    transparent: '#8E8E93',
+  };
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
     {
       // Also where account deletion now lives (see ProfileSrc.tsx) — moved
@@ -553,7 +579,7 @@ const MoreSrc = memo(() => {
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
-                iconBackgroundColor={item.iconBackgroundColor}
+                iconBackgroundColor={STATUS_COLORS[item.status] ?? ICON_BG}
                 iconColor={item.iconColor}
                 key={i}
                 onPress={item.onPress}
@@ -574,7 +600,7 @@ const MoreSrc = memo(() => {
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
-                iconBackgroundColor={item.iconBackgroundColor}
+                iconBackgroundColor={STATUS_COLORS[item.status] ?? ICON_BG}
                 iconColor={item.iconColor}
                 onPress={item.onPress}
                 key={i}
@@ -587,7 +613,7 @@ const MoreSrc = memo(() => {
             icon="darkMode"
             title={t('more:switch-dark-mode')}
             status={'danger'}
-            iconBackgroundColor={ICON_BG}
+            iconBackgroundColor={STATUS_COLORS.danger}
             iconColor={ICON_GLYPH}
             checked={darkMode}
             onPress={toggleTheme}
@@ -605,7 +631,7 @@ const MoreSrc = memo(() => {
             icon="notification"
             title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
             status={'facebook'}
-            iconBackgroundColor={ICON_BG}
+            iconBackgroundColor={STATUS_COLORS.facebook}
             iconColor={ICON_GLYPH}
             checked={notificationsEnabled}
             onPress={onToggleNotifications}
@@ -632,14 +658,19 @@ const MoreSrc = memo(() => {
               styles.logoutRow,
               {opacity: isSigningOut ? 0.6 : 1},
             ]}>
-            {/* REDESIGN — dropped the gray circle wrap (logoutIconWrap) to
-                match every other row above, which switched to a plain
-                unwrapped icon glyph (see ButtonOptional.tsx). */}
-            <Icon
-              pack="eva"
-              name="log-out-outline"
-              style={{width: 22, height: 22, tintColor: theme['text-basic-color']}}
-            />
+            {/* REDESIGN (iOS Settings icon-badge pass — see
+                ButtonOptional.tsx's own REDESIGN comment) — this is the one
+                row on this screen rendering its own icon by hand instead of
+                through ButtonOptional (see the comment above), so it needs
+                the same colored-badge treatment applied manually to stay
+                consistent with every row above it. */}
+            <View style={[styles.logoutIconWrap, {backgroundColor: STATUS_COLORS.danger}]}>
+              <Icon
+                pack="eva"
+                name="log-out-outline"
+                style={{width: 18, height: 18, tintColor: '#fff'}}
+              />
+            </View>
             {/* Matches ButtonOptional.tsx's own row-label treatment -- this
                 is the one row on this screen that renders its own Text
                 directly instead of going through ButtonOptional (see the
@@ -712,5 +743,14 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     marginTop: 2,
+  },
+  // Same size/radius as ButtonOptional.tsx's own iconWrap — see that
+  // file's REDESIGN comment for the full reasoning.
+  logoutIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
