@@ -845,7 +845,7 @@ const HomeSrc = memo(() => {
             room before "Today's Career Focus" regardless of what's above
             it, rather than bumping that title's mt and disturbing its
             no-banner-shown spacing. */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingHorizontal:10 }}>
           {/* NextLessonHomeCard is a permanent third item, so something
               always follows both of these now — marginRight is
               unconditional on both rather than only when both were
@@ -1043,8 +1043,22 @@ const HomeSrc = memo(() => {
             {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
           </Text>
           <View style={styles.quickActionsRow}>
+          {/* RETINTED (product follow-up: "I dont like the colors you used
+              for the coach icon, and company icon... use more beautiful
+              colors") -- both were the same flat brand blue as each other
+              (and as most other blue accents on this screen), so the row
+              read as three colorful icons (blue, blue, purple, green) with
+              two indistinguishable twins at the front. Coach picks up a
+              teal/cyan (#06B6D4) and Companies a rich indigo (#6366F1) --
+              both pulled from the same vivid palette RecentActivityList.tsx's
+              COLOR_BY_TYPE already uses elsewhere on this screen, so all 4
+              Career Toolkit icons are now distinct hues (teal, indigo,
+              purple, green) without introducing a new, unrelated palette.
+              Courses (#7C5CFC) and Salary (#1D9E75) untouched per explicit
+              ask ("you can leave the courses and salary colors they are
+              fine"). */}
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-            <GradientIconBadge color="#0063f8" size={48} radius={14}>
+            <GradientIconBadge color="#06B6D4" size={48} radius={14}>
               <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
             </GradientIconBadge>
             <Text category="h10" center mt={6} numberOfLines={1}>
@@ -1052,7 +1066,7 @@ const HomeSrc = memo(() => {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
-            <GradientIconBadge color="#0063f8" size={48} radius={14}>
+            <GradientIconBadge color="#6366F1" size={48} radius={14}>
               <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
             </GradientIconBadge>
             <Text category="h10" center mt={6} numberOfLines={1}>
