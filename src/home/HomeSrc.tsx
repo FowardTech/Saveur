@@ -154,34 +154,37 @@ const HomeSrc = memo(() => {
   // the top of Home (see the JSX right under the verify-email banner
   // below) instead of ContinueLearningCard alone at the top and
   // UpcomingSessionHomeCard buried at the bottom in the old "Next Steps"
-  // stack. Both track their own visibility here so that row can size each
-  // card correctly: when only one has something to show, it stretches to
-  // fill the full row instead of sitting at half width next to empty space
-  // (product follow-up #3: "when the learning course card disappears then
-  // the upcoming session card can then automatically stretch to cover the
-  // full space"). Both default true (assume visible) until each card's own
-  // fetch resolves and reports back — same "brief flash, then corrects"
-  // convention this file already used for upcomingPlanVisible before this
-  // change.
-  const [continuePlanVisible, setContinuePlanVisible] = React.useState(true);
-  const [upcomingPlanVisible, setUpcomingPlanVisible] = React.useState(true);
+  // stack.
+  //
+  // BUG FIX cleanup: this used to also track each card's own visibility
+  // (continuePlanVisible/upcomingPlanVisible state, fed by an
+  // onVisibilityChange prop on each) to stretch whichever one was alone to
+  // fill the row. Now that all three cards share one fixed width (see
+  // topCardWidth's own comment below) instead of stretching, nothing reads
+  // that visibility anymore — removed rather than left as dead state an
+  // onVisibilityChange prop nobody uses the result of.
   const topCardsGap = 12;
-  const topCardsBothVisible = continuePlanVisible && upcomingPlanVisible;
-  const topCardWidth = topCardsBothVisible
-    ? (width - CONTENT_PADDER * 2 - topCardsGap) / 2
-    : width - CONTENT_PADDER * 2;
   // Product follow-up: "add another card in the scroll item of upcoming...
   // the next lesson to be taken [or, once finished,] a card that navigates
-  // to a screen that display upcoming features." NextLessonHomeCard is a
-  // permanent THIRD item in the same row — exactly the "a future 3rd card
-  // would scroll instead of squeezing everyone thinner" scenario topCardWidth's
-  // own comment already anticipated. Deliberately NOT part of the
-  // topCardsBothVisible stretch calculation above (that's still only about
-  // UpcomingSessionHomeCard/ContinueLearningCard relative to each other) —
-  // always sized at the "grid of 2" half-width regardless of whether those
-  // two are stretched, so the row still reads as same-sized cards you
-  // scroll through rather than one giant card swallowing the whole screen.
-  const halfCardWidth = (width - CONTENT_PADDER * 2 - topCardsGap) / 2;
+  // to a screen that display upcoming features" -- NextLessonHomeCard
+  // joined as a permanent THIRD item in this row.
+  // BUG FIX (product report: "the upcoming feature should have the same
+  // width... the three should be of the same width the upcoming session
+  // should not be longer than any of the other two"): this used to
+  // stretch UpcomingSessionHomeCard/ContinueLearningCard to the FULL row
+  // width whenever the other one had nothing to show (product follow-up
+  // #3, from before the third card existed: "when the learning course
+  // card disappears then the upcoming session card can then automatically
+  // stretch to cover the full space"). With NextLessonHomeCard now always
+  // present in the same row, that stretch made the remaining card visibly
+  // longer than the third one instead of matching it. All three cards now
+  // share one fixed "grid of 2" half-width — same value the row already
+  // used when both of the first two were visible — regardless of how many
+  // of the three actually have content, so they always match. A row with
+  // only one real card just shows one half-width card instead of a full-
+  // width one; the layout no longer needs to know the individual
+  // visibility flags to size anything.
+  const topCardWidth = (width - CONTENT_PADDER * 2 - topCardsGap) / 2;
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -820,46 +823,43 @@ const HomeSrc = memo(() => {
             section-less block on this screen.
             Product follow-up: "the upcoming session should be on the left
             while the continue learning be on the right" -- swapped order
-            (UpcomingSessionHomeCard first, ContinueLearningCard second);
-            topCardsGap now applies to whichever card renders FIRST in the
-            row, so it still only shows a gap when both cards actually have
-            something to show.
+            (UpcomingSessionHomeCard first, ContinueLearningCard second).
             Product follow-up: "add another card in the scroll item of
             upcoming and thats the next lesson to be taken and if the user
             have finished all the curriculums then the next card... is a
             card that navigates to a screen that display upcoming
             features" -- NextLessonHomeCard joined as a permanent third
-            item (see halfCardWidth's own comment above for its sizing). */}
+            item (see topCardWidth's own comment above for its sizing). */}
         <Text category="h8" bold mt={4} mb={12}>
           {t('home:continue_and_upcoming_label', { defaultValue: 'Continue & Upcoming' })}
         </Text>
-        {/* Always mounted (both cards already self-hide internally by
-            returning null when they have nothing to show — no need to
-            conditionally swap the wrapper itself), so when both, one, or
-            neither has content, topCardWidth above already resolves to the
-            right value for whichever card(s) actually render something. */}
+        {/* Always mounted (all three cards already self-hide/self-fallback
+            internally when they have nothing to show — no need to
+            conditionally swap the wrapper itself). All three share one
+            fixed width now (see topCardWidth's own comment above) so they
+            always match regardless of which ones actually render
+            content. */}
         {/* marginBottom here (same reasoning as homeBannerCard's own —
             see that style's comment) gives this row its own breathing
             room before "Today's Career Focus" regardless of what's above
             it, rather than bumping that title's mt and disturbing its
             no-banner-shown spacing. */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
-          {/* NextLessonHomeCard is a permanent third item (see halfCardWidth's
-              own comment above), so something always follows both of these
-              now — marginRight is unconditional on both rather than only
-              when topCardsBothVisible, which used to matter for avoiding a
-              dangling margin on whichever card became the sole, full-width
-              one. An invisible (null-rendering) card's own marginRight is
-              harmless either way. */}
+          {/* NextLessonHomeCard is a permanent third item, so something
+              always follows both of these now — marginRight is
+              unconditional on both rather than only when both were
+              visible, which used to matter for avoiding a dangling margin
+              on whichever card became the sole, full-width one (that
+              stretch-to-full-width behavior is gone now — see
+              topCardWidth's comment). An invisible (null-rendering)
+              card's own marginRight is harmless either way. */}
           <UpcomingSessionHomeCard
             style={{ width: topCardWidth, marginRight: topCardsGap }}
-            onVisibilityChange={setUpcomingPlanVisible}
           />
           <ContinueLearningCard
             style={{ width: topCardWidth, marginRight: topCardsGap }}
-            onVisibilityChange={setContinuePlanVisible}
           />
-          <NextLessonHomeCard style={{ width: halfCardWidth }} />
+          <NextLessonHomeCard style={{ width: topCardWidth }} />
         </ScrollView>
 
         {/* "Today's Focus" -- wireframe's top card: a square image, a bold
