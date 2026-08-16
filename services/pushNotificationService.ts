@@ -26,6 +26,8 @@ import {
   navigateToNextStepRecommendation,
   navigateToApplicationDetails,
   navigateToApplicationsList,
+  navigateToCareerEventWebView,
+  navigateToNetworkingAssistant,
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 import * as scheduledInterviewService from './scheduledInterviewService';
@@ -164,6 +166,20 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
       navigateToJobAlertDetails(job);
       return;
     }
+  }
+  // Career Events (Saveur-Backend's career_events_service.py — product
+  // request: "Users need to get push notifications too the same way they
+  // get for job alert"). Same "land directly on the real content" choice
+  // as job_alert above — opens the actual Eventbrite page in-app rather
+  // than just the events list, since url is always present on a real
+  // career_event payload (see push_service.send_career_event).
+  if (data?.type === 'career_event') {
+    if (data.url) {
+      navigateToCareerEventWebView(data.url, data.title);
+    } else {
+      navigateToNetworkingAssistant();
+    }
+    return;
   }
   // Weekly Career Report / Daily Industry News (product request item:
   // "when users click on the updates in the push notification, it should

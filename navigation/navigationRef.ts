@@ -94,6 +94,12 @@ type PendingNavigation =
   // other multi-item push in this file.
   | {name: 'ApplicationDetails'; params: {id: string | number}}
   | {name: 'ApplicationsList'}
+  // career_event push tap fallback (Saveur-Backend's
+  // career_events_service.py — product request: "Users need to get push
+  // notifications too the same way they get for job alert") — only used
+  // when a career_event payload has no usable url; the normal case reuses
+  // the existing WebViewScreen entry above (navigateToCareerEventWebView).
+  | {name: 'NetworkingAssistant'}
   // post_offer_step_unlocked / post_offer_plan_complete push taps
   // (Saveur-Backend's roadmap_progress_service.py) — same gap as
   // stale_applications above; both reuse the existing WhatsNext
@@ -164,6 +170,8 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('RequestStack', {screen: 'ApplicationDetails', params: nav.params});
   } else if (nav.name === 'ApplicationsList') {
     navigationRef.navigate('MainBottomTab', {screen: 'Interviews', params: {screen: 'RequestsSrc'}});
+  } else if (nav.name === 'NetworkingAssistant') {
+    navigationRef.navigate('NetworkingAssistant');
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -212,6 +220,26 @@ export function navigateToJobAlertWebView(job: JobAlertProps): void {
       },
     },
   });
+}
+
+/** Career event push tap (Saveur-Backend's career_events_service sends
+ * type: "career_event" — product request: "Users need to get push
+ * notifications too the same way they get for job alert"). Same "land
+ * directly on the real content, not just the list" treatment
+ * navigateToJobAlertWebView above gets — a career event has no separate
+ * in-app details screen of its own (see src/more/NetworkingAssistant.tsx),
+ * so this opens the real Eventbrite page in-app via WebViewScreen
+ * directly, skipping an extra tap through the events list. */
+export function navigateToCareerEventWebView(url: string, title?: string): void {
+  queueOrNavigate({name: 'WebViewScreen', params: {url, title}});
+}
+
+/** Fallback for a career_event push/notification tap with no usable url
+ * (shouldn't normally happen — see jobFromPushData's own equivalent
+ * "not enough to act on" fallback) — lands on the Career Events section
+ * itself rather than doing nothing. */
+export function navigateToNetworkingAssistant(): void {
+  queueOrNavigate({name: 'NetworkingAssistant'});
 }
 
 /** Generic fallback destination for any non-job-alert push tap — see
