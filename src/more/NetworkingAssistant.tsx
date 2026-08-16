@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -90,10 +90,34 @@ const NetworkingAssistant = memo(() => {
     if (isRefreshingEvents) return;
     setIsRefreshingEvents(true);
     try {
-      await careerEventsService.refreshCareerEvents();
+      const result = await careerEventsService.refreshCareerEvents();
+      // "paused"/"cooldown" are normal 200 responses, not errors (see
+      // careerEventsService.refreshCareerEvents' own doc comment) — worth
+      // a real message rather than the button silently doing nothing,
+      // especially "cooldown" (product follow-up: "I dont want too much
+      // load on perplexity"), which a user could otherwise read as broken
+      // if they tap it twice in a row.
+      if (result.status === 'cooldown') {
+        const minutes = Math.max(1, Math.ceil((result.retryAfterSeconds ?? 0) / 60));
+        Alert.alert(
+          t('more:career_events_refresh_cooldown_title', { defaultValue: 'Just refreshed' }) as string,
+          (result.message ??
+            t('more:career_events_refresh_cooldown_body', {
+              defaultValue: 'Please wait about {{minutes}} minute(s) before refreshing again.',
+              minutes,
+            })) as string,
+        );
+      } else if (result.status === 'paused') {
+        Alert.alert(
+          t('more:career_events_refresh_paused_title', { defaultValue: 'Paused' }) as string,
+          (result.message ??
+            t('more:career_events_refresh_paused_body', { defaultValue: 'Career events discovery is temporarily paused.' })) as string,
+        );
+      }
     } catch {
-      // Silently ignored — same "the button itself is the only feedback
-      // needed" treatment as JobAlerts.tsx's own manual refresh.
+      // Real errors (network, etc.) stay silent — same "the button itself
+      // is the only feedback needed" treatment as JobAlerts.tsx's own
+      // manual refresh.
     } finally {
       setIsRefreshingEvents(false);
     }

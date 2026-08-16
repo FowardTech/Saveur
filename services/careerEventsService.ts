@@ -131,6 +131,13 @@ export async function markCareerEventsRead(ids: string[]): Promise<void> {
   }
 }
 
+export interface RefreshCareerEventsResult {
+  ok: boolean;
+  status: 'refreshing' | 'paused' | 'cooldown';
+  message?: string;
+  retryAfterSeconds?: number;
+}
+
 /**
  * POST /api/v1/career-events/refresh — manual re-scan. Same "queued, not
  * instant" contract as jobAlertsService.refreshJobAlerts: runs in a
@@ -139,9 +146,25 @@ export async function markCareerEventsRead(ids: string[]): Promise<void> {
  * is its own Perplexity search plus an Eventbrite/Firecrawl lookup per
  * candidate found). `listCareerEvents()` right after this will very likely
  * still show the same list; new matches show up a little later.
+ *
+ * Unlike jobAlertsService.refreshJobAlerts, this returns the response body
+ * rather than discarding it — the backend can come back with
+ * status: "cooldown" (product follow-up: "I dont want too much load on
+ * perplexity") if this was tapped again too soon after the last refresh,
+ * and the caller needs that to show real feedback instead of the button
+ * silently doing nothing.
  */
-export async function refreshCareerEvents(): Promise<void> {
-  await apiClient.post('/api/v1/career-events/refresh', {});
+export async function refreshCareerEvents(): Promise<RefreshCareerEventsResult> {
+  const {data} = await apiClient.post<{ok: boolean; status: string; message?: string; retry_after_seconds?: number}>(
+    '/api/v1/career-events/refresh',
+    {},
+  );
+  return {
+    ok: data.ok,
+    status: (data.status as RefreshCareerEventsResult['status']) ?? 'refreshing',
+    message: data.message,
+    retryAfterSeconds: data.retry_after_seconds,
+  };
 }
 
 /**
