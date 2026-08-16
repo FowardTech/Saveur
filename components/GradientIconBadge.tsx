@@ -18,21 +18,33 @@ import { View, ViewStyle, StyleProp } from 'react-native';
 // fill, so every badge in the app reads as a single uniform color instead
 // of a two-tone split.
 //
-// RETINTED (immediate product follow-up: "The colors are too bright make
-// them a little darker... I dont want this app to look like a children's
-// app") -- was shaded +22 (lighter than the caller's own color, on top of
+// RETINTED (product follow-up: "The colors are too bright make them a
+// little darker... I dont want this app to look like a children's app")
+// -- was shaded +22 (lighter than the caller's own color, on top of
 // several already-vivid base hexes like MoreSrc.tsx's STATUS_COLORS),
-// which read as pastel/candy-colored at app-wide scale. Shaded -8 now
-// (moderately darker than the caller's true color, not just "less
-// bright") -- applies to every badge in the app in one place, same as the
-// brightening did.
+// which read as pastel/candy-colored at app-wide scale. Shaded -8 for one
+// pass (moderately darker than the caller's true color).
+//
+// RETINTED AGAIN, immediate follow-up ("Now you know what just make them
+// a little more lighter or even just make them subtle versions of that
+// same color except the ones in the continue & upcoming card") -- -8 read
+// as a bit too dark/heavy the other way. Default shade is +16 now (a
+// gentle, "subtle" lift off the caller's true color -- lighter than -8,
+// but nowhere near the original +22 "too bright" complaint). The default
+// applies to every badge EXCEPT the ones explicitly excluded per the
+// same ask: ContinueLearningCard.tsx and NextLessonHomeCard.tsx (the
+// "Continue & Upcoming" row's own icon badges) pass their own explicit
+// `shade={-8}` to keep the darker look from the previous pass, since
+// those two are the one place asked to stay as-is.
 //
 // Takes a single `color` (the same hex any caller used to pass straight to
 // `backgroundColor` before) rather than an explicit two-color array --
 // callers don't need to hand-pick anything, so every existing
 // per-row/per-action color (MoreSrc.tsx's STATUS_COLORS, the per-icon
 // hexes in HomeSrc.tsx's Career Toolkit) keeps working unchanged, just
-// passed through as `color` instead of `backgroundColor`.
+// passed through as `color` instead of `backgroundColor`. `shade` is the
+// one thing individual callers can now override away from the shared
+// default, for exactly this kind of "everywhere except one place" ask.
 function shadeColor(hex: string, percent: number): string {
   const normalized = hex.replace('#', '');
   const expanded =
@@ -57,6 +69,12 @@ interface GradientIconBadgeProps {
   // proportion the iOS Settings reference screenshot's own app icons use
   // (see ButtonOptional.tsx's iconWrap history -- 9/32 there).
   radius?: number;
+  // How far to shade `color` before filling the badge with it -- positive
+  // lightens, negative darkens. Defaults to +16 (see this file's own
+  // RETINTED AGAIN comment above); ContinueLearningCard.tsx/
+  // NextLessonHomeCard.tsx pass -8 to opt out of that default and keep
+  // their own darker look.
+  shade?: number;
   style?: StyleProp<ViewStyle>;
   children: React.ReactNode;
 }
@@ -65,6 +83,7 @@ const GradientIconBadge: React.FC<GradientIconBadgeProps> = ({
   color,
   size,
   radius,
+  shade = 16,
   style,
   children,
 }) => {
@@ -78,7 +97,7 @@ const GradientIconBadge: React.FC<GradientIconBadgeProps> = ({
           borderRadius,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: shadeColor(color, -8),
+          backgroundColor: shadeColor(color, shade),
         },
         style,
       ]}>

@@ -143,8 +143,13 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
         {/* REDESIGN (product ask: "use that same icon style in some other
             key notable screens in the app") -- was a flat
             color-primary-transparent-100 tint circle; now the same
-            GradientIconBadge every other icon badge in the app uses. */}
-        <GradientIconBadge color="#0063f8" size={30} radius={10} style={styles.iconWrap}>
+            GradientIconBadge every other icon badge in the app uses.
+            `shade={-8}` (product follow-up: "make them a little more
+            lighter... except the ones in the continue & upcoming card")
+            -- this card is one of the explicitly excluded ones, opting
+            out of GradientIconBadge's own new lighter +16 default to
+            keep the darker look from the previous pass. */}
+        <GradientIconBadge color="#0063f8" size={30} radius={10} shade={-8} style={styles.iconWrap}>
           <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
         </GradientIconBadge>
         <View style={globalStyle.flexOne}>
