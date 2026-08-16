@@ -375,18 +375,20 @@ const Onboarding = memo(() => {
               const overrideUri = overrideImageUri(i.configKey);
               return (
                 <Animated.View key={index} style={style}>
-                  {/* Product follow-up: "why did you reduce the size of the
-                      onboarding header text it should be an H2 or H3" —
-                      this was already category="h2" (30px, per
-                      constants/theme/mapping.json's text-heading-2-font-size)
-                      and was never touched by the icon-cluster redesign
-                      above; nothing in this file changed its size. Bumped
-                      explicitly bigger than the mapped h2 default anyway
-                      (styles.title) so it reads unmistakably large
-                      regardless — still semantically "h2" (bold weight,
-                      same category prop), just with its own larger
-                      fontSize/lineHeight on top. */}
-                  <Text category="h2" bold mh={24} style={styles.title}>
+                  {/* Product follow-up history: "why did you reduce the size
+                      of the onboarding header text it should be an H2 or
+                      H3" -- was bumped to an explicit 34px/lineHeight 42 on
+                      top of category="h2" (30px default). Immediate
+                      follow-up: "I think the onboarding header text is too
+                      big give it an h5" -- category swapped to "h5"
+                      (constants/theme/mapping.json's
+                      text-heading-5-font-size, 25px) and the explicit
+                      fontSize/lineHeight override removed from
+                      styles.title so the h5 mapping's own size/line-height
+                      (25/30, see Text.tsx's getLineHeight) actually takes
+                      effect instead of being overridden by a leftover
+                      bigger value. */}
+                  <Text category="h5" bold mh={24} style={styles.title}>
                     {i.title}
                   </Text>
                   <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
@@ -476,12 +478,12 @@ const themedStyles = StyleService.create({
   // font — so this "nudge" was actually the thing breaking the custom font
   // on this screen. The real bold PlusJakartaSans-Bold.ttf file already
   // provides all the weight available; there's no heavier cut to nudge to.
-  // See the REDESIGN comment at the render call site — explicit bump past
-  // the mapped h2 default (30px/lineHeight 42) for extra headroom.
-  title: {
-    fontSize: 34,
-    lineHeight: 42,
-  },
+  // See the render call site's own comment -- was an explicit
+  // fontSize:34/lineHeight:42 override on top of category="h2"; product
+  // follow-up ("too big, give it an h5") swapped the category to "h5" and
+  // removed the override entirely so the h5 mapping's own smaller default
+  // (25px/lineHeight 30) actually applies instead of being overridden.
+  title: {},
   subtitle: {
     lineHeight: 20,
   },
