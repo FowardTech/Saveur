@@ -1045,7 +1045,7 @@ const HomeSrc = memo(() => {
             style={styles.referralCard}
             onPress={() => navigate('ReferralProgram')}>
             <LinearGradient
-              colors={['#8B5CF6', '#000000']}
+              colors={['#8B5CF6', '#5e40a2ff']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={StyleSheet.absoluteFillObject}
