@@ -98,7 +98,7 @@ const COACH_SUGGESTED_COURSE_MODULES = 5;
 // trending-up-chart icon in the pack), a lightbulb-in-a-head for "idea"
 // topics, and a briefcase-and-gear for "job/career" topics.
 const TOPIC_CHIP_STYLES: { bg: string; image: ImageSourcePropType }[] = [
-  { bg: 'rgba(139, 92, 246, 0.08)', image: Images.iconCoachChat },
+  { bg: 'rgba(139, 92, 246, 0.08)', image: Images.iconCoachChatBlue },
   { bg: 'rgba(126, 168, 226, 0.12)', image: Images.iconRocket },
   { bg: 'rgba(216, 90, 48, 0.08)', image: Images.iconLightbulbHead },
   { bg: 'rgba(29, 158, 117, 0.08)', image: Images.iconBriefcaseGear },
@@ -645,21 +645,23 @@ const Chat = memo(() => {
     // scaleY(-1) below, the whole greeting renders upside down.
     return (
       <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
-        {/* Product follow-up: "the saveur logo background should be the
-            default blue color" — was the soft two-tone reference-blue
-            gradient (#9DBFEF -> #7EA8E2); this is a brand mark, not a
-            motivational/streak surface, so it gets this app's actual
-            brand blue (#0063f8) as a plain solid fill instead.
-            REDESIGN (product request: "replace the saveur icon in the AI
-            career Coach with the chat icon of the new icons i uploaded")
-            -- BrandWordmark's Saveur "S" mark swapped for the same
-            illustrated chat-bubble icon already used for Coach elsewhere
-            in this app (Career Toolkit's Coach icon, the suggested-topics
-            sheet's first chip). Plain <Image>, no tintColor -- full-color
-            source art, not a tintable glyph like the wordmark was. Circle
-            backdrop (emptyGlowWrap, brand blue) is unchanged. */}
+        {/* Product follow-up history: "the saveur logo background should be
+            the default blue color" -- brand blue (#0063f8) solid fill.
+            "replace the saveur icon in the AI career Coach with the chat
+            icon of the new icons i uploaded" -- BrandWordmark's Saveur "S"
+            mark swapped for an illustrated chat-bubble icon instead (first
+            landed on Images.iconCoachChat, the orange/red bubble). Local
+            edits then dropped emptyGlowWrap's solid blue backgroundColor
+            and grew the icon to fill the full 88x88 circle, since a
+            colored circle behind an already-colored bubble read as
+            competing fills.
+            "you are supposed to use the blue not the red icons" --
+            Images.iconCoachChat swapped for Images.iconCoachChatBlue (the
+            blue-teal bubble), matching the same fix already made to
+            HomeSrc.tsx's Career Toolkit Coach icon and this file's own
+            suggested-topics sheet (TOPIC_CHIP_STYLES[0]). */}
         <View style={styles.emptyGlowWrap}>
-          <Image source={Images.iconCoachChat} resizeMode="contain" style={styles.emptyGlowIcon as ImageStyle} />
+          <Image source={Images.iconCoachChatBlue} resizeMode="contain" style={styles.emptyGlowIcon as ImageStyle} />
         </View>
         <Text category="h6" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
