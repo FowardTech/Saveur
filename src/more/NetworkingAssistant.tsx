@@ -387,7 +387,7 @@ const NetworkingAssistant = memo(() => {
             {isRefreshingEvents ? (
               <Spinner size="tiny" />
             ) : (
-              <Icon pack="eva" name="sync-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+              <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
             )}
           </TouchableOpacity>
         </Flex>
