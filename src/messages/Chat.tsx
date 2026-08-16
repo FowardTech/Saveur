@@ -812,16 +812,17 @@ const Chat = memo(() => {
                 <Icon
                   pack="eva"
                   name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
-                  // Product report: "Remove the blue background from the
-                  // voice button... Just give it a blue border and a blue
-                  // text" -- was white (for contrast against the old solid
-                  // blue fill); the pill has no fill now, so the icon goes
-                  // blue instead, matching the new border/text color.
-                  style={[globalStyle.icon16, { tintColor: '#0063f8' }]}
+                  // Product report: "Sorry just give it a gray border and a
+                  // black text" (immediate follow-up, reversing the prior
+                  // blue border/text) -- icon/label now use this app's
+                  // theme-adaptive text-basic-color (near-black in light
+                  // mode, near-white in dark mode -- see components/Text.tsx),
+                  // matching the border's own gray below.
+                  style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
                 />
                 <Text
                   category="h9"
-                  style={[styles.modeToggleLabel, { color: '#0063f8' }]}>
+                  style={[styles.modeToggleLabel, { color: theme['text-basic-color'] }]}>
                   {mode === 'voice'
                     ? t("message:mode_text", { defaultValue: "Text" })
                     : t("message:mode_voice", { defaultValue: "Voice" })}
@@ -1064,8 +1065,11 @@ const themedStyles = StyleService.create({
   // Product report: "Remove the blue background from the voice button...
   // Just give it a blue border and a blue text" -- was a solid
   // `button-basic-color` fill with white icon/text; now an outline pill
-  // instead (no backgroundColor, a blue border) -- see the render call
-  // site for the matching icon/text color swap to blue.
+  // instead (no backgroundColor). Immediate follow-up: "Sorry just give it
+  // a gray border and a black text" -- borderColor swapped from brand blue
+  // to this app's standard card-border gray (rgba(128,128,128,0.3), same
+  // value globalStyle.card's own border uses) -- see the render call site
+  // for the matching icon/text color swap to theme-adaptive black.
   modeToggleButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -1073,7 +1077,7 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 10,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: "#0063f8",
+    borderColor: "rgba(128,128,128,0.3)",
   },
   modeToggleLabel: {
     marginLeft: 4,
