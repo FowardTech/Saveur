@@ -13,6 +13,9 @@
     "text-heading-3-font-size": 25,
     "text-heading-3-font-weight": "400",
     "text-heading-3-font-family": "$text-font-family-medium",
+    "text-heading-4-font-size": 27,
+    "text-heading-4-font-weight": "400",
+    "text-heading-4-font-family": "$text-font-family-medium",
     "text-heading-5-font-size": 25,
     "text-heading-5-font-weight": "400",
     "text-heading-5-font-family": "$text-font-family-medium",
@@ -5339,6 +5342,9 @@
             "h3": {
               "default": false
             },
+            "h4": {
+              "default": false
+            },
             "h6": {
               "default": false
             },
@@ -5432,6 +5438,11 @@
                 "fontSize": "text-heading-3-font-size",
                 "fontWeight": "text-heading-3-font-weight",
                 "fontFamily": "text-heading-3-font-family"
+              },
+              "h4": {
+                "fontSize": "text-heading-4-font-size",
+                "fontWeight": "text-heading-4-font-weight",
+                "fontFamily": "text-heading-4-font-family"
               },
               "h6": {
                 "fontSize": "text-heading-6-font-size",

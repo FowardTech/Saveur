@@ -377,18 +377,28 @@ const Onboarding = memo(() => {
                 <Animated.View key={index} style={style}>
                   {/* Product follow-up history: "why did you reduce the size
                       of the onboarding header text it should be an H2 or
-                      H3" -- was bumped to an explicit 34px/lineHeight 42 on
-                      top of category="h2" (30px default). Immediate
-                      follow-up: "I think the onboarding header text is too
-                      big give it an h5" -- category swapped to "h5"
-                      (constants/theme/mapping.json's
-                      text-heading-5-font-size, 25px) and the explicit
-                      fontSize/lineHeight override removed from
-                      styles.title so the h5 mapping's own size/line-height
-                      (25/30, see Text.tsx's getLineHeight) actually takes
-                      effect instead of being overridden by a leftover
-                      bigger value. */}
-                  <Text category="h5" bold mh={24} style={styles.title}>
+                      H3" -- bumped to an explicit 34px/lineHeight 42 on top
+                      of category="h2". "too big, give it an h5" -- swapped
+                      to category="h5" (25px) with the override removed.
+                      "ok make it h4 then" -- turned out this app's type
+                      scale never actually had an h4 (constants/theme/
+                      mapping.json jumped straight from h3 to h5/h6 -- h4
+                      wasn't wired to the eva Text component's variant
+                      mapping at all, and Text.tsx's own category union
+                      didn't list it either; the one pre-existing
+                      category="h4" call site, src/more/CourseSession.tsx,
+                      was actually a standing type error, see
+                      CourseSession.tsx). Added a real h4 tier instead of
+                      quietly falling back to something else --
+                      text-heading-4-font-size (27px, between h3/h5's 25 and
+                      h2's 30) wired into mapping.json's Text variant
+                      mapping the same way h1/h2/h3/h6 already are, plus
+                      Text.tsx's category type + getLineHeight (38, see that
+                      file). This also fixes CourseSession.tsx's
+                      previously-broken h4 usage as a side effect -- it now
+                      resolves to a real style instead of silently falling
+                      through to eva's default variant. */}
+                  <Text category="h4" bold mh={24} style={styles.title}>
                     {i.title}
                   </Text>
                   <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>

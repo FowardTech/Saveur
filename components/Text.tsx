@@ -9,6 +9,7 @@ export interface MyTextProps extends TextProps {
     | 'h1'
     | 'h2'
     | 'h3'
+    | 'h4'
     | 'h5'
     | 'h6'
     | 'h6-s'
@@ -60,6 +61,7 @@ const getLineHeight = (
     | 'h1'
     | 'h2'
     | 'h3'
+    | 'h4'
     | 'h5'
     | 'h6'
     | 'h6-s'
@@ -84,6 +86,8 @@ const getLineHeight = (
       return 42;
     case 'h3':
       return 36;
+    case 'h4':
+      return 38;
     case 'h5':
       return 30;
     case 'h6':
