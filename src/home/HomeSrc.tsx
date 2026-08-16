@@ -1034,21 +1034,31 @@ const HomeSrc = memo(() => {
             {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
           </Text>
           <View style={styles.quickActionsRow}>
+          {/* REDESIGN (product-supplied icon pack, "use them in the
+              appropriate places in the app most especially the career
+              toolkit icons") -- the flat platform-blue Eva glyphs above are
+              swapped for the matching real illustrated icons from that pack
+              (see assets/images/index.ts's own comment): a chat bubble for
+              Coach, a handshake for Companies (Dream Companies is about
+              building real relationships with target employers, not just
+              browsing a briefcase icon), a graduation cap for Courses, and
+              a coin for Salary. Plain <Image>, no tintColor -- these are
+              full-color source art, not tintable glyphs. */}
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+            <Image source={Images.iconCoachChat} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_coach', { defaultValue: 'Coach' })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
-            <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+            <Image source={Images.iconHandshake} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
             </Text>
           </TouchableOpacity>
           {configService.isFeatureEnabled('learning_courses') ? (
             <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('LearningCourses')}>
-              <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+              <Image source={Images.iconGraduationCap} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
               <Text category="h10" center mt={6} numberOfLines={1}>
                 {t('home:quick_action_courses', { defaultValue: 'Courses' })}
               </Text>
@@ -1056,7 +1066,7 @@ const HomeSrc = memo(() => {
           ) : null}
           {configService.isFeatureEnabled('salary_negotiation') ? (
             <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('SalaryNegotiation')}>
-              <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
+              <Image source={Images.iconCoins} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
               <Text category="h10" center mt={6} numberOfLines={1}>
                 {t('home:quick_action_salary', { defaultValue: 'Salary' })}
               </Text>
@@ -1450,6 +1460,14 @@ const themedStyles = StyleService.create({
   quickActionItem: {
     alignItems: 'center',
     width: '22%',
+  },
+  // Sized a touch smaller than globalStyle.icon20's 28x28 -- these are
+  // full illustrated icons (real perceived weight/detail even at rest,
+  // unlike a thin single-color Eva glyph), so a full 28px read as visually
+  // heavier than the row's own text/spacing was designed around.
+  quickActionIcon: {
+    width: 26,
+    height: 26,
   },
   // "Your Progress" Progress Toward Goal card -- ring on the left, title +
   // two lines of real supporting copy on the right (see the effects above

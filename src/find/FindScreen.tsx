@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
+import { Image, ImageStyle, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -24,6 +24,7 @@ import * as interviewService from 'services/interviewService';
 import { getSessionEntitlement, hasAddon, ADDON_CODES } from 'services/entitlementsService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
+import { Images } from 'assets/images';
 
 // "Practice" tab — the entry point for AI mock interviews. Lets a candidate
 // jump straight into a category, or open the full setup wizard (mode /
@@ -266,8 +267,13 @@ const FindScreen = memo(() => {
               icons... give the icons themselves the platform blue") -- no
               badge/background now, matching HomeSrc.tsx's own reverted
               Career Toolkit icons -- plain calendar glyph tinted platform
-              blue (#0063f8) directly. */}
-          <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: '#0063f8', marginRight: 12 }]} />
+              blue (#0063f8) directly.
+              REDESIGN (product-supplied icon pack, "use them in the
+              appropriate places in the app") -- swapped for the real
+              illustrated calendar icon from that pack, same as HomeSrc.tsx's
+              Career Toolkit icons a few sections above this one in the same
+              redesign pass. */}
+          <Image source={Images.iconCalendarSchedule} style={styles.scheduleIcon as ImageStyle} resizeMode="contain" />
           <View style={globalStyle.flexOne}>
             <Text category="h9" bold numberOfLines={1}>
               {t('find:schedule_session_card_title', { defaultValue: 'Schedule a session' })}
@@ -456,6 +462,13 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginTop: 8,
+  },
+  // Matches globalStyle.icon20's 28x28 footprint the old Eva glyph rendered
+  // at, plus the same marginRight that glyph had inline.
+  scheduleIcon: {
+    width: 28,
+    height: 28,
+    marginRight: 12,
   },
   // Purely a shadow-casting shell — the real fill lives on heroInner's
   // absolute-positioned LinearGradient (see the JSX comment). Static

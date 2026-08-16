@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Image, ImageStyle, TouchableOpacity, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +11,7 @@ import { RootStackParamList } from 'navigation/types';
 import { EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
 import * as configService from 'services/configService';
 import { AuthContext } from '../../AuthContext';
+import { Images } from 'assets/images';
 
 // Product request: "add a banner in the homescreen at the top top for
 // regular informations like policy change, change in terms and conditions
@@ -88,7 +89,14 @@ const AnnouncementBanner = memo(() => {
 
   return (
     <View style={[styles.wrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-      <Icon pack="eva" name="info-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+      {/* REDESIGN (product-supplied icon pack, "use them in the appropriate
+          places in the app") -- was a plain info-outline Eva glyph; this
+          banner's whole purpose (policy changes, admin-authored notices) is
+          literally an announcement, so the real illustrated megaphone icon
+          from that pack is a closer fit than a generic "info" symbol. Sized
+          up from the old icon16 (18x18) since a detailed full-color icon
+          reads as too small at that size. */}
+      <Image source={Images.iconMegaphone} style={styles.announcementIcon as ImageStyle} resizeMode="contain" />
       <View style={[globalStyle.flexOne, styles.textWrap]}>
         {config.title ? (
           <Text category="h10" bold numberOfLines={1}>
@@ -130,5 +138,13 @@ const themedStyles = StyleService.create({
   },
   textWrap: {
     marginHorizontal: 10,
+  },
+  // See the REDESIGN comment at the render call site -- a touch bigger than
+  // the old icon16 (18x18) this replaced, small illustrated icons lose
+  // their detail below ~20px.
+  announcementIcon: {
+    width: 22,
+    height: 22,
+    marginTop: 1,
   },
 });

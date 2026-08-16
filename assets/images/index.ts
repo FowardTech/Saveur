@@ -239,4 +239,33 @@ export const Images = {
   // (verified via its alpha channel), 674x663 — square-ish, no backdrop
   // baked in, so it drops cleanly onto any surface.
   trophy: require('./img_trophy.png'),
+  // Product-supplied icon pack (20 real 3D-rendered/illustrated PNGs, "use
+  // them in the appropriate places in the app most especially the career
+  // toolkit icons") -- these are full-color source images, not tintable
+  // glyphs like the eva/assets Icon packs elsewhere in this app, so call
+  // sites render them via a plain <Image>, no tintColor. Only 7 of the 20
+  // have an actual call site wired up so far (see each site's own
+  // "REDESIGN" comment); the rest are registered here ready for a future
+  // placement pass rather than left unregistered.
+  iconCoachChat: require('./img_icon_coach_chat.png'),
+  iconHandshake: require('./img_icon_handshake.png'),
+  iconGraduationCap: require('./img_icon_graduation_cap.png'),
+  iconCoins: require('./img_icon_coins.png'),
+  iconRocket: require('./img_icon_rocket.png'),
+  iconCalendarSchedule: require('./img_icon_calendar_schedule.png'),
+  iconMegaphone: require('./img_icon_megaphone.png'),
+  // Not yet wired to a call site -- available for a future placement pass.
+  iconCheck: require('./img_icon_check.png'),
+  iconClock: require('./img_icon_clock.png'),
+  iconConnectShare: require('./img_icon_connect_share.png'),
+  iconPadlock: require('./img_icon_padlock.png'),
+  iconDebitCard: require('./img_icon_debit_card.png'),
+  iconDocumentShield: require('./img_icon_document_shield.png'),
+  iconLightbulbHead: require('./img_icon_lightbulb_head.png'),
+  iconLocation: require('./img_icon_location.png'),
+  iconBriefcaseGear: require('./img_icon_briefcase_gear.png'),
+  iconQrGrid: require('./img_icon_qr_grid.png'),
+  iconShield: require('./img_icon_shield.png'),
+  iconSpeechBubble: require('./img_icon_speech_bubble.png'),
+  iconAppGrid: require('./img_icon_app_grid.png'),
 };

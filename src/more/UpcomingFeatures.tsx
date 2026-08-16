@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View } from 'react-native';
+import { Image, ImageStyle, View } from 'react-native';
 import { StyleService, TopNavigation, useStyleSheet, Layout, Icon } from '@ui-kitten/components';
 import Container from 'components/Container';
 import Content from 'components/Content';
@@ -9,6 +9,7 @@ import NavigationAction from 'components/NavigationAction';
 import { useTranslation } from 'react-i18next';
 import { globalStyle } from 'styles/globalStyle';
 import * as configService from 'services/configService';
+import { Images } from 'assets/images';
 
 // Upcoming Features (product request item — see src/home/NextLessonHomeCard.tsx,
 // the "Continue & Upcoming" row's third card this screen is reached from
@@ -47,12 +48,29 @@ const UpcomingFeatures = () => {
                     blue") -- this cycled through a color-primary-
                     transparent-100 tint circle and a GradientIconBadge; no
                     badge/background now, plain glyph tinted platform blue
-                    (#0063f8) directly. */}
-                <Icon
-                  pack="eva"
-                  name={item.icon || 'rocket-outline'}
-                  style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#0063f8' }]}
-                />
+                    (#0063f8) directly.
+                    REDESIGN (product-supplied icon pack, "use them in the
+                    appropriate places in the app") -- when an item has no
+                    admin-configured icon (the common case, falling back to
+                    'rocket-outline'), render the real illustrated rocket
+                    icon instead of the plain Eva glyph. Admin-configured
+                    custom icons (item.icon set from Config > Upcoming
+                    Features in the dashboard) still render as a plain Eva
+                    glyph, since the admin picks from Eva's icon set, not
+                    this image pack. */}
+                {item.icon ? (
+                  <Icon
+                    pack="eva"
+                    name={item.icon}
+                    style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#0063f8' }]}
+                  />
+                ) : (
+                  <Image
+                    source={Images.iconRocket}
+                    style={[styles.iconWrap, styles.iconImage] as ImageStyle[]}
+                    resizeMode="contain"
+                  />
+                )}
                 <View style={globalStyle.flexOne}>
                   <Text category="h9" bold>{item.title}</Text>
                   {item.description ? (
@@ -85,5 +103,12 @@ const themedStyles = StyleService.create({
   // its `size`/`radius` props at the call site.
   iconWrap: {
     marginRight: 12,
+  },
+  // Matches globalStyle.icon20's 28x28 footprint (the size the Eva glyph
+  // branch above still renders at) so a row doesn't visibly reflow between
+  // the two icon types.
+  iconImage: {
+    width: 28,
+    height: 28,
   },
 });
