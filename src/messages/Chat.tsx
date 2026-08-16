@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Alert, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageSourcePropType, ImageStyle, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
 import {
@@ -47,6 +47,7 @@ import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
 import * as notificationService from "services/notificationService";
 import i18n from "i18next";
+import { Images } from "assets/images";
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
 // orb (see renderAvatar below), same mark used on the Login screen and
@@ -85,11 +86,22 @@ const COACH_SUGGESTED_COURSE_MODULES = 5;
 // MessagesScreen.tsx's Suggested Topics grid and Home's "More for you" rows
 // already use, kept as its own module constant (rather than importing
 // MessagesScreen's) since these are two independent screens.
-const TOPIC_CHIP_STYLES: { bg: string; icon: string; iconColor: string }[] = [
-  { bg: 'rgba(139, 92, 246, 0.08)', icon: 'message-square-outline', iconColor: '#8B5CF6' },
-  { bg: 'rgba(126, 168, 226, 0.12)', icon: 'trending-up-outline', iconColor: '#7EA8E2' },
-  { bg: 'rgba(216, 90, 48, 0.08)', icon: 'bulb-outline', iconColor: '#D85A30' },
-  { bg: 'rgba(29, 158, 117, 0.08)', icon: 'briefcase-outline', iconColor: '#1D9E75' },
+// REDESIGN (product request: "I want you to use the new icons too in the
+// suggested topics bottom sheet") -- `icon`/`iconColor` (plain tintable Eva
+// glyphs) replaced with `image`, one of the real full-color icons8 PNGs
+// already used elsewhere in this app (assets/images/index.ts). These can't
+// be tinted (they're baked full-color source art, not single-color
+// glyphs), so the pastel circle backdrop (`bg`) now does the "distinct
+// color per topic" job on its own, same as before. Picked for a loose
+// thematic match to what the old Eva glyph represented: a chat bubble for
+// "message" topics, a rocket for "trending up"/momentum topics (no literal
+// trending-up-chart icon in the pack), a lightbulb-in-a-head for "idea"
+// topics, and a briefcase-and-gear for "job/career" topics.
+const TOPIC_CHIP_STYLES: { bg: string; image: ImageSourcePropType }[] = [
+  { bg: 'rgba(139, 92, 246, 0.08)', image: Images.iconCoachChat },
+  { bg: 'rgba(126, 168, 226, 0.12)', image: Images.iconRocket },
+  { bg: 'rgba(216, 90, 48, 0.08)', image: Images.iconLightbulbHead },
+  { bg: 'rgba(29, 158, 117, 0.08)', image: Images.iconBriefcaseGear },
 ];
 
 // Maps a persisted CoachChatMessageProps (see services/coachService.ts) to
@@ -974,7 +986,7 @@ const Chat = memo(() => {
                           onPress={() => onTapTopic(item.title)}
                           style={styles.emptyTopicButton}>
                           <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
-                            <Icon pack="eva" name={chipStyle.icon} style={[globalStyle.icon20, { tintColor: chipStyle.iconColor }]} />
+                            <Image source={chipStyle.image} resizeMode="contain" style={styles.emptyTopicIcon as ImageStyle} />
                             <View style={styles.emptyTopicMicBadge}>
                               <Icon pack="eva" name="mic-outline" style={{ width: 10, height: 10, tintColor: '#fff' }} />
                             </View>
@@ -993,7 +1005,12 @@ const Chat = memo(() => {
                               2-column layout that goes with this, so a
                               longer title has real room to wrap instead of
                               cramming into a narrow 72px column. */}
-                          <Text category="h10" bold center mt={8}>
+                          {/* Product report: "make the topics font a font
+                              weight of 500 they are too bold" -- `bold`
+                              (PlusJakartaSans-Bold) swapped for `medium`
+                              (PlusJakartaSans-Medium, weight 500 -- see
+                              Text.tsx's own `medium` prop comment). */}
+                          <Text category="h10" medium center mt={8}>
                             {item.title}
                           </Text>
                         </TouchableOpacity>
@@ -1214,6 +1231,14 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
+  },
+  // See the REDESIGN comment at TOPIC_CHIP_STYLES -- a touch bigger than
+  // the old icon20 (28x28) glyph it replaced, since these are full
+  // illustrated icons that read as too small at that size inside a 56px
+  // circle.
+  emptyTopicIcon: {
+    width: 32,
+    height: 32,
   },
   // Small mic badge on each topic circle — signals up front that tapping a
   // topic starts a live voice conversation, not a text reply (see the hint
