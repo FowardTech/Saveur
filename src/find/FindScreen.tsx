@@ -463,11 +463,12 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 14,
     marginTop: 8,
   },
-  // Matches globalStyle.icon20's 28x28 footprint the old Eva glyph rendered
-  // at, plus the same marginRight that glyph had inline.
+  // Product follow-up: "increase their sizes" -- was 28x28 (matching
+  // globalStyle.icon20's footprint, the size the old Eva glyph rendered
+  // at).
   scheduleIcon: {
-    width: 28,
-    height: 28,
+    width: 38,
+    height: 38,
     marginRight: 12,
   },
   // Purely a shadow-casting shell — the real fill lives on heroInner's

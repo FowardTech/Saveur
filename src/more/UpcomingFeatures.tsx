@@ -104,11 +104,13 @@ const themedStyles = StyleService.create({
   iconWrap: {
     marginRight: 12,
   },
-  // Matches globalStyle.icon20's 28x28 footprint (the size the Eva glyph
-  // branch above still renders at) so a row doesn't visibly reflow between
-  // the two icon types.
+  // Product follow-up: "increase their sizes" -- was 28x28 (matching
+  // globalStyle.icon20's footprint, the size the Eva glyph branch above
+  // still renders at). Now bigger than that glyph branch on purpose --
+  // this component only ever falls back to the Eva branch for an
+  // admin-configured custom icon, an edge case, not the common path.
   iconImage: {
-    width: 28,
-    height: 28,
+    width: 38,
+    height: 38,
   },
 });

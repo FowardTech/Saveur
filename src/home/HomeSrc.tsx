@@ -1461,13 +1461,14 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     width: '22%',
   },
-  // Sized a touch smaller than globalStyle.icon20's 28x28 -- these are
-  // full illustrated icons (real perceived weight/detail even at rest,
-  // unlike a thin single-color Eva glyph), so a full 28px read as visually
-  // heavier than the row's own text/spacing was designed around.
+  // Product follow-up: "they are looking ok but you need to increase their
+  // sizes" -- was 26x26 (a touch under globalStyle.icon20's 28x28, on the
+  // theory a full-color illustrated icon reads visually heavier than a
+  // thin Eva glyph at the same size). That theory undershot -- bumped up
+  // past icon20 instead of just back to it.
   quickActionIcon: {
-    width: 26,
-    height: 26,
+    width: 38,
+    height: 38,
   },
   // "Your Progress" Progress Toward Goal card -- ring on the left, title +
   // two lines of real supporting copy on the right (see the effects above

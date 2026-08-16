@@ -139,12 +139,12 @@ const themedStyles = StyleService.create({
   textWrap: {
     marginHorizontal: 10,
   },
-  // See the REDESIGN comment at the render call site -- a touch bigger than
-  // the old icon16 (18x18) this replaced, small illustrated icons lose
-  // their detail below ~20px.
+  // Product follow-up: "increase their sizes" -- was 22x22. See the
+  // REDESIGN comment at the render call site for why this replaced the old
+  // icon16 (18x18) info glyph in the first place.
   announcementIcon: {
-    width: 22,
-    height: 22,
+    width: 30,
+    height: 30,
     marginTop: 1,
   },
 });
