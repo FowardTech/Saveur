@@ -812,25 +812,16 @@ const Chat = memo(() => {
                 <Icon
                   pack="eva"
                   name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
-                  // Product request: "bake the button background the
-                  // default blue color" — this pill's fill is this app's
-                  // standard solid brand blue (`button-basic-color`, same
-                  // token every other filled CTA button reads), so the
-                  // icon/label go white for contrast — the same solid-fill/
-                  // white-text pairing already correct everywhere else in
-                  // the app (see Leaderboard.tsx's own header comment on
-                  // why that pairing only holds on a SOLID fill, which this
-                  // is). Used to swap to a translucent-white variant in
-                  // Voice mode (modeToggleButtonOnVoice, since a solid blue
-                  // pill would've blended into the old solid-blue Voice-mode
-                  // background) -- no longer needed now that Voice mode's
-                  // own background is white/normal, same as Text mode (see
-                  // isVoiceMode's own comment further up this file).
-                  style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]}
+                  // Product report: "Remove the blue background from the
+                  // voice button... Just give it a blue border and a blue
+                  // text" -- was white (for contrast against the old solid
+                  // blue fill); the pill has no fill now, so the icon goes
+                  // blue instead, matching the new border/text color.
+                  style={[globalStyle.icon16, { tintColor: '#0063f8' }]}
                 />
                 <Text
                   category="h9"
-                  style={[styles.modeToggleLabel, { color: '#FFFFFF' }]}>
+                  style={[styles.modeToggleLabel, { color: '#0063f8' }]}>
                   {mode === 'voice'
                     ? t("message:mode_text", { defaultValue: "Text" })
                     : t("message:mode_voice", { defaultValue: "Voice" })}
@@ -1070,13 +1061,19 @@ const themedStyles = StyleService.create({
   // full-bleed voice-mode-background screen (already that same blue in
   // light mode) a translucent white fill instead, so the button still
   // reads as a distinct control against its own background there.
+  // Product report: "Remove the blue background from the voice button...
+  // Just give it a blue border and a blue text" -- was a solid
+  // `button-basic-color` fill with white icon/text; now an outline pill
+  // instead (no backgroundColor, a blue border) -- see the render call
+  // site for the matching icon/text color swap to blue.
   modeToggleButton: {
     flexDirection: "row",
     alignItems: "center",
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 16,
-    backgroundColor: "button-basic-color",
+    borderWidth: 1.5,
+    borderColor: "#0063f8",
   },
   modeToggleLabel: {
     marginLeft: 4,
