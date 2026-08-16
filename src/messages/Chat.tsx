@@ -34,7 +34,6 @@ import useKeyboard from "hooks/useKeyboard";
 import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { RootStackParamList, MessagesStackParamList } from "navigation/types";
 import AttachItem from "./Components/AttachItem";
-import BrandWordmark from "components/BrandWordmark";
 import Text from "components/Text";
 import { CoachChatMessageProps, Practice_Mode_Enum, SuggestedActionId } from "constants/Types";
 import * as coachService from "services/coachService";
@@ -711,16 +710,21 @@ const Chat = memo(() => {
     );
   }, [initialPrompt, topics, onMakeCall, t, theme, styles]);
 
-  // Draws the Saveur brand orb for the coach's avatar instead of an <Image>
-  // (no logo.png asset needed). Returns null for the current user's own
-  // messages so GiftedChat falls back to its default (blank) treatment.
+  // Product request: "there are some other places too in the app that you
+  // can add some of those icons i uploaded too" -- was the Saveur brand
+  // orb (BrandWordmark's "S" mark); swapped for the same illustrated blue
+  // chat-bubble icon this file already uses for Coach elsewhere (the
+  // empty-thread greeting icon, the suggested-topics sheet's first chip),
+  // so every "this message is from the coach" marker in this screen now
+  // matches. Returns null for the current user's own messages so
+  // GiftedChat falls back to its default (blank) treatment.
   const renderAvatar = React.useCallback((props: any) => {
     if (props?.currentMessage?.user?._id !== COACH_USER._id) {
       return null;
     }
     return (
       <View style={styles.coachAvatar}>
-        <BrandWordmark markOnly size={32} />
+        <Image source={Images.iconCoachChatBlue} resizeMode="contain" style={styles.coachAvatarIcon as ImageStyle} />
       </View>
     );
   }, [styles.coachAvatar]);
@@ -1124,6 +1128,10 @@ const themedStyles = StyleService.create({
   },
   coachAvatar: {
     marginRight: 4,
+  },
+  coachAvatarIcon: {
+    width: 32,
+    height: 32,
   },
   suggestedCourseChip: {
     flexDirection: 'row',

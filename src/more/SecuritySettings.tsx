@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, View} from 'react-native';
+import {Alert, Image, ImageStyle, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, Toggle, Button, Input, Spinner} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
@@ -13,6 +13,7 @@ import * as biometricAuthService from 'services/biometricAuthService';
 import * as twoFactorService from 'services/twoFactorService';
 import {AuthContext} from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import {Images} from 'assets/images';
 
 // Reached from More > Security. Houses both device-local biometric app-lock
 // (services/biometricAuthService.ts) and account-level email-code 2FA
@@ -166,6 +167,15 @@ const SecuritySettings = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('more:security', {defaultValue: 'Security'})} accessoryLeft={<NavigationAction />} />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+        {/* Product request: "In the security screen add the shield icon
+            there i.e one of those icons i uploaded" -- a centered hero
+            icon at the top of the screen, the same real illustrated shield
+            from the icon pack already used elsewhere in this app
+            (assets/images/index.ts's iconShield). Plain <Image>, no
+            tintColor -- full-color source art, not a tintable glyph. */}
+        <View style={styles.heroIconWrap}>
+          <Image source={Images.iconShield} resizeMode="contain" style={styles.heroIcon as ImageStyle} />
+        </View>
         <Text category="h9-s" bold mb={12}>
           {t('more:biometric_section_title', {defaultValue: 'App Lock'})}
         </Text>
@@ -255,5 +265,13 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 48,
+  },
+  heroIconWrap: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  heroIcon: {
+    width: 64,
+    height: 64,
   },
 });

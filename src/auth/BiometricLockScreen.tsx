@@ -1,16 +1,16 @@
 import React, {memo} from 'react';
-import {View} from 'react-native';
-import {StyleService, useStyleSheet, useTheme, Icon, Button} from '@ui-kitten/components';
+import {Image, ImageStyle, View} from 'react-native';
+import {StyleService, useStyleSheet, Button} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
 import Content from 'components/Content';
 import Flex from 'components/Flex';
-import {globalStyle} from 'styles/globalStyle';
 import * as biometricAuthService from 'services/biometricAuthService';
 import {AuthContext} from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import {Images} from 'assets/images';
 
 type Props = {
   label: string; // "Face ID" / "Touch ID" / "Fingerprint" — from checkAvailability()
@@ -23,7 +23,6 @@ type Props = {
 // reasoning as TwoFactorVerify: there's nothing to navigate around it to
 // until it resolves.
 const BiometricLockScreen = memo(({label, onUnlock}: Props) => {
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['auth', 'common']);
   const {signOut} = React.useContext(AuthContext);
@@ -75,12 +74,14 @@ const BiometricLockScreen = memo(({label, onUnlock}: Props) => {
     <Container style={styles.container}>
       <Content padder contentContainerStyle={styles.content}>
         <Flex vertical itemsCenter justify="center">
-          <View style={[styles.iconCircle, {backgroundColor: theme['background-basic-color-2']}]}>
-            <Icon
-              pack="eva"
-              name="lock-outline"
-              style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
-            />
+          {/* Product request: "there are some other places too in the app
+              that you can add some of those icons i uploaded too" -- this
+              full-screen lock gate is a literal match for the padlock icon
+              from that pack (assets/images/index.ts's iconPadlock),
+              swapped in for the plain lock-outline Eva glyph. Plain
+              <Image>, no tintColor -- full-color source art. */}
+          <View style={styles.iconCircle}>
+            <Image source={Images.iconPadlock} resizeMode="contain" style={styles.iconImage as ImageStyle} />
           </View>
           <Text category="h3" bold center mt={20}>
             {t('auth:biometric_locked_title', {defaultValue: 'Saveur is locked'})}
@@ -126,12 +127,18 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
   },
+  // No backgroundColor here anymore -- iconImage below is full-color
+  // source art, a colored circle behind it would clash rather than help.
   iconCircle: {
     width: 88,
     height: 88,
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconImage: {
+    width: 72,
+    height: 72,
   },
   button: {
     marginTop: 28,

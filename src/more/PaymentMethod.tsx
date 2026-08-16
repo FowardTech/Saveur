@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, View} from 'react-native';
+import {Alert, Image, ImageStyle, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -21,6 +21,7 @@ import SwiperCard from 'components/SwiperCard';
 import * as billingService from 'services/billingService';
 import {stripeAppearance} from 'utils/stripeAppearance';
 import CardBrandLogo from 'components/CardBrandLogo';
+import {Images} from 'assets/images';
 
 // Matches Subscription.tsx's STRIPE_RETURN_URL — required by initPaymentSheet
 // even in setup mode, in case a saved card's verification redirects out
@@ -164,6 +165,13 @@ const PaymentMethod = memo(() => {
           </Flex>
         ) : !methods || methods.length === 0 ? (
           <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60, paddingHorizontal: 24}}>
+            {/* Product request: "there are some other places too in the app
+                that you can add some of those icons i uploaded too" -- a
+                real illustrated debit-card icon (assets/images/index.ts's
+                iconDebitCard) above this empty state's text, the same
+                "hero icon above empty-state copy" pattern this app already
+                uses elsewhere. Plain <Image>, no tintColor. */}
+            <Image source={Images.iconDebitCard} resizeMode="contain" style={[styles.emptyIcon as ImageStyle, {marginBottom: 16}]} />
             <Text category="h9-s" status="placeholder" center mb={16}>
               {t('payment:no_saved_cards', {defaultValue: "No saved cards yet — add one to speed up checkout."})}
             </Text>
@@ -256,6 +264,10 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingTop: 32,
+  },
+  emptyIcon: {
+    width: 64,
+    height: 64,
   },
   iconLogoBank: {
     // Sizing now comes from CardBrandLogo's own width/height props (48x30 —
