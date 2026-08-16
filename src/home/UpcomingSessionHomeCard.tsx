@@ -290,9 +290,9 @@ const themedStyles = StyleService.create({
     borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.32)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: 'transparent',
+    // borderWidth: 1,
+    // borderColor: 'rgba(255,255,255,0.5)',
   },
   titleText: {
     color: '#fff',
