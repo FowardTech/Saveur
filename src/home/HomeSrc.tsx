@@ -1384,9 +1384,17 @@ const themedStyles = StyleService.create({
   // `toolkitCard`. `globalStyle.card` supplies the shape (border is gone
   // app-wide now -- see that style's own "remove the border from all the
   // white cards" comment); this just adds the padding/fill on top.
+  // Product follow-up: "I want you to give the today's Career focus a very
+  // subtle light gray and lets see how it looks" -- was
+  // background-basic-color-2 (solid white, #FFFFFF, matching every other
+  // card on this screen). Swapped for background-basic-color-3
+  // (#F0F0F0), the same light gray token Container.tsx's own gray page
+  // level already uses elsewhere in this app, so this stays a "known"
+  // gray rather than a one-off new value -- light mode only, dark mode's
+  // own override below (transparent) is untouched.
   focusToolkitCard: {
     padding: 16,
-    backgroundColor: 'background-basic-color-2',
+    backgroundColor: 'background-basic-color-3',
   },
   // Dark-mode-only override (see the "remove the border and background...
   // Only in dark mode" comment at the call site) — light mode keeps the

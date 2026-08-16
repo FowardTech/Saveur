@@ -375,6 +375,17 @@ const Onboarding = memo(() => {
               const overrideUri = overrideImageUri(i.configKey);
               return (
                 <Animated.View key={index} style={style}>
+                  {/* Product follow-up: "why did you reduce the size of the
+                      onboarding header text it should be an H2 or H3" —
+                      this was already category="h2" (30px, per
+                      constants/theme/mapping.json's text-heading-2-font-size)
+                      and was never touched by the icon-cluster redesign
+                      above; nothing in this file changed its size. Bumped
+                      explicitly bigger than the mapped h2 default anyway
+                      (styles.title) so it reads unmistakably large
+                      regardless — still semantically "h2" (bold weight,
+                      same category prop), just with its own larger
+                      fontSize/lineHeight on top. */}
                   <Text category="h2" bold mh={24} style={styles.title}>
                     {i.title}
                   </Text>
@@ -465,7 +476,12 @@ const themedStyles = StyleService.create({
   // font — so this "nudge" was actually the thing breaking the custom font
   // on this screen. The real bold PlusJakartaSans-Bold.ttf file already
   // provides all the weight available; there's no heavier cut to nudge to.
-  title: {},
+  // See the REDESIGN comment at the render call site — explicit bump past
+  // the mapped h2 default (30px/lineHeight 42) for extra headroom.
+  title: {
+    fontSize: 34,
+    lineHeight: 42,
+  },
   subtitle: {
     lineHeight: 20,
   },
