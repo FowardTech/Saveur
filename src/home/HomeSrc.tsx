@@ -867,7 +867,15 @@ const HomeSrc = memo(() => {
             card that navigates to a screen that display upcoming
             features" -- NextLessonHomeCard joined as a permanent third
             item (see topCardWidth's own comment above for its sizing). */}
-        <Text category="h8" bold mt={4} mb={12}>
+        {/* Product report: "move the continue & Upcoming card down a
+            little bit its too close to the career toolkit card" -- was
+            mt={4} (a tight gap that made sense when this was the very
+            first section on the page, before the RESTRUCTURE pass moved
+            Career Toolkit above it) -- bumped to match this screen's
+            standard section-gap (24, same as Career Progress/DailyChallengeCard/
+            Next Steps below) now that a real card sits above it instead of
+            just the page edge. */}
+        <Text category="h8" bold mt={24} mb={12}>
           {t('home:continue_and_upcoming_label', { defaultValue: 'Continue & Upcoming' })}
         </Text>
         {/* Always mounted (all three cards already self-hide/self-fallback
@@ -907,7 +915,10 @@ const HomeSrc = memo(() => {
             same "honest zero state instead of a gap" reasoning as Today's
             Focus above -- a user with no roadmap yet just sees 0% and a
             nudge to build one, not a hidden section. */}
-        <Text category="h8" bold mt={24} mb={12}>
+        {/* Product report: "move the Career Progress up a little bit its
+            too far from the continues & upcoming cards" -- was mt={24}
+            (this screen's standard section gap), tightened up. */}
+        <Text category="h8" bold mt={12} mb={12}>
           {t('home:your_progress_label', { defaultValue: 'Career Progress' })}
         </Text>
         <View style={[globalStyle.card, styles.progressCard]}>
@@ -1227,12 +1238,14 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
+  // Product report: "Remove the border individual border from the career
+  // toolkit icons" -- a per-item borderWidth/borderRadius/borderColor
+  // (added locally, outside this session) drew a small bordered box around
+  // each icon+label; removed, back to a plain unboxed column like every
+  // other icon-label item on this screen.
   quickActionItem: {
     alignItems: 'center',
     width: '22%',
-    borderWidth: 1.2,
-    borderRadius: 7,
-    borderColor: 'rgba(128,128,128,0.3)',
   },
   // Product follow-up: "they are looking ok but you need to increase their
   // sizes" -- was 26x26 (a touch under globalStyle.icon20's 28x28, on the
