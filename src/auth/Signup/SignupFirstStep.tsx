@@ -195,6 +195,16 @@ const themedStyles = StyleService.create({
     // (matching ChangeCareType/index.tsx's identical fix) lays every row
     // out identically regardless of how many cards land in it.
     justifyContent: 'flex-start',
+    // BUG FIX, kept in sync with src/more/ChangeCareType/index.tsx's
+    // identical fix (same 10-item goal grid, see that file's own comment
+    // for the full root cause): with no alignItems set, flexbox's default
+    // "stretch" cross-axis behavior stretched every card in a row to match
+    // its tallest sibling (2-line labels like "Internship / Grad Job" vs
+    // 1-line ones like "Promotion"), and each card's own centered content
+    // then drifted to different heights -- the "zig-zag" look. flex-start
+    // keeps every card at its own natural height so all icon chips align
+    // on the same top edge in every row.
+    alignItems: 'flex-start',
     rowGap: 24,
     columnGap: 20,
   },

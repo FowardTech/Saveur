@@ -247,6 +247,21 @@ const themedStyles = StyleService.create({
     // plus explicit rowGap/columnGap lays every row out identically,
     // whether it's full or not.
     justifyContent: "flex-start",
+    // BUG FIX (product report, screenshot: "Some of this cards are not
+    // aligning well. Some rows look zig-zag") — with no alignItems set
+    // here, flexbox's default cross-axis behavior is "stretch": every
+    // Pressable in a row gets stretched to match the tallest sibling in
+    // that row. Labels vary between 1 line ("Promotion") and 2 lines
+    // ("Internship / Grad Job"), so a 2-line card's row stretched its
+    // 1-line neighbors taller too -- and since each Pressable centers its
+    // own content (justifyContent/alignItems: "center"), the icon chip in
+    // a stretched 1-line card got pushed down to stay centered, while the
+    // 2-line card's chip stayed near the top. That per-row height mismatch
+    // is exactly what read as a "zig-zag". `flex-start` stops the stretch
+    // -- every card keeps its own natural height and all icon chips now
+    // align along the same top edge in every row, regardless of how many
+    // lines the label below wraps to.
+    alignItems: "flex-start",
     padding: 24,
     // Tightened alongside the smaller card size above so the grid doesn't
     // end up with disproportionately large gaps around now-smaller cards.
