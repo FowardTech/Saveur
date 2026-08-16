@@ -220,7 +220,7 @@ const themedStyles = StyleService.create({
   // takes its place, same neutral tone as globalStyle.divider.
   card: {
     ...globalStyle.card,
-    borderRadius: 20,
+    borderRadius: 15,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

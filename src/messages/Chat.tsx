@@ -649,9 +649,17 @@ const Chat = memo(() => {
             default blue color" — was the soft two-tone reference-blue
             gradient (#9DBFEF -> #7EA8E2); this is a brand mark, not a
             motivational/streak surface, so it gets this app's actual
-            brand blue (#0063f8) as a plain solid fill instead. */}
+            brand blue (#0063f8) as a plain solid fill instead.
+            REDESIGN (product request: "replace the saveur icon in the AI
+            career Coach with the chat icon of the new icons i uploaded")
+            -- BrandWordmark's Saveur "S" mark swapped for the same
+            illustrated chat-bubble icon already used for Coach elsewhere
+            in this app (Career Toolkit's Coach icon, the suggested-topics
+            sheet's first chip). Plain <Image>, no tintColor -- full-color
+            source art, not a tintable glyph like the wordmark was. Circle
+            backdrop (emptyGlowWrap, brand blue) is unchanged. */}
         <View style={styles.emptyGlowWrap}>
-          <BrandWordmark markOnly size={34} markColor="#fff" />
+          <Image source={Images.iconCoachChat} resizeMode="contain" style={styles.emptyGlowIcon as ImageStyle} />
         </View>
         <Text category="h6" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
@@ -1151,7 +1159,12 @@ const themedStyles = StyleService.create({
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#0063f8',
+    // backgroundColor: '#0063f8',
+  },
+  // See the REDESIGN comment at the render call site.
+  emptyGlowIcon: {
+    width: 88,
+    height: 88,
   },
   // BUG FIX (product report: "too bold", "reduce the size"): `category`
   // was "h5" with the `bold` prop -- h5 was never actually added to this

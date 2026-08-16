@@ -155,7 +155,7 @@ export const globalStyle = StyleSheet.create({
   // app-wide) still keeps its own value regardless of this change; those
   // are follow-up candidates for a future pass, not touched here.
   card: {
-    borderRadius: 20,
+    borderRadius: 16,
     // Product ask: "remove the box shadow from the white cards and let's
     // see how it looks" — cardShadow (the soft ambient shadow/elevation
     // object above) was removed from this spread. Definition against the
@@ -194,7 +194,7 @@ export const globalStyle = StyleSheet.create({
     // Container.tsx's own comment), so a real border is needed again for
     // cards to read as distinct surfaces — explicitly back to 1.5, the
     // same width this had before it was ever removed.
-    borderWidth: 1.5,
+    borderWidth: 1.2,
     borderColor: 'rgba(128,128,128,0.3)',
   },
   // Redesign v2 (full reskin): primary buttons get the same soft ambient

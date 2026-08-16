@@ -248,6 +248,7 @@ export const Images = {
   // "REDESIGN" comment); the rest are registered here ready for a future
   // placement pass rather than left unregistered.
   iconCoachChat: require('./img_icon_coach_chat.png'),
+  iconCoachChatBlue: require('./img_icon_coach_chat2.png'),
   iconHandshake: require('./img_icon_handshake.png'),
   iconGraduationCap: require('./img_icon_graduation_cap.png'),
   iconCoins: require('./img_icon_coins.png'),

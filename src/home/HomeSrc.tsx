@@ -1045,7 +1045,7 @@ const HomeSrc = memo(() => {
               a coin for Salary. Plain <Image>, no tintColor -- these are
               full-color source art, not tintable glyphs. */}
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-            <Image source={Images.iconCoachChat} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
+            <Image source={Images.iconCoachChatBlue} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_coach', { defaultValue: 'Coach' })}
             </Text>
@@ -1394,7 +1394,7 @@ const themedStyles = StyleService.create({
   // own override below (transparent) is untouched.
   focusToolkitCard: {
     padding: 16,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-0',
   },
   // Dark-mode-only override (see the "remove the border and background...
   // Only in dark mode" comment at the call site) — light mode keeps the
@@ -1468,6 +1468,9 @@ const themedStyles = StyleService.create({
   quickActionItem: {
     alignItems: 'center',
     width: '22%',
+    borderWidth: 1.2,
+    borderRadius: 7,
+    borderColor: 'rgba(128,128,128,0.3)',
   },
   // Product follow-up: "they are looking ok but you need to increase their
   // sizes" -- was 26x26 (a touch under globalStyle.icon20's 28x28, on the

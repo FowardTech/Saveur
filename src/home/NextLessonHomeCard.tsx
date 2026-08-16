@@ -134,7 +134,7 @@ const themedStyles = StyleService.create({
   // `card` style — see that file's comment for the full history/reasoning.
   card: {
     ...globalStyle.card,
-    borderRadius: 20,
+    borderRadius: 15,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
