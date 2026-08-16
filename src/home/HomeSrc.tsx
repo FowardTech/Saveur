@@ -13,19 +13,17 @@ import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import NextLessonHomeCard from './NextLessonHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { ArtGiftBox, ArtPractice, ArtWorkplaceCompass } from './HomeHeroArt';
+import { ArtGiftBox, ArtWorkplaceCompass } from './HomeHeroArt';
 import CircularProgress from 'components/CircularProgress';
-import ProgressBar from 'components/ProgressBar';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { AdvertisementProps, EKeyAsyncStorage, GamificationStreakProps, accountScopedKey } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
 import * as notificationService from 'services/notificationService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
-import * as gamificationService from 'services/gamificationService';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
@@ -95,52 +93,31 @@ const HomeSrc = memo(() => {
   // see"). This replaces the previous stack of full-width dark-gradient
   // hero cards (Career Coach / Dream Company Dashboard / Refer & Earn, see
   // git history) with that structure, built from real data instead of the
-  // reference's placeholder numbers: the ring/streak/XP below come from
-  // GET /api/v1/gamification/streak (services/gamificationService.ts),
-  // the same endpoint src/home/Leaderboard.tsx's own streak card already
-  // uses (shown in both places for now — Leaderboard's card is untouched).
-  // The Fortune-500 logo stack the old Dream Company Dashboard card had
-  // doesn't fit this row-based "More for you" format and is dropped here
-  // (constants/Data.ts's dreamCompanyLogoNames is still there if a future
-  // pass wants it back).
-  const [streak, setStreak] = React.useState<GamificationStreakProps | null>(null);
-  React.useEffect(() => {
-    if (!isSignedIn) return;
-    gamificationService.getStreak().then(setStreak).catch(() => {
-      // Non-critical — the hero card just hides itself (see the JSX below)
-      // rather than showing broken/stale numbers on a failed fetch.
-    });
-  }, [isSignedIn]);
-  // Same "streak toward a 7-day week" framing Leaderboard.tsx's own ring
-  // already uses, so the two don't disagree with each other.
-  const streakRingPct = streak ? Math.min(100, (streak.streakDays / 7) * 100) : 0;
-
-  // Product report: "the Today's Career Focus card progress bar is
-  // displaying the same value as the Job Readiness [ring below] ... Users
-  // need to know the difference" -- and on discussion, the fix isn't just
-  // making the two numbers different, it's putting the RIGHT metric in
-  // each spot given what this app is actually for (helping someone reach
-  // their target role, not just log a streak):
-  //   - Today's Career Focus (top hero, mic icon, "X days" headline) stays
-  //     100% about the daily practice habit -- streakRingPct below is the
-  //     only number that belongs in a card framed entirely around "what
-  //     should I do today."
-  //   - Career Progress (this section) is the north-star, longer-horizon
-  //     metric: concrete milestone progress toward the user's actual
-  //     target role, not an abstract skill/consistency score -- see
-  //     roadmapPercent below.
-  //   - The old Job Readiness composite (60% avg interview score + 40%
-  //     streak) is dropped from Home entirely rather than becoming a third
-  //     competing headline number -- it still lives on Practice/My
-  //     Progress, the screen someone actually goes to for a performance
-  //     diagnostic, which is the right depth level for it.
+  // reference's placeholder numbers. The Fortune-500 logo stack the old
+  // Dream Company Dashboard card had doesn't fit this row-based "More for
+  // you" format and is dropped here (constants/Data.ts's
+  // dreamCompanyLogoNames is still there if a future pass wants it back).
+  //
+  // RESTRUCTURE (product follow-up, home-screen layout review: "Remove the
+  // career tool kit from the whole card and place it immediately after
+  // homebanner. And then remove the todays focus content totally") — the
+  // "Today's Career Focus" streak hero (mic icon, "X days" headline,
+  // streak-toward-7-days progress bar, "Ask Your Career Coach" button) is
+  // gone from Home entirely, not moved elsewhere — see git history for its
+  // full prior implementation if a future pass wants it back. That also
+  // retires the streak fetch/state that only ever fed this block (GET
+  // /api/v1/gamification/streak, services/gamificationService.ts) —
+  // Leaderboard.tsx's own streak card is untouched, it has its own
+  // independent fetch of the same endpoint. Career Toolkit is still here,
+  // just as its own standalone section now (see the JSX below) instead of
+  // living inside this same card.
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
   React.useEffect(() => {
     if (!isSignedIn) return;
     roadmapService.getSavedRoadmap().then(setRoadmap).catch(() => {
       // Non-critical -- "Progress Toward Goal" just falls back to an
-      // honest 0% / "build your roadmap" nudge below, same fail-open
-      // convention as streak above.
+      // honest 0% / "build your roadmap" nudge below rather than a broken
+      // state on a failed fetch.
     });
   }, [isSignedIn]);
   const roadmapPercent = roadmap && roadmap.totalCount > 0
@@ -687,29 +664,29 @@ const HomeSrc = memo(() => {
         {/* Home redesign v3 (see this file's module comment + the effects
             above for the full "why"), section titles renamed in a later
             follow-up to read as this app's own career-coaching vocabulary
-            rather than generic dashboard labels. Top to bottom: a verify-
-            email banner (unchanged, time-sensitive account action, not a
-            content card), "Today's Career Focus" (practice streak, always
-            visible -- the wireframe's anchor card, not a self-hiding one
-            like the sections it replaces), "Career Toolkit" (4
-            shortcuts), "Career Progress" (Job Readiness ring),
-            DailyChallengeCard (self-contained, own doc comment), "Next
-            Steps" (a standing link into WhatsNext.tsx). NOTE: this list is
-            top-to-bottom as of the ORIGINAL v3 pass -- see the "Continue &
-            Upcoming" section's own comment further down for where
-            ContinueLearningCard/UpcomingSessionHomeCard actually live now
-            (a horizontal row right below the Home banner, own section
-            title, not inside "Next Steps" anymore).
+            rather than generic dashboard labels.
+            CURRENT top-to-bottom order (RESTRUCTURE pass, product follow-up
+            "Remove the career tool kit from the whole card and place it
+            immediately after homebanner. And then remove the todays focus
+            content totally" -- see the toolkitCard/toolkitCardDark styles'
+            own comment for what got removed entirely rather than moved):
+            verify-email banner (time-sensitive account action, not a
+            content card) -> admin Home banner (conditional) -> "Career
+            Toolkit" (4 shortcuts, now its own standalone section right
+            after the banner) -> "Continue & Upcoming" (3-card horizontal
+            row) -> "Career Progress" (Progress Toward Goal ring) ->
+            DailyChallengeCard (self-contained, own doc comment) -> Refer &
+            Earn promo -> "Next Steps" (a standing link into WhatsNext.tsx).
+            "Today's Career Focus" (the old streak/mic-icon hero this
+            screen used to open with) is GONE, not relocated -- see git
+            history if a future pass wants it back.
             REMOVED from Home in the original v3 pass (still reachable
             elsewhere, not deleted from the app): DailyNewsBanner/
-            DailyTipsBanner, the old streak-stats grid, the Career Coach/
-            Dream Company Dashboard/Refer & Earn/Salary Negotiation action
-            rows (now back as "Career Toolkit"'s 4 shortcuts instead, see
-            below), and RecentActivityList. DailyChallengeCard was ALSO
-            removed in that pass with no other entry point left anywhere
-            in the app -- restored here (product follow-up: "add more
-            content after the your progress card") rather than staying
-            orphaned. */}
+            DailyTipsBanner, the old streak-stats grid, and
+            RecentActivityList. DailyChallengeCard was ALSO removed in that
+            pass with no other entry point left anywhere in the app --
+            restored here (product follow-up: "add more content after the
+            your progress card") rather than staying orphaned. */}
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -813,14 +790,74 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         ) : null}
 
+        {/* RESTRUCTURE (product follow-up, home-screen layout review:
+            "Remove the career tool kit from the whole card and place it
+            immediately after homebanner. And then remove the todays focus
+            content totally") -- Career Toolkit used to live inside the
+            same merged card as the (now-removed) "Today's Career Focus"
+            streak hero, both sitting below the "Continue & Upcoming" row.
+            It's its own standalone section now, moved up to be the very
+            first content section after the home banner -- same
+            `<Text category="h8" bold>` section-title treatment every
+            other section on this screen already uses, plus its own
+            globalStyle.card box (same "remove the border/background only
+            in dark mode" treatment the old merged card had --
+            toolkitCardDark). */}
+        <Text category="h8" bold mt={4} mb={12}>
+          {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
+        </Text>
+        <View style={[globalStyle.card, styles.toolkitCard, isDarkMode && styles.toolkitCardDark]}>
+          <View style={styles.quickActionsRow}>
+            {/* REDESIGN (product-supplied icon pack, "use them in the
+                appropriate places in the app most especially the career
+                toolkit icons") -- a chat bubble for Coach, a handshake for
+                Companies (Dream Companies is about building real
+                relationships with target employers, not just browsing a
+                briefcase icon), a graduation cap for Courses, and a coin
+                for Salary. Plain <Image>, no tintColor -- these are
+                full-color source art, not tintable glyphs.
+                "you are supposed to use the blue not the red icons" --
+                Coach's icon is iconCoachChatBlue (blue-teal bubble), not
+                the original orange/red iconCoachChat. */}
+            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
+              <Image source={Images.iconCoachChatBlue} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
+              <Text category="h10" center mt={6} numberOfLines={1}>
+                {t('home:quick_action_coach', { defaultValue: 'Coach' })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
+              <Image source={Images.iconHandshake} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
+              <Text category="h10" center mt={6} numberOfLines={1}>
+                {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
+              </Text>
+            </TouchableOpacity>
+            {configService.isFeatureEnabled('learning_courses') ? (
+              <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('LearningCourses')}>
+                <Image source={Images.iconGraduationCap} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
+                <Text category="h10" center mt={6} numberOfLines={1}>
+                  {t('home:quick_action_courses', { defaultValue: 'Courses' })}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+            {configService.isFeatureEnabled('salary_negotiation') ? (
+              <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('SalaryNegotiation')}>
+                <Image source={Images.iconCoins} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
+                <Text category="h10" center mt={6} numberOfLines={1}>
+                  {t('home:quick_action_salary', { defaultValue: 'Salary' })}
+                </Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+
         {/* Product follow-up: "I want you to place the 2 cards below the
             homebanner and give them a section name just like the other
             sections in the homescreen" -- ContinueLearningCard +
             UpcomingSessionHomeCard's horizontal row moved from right above
             the home banner to right below it, now with its own section
             title (same `<Text category="h8" bold>` treatment as "Career
-            Toolkit"/"Career Progress" below), instead of being the one
-            section-less block on this screen.
+            Toolkit" above / "Career Progress" below), instead of being the
+            one section-less block on this screen.
             Product follow-up: "the upcoming session should be on the left
             while the continue learning be on the right" -- swapped order
             (UpcomingSessionHomeCard first, ContinueLearningCard second).
@@ -862,223 +899,7 @@ const HomeSrc = memo(() => {
           <NextLessonHomeCard style={{ width: topCardWidth }} />
         </ScrollView>
 
-        {/* "Today's Focus" -- wireframe's top card: a square image, a bold
-            title, two lines of real streak copy (same fields/keys the old
-            hero card used), and a horizontal progress bar toward a 7-day
-            week (same streakRingPct the old ring used, just a bar instead
-            of a ring here -- the ring moves down to "Your Progress"
-            below). Always rendered (not gated on `streak` loaded) since
-            this is the wireframe's anchor card, not a self-hiding one --
-            falls back to a real, honest 0%/0-days zero state rather than
-            leaving a gap at the very top of the screen while the fetch is
-            in flight or if it fails.
-            MERGE (product ask: "place the career toolkit card and the
-            today's career focus card to be in one container. So just one
-            container should house them") -- these used to be two separate
-            globalStyle.card boxes, each with its own top-level section
-            title. Now one outer card (focusToolkitCard) houses both;
-            "Career Toolkit" becomes a smaller inner subheading instead of
-            its own section, and "Today's Career Focus" is the one title
-            that still sits above the whole merged container. */}
-        <Text category="h8" bold mt={4} mb={12}>
-          {t('home:todays_focus_label', { defaultValue: "Today's Career Focus" })}
-        </Text>
-        {/* Product ask: "In dark mode remove the border and background from
-            the career toolkit and the today's Surprise challenge. Only in
-            dark mode" — focusToolkitCardDark zeroes out backgroundColor
-            (transparent, letting the page's own dark background show
-            through) for the WHOLE merged container now, same treatment
-            both halves already had separately before the merge. */}
-        <View style={[globalStyle.card, styles.focusToolkitCard, isDarkMode && styles.focusToolkitCardDark]}>
-          {/* Product report: "the Today's Career Focus card should not
-              navigate to the leaderboard when clicked since the trophy cup
-              icon [already] navigates there" (see HeaderHome.tsx's own
-              trophy button) -- this was a duplicate entry point to the same
-              screen, originally fixed by routing the whole card into the
-              Coach tab's Chat screen with the Suggested Topics bottom sheet
-              already popped open instead (openTopicsSheet -- see Chat.tsx's
-              own effect for this).
-              REDESIGN (product follow-up: "there should be a button in that
-              card that will now trigger the suggested topic in the AI
-              career coach screen instead of the whole card to now be the
-              one to trigger it") -- that TouchableOpacity used to wrap this
-              entire streak block; it's a plain View now, and the dedicated
-              "Ask Your Career Coach" button below (askCoachButton) is the
-              only thing in this container that navigates into Coach/Chat
-              with the Suggested Topics sheet open. Those topics are still
-              the same live, personalized GET /api/v1/coach/suggested-topics
-              call built from the user's real recent activity (interview
-              scores/weak spots, streak, learning progress -- see
-              Saveur-Backend's coach.py _activity_snippet), just reached via
-              an explicit tap target now instead of the whole card. */}
-          <Flex justify="flex-start" itemsCenter>
-            {/* Product follow-up, round 3: "I dont like it, I want you to
-                use the illustration style you used in the referral screen
-                i.e the gift box kind of illustration style" -- IconMic3D
-                (round 2's pick, a glossy 3D-style SVG badge) still wasn't
-                the right register. ArtGiftBox (ReferralProgram.tsx) and
-                ArtPractice both live in src/home/HomeHeroArt.tsx and share
-                one construction: a soft brand-tint backdrop circle, solid
-                (not gradient/glossy) flat-colored shapes, and a small
-                ground-shadow ellipse for a touch of depth -- that's the
-                actual "illustration style" being asked for here.
-                ArtPractice is the practice/mic scene in that exact family
-                (see HomeHeroArt.tsx's own history -- it's the same
-                illustration this app's OLD quick-action tiles used for
-                their Practice card), so it's both the right style AND the
-                right subject for this streak/practice card. */}
-            {/* Product report: "reduce the size of the mic icon in the
-                Today's Career Focus card" — was 64 (the same footprint
-                as the old image it replaced), sized down to read more like
-                an accent icon next to the streak text than a co-equal
-                visual block.
-                REDESIGN, then REVERTED (product follow-up: "The icons
-                background color are still looking awful to me... remove
-                the backgrounds from the icons... and give the icons
-                themselves... the platform blue") — this cycled through a
-                GradientIconBadge wrapper (orange, at one point) and back;
-                no badge behind it now, plain ArtPractice again with no
-                `light` prop, so it reverts to its own default construction
-                (brand-blue stroke + its own faint built-in backdrop
-                wash) -- the exact "platform blue" this ask wants, with no
-                separate colored square needed behind it. */}
-            <ArtPractice size={44} />
-            <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
-              <Text category="h9" bold numberOfLines={1}>
-                {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
-              </Text>
-              <Text category="h10" status="placeholder" mt={2} numberOfLines={1}>
-                {streak && streak.longestStreak && streak.longestStreak > streak.streakDays
-                  ? t('home:streak_hero_subtitle_chasing', {
-                      defaultValue: 'Best is {{best}} days — keep going!',
-                      best: streak.longestStreak,
-                    })
-                  : streak
-                  ? t('home:streak_hero_subtitle_best', { defaultValue: "That's your best run yet!" })
-                  : t('home:todays_focus_zero_state', { defaultValue: 'Start a practice session today' })}
-              </Text>
-              {/* Kept as the plain streak-toward-7-days bar (see the
-                  "which metric belongs where" comment above where
-                  streakRingPct/roadmapPercent are computed) -- this card's
-                  whole narrative (headline, subtitle) is the daily practice
-                  habit, so the bar underneath stays that same story instead
-                  of switching metrics mid-card.
-                  Product report: "the height of the progress bar... is too
-                  tiny" — was the component's bare 4px default on both the
-                  outer track (`style`) and the inner fill (previously
-                  unset, so it fell back to that same hardcoded 4 inside
-                  ProgressBar.tsx); focusProgressBar/focusProgressBarFill
-                  now both explicitly set height: 8 so the fill actually
-                  grows along with its own track. */}
-              <Flex justify="flex-start" itemsCenter mt={8}>
-                <ProgressBar
-                  style={styles.focusProgressBar}
-                  styleBar={styles.focusProgressBarFill}
-                  didDone={streak?.streakDays ?? 0}
-                  total={7}
-                  minimumTrackTintColor="#0063f8"
-                />
-                <Text category="h10" bold ml={8}>
-                  {Math.round(streakRingPct)}%
-                </Text>
-              </Flex>
-            </View>
-          </Flex>
-
-          {/* New dedicated tap target (see the REDESIGN comment above) --
-              a compact pill/row rather than a big CTA button, since this
-              sits inside an already-busy card alongside the streak block
-              and the Career Toolkit icons below it. */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.askCoachButton}
-            onPress={() => navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { openTopicsSheet: true } } })}>
-            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
-            <Text category="h10" bold ml={6} style={styles.askCoachButtonText}>
-              {t('home:ask_coach_button', { defaultValue: 'Ask Your Career Coach' })}
-            </Text>
-            <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, styles.askCoachButtonArrow]} />
-          </TouchableOpacity>
-
-          {/* Separates the streak block above from the Career Toolkit
-              icons below now that both live inside one container -- an
-              internal section divider distinct from the outer card's own
-              border (see globalStyle.card's own border comment). */}
-          <View style={styles.toolkitDivider} />
-
-          {/* "Quick Actions" (product follow-up: "replace the 4 quick
-              actions you put there with: Career Coach, Dream Company
-              Dashboard, Refer & Earn, and Salary Negotiation") -- same 4
-              destinations/icon colors the old "More for you" action rows
-              used before this redesign, just laid out as plain
-              icon-in-a-badge + label (wireframe shows these directly on
-              the page, not inside tiles) instead of full-width rows -- see
-              src/home/QuickActionGrid.tsx for the heavier bento-tile
-              version this deliberately does NOT reuse here. Learning
-              Courses / Salary Negotiation stay behind the same admin
-              feature flags the old rows checked.
-              Refer & Earn REMOVED from here (product follow-up: "Remove
-              refer from the career toolkit and replace it with Courses")
-              -- it now has its own full promo card below DailyChallengeCard
-              instead (more room for the actual pitch than a small icon
-              label ever had).
-              REDESIGN, then REVERTED (product follow-up: "The icons
-              background color are still looking awful to me... remove the
-              backgrounds from the icons... and give the icons themselves
-              the platform blue") -- this row cycled through a colored
-              badge behind every icon (a distinct hue each -- teal,
-              orange, purple, green) and back; no badge/background now,
-              every icon glyph tinted the same flat platform blue
-              (#0063f8) directly instead. */}
-          <Text category="h9" bold mb={12}>
-            {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
-          </Text>
-          <View style={styles.quickActionsRow}>
-          {/* REDESIGN (product-supplied icon pack, "use them in the
-              appropriate places in the app most especially the career
-              toolkit icons") -- the flat platform-blue Eva glyphs above are
-              swapped for the matching real illustrated icons from that pack
-              (see assets/images/index.ts's own comment): a chat bubble for
-              Coach, a handshake for Companies (Dream Companies is about
-              building real relationships with target employers, not just
-              browsing a briefcase icon), a graduation cap for Courses, and
-              a coin for Salary. Plain <Image>, no tintColor -- these are
-              full-color source art, not tintable glyphs. */}
-          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-            <Image source={Images.iconCoachChatBlue} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
-            <Text category="h10" center mt={6} numberOfLines={1}>
-              {t('home:quick_action_coach', { defaultValue: 'Coach' })}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
-            <Image source={Images.iconHandshake} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
-            <Text category="h10" center mt={6} numberOfLines={1}>
-              {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
-            </Text>
-          </TouchableOpacity>
-          {configService.isFeatureEnabled('learning_courses') ? (
-            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('LearningCourses')}>
-              <Image source={Images.iconGraduationCap} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
-              <Text category="h10" center mt={6} numberOfLines={1}>
-                {t('home:quick_action_courses', { defaultValue: 'Courses' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-          {configService.isFeatureEnabled('salary_negotiation') ? (
-            <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('SalaryNegotiation')}>
-              <Image source={Images.iconCoins} style={styles.quickActionIcon as ImageStyle} resizeMode="contain" />
-              <Text category="h10" center mt={6} numberOfLines={1}>
-                {t('home:quick_action_salary', { defaultValue: 'Salary' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-          </View>
-        </View>
-
-        {/* "Your Progress" -- Progress Toward Goal ring (see the "which
-            metric belongs where" comment above where streakRingPct/
-            roadmapPercent are computed for the full reasoning). A
-            genuinely distinct metric from Today's Focus: concrete
+        {/* "Your Progress" -- Progress Toward Goal ring. Concrete
             milestone progress through
             the user's real AI Career Roadmap (completedCount/totalCount),
             the same source src/practice/MyProgress.tsx's own "Progress
@@ -1377,92 +1198,23 @@ const themedStyles = StyleService.create({
   referralText: {
     color: '#fff',
   },
-  // MERGE (see the "place the career toolkit card and the today's career
-  // focus card... in one container" comment at the call site) -- one
-  // outer card now houses both the streak block and the Career Toolkit
-  // icon row that each used to have their own separate `focusCard`/
-  // `toolkitCard`. `globalStyle.card` supplies the shape (border is gone
-  // app-wide now -- see that style's own "remove the border from all the
-  // white cards" comment); this just adds the padding/fill on top.
-  // Product follow-up: "I want you to give the today's Career focus a very
-  // subtle light gray and lets see how it looks" -- was
-  // background-basic-color-2 (solid white, #FFFFFF, matching every other
-  // card on this screen). Swapped for background-basic-color-3
-  // (#F0F0F0), the same light gray token Container.tsx's own gray page
-  // level already uses elsewhere in this app, so this stays a "known"
-  // gray rather than a one-off new value -- light mode only, dark mode's
-  // own override below (transparent) is untouched.
-  // BUG FIX: 'background-basic-color-0' isn't a real token — this app's
-  // theme only defines background-basic-color-1 through -8 (see
-  // constants/theme/light.json/dark.json), so this was an invalid color
-  // string reaching React Native's style processing, a likely second
-  // source of "the app is giving me error" alongside the missing
-  // img_home_banner_ai_coach.jpg fix in the same commit. Set to
-  // background-basic-color-1 (#F6FAF8, an even subtler off-white than the
-  // #F0F0F0 -3 token this card had two turns ago) as a safe, valid
-  // placeholder — flagging this as a guess in case a different shade was
-  // actually intended.
-  focusToolkitCard: {
+  // RESTRUCTURE (see the JSX comment at the render call site) -- Career
+  // Toolkit is its own standalone card now, no longer merged with the
+  // (removed) "Today's Career Focus" streak hero this used to share a
+  // container with -- see git history for the old focusToolkitCard/
+  // focusToolkitCardDark/focusTextWrap/focusProgressBar/
+  // focusProgressBarFill/askCoachButton*/toolkitDivider styles this
+  // replaces, all now dead and removed.
+  toolkitCard: {
     padding: 16,
-    backgroundColor: 'background-basic-color-1',
   },
-  // Dark-mode-only override (see the "remove the border and background...
-  // Only in dark mode" comment at the call site) — light mode keeps the
-  // tinted look above untouched.
-  focusToolkitCardDark: {
+  // Dark-mode-only override (product ask, still honored: "In dark mode
+  // remove the border and background from the career toolkit... Only in
+  // dark mode") — light mode keeps globalStyle.card's normal white/bordered
+  // look untouched.
+  toolkitCardDark: {
     backgroundColor: 'transparent',
-  },
-  focusTextWrap: {
-    marginLeft: 12,
-  },
-  // `flex: 1` so the bar fills the remaining row width next to its %
-  // label (matches ProgressBar's own "measure my own width via onLayout"
-  // design -- it needs a bounded parent, which flex:1 in a row provides).
-  // height: 8 (up from the component's bare 4px default) -- product
-  // report: "the height of the progress bar... is too tiny."
-  focusProgressBar: {
-    flex: 1,
-    height: 8,
-    borderRadius: 4,
-  },
-  // Matches focusProgressBar's own new height -- ProgressBar.tsx's inner
-  // fill only picks this up via the separate `styleBar` prop, its own
-  // `style` prop only reaches the outer track.
-  focusProgressBarFill: {
-    height: 8,
-    borderRadius: 4,
-  },
-  // Dedicated tap target (product ask: "there should be a button in that
-  // card that will now trigger the suggested topic in the AI career coach
-  // screen instead of the whole card") -- a light brand-blue-tinted pill,
-  // same `color-primary-transparent-100` tint the old icon badges used to
-  // use before the gradient redesign, now repurposed here as a button
-  // background instead of an icon backdrop.
-  askCoachButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 14,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    backgroundColor: 'color-primary-transparent-100',
-  },
-  askCoachButtonText: {
-    color: '#0063f8',
-  },
-  askCoachButtonArrow: {
-    tintColor: '#0063f8',
-    marginLeft: 'auto',
-  },
-  // Internal section break between the streak block and the Career
-  // Toolkit icons now that both live inside one merged container -- a
-  // plain hairline, not a card border (see globalStyle.card's own border
-  // removal comment for why the outer card itself doesn't use one).
-  toolkitDivider: {
-    height: 1,
-    backgroundColor: 'rgba(128,128,128,0.15)',
-    marginTop: 16,
-    marginBottom: 16,
+    borderWidth: 0,
   },
   // "Quick Actions" row -- 4 plain icon-in-a-badge + label items (see the
   // JSX comment above for why this deliberately doesn't reuse
