@@ -1392,9 +1392,19 @@ const themedStyles = StyleService.create({
   // level already uses elsewhere in this app, so this stays a "known"
   // gray rather than a one-off new value -- light mode only, dark mode's
   // own override below (transparent) is untouched.
+  // BUG FIX: 'background-basic-color-0' isn't a real token — this app's
+  // theme only defines background-basic-color-1 through -8 (see
+  // constants/theme/light.json/dark.json), so this was an invalid color
+  // string reaching React Native's style processing, a likely second
+  // source of "the app is giving me error" alongside the missing
+  // img_home_banner_ai_coach.jpg fix in the same commit. Set to
+  // background-basic-color-1 (#F6FAF8, an even subtler off-white than the
+  // #F0F0F0 -3 token this card had two turns ago) as a safe, valid
+  // placeholder — flagging this as a guess in case a different shade was
+  // actually intended.
   focusToolkitCard: {
     padding: 16,
-    backgroundColor: 'background-basic-color-0',
+    backgroundColor: 'background-basic-color-1',
   },
   // Dark-mode-only override (see the "remove the border and background...
   // Only in dark mode" comment at the call site) — light mode keeps the
