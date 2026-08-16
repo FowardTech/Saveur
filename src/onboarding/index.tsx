@@ -35,18 +35,16 @@ import { SUPPORTED_LANGUAGES, getLanguageLabel } from 'constants/languages';
 import { EKeyAsyncStorage } from 'constants/Types';
 import { Images } from 'assets/images';
 import { getSignupOnboardingImage, SignupOnboardingImagesConfig } from 'services/configService';
-import { ImageSourcePropType } from 'react-native';
+import OnboardingIconArt from './OnboardingIconArt';
 
-/** Admin-uploaded override for one signup-carousel slide (see
- * configService.getSignupOnboardingImage) if one exists, else the slide's
- * own bundled local asset — unchanged behavior until an admin actually
- * uploads something. */
-function slideImageSource(
-  key: keyof SignupOnboardingImagesConfig,
-  fallback: ImageSourcePropType,
-): ImageSourcePropType {
-  const remote = getSignupOnboardingImage(key);
-  return remote ? { uri: remote } : fallback;
+/** Admin-uploaded override photo for one signup-carousel slide (Admin >
+ * Content > Onboarding > Signup Carousel), if one exists — see DATA's own
+ * REDESIGN comment in the component below for how this is now used
+ * (only ever shown in place of the new default icon-cluster art, not in
+ * place of the old bundled phone-mockup asset, which no longer renders by
+ * default at all). */
+function overrideImageUri(key: keyof SignupOnboardingImagesConfig): string | null {
+  return getSignupOnboardingImage(key);
 }
 
 const Onboarding = memo(() => {
@@ -170,55 +168,101 @@ const Onboarding = memo(() => {
   // Product request: "implement the ability to upload the app onboarding
   // images i.e the one at signup. Admin should be able to upload the
   // images for it... single image upload for the [5] onboarding screen
-  // that is in the signup part" — each slide's `image` now prefers an
-  // admin-uploaded override (Admin > Content > Onboarding > Signup
-  // Carousel) over its bundled local asset, via `configKey` +
-  // slideImageSource() below. No per-language variant here (unlike the
+  // that is in the signup part" — each slide still prefers an admin-
+  // uploaded override (Admin > Content > Onboarding > Signup Carousel) over
+  // its own default art, checked via `configKey` + getSignupOnboardingImage()
+  // at the render call site below. No per-language variant here (unlike the
   // Job Alerts/Learning Courses onboarding banners) — this carousel's
   // headline/subtitle text was deliberately cropped OUT of each source
-  // image and rebuilt as the translatable <Text> above, so the
-  // illustration itself has nothing baked in that needs localizing.
+  // image and rebuilt as the translatable <Text> above, so the illustration
+  // itself has nothing baked in that needs localizing.
+  //
+  // REDESIGN (product request: "In the app onboarding I want you to replace
+  // those illustrations with the appropriate icons from this [icon pack —
+  // 36 real icons8 PNGs the product owner downloaded and uploaded as a
+  // zip]... or even a combination of icons just to illustrate
+  // appropriately") — the bundled `Images.onboardingX` phone-mockup PNGs
+  // (see this file's own long module comment above for that illustration's
+  // full history) are no longer each slide's DEFAULT art; each slide now
+  // instead pairs a `primaryIcon` (the main idea) with a smaller `accentIcon`
+  // badge (a second, related idea) via OnboardingIconArt.tsx, only falling
+  // back to the old bundled asset for a slide if an admin has ALSO
+  // separately uploaded a real replacement photo for it (see the render
+  // call site's `overrideUri` check) — that admin-upload feature still
+  // works exactly as before, it just no longer competes with a bundled
+  // "default" hero photo that doesn't exist anymore.
+  // Per-slide icon reasoning:
+  //  1. Interview practice with an AI coach -- discussion bubbles (the
+  //     interview conversation itself) + an AI-sparkle badge (the "AI
+  //     coach" half of the sentence).
+  //  2. Instant feedback on confidence/clarity/skills -- a lightbulb-in-a-
+  //     head icon (clarity/insight) + a checkmark badge (the actual
+  //     feedback verdict).
+  //  3. First-hand Job Alert -- a megaphone (the alert itself) + a
+  //     briefcase-and-gear badge (the job it's alerting about).
+  //  4. Get past the resume scanners -- an agenda/document icon (the
+  //     résumé) + a shield-with-checkmark badge (passing the ATS check --
+  //     the most literal icon-to-copy match in this whole set).
+  //  5. Learn one course at a time -- an open book (learning itself) + a
+  //     graduation cap badge (reusing HomeSrc.tsx's Career Toolkit "Courses"
+  //     icon, same idea in both places).
+  // `tintColor` is each backdrop circle's soft brand tint, one distinct hue
+  // per slide so the carousel doesn't read as five identical gray circles.
   const DATA = [
-    // `aspect` (width / height, measured from each PNG's actual pixel
-    // dimensions) — see the image container's own comment below for why
-    // this is needed: rendering resizeMode="contain" inside a fixed-aspect
-    // box that doesn't match the source image's real aspect ratio leaves
-    // uneven empty margin on two sides, which is what read as "not
-    // centered" (bug report: "the illustrations are not at the center").
     {
       id: 0,
       title: t('intro:title_1'),
       subtitle: t('intro:subtitle_1'),
-      image: slideImageSource('interview', Images.onboardingInterview),
+      configKey: 'interview' as const,
+      fallbackImage: Images.onboardingInterview,
       aspect: 1600 / 1537,
+      primaryIcon: Images.iconDiscussionBubbles,
+      accentIcon: Images.iconAiStars,
+      tintColor: 'rgba(0,99,248,0.10)',
     },
     {
       id: 1,
       title: t('intro:title_2'),
       subtitle: t('intro:subtitle_2'),
-      image: slideImageSource('feedback', Images.onboardingFeedback),
+      configKey: 'feedback' as const,
+      fallbackImage: Images.onboardingFeedback,
       aspect: 1600 / 1530,
+      primaryIcon: Images.iconLightbulbHead,
+      accentIcon: Images.iconCheck,
+      tintColor: 'rgba(245,158,11,0.12)',
     },
     {
       id: 2,
       title: t('intro:title_3'),
       subtitle: t('intro:subtitle_3'),
-      image: slideImageSource('job_alert', Images.onboardingJobAlert),
+      configKey: 'job_alert' as const,
+      fallbackImage: Images.onboardingJobAlert,
       aspect: 1600 / 1211,
+      primaryIcon: Images.iconMegaphone,
+      accentIcon: Images.iconBriefcaseGear,
+      tintColor: 'rgba(249,115,22,0.12)',
     },
     {
       id: 3,
       title: t('intro:title_4'),
       subtitle: t('intro:subtitle_4'),
-      image: slideImageSource('resume_scan', Images.onboardingResumeScan),
+      configKey: 'resume_scan' as const,
+      fallbackImage: Images.onboardingResumeScan,
       aspect: 1600 / 1217,
+      primaryIcon: Images.iconAgendaDocument,
+      accentIcon: Images.iconShieldCheck,
+      tintColor: 'rgba(124,58,237,0.10)',
     },
     {
       id: 4,
       title: t('intro:title_5'),
       subtitle: t('intro:subtitle_5'),
-      image: slideImageSource('learning', Images.onboardingLearning),
+      configKey: 'learning' as const,
+      fallbackImage: Images.onboardingLearning,
       aspect: 1600 / 1369,
+      primaryIcon: Images.iconOpenBook,
+      accentIcon: Images.iconGraduationCap,
+      tintColor: 'rgba(13,148,136,0.10)',
     },
   ];
 
@@ -328,6 +372,7 @@ const Onboarding = memo(() => {
                   width: width,
                 };
               });
+              const overrideUri = overrideImageUri(i.configKey);
               return (
                 <Animated.View key={index} style={style}>
                   <Text category="h2" bold mh={24} style={styles.title}>
@@ -336,7 +381,8 @@ const Onboarding = memo(() => {
                   <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
                     {i.subtitle}
                   </Text>
-                  {/* Bug reports: "Why are you placing the illustrations in
+                  {/* Bug reports (legacy, applies only to the admin-override
+                      path below): "Why are you placing the illustrations in
                       a gray card and also the illustrations are not at the
                       center." Both came from the same root cause — a fixed
                       1:0.72 box didn't match any of these illustrations'
@@ -348,14 +394,31 @@ const Onboarding = memo(() => {
                       box to each image's own measured aspect ratio instead
                       (DATA's `aspect`, no backgroundColor) means the image
                       fills its box edge-to-edge with no letterboxing gap
-                      and nothing behind it to read as a "card". */}
-                  <View style={[styles.image, { width: width * 0.86, height: (width * 0.86) / i.aspect }]}>
-                    <Image
-                      source={i.image}
-                      resizeMode="contain"
-                      style={{ width: '100%', height: '100%' }}
-                    />
-                  </View>
+                      and nothing behind it to read as a "card".
+                      REDESIGN (see DATA's own comment above) — this now
+                      only renders that old full-image box when an admin has
+                      uploaded a real replacement photo for this specific
+                      slide; otherwise it renders the new icon-cluster
+                      illustration instead. */}
+                  {overrideUri ? (
+                    <View style={[styles.image, { width: width * 0.86, height: (width * 0.86) / i.aspect }]}>
+                      <Image
+                        source={{ uri: overrideUri }}
+                        resizeMode="contain"
+                        style={{ width: '100%', height: '100%' }}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.iconArtWrap}>
+                      <OnboardingIconArt
+                        primaryIcon={i.primaryIcon}
+                        accentIcon={i.accentIcon}
+                        tintColor={i.tintColor}
+                        size={Math.min(width * 0.46, 200)}
+                        pageBackgroundColor={theme[isDarkMode ? 'background-basic-color-1' : 'background-basic-color-2']}
+                      />
+                    </View>
+                  )}
                 </Animated.View>
               );
             })}
@@ -432,6 +495,16 @@ const themedStyles = StyleService.create({
     // their outer bounds) was enough to read as a "box" around the
     // artwork. Neither is needed — the box is always sized to the image's
     // own aspect ratio, so there's nothing to clip.
+  },
+  // REDESIGN — wraps OnboardingIconArt (see DATA's own comment above).
+  // Centered the same way `image` is above; OnboardingIconArt sizes its own
+  // content internally (its `size` prop), this wrapper just needs to be a
+  // centered flex container with matching vertical breathing room.
+  iconArtWrap: {
+    marginVertical: 24,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   login: {
     flex: 1,

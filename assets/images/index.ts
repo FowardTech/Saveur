@@ -268,4 +268,16 @@ export const Images = {
   iconShield: require('./img_icon_shield.png'),
   iconSpeechBubble: require('./img_icon_speech_bubble.png'),
   iconAppGrid: require('./img_icon_app_grid.png'),
+  // Second batch from the same "ICON COLLECTIONS" pack (product request:
+  // "In the app onboarding I want you to replace those illustrations with
+  // the appropriate icons from this... a combination of icons") -- these 5
+  // are new to this pack (not duplicates of the first batch above), used by
+  // src/onboarding/OnboardingIconArt.tsx to build each signup-carousel
+  // slide's icon-cluster illustration alongside iconLightbulbHead/iconCheck/
+  // iconMegaphone/iconBriefcaseGear/iconGraduationCap from the first batch.
+  iconAiStars: require('./img_icon_ai_stars.png'),
+  iconDiscussionBubbles: require('./img_icon_discussion_bubbles.png'),
+  iconAgendaDocument: require('./img_icon_agenda_document.png'),
+  iconShieldCheck: require('./img_icon_shield_check.png'),
+  iconOpenBook: require('./img_icon_open_book.png'),
 };
