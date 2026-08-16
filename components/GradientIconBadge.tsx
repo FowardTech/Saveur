@@ -15,9 +15,17 @@ import { View, ViewStyle, StyleProp } from 'react-native';
 // (a lighter tint on one corner, a genuinely darker shade on the other,
 // meant to read as "glossy") plus a separate white sheen overlay on the
 // top half on top of that. Both of those are gone now -- just one flat
-// fill, the same lighter tint the gradient's own light end used
-// (shadeColor at +22), so every badge in the app reads as a single
-// uniform color instead of a two-tone split.
+// fill, so every badge in the app reads as a single uniform color instead
+// of a two-tone split.
+//
+// RETINTED (immediate product follow-up: "The colors are too bright make
+// them a little darker... I dont want this app to look like a children's
+// app") -- was shaded +22 (lighter than the caller's own color, on top of
+// several already-vivid base hexes like MoreSrc.tsx's STATUS_COLORS),
+// which read as pastel/candy-colored at app-wide scale. Shaded -8 now
+// (moderately darker than the caller's true color, not just "less
+// bright") -- applies to every badge in the app in one place, same as the
+// brightening did.
 //
 // Takes a single `color` (the same hex any caller used to pass straight to
 // `backgroundColor` before) rather than an explicit two-color array --
@@ -70,7 +78,7 @@ const GradientIconBadge: React.FC<GradientIconBadgeProps> = ({
           borderRadius,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: shadeColor(color, 22),
+          backgroundColor: shadeColor(color, -8),
         },
         style,
       ]}>

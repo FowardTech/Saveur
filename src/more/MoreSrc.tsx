@@ -170,13 +170,26 @@ const MoreSrc = memo(() => {
   // DATA_DETAILS/DATA_APPLICATION entries don't each need a new explicit
   // color field — their existing `status` values already vary sensibly
   // row to row and just needed a real color mapped to them again.
+  // RETINTED (product follow-up: "The colors are too bright make them a
+  // little darker. Especially the ones in the menu the light greens and
+  // the cyan blue are too bright... I dont want this app to look like a
+  // children's app") -- `green`/`success` was iOS's bright, almost neon
+  // system green (#34C759) and `twitter-3` was a pastel sky-cyan
+  // (#5AC8FA), the two worst offenders by name. Both replaced with
+  // deeper, more muted tones in the same hue family (a natural sea-green
+  // instead of a neon one; a steel/teal blue instead of a pastel cyan)
+  // rather than just relying on GradientIconBadge's own darkening alone.
+  // `twitter` (a genuine, still-bright blue right next to the now-muted
+  // twitter-3) toned down to match. facebook/primary/warning/danger left
+  // alone -- not called out, and already read as solid/adult rather than
+  // pastel.
   const STATUS_COLORS: Record<string, string> = {
     facebook: '#0063f8',
     primary: '#0063f8',
-    twitter: '#1DA1F2',
-    'twitter-3': '#5AC8FA',
-    green: '#34C759',
-    success: '#34C759',
+    twitter: '#1878B5',
+    'twitter-3': '#2C7DA0',
+    green: '#2E8B57',
+    success: '#2E8B57',
     warning: '#FF9500',
     danger: '#FF3B30',
     basic: '#8E8E93',
