@@ -137,10 +137,12 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     shadowOpacity: 0,
     elevation: 0,
-    // REMOVED (product ask: "remove the border from all the white
-    // cards") — matches globalStyle.card's own border removal, see that
-    // style's comment for the full reasoning.
-    borderWidth: 0,
+    // RESTORED (product follow-up: "Change the app background back to
+    // white and then give the white cards their borders back. Make the
+    // border width to be 1.5") — matches globalStyle.card's own border
+    // restoration, see that style's comment for the full reasoning.
+    borderWidth: 1.5,
+    borderColor: 'rgba(128,128,128,0.3)',
   },
   // Just the spacing now -- GradientIconBadge owns its own size/shape via
   // its `size`/`radius` props at the call site.

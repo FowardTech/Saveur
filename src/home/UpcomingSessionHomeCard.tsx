@@ -226,7 +226,20 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingLeft: 12,
+    // BUG FIX (product report: "the cancel icon... is not visible... some
+    // part of it is cut out", round 3) -- plain paddingHorizontal: 12
+    // let the trailing status icon (arrow/lock) sit flush against the same
+    // top-right corner the absolutely-positioned deleteButton overlays,
+    // so the two visually collided/overlapped instead of the delete
+    // button ever actually being its own clean, cut-out-free chip.
+    // paddingRight bumped to 34 so the row's real flex content (including
+    // that trailing icon) stops well clear of deleteButton's own
+    // reserved corner (see that style's own comment for its exact
+    // position/size) -- horizontal separation alone is enough to keep
+    // them from ever overlapping, regardless of either one's vertical
+    // position within the row.
+    paddingRight: 34,
     backgroundColor: 'color-primary-500',
     borderWidth: 0,
   },
@@ -244,8 +257,8 @@ const themedStyles = StyleService.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   // Delete button — see the "User should be able to delete an upcoming
-  // interview session" comment at the call site. Overlaid on the card's
-  // top-right corner rather than sitting inline in the row.
+  // interview session" comment at the call site. Sits inside the card's
+  // own top-right corner rather than sitting inline in the row.
   // BUG FIX (product report: "the cancel icon on the upcoming session
   // card... is not visible well enough") -- was a translucent WHITE circle
   // (rgba(255,255,255,0.25)) behind a solid white glyph, which barely
@@ -255,14 +268,26 @@ const themedStyles = StyleService.create({
   // contrast against both the icon on top of it and the blue card behind
   // it, plus a thin white ring (borderWidth/borderColor below) so the
   // whole chip stays legible even in the lightest corner of the card's
-  // fill. Also a hair bigger (22 -> 24) for a slightly easier tap target.
+  // fill.
+  // BUG FIX, round 2 (product report: "still not visible some part of it
+  // is cut out") -- the circle used to be overlaid HALF-OUTSIDE the card
+  // (top: -7, right: -7), poking past the card's own bounds. This card is
+  // one of three sitting inside a horizontal ScrollView on Home
+  // (HomeSrc.tsx's "Continue & Upcoming" row) -- a horizontal ScrollView
+  // clips its content to its own frame on the perpendicular (vertical)
+  // axis, so that negative top offset was getting sliced off by the
+  // ScrollView's own top edge rather than actually rendering above the
+  // card. Moved fully INSIDE the card's own padding box (top/right: 6,
+  // both positive) so it can never be clipped by any scroll container
+  // regardless of layout, at the cost of sitting a little further from
+  // the literal corner.
   deleteButton: {
     position: 'absolute',
-    top: -7,
-    right: -7,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    top: 6,
+    right: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0,0,0,0.32)',

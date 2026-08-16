@@ -1,28 +1,30 @@
 import React from 'react';
-import { StyleSheet, View, ViewStyle, StyleProp } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import { View, ViewStyle, StyleProp } from 'react-native';
 
-// iOS-Settings-style icon badge (product reference screenshot + follow-up:
-// "The icon background in screenshot i showed you are glossy gradient. So
-// you need to check that") -- every icon badge in the app (Menu/More rows'
-// ButtonOptional icons + the logout row, Home's Career Toolkit icons, and
-// Today's Career Focus's mic icon) previously used a single flat
-// `backgroundColor`, which read as matte/flat next to the reference
-// screenshot's own glossy two-tone badges. One shared component so all of
-// those converge on the exact same effect instead of three separate
-// hand-rolled copies: a diagonal two-tone LinearGradient (derived from one
-// base color -- lighter toward the top-left corner, darker toward the
-// bottom-right, the same "light source from upper-left" convention real
-// iOS icon gloss uses) plus a soft semi-transparent white sheen across the
-// badge's top half for the actual glossy highlight, not just a plain flat
-// gradient fill.
+// iOS-Settings-style icon badge -- a colored rounded-square chip behind
+// each icon glyph. Used everywhere an icon needs this treatment: Menu/More
+// rows' ButtonOptional icons + the logout row, Home's Career Toolkit
+// icons, Today's Career Focus's mic icon, the Practice tab's schedule
+// card, Career Diary/Dream Companies' "add" triggers, Recent Activity's
+// per-type icons, and more.
+//
+// REDESIGN (product follow-up: "this icon's background color is divided
+// into 2 halves. The upper part is light and the lower part is darker...
+// make the darker part light as the upper part so that the background is
+// just one color") -- this used to be a diagonal two-tone LinearGradient
+// (a lighter tint on one corner, a genuinely darker shade on the other,
+// meant to read as "glossy") plus a separate white sheen overlay on the
+// top half on top of that. Both of those are gone now -- just one flat
+// fill, the same lighter tint the gradient's own light end used
+// (shadeColor at +22), so every badge in the app reads as a single
+// uniform color instead of a two-tone split.
 //
 // Takes a single `color` (the same hex any caller used to pass straight to
 // `backgroundColor` before) rather than an explicit two-color array --
-// callers don't need to hand-pick a matching light/dark pair, so every
-// existing per-row/per-action color (MoreSrc.tsx's STATUS_COLORS, the
-// per-icon hexes in HomeSrc.tsx's Career Toolkit) keeps working unchanged,
-// just passed through as `color` instead of `backgroundColor`.
+// callers don't need to hand-pick anything, so every existing
+// per-row/per-action color (MoreSrc.tsx's STATUS_COLORS, the per-icon
+// hexes in HomeSrc.tsx's Career Toolkit) keeps working unchanged, just
+// passed through as `color` instead of `backgroundColor`.
 function shadeColor(hex: string, percent: number): string {
   const normalized = hex.replace('#', '');
   const expanded =
@@ -62,50 +64,19 @@ const GradientIconBadge: React.FC<GradientIconBadgeProps> = ({
   return (
     <View
       style={[
-        { width: size, height: size, borderRadius, overflow: 'hidden' },
+        {
+          width: size,
+          height: size,
+          borderRadius,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: shadeColor(color, 22),
+        },
         style,
       ]}>
-      {/* REVERTED (product follow-up: "I asked you to remove the darker
-          color of the icons right. Sorry for that please revert back. Its
-          a mistake") -- two earlier passes tried removing/lightening this
-          gradient's darker stop (first swapping it for the caller's true
-          base color, then for a second light tint), both since walked back
-          as a mistake. Back to the original two-tone gloss: a lighter tint
-          on one corner, a genuinely darker shade on the other
-          (shadeColor at +22/-22) -- the real "light source from
-          upper-left" glossy badge look this component was first built for. */}
-      <LinearGradient
-        colors={[shadeColor(color, 22), shadeColor(color, -22)]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={StyleSheet.absoluteFillObject}
-      />
-      {/* Gloss sheen -- a translucent white wash over just the top half,
-          the piece a plain two-tone gradient alone doesn't give you. */}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '50%',
-          backgroundColor: 'rgba(255,255,255,0.25)',
-          borderTopLeftRadius: borderRadius,
-          borderTopRightRadius: borderRadius,
-        }}
-      />
-      <View style={styles.content}>{children}</View>
+      {children}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  content: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default GradientIconBadge;

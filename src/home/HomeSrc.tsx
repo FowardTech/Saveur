@@ -1010,9 +1010,8 @@ const HomeSrc = memo(() => {
 
           {/* Separates the streak block above from the Career Toolkit
               icons below now that both live inside one container -- an
-              internal section divider, not a card border (see globalStyle.
-              card's own "remove the border from all the white cards"
-              comment for why that's gone from the outer card itself). */}
+              internal section divider distinct from the outer card's own
+              border (see globalStyle.card's own border comment). */}
           <View style={styles.toolkitDivider} />
 
           {/* "Quick Actions" (product follow-up: "replace the 4 quick
@@ -1163,35 +1162,48 @@ const HomeSrc = memo(() => {
             ReferralProgram.tsx's own header uses, so this card previews
             the destination it links to.
             BUG FIX (product follow-up: "work on the dark mode for the
-            referral card" -- the original fixed light-pink/black-text
-            combo, correct for light mode, went low-contrast/looked out
-            of place once the rest of the screen switched to dark
-            surfaces): colors are still fixed (not theme tokens) rather
-            than flipping to a dark tonal surface, per the original ask,
-            but now with an explicit isDarkMode-picked pair for each mode
-            -- same inline isDarkMode ? darkValue : lightValue pattern
-            homeBannerFallback above already uses for its own gradient/
-            text. Dark mode gets a muted plum/rose fill (reads as the
-            same "pink" family as light mode without glowing against a
-            dark screen) + a pale pink-white text, instead of black text
-            on a bright pink card that would otherwise sit awkwardly next
-            to the rest of dark mode's low-brightness surfaces.
+            referral card") -- the original fixed light-pink/black-text
+            combo went low-contrast in dark mode; briefly fixed with an
+            isDarkMode-picked plum/rose pair.
+            REDESIGN (product follow-up: "The referral card background
+            should be purple and black linear gradient instead of pink and
+            the text should be white") -- the flat pink (or dark-mode
+            plum) fill is gone; a purple-to-black diagonal LinearGradient
+            now covers both themes with the exact same fixed look (product
+            asked for one specific gradient look, not a per-theme pair),
+            same "gradient as an absoluteFill decorative layer behind a
+            plain-View content sibling" construction homeBannerFallback
+            above already uses (a full-size LinearGradient sized only by
+            flex doesn't reliably grow to wrap its own children's real
+            height on every layout pass -- see that card's own comment for
+            the full story). Purple end (#8B5CF6) is this app's existing
+            accent-purple token (see ArtGiftBox's own box-body color, so
+            the gradient and the illustration sitting on top of it share a
+            family), fading to black. Text is unconditionally white now
+            (no more isDarkMode branching) since it needs to read against
+            the same gradient in both themes.
             Reuses referral_card_title/subtitle/cta -- already fully
             translated across all 12 languages from an earlier, now-
             orphaned Home layout, so no new i18n work needed here. */}
         {configService.isFeatureEnabled('referral_program') ? (
           <TouchableOpacity
             activeOpacity={0.85}
-            style={[styles.referralCard, { backgroundColor: isDarkMode ? '#3D2530' : '#FDECEF' }]}
+            style={styles.referralCard}
             onPress={() => navigate('ReferralProgram')}>
+            <LinearGradient
+              colors={['#8B5CF6', '#000000']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={StyleSheet.absoluteFillObject}
+            />
             <View style={[globalStyle.flexOne, styles.referralTextWrap]}>
-              <Text category="h9" bold style={{ color: isDarkMode ? '#F5E3EA' : '#000000' }}>
+              <Text category="h9" bold style={styles.referralText}>
                 {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
               </Text>
-              <Text category="h10" mt={2} style={{ color: isDarkMode ? '#F5E3EA' : '#000000' }}>
+              <Text category="h10" mt={2} style={styles.referralText}>
                 {t('home:referral_card_subtitle_short', { defaultValue: 'Invite a friend, get rewards' })}
               </Text>
-              <Text category="h10" bold mt={8} style={{ color: isDarkMode ? '#F5E3EA' : '#000000' }}>
+              <Text category="h10" bold mt={8} style={styles.referralText}>
                 {t('home:referral_card_cta', { defaultValue: 'Share your link' })}
               </Text>
             </View>
@@ -1358,25 +1370,34 @@ const themedStyles = StyleService.create({
     height: 40,
   },
   // Refer & Earn promo card (see the JSX comment above where this
-  // renders). Fixed colors, not theme tokens -- product asked for this
-  // specific "pink card" look, same reasoning as homeBannerFallback's own
-  // fixed white-on-color text above -- but backgroundColor/text color are
-  // applied inline per isDarkMode at the JSX call site (not here) since
-  // each mode needs its own fixed pair. No `globalStyle.card` spread
-  // (product follow-up: "remove the box shadow from the referral card")
-  // -- the fill is already opaque and visually distinct from the screen
-  // background on its own, so the shadow was pure extra weight, not
-  // something covering an invisible-card gap like JobFitAnalysis.tsx's
-  // earlier fix.
+  // renders). Fixed colors, not theme tokens -- product asked for one
+  // specific gradient look regardless of app theme, same reasoning as
+  // homeBannerFallback's own fixed white-on-color text above. No
+  // `globalStyle.card` spread (product follow-up: "remove the box shadow
+  // from the referral card") -- the fill is already opaque and visually
+  // distinct from the screen background on its own, so the shadow was
+  // pure extra weight, not something covering an invisible-card gap like
+  // JobFitAnalysis.tsx's earlier fix.
+  // `overflow: 'hidden'` added for the purple-to-black LinearGradient
+  // redesign (see the JSX comment) -- clips the gradient's own square
+  // corners to this card's borderRadius instead of the gradient's fill
+  // poking past the rounded corners underneath them.
   referralCard: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 20,
     padding: 16,
     marginTop: 16,
+    overflow: 'hidden',
   },
   referralTextWrap: {
     marginRight: 14,
+  },
+  // Unconditionally white now (was an isDarkMode-branched pink/plum pair)
+  // -- the purple-to-black gradient behind it is the same fixed look in
+  // both themes, so the text no longer needs to vary either.
+  referralText: {
+    color: '#fff',
   },
   // MERGE (see the "place the career toolkit card and the today's career
   // focus card... in one container" comment at the call site) -- one

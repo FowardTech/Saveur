@@ -68,12 +68,17 @@ const Container: React.FC<ContainerProps> = ({
   //
   // REDESIGN (product reference — an iOS Settings app screenshot: "I want
   // us to use that type of gray background for the app background... and
-  // lets see how it looks like") — `background-page-body` is now #F2F2F7,
-  // the real iOS systemGroupedBackground light color the reference
-  // screenshot itself uses, in place of the flatter #F0F0F0 gray above.
-  // Same token/mechanism, just a different value again — trivial to revert
-  // to #F0F0F0 (or back to #FFFFFF, this app's most recent prior value) if
-  // this doesn't read well once seen live.
+  // lets see how it looks like") — `background-page-body` briefly became
+  // #F2F2F7, the real iOS systemGroupedBackground light color the
+  // reference screenshot itself uses, in place of the flatter #F0F0F0 gray
+  // above.
+  //
+  // RE-REVERTED (product follow-up: "Change the app background back to
+  // white and then give the white cards their borders back") — back to
+  // #FFFFFF. White cards go back to defining themselves via a real border
+  // again instead of a page/card color contrast (see globalStyle.card's
+  // own border restoration), so the page itself no longer needs to be a
+  // visibly different gray for cards to read as distinct surfaces.
   const bodyBackgroundOverride =
     level === undefined && appTheme !== "dark" ? { backgroundColor: theme["background-page-body"] } : null;
   return (
