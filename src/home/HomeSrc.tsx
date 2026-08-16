@@ -7,7 +7,6 @@ import LinearGradient from 'react-native-linear-gradient';
 
 import Content, { CONTENT_PADDER } from 'components/Content';
 import Container from 'components/Container';
-import GradientIconBadge from 'components/GradientIconBadge';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
@@ -933,24 +932,17 @@ const HomeSrc = memo(() => {
                 as the old image it replaced), sized down to read more like
                 an accent icon next to the streak text than a co-equal
                 visual block.
-                REDESIGN (product follow-up: "I asked you to change the
-                icons too in the homescreen why did you leave... the mic
-                icon in the career focus card?") — was a bare ArtPractice
-                sitting directly on the page with its own faint brand-tint
-                backdrop wash; now wrapped in the same GradientIconBadge
-                every other icon in the app just moved to (Menu screen rows,
-                Career Toolkit below), so this card gets the iOS-Settings
-                glossy badge treatment too. ArtPractice's `light` prop swaps
-                the mic to a white stroke and drops its own now-redundant
-                backdrop circle, since the badge behind it is the
-                background now.
-                RETINTED (product follow-up: "the mic icon background in
-                the homescreen should be orange gradient") — was the same
-                brand blue every other badge on this screen uses; this one
-                now stands out from the Career Toolkit icons below it. */}
-            <GradientIconBadge color="#FF9500" size={48} radius={16}>
-              <ArtPractice size={28} light />
-            </GradientIconBadge>
+                REDESIGN, then REVERTED (product follow-up: "The icons
+                background color are still looking awful to me... remove
+                the backgrounds from the icons... and give the icons
+                themselves... the platform blue") — this cycled through a
+                GradientIconBadge wrapper (orange, at one point) and back;
+                no badge behind it now, plain ArtPractice again with no
+                `light` prop, so it reverts to its own default construction
+                (brand-blue stroke + its own faint built-in backdrop
+                wash) -- the exact "platform blue" this ask wants, with no
+                separate colored square needed behind it. */}
+            <ArtPractice size={44} />
             <View style={[globalStyle.flexOne, styles.focusTextWrap]}>
               <Text category="h9" bold numberOfLines={1}>
                 {t('home:streak_hero_days', { defaultValue: '{{days}} days', days: streak?.streakDays ?? 0 })}
@@ -1030,55 +1022,33 @@ const HomeSrc = memo(() => {
               -- it now has its own full promo card below DailyChallengeCard
               instead (more room for the actual pitch than a small icon
               label ever had).
-              REDESIGN (product follow-up: "I asked you to change the icons
-              too in the homescreen why did you leave the career tool
-              icons...?" / "the icon background... is glossy gradient") --
-              each icon was a light rgba-tint circle behind a solid-colored
-              glyph; now a GradientIconBadge squircle (same component/effect
-              as the Menu screen rows and the mic icon above) with a white
-              glyph on top, matching the iOS Settings reference across the
-              whole app instead of just one screen. */}
+              REDESIGN, then REVERTED (product follow-up: "The icons
+              background color are still looking awful to me... remove the
+              backgrounds from the icons... and give the icons themselves
+              the platform blue") -- this row cycled through a colored
+              badge behind every icon (a distinct hue each -- teal,
+              orange, purple, green) and back; no badge/background now,
+              every icon glyph tinted the same flat platform blue
+              (#0063f8) directly instead. */}
           <Text category="h9" bold mb={12}>
             {t('home:quick_actions_label', { defaultValue: 'Career Toolkit' })}
           </Text>
           <View style={styles.quickActionsRow}>
-          {/* RETINTED (product follow-up: "I dont like the colors you used
-              for the coach icon, and company icon... use more beautiful
-              colors") -- both were the same flat brand blue as each other
-              (and as most other blue accents on this screen), so the row
-              read as three colorful icons (blue, blue, purple, green) with
-              two indistinguishable twins at the front. Coach picks up a
-              teal/cyan (#06B6D4); both pulled from the same vivid palette
-              RecentActivityList.tsx's COLOR_BY_TYPE already uses elsewhere
-              on this screen. Courses (#7C5CFC) and Salary (#1D9E75)
-              untouched per explicit ask ("you can leave the courses and
-              salary colors they are fine").
-              RETINTED AGAIN (immediate follow-up: "one of them should be
-              orange") -- Companies swapped from indigo to the same orange
-              (#F97316) COLOR_BY_TYPE uses for career_diary, so all 4
-              Career Toolkit icons are now distinct hues (teal, orange,
-              purple, green). */}
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-            <GradientIconBadge color="#06B6D4" size={48} radius={14}>
-              <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-            </GradientIconBadge>
+            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_coach', { defaultValue: 'Coach' })}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('DreamCompanies')}>
-            <GradientIconBadge color="#F97316" size={48} radius={14}>
-              <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-            </GradientIconBadge>
+            <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
             <Text category="h10" center mt={6} numberOfLines={1}>
               {t('home:quick_action_dream_company', { defaultValue: 'Companies' })}
             </Text>
           </TouchableOpacity>
           {configService.isFeatureEnabled('learning_courses') ? (
             <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('LearningCourses')}>
-              <GradientIconBadge color="#7C5CFC" size={48} radius={14}>
-                <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-              </GradientIconBadge>
+              <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
               <Text category="h10" center mt={6} numberOfLines={1}>
                 {t('home:quick_action_courses', { defaultValue: 'Courses' })}
               </Text>
@@ -1086,9 +1056,7 @@ const HomeSrc = memo(() => {
           ) : null}
           {configService.isFeatureEnabled('salary_negotiation') ? (
             <TouchableOpacity activeOpacity={0.7} style={styles.quickActionItem} onPress={() => navigate('SalaryNegotiation')}>
-              <GradientIconBadge color="#1D9E75" size={48} radius={14}>
-                <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-              </GradientIconBadge>
+              <Icon pack="eva" name="credit-card-outline" style={[globalStyle.icon20, { tintColor: '#0063f8' }]} />
               <Text category="h10" center mt={6} numberOfLines={1}>
                 {t('home:quick_action_salary', { defaultValue: 'Salary' })}
               </Text>

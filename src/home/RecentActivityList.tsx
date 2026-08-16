@@ -6,7 +6,6 @@ import { useFocusEffect } from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
-import GradientIconBadge from 'components/GradientIconBadge';
 import { globalStyle } from 'styles/globalStyle';
 import * as dayActivityService from 'services/dayActivityService';
 import { DayActivityItem, DayActivityItemType } from 'services/dayActivityService';
@@ -89,14 +88,12 @@ const RecentActivityList = memo(() => {
   return (
     <View style={styles.section}>
       <Flex justify="flex-start" itemsCenter mb={14}>
-        {/* REDESIGN (product ask: "use that same icon style in some other
-            key notable screens in the app") -- was a flat
-            color-primary-transparent-100 tint circle, the same older
-            pattern Home's own Career Toolkit icons used before their own
-            redesign. Now the same GradientIconBadge used everywhere else. */}
-        <GradientIconBadge color="#0063f8" size={28} radius={9}>
-          <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
-        </GradientIconBadge>
+        {/* REVERTED (product ask: "remove the backgrounds from the
+            icons... give the icons themselves the platform blue") -- this
+            cycled through a color-primary-transparent-100 tint circle and
+            a GradientIconBadge; no badge/background now, plain glyph
+            tinted platform blue (#0063f8) directly. */}
+        <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
         <Text category="h7" bold ml={10}>
           {t('home:recent_activity_title', { defaultValue: 'Recent activity' })}
         </Text>
@@ -119,22 +116,21 @@ const RecentActivityList = memo(() => {
               <View
                 key={`${item.type}-${i}`}
                 style={[styles.row, i === items.length - 1 ? styles.rowLast : null]}>
-                {/* REDESIGN (product ask: "use that same icon style in some
-                    other key notable screens in the app") -- was a light
-                    per-type color tint (`${color}1F`, ~12% alpha) behind a
-                    solid-colored glyph; now the same GradientIconBadge
-                    every other icon badge in the app uses, fed the exact
-                    same per-type `color` this row already computed above
-                    (COLOR_BY_TYPE) -- the color-coding-by-activity-type
-                    idea is untouched, just rendered as a glossy badge with
-                    a white glyph instead of a flat tint circle. */}
-                <GradientIconBadge color={color} size={38} radius={13} style={styles.iconWrap}>
-                  <Icon
-                    pack="eva"
-                    name={ICON_BY_TYPE[item.type] ?? 'checkmark-circle-2-outline'}
-                    style={[globalStyle.icon20, { tintColor: '#fff' }]}
-                  />
-                </GradientIconBadge>
+                {/* REDESIGN, then REVERTED (product ask: "use that same
+                    icon style in some other key notable screens" ->
+                    "remove the backgrounds from the icons... give the
+                    icons themselves [color]") -- cycled through a light
+                    per-type tint circle and a GradientIconBadge behind the
+                    glyph; no badge/background now, the same per-type
+                    `color` this row already computes above (COLOR_BY_TYPE)
+                    goes straight onto the glyph itself instead -- the
+                    color-coding-by-activity-type idea this list exists for
+                    is untouched, just without a colored shape behind it. */}
+                <Icon
+                  pack="eva"
+                  name={ICON_BY_TYPE[item.type] ?? 'checkmark-circle-2-outline'}
+                  style={[globalStyle.icon20, styles.iconWrap, { tintColor: color }]}
+                />
                 <View style={globalStyle.flexOne}>
                   <Text category="h9" bold numberOfLines={1}>
                     {item.title}

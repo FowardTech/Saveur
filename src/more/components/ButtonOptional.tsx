@@ -11,7 +11,6 @@ import {
   useTheme,
 } from '@ui-kitten/components';
 import Flex from 'components/Flex';
-import GradientIconBadge from 'components/GradientIconBadge';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {MainBottomTabStackParamList} from 'navigation/types';
@@ -28,25 +27,24 @@ export interface ButtonOptionalProps {
     | 'MoreSrc';
   withToggle?: boolean;
   checked?: boolean;
-  // REDESIGN (product reference — iOS Settings app: a colored rounded-
-  // square badge behind each row's icon, white glyph on top). This prop
-  // had a long back-and-forth history — ButtonFill's circular shadowed
-  // squircle originally, then dropped entirely for a flat no-chip glyph —
-  // and is back in real use again now, this time as a small square badge
-  // rather than a big circle. See the render below.
-  // REDESIGN follow-up (product report: "the icon background in screenshot
-  // i showed you are glossy gradient") — this used to be applied as a flat
-  // `backgroundColor` directly; it's now handed to GradientIconBadge
-  // (components/GradientIconBadge.tsx) as its base color instead, which
-  // derives a glossy two-tone gradient + highlight sheen from it. Callers
-  // (MoreSrc.tsx's STATUS_COLORS map) didn't need to change at all — same
-  // single hex per row, just rendered differently underneath.
+  // REDESIGN, ROUND 1 (product reference — iOS Settings app: a colored
+  // rounded-square badge behind each row's icon, white glyph on top). This
+  // prop had a long back-and-forth history — ButtonFill's circular
+  // shadowed squircle originally, then dropped entirely for a flat
+  // no-chip glyph, then this colored badge.
+  // REVERTED (product follow-up: "The icons background color are still
+  // looking awful to me... What if we remove the backgrounds from the
+  // icons... and give the icons themselves... the ones in the menu the
+  // black color they were before") — the badge is gone again, all the way
+  // back to the flat no-chip glyph this prop's own history already cycled
+  // through once. No longer read anywhere; kept in the type only so
+  // MoreSrc.tsx's DATA_DETAILS/DATA_APPLICATION entries (which still pass
+  // it, now inert) don't need a separate sweep to strip it.
   iconBackgroundColor?: string;
-  // No longer applied — the icon badge's glyph is always white now (see
-  // iconBackgroundColor above), so a separate glyph tint has nothing left
-  // to vary against. Kept in the type only so MoreSrc.tsx's DATA_DETAILS/
-  // DATA_APPLICATION entries (which still pass it) don't need a separate
-  // sweep to strip a now-inert value.
+  // Back in real use (see iconBackgroundColor's own REVERTED comment
+  // above) — this is now the icon glyph's actual tint again, the same
+  // plain theme-adaptive black/white color (MoreSrc.tsx's ICON_GLYPH)
+  // every row used before the badge redesign.
   iconColor?: string;
   iconBorderColor?: string;
   // Small unread indicator on the icon's top-right corner (product request
@@ -83,7 +81,7 @@ const ButtonOptional = ({
   withToggle,
   checked,
   navigateSrc,
-  iconBackgroundColor,
+  iconColor,
   badgeCount,
   badgeDot,
 }: ButtonOptionalProps) => {
@@ -109,27 +107,20 @@ const ButtonOptional = ({
       itemsCenter
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
-        <View>
-          {/* REDESIGN (product reference — iOS Settings app: each row's
-              icon sits inside a small colored rounded-square badge, white
-              glyph on top, instead of a bare tinted icon). Was a plain,
-              unwrapped icon glyph directly next to the label (see this
-              comment's own git history for the two earlier redesigns that
-              led here — a shadowed circle, then a flat no-chip glyph).
-              iconBackgroundColor is finally used again (MoreSrc.tsx now
-              passes a distinct color per row instead of the old uniform
-              gray) — the glyph itself is always white now, matching every
-              icon in the reference screenshot regardless of the badge's
-              own color.
-              REDESIGN follow-up ("the icon background... is glossy
-              gradient") — GradientIconBadge in place of a flat-colored
-              View, see iconBackgroundColor's own comment above. */}
-          <GradientIconBadge
-            color={iconBackgroundColor ?? theme['color-primary-500']}
-            size={32}
-            radius={9}>
-            <Icon pack="assets" name={icon} style={{width: 18, height: 18, tintColor: '#fff'}} />
-          </GradientIconBadge>
+        <View style={styles.iconWrap}>
+          {/* REVERTED (product follow-up: "remove the backgrounds from the
+              icons... the ones in the menu the black color they were
+              before") — no more colored badge behind this; back to a
+              plain, unwrapped icon glyph tinted with iconColor (MoreSrc.tsx
+              passes its own ICON_GLYPH, the theme-adaptive
+              text-basic-color every row used pre-redesign — near-black in
+              light mode, near-white in dark mode). Falls back to
+              text-basic-color directly if a caller doesn't pass one. */}
+          <Icon
+            pack="assets"
+            name={icon}
+            style={{width: 20, height: 20, tintColor: iconColor ?? theme['text-basic-color']}}
+          />
           {badgeCount ? (
             <View style={styles.badgeCount}>
               <Text category="h9" status="control" fontSize={11} lineHeight={13}>
@@ -216,13 +207,23 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     marginTop: 2,
   },
+  // Fixed-size box around the plain icon glyph (see the REVERTED comment
+  // at the render call site) -- gives the row a consistent icon column
+  // width/alignment even without a badge behind it, and gives
+  // badgeCount/badgeDot below a stable box to corner-anchor against.
+  iconWrap: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   // Same corner-badge idea as HeaderHome.tsx's bell badge, re-tuned for the
-  // new 32x32 icon badge (was tuned for a plain 22x22 glyph before this
-  // redesign — see iconWrap's own comment).
+  // plain 28x28 icon box above (was tuned for a 32x32 colored badge during
+  // the since-reverted iOS-Settings redesign).
   badgeCount: {
     position: 'absolute',
-    top: -6,
-    right: -8,
+    top: -4,
+    right: -6,
     minWidth: 18,
     height: 18,
     paddingHorizontal: 3,
@@ -236,8 +237,8 @@ const themedStyles = StyleService.create({
   // JobAlerts.tsx's unread-item dot.
   badgeDot: {
     position: 'absolute',
-    top: -3,
-    right: -4,
+    top: -1,
+    right: -2,
     width: 12,
     height: 12,
     borderRadius: 6,

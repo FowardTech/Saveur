@@ -15,7 +15,6 @@ import LinearGradient from 'react-native-linear-gradient';
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
-import GradientIconBadge from 'components/GradientIconBadge';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { DATA_INTERVIEW_TYPES } from 'constants/Data';
@@ -260,15 +259,15 @@ const FindScreen = memo(() => {
               a session card in the practice screen to the icon style used
               in the homescreen and menu items... a yellow background just
               like the mic in the homescreen") -- was a light-blue rgba
-              tint circle behind a solid blue glyph, the same older pattern
-              Home's Career Toolkit icons used before their own redesign.
-              Now GradientIconBadge with the exact same orange (#FF9500)
-              Home's Today's Career Focus mic icon uses, white glyph on
-              top, matching the iOS-Settings badge style everywhere else in
-              the app. */}
-          <GradientIconBadge color="#FF9500" size={36} radius={12} style={{ marginRight: 12 }}>
-            <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-          </GradientIconBadge>
+              tint circle behind a solid blue glyph, then a GradientIconBadge
+              (colored square background), matching whatever HomeSrc.tsx's
+              own icon treatment was at the time.
+              REVERTED (product follow-up: "remove the backgrounds from the
+              icons... give the icons themselves the platform blue") -- no
+              badge/background now, matching HomeSrc.tsx's own reverted
+              Career Toolkit icons -- plain calendar glyph tinted platform
+              blue (#0063f8) directly. */}
+          <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon20, { tintColor: '#0063f8', marginRight: 12 }]} />
           <View style={globalStyle.flexOne}>
             <Text category="h9" bold numberOfLines={1}>
               {t('find:schedule_session_card_title', { defaultValue: 'Schedule a session' })}

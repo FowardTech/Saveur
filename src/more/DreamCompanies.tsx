@@ -22,7 +22,6 @@ import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
 import InfoBox from 'components/InfoBox';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
-import GradientIconBadge from 'components/GradientIconBadge';
 import {accentColorForKey, accentTintBg} from 'utils/accentPalette';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
@@ -220,13 +219,12 @@ const DreamCompanies = memo(() => {
         </InfoBox>
 
         <TouchableOpacity activeOpacity={0.8} style={styles.addTrigger} onPress={() => setShowAddSheet(true)}>
-          {/* REDESIGN (product ask: "use that same icon style in some other
-              key notable screens in the app") -- was a flat
-              color-primary-transparent-100 tint circle; now the same
-              GradientIconBadge every other icon badge in the app uses. */}
-          <GradientIconBadge color="#0063f8" size={36} radius={12} style={styles.addTriggerIconWrap}>
-            <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-          </GradientIconBadge>
+          {/* REVERTED (product ask: "remove the backgrounds from the
+              icons... give the icons themselves the platform blue") --
+              this cycled through a color-primary-transparent-100 tint
+              circle and a GradientIconBadge; no badge/background now,
+              plain plus glyph tinted platform blue (#0063f8) directly. */}
+          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#0063f8', marginRight: 12 }]} />
           <Text category="h9" bold style={globalStyle.flexOne}>
             {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
           </Text>
@@ -633,11 +631,6 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     padding: 14,
     marginBottom: 8,
-  },
-  // Just the spacing now -- GradientIconBadge owns its own size/shape via
-  // its `size`/`radius` props at the call site.
-  addTriggerIconWrap: {
-    marginRight: 12,
   },
   modalOverlay: {
     flex: 1,

@@ -5,7 +5,6 @@ import Container from 'components/Container';
 import Content from 'components/Content';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
-import GradientIconBadge from 'components/GradientIconBadge';
 import NavigationAction from 'components/NavigationAction';
 import { useTranslation } from 'react-i18next';
 import { globalStyle } from 'styles/globalStyle';
@@ -43,18 +42,17 @@ const UpcomingFeatures = () => {
           items.map((item, index) => (
             <Layout key={item.id || index} level="2" style={styles.card}>
               <Flex justify="flex-start" itemsCenter>
-                {/* REDESIGN (product ask: "use that same icon style in some
-                    other key notable screens in the app") -- was a flat
-                    color-primary-transparent-100 tint circle; now the same
-                    GradientIconBadge every other icon badge in the app
-                    uses. */}
-                <GradientIconBadge color="#0063f8" size={40} radius={14} style={styles.iconWrap}>
-                  <Icon
-                    pack="eva"
-                    name={item.icon || 'rocket-outline'}
-                    style={[globalStyle.icon20, { tintColor: '#fff' }]}
-                  />
-                </GradientIconBadge>
+                {/* REVERTED (product ask: "remove the backgrounds from the
+                    icons... give the icons themselves the platform
+                    blue") -- this cycled through a color-primary-
+                    transparent-100 tint circle and a GradientIconBadge; no
+                    badge/background now, plain glyph tinted platform blue
+                    (#0063f8) directly. */}
+                <Icon
+                  pack="eva"
+                  name={item.icon || 'rocket-outline'}
+                  style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#0063f8' }]}
+                />
                 <View style={globalStyle.flexOne}>
                   <Text category="h9" bold>{item.title}</Text>
                   {item.description ? (

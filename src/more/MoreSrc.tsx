@@ -12,7 +12,6 @@ import {RootStackParamList} from 'navigation/types';
 import {EKeyAsyncStorage, accountScopedKey} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
-import GradientIconBadge from 'components/GradientIconBadge';
 import ThemeContext from '../../ThemeContext';
 import {AuthContext} from '../../AuthContext';
 import * as configService from 'services/configService';
@@ -140,64 +139,28 @@ const MoreSrc = memo(() => {
   // services/configService.ts) — flip it off there and the row disappears
   // on next app launch, no release needed. Rows with no featureKey are
   // considered core and always shown.
-  // iconBackgroundColor/iconColor: per explicit follow-up request, the
-  // subtle blue fill + blue glyph treatment above (history of that in the
-  // superseded comment this replaced) is gone — every row's icon is now a
-  // plain black (theme-adaptive) glyph with NO colored circle behind it.
-  // `background-basic-color-2` is the same neutral gray already used for
-  // every other card/icon-wrap surface in this app (HomeSrc.tsx's
-  // statCard/badgesPreviewRow, etc.) rather than a fully transparent fill —
-  // ButtonFill's container carries a real drop shadow (globalStyle.shadow)
-  // that would otherwise render as a shape-less floating shadow blob on
-  // Android (elevation draws from the view's bounds, not the PNG's actual
-  // opaque pixels) if the circle itself were invisible. `status` is left in
-  // place only because it still drives ButtonFill's tint fallback when
-  // these overrides aren't passed (nothing does, currently). NOW applied to
-  // the dark-mode toggle, push-notifications toggle, and logout row too
-  // (previously deliberately excluded from the blue treatment; the new
-  // "every icon black, no exceptions but stats" direction applies to them
-  // as well — see those three below).
+  // iconBackgroundColor/iconColor history: plain black glyph, no
+  // background -> a colored-square badge behind each icon (iOS Settings
+  // reference) with a per-row STATUS_COLORS lookup -> two rounds of
+  // retinting/darkening that badge's colors -> and now, immediate product
+  // follow-up: "The icons background color are still looking awful to
+  // me... What if we remove the backgrounds from the icons... and give
+  // the icons themselves... the ones in the menu the black color they
+  // were before." Back to exactly that: every row's icon is a plain,
+  // theme-adaptive black-in-light/white-in-dark glyph again, no colored
+  // circle or square behind it. STATUS_COLORS is gone (it only ever
+  // existed to feed that now-removed badge); every render call site below
+  // passes `iconColor={ICON_GLYPH}` instead of
+  // `iconBackgroundColor={STATUS_COLORS[...]}`. `status` itself is left
+  // in place on each DATA_DETAILS/DATA_APPLICATION entry only because
+  // ButtonOptionalProps still requires it as a field (harmless, unread by
+  // anything now). ICON_BG is the same story -- every one of the ~36
+  // entries below still sets `iconBackgroundColor: ICON_BG` (now an inert
+  // prop, see ButtonOptional.tsx's own comment), so the constant stays
+  // declared purely so those data-array literals keep compiling without a
+  // separate sweep to strip every single one.
   const ICON_BG = theme['background-basic-color-2'];
   const ICON_GLYPH = theme['text-basic-color'];
-  // REDESIGN (product reference — iOS Settings app screenshot: "lets use
-  // that type of icon style for the icons in app including the menu
-  // icons"): each row's `status` field (declared per-entry below, and
-  // already threaded through to ButtonOptional either way) used to only
-  // matter to ButtonFill's old circular-icon design, back before this
-  // screen went flat/no-chip — see ButtonOptional.tsx's own REDESIGN
-  // comment for that history. Repurposed here as the badge-color lookup
-  // for the new colored-square icon treatment, so the ~30 existing
-  // DATA_DETAILS/DATA_APPLICATION entries don't each need a new explicit
-  // color field — their existing `status` values already vary sensibly
-  // row to row and just needed a real color mapped to them again.
-  // RETINTED (product follow-up: "The colors are too bright make them a
-  // little darker. Especially the ones in the menu the light greens and
-  // the cyan blue are too bright... I dont want this app to look like a
-  // children's app") -- `green`/`success` was iOS's bright, almost neon
-  // system green (#34C759) and `twitter-3` was a pastel sky-cyan
-  // (#5AC8FA), the two worst offenders by name. Both replaced with
-  // deeper, more muted tones in the same hue family (a natural sea-green
-  // instead of a neon one; a steel/teal blue instead of a pastel cyan)
-  // rather than just relying on GradientIconBadge's own darkening alone.
-  // `twitter` (a genuine, still-bright blue right next to the now-muted
-  // twitter-3) toned down to match. facebook/primary/warning/danger left
-  // alone -- not called out, and already read as solid/adult rather than
-  // pastel.
-  const STATUS_COLORS: Record<string, string> = {
-    facebook: '#0063f8',
-    primary: '#0063f8',
-    twitter: '#1878B5',
-    'twitter-3': '#2C7DA0',
-    green: '#2E8B57',
-    success: '#2E8B57',
-    warning: '#FF9500',
-    danger: '#FF3B30',
-    basic: '#8E8E93',
-    neutral: '#8E8E93',
-    placeholder: '#AEAEB2',
-    white: '#8E8E93',
-    transparent: '#8E8E93',
-  };
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
     {
       // Also where account deletion now lives (see ProfileSrc.tsx) — moved
@@ -593,7 +556,6 @@ const MoreSrc = memo(() => {
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
-                iconBackgroundColor={STATUS_COLORS[item.status] ?? ICON_BG}
                 iconColor={item.iconColor}
                 key={i}
                 onPress={item.onPress}
@@ -614,7 +576,6 @@ const MoreSrc = memo(() => {
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
-                iconBackgroundColor={STATUS_COLORS[item.status] ?? ICON_BG}
                 iconColor={item.iconColor}
                 onPress={item.onPress}
                 key={i}
@@ -627,7 +588,6 @@ const MoreSrc = memo(() => {
             icon="darkMode"
             title={t('more:switch-dark-mode')}
             status={'danger'}
-            iconBackgroundColor={STATUS_COLORS.danger}
             iconColor={ICON_GLYPH}
             checked={darkMode}
             onPress={toggleTheme}
@@ -645,7 +605,6 @@ const MoreSrc = memo(() => {
             icon="notification"
             title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
             status={'facebook'}
-            iconBackgroundColor={STATUS_COLORS.facebook}
             iconColor={ICON_GLYPH}
             checked={notificationsEnabled}
             onPress={onToggleNotifications}
@@ -672,21 +631,20 @@ const MoreSrc = memo(() => {
               styles.logoutRow,
               {opacity: isSigningOut ? 0.6 : 1},
             ]}>
-            {/* REDESIGN (iOS Settings icon-badge pass — see
-                ButtonOptional.tsx's own REDESIGN comment) — this is the one
-                row on this screen rendering its own icon by hand instead of
-                through ButtonOptional (see the comment above), so it needs
-                the same colored-badge treatment applied manually to stay
-                consistent with every row above it. Now GradientIconBadge
-                (product follow-up: "the icon background... is glossy
-                gradient" — same fix as ButtonOptional.tsx's own icon). */}
-            <GradientIconBadge color={STATUS_COLORS.danger} size={32} radius={9}>
-              <Icon
-                pack="eva"
-                name="log-out-outline"
-                style={{width: 18, height: 18, tintColor: '#fff'}}
-              />
-            </GradientIconBadge>
+            {/* REVERTED (product follow-up: "remove the backgrounds from
+                the icons... the ones in the menu the black color they
+                were before") — this is the one row on this screen
+                rendering its own icon by hand instead of through
+                ButtonOptional (see the comment above), so it needs the
+                same plain-glyph-no-badge treatment applied manually to
+                stay consistent with every row above it (see
+                ButtonOptional.tsx's own REVERTED comment for the full
+                history). */}
+            <Icon
+              pack="eva"
+              name="log-out-outline"
+              style={{width: 20, height: 20, tintColor: ICON_GLYPH}}
+            />
             {/* Matches ButtonOptional.tsx's own row-label treatment -- this
                 is the one row on this screen that renders its own Text
                 directly instead of going through ButtonOptional (see the
