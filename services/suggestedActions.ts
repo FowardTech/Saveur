@@ -78,6 +78,7 @@ export const ACTION_META: Record<SuggestedActionId, ActionMeta> = {
   cover_letter_generator: {title: 'the Cover Letter Generator', titleKey: 'message:suggested_action_title_cover_letter_generator', icon: 'file-text-outline'},
   coding_practice: {title: 'Coding Practice', titleKey: 'message:suggested_action_title_coding_practice', icon: 'code-outline'},
   addons: {title: 'the Add-ons screen', titleKey: 'message:suggested_action_title_addons', icon: 'star-outline'},
+  career_events: {title: 'Career Events', titleKey: 'message:suggested_action_title_career_events', icon: 'calendar-outline'},
 };
 
 // Localized title — falls back to the plain-English `title` above (used as
@@ -136,6 +137,10 @@ const SCREEN_MAP: Partial<Record<SuggestedActionId, {screen: string; params?: ob
   schedule_interview: {screen: 'ScheduleInterview'},
   cover_letter_generator: {screen: 'CoverLetterGenerator', params: {}},
   addons: {screen: 'AddOns', params: {}},
+  // Same destination as 'networking_assistant' — the Career Events section
+  // renders at the top of that screen (see src/more/NetworkingAssistant.tsx),
+  // so no separate screen/param is needed, just a more specific chip label.
+  career_events: {screen: 'NetworkingAssistant'},
   // new_job_course, continue_learning, application_tracker, coding_practice,
   // and system_design_whiteboard are NOT here — the first three each need
   // real logic (a fixed course payload, an async lookup, or a 2-level

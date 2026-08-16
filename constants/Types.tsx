@@ -20,6 +20,7 @@ export enum EKeyAsyncStorage {
   gamificationLeaderboard = 'gamificationLeaderboard',
   goalTipsCache = 'goalTipsCache',
   jobAlertsCache = 'jobAlertsCache',
+  careerEventsCache = 'careerEventsCache',
   scheduledInterviews = 'scheduledInterviews',
   // Whether the new-user "how this app works" tour (components/AppTour.tsx,
   // shown once from HomeSrc.tsx) has already been dismissed. Cleared by
@@ -690,6 +691,31 @@ export interface JobAlertProps {
   applied?: boolean;
 }
 
+// A career fair/networking event matched against the user's
+// preferredCountries + desiredRoles, surfaced on the Networking Assistant
+// screen — see services/careerEventsService.ts. Product request: "add the
+// fetching of career events using eventbrite api... determined by the
+// target roles and countries." `url` opens Eventbrite's own event page in
+// an in-app WebView, same "stay in the app" treatment JobAlertProps.applyUrl
+// gets.
+export interface CareerEventProps {
+  id: string;
+  title: string;
+  organizer?: string;
+  location?: string;
+  matchedCountry?: string;
+  matchedRole?: string;
+  url: string;
+  source?: string; // "eventbrite" today
+  eventDate?: number; // unix ms, when the event itself happens (if known)
+  createdAt: number; // unix ms, when this app discovered it
+  read: boolean;
+  // "Interested" bookmark — same role JobAlertProps.pinned plays: opts an
+  // event out of the backend's oldest-first trimming once a user is over
+  // their per-user cap.
+  saved: boolean;
+}
+
 // Admin-configured in-app advert popup — see services/adsService.ts (GET
 // /api/v1/ads/next, POST /api/v1/ads/<id>/impression), src/home/HomeSrc.tsx
 // (where the popup is triggered) and src/more/AdDetails.tsx (the screen a
@@ -977,7 +1003,17 @@ export type SuggestedActionId =
   // before it auto navigate the user there") — lets the coach send someone
   // straight to the purchase screen when asked directly, not just as a
   // redirect target for the two gated actions above.
-  | 'addons';
+  | 'addons'
+  // Career Events (product request: "add the fetching of career events
+  // using eventbrite api... the AI career coach must have complete and
+  // full information about this feature") — a distinct id from
+  // 'networking_assistant' above even though both land on the same
+  // NetworkingAssistant screen, same reasoning 'job_alerts' stays distinct
+  // from 'job_preferences': the coach/chip label should read "Career
+  // Events", not the more generic "Networking Assistant", when that's
+  // specifically what the user asked about. See suggestedActions.ts's
+  // SCREEN_MAP.
+  | 'career_events';
 
 // ---- AI Interview Coach additions (networking assistant) ----
 export interface NetworkingContactProps {

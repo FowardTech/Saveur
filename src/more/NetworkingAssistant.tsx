@@ -9,7 +9,9 @@ import {
   Button,
   Input,
   Icon,
+  Spinner,
 } from '@ui-kitten/components';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -18,9 +20,11 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
-import { NetworkingContactProps } from 'constants/Types';
+import { NetworkingContactProps, CareerEventProps } from 'constants/Types';
+import { RootStackParamList } from 'navigation/types';
 import * as networkingService from 'services/networkingService';
 import { MESSAGE_TONES, MessageTone } from 'services/networkingService';
+import * as careerEventsService from 'services/careerEventsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
@@ -39,6 +43,86 @@ const NetworkingAssistant = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t, i18n } = useTranslation(['more', 'common']);
   const { isPro } = React.useContext(AuthContext);
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+
+  // Career Events (product request: "add the fetching of career events
+  // using eventbrite api... I want this to be in the networking assistant
+  // screen"). Own loading/refreshing state, separate from the contacts
+  // list below — a slow events fetch (server-side auto-refresh trigger on
+  // GET, see careerEventsService.listCareerEvents) shouldn't block the
+  // contacts list from rendering, and vice versa.
+  const [events, setEvents] = React.useState<CareerEventProps[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
+  const [isRefreshingEvents, setIsRefreshingEvents] = React.useState(false);
+  const [savingEventId, setSavingEventId] = React.useState<string | null>(null);
+
+  const loadEvents = React.useCallback(async () => {
+    setIsLoadingEvents(true);
+    try {
+      const list = await careerEventsService.listCareerEvents();
+      setEvents(list);
+    } catch {
+      // Best-effort — an empty-state message covers both "genuinely
+      // nothing found yet" and "couldn't reach the server" the same way
+      // the contacts list already tolerates a failed load silently.
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    loadEvents();
+  }, [loadEvents]);
+
+  // Manual refresh triggers a background discovery pass server-side (see
+  // careerEventsService.refreshCareerEvents's own doc comment — it does NOT
+  // return new results immediately). Re-focusing this screen later (e.g.
+  // coming back from the WebView after viewing an event) re-fetches, same
+  // "refresh on focus" convention src/home/DailyTipsBanner.tsx uses, so a
+  // pass that finished in the background while the user was elsewhere gets
+  // picked up without a manual pull.
+  React.useEffect(() => {
+    const unsubscribe = navigation.addListener('focus', loadEvents);
+    return unsubscribe;
+  }, [navigation, loadEvents]);
+
+  const onRefreshEvents = async () => {
+    if (isRefreshingEvents) return;
+    setIsRefreshingEvents(true);
+    try {
+      await careerEventsService.refreshCareerEvents();
+    } catch {
+      // Silently ignored — same "the button itself is the only feedback
+      // needed" treatment as JobAlerts.tsx's own manual refresh.
+    } finally {
+      setIsRefreshingEvents(false);
+    }
+  };
+
+  const onOpenEvent = (event: CareerEventProps) => {
+    if (!event.read) {
+      careerEventsService.markCareerEventsRead([event.id]).catch(() => undefined);
+      setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, read: true } : e)));
+    }
+    navigation.navigate('WebViewScreen', { url: event.url, title: event.title });
+  };
+
+  const onToggleEventSaved = async (event: CareerEventProps) => {
+    if (savingEventId) return;
+    setSavingEventId(event.id);
+    // Optimistic — same "flip it locally, reconcile on failure" treatment
+    // PaymentMethod.tsx's onSetDefault uses, so the star/heart responds the
+    // instant it's tapped rather than waiting on a round trip.
+    setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, saved: !e.saved } : e)));
+    try {
+      const updated = await careerEventsService.toggleCareerEventSaved(event.id);
+      setEvents(prev => prev.map(e => (e.id === event.id ? updated : e)));
+    } catch {
+      setEvents(prev => prev.map(e => (e.id === event.id ? { ...e, saved: event.saved } : e)));
+    } finally {
+      setSavingEventId(null);
+    }
+  };
 
   const [contacts, setContacts] = React.useState<NetworkingContactProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -261,6 +345,83 @@ const NetworkingAssistant = memo(() => {
             </Layout>
           </KeyboardAvoidingView>
         </Modal>
+
+        {/* Career Events (product request: "add the fetching of career
+            events using eventbrite api... I want this to be in the
+            networking assistant screen. The career event fetched must be
+            determined by the target roles and countries... (Target Role &
+            Countries and Job alert)") — its own section above the existing
+            Contacts list, same "most dynamic content first" placement
+            Home's own sections follow. Each card opens the real Eventbrite
+            page in-app (WebViewScreen), same "stay in the app" treatment
+            Job Alerts gives its own apply links. */}
+        <Flex justify="space-between" itemsCenter mb={12}>
+          <Text category="h7" bold>
+            {t('more:career_events_title', { defaultValue: 'Career Events' })}
+          </Text>
+          <TouchableOpacity onPress={onRefreshEvents} disabled={isRefreshingEvents} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            {isRefreshingEvents ? (
+              <Spinner size="tiny" />
+            ) : (
+              <Icon pack="eva" name="sync-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+            )}
+          </TouchableOpacity>
+        </Flex>
+        {isLoadingEvents ? (
+          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 24 }}>
+            <Spinner size="small" />
+          </Flex>
+        ) : events.length === 0 ? (
+          <Layout level="2" style={[styles.contactCard, { marginBottom: 24 }]}>
+            <Text category="h9-s" status="placeholder">
+              {t('more:no_career_events', {
+                defaultValue: "No career events found yet for your target roles and countries — check back soon, or tap refresh above.",
+              })}
+            </Text>
+          </Layout>
+        ) : (
+          <View style={{ marginBottom: 24 }}>
+            {events.map(event => (
+              <TouchableOpacity key={event.id} activeOpacity={0.8} onPress={() => onOpenEvent(event)}>
+                <Layout level="2" style={styles.contactCard}>
+                  <Flex justify="space-between" itemsCenter mb={4}>
+                    <Text category="h8" bold style={globalStyle.flexOne} numberOfLines={2}>
+                      {event.title}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() => onToggleEventSaved(event)}
+                      disabled={savingEventId === event.id}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{ marginLeft: 8 }}>
+                      <Icon
+                        pack="eva"
+                        name={event.saved ? 'star' : 'star-outline'}
+                        style={[globalStyle.icon20, { tintColor: event.saved ? '#f59e0b' : theme['text-hint-color'] }]}
+                      />
+                    </TouchableOpacity>
+                  </Flex>
+                  {event.organizer || event.location ? (
+                    <Text category="h9-s" status="placeholder" mb={4}>
+                      {[event.organizer, event.location].filter(Boolean).join(' · ')}
+                    </Text>
+                  ) : null}
+                  {event.eventDate ? (
+                    <Flex justify="flex-start" itemsCenter>
+                      <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'], marginRight: 4, width: 12, height: 12 }]} />
+                      <Text category="h10" status="placeholder">
+                        {new Date(event.eventDate).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </Text>
+                    </Flex>
+                  ) : null}
+                </Layout>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        <Text category="h7" bold mb={12}>
+          {t('more:networking_contacts_title', { defaultValue: 'Your Contacts' })}
+        </Text>
 
         {!isLoading && contacts.length === 0 ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
