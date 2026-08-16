@@ -790,6 +790,50 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         ) : null}
 
+        {/* Product request: "I want buttons like this in the app" (reference
+            screenshot: Uber Eats' pill-shaped filter-chip row -- Uber One /
+            Pickup / Offers / Under 30) "Place them immediately after the
+            homebanner. The buttons should lead to 'Today's Tips', Roadmap,
+            and Career DNA." Same shape here -- small rounded-pill buttons,
+            icon + label, sitting directly under the home banner and above
+            the Career Toolkit section below. Left-aligned with a small gap
+            between pills (not `space-between`) to match the reference's
+            compact, non-stretched chips rather than spreading 3 short
+            labels across the full row width.
+            Icons are from the same uploaded pack already used throughout
+            this screen: iconLightbulbHead for Tips (the same bulb glyph
+            DailyTipsBanner.tsx uses for its own "Today's tip" row),
+            iconLocation for Roadmap (a path of milestones), iconAiStars for
+            Career DNA (an AI-built profile -- see careerDnaService.ts).
+            Destinations confirmed against navigation/types.tsx:
+            GoalTipDetail (no params -- the full-page "Today's Goal Tips"
+            screen), CareerRoadmap (targetRole is an optional prefill,
+            omitting it is a valid "start fresh" entry), CareerDna (no
+            params). */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingHorizontal:10 }}>
+
+          <View style={styles.pillRow}>
+            <TouchableOpacity activeOpacity={0.7} style={styles.pillButton} onPress={() => navigate('GoalTipDetail')}>
+              <Image source={Images.iconLightbulbHead} style={styles.pillIcon as ImageStyle} resizeMode="contain" />
+              <Text category="h10" bold numberOfLines={1}>
+                {t('home:pill_todays_tips', { defaultValue: "Today's Tips" })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} style={styles.pillButton} onPress={() => navigate('CareerRoadmap')}>
+              <Image source={Images.iconLocation} style={styles.pillIcon as ImageStyle} resizeMode="contain" />
+              <Text category="h10" bold numberOfLines={1}>
+                {t('home:pill_roadmap', { defaultValue: 'Roadmap' })}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity activeOpacity={0.7} style={[styles.pillButton, styles.pillButtonLast]} onPress={() => navigate('CareerDna')}>
+              <Image source={Images.iconAiStars} style={styles.pillIcon as ImageStyle} resizeMode="contain" />
+              <Text category="h10" bold numberOfLines={1}>
+                {t('home:pill_career_dna', { defaultValue: 'Career DNA' })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
         {/* RESTRUCTURE (product follow-up, home-screen layout review:
             "Remove the career tool kit from the whole card and place it
             immediately after homebanner. And then remove the todays focus
@@ -1255,6 +1299,34 @@ const themedStyles = StyleService.create({
   quickActionIcon: {
     width: 38,
     height: 38,
+  },
+  // Uber-Eats-style filter-chip row (product request, see the JSX comment
+  // above this row for the full "why"). Sits between the home banner and
+  // the Career Toolkit section.
+  pillRow: {
+    flexDirection: 'row',
+    marginTop: 16,
+  },
+  pillButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.25)',
+    backgroundColor: 'background-basic-color-2',
+    marginRight: 10,
+  },
+  // Last pill in the row doesn't need the trailing gap the other two use to
+  // separate themselves from their neighbor.
+  pillButtonLast: {
+    marginRight: 0,
+  },
+  pillIcon: {
+    width: 18,
+    height: 18,
+    marginRight: 6,
   },
   // "Your Progress" Progress Toward Goal card -- ring on the left, title +
   // two lines of real supporting copy on the right (see the effects above
