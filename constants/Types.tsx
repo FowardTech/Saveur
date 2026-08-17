@@ -706,7 +706,14 @@ export interface CareerEventProps {
   matchedCountry?: string;
   matchedRole?: string;
   url: string;
-  source?: string; // "eventbrite" today
+  source?: string; // "eventbrite", or the real host (e.g. "meetup.com") for the trusted-platforms pipeline
+  // Product request: "The logo of the platform where the event was gotten
+  // from should be on the individual cards too." Backend-computed (see
+  // Saveur-Backend's CareerEvent.to_dict()) from `source` via the same
+  // geticon.dev logo lookup Job Alerts/Dream Companies already use for
+  // employer logos — render through CompanyLogoAvatar, which already
+  // handles a missing/404ing URL with a graceful icon fallback.
+  logoUrl?: string;
   eventDate?: number; // unix ms, when the event itself happens (if known)
   createdAt: number; // unix ms, when this app discovered it
   read: boolean;

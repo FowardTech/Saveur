@@ -34,6 +34,7 @@ interface CareerEventWire {
   matched_role?: string;
   url: string;
   source?: string;
+  logo_url?: string;
   event_date?: string | number;
   created_at: string | number;
   read: boolean;
@@ -66,6 +67,7 @@ function fromWire(wire: CareerEventWire): CareerEventProps {
     matchedRole: wire.matched_role,
     url: wire.url,
     source: wire.source,
+    logoUrl: wire.logo_url,
     eventDate: toMillis(wire.event_date),
     createdAt: toMillis(wire.created_at) ?? Date.now(),
     read: wire.read ?? false,

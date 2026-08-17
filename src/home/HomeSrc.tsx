@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
+import CareerFairEventCard from './CareerFairEventCard';
 import NextLessonHomeCard from './NextLessonHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
@@ -20,12 +21,13 @@ import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { AdvertisementProps, EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
+import { AdvertisementProps, CareerEventProps, EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
 import * as notificationService from 'services/notificationService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
+import * as careerEventsService from 'services/careerEventsService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
@@ -123,6 +125,45 @@ const HomeSrc = memo(() => {
   const roadmapPercent = roadmap && roadmap.totalCount > 0
     ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
     : 0;
+
+  // Product request: "targeted career fairs and events card to display
+  // under the continue & Upcoming cards... maximum of 4 recently posted
+  // event/career fair cards." listCareerEvents() already returns
+  // soonest-event-first (see careerEventsService.ts's own docstring), which
+  // isn't the same ordering as "recently posted" — re-sorted by createdAt
+  // (when THIS APP discovered it, not when the event itself happens)
+  // descending, then capped at 4, so this preview genuinely shows the
+  // newest finds rather than whichever happens to be soonest. Self-fetched
+  // here (not a separate self-contained card component like
+  // ContinueLearningCard/UpcomingSessionHomeCard above) since HomeSrc
+  // already owns list-fetching for its other sections (e.g. roadmap right
+  // above) — CareerFairEventCard itself stays a plain presentational card.
+  const [careerEvents, setCareerEvents] = React.useState<CareerEventProps[]>([]);
+  const loadCareerEvents = React.useCallback(() => {
+    if (!isSignedIn) return;
+    careerEventsService.listCareerEvents()
+      .then(list => {
+        const recent = [...list].sort((a, b) => b.createdAt - a.createdAt).slice(0, 4);
+        setCareerEvents(recent);
+      })
+      .catch(() => {
+        // Non-critical -- same "section just doesn't render" fallback as
+        // every other best-effort Home fetch (e.g. roadmap above).
+      });
+  }, [isSignedIn]);
+  React.useEffect(() => { loadCareerEvents(); }, [loadCareerEvents]);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadCareerEvents();
+    }, [loadCareerEvents]),
+  );
+  const onOpenCareerEvent = React.useCallback((event: CareerEventProps) => {
+    if (!event.read) {
+      careerEventsService.markCareerEventsRead([event.id]).catch(() => undefined);
+      setCareerEvents(prev => prev.map(e => (e.id === event.id ? { ...e, read: true } : e)));
+    }
+    navigate('WebViewScreen', { url: event.url, title: event.title });
+  }, [navigate]);
 
   // Product follow-up: "Why did you place the upcoming interview session at
   // the bottom of the homescreen. Place it at the top beside the continue
@@ -950,6 +991,39 @@ const HomeSrc = memo(() => {
           />
           <NextLessonHomeCard style={{ width: topCardWidth }} />
         </ScrollView>
+
+        {/* Product request: "targeted career fairs and events card to
+            display under the continu & Upcomming cards. They should be
+            horizontally scrollable too like the continue and upcoming
+            cards." Same section-title treatment + horizontal ScrollView
+            shape as "Continue & Upcoming" right above -- self-hides
+            entirely (title included) when there's nothing to show, same
+            "don't show an empty section" convention every other
+            self-contained Home card already follows. */}
+        {careerEvents.length > 0 && (
+          <>
+            <Text category="h8" bold mt={4} mb={12}>
+              {t('home:career_fairs_events_label', { defaultValue: 'Career Fairs & Events' })}
+            </Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={{ marginBottom: 16, paddingHorizontal: 10 }}
+            >
+              {careerEvents.map((event, i) => (
+                <CareerFairEventCard
+                  key={event.id}
+                  event={event}
+                  onPress={onOpenCareerEvent}
+                  style={{
+                    width: topCardWidth,
+                    marginRight: i === careerEvents.length - 1 ? 0 : topCardsGap,
+                  }}
+                />
+              ))}
+            </ScrollView>
+          </>
+        )}
 
         {/* "Your Progress" -- Progress Toward Goal ring. Concrete
             milestone progress through
