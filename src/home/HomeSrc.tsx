@@ -11,6 +11,7 @@ import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import CareerFairEventCard from './CareerFairEventCard';
+import { SkeletonHomeCardRow, SkeletonBlock } from 'components/Skeleton';
 import NextLessonHomeCard from './NextLessonHomeCard';
 import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
@@ -114,13 +115,22 @@ const HomeSrc = memo(() => {
   // just as its own standalone section now (see the JSX below) instead of
   // living inside this same card.
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
+  // Product request: "I want skeleton loader in app" — "Career Progress"
+  // below used to just show 0% momentarily on every load (indistinguishable
+  // from a real "no roadmap yet" state) until this fetch resolved. Starts
+  // true so the real ring only ever appears once there's a real answer,
+  // never a misleading 0% flash.
+  const [roadmapLoading, setRoadmapLoading] = React.useState(true);
   React.useEffect(() => {
-    if (!isSignedIn) return;
+    if (!isSignedIn) {
+      setRoadmapLoading(false);
+      return;
+    }
     roadmapService.getSavedRoadmap().then(setRoadmap).catch(() => {
       // Non-critical -- "Progress Toward Goal" just falls back to an
       // honest 0% / "build your roadmap" nudge below rather than a broken
       // state on a failed fetch.
-    });
+    }).finally(() => setRoadmapLoading(false));
   }, [isSignedIn]);
   const roadmapPercent = roadmap && roadmap.totalCount > 0
     ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
@@ -139,8 +149,20 @@ const HomeSrc = memo(() => {
   // already owns list-fetching for its other sections (e.g. roadmap right
   // above) — CareerFairEventCard itself stays a plain presentational card.
   const [careerEvents, setCareerEvents] = React.useState<CareerEventProps[]>([]);
+  // Product request: "I want skeleton loader in app" — without this, the
+  // whole "Career Fairs & Events" section (title included, see its
+  // `careerEvents.length > 0` gate below) just doesn't exist at all until
+  // the very first fetch resolves, so a user who genuinely has events
+  // waiting for them saw nothing for that whole window instead of a
+  // placeholder. Only shown while a first real answer is still pending —
+  // once loaded, an empty result still means "nothing to show" (same as
+  // today), not a stuck skeleton.
+  const [careerEventsLoading, setCareerEventsLoading] = React.useState(true);
   const loadCareerEvents = React.useCallback(() => {
-    if (!isSignedIn) return;
+    if (!isSignedIn) {
+      setCareerEventsLoading(false);
+      return;
+    }
     careerEventsService.listCareerEvents()
       .then(list => {
         const recent = [...list].sort((a, b) => b.createdAt - a.createdAt).slice(0, 4);
@@ -149,7 +171,8 @@ const HomeSrc = memo(() => {
       .catch(() => {
         // Non-critical -- same "section just doesn't render" fallback as
         // every other best-effort Home fetch (e.g. roadmap above).
-      });
+      })
+      .finally(() => setCareerEventsLoading(false));
   }, [isSignedIn]);
   React.useEffect(() => { loadCareerEvents(); }, [loadCareerEvents]);
   useFocusEffect(
@@ -1000,7 +1023,7 @@ const HomeSrc = memo(() => {
             entirely (title included) when there's nothing to show, same
             "don't show an empty section" convention every other
             self-contained Home card already follows. */}
-        {careerEvents.length > 0 && (
+        {(careerEventsLoading || careerEvents.length > 0) && (
           <>
             <Text category="h8" bold mt={4} mb={12}>
               {t('home:career_fairs_events_label', { defaultValue: 'Career Fairs & Events' })}
@@ -1010,17 +1033,28 @@ const HomeSrc = memo(() => {
               showsHorizontalScrollIndicator={false}
               style={{ marginBottom: 16, paddingHorizontal: 10 }}
             >
-              {careerEvents.map((event, i) => (
-                <CareerFairEventCard
-                  key={event.id}
-                  event={event}
-                  onPress={onOpenCareerEvent}
-                  style={{
-                    width: topCardWidth,
-                    marginRight: i === careerEvents.length - 1 ? 0 : topCardsGap,
-                  }}
-                />
-              ))}
+              {careerEventsLoading ? (
+                // Product request: "I want skeleton loader in app" — 2
+                // placeholder cards while the first fetch is in flight,
+                // same topCardWidth/topCardsGap sizing as the real cards
+                // below so nothing shifts once they're replaced.
+                <>
+                  <SkeletonHomeCardRow style={{ width: topCardWidth, marginRight: topCardsGap }} />
+                  <SkeletonHomeCardRow style={{ width: topCardWidth }} />
+                </>
+              ) : (
+                careerEvents.map((event, i) => (
+                  <CareerFairEventCard
+                    key={event.id}
+                    event={event}
+                    onPress={onOpenCareerEvent}
+                    style={{
+                      width: topCardWidth,
+                      marginRight: i === careerEvents.length - 1 ? 0 : topCardsGap,
+                    }}
+                  />
+                ))
+              )}
             </ScrollView>
           </>
         )}
@@ -1040,35 +1074,51 @@ const HomeSrc = memo(() => {
           {t('home:your_progress_label', { defaultValue: 'Career Progress' })}
         </Text>
         <View style={[globalStyle.card, styles.progressCard]}>
-          <CircularProgress progress={roadmapPercent} size={64} strokeWidth={7}>
-            <Text category="h9" bold>{roadmapPercent}%</Text>
-          </CircularProgress>
-          <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
-            <Text category="h9" bold>
-              {t('home:goal_progress_title', { defaultValue: 'Progress Toward Goal' })}
-            </Text>
-            <Text category="h10" status="placeholder" mt={4}>
-              {roadmap
-                ? t('home:goal_progress_hint_role', {
-                    defaultValue: 'Your roadmap to {{role}}',
-                    role: roadmap.targetRole,
-                  })
-                : t('home:goal_progress_hint_no_roadmap', {
-                    defaultValue: 'Based on your AI Career Roadmap milestones',
-                  })}
-            </Text>
-            <Text category="h10" status="placeholder" mt={2}>
-              {roadmap
-                ? t('home:goal_progress_steps_of', {
-                    defaultValue: '{{completed}} of {{total}} steps complete',
-                    completed: roadmap.completedCount,
-                    total: roadmap.totalCount,
-                  })
-                : t('home:goal_progress_no_roadmap', {
-                    defaultValue: 'Build a roadmap to track progress toward your goal',
-                  })}
-            </Text>
-          </View>
+          {roadmapLoading ? (
+            // Product request: "I want skeleton loader in app" — was a
+            // real, momentarily-misleading 0% ring on every load (see
+            // roadmapLoading's own comment above) until this resolved.
+            <>
+              <SkeletonBlock style={{ width: 64, height: 64 }} radius={32} />
+              <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
+                <SkeletonBlock style={{ width: '60%', height: 14, marginBottom: 8 }} radius={4} />
+                <SkeletonBlock style={{ width: '80%', height: 11, marginBottom: 6 }} radius={4} />
+                <SkeletonBlock style={{ width: '50%', height: 11 }} radius={4} />
+              </View>
+            </>
+          ) : (
+            <>
+              <CircularProgress progress={roadmapPercent} size={64} strokeWidth={7}>
+                <Text category="h9" bold>{roadmapPercent}%</Text>
+              </CircularProgress>
+              <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
+                <Text category="h9" bold>
+                  {t('home:goal_progress_title', { defaultValue: 'Progress Toward Goal' })}
+                </Text>
+                <Text category="h10" status="placeholder" mt={4}>
+                  {roadmap
+                    ? t('home:goal_progress_hint_role', {
+                        defaultValue: 'Your roadmap to {{role}}',
+                        role: roadmap.targetRole,
+                      })
+                    : t('home:goal_progress_hint_no_roadmap', {
+                        defaultValue: 'Based on your AI Career Roadmap milestones',
+                      })}
+                </Text>
+                <Text category="h10" status="placeholder" mt={2}>
+                  {roadmap
+                    ? t('home:goal_progress_steps_of', {
+                        defaultValue: '{{completed}} of {{total}} steps complete',
+                        completed: roadmap.completedCount,
+                        total: roadmap.totalCount,
+                      })
+                    : t('home:goal_progress_no_roadmap', {
+                        defaultValue: 'Build a roadmap to track progress toward your goal',
+                      })}
+                </Text>
+              </View>
+            </>
+          )}
         </View>
         {/* Product follow-up: "add more content after the your progress
             card" -- DailyChallengeCard specifically (product's own choice

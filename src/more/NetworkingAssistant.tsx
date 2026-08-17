@@ -15,6 +15,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
+import { SkeletonListRow } from 'components/Skeleton';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -392,9 +393,15 @@ const NetworkingAssistant = memo(() => {
           </TouchableOpacity>
         </Flex>
         {isLoadingEvents ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 24 }}>
-            <Spinner size="small" />
-          </Flex>
+          // Product request: "I want skeleton loader in app" — was a bare
+          // centered Spinner; two placeholder rows shaped like the real
+          // event cards below read as "content is coming" more clearly
+          // than a spinner, and cost nothing extra to build (shared
+          // Skeleton component).
+          <View style={{ marginBottom: 24 }}>
+            <SkeletonListRow style={styles.contactCard} />
+            <SkeletonListRow style={[styles.contactCard, { marginBottom: 0 }]} />
+          </View>
         ) : events.length === 0 ? (
           <Layout level="2" style={[styles.contactCard, { marginBottom: 24 }]}>
             <Text category="h9-s" status="placeholder">
@@ -447,7 +454,16 @@ const NetworkingAssistant = memo(() => {
           {t('more:networking_contacts_title', { defaultValue: 'Your Contacts' })}
         </Text>
 
-        {!isLoading && contacts.length === 0 ? (
+        {isLoading ? (
+          // Product request: "I want skeleton loader in app" — this list
+          // used to render nothing at all (not even a spinner) for the
+          // entire fetch, indistinguishable from "you have zero contacts"
+          // until it resolved.
+          <>
+            <SkeletonListRow style={styles.contactCard} />
+            <SkeletonListRow style={styles.contactCard} />
+          </>
+        ) : contacts.length === 0 ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
             <Text category="h9-s" status="placeholder" center>
               {t('more:no_contacts', { defaultValue: 'No contacts yet — add someone you met networking.' })}

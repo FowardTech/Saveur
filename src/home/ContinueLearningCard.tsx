@@ -11,6 +11,7 @@ import { RootStackParamList } from 'navigation/types';
 import * as learningService from 'services/learningService';
 import { ContinueCourseSummary, CourseVideo } from 'services/learningService';
 import InAppVideoPlayer from 'components/InAppVideoPlayer';
+import { SkeletonHomeCardRow } from 'components/Skeleton';
 
 // Product request item: "In the homescreen I want you to place like a card
 // to show the user about where they left over in the lesson. or video
@@ -72,12 +73,21 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
   const [course, setCourse] = React.useState<ContinueCourseSummary | null>(null);
   const [video, setVideo] = React.useState<CourseVideo | null>(null);
   const [playingVideo, setPlayingVideo] = React.useState<CourseVideo | null>(null);
+  // Product request: "I want skeleton loader in app" — this card used to
+  // just render null for the entire time between mount and its fetch
+  // resolving, same as when it genuinely has nothing to resume, so a
+  // user with real in-progress content still saw a blank gap pop into a
+  // card. Starts true, flips false once BOTH fetches below have settled
+  // (Promise.allSettled, not .then on each independently, since either one
+  // alone resolving isn't "done loading" — both determine hasContent below).
+  const [loading, setLoading] = React.useState(true);
 
   const load = React.useCallback(() => {
-    learningService.getAllProgress()
+    const coursePromise = learningService.getAllProgress()
       .then(all => setCourse(learningService.deriveContinueCourse(all)))
       .catch(() => {});
-    learningService.getContinueVideo().then(setVideo).catch(() => {});
+    const videoPromise = learningService.getContinueVideo().then(setVideo).catch(() => {});
+    Promise.allSettled([coursePromise, videoPromise]).finally(() => setLoading(false));
   }, []);
 
   React.useEffect(() => { load(); }, [load]);
@@ -100,6 +110,7 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
     onVisibilityChange?.(hasContent);
   }, [hasContent, onVisibilityChange]);
 
+  if (loading) return <SkeletonHomeCardRow style={style} />;
   if (!hasContent) return null;
 
   const videoProgressPct =

@@ -16,6 +16,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
+import { SkeletonBlock } from 'components/Skeleton';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -411,6 +412,21 @@ const LearningCourses = memo(() => {
                 </View>
               </Flex>
             ))}
+          </Layout>
+        ) : null}
+
+        {!curriculumLoaded && hasGoalAndRole ? (
+          // Product request: "I want skeleton loader in app" — the AI
+          // Curriculum Builder card below is entirely absent until
+          // curriculumLoaded resolves (see this screen's own comment on
+          // why), which reads as the page quietly shifting once it pops
+          // in for anyone with a goal+role set. A same-sized placeholder
+          // keeps the layout stable and signals "this is coming" instead.
+          <Layout level="2" style={styles.customCard}>
+            <SkeletonBlock style={{ width: '55%', height: 16, marginBottom: 14 }} radius={4} />
+            <SkeletonBlock style={{ width: '90%', height: 11, marginBottom: 8 }} radius={4} />
+            <SkeletonBlock style={{ width: '70%', height: 11, marginBottom: 16 }} radius={4} />
+            <SkeletonBlock style={{ width: '100%', height: 40 }} radius={10} />
           </Layout>
         ) : null}
 

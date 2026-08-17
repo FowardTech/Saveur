@@ -33,6 +33,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import StatusBadge from 'components/StatusBadge';
 import CtaButton from 'components/CtaButton';
 import {globalStyle} from 'styles/globalStyle';
@@ -680,7 +681,14 @@ const JobAlerts = memo(() => {
         </Modal>
 
         {isLoading ? (
-          <EmptyState variant="loading" />
+          // Product request: "I want skeleton loader in app" — was the
+          // shared EmptyState's bare centered Spinner (variant="loading");
+          // list-shaped placeholder rows read as "your job alerts are
+          // loading" much more clearly than a generic spinner. Scoped to
+          // this screen only — EmptyState's own `loading` variant is
+          // shared by several other screens not covered by this request,
+          // so it's left unchanged.
+          <SkeletonList count={4} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <EmptyState
             variant="error"

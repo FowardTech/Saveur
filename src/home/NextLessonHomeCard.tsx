@@ -11,6 +11,7 @@ import { RootStackParamList } from 'navigation/types';
 import * as learningService from 'services/learningService';
 import { NextLessonInfo } from 'services/learningService';
 import * as configService from 'services/configService';
+import { SkeletonHomeCardRow } from 'components/Skeleton';
 
 // Product request item: "add another card in the scroll item of upcoming
 // and thats the next lesson to be taken and if the user have finished all
@@ -51,9 +52,15 @@ const NextLessonHomeCard = memo(({ style, onVisibilityChange }: {
   const [, forceRerender] = React.useReducer(x => x + 1, 0);
   React.useEffect(() => configService.subscribe(forceRerender), []);
   const upcomingFeatures = configService.getCachedConfig().upcoming_features.items.filter(i => i.enabled);
+  // Product request: "I want skeleton loader in app" — same addition as
+  // this card's two row partners (ContinueLearningCard/
+  // UpcomingSessionHomeCard). Gated only on getNextLesson()'s own
+  // resolution — configService's cache is synchronous once subscribed, so
+  // it doesn't need its own separate loading gate here.
+  const [loading, setLoading] = React.useState(true);
 
   const load = React.useCallback(() => {
-    learningService.getNextLesson().then(setNextLesson).catch(() => {});
+    learningService.getNextLesson().then(setNextLesson).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   React.useEffect(() => { load(); }, [load]);
@@ -72,6 +79,7 @@ const NextLessonHomeCard = memo(({ style, onVisibilityChange }: {
     onVisibilityChange?.(hasContent);
   }, [hasContent, onVisibilityChange]);
 
+  if (loading) return <SkeletonHomeCardRow style={style} />;
   if (!hasContent) return null;
 
   const primary = nextLesson

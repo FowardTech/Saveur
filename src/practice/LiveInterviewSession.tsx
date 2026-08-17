@@ -1033,7 +1033,30 @@ const LiveInterviewSession = memo(() => {
       // comment for why: it must fire no matter how long the recording
       // takes to finalize, not just when it beats a fixed UI-wait ceiling.
     } finally {
-      navigate('InterviewFeedback', { sessionId, interviewType, videoAnalysis: videoMetrics });
+      // Product request: "success screens aside the success screens for
+      // the subscription payment" — a completed mock interview used to
+      // land directly on Feedback with zero acknowledgment that the
+      // session itself was done; same dedicated-success-screen treatment
+      // signup/password-reset/subscription payment already get, via the
+      // same shared SuccessScr/NotificationScreen this app already uses
+      // for those (see src/SuccessScr.tsx).
+      navigate('SuccessScr', {
+        successScr: {
+          title: t('find:interview_complete_title', { defaultValue: 'Interview complete!' }) as string,
+          description: t('find:interview_complete_body', {
+            defaultValue: "Nice work. Your feedback is ready — let's see how you did.",
+          }) as string,
+          children: [
+            {
+              title: t('find:interview_view_feedback_cta', { defaultValue: 'View Feedback' }),
+              onPress: () =>
+                navigate('InterviewFeedback', { sessionId, interviewType, videoAnalysis: videoMetrics }),
+              status: 'basic',
+            },
+          ],
+          buttonsViewStyle: { marginHorizontal: 32 },
+        },
+      });
     }
   };
 

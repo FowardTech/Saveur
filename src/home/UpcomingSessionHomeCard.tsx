@@ -9,6 +9,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { SkeletonHomeCardRow } from 'components/Skeleton';
 
 // Product request item: "the upcoming session already scheduled should be
 // placed side by side with the continue learning card at the top in the
@@ -63,9 +64,17 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
   const [nextSession, setNextSession] = React.useState<
     Awaited<ReturnType<typeof scheduledInterviewService.listUpcoming>>[number] | undefined
   >(undefined);
+  // Product request: "I want skeleton loader in app" — see
+  // ContinueLearningCard.tsx's identical addition (its row partner here)
+  // for the full reasoning: without this, a user with a real scheduled
+  // session still saw a blank gap for the entire round trip before this
+  // card popped in.
+  const [loading, setLoading] = React.useState(true);
 
   const load = React.useCallback(() => {
-    return scheduledInterviewService.listUpcoming().then(list => setNextSession(list[0]));
+    return scheduledInterviewService.listUpcoming()
+      .then(list => setNextSession(list[0]))
+      .finally(() => setLoading(false));
   }, []);
 
   useFocusEffect(
@@ -73,6 +82,8 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
       let cancelled = false;
       scheduledInterviewService.listUpcoming().then(list => {
         if (!cancelled) setNextSession(list[0]);
+      }).finally(() => {
+        if (!cancelled) setLoading(false);
       });
       return () => {
         cancelled = true;
@@ -157,6 +168,7 @@ const UpcomingSessionHomeCard = memo(({ style, onVisibilityChange }: {
     );
   };
 
+  if (loading) return <SkeletonHomeCardRow style={style} />;
   if (!nextSession) return null;
 
   return (

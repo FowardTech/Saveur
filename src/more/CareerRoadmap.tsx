@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 
 import Text from 'components/Text';
+import { SkeletonBlock } from 'components/Skeleton';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -155,13 +156,33 @@ const CareerRoadmap = memo(() => {
   // Courses). See entitlements_service.py's module docstring for the full
   // breakdown this mirrors.
   if (!roadmapLoaded) {
+    // Product request: "I want skeleton loader in app" — was a bare
+    // centered Spinner; a timeline-shaped placeholder (same dot/line/
+    // content columns the real roadmap steps use below) previews the
+    // eventual layout instead of just signaling "something is happening"
+    // with no shape to it.
     return (
       <Container style={styles.container}>
         <TopNavigation
           title={t('more:career_roadmap', { defaultValue: 'AI Career Roadmap' })}
           accessoryLeft={<NavigationAction />}
         />
-        <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
+        <Content contentContainerStyle={{ padding: 24 }}>
+          <View style={styles.timeline}>
+            {[0, 1, 2].map(i => (
+              <View key={i} style={styles.timelineRow}>
+                <View style={styles.timelineIndicatorCol}>
+                  <SkeletonBlock style={{ width: 32, height: 32 }} radius={16} />
+                  {i < 2 ? <View style={styles.timelineLine} /> : null}
+                </View>
+                <View style={[styles.timelineContent, { paddingBottom: i < 2 ? 24 : 0 }]}>
+                  <SkeletonBlock style={{ width: '70%', height: 14, marginBottom: 8 }} radius={4} />
+                  <SkeletonBlock style={{ width: '90%', height: 11 }} radius={4} />
+                </View>
+              </View>
+            ))}
+          </View>
+        </Content>
       </Container>
     );
   }
