@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { initStripe, useStripe } from '@stripe/stripe-react-native';
 
 import Text from 'components/Text';
+import { Images } from 'assets/images';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -366,7 +367,12 @@ const Subscription = memo(() => {
               defaultValue: 'Your payment for {{plan}} was successful. A receipt has been sent to your email.',
               plan: plan.title,
             }),
-            logo: true,
+            // Product request: "remove the saveur logo that is there and
+            // replace it with the success icon that is part of the icon
+            // pack zip file i uploaded recently" — was `logo: true`
+            // (Images.logoSuccess, the Saveur app logo). See
+            // assets/images/index.ts's paymentSuccessCheck comment.
+            image: Images.paymentSuccessCheck,
             children: [
               {
                 title: t('more:view_payment_history', { defaultValue: 'View Payment History' }),
@@ -428,7 +434,12 @@ const Subscription = memo(() => {
             defaultValue: 'Your payment for {{plan}} was successful. A receipt has been sent to your email.',
             plan: plan.title,
           }),
-          logo: true,
+          // Product request: "remove the saveur logo that is there and
+          // replace it with the success icon that is part of the icon pack
+          // zip file i uploaded recently" — was `logo: true`
+          // (Images.logoSuccess, the Saveur app logo). See
+          // assets/images/index.ts's paymentSuccessCheck comment.
+          image: Images.paymentSuccessCheck,
           children: [
             {
               title: t('more:view_payment_history', { defaultValue: 'View Payment History' }),

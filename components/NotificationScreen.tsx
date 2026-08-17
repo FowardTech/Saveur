@@ -17,6 +17,15 @@ const NotificationScreen = memo(
     children,
     buttonsViewStyle,
     logo,
+    // Explicit per-call override — was a declared field on
+    // SuccessScreenType that this component never actually read (every
+    // caller either got the generic Images.success checkmark or, with
+    // `logo: true`, the Saveur logo). Now used by the payment-success
+    // screen specifically (see Images.paymentSuccessCheck's own comment)
+    // to show a different icon without touching the shared `logo` branch
+    // every other SuccessScr caller (signup, student verification) also
+    // relies on.
+    image,
   }: SuccessScreenType) => {
     const {width, height} = useLayout();
     const sizeIMG = 160 * (width / 375);
@@ -44,7 +53,18 @@ const NotificationScreen = memo(
                 height: 294 * (height / 812),
               }}
             />
-            {logo === undefined ? (
+            {image ? (
+              <Image
+                style={{
+                  width: logoSize,
+                  height: logoSize,
+                  position: 'absolute',
+                  bottom: 30,
+                  alignSelf: 'center',
+                }}
+                source={image}
+              />
+            ) : logo === undefined ? (
               <Image
                 style={{
                   width: sizeIMG,

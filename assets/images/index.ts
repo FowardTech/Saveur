@@ -31,6 +31,16 @@ export const Images = {
   // with a bite taken out of it) that rendered as an odd, unbranded "C."
   // mark on the post-signup welcome screen. Now the real logo.
   logoSuccess: require('./logo_square.png'),
+  // Product request: "in the subscription success screen remove the
+  // saveur logo that is there and replace it with the success icon that
+  // is part of the icon pack zip file i uploaded recently" — from the
+  // user's "ICON COLLECTIONS.zip" upload (icons8-check-sign-100.png, a
+  // green circular checkmark). Used only on the two payment-success
+  // SuccessScr calls in src/more/Subscription.tsx via NotificationScreen's
+  // `image` override prop — the other logo:true success screens
+  // (signup completion, student verification) are unchanged, still the
+  // real Saveur logo, since only the subscription one was asked about.
+  paymentSuccessCheck: require('./img_payment_success_check.png'),
   emptyFavorites: require('./img_empty_favorites.png'),
   videoFrame: require('./img_videoFrame.png'),
   avatar: require('./img_avatar.png'),
