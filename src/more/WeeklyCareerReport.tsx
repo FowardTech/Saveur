@@ -7,7 +7,6 @@ import {
   useTheme,
   Layout,
   Icon,
-  Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -24,6 +23,7 @@ import { WeeklyReport } from 'services/careerReportService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CopyButton from 'components/CopyButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // AI Weekly Career Report — product request item. Lazy-generated server-side
 // (GET /api/v1/career-report) the first time it's opened in a given ISO
@@ -88,9 +88,7 @@ const WeeklyCareerReport = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <Flex center style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : error ? (
           <Flex vertical center style={{ paddingVertical: 60 }}>
             <Text category="h9-s" status="danger" center mb={12}>{error}</Text>

@@ -23,6 +23,7 @@ import {renderCenteredLabel} from 'utils/buttonLabel';
 import * as documentsService from 'services/documentsService';
 import {DocumentRecord} from 'services/documentsService';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 function formatSize(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return '';
@@ -141,9 +142,7 @@ const MyDocuments = memo(() => {
         />
 
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40}}>
             <Text category="h9-s" status="danger" center mb={12}>

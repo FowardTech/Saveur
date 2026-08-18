@@ -26,6 +26,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import { SkeletonList } from 'components/Skeleton';
 import { ArtWorkplaceCompass } from 'src/home/HomeHeroArt';
 import * as whatsNextService from 'services/whatsNextService';
 import { PostOfferPlan, PlanStep, PostOfferCheckIn } from 'services/whatsNextService';
@@ -236,7 +237,7 @@ const WhatsNext = memo(() => {
           title={t('more:whats_next_title', { defaultValue: "What's Next" })}
           accessoryLeft={<NavigationAction />}
         />
-        <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
       </Container>
     );
   }

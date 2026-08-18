@@ -19,6 +19,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import CircularProgress from 'components/CircularProgress';
 import WeeklyBarChart from 'components/WeeklyBarChart';
 import SegmentedTabBar from 'components/SegmentedTabBar';
@@ -239,7 +240,7 @@ const MyProgress = memo(() => {
       ) : null}
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <EmptyState variant="loading" />
+          <SkeletonList count={4} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <EmptyState
             variant="error"

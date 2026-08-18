@@ -6,7 +6,6 @@ import {
   useStyleSheet,
   useTheme,
   Icon,
-  Spinner,
 } from '@ui-kitten/components';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +17,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import InAppVideoPlayer from 'components/InAppVideoPlayer';
 import ProLockGate from 'components/ProLockGate';
+import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import * as learningService from 'services/learningService';
 import { CourseVideo } from 'services/learningService';
@@ -67,9 +67,7 @@ const SavedVideos = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {videos === null ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : videos.length === 0 ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
             <Icon pack="eva" name="bookmark-outline" style={[{ width: 32, height: 32 }, { tintColor: theme['text-hint-color'] }]} />

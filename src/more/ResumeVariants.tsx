@@ -26,6 +26,7 @@ import { downloadDocumentFile } from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // AI Resume Evolution — product request item, Pro Premium feature: multiple
 // independently AI-tailored resume variants saved side by side (one per
@@ -156,7 +157,7 @@ const ResumeVariants = memo(() => {
         </CtaButton>
 
         {isLoading ? (
-          <Flex center style={{ paddingVertical: 40 }}><Spinner size="large" /></Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : variants.length === 0 ? (
           <Text category="h9-s" status="placeholder" center mt={20}>
             {t('more:no_variants_yet', { defaultValue: 'No variants yet — create your first one above.' })}

@@ -20,6 +20,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import InfoBox from 'components/InfoBox';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import {accentColorForKey, accentTintBg} from 'utils/accentPalette';
@@ -249,7 +250,7 @@ const DreamCompanies = memo(() => {
         </TouchableOpacity>
 
         {isLoading ? (
-          <EmptyState variant="loading" />
+          <SkeletonList count={4} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <EmptyState
             variant="error"

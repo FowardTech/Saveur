@@ -9,7 +9,6 @@ import {
   Layout,
   Button,
   Input,
-  Spinner,
 } from '@ui-kitten/components';
 
 import Text from 'components/Text';
@@ -17,6 +16,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import * as referralService from 'services/referralService';
 import { ReferralSummary } from 'services/referralService';
@@ -112,9 +112,7 @@ const ReferralProgram = memo(() => {
       <TopNavigation title={t('more:refer_and_earn', {defaultValue: 'Refer & Earn'})} accessoryLeft={<NavigationAction />} />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
             <Text category="h9-s" status="danger" center mb={16}>

@@ -7,7 +7,6 @@ import {
   useTheme,
   Layout,
   Icon,
-  Spinner,
   Button,
 } from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
@@ -26,6 +25,7 @@ import * as sharesService from 'services/sharesService';
 import {ReceivedShareProps, PendingConnectionRequest} from 'services/sharesService';
 import dayjs from 'utils/dayjs';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 const ICON_BY_TYPE: Record<string, string> = {
   feedback: 'checkmark-circle-2-outline',
@@ -135,9 +135,7 @@ const SharedWithMe = memo(() => {
 
   const renderShares = () =>
     isLoading ? (
-      <Flex center style={globalStyle.flexOne}>
-        <Spinner size="large" />
-      </Flex>
+      <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
     ) : loadError ? (
       <EmptyState variant="error" body={loadError} actionLabel={t('common:try_again', {defaultValue: 'Try again'})} onAction={load} />
     ) : shares.length === 0 ? (
@@ -189,9 +187,7 @@ const SharedWithMe = memo(() => {
 
   const renderRequests = () =>
     isLoadingRequests ? (
-      <Flex center style={globalStyle.flexOne}>
-        <Spinner size="large" />
-      </Flex>
+      <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
     ) : requestsError ? (
       <EmptyState variant="error" body={requestsError} actionLabel={t('common:try_again', {defaultValue: 'Try again'})} onAction={loadRequests} />
     ) : requests.length === 0 ? (

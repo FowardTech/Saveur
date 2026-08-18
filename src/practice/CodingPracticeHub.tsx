@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import * as codingService from 'services/codingService';
@@ -228,7 +229,7 @@ const CodingPracticeHub = memo(() => {
         ) : null}
 
         {isLoading && !problems ? (
-          <EmptyState variant="loading" />
+          <SkeletonList count={4} style={{ paddingHorizontal: 16 }} />
         ) : loadError && !problems ? (
           <EmptyState
             variant="error"

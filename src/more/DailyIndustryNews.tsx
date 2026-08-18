@@ -7,7 +7,6 @@ import {
   useTheme,
   Layout,
   Icon,
-  Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -22,6 +21,7 @@ import * as newsService from 'services/newsService';
 import { NewsItem } from 'services/newsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import { SkeletonList } from 'components/Skeleton';
 
 // Daily Industry News — product request item, Pro Premium feature. Real,
 // web-search-grounded headlines (Perplexity) tailored to the learner's own
@@ -83,9 +83,7 @@ const DailyIndustryNews = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <Flex center style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : error ? (
           <Flex vertical center style={{ paddingVertical: 60 }}>
             <Text category="h9-s" status="danger" center mb={12}>{error}</Text>

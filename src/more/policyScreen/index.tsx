@@ -6,7 +6,6 @@ import {
   StyleService,
   TopNavigation,
   useStyleSheet,
-  Spinner,
   Button,
 } from "@ui-kitten/components";
 import Content from "components/Content";
@@ -17,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import i18n from "i18next";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import NavigationAction from "components/NavigationAction";
+import { SkeletonList } from 'components/Skeleton';
 import * as contentService from "services/contentService";
 import { LegalSlug } from "services/contentService";
 import { RootStackParamList } from "navigation/types";
@@ -177,9 +177,7 @@ const PolicyScreen = () => {
       />
       <Content contentContainerStyle={styles.content}>
         {isLoading && !current ? (
-          <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError && !current ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 40 }}>
             <Text category="h9-s" status="danger" center mb={16}>

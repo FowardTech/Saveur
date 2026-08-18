@@ -20,6 +20,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import * as generatedDocumentsService from 'services/generatedDocumentsService';
 import { GeneratedDocument, GeneratedDocumentKind } from 'services/generatedDocumentsService';
@@ -193,7 +194,7 @@ const GeneratedDocuments = memo(() => {
         </Text>
 
         {isLoading ? (
-          <Flex center style={{ paddingVertical: 40 }}><Spinner size="large" /></Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : documents.length === 0 ? (
           <Text category="h9-s" status="placeholder" center mt={20}>
             {t('more:no_generated_documents_yet', { defaultValue: "Nothing here yet — anything you download from Resume Builder, Cover Letter Generator, or Resume Evolution will show up here." })}

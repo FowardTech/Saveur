@@ -21,6 +21,7 @@ import SwiperCard from 'components/SwiperCard';
 import * as billingService from 'services/billingService';
 import {stripeAppearance} from 'utils/stripeAppearance';
 import CardBrandLogo from 'components/CardBrandLogo';
+import { SkeletonList } from 'components/Skeleton';
 import {Images} from 'assets/images';
 
 // Matches Subscription.tsx's STRIPE_RETURN_URL — required by initPaymentSheet
@@ -151,9 +152,7 @@ const PaymentMethod = memo(() => {
       />
       <Content style={styles.content}>
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60}}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40, paddingHorizontal: 24}}>
             <Text category="h9-s" status="danger" center mb={16}>

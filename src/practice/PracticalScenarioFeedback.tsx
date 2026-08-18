@@ -25,6 +25,7 @@ import { PracticalSessionDetail } from 'services/practicalService';
 import CtaButton from 'components/CtaButton';
 import StarRating, { percentToStars } from 'components/StarRating';
 import CopyButton from 'components/CopyButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // Judgment scoring across the whole decision path — generated in the
 // background right after the scenario's final choice (see
@@ -87,7 +88,7 @@ const PracticalScenarioFeedback = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       {isLoading && !session ? (
-        <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16, paddingTop: 16 }} />
       ) : error ? (
         <Flex vertical center style={globalStyle.flexOne}>
           <Text category="h9-s" status="danger" center>{error}</Text>

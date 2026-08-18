@@ -7,7 +7,6 @@ import {
   useTheme,
   Layout,
   Icon,
-  Spinner,
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 
@@ -17,6 +16,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import StarRating from 'components/StarRating';
+import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import * as appRatingService from 'services/appRatingService';
 import { AppRatingProps } from 'services/appRatingService';
@@ -59,9 +59,7 @@ const MyRatings = memo(() => {
           })}
         </Text>
         {isLoading ? (
-          <Flex center style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : error ? (
           <Flex vertical center style={{ paddingVertical: 60 }}>
             <Text category="h9-s" status="danger" center mb={12}>{error}</Text>

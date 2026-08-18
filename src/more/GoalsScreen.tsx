@@ -20,6 +20,7 @@ import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
 import { accentTintBg } from 'utils/accentPalette';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import dayjs from 'utils/dayjs';
 import { RootStackParamList } from 'navigation/types';
@@ -154,7 +155,7 @@ const GoalsScreen = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <EmptyState variant="loading" />
+          <SkeletonList count={4} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <EmptyState
             variant="error"

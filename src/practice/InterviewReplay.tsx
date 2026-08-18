@@ -9,7 +9,6 @@ import {
   useTheme,
   Layout,
   Icon,
-  Spinner,
 } from '@ui-kitten/components';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +26,7 @@ import { SessionReplay } from 'services/interviewReplayService';
 import { formatMs } from 'services/interviewReplayService';
 import * as interviewService from 'services/interviewService';
 import ShareToUserModal from 'components/ShareToUserModal';
+import { SkeletonList } from 'components/Skeleton';
 
 // Video Interview Replay — product request item ("the real catch of the
 // app... users can replay and see the part where they need to improve
@@ -221,7 +221,7 @@ const InterviewReplay = memo(() => {
         />
       ) : null}
       {isLoading ? (
-        <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
       ) : error || !replay ? (
         <Flex vertical center style={globalStyle.flexOne}>
           <Text category="h9-s" status="danger" center>

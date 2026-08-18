@@ -29,6 +29,7 @@ import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import {formatMs} from 'services/interviewReplayService';
 import CtaButton from 'components/CtaButton';
 import StarRating, {percentToStars} from 'components/StarRating';
+import { SkeletonList } from 'components/Skeleton';
 
 const SCORE_KEYS = [
   'confidence', 'communication', 'technical', 'leadership',
@@ -92,9 +93,7 @@ const SharedContentDetail = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       {isLoading ? (
-        <Flex center style={globalStyle.flexOne}>
-          <Spinner size="large" />
-        </Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
       ) : error || !share ? (
         <EmptyState
           variant="error"

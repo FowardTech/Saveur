@@ -29,6 +29,7 @@ import * as studentVerificationService from 'services/studentVerificationService
 import { University, StudentProfile, YEAR_OPTIONS } from 'services/studentVerificationService';
 import * as configService from 'services/configService';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // The perks shown below are all real, already-shipped behavior — not
 // aspirational copy. "3% off" alone undersold what verifying actually
@@ -250,7 +251,7 @@ const StudentVerification = memo(() => {
     return (
       <Container style={styles.container}>
         <TopNavigation alignment="start" title={renderTitle} accessoryLeft={<NavigationAction />} />
-        <Flex center style={globalStyle.flexOne}><Spinner size="large" /></Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
       </Container>
     );
   }

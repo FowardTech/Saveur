@@ -14,6 +14,7 @@ import * as configService from 'services/configService';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // Product request: "I want the 'Todays Surprise challenge' card to open on
 // a new screen instead of displaying the content in that same card" — the
@@ -101,9 +102,7 @@ const DailyChallengeScreen = memo(() => {
       />
       <Content padder>
         {isLoading ? (
-          <Flex itemsCenter justify="center" style={styles.status}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={styles.status}>
             <Text category="h9-s" status="danger" center mb={12}>

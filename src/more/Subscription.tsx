@@ -29,6 +29,7 @@ import { stripeAppearance } from 'utils/stripeAppearance';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // Matches urlScheme: 'saveur' passed to initStripe() below, and the
 // CFBundleURLTypes/intent-filter registered natively for it (ios/Info.plist,
@@ -657,9 +658,7 @@ const Subscription = memo(() => {
           title={t('more:subscription', { defaultValue: 'Subscription' })}
           accessoryLeft={fromOnboarding ? undefined : <NavigationAction />}
         />
-        <Flex style={{ flex: 1 }} itemsCenter justify="center">
-          <Spinner size="large" />
-        </Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
       </Container>
     );
   }

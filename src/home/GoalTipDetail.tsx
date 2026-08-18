@@ -5,7 +5,6 @@ import {
   StyleService,
   useStyleSheet,
   useTheme,
-  Spinner,
 } from '@ui-kitten/components';
 import dayjs from 'utils/dayjs';
 import { useTranslation } from 'react-i18next';
@@ -15,6 +14,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import { GoalTipProps } from 'constants/Types';
 import * as goalTipsService from 'services/goalTipsService';
@@ -66,9 +66,7 @@ const GoalTipDetail = memo(() => {
           {dayjs().format('dddd, MMMM D')}
         </Text>
         {loading && !tips ? (
-          <Flex vertical center style={{ paddingVertical: 60 }}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : error && !tips ? (
           <Flex vertical center style={{ paddingVertical: 40 }}>
             <Text category="h9-s" status="danger" center mb={16}>

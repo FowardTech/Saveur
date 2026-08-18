@@ -22,6 +22,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { GamificationStreakProps, LeaderboardEntryProps } from 'constants/Types';
 import * as gamificationService from 'services/gamificationService';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 import { Images } from 'assets/images';
 
 // REDESIGN (product request, explicit reference screenshot: a colorful
@@ -364,9 +365,7 @@ const Leaderboard = memo(() => {
         ) : null}
 
         {isLoading ? (
-          <Flex itemsCenter justify="center" style={styles.status}>
-            <Spinner size="large" />
-          </Flex>
+          <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={styles.status}>
             <Text category="h9-s" status="danger" center mb={12}>

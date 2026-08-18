@@ -29,6 +29,7 @@ import * as dreamCompaniesService from 'services/dreamCompaniesService';
 import * as networkingService from 'services/networkingService';
 import NavigationAction from 'components/NavigationAction';
 import Content from 'components/Content';
+import { SkeletonList } from 'components/Skeleton';
 import dayjs from 'dayjs';
 import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
 import * as configService from 'services/configService';
@@ -289,9 +290,10 @@ const ApplicationDetails = memo(() => {
           accessoryLeft={<NavigationAction icon={'back'} onPress={goBack} />}
           title={<Text center category="h6" bold>{t('request:requestDetails')}</Text>}
         />
-        <Flex vertical itemsCenter justify="center" style={globalStyle.flexOne}>
-          <Text category="h9-s" status="placeholder" center>{t('common:loading', {defaultValue: 'Loading…'})}</Text>
-        </Flex>
+        {/* Product request: "skeleton loader should be in all the screen
+            except the auth screens, AI Career coach screen" — was a bare
+            "Loading…" text, no shape at all. */}
+        <SkeletonList count={3} style={{ paddingHorizontal: 16, paddingTop: 16 }} />
       </Container>
     );
   }

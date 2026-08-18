@@ -5,7 +5,6 @@ import {
   StyleService,
   useStyleSheet,
   Button,
-  Spinner,
 } from '@ui-kitten/components';
 import notifee from '@notifee/react-native';
 import {useTranslation} from 'react-i18next';
@@ -22,6 +21,7 @@ import * as notificationService from 'services/notificationService';
 import {handleDataTap} from 'services/pushNotificationService';
 import Applications from './Applications';
 import CtaButton from 'components/CtaButton';
+import { SkeletonList } from 'components/Skeleton';
 
 // Sets the app-icon badge to the given list's actual local unread count.
 // Best-effort/fire-and-forget, same as every other notifee call in this
@@ -190,9 +190,7 @@ const Notification = memo(() => {
         }
       />
       {loading ? (
-        <Flex style={styles.center} itemsCenter justify="center">
-          <Spinner size="large" />
-        </Flex>
+        <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
       ) : loadError ? (
         <Content padder contentContainerStyle={styles.errorContent}>
           <Text category="h9-s" status="danger" mb={20} center>

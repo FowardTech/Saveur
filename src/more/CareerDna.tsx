@@ -19,6 +19,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import InfoBox from 'components/InfoBox';
 import { globalStyle } from 'styles/globalStyle';
 import { tileColorAt } from 'styles/tileColors';
@@ -176,7 +177,7 @@ const CareerDna = memo(() => {
           })}
         </InfoBox>
         {isLoading ? (
-          <EmptyState variant="loading" />
+          <SkeletonList count={4} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (
           <EmptyState
             variant="error"

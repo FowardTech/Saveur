@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {View} from 'react-native';
-import {TopNavigation, StyleService, useStyleSheet, useTheme, Layout, Icon, Spinner} from '@ui-kitten/components';
+import {TopNavigation, StyleService, useStyleSheet, useTheme, Layout, Icon} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import EmptyState from 'components/EmptyState';
+import { SkeletonList } from 'components/Skeleton';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import {Application_Stage_Enum, ApplicationAnalyticsProps} from 'constants/Types';
@@ -68,9 +69,7 @@ const ApplicationAnalytics = memo(() => {
       />
       <Content padder contentContainerStyle={styles.content}>
         {isLoading ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60}}>
-            <Spinner size="medium" />
-          </Flex>
+          <SkeletonList count={3} />
         ) : error || !data ? (
           <Text category="h9-s" status="danger" center mt={24}>
             {error}
