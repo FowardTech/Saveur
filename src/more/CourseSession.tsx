@@ -21,7 +21,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as learningService from 'services/learningService';
-import { CourseModule, CourseLevel, Certificate, COURSE_LEVELS, CourseVideo } from 'services/learningService';
+import { CourseModule, CourseLevel, Certificate, COURSE_LEVELS, MODULES_PER_LEVEL, CourseVideo } from 'services/learningService';
 import * as speechService from 'services/speechService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
@@ -99,7 +99,7 @@ const CourseSession = memo(() => {
   const theme = useTheme();
   const { t } = useTranslation(['more', 'common']);
   const styles = useStyleSheet(themedStyles);
-  const { goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'CourseSession'>>();
   const { profile, isPremium } = React.useContext(AuthContext);
   const { topic, totalModules, level = 'basic' as CourseLevel, coreSubtopics } = route.params;
@@ -363,6 +363,26 @@ const CourseSession = memo(() => {
   if (isComplete) {
     const nextLevelIdx = COURSE_LEVELS.indexOf(level) + 1;
     const nextLevel = COURSE_LEVELS[nextLevelIdx];
+    // BUG FIX (product report: "Need the learning course to take the user
+    // to higher advance course even up to the highest level") — this used
+    // to only tell the learner in plain text that the next tier was
+    // unlocked ("Advanced unlocked — head back to Learning Courses to
+    // continue"), with the one real button on this screen just calling
+    // onBack(). In practice that meant manually reopening Learning Courses,
+    // re-entering the same career path + topic into the "Start a course"
+    // form, re-running the topic check, and re-picking the tier — real
+    // friction that made climbing Basic -> Intermediate -> Advanced feel
+    // like it stalled after one tier. This jumps straight into the
+    // next tier's first module with the same topic, same as
+    // LearningCourses.tsx's own onStartTier does for a manual tier pick.
+    const onContinueNextLevel = () => {
+      if (!nextLevel) return;
+      navigate('CourseSession', {
+        topic,
+        totalModules: MODULES_PER_LEVEL[nextLevel],
+        level: nextLevel,
+      });
+    };
     return (
       <Container style={styles.container}>
         <TopNavigation
@@ -419,14 +439,38 @@ const CourseSession = memo(() => {
             ) : nextLevel ? (
               <Text category="h9-s" status="link" center mt={16}>
                 {t('more:course_next_level_unlocked', {
-                  defaultValue: '{{level}} unlocked — head back to Learning Courses to continue.',
+                  defaultValue: '{{level}} unlocked!',
                   level: getCourseLevelLabel(nextLevel, t),
                 })}
               </Text>
             ) : null}
-            <CtaButton style={{ marginTop: 32, width: '100%' }} onPress={onBack}>
-              {t('more:course_back_to_courses', { defaultValue: 'Back to Courses' })}
-            </CtaButton>
+            {nextLevel ? (
+              <CtaButton style={{ marginTop: 32, width: '100%' }} onPress={onContinueNextLevel}>
+                {t('more:course_continue_next_level', {
+                  defaultValue: 'Continue to {{level}}',
+                  level: getCourseLevelLabel(nextLevel, t),
+                })}
+              </CtaButton>
+            ) : null}
+            <Button
+              appearance={nextLevel ? 'ghost' : 'filled'}
+              status={nextLevel ? 'basic' : 'primary'}
+              style={{ marginTop: nextLevel ? 12 : 32, width: '100%' }}
+              onPress={onBack}>
+              {/* BUG FIX (product report: "no path to a new topic after
+                  finishing one"/"take the user to higher advance course
+                  even up to the highest level") — Advanced is the last
+                  tier (nextLevel is undefined once it's done), so this is
+                  the only button on the certificate screen. Relabeled from
+                  the generic "Back to Courses" to something that actually
+                  names the next real action once a topic is fully done
+                  (still lands on Learning Courses' own "Start a course"
+                  form via onBack, same destination as before — just a
+                  clearer, more inviting label for that specific moment). */}
+              {earnedCertificate
+                ? t('more:course_explore_another_topic', { defaultValue: 'Explore Another Topic' })
+                : t('more:course_back_to_courses', { defaultValue: 'Back to Courses' })}
+            </Button>
           </Flex>
         </Content>
       </Container>

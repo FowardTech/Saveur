@@ -600,12 +600,23 @@ const ApplicationDetails = memo(() => {
           />
         ) : null}
 
-        <Button
-          children={t('request:practice-for-this-interview')}
-          status="primary"
-          onPress={onPracticeForThis}
-          style={{marginBottom: 24}}
-        />
+        {/* BUG FIX (product report: "the practice for this interview button
+            should not appear there yet until it gets to the interview
+            stage") — this used to render unconditionally for every
+            application regardless of stage, including ones still sitting
+            at Applied (no interview scheduled yet) or already Rejected.
+            Interviewing and Offer are the only stages where practicing for
+            an interview is actually relevant (Offer stays included since an
+            applicant can still have further interview rounds — onsite,
+            panel, etc. — after an initial offer conversation). */}
+        {stage === Application_Stage_Enum.Interviewing || stage === Application_Stage_Enum.Offer ? (
+          <Button
+            children={t('request:practice-for-this-interview')}
+            status="primary"
+            onPress={onPracticeForThis}
+            style={{marginBottom: 24}}
+          />
+        ) : null}
       </Content>
       <Layout style={[styles.bottom, {paddingBottom: bottom + 8}]} level="2">
         <Button

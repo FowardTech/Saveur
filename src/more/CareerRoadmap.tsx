@@ -74,10 +74,25 @@ const CareerRoadmap = memo(() => {
   const [completingOrder, setCompletingOrder] = React.useState<number | null>(null);
 
   const loadRoadmap = React.useCallback(() => {
+    // BUG FIX (product report: "The AI roadmap is a premium plan but users
+    // are accessing it when they click on it from the notification center
+    // or trail... Features that are pro and pro premium should not be
+    // accessible just from the notification tile or center when they did
+    // not subscribe to the plan that has that feature") -- a non-Premium
+    // user reaching this screen (Home's Roadmap pill, a push/in-app
+    // notification tap, the AI Coach's suggested action, etc.) never needs
+    // to fetch at all now that the whole screen is Premium-gated below;
+    // skip the network round-trip entirely and just mark the (empty) load
+    // as done so the paywall renders immediately instead of a skeleton
+    // flash first.
+    if (!isPremium) {
+      setRoadmapLoaded(true);
+      return;
+    }
     roadmapService.getSavedRoadmap()
       .then(setRoadmap)
       .finally(() => setRoadmapLoaded(true));
-  }, []);
+  }, [isPremium]);
 
   React.useEffect(() => {
     loadRoadmap();
@@ -144,17 +159,36 @@ const CareerRoadmap = memo(() => {
     return theme['text-hint-color'];
   };
 
-  // Everyone lands here with an orientation roadmap already built from the
-  // goal/role they gave at signup (see app/services/career_roadmap_service.py's
-  // ensure_auto_roadmap, wired into users.py's update_me) -- this screen used
-  // to hard-gate on isPremium before even checking whether a roadmap existed,
-  // which meant a free user who already had one auto-generated for them could
-  // never actually see it. The Pro gate now only applies to the MANUAL
-  // "build one yourself" flow below (no saved roadmap yet, e.g. a social-login
-  // signup that skipped the goal/role step) -- matched to the same tier as
-  // the other "AI plans your path" features (Curriculum Builder/Learning
-  // Courses). See entitlements_service.py's module docstring for the full
-  // breakdown this mirrors.
+  // BUG FIX (product report: "The AI roadmap is a premium plan but users
+  // are accessing it when they click on it from the notification center or
+  // trail. That's wrong... Features that are pro and pro premium should not
+  // be accessible just from the notification tile or center when they did
+  // not subscribe to the plan that has that feature") -- a PRIOR version of
+  // this screen only Pro-Premium-gated the manual "build one yourself" flow,
+  // letting any free user who already had an orientation roadmap
+  // auto-generated for them at signup (see
+  // app/services/career_roadmap_service.py's ensure_auto_roadmap) view and
+  // fully interact with it (mark steps complete, etc.) -- reachable from
+  // Home's Roadmap pill, a push/in-app notification tap, or the AI Coach's
+  // suggested action, same as every other entry point. Product decision now
+  // is that Roadmap is a Premium feature full stop: even that free
+  // auto-generated one is gated behind isPremium below, matching
+  // entitlements_service.py's require_premium on GET/complete-step/reset
+  // (see career_roadmap.py's own module docstring). isPremium is checked
+  // first, ahead of the loading-skeleton branch, so a non-Premium user never
+  // even sees a loading flash before the paywall.
+  if (!isPremium) {
+    return (
+      <ProLockGate
+        variant="premium"
+        title={t('more:career_roadmap', { defaultValue: 'AI Career Roadmap' })}
+        description={t('more:career_roadmap_pro_gate_description', {
+          defaultValue: 'Tell the AI the role you want and it plans the real, step-by-step path to get there — a Premium feature.',
+        })}
+      />
+    );
+  }
+
   if (!roadmapLoaded) {
     // Product request: "I want skeleton loader in app" — was a bare
     // centered Spinner; a timeline-shaped placeholder (same dot/line/
@@ -187,17 +221,9 @@ const CareerRoadmap = memo(() => {
     );
   }
 
-  if (!roadmap && !isPremium) {
-    return (
-      <ProLockGate
-        variant="premium"
-        title={t('more:career_roadmap', { defaultValue: 'AI Career Roadmap' })}
-        description={t('more:career_roadmap_pro_gate_description', {
-          defaultValue: 'Tell the AI the role you want and it plans the real, step-by-step path to get there — a Premium feature.',
-        })}
-      />
-    );
-  }
+  // The old second gate that used to live here (`!roadmap && !isPremium`)
+  // is now redundant -- the isPremium check above already returns before
+  // this point for any non-Premium user, roadmap or not.
 
   return (
     <Container style={styles.container}>

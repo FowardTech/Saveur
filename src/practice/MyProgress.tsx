@@ -104,9 +104,13 @@ const MyProgress = memo(() => {
   // progress screen not just a repeated stats from the homescreen"). The AI
   // Career Roadmap (services/roadmapService.ts) is the one feature that
   // already tracks a linear, ordered sequence of real-world milestones from
-  // today to the goal role — and every user lands with one auto-generated
-  // from their signup goal/role, so this is reliably populated rather than a
-  // Pro-only dead end.
+  // today to the goal role. Roadmap is now a Premium feature end to end
+  // (product report: "The AI roadmap is a premium plan but users are
+  // accessing it..." — see src/more/CareerRoadmap.tsx and Saveur-Backend's
+  // career_roadmap.py), so for a non-Premium user this just stays null and
+  // the section below falls back to its existing "Build my roadmap" CTA,
+  // same as any user with no roadmap yet — tapping it lands on the
+  // now-gated CareerRoadmap screen, which shows the real paywall.
   const [roadmap, setRoadmap] = React.useState<CareerRoadmapPlan | null>(null);
   // Interview Heat Map (product request item) — cross-session average per
   // skill dimension. Best-effort/fail-open (.catch(() => null)) like streak
@@ -132,7 +136,12 @@ const MyProgress = memo(() => {
       const [historyResult, streakResult, roadmapResult, heatMapResult] = await Promise.all([
         interviewService.getPracticeHistory(),
         gamificationService.getStreak().catch(() => null),
-        roadmapService.getSavedRoadmap(),
+        // .catch(() => null) — GET /api/v1/roadmap now 402s for a
+        // non-Premium user (see this state's own comment above); without
+        // this, that single rejection would fail the whole Promise.all and
+        // break history/streak/heatMap too for every free user landing on
+        // this screen.
+        roadmapService.getSavedRoadmap().catch(() => null),
         configService.isFeatureEnabled('interview_heat_map')
           ? feedbackService.getHeatMap().then(r => (r.sessionCount > 0 ? r.dimensions : null)).catch(() => null)
           : Promise.resolve(null),

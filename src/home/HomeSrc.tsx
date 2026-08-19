@@ -86,7 +86,7 @@ const HomeSrc = memo(() => {
   const isDarkMode = appTheme === 'dark';
   const { width } = useWindowDimensions();
   const { t } = useTranslation(HOME_I18N_NAMESPACES);
-  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile } =
+  const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPremium } =
     React.useContext(AuthContext);
 
   // Home redesign (product follow-up: shown a wellness-app reference —
@@ -122,7 +122,18 @@ const HomeSrc = memo(() => {
   // never a misleading 0% flash.
   const [roadmapLoading, setRoadmapLoading] = React.useState(true);
   React.useEffect(() => {
-    if (!isSignedIn) {
+    // BUG FIX (product report: "The AI roadmap is a premium plan but users
+    // are accessing it when they click on it from the notification center
+    // or trail... Features that are pro and pro premium should not be
+    // accessible") -- Roadmap is now Premium end to end (see
+    // src/more/CareerRoadmap.tsx and Saveur-Backend's career_roadmap.py),
+    // so this card should never call the now-require_premium-gated GET
+    // /api/v1/roadmap for a non-Premium user in the first place. Skipping
+    // the fetch entirely (rather than letting it 402 and silently fall
+    // back, which happened to work but wasn't the intent) means a free
+    // user's "Progress Toward Goal" ring always shows the honest 0% /
+    // "build a roadmap" nudge, never a flash of real milestone data.
+    if (!isSignedIn || !isPremium) {
       setRoadmapLoading(false);
       return;
     }
@@ -131,7 +142,7 @@ const HomeSrc = memo(() => {
       // honest 0% / "build your roadmap" nudge below rather than a broken
       // state on a failed fetch.
     }).finally(() => setRoadmapLoading(false));
-  }, [isSignedIn]);
+  }, [isSignedIn, isPremium]);
   const roadmapPercent = roadmap && roadmap.totalCount > 0
     ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
     : 0;
