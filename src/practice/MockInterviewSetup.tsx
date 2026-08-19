@@ -8,6 +8,7 @@ import {
   Icon,
   Button,
   Input,
+  Spinner,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +31,7 @@ import CtaButton from 'components/CtaButton';
 import PersonaDetailModal from 'components/PersonaDetailModal';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import { guessCompanyLogoUrl } from 'utils/companyLogo';
+import { searchCompany, CompanySearchResult } from 'services/companySearchService';
 import { InterviewPersona } from 'services/configService';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
@@ -142,13 +144,95 @@ const MockInterviewSetup = memo(() => {
     [profile?.preferredCountries],
   );
 
+  // AI web search fallback (product request: "when users type the company
+  // and it's not part of the list already listed there the AI should
+  // search the web for that company and its logo and then the user can
+  // select it... the app should ask 'is this the company you are looking
+  // for?'"). customCompanies holds AI-confirmed companies added this
+  // session so they render as a normal selectable chip (with the real,
+  // verified logo from the search) right alongside the app's own curated
+  // list, same as if they'd been there all along. customCompanyLogos maps
+  // a custom company's name to its verified logoUrl, checked ahead of
+  // guessCompanyLogoUrl's heuristic when rendering any chip below.
+  const [customCompanies, setCustomCompanies] = React.useState<CompanySearchResult[]>([]);
+  const customCompanyLogos = React.useMemo(() => {
+    const map: Record<string, string> = {};
+    customCompanies.forEach(c => {
+      if (c.logoUrl) map[c.name.toLowerCase()] = c.logoUrl;
+    });
+    return map;
+  }, [customCompanies]);
+
+  type AiCompanySearchState = 'idle' | 'searching' | 'confirming' | 'not_found';
+  const [aiSearchState, setAiSearchState] = React.useState<AiCompanySearchState>('idle');
+  const [aiSearchResult, setAiSearchResult] = React.useState<CompanySearchResult | null>(null);
+  // Any edit to the search box invalidates whatever the AI search last
+  // found/confirmed for a DIFFERENT query — otherwise a stale "Is this the
+  // company you're looking for?" card (or "check the spelling" message)
+  // from a previous search could linger on screen while the user types a
+  // new one.
+  React.useEffect(() => {
+    setAiSearchState('idle');
+    setAiSearchResult(null);
+  }, [companySearch]);
+
   const filteredCompanies = React.useMemo(() => {
     const query = companySearch.trim().toLowerCase();
+    const combined = [
+      ...regionCompanies,
+      ...customCompanies
+        .map(c => c.name)
+        .filter(name => !regionCompanies.some(r => r.toLowerCase() === name.toLowerCase())),
+    ];
     const list = query
-      ? regionCompanies.filter(name => name.toLowerCase().includes(query))
-      : regionCompanies;
+      ? combined.filter(name => name.toLowerCase().includes(query))
+      : combined;
     return [...list, COMPANY_ANY];
-  }, [companySearch, regionCompanies]);
+  }, [companySearch, regionCompanies, customCompanies]);
+
+  // Nothing in the app's own list (region-ranked catalog + anything
+  // already AI-confirmed this session) matches what's typed — the trigger
+  // for offering the AI web-search fallback below instead of leaving the
+  // user stuck with only the generic "Other / Any Company" pill.
+  const hasNoLocalMatch = companySearch.trim().length > 0
+    && filteredCompanies.every(name => name === COMPANY_ANY);
+
+  const onSearchCompanyOnline = async () => {
+    const query = companySearch.trim();
+    if (!query || aiSearchState === 'searching') return;
+    setAiSearchState('searching');
+    const result = await searchCompany(query);
+    if (result) {
+      setAiSearchResult(result);
+      setAiSearchState('confirming');
+    } else {
+      setAiSearchResult(null);
+      setAiSearchState('not_found');
+    }
+  };
+
+  const onConfirmAiCompanyYes = () => {
+    if (!aiSearchResult) return;
+    setCustomCompanies(prev =>
+      prev.some(c => c.name.toLowerCase() === aiSearchResult.name.toLowerCase())
+        ? prev
+        : [...prev, aiSearchResult],
+    );
+    setCompany(aiSearchResult.name);
+    setCompanySearch('');
+    setAiSearchState('idle');
+    setAiSearchResult(null);
+  };
+
+  const onConfirmAiCompanyNo = () => {
+    // Product spec: "if the user picks no then a new app should tell the
+    // user to check the name and spelling well or search again" — reusing
+    // the same not_found state/message as a search that found nothing at
+    // all, since the corrective action (fix the spelling, try again) is
+    // identical either way.
+    setAiSearchResult(null);
+    setAiSearchState('not_found');
+  };
 
   // Video mode is gated to Pro Premium/Pro Yearly specifically (see
   // saveur-backend/app/api/interviews.py's create_session, which enforces
@@ -497,7 +581,7 @@ const MockInterviewSetup = memo(() => {
                     Company" pill, which isn't a real company. */}
                 {isRealCompany ? (
                   <CompanyLogoAvatar
-                    logoUrl={guessCompanyLogoUrl(name)}
+                    logoUrl={customCompanyLogos[name.toLowerCase()] ?? guessCompanyLogoUrl(name)}
                     companyName={name}
                     size="tiny"
                     style={{ marginRight: 6 }}
@@ -510,6 +594,81 @@ const MockInterviewSetup = memo(() => {
             );
           })}
         </View>
+
+        {/* AI web search fallback (product request: "when users type the
+            company and it's not part of the list already listed there the
+            AI should search the web for that company and its logo and then
+            the user can select it... We should not limit the user to the
+            few ones the app listed"). Only offered once nothing in the
+            app's own list matches what's typed — a real match should
+            always just be picked from the chips above. */}
+        {hasNoLocalMatch ? (
+          <View style={styles.aiCompanySearchBlock}>
+            {aiSearchState === 'confirming' && aiSearchResult ? (
+              <View style={[styles.aiCompanyCard, { borderColor: theme['background-basic-color-3'] }]}>
+                <Flex itemsCenter mb={12}>
+                  <CompanyLogoAvatar
+                    logoUrl={aiSearchResult.logoUrl}
+                    companyName={aiSearchResult.name}
+                    size="small"
+                    style={{ marginRight: 10 }}
+                  />
+                  <Text category="h8" bold style={globalStyle.flexOne}>
+                    {aiSearchResult.name}
+                  </Text>
+                </Flex>
+                <Text category="h9-s" status="placeholder" mb={14}>
+                  {t('find:ai_company_confirm_question', {
+                    defaultValue: 'Is this the company you’re looking for?',
+                  })}
+                </Text>
+                <Flex>
+                  <Button
+                    size="small"
+                    status="primary"
+                    style={[globalStyle.flexOne, { marginRight: 8 }]}
+                    onPress={onConfirmAiCompanyYes}>
+                    {t('common:yes', { defaultValue: 'Yes' })}
+                  </Button>
+                  <Button
+                    size="small"
+                    status="basic"
+                    appearance="outline"
+                    style={globalStyle.flexOne}
+                    onPress={onConfirmAiCompanyNo}>
+                    {t('common:no', { defaultValue: 'No' })}
+                  </Button>
+                </Flex>
+              </View>
+            ) : aiSearchState === 'not_found' ? (
+              <Text category="h9-s" status="danger" mt={4}>
+                {t('find:ai_company_not_found', {
+                  defaultValue: "Couldn't confirm that company — check the name and spelling, or try searching again.",
+                })}
+              </Text>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                disabled={aiSearchState === 'searching'}
+                onPress={onSearchCompanyOnline}
+                style={[styles.aiCompanySearchRow, { borderColor: theme['background-basic-color-3'] }]}>
+                {aiSearchState === 'searching' ? (
+                  <Spinner size="small" status="basic" />
+                ) : (
+                  <Icon pack="eva" name="globe-2-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+                )}
+                <Text category="h9" bold status="primary" ml={8}>
+                  {aiSearchState === 'searching'
+                    ? t('find:ai_company_searching', { defaultValue: 'Searching the web…' })
+                    : t('find:ai_company_search_cta', {
+                        defaultValue: 'Search the web for "{{query}}"',
+                        query: companySearch.trim(),
+                      })}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : null}
 
         {showPersonaPicker ? (
           <>
@@ -737,6 +896,24 @@ const themedStyles = StyleService.create({
   chipWithLogo: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  aiCompanySearchBlock: {
+    marginTop: 4,
+  },
+  aiCompanySearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+  },
+  aiCompanyCard: {
+    ...globalStyle.card,
+    borderWidth: 1,
+    padding: 16,
   },
   difficultyPill: {
     paddingVertical: 10,
