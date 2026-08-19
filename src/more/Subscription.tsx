@@ -9,6 +9,7 @@ import {
   Button,
   Icon,
   Spinner,
+  Input,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -122,6 +123,23 @@ const Subscription = memo(() => {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [checkoutPlanId, setCheckoutPlanId] = React.useState<string | null>(null);
   const [justSubscribedTier, setJustSubscribedTier] = React.useState<PlanId | null>(null);
+
+  // Coupon code field (product request: "Implementation of coupons for
+  // discounts for all the plans and for countries by countries") — only
+  // ever rendered on the !IS_NATIVE_IAP_PLATFORM path below, since Apple/
+  // Google native IAP can't accept a third-party discount at all (see
+  // IS_NATIVE_IAP_PLATFORM's own comment). `couponApplied` is a soft,
+  // best-effort confirmation (checked against the cheapest visible paid
+  // plan, since the user hasn't necessarily picked a specific plan card
+  // yet) — the real, authoritative eligibility check (does this code
+  // actually apply to the specific plan tier the user ends up buying)
+  // happens server-side at the moment of payment in payWithPaymentSheet
+  // below, same "client is a UX nicety, server is the source of truth"
+  // pattern used everywhere else in this screen.
+  const [couponCode, setCouponCode] = React.useState('');
+  const [couponApplied, setCouponApplied] = React.useState<billingService.CouponValidationResult | null>(null);
+  const [couponCheckError, setCouponCheckError] = React.useState<string | null>(null);
+  const [isCheckingCoupon, setIsCheckingCoupon] = React.useState(false);
 
   // Which tier the user most recently tried to buy/change to, and whether a
   // checkout/portal tab is currently "in flight" (opened but not yet
@@ -299,7 +317,10 @@ const Subscription = memo(() => {
   // that integration point, there's no separate call needed to surface it.
   const payWithPaymentSheet = async (plan: BillingPlanProps) => {
     if (!plan.code) return; // guarded by caller, but keeps this fn self-contained
-    const sheet = await billingService.createPaymentSheet({ planCode: plan.code });
+    const sheet = await billingService.createPaymentSheet({
+      planCode: plan.code,
+      couponCode: couponApplied ? couponCode.trim().toUpperCase() : undefined,
+    });
     await initStripe({ publishableKey: sheet.publishableKey, urlScheme: 'saveur' });
     const { error: initError } = await initPaymentSheet({
       merchantDisplayName: 'Saveur',
@@ -642,12 +663,61 @@ const Subscription = memo(() => {
     } catch (error: any) {
       attemptedTierRef.current = null;
       pendingCheckoutRef.current = false;
+      // A coupon that validated fine against the cheapest plan (see
+      // onApplyCoupon below) can still be rejected here — this is the
+      // authoritative, per-plan-tier/country re-check happening
+      // server-side at the actual moment of payment (see
+      // app/api/billing.py's payment_sheet()). Clear it so the user isn't
+      // stuck retrying with a coupon the backend just refused.
+      if (typeof error?.error === 'string' && error.error.startsWith('coupon_')) {
+        setCouponApplied(null);
+      }
       Alert.alert(
         t('more:subscription_checkout_failed_title', { defaultValue: 'Could not start checkout' }),
         error?.message ?? t('more:subscription_checkout_failed_body', { defaultValue: 'Please try again in a moment.' }),
       );
     } finally {
       setCheckoutPlanId(null);
+    }
+  };
+
+  // Checked against the cheapest visible paid plan since the user hasn't
+  // necessarily picked a specific plan card yet at this point — see
+  // couponApplied's own comment above for why this is a soft, non-final
+  // check.
+  const onApplyCoupon = async () => {
+    const trimmed = couponCode.trim();
+    if (!trimmed) return;
+    const cheapestPaidPlan = visiblePlans.find(p => !!p.code);
+    if (!cheapestPaidPlan?.code) return;
+    setIsCheckingCoupon(true);
+    setCouponCheckError(null);
+    try {
+      const result = await billingService.validateCoupon(trimmed, cheapestPaidPlan.code);
+      if (result.valid) {
+        setCouponApplied(result);
+      } else {
+        setCouponApplied(null);
+        setCouponCheckError(
+          (result.errorCode === 'coupon_not_found'
+            ? t('more:coupon_not_found', { defaultValue: "That code doesn't exist." })
+            : result.errorCode === 'coupon_expired'
+            ? t('more:coupon_expired', { defaultValue: 'That code has expired.' })
+            : result.errorCode === 'coupon_inactive'
+            ? t('more:coupon_inactive', { defaultValue: 'That code is no longer active.' })
+            : result.errorCode === 'coupon_redemption_limit_reached'
+            ? t('more:coupon_redemption_limit_reached', { defaultValue: 'That code has already been fully redeemed.' })
+            : result.errorCode === 'coupon_not_valid_for_country'
+            ? t('more:coupon_not_valid_for_country', { defaultValue: "That code isn't valid in your country." })
+            : t('more:coupon_invalid', { defaultValue: "That code isn't valid." })
+          ).toString(),
+        );
+      }
+    } catch (error: any) {
+      setCouponApplied(null);
+      setCouponCheckError(error?.message ?? t('more:coupon_check_failed', { defaultValue: 'Could not check that code. Please try again.' }).toString());
+    } finally {
+      setIsCheckingCoupon(false);
     }
   };
 
@@ -760,6 +830,51 @@ const Subscription = memo(() => {
               {t('more:restore_purchases_cta', { defaultValue: 'Restore purchases' })}
             </Text>
           </TouchableOpacity>
+        ) : null}
+
+        {/* Coupon code field (product request: "Implementation of coupons
+            for discounts for all the plans and for countries by
+            countries") — Stripe checkout only, see IS_NATIVE_IAP_PLATFORM
+            and couponApplied's own comments above for why this never
+            renders on an actual iOS/Android build today. */}
+        {!IS_NATIVE_IAP_PLATFORM && !fromOnboarding && currentTier === 'free' ? (
+          <View style={{ marginBottom: 16 }}>
+            <Flex itemsCenter>
+              <View style={globalStyle.flexOne}>
+                <Input
+                  placeholder={t('more:coupon_code_placeholder', { defaultValue: 'Have a coupon code?' }).toString()}
+                  value={couponCode}
+                  autoCapitalize="characters"
+                  disabled={isCheckingCoupon}
+                  onChangeText={text => {
+                    setCouponCode(text);
+                    setCouponApplied(null);
+                    setCouponCheckError(null);
+                  }}
+                />
+              </View>
+              <Button
+                size="small"
+                appearance="outline"
+                style={{ marginLeft: 8 }}
+                disabled={isCheckingCoupon || !couponCode.trim()}
+                accessoryLeft={isCheckingCoupon ? () => <Spinner size="tiny" /> : undefined}
+                onPress={onApplyCoupon}>
+                {t('more:coupon_apply_cta', { defaultValue: 'Apply' })}
+              </Button>
+            </Flex>
+            {couponApplied ? (
+              <Text category="h10" status="success" mt={6}>
+                {couponApplied.percentOff
+                  ? t('more:coupon_applied_percent', { defaultValue: '{{percent}}% off applied', percent: couponApplied.percentOff })
+                  : t('more:coupon_applied_generic', { defaultValue: 'Discount applied' })}
+              </Text>
+            ) : couponCheckError ? (
+              <Text category="h10" status="danger" mt={6}>
+                {couponCheckError}
+              </Text>
+            ) : null}
+          </View>
         ) : null}
 
         {/* Vertical stack — each card shows its own feature list, and

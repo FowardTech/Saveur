@@ -234,7 +234,12 @@ export async function createCheckoutSession(planCode: string): Promise<string> {
 // ---- In-app native Payment Sheet (@stripe/stripe-react-native) -----------
 
 export type PaymentSheetRequest =
-  | {planCode: string}
+  // `couponCode` (optional, subscription only): an admin-managed discount
+  // code (see coupon_service.py) — should already have been checked via
+  // `validateCoupon` below before the user reaches the actual pay button,
+  // but the backend re-validates independently regardless (never trusts
+  // the client's own belief that a code is still valid).
+  | {planCode: string; couponCode?: string}
   | {mode: 'payment'; amount: number; currency: string}
   // Paid Add-ons feature ("I want [Coding Practice / System Design
   // Whiteboard] to be in a separate screen called add-ons and they should
@@ -275,7 +280,7 @@ interface PaymentSheetWire {
 export async function createPaymentSheet(req: PaymentSheetRequest): Promise<PaymentSheetInit> {
   const body =
     'planCode' in req
-      ? {plan_code: req.planCode}
+      ? {plan_code: req.planCode, coupon_code: req.couponCode}
       : 'addonCode' in req
       ? {mode: req.mode, addon_code: req.addonCode}
       : {mode: req.mode, amount: req.amount, currency: req.currency};
@@ -303,6 +308,46 @@ export async function createPaymentSheet(req: PaymentSheetRequest): Promise<Paym
     subscriptionId: data.subscription_id,
     paymentIntentId: data.payment_intent_id,
   };
+}
+
+export interface CouponValidationResult {
+  valid: boolean;
+  percentOff?: number | null;
+  amountOff?: number | null;
+  currency?: string;
+  errorCode?: string;
+}
+
+/**
+ * POST /api/v1/billing/coupons/validate — lets Subscription.tsx's coupon
+ * field show a live "20% off applied" / error state before the user taps
+ * the actual pay button. Never throws on an invalid/ineligible code (a 400
+ * with a machine-readable `error` is treated the same as `{valid: false}`,
+ * so the caller doesn't need its own try/catch just to render "invalid
+ * code") — only a genuine network/auth failure propagates as a thrown
+ * error, same convention as the rest of this file.
+ */
+export async function validateCoupon(code: string, planCode: string): Promise<CouponValidationResult> {
+  try {
+    const {data} = await apiClient.post<{
+      valid: boolean;
+      percent_off?: number | null;
+      amount_off?: number | null;
+      currency?: string;
+    }>('/api/v1/billing/coupons/validate', {code, plan_code: planCode});
+    return {
+      valid: data.valid,
+      percentOff: data.percent_off,
+      amountOff: data.amount_off,
+      currency: data.currency,
+    };
+  } catch (error: any) {
+    const errorCode = error?.response?.data?.error;
+    if (errorCode) {
+      return {valid: false, errorCode};
+    }
+    throw error;
+  }
 }
 
 /**
