@@ -121,12 +121,36 @@ export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerif
     });
 
     ensureConnection()
-      .then(() =>
-        RNIap.requestPurchase({
+      // BUG FIX (product report: buying a subscription always failed
+      // instantly with a native "SKU not found" error, even with a valid
+      // StoreKit Configuration file selected in the Xcode scheme and the
+      // product ID matching exactly). Root cause: this function used to
+      // call RNIap.requestPurchase(sku) directly, with no prior
+      // RNIap.fetchProducts() call for that sku anywhere in the app.
+      // react-native-iap's iOS layer caches each sku's product type
+      // (subscription vs one-time) from whatever the last fetchProducts()
+      // call told it — requestPurchase() reads that cache to decide which
+      // StoreKit query to run, and with an empty cache it falls back to
+      // treating every sku as a one-time in-app product. A subscription
+      // sku queried that way is never found, hence "SKU not found" even
+      // though the product genuinely exists in the active StoreKit
+      // config/App Store Connect catalog. Fetching the product first (with
+      // the correct `type`) both warms that cache with the right type AND
+      // gives a much clearer error up front if the sku genuinely doesn't
+      // exist anywhere (typo, wrong environment, catalog/config code
+      // mismatch) instead of the vague native message.
+      .then(() => RNIap.fetchProducts({skus: [sku], type}))
+      .then(products => {
+        if (!products?.length) {
+          throw new Error(
+            `No StoreKit product found for "${sku}" (type: ${type}). Check that this exact product ID exists in the active StoreKit Configuration (local testing) or has been created in App Store Connect (sandbox/production), and that the scheme's StoreKit Configuration is actually selected for this build.`,
+          );
+        }
+        return RNIap.requestPurchase({
           request: {apple: {sku}, google: {skus: [sku]}},
           type,
-        }),
-      )
+        });
+      })
       .catch(err => settle(() => reject(err)));
   });
 }

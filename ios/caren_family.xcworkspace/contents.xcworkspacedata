@@ -2,6 +2,9 @@
 <Workspace
    version = "1.0">
    <FileRef
+      location = "group:Saveur-plans.storekit">
+   </FileRef>
+   <FileRef
       location = "group:caren_family.xcodeproj">
    </FileRef>
    <FileRef
