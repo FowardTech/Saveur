@@ -161,6 +161,15 @@ export enum EKeyAsyncStorage {
   // last dismissed, so a NEW announcement (different title/message) always
   // reappears even though this same key was already written once.
   homeBannerDismissed = 'homeBannerDismissed',
+  // OS Share Sheet integration (product request: "Ability to share files
+  // to Saveur from the device and it will go directly to the document
+  // section of the app") — holds whatever shareIntentService.ts's native
+  // modules most recently resolved (a JSON-stringified SharedFile[]),
+  // bridging App.tsx's own "never navigate directly, just stash a pending
+  // flag" convention (see jobShareService.pendingJobId's identical
+  // pattern) over to HomeSrc.tsx's useFocusEffect, which is what actually
+  // navigates to My Documents once the navigator/auth state is ready.
+  pendingSharedFiles = 'pendingSharedFiles',
 }
 
 // BUG FIX (product report: "the tour guide always shows every time the

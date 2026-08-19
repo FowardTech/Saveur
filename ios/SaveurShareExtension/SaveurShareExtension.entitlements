@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Must match caren_family/caren_family.entitlements' group id
+	     exactly -- this is what lets ShareViewController.swift (this
+	     extension) and ShareIntentModule.swift (the main app) both read/
+	     write the same shared container. See that file's own comment and
+	     ios/SHARE_EXTENSION_SETUP.md for the full setup this needs in
+	     Xcode. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.ayotundebalogun.saveur</string>
+	</array>
+</dict>
+</plist>

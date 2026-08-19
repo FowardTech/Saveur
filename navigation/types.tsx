@@ -11,6 +11,7 @@ import {
   VideoAnalysisMetrics,
 } from 'constants/Types';
 import { PracticalType, PracticalStep } from 'services/practicalService';
+import { SharedFile } from 'services/shareIntentService';
 
 export type RootStackParamList = {
   Intro: undefined;
@@ -160,7 +161,14 @@ export type RootStackParamList = {
   // childcare-template MyChildren screen; now a real screen, and also
   // reachable from ResumeBuilder's import buttons as a "choose from My
   // Documents" alternative to the device file picker.
-  MyDocuments: undefined;
+  // pendingImport (product request: "Ability to share files to Saveur from
+  // the device and it will go directly to the document section of the
+  // app") — set by HomeSrc.tsx's useFocusEffect when
+  // shareIntentService.ts hands back a share the OS Share Sheet just
+  // delivered; MyDocuments.tsx auto-uploads each file on mount when
+  // present. undefined for every other way this screen is reached (the
+  // More menu row, suggestedActions.ts's my_documents action, etc.).
+  MyDocuments: {pendingImport?: SharedFile[]} | undefined;
   JDAnalyzer: undefined;
   // JD Analyzer's "build a matching resume" flow, and the standalone
   // "Create CV" entry point from ResumeBuilder — see

@@ -12,6 +12,7 @@ import {
 } from '@ui-kitten/components';
 import {pick, isErrorWithCode, errorCodes, types as documentTypes} from '@react-native-documents/picker';
 import {useTranslation} from 'react-i18next';
+import {RouteProp, useRoute} from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -24,6 +25,7 @@ import * as documentsService from 'services/documentsService';
 import {DocumentRecord} from 'services/documentsService';
 import CtaButton from 'components/CtaButton';
 import { SkeletonList } from 'components/Skeleton';
+import {RootStackParamList} from 'navigation/types';
 
 function formatSize(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return '';
@@ -45,12 +47,20 @@ const MyDocuments = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['more', 'common']);
+  const route = useRoute<RouteProp<RootStackParamList, 'MyDocuments'>>();
 
   const [documents, setDocuments] = React.useState<DocumentRecord[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  // OS Share Sheet integration (product request: "Ability to share files
+  // to Saveur from the device and it will go directly to the document
+  // section of the app") — how many of route.params.pendingImport are
+  // still uploading, shown as a small inline progress note rather than a
+  // blocking spinner over the whole screen (the existing document list
+  // stays visible/usable the whole time).
+  const [importingCount, setImportingCount] = React.useState(0);
 
   const loadDocuments = React.useCallback(async () => {
     setIsLoading(true);
@@ -68,6 +78,60 @@ const MyDocuments = memo(() => {
   React.useEffect(() => {
     loadDocuments();
   }, [loadDocuments]);
+
+  // Auto-uploads whatever the OS Share Sheet just handed off (see
+  // HomeSrc.tsx's useFocusEffect, which is what navigates here with this
+  // param set — App.tsx itself never navigates directly, see
+  // shareIntentService.ts's own file header). Runs once per screen mount
+  // (route.params is a one-shot hand-off, not something that changes while
+  // this screen stays open) — each file is uploaded through the exact same
+  // documentsService.uploadDocument call the manual "Upload" button above
+  // uses, so a shared file becomes a completely normal document afterward,
+  // indistinguishable from one picked manually. Failures are reported
+  // per-file (one bad file in a multi-file share shouldn't silently lose
+  // the others) but don't block the rest of the screen.
+  React.useEffect(() => {
+    const pending = route.params?.pendingImport;
+    if (!pending || !pending.length) return;
+    let cancelled = false;
+    (async () => {
+      setImportingCount(pending.length);
+      const uploaded: DocumentRecord[] = [];
+      let failedCount = 0;
+      for (const file of pending) {
+        try {
+          const doc = await documentsService.uploadDocument({
+            uri: file.uri,
+            name: file.name,
+            sizeBytes: file.sizeBytes,
+            mimeType: file.mimeType,
+          });
+          uploaded.push(doc);
+        } catch {
+          failedCount += 1;
+        } finally {
+          if (!cancelled) setImportingCount(prev => Math.max(0, prev - 1));
+        }
+      }
+      if (cancelled) return;
+      if (uploaded.length) {
+        setDocuments(prev => [...uploaded, ...prev]);
+      }
+      if (failedCount > 0) {
+        Alert.alert(
+          t('more:documents_import_failed_title', {defaultValue: "Couldn't import everything"}),
+          t('more:documents_import_failed_body', {
+            defaultValue: '{{count}} shared file(s) could not be uploaded. Please try sharing them again.',
+            count: failedCount,
+          }).toString(),
+        );
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot on mount, see comment above
+  }, []);
 
   const onUpload = async () => {
     try {
@@ -128,6 +192,17 @@ const MyDocuments = memo(() => {
     <Container style={styles.container}>
       <TopNavigation title={t('more:my_documents', {defaultValue: 'My Documents'})} accessoryLeft={<NavigationAction />} />
       <Content padder contentContainerStyle={styles.content}>
+        {importingCount > 0 ? (
+          <Flex itemsCenter mb={16} style={styles.importingBanner}>
+            <Spinner size="small" status="basic" />
+            <Text category="h9" ml={10}>
+              {t('more:documents_importing_shared', {
+                defaultValue: 'Importing {{count}} shared file(s)…',
+                count: importingCount,
+              })}
+            </Text>
+          </Flex>
+        ) : null}
         <CtaButton
           children={renderCenteredLabel(
             isUploading
@@ -198,6 +273,10 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  importingBanner: {
+    ...globalStyle.card,
+    padding: 12,
   },
   docRow: {
     ...globalStyle.card,

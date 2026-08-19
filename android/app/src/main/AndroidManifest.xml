@@ -114,6 +114,42 @@
             <data android:scheme="https" android:host="api.saveurnow.com" />
             <data android:scheme="https" android:host="share.saveurnow.com" />
         </intent-filter>
+        <!-- OS Share Sheet integration (product request: "Ability to share
+             files to Saveur from the device and it will go directly to the
+             document section of the app") — lets Saveur appear as a share
+             target from Files, Mail, a browser's "Share" menu, etc., for a
+             single file (ACTION_SEND) or several at once
+             (ACTION_SEND_MULTIPLE). Reuses this same singleTask
+             MainActivity rather than a separate share-only Activity — a
+             dedicated ShareActivity is the more common pattern for apps
+             that want a lightweight "confirm and dismiss" share UI
+             (finish() immediately after handling the intent), but this
+             app's product ask is specifically "it will go directly to the
+             document section of the app" — i.e. land the user inside the
+             real app, on My Documents, with the shared file already queued
+             for upload, not a transient dialog. See ShareIntentModule.kt
+             for how the shared content:// URI(s) get resolved into real
+             local files and handed to JS, and services/shareIntentService.ts
+             for how the JS side picks this up and navigates to My
+             Documents.
+             mimeType intentionally broad (*/*) rather than enumerating
+             specific types (application/pdf, image/*, etc., each needing
+             its own <data> element) — My Documents' own manual upload
+             picker (src/more/MyDocuments.tsx's onUpload, via
+             @react-native-documents/picker) already accepts pdf/doc/docx/
+             plainText/images, and this share path is meant to mirror that,
+             not be more restrictive about what a user can share in from
+             another app. -->
+        <intent-filter android:label="@string/app_name">
+            <action android:name="android.intent.action.SEND" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="*/*" />
+        </intent-filter>
+        <intent-filter android:label="@string/app_name">
+            <action android:name="android.intent.action.SEND_MULTIPLE" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <data android:mimeType="*/*" />
+        </intent-filter>
       </activity>
       <!-- BUG FIX (product report: "the icon for the push notification is
            still showing the old one instead of the new icon"): this only

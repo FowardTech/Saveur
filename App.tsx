@@ -28,6 +28,7 @@ import * as linkedinAuthService from 'services/linkedinAuthService';
 import * as emailConnectionService from 'services/emailConnectionService';
 import * as calendarConnectionService from 'services/calendarConnectionService';
 import * as jobShareService from 'services/jobShareService';
+import * as shareIntentService from 'services/shareIntentService';
 import * as appsFlyerService from 'services/appsFlyerService';
 import * as configService from 'services/configService';
 import { flushPendingVideoUploads } from 'services/interviewService';
@@ -238,6 +239,17 @@ function App() {
     calendarConnectionService.handleIncomingUrl(url);
     const jobId = jobShareService.extractJobIdFromUrl(url);
     if (jobId) jobShareService.setPendingJobId(jobId).catch(() => {});
+    // OS Share Sheet integration (product request: "Ability to share files
+    // to Saveur from the device") — iOS's Share Extension (see
+    // ios/SaveurShareExtension/ShareViewController.swift) can't reach a
+    // running host app's JS runtime directly, so it re-opens Saveur via
+    // saveur://shared-import instead, landing here the same way every
+    // other saveur:// deep link does. checkForSharedFiles below picks up
+    // whatever that extension just wrote to the shared App Group
+    // container.
+    if (shareIntentService.handleIncomingUrl(url)) {
+      checkForSharedFiles();
+    }
   }, []);
 
   React.useEffect(() => {
@@ -245,6 +257,29 @@ function App() {
     const subscription = Linking.addEventListener('url', ({url}) => handleIncomingUrl(url));
     return () => subscription.remove();
   }, [handleIncomingUrl]);
+
+  // OS Share Sheet integration, continued — Android's own two delivery
+  // paths (see shareIntentService.ts's file header): getPendingSharedFiles
+  // covers a cold start (MainActivity.onCreate already had the ACTION_SEND
+  // intent) checked once here at mount, and addShareListener covers a
+  // share tapped while the app is already running/backgrounded
+  // (MainActivity.onNewIntent). Either way, this only ever CAPTURES the
+  // result into AsyncStorage (setPendingSharedFiles) — same "never
+  // navigate directly" posture as jobShareService.setPendingJobId a few
+  // effects above — HomeSrc.tsx's useFocusEffect is what actually
+  // navigates to My Documents once the navigator/auth state is ready.
+  const checkForSharedFiles = React.useCallback(() => {
+    shareIntentService.getPendingSharedFiles().then(files => {
+      if (files.length) shareIntentService.setPendingSharedFiles(files).catch(() => {});
+    });
+  }, []);
+
+  React.useEffect(() => {
+    checkForSharedFiles();
+    return shareIntentService.addShareListener(files => {
+      if (files.length) shareIntentService.setPendingSharedFiles(files).catch(() => {});
+    });
+  }, [checkForSharedFiles]);
 
   const toggleTheme = () => {
     hasExplicitPreference.current = true;

@@ -37,6 +37,7 @@ import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInShee
 import PeriodicCheckInSheet from 'components/PeriodicCheckInSheet';
 import * as appRatingService from 'services/appRatingService';
 import * as dailyCheckinService from 'services/dailyCheckinService';
+import * as shareIntentService from 'services/shareIntentService';
 import * as studentCheckinService from 'services/studentCheckinService';
 import { StudentCheckIn } from 'services/studentCheckinService';
 import useModal from 'hooks/useModal';
@@ -446,6 +447,26 @@ const HomeSrc = memo(() => {
         }
       });
     }, [requestOverlay]),
+  );
+
+  // OS Share Sheet integration (product request: "Ability to share files
+  // to Saveur from the device and it will go directly to the document
+  // section of the app") — App.tsx's own effects only ever CAPTURE a share
+  // (see shareIntentService.setPendingSharedFiles, called from both the
+  // Android live-event path and the iOS saveur://shared-import relaunch
+  // path) since the navigator/auth state may not exist yet on a cold
+  // start, same reasoning as the shared-job deep link and the daily
+  // check-in reflection prompt above. Checked on every focus, not just
+  // mount — a share tapped while the app is already sitting on Home
+  // wouldn't remount this component at all.
+  useFocusEffect(
+    React.useCallback(() => {
+      shareIntentService.getAndClearPendingSharedFiles().then(files => {
+        if (files.length) {
+          navigate('MyDocuments', {pendingImport: files});
+        }
+      });
+    }, [navigate]),
   );
 
   const onSubmitCheckin = React.useCallback(async (text: string) => {

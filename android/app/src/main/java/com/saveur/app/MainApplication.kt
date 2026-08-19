@@ -18,6 +18,12 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
+          // ShareIntentModule/ShareIntentPackage — OS Share Sheet
+          // integration (product request: "Ability to share files to
+          // Saveur from the device"). Manual, not autolinked, since it's a
+          // plain in-app-source module (no separate npm package/podspec/
+          // build.gradle of its own for RN's autolinking to discover).
+          add(ShareIntentPackage())
         },
     )
   }

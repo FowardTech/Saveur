@@ -28,5 +28,28 @@
 		<string>applinks:api.saveurnow.com</string>
 		<string>applinks:share.saveurnow.com</string>
 	</array>
+	<!-- OS Share Sheet integration (product request: "Ability to share
+	     files to Saveur from the device and it will go directly to the
+	     document section of the app") -- an iOS Share Extension runs in
+	     its own separate process/sandbox from the main app, so the only
+	     way for it to hand a shared file over to Saveur itself is a
+	     location BOTH processes can read/write: an App Group shared
+	     container. This key must be added to BOTH this file AND the
+	     extension target's own entitlements (SaveurShareExtension/
+	     SaveurShareExtension.entitlements) with the exact same group id,
+	     and the "App Groups" capability enabled for both targets in
+	     Xcode's Signing & Capabilities tab (which is also what actually
+	     registers this group id with Apple's provisioning system --
+	     adding the key here by hand is necessary but not sufficient on
+	     its own). See ios/SHARE_EXTENSION_SETUP.md for the full,
+	     step-by-step Xcode setup this repo's own sandbox can't perform
+	     (no Xcode/macOS available in this environment -- see that doc's
+	     own intro). ShareIntentModule.swift (main app) reads from this
+	     same container; ShareViewController.swift (extension) writes to
+	     it. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.ayotundebalogun.saveur</string>
+	</array>
 </dict>
 </plist>
