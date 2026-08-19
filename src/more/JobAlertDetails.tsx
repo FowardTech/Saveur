@@ -38,7 +38,7 @@ const JobAlertDetails = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'JobAlertDetails'>>();
   const {job} = route.params;
-  const {isPremium} = React.useContext(AuthContext);
+  const {isPro} = React.useContext(AuthContext);
 
   // Reached from the bell/a push tap, this alert may not have been marked
   // read yet (Notification screen only marks read on the general list tap,
@@ -96,23 +96,28 @@ const JobAlertDetails = memo(() => {
   };
 
   // Product report: the Job Alerts list (JobAlerts.tsx) is already gated
-  // behind Pro Premium, but this detail screen is reachable three other
+  // behind Basic and up, but this detail screen is reachable three other
   // ways that all skip that gate entirely -- tapping a "job_alert"
   // notification from the bell, tapping the equivalent OS push
   // notification, and (per the same report) the notification/push payload
   // itself carrying the full job title/company/location before any tap
   // happens at all. This screen-level gate closes the "reach it directly"
-  // path; the notification/push payload redaction for non-Premium users is
+  // path; the notification/push payload redaction for non-Basic users is
   // handled server-side (see Saveur-Backend's job_search_service.py
   // notification creation, push_service.py send_job_alert, and
   // app/api/notifications.py's _job_alert_payload).
-  if (!isPremium) {
+  //
+  // BUG FIX / product decision: "I want the Job alert to be in the Saveur
+  // basic plan too" — this used to gate on isPremium, matching
+  // app/api/job_alerts.py's OLD @require_premium; now matches its new
+  // @require_pro gate (Job Alerts is Basic-and-up, see JobAlerts.tsx's own
+  // comment for the full breakdown).
+  if (!isPro) {
     return (
       <ProLockGate
-        variant="premium"
         title={t('more:job_details_title', {defaultValue: 'Job Details'})}
-        description={t('more:job_details_premium_gate_description', {
-          defaultValue: 'Viewing full job alert details is a Premium feature.',
+        description={t('more:job_details_pro_gate_description', {
+          defaultValue: 'Viewing full job alert details is a Basic feature.',
         })}
       />
     );

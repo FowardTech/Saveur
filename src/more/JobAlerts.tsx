@@ -50,23 +50,31 @@ import {isRemoteLocation} from 'utils/jobLocation';
 import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
 import {accentColorForKey, accentTintBg} from 'utils/accentPalette';
 
-// Mirrors app_config_service's "job_alerts"."max_desired_roles"/
-// "max_preferred_countries" defaults (see saveur-backend's own comment on
-// that section) — hardcoded here rather than fetched live, same convention
-// this screen's dailyLimit slider already uses for its 15-50 bounds. The
-// real enforcement is server-side (app/api/users.py's update_me, which
-// truncates to whatever the admin has these set to); this is just what
-// stops a user from adding past the cap in the UI in the first place.
-// Every desired_role x preferred_country combo becomes its own live
-// Firecrawl/Perplexity discovery pass in job_search_service.py's global
-// batch unless another user happens to share the exact combo — this bounds
-// how much any single account can multiply that fan-out. Deliberately does
-// NOT apply to Dream Companies (DreamCompanies.tsx) — those are already
-// capped separately (app_config_service's "dream_companies"."max_per_user")
-// and each one is only ever a single role/country combo, not a cross
-// product, so there's no equivalent fan-out risk to guard against there.
-const MAX_DESIRED_ROLES = 5;
-const MAX_PREFERRED_COUNTRIES = 3;
+// Mirrors app_config_service's "job_alerts" tiered targeting-cap defaults
+// (see saveur-backend's entitlements_service.job_role_country_caps and that
+// section's own comment) — hardcoded here rather than fetched live, same
+// convention this screen's dailyLimit slider already uses for its 15-50
+// bounds. The real enforcement is server-side (app/api/users.py's
+// update_me, which truncates to whatever the admin has these set to); this
+// is just what stops a user from adding past the cap in the UI in the
+// first place. Every desired_role x preferred_country combo becomes its
+// own live Firecrawl/Perplexity discovery pass in job_search_service.py's
+// global batch unless another user happens to share the exact combo — this
+// bounds how much any single account can multiply that fan-out.
+// Deliberately does NOT apply to Dream Companies (DreamCompanies.tsx) —
+// those are already capped separately (app_config_service's
+// "dream_companies"."max_per_user") and each one is only ever a single
+// role/country combo, not a cross product, so there's no equivalent
+// fan-out risk to guard against there.
+//
+// Tiered as of the product decision: "I want the Job alert to be in the
+// Saveur basic plan too but they should only be able to add not more than
+// 1 target roles and 3 countries. But if they want to add up to 10 target
+// roles and 10 countries then they have to subscribe to the premium plan."
+const MAX_DESIRED_ROLES_BASIC = 1;
+const MAX_PREFERRED_COUNTRIES_BASIC = 3;
+const MAX_DESIRED_ROLES_PREMIUM = 10;
+const MAX_PREFERRED_COUNTRIES_PREMIUM = 10;
 
 // "Like a Google Alert, but for jobs" — matches new postings found online
 // against profile.preferredCountries + profile.desiredRoles (see
@@ -82,7 +90,9 @@ const JobAlerts = memo(() => {
   const {t} = useTranslation(['more', 'common', 'countries', 'auth']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'JobAlerts'>>();
-  const {profile, updateProfile, isPremium} = React.useContext(AuthContext);
+  const {profile, updateProfile, isPro, isPremium} = React.useContext(AuthContext);
+  const maxDesiredRoles = isPremium ? MAX_DESIRED_ROLES_PREMIUM : MAX_DESIRED_ROLES_BASIC;
+  const maxPreferredCountries = isPremium ? MAX_PREFERRED_COUNTRIES_PREMIUM : MAX_PREFERRED_COUNTRIES_BASIC;
 
   // Product request: "I also want an onboarding illustration for Job
   // alerts the same way you did for the learning course" — same
@@ -91,7 +101,7 @@ const JobAlerts = memo(() => {
   // `null` = not checked yet (render nothing this one frame, avoiding a
   // flash of the real screen before the AsyncStorage read resolves);
   // `true`/`false` once known. Checked here rather than gated behind
-  // isPremium below — this introduces the feature to every user, paid or
+  // isPro below — this introduces the feature to every user, paid or
   // not, same as the learning-course banner. Admin toggle (product
   // request: "make all those new features configurable in the admin") —
   // off skips straight to `false` regardless of the AsyncStorage flag,
@@ -318,13 +328,27 @@ const JobAlerts = memo(() => {
   const addRole = () => {
     const trimmed = roleDraft.trim();
     if (!trimmed) return;
-    if (desiredRoles.length >= MAX_DESIRED_ROLES && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())) {
+    if (desiredRoles.length >= maxDesiredRoles && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())) {
       Alert.alert(
         t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
-        t('more:job_alerts_max_roles_body', {
-          count: MAX_DESIRED_ROLES,
-          defaultValue: `You can target up to ${MAX_DESIRED_ROLES} roles at once. Remove one to add another.`,
-        }).toString(),
+        // BUG FIX (product decision: "Job alert to be in the Saveur basic
+        // plan too but they should only be able to add not more than 1
+        // target roles and 3 countries... up to 10 target roles and 10
+        // countries [requires] premium") — a Basic user hitting their
+        // tighter 1-role cap gets a nudge toward Premium instead of the
+        // generic "remove one to add another" (which reads oddly at a cap
+        // of exactly 1 — there's nothing to "add another" after removing
+        // the only one).
+        (isPremium
+          ? t('more:job_alerts_max_roles_body', {
+              count: maxDesiredRoles,
+              defaultValue: `You can target up to ${maxDesiredRoles} roles at once. Remove one to add another.`,
+            })
+          : t('more:job_alerts_max_roles_body_basic', {
+              count: maxDesiredRoles,
+              defaultValue: `Saveur Basic targets up to ${maxDesiredRoles} role at a time. Upgrade to Premium to target up to ${MAX_DESIRED_ROLES_PREMIUM}.`,
+            })
+        ).toString(),
       );
       return;
     }
@@ -334,13 +358,19 @@ const JobAlerts = memo(() => {
   const toggleCountry = (country: string) => {
     setPreferredCountries(prev => {
       if (prev.includes(country)) return prev.filter(c => c !== country);
-      if (prev.length >= MAX_PREFERRED_COUNTRIES) {
+      if (prev.length >= maxPreferredCountries) {
         Alert.alert(
           t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
-          t('more:job_alerts_max_countries_body', {
-            count: MAX_PREFERRED_COUNTRIES,
-            defaultValue: `You can pick up to ${MAX_PREFERRED_COUNTRIES} countries at once. Remove one to add another.`,
-          }).toString(),
+          (isPremium
+            ? t('more:job_alerts_max_countries_body', {
+                count: maxPreferredCountries,
+                defaultValue: `You can pick up to ${maxPreferredCountries} countries at once. Remove one to add another.`,
+              })
+            : t('more:job_alerts_max_countries_body_basic', {
+                count: maxPreferredCountries,
+                defaultValue: `Saveur Basic targets up to ${maxPreferredCountries} countries at once. Upgrade to Premium to target up to ${MAX_PREFERRED_COUNTRIES_PREMIUM}.`,
+              })
+          ).toString(),
         );
         return prev;
       }
@@ -363,7 +393,18 @@ const JobAlerts = memo(() => {
       // (app_config_service's "job_alerts" section) to prevent a single
       // account polling too aggressively from exhausting Firecrawl's rate
       // limit/credits for everyone.
-      const jobAlertDailyLimit = Math.min(Math.max(Math.round(dailyLimit), 15), 50);
+      // BUG FIX / product decision: a Basic (non-Premium) user's daily
+      // limit is fixed at 3 and not editable (see the slider's own
+      // comment above) — sends 3 explicitly rather than whatever
+      // `dailyLimit` state happens to hold (its slider never even renders
+      // for this user, so it's just whatever it was initialized to), so
+      // the saved value always matches what's actually shown/enforced.
+      // The server pins it to 3 either way (app/api/users.py's update_me)
+      // — this just keeps the client's own state honest without relying
+      // on that round-trip.
+      const jobAlertDailyLimit = isPremium
+        ? Math.min(Math.max(Math.round(dailyLimit), 15), 50)
+        : 3;
       await updateProfile({desiredRoles, preferredCountries, jobAlertDailyLimit});
       setDailyLimit(jobAlertDailyLimit);
       setIsPrefsOpen(false);
@@ -400,13 +441,21 @@ const JobAlerts = memo(() => {
     return <JobAlertsOnboarding onGetStarted={onGetStartedOnboarding} />;
   }
 
-  if (!isPremium) {
+  // BUG FIX / product decision: "I want the Job alert to be in the Saveur
+  // basic plan too but they should only be able to add not more than 1
+  // target roles and 3 countries. But if they want to add up to 10 target
+  // roles and 10 countries then they have to subscribe to the premium
+  // plan." — Job Alerts moves from Premium-only to Basic-and-up (variant
+  // defaults to 'pro', matching app/api/job_alerts.py's new @require_pro
+  // gate); the 1-role/3-country vs. 10/10 split is enforced above via
+  // maxDesiredRoles/maxPreferredCountries and below via the daily-limit
+  // slider being Premium-only.
+  if (!isPro) {
     return (
       <ProLockGate
-        variant="premium"
         title={t('more:job_alerts', {defaultValue: 'Job Alerts'})}
-        description={t('more:job_alerts_premium_gate_description', {
-          defaultValue: 'Get notified the moment a real job posting matches your profile — Job Alerts is a Premium feature.',
+        description={t('more:job_alerts_pro_gate_description', {
+          defaultValue: 'Get notified the moment a real job posting matches your profile — Job Alerts is a Basic feature.',
         })}
       />
     );
@@ -603,7 +652,7 @@ const JobAlerts = memo(() => {
               </View>
             ) : null}
             {/* Same fixed COUNTRIES list JobPreferences.tsx uses, filtered
-                by countryQuery — bounded by MAX_PREFERRED_COUNTRIES above,
+                by countryQuery — bounded by maxPreferredCountries above,
                 so this stays a short, scrollable-within-the-sheet list even
                 with the search box empty (COUNTRIES itself is only ~65
                 entries, and this sheet's ScrollView already handles taller
@@ -630,6 +679,29 @@ const JobAlerts = memo(() => {
               })}
             </View>
 
+            {/* BUG FIX / product decision (product report: "the user should
+                not see the numbers of job alert range in the preferences
+                settings when in basic plan. They should only be able to
+                receive 3 job alerts per day. But those with premium plan
+                can set the range") — the slider below (with its numeric
+                value) is now Premium-only; a Basic user sees a plain,
+                non-editable line instead, matching what's actually
+                enforced server-side (app/api/users.py's update_me pins a
+                Basic user's job_alert_daily_limit to 3 regardless of any
+                value sent). */}
+            {!isPremium ? (
+              <>
+                <Text category="h8" bold mb={4} mt={16}>
+                  {t('more:job_alerts_daily_limit_label', {defaultValue: 'Max new alerts per day'})}
+                </Text>
+                <Text category="h9-s" status="placeholder" mb={4}>
+                  {t('more:job_alerts_daily_limit_basic_hint', {
+                    defaultValue: "You'll receive up to 3 new matches a day on Saveur Basic. Upgrade to Premium to set your own range.",
+                  })}
+                </Text>
+              </>
+            ) : (
+            <>
             <Flex justify="space-between" itemsCenter mb={4} mt={16}>
               <Text category="h8" bold>
                 {t('more:job_alerts_daily_limit_label', {defaultValue: 'Max new alerts per day'})}
@@ -666,6 +738,8 @@ const JobAlerts = memo(() => {
                   "Choose anywhere from 15 to 50 — once you hit this many new matches in a day, we'll stop adding more until tomorrow.",
               })}
             </Text>
+            </>
+            )}
 
             <CtaButton style={{marginTop: 20}} loading={isSavingPrefs} onPress={onSavePrefs}>
               {isSavingPrefs

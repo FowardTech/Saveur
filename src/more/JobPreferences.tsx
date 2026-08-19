@@ -21,15 +21,28 @@ import {RootStackParamList} from 'navigation/types';
 import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
 import {AuthContext} from '../../AuthContext';
 
-// Same cap, same reasoning, as src/more/JobAlerts.tsx's identical constants
-// (see that file's fuller comment) — this screen edits the exact same two
-// profile fields, so it needs the exact same client-side guard against a
-// user piling up roles/countries that each become their own live Firecrawl/
-// Perplexity discovery pass. Server-side enforcement (app/api/users.py's
-// update_me, truncating to whatever app_config_service's "job_alerts"
-// section has these set to) is the real backstop either screen goes through.
-const MAX_DESIRED_ROLES = 5;
-const MAX_PREFERRED_COUNTRIES = 3;
+// Same caps, same reasoning, as src/more/JobAlerts.tsx's identical
+// constants (see that file's fuller comment) — this screen edits the exact
+// same two profile fields, so it needs the exact same client-side guard
+// against a user piling up roles/countries that each become their own live
+// Firecrawl/Perplexity discovery pass. Server-side enforcement
+// (app/api/users.py's update_me, via entitlements_service.
+// job_role_country_caps) is the real backstop either screen goes through.
+//
+// Tiered as of the product decision: "I want the Job alert to be in the
+// Saveur basic plan too but they should only be able to add not more than
+// 1 target roles and 3 countries. But if they want to add up to 10 target
+// roles and 10 countries then they have to subscribe to the premium plan."
+// A free user (who can't use Job Alerts at all — these fields still feed
+// the free AI Career Roadmap onboarding and Career Events matching here)
+// keeps the pre-existing flat 5/3 default, matching
+// job_role_country_caps' own free-tier fallback.
+const MAX_DESIRED_ROLES_FREE = 5;
+const MAX_PREFERRED_COUNTRIES_FREE = 3;
+const MAX_DESIRED_ROLES_BASIC = 1;
+const MAX_PREFERRED_COUNTRIES_BASIC = 3;
+const MAX_DESIRED_ROLES_PREMIUM = 10;
+const MAX_PREFERRED_COUNTRIES_PREMIUM = 10;
 
 // "Change it later" equivalent of src/auth/Signup/SignupSecondStep.tsx — was
 // previously only collected once, at signup, with no way for a user to add a
@@ -47,7 +60,9 @@ const JobPreferences = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const {t} = useTranslation(['auth', 'more', 'common', 'countries']);
-  const {profile, updateProfile} = React.useContext(AuthContext);
+  const {profile, updateProfile, isPro, isPremium} = React.useContext(AuthContext);
+  const maxDesiredRoles = isPremium ? MAX_DESIRED_ROLES_PREMIUM : isPro ? MAX_DESIRED_ROLES_BASIC : MAX_DESIRED_ROLES_FREE;
+  const maxPreferredCountries = isPremium ? MAX_PREFERRED_COUNTRIES_PREMIUM : isPro ? MAX_PREFERRED_COUNTRIES_BASIC : MAX_PREFERRED_COUNTRIES_FREE;
 
   // See SignupSecondStep.tsx's identical helper — COUNTRIES stays a fixed
   // list of stable English canonical values (what's actually stored/synced
@@ -72,12 +87,12 @@ const JobPreferences = memo(() => {
   const addRole = () => {
     const trimmed = roleDraft.trim();
     if (!trimmed) return;
-    if (desiredRoles.length >= MAX_DESIRED_ROLES && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())) {
+    if (desiredRoles.length >= maxDesiredRoles && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())) {
       Alert.alert(
         t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
         t('more:job_alerts_max_roles_body', {
-          count: MAX_DESIRED_ROLES,
-          defaultValue: `You can target up to ${MAX_DESIRED_ROLES} roles at once. Remove one to add another.`,
+          count: maxDesiredRoles,
+          defaultValue: `You can target up to ${maxDesiredRoles} roles at once. Remove one to add another.`,
         }).toString(),
       );
       return;
@@ -100,12 +115,12 @@ const JobPreferences = memo(() => {
   const toggleCountry = (country: string) => {
     setPreferredCountries(prev => {
       if (prev.includes(country)) return prev.filter(c => c !== country);
-      if (prev.length >= MAX_PREFERRED_COUNTRIES) {
+      if (prev.length >= maxPreferredCountries) {
         Alert.alert(
           t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}),
           t('more:job_alerts_max_countries_body', {
-            count: MAX_PREFERRED_COUNTRIES,
-            defaultValue: `You can pick up to ${MAX_PREFERRED_COUNTRIES} countries at once. Remove one to add another.`,
+            count: maxPreferredCountries,
+            defaultValue: `You can pick up to ${maxPreferredCountries} countries at once. Remove one to add another.`,
           }).toString(),
         );
         return prev;
