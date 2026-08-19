@@ -1,0 +1,144 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      {
+        "locale" : "en_US",
+        "policyText" : "",
+        "policyURL" : ""
+      }
+    ]
+  },
+  "identifier" : "959AF82F",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "9.99",
+      "familyShareable" : false,
+      "internalID" : "6607F7B5",
+      "localizations" : [
+        {
+          "description" : "Unlock unlimited AI-guided coding practice sessions.",
+          "displayName" : "Coding Practice",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "coding_practice",
+      "referenceName" : "Coding Practice",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6797867121",
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_billingIssuesEnabled" : false,
+    "_developerTeamID" : "HLW9D46M9Y",
+    "_disableDialogs" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_renewalBillingIssuesEnabled" : false,
+    "_shouldSetupSyncOnLoad" : true,
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ],
+    "_timeRate" : 0
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "6607F7B1",
+      "localizations" : [
+        {
+          "description" : "Saveur subscription plans",
+          "displayName" : "Saveur Plans",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Saveur Plans",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "19.00",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6607F7B2",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Unlimited AI mock interviews, resume + JD analysis, and voice analytics.",
+              "displayName" : "Saveur Basic (Monthly)",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "pro_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Saveur Basic Monthly",
+          "subscriptionGroupID" : "6607F7B1",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "49.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6607F7B3",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Everything in Basic, plus Job Alerts and Learning Courses with certificates.",
+              "displayName" : "Saveur Premium",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "team",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Saveur Premium Monthly",
+          "subscriptionGroupID" : "6607F7B1",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "190.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6607F7B4",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Everything in Premium, billed annually (2 months free).",
+              "displayName" : "Saveur Premium (Yearly)",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "pro_yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Saveur Premium Yearly",
+          "subscriptionGroupID" : "6607F7B1",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}
