@@ -534,9 +534,14 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // FULL RESKIN: pill-shaped to match CtaButton's own new pill shape right
+  // next to it (see CtaButton.tsx) — was left at the plain UI Kitten
+  // outline-appearance default radius, which read as mismatched against a
+  // fully-rounded Sign Up button on the same row.
   login: {
     flex: 1,
     marginRight: 16,
+    borderRadius: 999,
   },
   signup: {
     flex: 1,

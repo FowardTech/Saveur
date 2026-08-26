@@ -61,12 +61,14 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           // already in the app (see that token's own comment history).
           backgroundColor: theme['color-primary-100'],
           borderColor: theme['color-primary-100'],
-          // Product request: "All buttons like the one in the screenshot
-          // [a fully-rounded blue pill CTA] should have a border radius of
-          // 5 too." Was 20 (fully rounded pill); every primary CTA button
-          // app-wide renders through this one component, so this single
-          // change covers all of them at once.
-          borderRadius: 5,
+          // FULL RESKIN (product request: match a new reference app's
+          // look and feel — solid pill-shaped CTA buttons). Was radius 5
+          // per an earlier, since-reversed request; explicitly confirmed
+          // to keep the established brand blue fill (see this file's own
+          // COLOR HISTORY comment above — blue survived this pass too,
+          // only the shape changed back to a full pill) rather than the
+          // reference's black fill.
+          borderRadius: 999,
         },
         globalStyle.shadowBtn,
         style,

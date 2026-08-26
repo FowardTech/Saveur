@@ -1130,10 +1130,13 @@ const themedStyles = StyleService.create({
     // border now, and it explicitly sets its own color+width at the
     // usage site.
   },
+  // FULL RESKIN: pill badge, matching every other badge/pill on this
+  // reskinned screen (popularRibbon below was already a pill; this one
+  // wasn't, which read as inconsistent once seen side by side).
   currentBadge: {
-    borderRadius: 8,
+    borderRadius: 999,
     paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
   },
   popularRibbon: {
     position: 'absolute',
@@ -1176,7 +1179,7 @@ const themedStyles = StyleService.create({
   },
   heroSubscribeButton: {
     marginTop: 4,
-    borderRadius: 16,
+    borderRadius: 999,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',

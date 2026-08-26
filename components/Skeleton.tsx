@@ -8,6 +8,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useTheme } from '@ui-kitten/components';
+import { globalStyle } from 'styles/globalStyle';
 
 // Product request: "I want skeleton loader in app." This app had no
 // skeleton-loader component at all before this — every screen either
@@ -68,13 +69,17 @@ export const SkeletonHomeCardRow = memo(({ style }: { style?: StyleProp<ViewStyl
         {
           flexDirection: 'row',
           alignItems: 'center',
-          borderRadius: 15,
+          borderRadius: 20,
           paddingVertical: 10,
           paddingHorizontal: 12,
           backgroundColor: theme['background-basic-color-2'],
-          borderWidth: 1.5,
-          borderColor: 'rgba(128,128,128,0.3)',
         },
+        // FULL RESKIN: matches globalStyle.card's own border->shadow
+        // switch (see that file's comment) — a skeleton should mirror
+        // exactly the surface treatment of the real card it's standing in
+        // for, or the swap from skeleton to real content reads as a
+        // visible style jump the instant data arrives.
+        globalStyle.shadowFade,
         style,
       ]}
     >
@@ -96,13 +101,12 @@ export const SkeletonListRow = memo(({ style }: { style?: StyleProp<ViewStyle> }
     <View
       style={[
         {
-          borderRadius: 14,
+          borderRadius: 20,
           padding: 14,
           marginBottom: 12,
           backgroundColor: theme['background-basic-color-2'],
-          borderWidth: 1.5,
-          borderColor: 'rgba(128,128,128,0.3)',
         },
+        globalStyle.shadowFade,
         style,
       ]}
     >

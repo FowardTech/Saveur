@@ -154,46 +154,34 @@ export const globalStyle = StyleSheet.create({
   // `borderRadius` override (several exist — search for `borderRadius: 14`
   // app-wide) still keeps its own value regardless of this change; those
   // are follow-up candidates for a future pass, not touched here.
+  // FULL RESKIN (product request: match a new reference app's look and
+  // feel exactly — light gray page background, plain white cards lifted
+  // off it with a soft shadow and no visible border, big ~20-24px rounded
+  // corners). Supersedes the whole border-vs-shadow back-and-forth
+  // documented in this object's own history below: `background-page-body`
+  // is gray again (constants/theme/light.json — back to $color-basic-300,
+  // #F0F0F0), so a white card once again has real color contrast against
+  // the page on its own, the same condition that made the border-only look
+  // work earlier — except this reference wants the shadow-lift look, not
+  // the hairline-border look, against that same gray page. Border dropped
+  // entirely; cardShadow re-enabled.
   card: {
-    borderRadius: 16,
-    // Product ask: "remove the box shadow from the white cards and let's
-    // see how it looks" — cardShadow (the soft ambient shadow/elevation
-    // object above) was removed from this spread. Definition against the
-    // white page now comes entirely from the hairline border below (added
-    // in the previous "give all the white cards a border" pass), same as
-    // this app's earlier flat-bordered ZipRecruiter-style direction before
-    // shadows were restored — see cardShadow's own comment for that full
-    // back-and-forth history. Easy to re-add `...cardShadow` here if the
-    // border-only look reads as too flat once seen live.
-    // Product ask: "give all the white cards a border and let's see how
-    // they look" — this hairline used to be Android-only (elevation
-    // already gave iOS a visible edge, so a border felt redundant there at
-    // the time — see this comment's own git history). Since `card` is the
-    // one shared object ~60+ card styles app-wide spread, applying the
-    // border on every platform here is what actually makes it "all the
-    // white cards" in one change rather than a per-screen hunt. Same
-    // neutral hairline tone as globalStyle.divider's own border color —
-    // easy to revert to the old Platform.select-gated version if the
-    // combined border+shadow look reads as too busy once seen live.
-    // Product ask: "increase the grayness of the border of the white
-    // cards" — the actual "grayness" of an rgba border is its alpha, not
-    // its width (borderWidth was already bumped 1 -> 1.5 in an earlier
-    // pass, which makes the line thicker but not any more visibly gray at
-    // low opacity). 0.15 -> 0.3 doubles the opacity so the same neutral
-    // gray reads as a genuinely more visible border instead of a nearly-
-    // invisible hairline, while staying the same hue as
-    // globalStyle.divider's own border color.
-    //
-    // REMOVED, then RESTORED. Was briefly borderWidth: 0 (product ask:
-    // "remove the border from all the white cards") while the page
-    // background was a visibly different gray (`background-page-body:
-    // #F2F2F7`) that alone gave cards enough contrast. Product follow-up
-    // ("Change the app background back to white and then give the white
-    // cards their borders back. Make the border width to be 1.5") reverses
-    // both halves of that together: the page is back to #FFFFFF (see
-    // Container.tsx's own comment), so a real border is needed again for
-    // cards to read as distinct surfaces — explicitly back to 1.5, the
-    // same width this had before it was ever removed.
+    borderRadius: 24,
+    ...cardShadow,
+  },
+  // Retained for any screen that explicitly wants the old hairline-border
+  // look instead of a shadow (none currently do on purpose, but a couple of
+  // screens were spreading `card`'s border sub-values directly rather than
+  // the whole object — grep `rgba(128,128,128,0.3)` before deleting this).
+  //
+  // ORIGINAL HISTORY (why `card` looked the way it did before this pass):
+  // "remove the box shadow from the white cards" -> border-only, page white;
+  // "give all the white cards a border" -> hairline border added;
+  // "increase the grayness of the border" -> alpha 0.15 -> 0.3;
+  // "remove the border, page went gray" -> borderWidth 0, page #F2F2F7;
+  // "page back to white, borders back at 1.5" -> borderWidth 1.2 (typo'd as
+  // 1.5 in the ask, 1.2 is what actually shipped), border restored.
+  cardBorder: {
     borderWidth: 1.2,
     borderColor: 'rgba(128,128,128,0.3)',
   },
@@ -302,6 +290,14 @@ export const globalStyle = StyleSheet.create({
   },
 
   //Border
+  // FULL RESKIN: shared pill shape for buttons/badges/chips/plan-picker
+  // cards — 999 rather than a specific number so it always fully rounds
+  // regardless of the element's own height (React Native clips borderRadius
+  // to min(width,height)/2 automatically), instead of every call site
+  // guessing a radius that happens to match its own height.
+  pill: {
+    borderRadius: 999,
+  },
   border12: {
     borderRadius: 12,
   },

@@ -207,6 +207,33 @@ const MainBottomTab = memo(() => {
     }
   }, [hide]);
 
+  // FULL RESKIN (product request: match a new reference app's tab bar —
+  // a raised solid circular button floating above the bar for the app's
+  // single most-used quick action). Coach is the natural fit here: it's
+  // already the middle tab (2 tabs on each side, matching the reference's
+  // layout exactly) and, per its own history above, was ALREADY tried as
+  // a floating circular button once before and explicitly reverted back
+  // to a normal flat tab ("no more floating"). Re-introducing it now is a
+  // deliberate, confirmed decision for this reskin — not a regression of
+  // that earlier revert. Kept brand blue (not the reference's black) per
+  // the same "color stays blue" decision as CtaButton.tsx's own pill-
+  // shape change above — this is really just CtaButton's identity in a
+  // circular tab-bar form factor, not a new color introduced.
+  const CoachFabIcon = React.useCallback(
+    ({ focused }: { focused: boolean }) => (
+      <View style={styles.fabWrapper}>
+        <View style={[styles.fabCircle, globalStyle.shadowBtn]}>
+          <Icon
+            pack="assets"
+            name={focused ? "commentActive" : "comment"}
+            style={{ width: 24, height: 24, tintColor: theme["text-primary-color"] }}
+          />
+        </View>
+      </View>
+    ),
+    [theme]
+  );
+
   const ButtonTab = React.useCallback(
     ({ focused, icon, numberNotification }: ButtonTabProps) => {
       React.useEffect(() => {
@@ -342,21 +369,15 @@ const MainBottomTab = memo(() => {
           name="Coach"
           component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesNavigator}
           options={{
-            // Product follow-up (revert): "the floating chat icon in the
-            // bottom navigation should return as normal like the other
-            // icons no more floating" -- Coach used to hide its own
-            // label/icon here in favor of a separately-rendered floating
-            // circular button raised above the bar (see git history).
-            // Back to a normal inline tab like Home/Practice/Interviews/
-            // Menu, same ButtonTab component the other four use.
-            tabBarLabel: t("common:tab_coach", { defaultValue: "Coach" }),
-            tabBarIcon: ({ focused }) => (
-              <ButtonTab
-                focused={focused}
-                icon="comment"
-                numberNotification={undefined}
-              />
-            ),
+            // FULL RESKIN (see CoachFabIcon's own comment above): back to
+            // a raised floating circular button, no label underneath —
+            // matches the reference app's center camera/quick-action FAB
+            // exactly (2 tabs, FAB, 2 tabs). `tabBarLabel: () => null`
+            // suppresses react-navigation's own label slot entirely for
+            // just this one tab rather than passing an empty string
+            // (which would still reserve the same vertical space).
+            tabBarLabel: () => null,
+            tabBarIcon: ({ focused }) => <CoachFabIcon focused={focused} />,
           }}
         />
         <BottomTab.Screen
@@ -453,6 +474,28 @@ const themedStyles = StyleService.create({
     shadowOpacity: 0.08,
     shadowRadius: 16,
     elevation: 0,
+  },
+  // Coach's raised circular FAB (see CoachFabIcon above). `marginTop`
+  // negative-offsets it above the bar's own top edge so it visually floats
+  // rather than sitting flush with the other four icons; `fabWrapper`
+  // gives it the same 40px-tall hit-adjacent footprint react-navigation
+  // expects from every tabBarIcon so the bar's own row layout doesn't
+  // reflow around one taller icon.
+  fabWrapper: {
+    width: 40,
+    height: 40,
+    ...globalStyle.center,
+  },
+  fabCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: "color-primary-100",
+    marginTop: -34,
+    justifyContent: "center",
+    alignItems: "center",
+    borderWidth: 4,
+    borderColor: "background-basic-color-2",
   },
   // The colored pill behind the active tab's icon (see ButtonTab above).
   activePill: {
