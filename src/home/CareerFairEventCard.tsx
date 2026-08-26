@@ -65,6 +65,8 @@ const themedStyles = StyleService.create({
   // Copied verbatim from ContinueLearningCard.tsx's own `card` style — see
   // that file's comment history for the full "very small info card, white
   // fill, hairline border, no shadow" reasoning this matches.
+  // FULL RESKIN: stopped cancelling out globalStyle.card's own shadow —
+  // see ContinueLearningCard.tsx's own comment on this exact same change.
   card: {
     ...globalStyle.card,
     borderRadius: 15,
@@ -73,10 +75,6 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: 'background-basic-color-2',
-    shadowOpacity: 0,
-    elevation: 0,
-    borderWidth: 1.5,
-    borderColor: 'rgba(128,128,128,0.3)',
   },
   logoWrap: {
     marginRight: 10,

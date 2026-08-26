@@ -229,6 +229,12 @@ const themedStyles = StyleService.create({
   // both unconditionally is safe cross-platform, RN just ignores whichever
   // one doesn't apply on the current OS -- and a real hairline border
   // takes its place, same neutral tone as globalStyle.divider.
+  // FULL RESKIN: stopped cancelling out globalStyle.card's own shadow
+  // (this used to zero shadowOpacity/elevation right back out and add a
+  // manual border instead, from back when `card` itself was border-only —
+  // now that `card` is shadow-based again, this was actively fighting its
+  // own base style). Just the compact-row-specific overrides (radius,
+  // layout, padding) on top now.
   card: {
     ...globalStyle.card,
     borderRadius: 15,
@@ -237,14 +243,6 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: 'background-basic-color-2',
-    shadowOpacity: 0,
-    elevation: 0,
-    // RESTORED (product follow-up: "Change the app background back to
-    // white and then give the white cards their borders back. Make the
-    // border width to be 1.5") — matches globalStyle.card's own border
-    // restoration, see that style's comment for the full reasoning.
-    borderWidth: 1.5,
-    borderColor: 'rgba(128,128,128,0.3)',
   },
   // Just the spacing now -- GradientIconBadge owns its own size/shape via
   // its `size`/`radius` props at the call site.
