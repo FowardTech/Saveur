@@ -65,10 +65,18 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
   return (
     <View style={styles.outer}>
       <LinearGradient
-        colors={['#1F7BFF', '#0052D9']}
+        colors={['#2B8CFF', '#0047B3']}
         start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        end={{ x: 0, y: 1 }}
         style={styles.inner}>
+        {/* Badge + illustration sit side by side in normal flow (not
+            absolutely positioned) so the illustration can never overlap
+            the title/subtitle/meta/progress/CTA below it, regardless of
+            how short that content is (e.g. the generic "Ask your AI
+            Career Coach" fallback state, whose title/subtitle are much
+            shorter than a 2-line daily challenge prompt — the previous
+            absolute-positioned art sat on top of the meta row in that
+            case, hiding it). */}
         <View style={styles.topRow}>
           <View style={styles.badge}>
             <Icon pack="eva" name={badgeIcon} style={{ width: 13, height: 13, tintColor: '#FFFFFF', marginRight: 5 }} />
@@ -76,13 +84,10 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
               {badgeLabel}
             </Text>
           </View>
+          <ArtMissionPhone size={64} />
         </View>
 
-        <View style={styles.artWrap}>
-          <ArtMissionPhone size={90} />
-        </View>
-
-        <Text category="h6" bold numberOfLines={2} style={styles.title}>
+        <Text category="h6" bold numberOfLines={2} mt={14} style={styles.title}>
           {title}
         </Text>
         <Text category="h9-s" numberOfLines={2} mt={6} style={styles.subtitle}>
@@ -157,8 +162,14 @@ const themedStyles = StyleService.create({
     padding: 18,
     overflow: 'hidden',
   },
+  // Badge (left) + illustration (right), both in normal flow -- see the
+  // JSX's own comment on why the illustration moved out of absolute
+  // positioning (it used to sit on top of the meta/progress/CTA content
+  // whenever the title/subtitle were short).
   topRow: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   badge: {
     flexDirection: 'row',
@@ -172,22 +183,11 @@ const themedStyles = StyleService.create({
   badgeText: {
     color: '#FFFFFF',
   },
-  // Absolute -- sits on top of/beside the title block, same "illustration
-  // pinned to the top-right corner, real content flows underneath/beside
-  // it" composition the reference card uses.
-  artWrap: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-  },
   title: {
     color: '#FFFFFF',
-    marginTop: 14,
-    maxWidth: '68%',
   },
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
-    maxWidth: '68%',
   },
   metaRow: {
     flexDirection: 'row',
