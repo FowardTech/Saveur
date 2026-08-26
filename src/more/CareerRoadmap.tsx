@@ -28,6 +28,25 @@ import { ArtRoadmapPath } from 'src/home/HomeHeroArt';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan, RoadmapStep, RoadmapStepType } from 'services/roadmapService';
 import CtaButton from 'components/CtaButton';
+import CircularProgress from 'components/CircularProgress';
+import StatMiniCard from 'components/StatMiniCard';
+import * as gamificationService from 'services/gamificationService';
+import { GamificationStreakProps } from 'constants/Types';
+
+// HOME REDESIGN follow-through (product ask: "use this look and feel
+// throughout the whole app" -- this screen is the direct target of
+// screenshot 2, "My Roadmap": donut-ring + 2x2 stat header, card-row
+// timeline, and a "Milestone Overview" grid). Same "no fabricated data"
+// rule as HomeSrc.tsx's MissionHeroCard -- the reference's "Week 1-4"
+// milestone buckets don't exist in Saveur's real data (RoadmapStep has no
+// week/day field), so this groups by the real RoadmapStepType instead and
+// reports actual completed/total counts per type.
+const TYPE_META: Record<RoadmapStepType, { label: string; icon: string; bg: string; tint: string }> = {
+  skill: { label: 'Skills', icon: 'book-outline', bg: '#ECFDF5', tint: '#059669' },
+  project: { label: 'Projects', icon: 'briefcase-outline', bg: '#E8F0FF', tint: '#0052D9' },
+  interview: { label: 'Interviews', icon: 'mic-outline', bg: '#F5EFFF', tint: '#7C3AED' },
+  milestone: { label: 'Milestones', icon: 'flag-outline', bg: '#FFF3E0', tint: '#B45309' },
+};
 
 // AI Career Roadmap — product request item #15 (⭐⭐⭐⭐⭐): "I want to
 // become a Senior Backend Engineer" -> the AI plans a linear sequence of
@@ -72,6 +91,18 @@ const CareerRoadmap = memo(() => {
   // just that button (not the whole screen) and swaps its label for a
   // spinner while the request is out.
   const [completingOrder, setCompletingOrder] = React.useState<number | null>(null);
+
+  // Streak -- feeds the new stats-header card's "Streak" tile (see
+  // HomeSrc.tsx's own identical fetch/comment for the "why an independent
+  // duplicate fetch" rationale; same GET /api/v1/gamification/streak,
+  // same fail-open/non-critical handling).
+  const [streak, setStreak] = React.useState<GamificationStreakProps | null>(null);
+  React.useEffect(() => {
+    if (!isPremium) return;
+    gamificationService.getStreak().then(setStreak).catch(() => {
+      // Non-critical -- the stats card just falls back to 0 days.
+    });
+  }, [isPremium]);
 
   const loadRoadmap = React.useCallback(() => {
     // BUG FIX (product report: "The AI roadmap is a premium plan but users
@@ -158,6 +189,36 @@ const CareerRoadmap = memo(() => {
     if (status === 'current') return theme['color-primary-500'];
     return theme['text-hint-color'];
   };
+
+  // Real completion percent (same computation Home's Roadmap Progress
+  // stat card and MyProgress.tsx's own roadmap ring already use) and the
+  // one "current" step, if any -- feed the new stats-header card below.
+  const roadmapPercent = roadmap && roadmap.totalCount > 0
+    ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
+    : 0;
+  const currentStep = roadmap?.steps.find(s => s.status === 'current') ?? null;
+
+  // Milestone Overview -- real counts per RoadmapStepType (see TYPE_META
+  // above for why this replaces the reference's fabricated "Week 1-4"
+  // buckets), paired up two-per-row for the grid, and skipping any type
+  // that doesn't actually appear in this roadmap rather than rendering an
+  // empty "0 of 0" tile for it.
+  const milestoneGroups = React.useMemo(() => {
+    if (!roadmap) return [];
+    const counts = {} as Record<RoadmapStepType, { total: number; completed: number }>;
+    roadmap.steps.forEach(step => {
+      if (!counts[step.type]) counts[step.type] = { total: 0, completed: 0 };
+      counts[step.type].total += 1;
+      if (step.status === 'completed') counts[step.type].completed += 1;
+    });
+    return (Object.keys(counts) as RoadmapStepType[]).map(type => ({ type, ...counts[type] }));
+  }, [roadmap]);
+
+  const milestonePairs = React.useMemo(() => {
+    const pairs: (typeof milestoneGroups)[] = [];
+    for (let i = 0; i < milestoneGroups.length; i += 2) pairs.push(milestoneGroups.slice(i, i + 2));
+    return pairs;
+  }, [milestoneGroups]);
 
   // BUG FIX (product report: "The AI roadmap is a premium plan but users
   // are accessing it when they click on it from the notification center or
@@ -282,6 +343,63 @@ const CareerRoadmap = memo(() => {
               </Text>
             </View>
 
+            {/* HOME REDESIGN follow-through — reference screenshot 2's donut
+                + 2x2 stat-grid header. Real fields only: current step order,
+                completed/total steps, streak days, total steps — no
+                fabricated "Day X of 30" (Saveur's roadmaps are variable-
+                length, not a fixed 30-day program). */}
+            <View style={styles.statsCard}>
+              <CircularProgress
+                progress={roadmapPercent}
+                size={84}
+                strokeWidth={8}
+                trackColor={theme['background-basic-color-3']}
+                gradientFrom="#1F7BFF"
+                gradientTo="#0052D9"
+                style={styles.statsRing}>
+                <Text category="h7" bold>{roadmapPercent}%</Text>
+                <Text category="h10" status="placeholder" mt={2}>
+                  {t('more:roadmap_complete_label', { defaultValue: 'Complete' })}
+                </Text>
+              </CircularProgress>
+              <View style={styles.statsGrid}>
+                <View style={styles.statsGridItem}>
+                  <Text category="h10" status="placeholder">
+                    {t('more:roadmap_current_step', { defaultValue: 'Current Step' })}
+                  </Text>
+                  <Text category="h8" bold mt={2}>
+                    {currentStep ? currentStep.order : (roadmap.isComplete ? roadmap.totalCount : '—')}
+                  </Text>
+                </View>
+                <View style={styles.statsGridItem}>
+                  <Text category="h10" status="placeholder">
+                    {t('more:roadmap_completed_steps', { defaultValue: 'Completed' })}
+                  </Text>
+                  <Text category="h8" bold mt={2}>
+                    {t('more:roadmap_completed_of_total', {
+                      defaultValue: '{{completed}} of {{total}}',
+                      completed: roadmap.completedCount,
+                      total: roadmap.totalCount,
+                    })}
+                  </Text>
+                </View>
+                <View style={styles.statsGridItem}>
+                  <Text category="h10" status="placeholder">
+                    {t('more:roadmap_streak', { defaultValue: 'Streak' })}
+                  </Text>
+                  <Text category="h8" bold mt={2}>
+                    {t('more:roadmap_streak_days', { defaultValue: '{{count}} Days', count: streak?.streakDays ?? 0 })}
+                  </Text>
+                </View>
+                <View style={styles.statsGridItem}>
+                  <Text category="h10" status="placeholder">
+                    {t('more:roadmap_total_steps', { defaultValue: 'Total Steps' })}
+                  </Text>
+                  <Text category="h8" bold mt={2}>{roadmap.totalCount}</Text>
+                </View>
+              </View>
+            </View>
+
             {roadmap.isComplete ? (
               // Plain success-tinted card (gradient fill removed — reserved
               // for the homescreen XP card only). Reverted to the
@@ -338,7 +456,7 @@ const CareerRoadmap = memo(() => {
                         <View style={[styles.timelineLine, { backgroundColor: step.status === 'completed' ? theme['color-success-500'] : theme['border-basic-color-3'] }]} />
                       ) : null}
                     </View>
-                    <View style={[styles.timelineContent, { paddingBottom: isLast ? 0 : 24 }]}>
+                    <View style={[styles.timelineContent, styles.stepCard, { marginBottom: isLast ? 0 : 12 }]}>
                       <Text category="h9" bold status={step.status === 'locked' ? 'placeholder' : 'basic'}>
                         {step.title}
                       </Text>
@@ -366,6 +484,47 @@ const CareerRoadmap = memo(() => {
                 );
               })}
             </View>
+
+            {/* HOME REDESIGN follow-through — reference screenshot 2's
+                "Milestone Overview" grid, grouped by real RoadmapStepType
+                (see TYPE_META/milestoneGroups above) instead of the
+                reference's fabricated "Week 1-4" buckets. Reuses
+                StatMiniCard, same pastel-tile pattern Home's Roadmap
+                Progress/Current Streak pair already established. */}
+            {milestonePairs.length > 0 ? (
+              <View style={styles.milestoneSection}>
+                <Text category="h8" bold mb={12}>
+                  {t('more:roadmap_milestone_overview', { defaultValue: 'Milestone Overview' })}
+                </Text>
+                {milestonePairs.map((pair, i) => (
+                  <Flex key={i} justify="space-between" mt={i === 0 ? 0 : 12}>
+                    {pair.map((group, j) => (
+                      <StatMiniCard
+                        key={group.type}
+                        icon={TYPE_META[group.type].icon}
+                        iconTint={TYPE_META[group.type].tint}
+                        title={t(`more:roadmap_type_${group.type}`, { defaultValue: TYPE_META[group.type].label })}
+                        value={t('more:roadmap_completed_of_total', {
+                          defaultValue: '{{completed}} of {{total}}',
+                          completed: group.completed,
+                          total: group.total,
+                        })}
+                        valueColor={TYPE_META[group.type].tint}
+                        caption={t('more:roadmap_type_caption', {
+                          defaultValue: '{{completed}} of {{total}} steps complete',
+                          completed: group.completed,
+                          total: group.total,
+                        })}
+                        progressPercent={group.total > 0 ? Math.round((group.completed / group.total) * 100) : 0}
+                        progressColor={TYPE_META[group.type].tint}
+                        backgroundColor={TYPE_META[group.type].bg}
+                        style={j === 0 && pair.length > 1 ? { marginRight: 12 } : undefined}
+                      />
+                    ))}
+                  </Flex>
+                ))}
+              </View>
+            ) : null}
           </View>
         ) : null}
       </Content>
@@ -459,6 +618,40 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
+  },
+  // Donut + 2x2 stat-grid header (see the statsCard JSX above for what
+  // each tile shows). Plain globalStyle.card, same shadow/radius as every
+  // other neutral (non-pastel-fill) card in this app.
+  statsCard: {
+    ...globalStyle.card,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 20,
+  },
+  statsRing: {
+    marginRight: 18,
+  },
+  statsGrid: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  statsGridItem: {
+    width: '50%',
+    marginBottom: 12,
+  },
+  // "Card row" timeline step (reference screenshot 2's white row-per-day
+  // cards) -- the connecting dotted/solid line + circular status dot
+  // still live in timelineIndicatorCol, outside this box, same as before.
+  stepCard: {
+    ...globalStyle.card,
+    padding: 12,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  milestoneSection: {
+    marginTop: 28,
   },
   timeline: {
     marginTop: 4,
