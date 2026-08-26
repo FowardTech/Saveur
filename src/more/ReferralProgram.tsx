@@ -263,8 +263,9 @@ const themedStyles = StyleService.create({
   heroShareButton: {
     marginTop: 16,
     width: '100%',
-    // Product request: solid CTA pills app-wide -> border radius 5.
-    borderRadius: 5,
+    // FULL RESKIN: was borderRadius 5 (the old "solid CTA pills app-wide"
+    // pass); now 999, fully pill-shaped, matching the new reskin standard.
+    borderRadius: 999,
     paddingVertical: 12,
     alignItems: 'center',
     justifyContent: 'center',

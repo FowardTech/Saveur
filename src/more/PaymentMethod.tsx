@@ -190,31 +190,26 @@ const PaymentMethod = memo(() => {
               deleteLabel={t('common:delete', {defaultValue: 'Delete'})}
               onEdit={() => onSetDefault(item)}
               onDelete={() => onDelete(item)}>
-              {/* No fill — border-only (app-wide "cards are transparent"
-                  pass), same hairline border globalStyle.card uses
-                  elsewhere (not spreading globalStyle.card itself here
-                  since its own borderRadius:16 would fight the `border={12}`
-                  prop above), with the default-card highlight (brand blue
-                  border) layered on top for the item that's actually set as
-                  default instead of being the only bordered state. */}
+              {/* FULL RESKIN: the old hairline border (borderWidth: 1,
+                  'rgba(39, 39, 85, 0.12)') this comment used to describe as
+                  "same hairline border globalStyle.card uses elsewhere" is
+                  stale — globalStyle.card is shadow-only now, no border (see
+                  styles/globalStyle.ts). Dropped it here too: swiperContainer
+                  below already carries that same soft shadow
+                  (globalStyle.shadow, an alias of the same cardShadow card
+                  uses), so this row was double-chromed (shadow + leftover
+                  border) instead of matching the app's plain shadow-card
+                  look. The default-card highlight (brand blue border) stays
+                  — that's a real selection ring, not card chrome. */}
               <Flex
                 level="2"
                 pv={24}
                 ml={24}
                 justify="flex-start"
                 border={12}
-                style={[
-                  // BUG FIX (dark-mode audit): this hardcoded backgroundColor:
-                  // '#fff' directly contradicted the comment above ("No fill
-                  // — border-only") and was overriding the theme-aware
-                  // background `level="2"` already applies (see Flex.tsx —
-                  // backgroundColor: theme['background-basic-color-2']),
-                  // so every payment method row rendered as a solid white
-                  // card floating on a dark screen in dark mode. Dropped so
-                  // the level-2 theming actually takes effect.
-                  {borderWidth: 1, borderColor: 'rgba(39, 39, 85, 0.12)'},
-                  item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined,
-                ]}>
+                style={
+                  item.isDefault ? {borderColor: theme['color-primary-500'], borderWidth: 1.5} : undefined
+                }>
                 {/* Product report (screenshot: a card labeled "Visa"
                     rendering a Mastercard-style logo): this used to always
                     render assets/icons/ic_master.png directly, regardless of

@@ -605,7 +605,7 @@ const MockInterviewSetup = memo(() => {
         {hasNoLocalMatch ? (
           <View style={styles.aiCompanySearchBlock}>
             {aiSearchState === 'confirming' && aiSearchResult ? (
-              <View style={[styles.aiCompanyCard, { borderColor: theme['background-basic-color-3'] }]}>
+              <View style={styles.aiCompanyCard}>
                 <Flex itemsCenter mb={12}>
                   <CompanyLogoAvatar
                     logoUrl={aiSearchResult.logoUrl}
@@ -910,9 +910,12 @@ const themedStyles = StyleService.create({
     borderWidth: 1,
     borderStyle: 'dashed',
   },
+  // FULL RESKIN: dropped the leftover borderWidth: 1 hairline (and its
+  // inline borderColor override at the call site) — globalStyle.card
+  // already carries the new shadow, a border on top of that was the old
+  // pre-reskin card look doubled up with the new one.
   aiCompanyCard: {
     ...globalStyle.card,
-    borderWidth: 1,
     padding: 16,
   },
   difficultyPill: {

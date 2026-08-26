@@ -109,8 +109,11 @@ const themedStyles = StyleService.create({
   tipCard: {
     padding: 16,
     marginBottom: 12,
+    // Legitimate pastel-fill card (no shadow needed against globalStyle.card's
+    // own shadow on this pastel purple tint). FULL RESKIN: dropped the
+    // dangling borderColor with no matching borderWidth -- stale leftover
+    // from before the card->shadow migration, was already a visual no-op.
     backgroundColor: 'rgba(195, 165, 248, 0.08)',
-    borderColor: '#7e4fcbff',
   },
   tipPill: {
     alignSelf: 'flex-start',

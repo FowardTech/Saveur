@@ -837,7 +837,9 @@ const addChipStyles = StyleService.create({
   addBtn: {
     width: 40,
     height: 40,
-    borderRadius: 5,
+    // FULL RESKIN: square-ish borderRadius: 5 -> 999 (fully circular),
+    // matching the app-wide pill/circle convention for filled buttons.
+    borderRadius: 999,
     backgroundColor: 'color-primary-100',
     alignItems: 'center',
     justifyContent: 'center',

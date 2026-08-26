@@ -1571,7 +1571,9 @@ const styles = StyleSheet.create({
   submitAnswerBtn: {
     marginTop: 16,
     height: 48,
-    borderRadius: 16,
+    // FULL RESKIN: was 16, now fully pill-shaped like every other filled
+    // CTA button in the app.
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
