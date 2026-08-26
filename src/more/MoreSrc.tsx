@@ -17,6 +17,7 @@ import {AuthContext} from '../../AuthContext';
 import * as configService from 'services/configService';
 import {FeatureFlags} from 'services/configService';
 import {getMoreMenuBadges, MoreMenuBadges} from 'services/moreMenuBadgesService';
+import {globalStyle} from 'styles/globalStyle';
 
 const MoreSrc = memo(() => {
   const styles = useStyleSheet(themedStyles);
@@ -550,66 +551,80 @@ const MoreSrc = memo(() => {
           <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:myDetails')}
           </Text>
-          {DATA_DETAILS.map((item, i) => {
-            return (
-              <ButtonOptional
-                icon={item.icon}
-                title={item.title}
-                status={item.status}
-                iconColor={item.iconColor}
-                key={i}
-                onPress={item.onPress}
-                navigateSrc={item.navigateSrc}
-                badgeCount={item.badgeCount}
-                badgeDot={item.badgeDot}
-              />
-            );
-          })}
+          {/* FULL RESKIN (product request: match a new reference app's
+              look and feel — settings rows grouped into a white rounded
+              shadow-card per section, not the previous flat edge-to-edge
+              list). Explicitly confirmed to override this screen's own
+              extensive "remove the card/border, make it flat" history
+              (see `details`/`application`'s own style comments below) —
+              same "this reskin request supersedes an earlier, since-
+              superseded decision" reasoning as CtaButton.tsx's pill shape
+              and MainBottomTab.tsx's FAB above. */}
+          <View style={[globalStyle.card, styles.sectionCard]}>
+            {DATA_DETAILS.map((item, i) => (
+              <React.Fragment key={i}>
+                <ButtonOptional
+                  icon={item.icon}
+                  title={item.title}
+                  status={item.status}
+                  iconColor={item.iconColor}
+                  onPress={item.onPress}
+                  navigateSrc={item.navigateSrc}
+                  badgeCount={item.badgeCount}
+                  badgeDot={item.badgeDot}
+                />
+                {i < DATA_DETAILS.length - 1 ? <View style={styles.rowDivider} /> : null}
+              </React.Fragment>
+            ))}
+          </View>
         </View>
         <View style={styles.application}>
           <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:application')}
           </Text>
-          {DATA_APPLICATION.map((item, i) => {
-            return (
-              <ButtonOptional
-                icon={item.icon}
-                title={item.title}
-                status={item.status}
-                iconColor={item.iconColor}
-                onPress={item.onPress}
-                key={i}
-                navigateSrc={item.navigateSrc}
-              />
-            );
-          })}
-          <ButtonOptional
-            withToggle
-            icon="darkMode"
-            title={t('more:switch-dark-mode')}
-            status={'danger'}
-            iconColor={ICON_GLYPH}
-            checked={darkMode}
-            onPress={toggleTheme}
-            navigateSrc={undefined}
-          />
-          {/* Master push-notification opt-out. Was nowhere in the app —
-              once a push arrived, there was no in-app way to stop future
-              ones short of disabling notifications at the OS level.
-              Persisted server-side (User.notifications_enabled,
-              PATCH /api/users/me) and enforced in
-              app/services/push_service.py, not just a decorative local
-              switch. */}
-          <ButtonOptional
-            withToggle
-            icon="notification"
-            title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
-            status={'facebook'}
-            iconColor={ICON_GLYPH}
-            checked={notificationsEnabled}
-            onPress={onToggleNotifications}
-            navigateSrc={undefined}
-          />
+          <View style={[globalStyle.card, styles.sectionCard]}>
+            {DATA_APPLICATION.map((item, i) => (
+              <React.Fragment key={i}>
+                <ButtonOptional
+                  icon={item.icon}
+                  title={item.title}
+                  status={item.status}
+                  iconColor={item.iconColor}
+                  onPress={item.onPress}
+                  navigateSrc={item.navigateSrc}
+                />
+                <View style={styles.rowDivider} />
+              </React.Fragment>
+            ))}
+            <ButtonOptional
+              withToggle
+              icon="darkMode"
+              title={t('more:switch-dark-mode')}
+              status={'danger'}
+              iconColor={ICON_GLYPH}
+              checked={darkMode}
+              onPress={toggleTheme}
+              navigateSrc={undefined}
+            />
+            <View style={styles.rowDivider} />
+            {/* Master push-notification opt-out. Was nowhere in the app —
+                once a push arrived, there was no in-app way to stop future
+                ones short of disabling notifications at the OS level.
+                Persisted server-side (User.notifications_enabled,
+                PATCH /api/users/me) and enforced in
+                app/services/push_service.py, not just a decorative local
+                switch. */}
+            <ButtonOptional
+              withToggle
+              icon="notification"
+              title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
+              status={'facebook'}
+              iconColor={ICON_GLYPH}
+              checked={notificationsEnabled}
+              onPress={onToggleNotifications}
+              navigateSrc={undefined}
+            />
+          </View>
           {/* "Refer Friend & Family" used to be a separate row here, pointing
               at the old ReferFriend.tsx stub (hardcoded fake link, never
               wired to the real backend). It duplicated the actual referral
@@ -617,7 +632,10 @@ const MoreSrc = memo(() => {
               DATA_DETAILS ("Refer & Earn" -> ReferralProgram.tsx) — the
               stub file, its route, and its type entries have since been
               deleted entirely rather than left registered-but-unreachable. */}
-          {/* Uses a plain eva Icon rather than ButtonOptional/ButtonFill —
+          {/* FULL RESKIN: Log out kept as its own separate card below the
+              main section, matching the reference's convention of pulling
+              a destructive/standalone action out of the grouped list. Uses
+              a plain eva Icon rather than ButtonOptional/ButtonFill —
               those are hardcoded to the "assets" icon pack (see
               ButtonFill.tsx), which has no logout/exit glyph bundled and
               adding one means shipping new @2x/@3x image assets. eva's
@@ -628,6 +646,7 @@ const MoreSrc = memo(() => {
             onPress={onLogout}
             disabled={isSigningOut}
             style={[
+              globalStyle.card,
               styles.logoutRow,
               {opacity: isSigningOut ? 0.6 : 1},
             ]}>
@@ -676,46 +695,54 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
 
-  // Product follow-up correction: "the settings items should have full
-  // width from left to right covering the full width of the screen" —
-  // Content's `padder` puts a 24px horizontal margin around this whole
-  // screen (including the "My Details"/"Application" headings, which
-  // should stay inset), so the item rows inside these two wrappers need to
-  // bleed back out past that margin to actually reach the physical screen
-  // edges. marginHorizontal: -24 exactly cancels Content's padding for
-  // everything inside these two Views; ButtonOptional's own row/
-  // logoutRow below then use their own paddingHorizontal so the icon/text
-  // isn't flush against the true edge.
+  // FULL RESKIN: no longer bleeds past Content's 24px page margin — rows
+  // are grouped into a real card now (sectionCard below), so they sit
+  // inset like every other card on the reskinned app instead of reaching
+  // the physical screen edges. See sectionCard's own comment for the
+  // superseded "flat, edge-to-edge, no card" history this replaces.
   details: {
-    marginHorizontal: -24,
-    marginBottom: 48,
+    marginBottom: 32,
   },
   application: {
-    marginHorizontal: -24,
+    marginBottom: 16,
   },
-  // The "My Details"/"Application" headings above the row list are direct
-  // children of the now-bled-out `details`/`application` Views, so without
-  // this they'd bleed out to the physical screen edge right along with the
-  // rows -- this puts that same 24px page inset back, just on the heading.
   sectionHeading: {
-    paddingHorizontal: 24,
+    marginBottom: 12,
   },
-  // Matches ButtonOptional's own container style (see that file's comment,
-  // including its "remove the white background and border line" fix — kept
-  // in sync here so the sign-out row doesn't stand out as the one leftover
-  // white tile in an otherwise flat list) so the sign-out row reads as one
-  // more full-width row in the same stack, not a leftover flat row
-  // underneath the list above it.
-  // Kept in sync with ButtonOptional.tsx's own container spacing (see that
-  // file's comment on the same "reduce the gaps" request) so the sign-out
-  // row's gap above it matches every row above it exactly.
+  // The grouped white shadow-card each section's rows now sit inside —
+  // see the render call site's own comment for why this now overrides
+  // this screen's prior "remove the card/border, make it flat" history.
+  // `overflow: hidden` clips ButtonOptional's own row backgrounds/ripple
+  // to the card's rounded corners; paddingVertical: 4 keeps the first/
+  // last row's own vertical padding from making the card's top/bottom
+  // edge feel too loose.
+  sectionCard: {
+    backgroundColor: 'background-basic-color-2',
+    paddingVertical: 4,
+    overflow: 'hidden',
+  },
+  // Hairline separator between rows inside a sectionCard — globalStyle.
+  // divider only sets a border color (see that token's own comment), so
+  // the actual 1px line + inset (so it doesn't touch the card's rounded
+  // corners) is defined here.
+  rowDivider: {
+    height: 1,
+    marginHorizontal: 20,
+    backgroundColor: 'rgba(128,128,128,0.15)',
+  },
+  // Sign-out gets its own standalone card below the grouped list (see the
+  // render call site's own comment) rather than sitting inside the
+  // Application card — was matched to ButtonOptional's OWN now-superseded
+  // flat/transparent row style; now it's a full card row like everything
+  // else, so backgroundColor comes from globalStyle.card's spread instead
+  // of staying transparent.
   logoutRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'transparent',
+    backgroundColor: 'background-basic-color-2',
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    marginTop: 2,
+    paddingVertical: 14,
+    marginTop: 20,
   },
 });
