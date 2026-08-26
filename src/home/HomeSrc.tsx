@@ -1105,51 +1105,67 @@ const HomeSrc = memo(() => {
         <Text category="h8" bold mt={12} mb={12}>
           {t('home:your_progress_label', { defaultValue: 'Career Progress' })}
         </Text>
+        {/* BESPOKE POLISH (reference: Calorist's big centered ring as the
+            dashboard's own visual anchor) — was a compact left-ring/
+            right-text row, the same small-card treatment as the
+            Continue & Upcoming row above it. This is the one number on
+            Home meant to read as the headline metric, so it gets the
+            larger, centered hero-ring layout instead of blending into
+            every other compact card on the screen; the row layout is
+            gone (Skeleton/CircularProgress/copy stack vertically now,
+            all centered), and the ring itself is bigger (120 vs 64,
+            strokeWidth 12 vs 7) with the same soft blue gradient
+            MyProgress.tsx's own goal-progress ring already uses (see
+            that file's own "reference-redesign follow-up" comment on
+            gradientFrom/gradientTo) for visual consistency between the
+            two "progress toward your goal" rings in the app. */}
         <View style={[globalStyle.card, styles.progressCard]}>
           {roadmapLoading ? (
             // Product request: "I want skeleton loader in app" — was a
             // real, momentarily-misleading 0% ring on every load (see
             // roadmapLoading's own comment above) until this resolved.
-            <>
-              <SkeletonBlock style={{ width: 64, height: 64 }} radius={32} />
-              <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
-                <SkeletonBlock style={{ width: '60%', height: 14, marginBottom: 8 }} radius={4} />
-                <SkeletonBlock style={{ width: '80%', height: 11, marginBottom: 6 }} radius={4} />
-                <SkeletonBlock style={{ width: '50%', height: 11 }} radius={4} />
-              </View>
-            </>
+            <View style={styles.progressHeroLoading}>
+              <SkeletonBlock style={{ width: 120, height: 120 }} radius={60} />
+              <SkeletonBlock style={{ width: '55%', height: 16, marginTop: 18 }} radius={4} />
+              <SkeletonBlock style={{ width: '75%', height: 11, marginTop: 10 }} radius={4} />
+              <SkeletonBlock style={{ width: '45%', height: 11, marginTop: 6 }} radius={4} />
+            </View>
           ) : (
-            <>
-              <CircularProgress progress={roadmapPercent} size={64} strokeWidth={7}>
-                <Text category="h9" bold>{roadmapPercent}%</Text>
+            <View style={styles.progressHero}>
+              <CircularProgress
+                progress={roadmapPercent}
+                size={120}
+                strokeWidth={12}
+                trackColor={theme['background-basic-color-3']}
+                gradientFrom="#9DBFEF"
+                gradientTo="#0063f8">
+                <Text category="h4" bold>{roadmapPercent}%</Text>
               </CircularProgress>
-              <View style={[globalStyle.flexOne, styles.progressTextWrap]}>
-                <Text category="h9" bold>
-                  {t('home:goal_progress_title', { defaultValue: 'Progress Toward Goal' })}
-                </Text>
-                <Text category="h10" status="placeholder" mt={4}>
-                  {roadmap
-                    ? t('home:goal_progress_hint_role', {
-                        defaultValue: 'Your roadmap to {{role}}',
-                        role: roadmap.targetRole,
-                      })
-                    : t('home:goal_progress_hint_no_roadmap', {
-                        defaultValue: 'Based on your AI Career Roadmap milestones',
-                      })}
-                </Text>
-                <Text category="h10" status="placeholder" mt={2}>
-                  {roadmap
-                    ? t('home:goal_progress_steps_of', {
-                        defaultValue: '{{completed}} of {{total}} steps complete',
-                        completed: roadmap.completedCount,
-                        total: roadmap.totalCount,
-                      })
-                    : t('home:goal_progress_no_roadmap', {
-                        defaultValue: 'Build a roadmap to track progress toward your goal',
-                      })}
-                </Text>
-              </View>
-            </>
+              <Text category="h9" bold center mt={16}>
+                {t('home:goal_progress_title', { defaultValue: 'Progress Toward Goal' })}
+              </Text>
+              <Text category="h10" status="placeholder" center mt={4}>
+                {roadmap
+                  ? t('home:goal_progress_hint_role', {
+                      defaultValue: 'Your roadmap to {{role}}',
+                      role: roadmap.targetRole,
+                    })
+                  : t('home:goal_progress_hint_no_roadmap', {
+                      defaultValue: 'Based on your AI Career Roadmap milestones',
+                    })}
+              </Text>
+              <Text category="h10" status="placeholder" center mt={2}>
+                {roadmap
+                  ? t('home:goal_progress_steps_of', {
+                      defaultValue: '{{completed}} of {{total}} steps complete',
+                      completed: roadmap.completedCount,
+                      total: roadmap.totalCount,
+                    })
+                  : t('home:goal_progress_no_roadmap', {
+                      defaultValue: 'Build a roadmap to track progress toward your goal',
+                    })}
+              </Text>
+            </View>
           )}
         </View>
         {/* Product follow-up: "add more content after the your progress
@@ -1484,17 +1500,23 @@ const themedStyles = StyleService.create({
     height: 18,
     marginRight: 6,
   },
-  // "Your Progress" Progress Toward Goal card -- ring on the left, title +
-  // two lines of real supporting copy on the right (see the effects above
-  // for where roadmapPercent actually comes from).
+  // "Your Progress" Progress Toward Goal card -- BESPOKE POLISH: now a
+  // centered hero ring (see the JSX comment at the call site) instead of
+  // the old left-ring/right-text row (see the effects above for where
+  // roadmapPercent actually comes from).
   progressCard: {
-    flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
     backgroundColor: 'background-basic-color-2',
   },
-  progressTextWrap: {
-    marginLeft: 14,
+  progressHero: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  progressHeroLoading: {
+    alignItems: 'center',
+    width: '100%',
   },
   // Same compact single-row white card shape as ContinueLearningCard.tsx/
   // UpcomingSessionHomeCard.tsx's own `card` style (see those files'

@@ -129,6 +129,10 @@ function fromPlanWire(wire: BillingPlanWire): BillingPlanProps {
     price: formatPrice(wire.amount ?? 0, wire.currency ?? 'usd'),
     period: wire.interval ? `/${wire.interval === 'month' ? 'mo' : 'yr'}` : '',
     features: wire.features ?? [],
+    // Raw values for Subscription.tsx's "SAVE X%" badge — see
+    // BillingPlanProps.amount's own comment.
+    amount: wire.amount,
+    interval: wire.interval ?? null,
     // Optional — not every backend will send this. Subscription.tsx falls
     // back to a client-side heuristic (the cheapest paid/non-free tier) when
     // no plan in the list has this set, so the "Popular" badge always shows

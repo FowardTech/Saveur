@@ -441,6 +441,9 @@ const MoreSrc = memo(() => {
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
+      // Gold "PRO" pill next to the one row that's literally "go
+      // manage/buy your Pro plan" — see ButtonOptional.tsx's own comment.
+      showProBadge: true,
       onPress: () => navigate('Subscription'),
     },
     {

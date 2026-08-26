@@ -11,6 +11,7 @@ import {
   useTheme,
 } from '@ui-kitten/components';
 import Flex from 'components/Flex';
+import ProBadge from 'components/ProBadge';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {MainBottomTabStackParamList} from 'navigation/types';
@@ -59,6 +60,12 @@ export interface ButtonOptionalProps {
   // passed, the count wins.
   badgeCount?: number;
   badgeDot?: boolean;
+  // Small gold "PRO" pill after the row title (reference: gold PRO pills
+  // on the paywall) -- for the one row that's literally "go manage/buy
+  // your Pro plan" (Subscription), not every premium-adjacent row, so it
+  // stays meaningful rather than turning into visual noise across the
+  // whole menu. See components/ProBadge.tsx.
+  showProBadge?: boolean;
   status:
     | 'basic'
     | 'danger'
@@ -84,6 +91,7 @@ const ButtonOptional = ({
   iconColor,
   badgeCount,
   badgeDot,
+  showProBadge,
 }: ButtonOptionalProps) => {
   const theme = useTheme();
   const {t} = useTranslation(['more', 'common']);
@@ -146,6 +154,7 @@ const ButtonOptional = ({
         <Text ml={16} category="para-s" medium>
           {title}
         </Text>
+        {showProBadge ? <ProBadge style={{marginLeft: 8}} /> : null}
       </Flex>
       {withToggle ? (
         <Toggle

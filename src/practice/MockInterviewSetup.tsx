@@ -29,6 +29,7 @@ import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
 import PersonaDetailModal from 'components/PersonaDetailModal';
+import LockBadge from 'components/LockBadge';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import { guessCompanyLogoUrl } from 'utils/companyLogo';
 import { searchCompany, CompanySearchResult } from 'services/companySearchService';
@@ -449,11 +450,7 @@ const MockInterviewSetup = memo(() => {
                   styles.modeCard,
                   { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
                 ]}>
-                {locked ? (
-                  <View style={[styles.lockBadge, { backgroundColor: theme['background-basic-color-3'] }]}>
-                    <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]} />
-                  </View>
-                ) : null}
+                {locked ? <LockBadge /> : null}
                 <Icon
                   pack="assets"
                   name={item.icon}
@@ -843,16 +840,6 @@ const themedStyles = StyleService.create({
     top: 8,
     right: 8,
     zIndex: 1,
-  },
-  lockBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   chipsWrap: {
     flexDirection: 'row',

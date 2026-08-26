@@ -14,8 +14,10 @@ import {
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { initStripe, useStripe } from '@stripe/stripe-react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
+import { PRO_GOLD_FROM, PRO_GOLD_TO, PRO_GOLD_TEXT } from 'components/ProBadge';
 import { Images } from 'assets/images';
 import Content from 'components/Content';
 import Container from 'components/Container';
@@ -169,6 +171,21 @@ const Subscription = memo(() => {
     () => (freeSessionsExhausted ? plans?.filter(p => p.tier !== 'free') ?? [] : plans ?? []),
     [plans, freeSessionsExhausted],
   );
+
+  // Gold "SAVE X%" badge (reference: paywall plan pickers showing a real
+  // savings percentage on the yearly tier, next to "PRO"/"Save 77%"-style
+  // pills). One monthly amount per tier, from whichever plan in
+  // `visiblePlans` is actually billed monthly — a yearly plan on the same
+  // tier then compares its own per-month cost against that.
+  const monthlyAmountByTier = React.useMemo(() => {
+    const map: Partial<Record<UserProfileProps['subscriptionTier'], number>> = {};
+    for (const p of visiblePlans) {
+      if (p.interval === 'month' && typeof p.amount === 'number') {
+        map[p.tier] = p.amount;
+      }
+    }
+    return map;
+  }, [visiblePlans]);
 
   const onContinueOnboarding = React.useCallback(() => {
     if (onboardingSuccessPayload) {
@@ -935,13 +952,31 @@ const Subscription = memo(() => {
             // recommended; "upgrade to the plan you're already on" isn't a
             // real upsell.
             const isHero = isRecommended && !isCurrent;
+            // Gold "SAVE X%" pill (reference: "Save 77%" badge on the
+            // paywall's yearly plan) — only for a real, computed savings
+            // percentage, comparing this plan's own per-month cost against
+            // the monthly plan on the same tier (monthlyAmountByTier above).
+            // Never shown for the monthly plan itself (interval !== 'year')
+            // or when the backend hasn't sent amount/interval yet.
+            const monthlyEquivalentAmount = monthlyAmountByTier[plan.tier];
+            const savingsPercent =
+              plan.interval === 'year' && typeof plan.amount === 'number' && monthlyEquivalentAmount
+                ? Math.round((1 - plan.amount / 12 / monthlyEquivalentAmount) * 100)
+                : null;
             const cardBody = (
               <>
                 {isRecommended ? (
-                  <View style={[styles.popularRibbon, isHero ? styles.popularRibbonHero : { backgroundColor: theme['color-primary-500'] }]}>
-                    <Text category="h10" bold status={isHero ? 'basic' : 'control'} style={isHero ? styles.popularRibbonHeroText : undefined}>
-                      {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
-                    </Text>
+                  <View style={styles.popularRibbon}>
+                    <LinearGradient
+                      colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.popularRibbonGradient}>
+                      <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
+                      <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
+                        {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
+                      </Text>
+                    </LinearGradient>
                   </View>
                 ) : null}
                 <Flex justify="space-between" itemsCenter mb={8}>
@@ -954,10 +989,25 @@ const Subscription = memo(() => {
                     </View>
                   ) : null}
                 </Flex>
-                <Text category="h3" bold mb={16} style={isHero ? styles.heroText : undefined}>
-                  {plan.price}
-                  <Text category="h9-s" status={isHero ? 'basic' : 'placeholder'} style={isHero ? styles.heroSubText : undefined}>{plan.period}</Text>
-                </Text>
+                <Flex justify="flex-start" itemsCenter mb={16}>
+                  <Text category="h3" bold style={isHero ? styles.heroText : undefined}>
+                    {plan.price}
+                    <Text category="h9-s" status={isHero ? 'basic' : 'placeholder'} style={isHero ? styles.heroSubText : undefined}>{plan.period}</Text>
+                  </Text>
+                  {savingsPercent && savingsPercent > 0 ? (
+                    <View style={styles.saveBadge}>
+                      <LinearGradient
+                        colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={styles.saveBadgeGradient}>
+                        <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
+                          {t('more:save_percent_badge', { defaultValue: 'SAVE {{percent}}%', percent: savingsPercent })}
+                        </Text>
+                      </LinearGradient>
+                    </View>
+                  ) : null}
+                </Flex>
                 {plan.features.map((feature, i) => (
                   <Flex key={i} justify="flex-start" itemsCenter mb={10}>
                     <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon16, { tintColor: isHero ? '#FFFFFF' : theme['text-basic-color'] }]} />
@@ -1138,17 +1188,42 @@ const themedStyles = StyleService.create({
     paddingVertical: 4,
     paddingHorizontal: 10,
   },
+  // FULL RESKIN: was a flat blue (non-hero) / white-on-blue (hero) pill —
+  // now always the same gold gradient regardless of card state, matching
+  // the reference's gold "PRO"-style plan-picker pills and ProBadge.tsx's
+  // own gradient (this is the same "highlighted, this is the good one"
+  // signal, so it gets the same treatment app-wide instead of two
+  // different one-off blue variants). Reads correctly against both the
+  // plain white/dark card and the solid-blue hero card since it doesn't
+  // depend on either background — no more separate popularRibbonHero/
+  // popularRibbonHeroText variants needed.
   popularRibbon: {
     position: 'absolute',
     top: -12,
     alignSelf: 'center',
-    borderRadius: 99,
+    borderRadius: 999,
+    ...globalStyle.shadowFade,
+  },
+  popularRibbonGradient: {
+    borderRadius: 999,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 5,
     paddingHorizontal: 14,
   },
-  // Flat solid-blue hero card (gradient fill removed) — the ribbon flips to
-  // a white fill/blue text (`popularRibbonHero`) since the original
-  // solid-blue ribbon would blend into this card's own blue fill.
+  // Same gold gradient, compact pill, sits inline next to the yearly
+  // plan's price (see savingsPercent above) — reference: "Save 77%" badge.
+  saveBadge: {
+    marginLeft: 8,
+    borderRadius: 999,
+    ...globalStyle.shadowFade,
+  },
+  saveBadgeGradient: {
+    borderRadius: 999,
+    paddingVertical: 3,
+    paddingHorizontal: 9,
+  },
+  // Flat solid-blue hero card (gradient fill removed).
   // Product report: "colored cards like this are not supposed to have box
   // shadows" -- this hero card fills solid brand blue, and globalStyle.
   // card's dark neutral shadow (tuned for a plain white card) reads as a
@@ -1164,12 +1239,6 @@ const themedStyles = StyleService.create({
   },
   planCardHeroInner: {
     padding: 20,
-  },
-  popularRibbonHero: {
-    backgroundColor: '#FFFFFF',
-  },
-  popularRibbonHeroText: {
-    color: '#0063f8',
   },
   heroText: {
     color: '#FFFFFF',

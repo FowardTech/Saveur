@@ -27,6 +27,7 @@ import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import LockBadge from 'components/LockBadge';
 import { guessCompanyLogoUrl } from 'utils/companyLogo';
 
 const DURATION_OPTIONS_MIN = [15, 30, 45, 60];
@@ -217,11 +218,7 @@ const ScheduleInterview = memo(() => {
                   styles.modeCard,
                   { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
                 ]}>
-                {locked ? (
-                  <View style={[styles.lockBadge, { backgroundColor: theme['background-basic-color-3'] }]}>
-                    <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]} />
-                  </View>
-                ) : null}
+                {locked ? <LockBadge /> : null}
                 <Icon
                   pack="assets"
                   name={item.icon}
@@ -416,16 +413,6 @@ const themedStyles = StyleService.create({
     marginRight: '2%',
     marginBottom: 12,
     position: 'relative',
-  },
-  lockBadge: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   chipsWrap: {
     flexDirection: 'row',

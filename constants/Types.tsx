@@ -837,6 +837,15 @@ export interface BillingPlanProps {
   period: string;
   features: string[];
   recommended?: boolean;
+  // Raw values behind the already-formatted `price`/`period` strings above
+  // — added for the gold "SAVE X%" badge (reference: paywall plan pickers
+  // showing a real savings percentage on the yearly tier). `price`/`period`
+  // stay as the display-ready strings every existing call site already
+  // reads; these two are only for Subscription.tsx's own savings-percent
+  // arithmetic, comparing a yearly plan's per-month cost against the
+  // monthly plan on the same tier.
+  amount?: number; // minor currency unit (e.g. cents)
+  interval?: 'month' | 'year' | null;
   // Whether THIS plan is the one the signed-in user is currently on —
   // only present when GET /api/v1/billing/plans was called with a Bearer
   // token (it's optional-auth; apiClient always attaches one when signed
