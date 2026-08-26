@@ -11,12 +11,17 @@ import HeaderHome from './Components/HeaderHome';
 import ContinueLearningCard from './ContinueLearningCard';
 import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
 import CareerFairEventCard from './CareerFairEventCard';
-import { SkeletonHomeCardRow, SkeletonBlock } from 'components/Skeleton';
+import { SkeletonHomeCardRow } from 'components/Skeleton';
 import NextLessonHomeCard from './NextLessonHomeCard';
-import DailyChallengeCard from './DailyChallengeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { ArtGiftBox, ArtWorkplaceCompass } from './HomeHeroArt';
-import CircularProgress from 'components/CircularProgress';
+import { ArtGiftBox, ArtWorkplaceCompass, ArtMountainPeak, ArtStreakFlame } from './HomeHeroArt';
+import MissionHeroCard from 'components/MissionHeroCard';
+import StatMiniCard from 'components/StatMiniCard';
+import CoachPromptCard from 'components/CoachPromptCard';
+import * as dailyChallengeService from 'services/dailyChallengeService';
+import { DailyChallenge } from 'services/dailyChallengeService';
+import * as gamificationService from 'services/gamificationService';
+import { GamificationStreakProps } from 'constants/Types';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
@@ -50,6 +55,19 @@ import * as configService from 'services/configService';
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
 // for the same reasoning.
 const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
+
+// Same type -> icon mapping src/more/CareerRoadmap.tsx's own ICONS_BY_TYPE
+// uses (kept as a separate module-level constant here rather than a
+// shared import — this is a 4-entry decorative lookup, not worth adding a
+// cross-file dependency for) — used by missionHero's roadmap-step tier
+// below to pick a real, type-appropriate icon instead of one generic
+// glyph for every step.
+const ROADMAP_STEP_ICONS: Record<string, string> = {
+  skill: 'book-outline',
+  project: 'briefcase-outline',
+  interview: 'mic-outline',
+  milestone: 'flag-outline',
+};
 
 // BUG FIX (product report: homescreen freezing on scroll, every load, both
 // platforms) — root cause: `useTranslation(['home', 'common'])` used to
@@ -147,6 +165,49 @@ const HomeSrc = memo(() => {
   const roadmapPercent = roadmap && roadmap.totalCount > 0
     ? Math.round((roadmap.completedCount / roadmap.totalCount) * 100)
     : 0;
+  // Real current step, if any -- the mission hero's own fallback chain
+  // (see missionHero below) reads this when there's no daily challenge to
+  // show today.
+  const currentRoadmapStep = React.useMemo(
+    () => roadmap?.steps.find(s => s.status === 'current') ?? null,
+    [roadmap],
+  );
+
+  // HOME REDESIGN (product reference — a rich "Today's Mission" hero card
+  // at the very top of Home). Priority chain, each one a real, honest
+  // source (see MissionHeroCard.tsx's own comment on why there's no
+  // fabricated time/difficulty field): (1) today's Daily Challenge, if the
+  // feature's on and one exists — this is the only genuinely "today"-
+  // scoped content Home has; (2) the current AI Career Roadmap step, if
+  // the user has an active roadmap; (3) a generic "ask your coach"
+  // fallback when neither exists (e.g. a brand-new account). Same
+  // best-effort/fail-open convention as every other Home fetch on this
+  // screen (roadmap above, career events below).
+  const [dailyChallenge, setDailyChallenge] = React.useState<DailyChallenge | null>(null);
+  const [dailyChallengeLoading, setDailyChallengeLoading] = React.useState(true);
+  const fetchDailyChallenge = React.useCallback(() => {
+    if (!isSignedIn || !configService.isFeatureEnabled('daily_challenge')) {
+      setDailyChallengeLoading(false);
+      return;
+    }
+    dailyChallengeService.getTodayChallenge().then(setDailyChallenge).catch(() => {
+      // Non-critical -- missionHero below just falls through to the next
+      // item in the priority chain.
+    }).finally(() => setDailyChallengeLoading(false));
+  }, [isSignedIn]);
+  React.useEffect(() => { fetchDailyChallenge(); }, [fetchDailyChallenge]);
+
+  // Streak -- feeds the "Current Streak" stat mini-card below the hero.
+  // Independent fetch from Leaderboard.tsx's own (same endpoint, GET
+  // /api/v1/gamification/streak) -- this screen and that one don't share
+  // state, same as every other duplicated-fetch pair already in this app.
+  const [streak, setStreak] = React.useState<GamificationStreakProps | null>(null);
+  React.useEffect(() => {
+    if (!isSignedIn) return;
+    gamificationService.getStreak().then(setStreak).catch(() => {
+      // Non-critical -- the streak stat card below just falls back to 0.
+    });
+  }, [isSignedIn]);
 
   // Product request: "targeted career fairs and events card to display
   // under the continue & Upcoming cards... maximum of 4 recently posted
@@ -765,6 +826,81 @@ const HomeSrc = memo(() => {
   // others no matter what that constant is set to.
   const homeBannerWidth = width - CONTENT_PADDER * 2;
 
+  // Mission hero content -- priority chain described above
+  // (dailyChallenge -> currentRoadmapStep -> generic coach fallback).
+  // Gated on both loading flags together so this never flashes one tier's
+  // content and then swaps to another once the slower of the two fetches
+  // resolves (same "no misleading flash" convention as roadmapLoading's
+  // own comment above).
+  const missionHeroLoading = roadmapLoading || dailyChallengeLoading;
+  const missionHero = React.useMemo(() => {
+    if (dailyChallenge && !dailyChallenge.skipped) {
+      const typeLabel = dailyChallenge.challengeType
+        .split(' ')
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      return {
+        badgeIcon: 'flag-outline',
+        badgeLabel: t('home:mission_badge', { defaultValue: "Today's Mission" }),
+        title: typeLabel,
+        subtitle: dailyChallenge.promptText,
+        metaLeft: { icon: 'bulb-outline', label: t('home:mission_type_label', { defaultValue: 'Focus' }), value: typeLabel },
+        metaRight: { icon: 'award-outline', label: t('home:mission_reward_label', { defaultValue: 'Reward' }), value: t('home:mission_xp_value', { defaultValue: '+{{xp}} XP', xp: dailyChallenge.xpAwarded }) },
+        progressPercent: dailyChallenge.completed ? 100 : 0,
+        progressLabel: t('home:mission_progress_label', { defaultValue: 'Progress' }),
+        ctaLabel: dailyChallenge.completed
+          ? t('home:mission_cta_completed', { defaultValue: 'View Challenge' })
+          : t('home:mission_cta_start', { defaultValue: 'Start Task' }),
+        ctaIcon: dailyChallenge.completed ? 'checkmark-circle-2-outline' : 'play-circle-outline',
+        onPress: () => navigate('DailyChallenge'),
+      };
+    }
+    if (roadmap && currentRoadmapStep) {
+      return {
+        badgeIcon: 'flag-outline',
+        badgeLabel: t('home:mission_badge_roadmap', { defaultValue: 'Your Next Step' }),
+        title: currentRoadmapStep.title,
+        subtitle: currentRoadmapStep.description,
+        metaLeft: { icon: ROADMAP_STEP_ICONS[currentRoadmapStep.type] ?? 'flag-outline', label: t('home:mission_step_label', { defaultValue: 'Step' }), value: t('home:mission_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount }) },
+        metaRight: { icon: 'flag-outline', label: t('home:mission_goal_label', { defaultValue: 'Goal' }), value: roadmap.targetRole },
+        progressPercent: roadmapPercent,
+        progressLabel: t('home:mission_progress_label', { defaultValue: 'Progress' }),
+        ctaLabel: t('home:mission_cta_roadmap', { defaultValue: 'Continue Roadmap' }),
+        ctaIcon: 'play-circle-outline',
+        onPress: () => navigate('CareerRoadmap'),
+      };
+    }
+    return {
+      badgeIcon: 'message-circle-outline',
+      badgeLabel: t('home:mission_badge_coach', { defaultValue: 'AI Career Coach' }),
+      title: t('home:coach_hero_title', { defaultValue: 'Ask your AI Career Coach' }),
+      subtitle: t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' }),
+      metaLeft: { icon: 'clock-outline', label: t('home:mission_available_label', { defaultValue: 'Available' }), value: t('home:mission_available_value', { defaultValue: '24/7' }) },
+      metaRight: { icon: 'flash-outline', label: t('home:mission_response_label', { defaultValue: 'Response' }), value: t('home:mission_response_value', { defaultValue: 'Instant' }) },
+      progressPercent: undefined,
+      progressLabel: undefined,
+      ctaLabel: t('home:mission_cta_coach', { defaultValue: 'Ask Now' }),
+      ctaIcon: 'message-circle-outline',
+      onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
+    };
+  }, [dailyChallenge, roadmap, currentRoadmapStep, roadmapPercent, t, navigate]);
+
+  // Coach card suggested prompts -- generic, always-relevant conversation
+  // starters (not personalized/fetched — Saveur has no "suggested
+  // prompts" endpoint), each one deep-links into Chat.tsx with itself as
+  // `initialPrompt` (see CoachPromptCard.tsx's own comment).
+  const coachPrompts = [
+    t('home:coach_prompt_resume', { defaultValue: 'How can I improve my resume?' }),
+    t('home:coach_prompt_interview', { defaultValue: 'Help me prepare for an interview' }),
+    t('home:coach_prompt_skills', { defaultValue: 'What skills should I learn next?' }),
+  ];
+  const onPressCoachPrompt = React.useCallback((prompt: string) => {
+    navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { initialPrompt: prompt } } });
+  }, [navigate]);
+  const onPressCoachSend = React.useCallback(() => {
+    navigate('MainBottomTab', { screen: 'Coach' });
+  }, [navigate]);
+
   return (
     <Container style={styles.container}>
       {/* Product request: "add a banner in the homescreen at the top top
@@ -840,35 +976,92 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* HOME RESTRUCTURE — "AI-first hero" (see this file's own module
-            comment at the top for the full "why"). This is the very first
-            content section on the page (verify-email banner aside, which
-            is time-sensitive and rare) — Saveur's actual core loop is
-            talking to an AI coach, so Home now leads with that the same
-            way ChatGPT/Perplexity's own home screens lead with a prompt
-            input, instead of an admin marketing banner or a dashboard
-            card being the first thing a user sees. Replaces the "Coach"
-            icon that used to live buried as one of four equal-weight
-            icons inside the (now-removed) Career Toolkit row below —
-            same destination (MainBottomTab -> Coach tab), just promoted
-            to the single most prominent element on the screen. */}
-        <TouchableOpacity
-          activeOpacity={0.85}
-          style={styles.coachHero}
-          onPress={() => navigate('MainBottomTab', { screen: 'Coach' })}>
-          <View style={styles.coachHeroIconWrap}>
-            <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon24, { tintColor: '#fff' }]} />
+        {/* HOME REDESIGN v2 (product reference — a content-rich "Today's
+            Mission" hero, a Roadmap Progress / Current Streak stat pair,
+            and an AI Coach card with suggested prompts, "use this look
+            and feel throughout the whole app"). This is the very first
+            content section on the page (verify-email banner aside) —
+            replaces the plainer single-row "Ask your AI Career Coach"
+            hero from the prior pass (see git history) with real,
+            per-user content instead of one static CTA. See missionHero's
+            own computation above for the full priority chain (today's
+            Daily Challenge, falling back to the current AI Career Roadmap
+            step, falling back to a generic coach prompt) and why there's
+            no fabricated time/difficulty field. */}
+        {missionHeroLoading ? (
+          <View style={styles.missionHeroLoading}>
+            <Spinner status="control" />
           </View>
-          <View style={globalStyle.flexOne}>
-            <Text category="h9" bold style={styles.coachHeroText}>
-              {t('home:coach_hero_title', { defaultValue: 'Ask your AI Career Coach' })}
-            </Text>
-            <Text category="h10" mt={2} style={styles.coachHeroSubText}>
-              {t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' })}
-            </Text>
-          </View>
-          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon20, { tintColor: '#fff' }]} />
-        </TouchableOpacity>
+        ) : (
+          <MissionHeroCard
+            badgeIcon={missionHero.badgeIcon}
+            badgeLabel={missionHero.badgeLabel}
+            title={missionHero.title}
+            subtitle={missionHero.subtitle}
+            metaLeft={missionHero.metaLeft}
+            metaRight={missionHero.metaRight}
+            progressPercent={missionHero.progressPercent}
+            progressLabel={missionHero.progressLabel}
+            ctaLabel={missionHero.ctaLabel}
+            ctaIcon={missionHero.ctaIcon}
+            onPress={missionHero.onPress}
+          />
+        )}
+
+        {/* Roadmap Progress / Current Streak -- real numbers (roadmapPercent/
+            currentRoadmapStep from the effect above, streak from its own
+            effect above), same honest-zero-state convention as everything
+            else on this screen. "Day X of Y" from the reference isn't
+            available (RoadmapStep has no day field, only `order` — see
+            missionHero's own roadmap tier above), so this card shows
+            "Step X of Y" instead of a fabricated day count. */}
+        <Flex justify="space-between" mt={16}>
+          <StatMiniCard
+            icon="trending-up-outline"
+            iconTint="#0052D9"
+            title={t('home:roadmap_progress_stat_title', { defaultValue: 'Roadmap Progress' })}
+            value={
+              roadmap && currentRoadmapStep
+                ? t('home:roadmap_progress_stat_value', { defaultValue: 'Step {{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
+                : t('home:roadmap_progress_stat_value_none', { defaultValue: 'Not started' })
+            }
+            valueColor="#0052D9"
+            caption={
+              roadmap
+                ? t('home:roadmap_progress_stat_caption', { defaultValue: 'Complete each step to reach {{role}}.', role: roadmap.targetRole })
+                : t('home:roadmap_progress_stat_caption_none', { defaultValue: 'Build a roadmap to start tracking progress.' })
+            }
+            progressPercent={roadmapPercent}
+            progressColor="#0052D9"
+            backgroundColor="#E8F0FF"
+            illustration={<ArtMountainPeak size={40} />}
+            onPress={() => navigate('CareerRoadmap')}
+            style={{ marginRight: 12 }}
+          />
+          <StatMiniCard
+            icon="flash-outline"
+            iconTint="#B45309"
+            title={t('home:streak_stat_title', { defaultValue: 'Current Streak' })}
+            value={t('home:streak_stat_value', { defaultValue: '{{count}} Days', count: streak?.streakDays ?? 0 })}
+            valueColor="#B45309"
+            caption={t('home:streak_stat_caption', { defaultValue: 'Keep it going to unlock more badges.' })}
+            backgroundColor="#FFF3E0"
+            illustration={<ArtStreakFlame size={40} />}
+            onPress={() => navigate('Leaderboard')}
+          />
+        </Flex>
+
+        {/* AI Coach card -- see coachPrompts above for the exact starter
+            list and CoachPromptCard.tsx's own comment for how a tap
+            deep-links straight into a real conversation instead of just
+            opening a blank thread. */}
+        <CoachPromptCard
+          title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
+          subtitle={t('home:coach_card_subtitle', { defaultValue: 'Ask anything about your job search' })}
+          prompts={coachPrompts}
+          onPressPrompt={onPressCoachPrompt}
+          onPressSend={onPressCoachSend}
+        />
 
         {/* Admin-configured Home banner (see the effect above for the full
             "why" + how this differs from AnnouncementBanner). Deliberately
@@ -994,55 +1187,25 @@ const HomeSrc = memo(() => {
             Challenge, Refer & Earn, and Next Steps used to each be their
             own separately-titled section stacked all the way down the
             page — folded into one "For You" horizontal row instead, same
-            "AI-first hero" principle as the collapsed Continue card above
-            (one clear focal point per screen, not a stack of equally-
-            weighted cards). Ordered by how timely/personal each item is:
-            Career Progress (a real personal number) and Daily Challenge
-            (today-only) first, then the newest Career Fairs & Events,
-            then the evergreen shortcuts (Today's Tips/Roadmap/Career DNA/
-            Companies/Courses/Salary — see forYouShortcuts above, replaces
-            the old pill row + Career Toolkit section), then Refer & Earn
-            and Next Steps last as the least time-sensitive items. Career
-            Progress and the shortcuts are always present for a signed-in
-            user, so this row is never empty in practice — no top-level
-            "is there anything at all" gate needed, unlike the old Career
-            Fairs & Events section it now sits inside. */}
+            "one clear focal point per screen, not a stack of equally-
+            weighted cards" principle as the collapsed Continue card
+            above. Career Progress and Daily Challenge are gone from this
+            row entirely (v2 redesign) — both now live in the mission
+            hero/stat-card pair above instead of a duplicate smaller tile
+            down here. Ordered by how timely/personal what's left is: the
+            newest Career Fairs & Events first, then the evergreen
+            shortcuts (Today's Tips/Roadmap/Career DNA/Companies/Courses/
+            Salary — see forYouShortcuts above, replaces the old pill row
+            + Career Toolkit section), then Refer & Earn and Next Steps
+            last as the least time-sensitive items. The shortcuts are
+            always present for a signed-in user, so this row is never
+            empty in practice — no top-level "is there anything at all"
+            gate needed, unlike the old Career Fairs & Events section it
+            now sits inside. */}
         <Text category="h8" bold mt={24} mb={12}>
           {t('home:for_you_label', { defaultValue: 'For You' })}
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingHorizontal: 10 }}>
-          {/* Career Progress -- Progress Toward Goal ring, condensed from
-              its old full-width hero-ring section (see git history) into
-              one tile here — the AI Coach hero above is the one thing on
-              this screen meant to read as the headline focal point now,
-              not this ring. */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.forYouTile, { marginRight: forYouGap }]}
-            onPress={() => navigate('CareerRoadmap')}>
-            {roadmapLoading ? (
-              <SkeletonBlock style={{ width: 56, height: 56 }} radius={28} />
-            ) : (
-              <CircularProgress
-                progress={roadmapPercent}
-                size={56}
-                strokeWidth={6}
-                trackColor={theme['background-basic-color-3']}
-                gradientFrom="#9DBFEF"
-                gradientTo="#0063f8">
-                <Text category="h10" bold>{roadmapPercent}%</Text>
-              </CircularProgress>
-            )}
-            <Text category="h10" bold center numberOfLines={1} mt={8}>
-              {t('home:your_progress_label', { defaultValue: 'Career Progress' })}
-            </Text>
-          </TouchableOpacity>
-
-          {/* Daily Challenge -- self-hides on its own (feature off or no
-              challenge today), same convention as before; `style` now
-              fits it into this row instead of its own full-width slot. */}
-          <DailyChallengeCard style={{ width: forYouCardWidth, marginRight: forYouGap, marginTop: 0 }} />
-
           {/* Career Fairs & Events -- up to 4 cards, same skeleton-while-
               loading convention as before, just sized to this row's
               shared tile width now instead of the old topCardWidth. */}
@@ -1244,33 +1407,20 @@ const themedStyles = StyleService.create({
   // git history for any of those styles' own prior comment history if a
   // future pass wants the old section-per-item layout back.
   //
-  // AI Coach hero — the page's one clear focal point, brand-blue filled
-  // card matching CtaButton's own color (see that file's own "COLOR
-  // HISTORY" comment — this reskin keeps brand blue, just applies it to
-  // a new element).
-  coachHero: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  // HOME REDESIGN v2 — replaces the plainer single-row coachHero/
+  // coachHeroIconWrap/coachHeroText/coachHeroSubText from the prior pass
+  // (now dead, see git history) with a loading placeholder for the new
+  // MissionHeroCard (the card itself owns its own styling — see
+  // components/MissionHeroCard.tsx — this is only shown for the brief
+  // window before missionHeroLoading resolves).
+  missionHeroLoading: {
+    height: 240,
     borderRadius: 24,
-    padding: 18,
     marginTop: 16,
     backgroundColor: 'color-primary-500',
-    ...globalStyle.shadowFade,
-  },
-  coachHeroIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
-  },
-  coachHeroText: {
-    color: '#fff',
-  },
-  coachHeroSubText: {
-    color: 'rgba(255,255,255,0.85)',
+    ...globalStyle.shadowFade,
   },
   // Collapsed Continue card — full row width now (was topCardWidth's
   // fixed half-width, back when three of these sat side by side).

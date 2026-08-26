@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Circle, Ellipse, Rect, Path, Line } from 'react-native-svg';
+import Svg, { Circle, Ellipse, Rect, Path, Line, Polygon } from 'react-native-svg';
 
 // Small decorative illustrations for Home's hero cards (product follow-up:
 // "the cards are too plain... place some svg illustration on the right side
@@ -427,6 +427,73 @@ export const ArtWorkplaceCompass: React.FC<ArtProps> = ({ size }) => (
 // src/more/JDAnalyzer.tsx's intro (before a JD is analyzed) — had no icon
 // on the screen at all, just the paste-text/paste-URL tabs. A magnifying
 // glass over a document reads as "we're going to examine this posting."
+// HOME REDESIGN (product reference — a "Today's Mission" hero card: a
+// phone showing a profile, with a floating checkmark badge and a floating
+// star badge, standing on a small podium) — used by the new
+// MissionHeroCard.tsx on a saturated brand-blue fill, so every shape here
+// is translucent white (same "reads as an etched/frosted accent against
+// any gradient" reasoning ArtCareerCoach's own history comment already
+// established for this exact fill), with only the two floating badges in
+// real color (green check, gold star) for a bit of pop, matching the
+// reference's own restrained two-accent-color approach.
+export const ArtMissionPhone: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 140 140">
+    {/* podium */}
+    <Ellipse cx="66" cy="120" rx="40" ry="10" fill="#FFFFFF" opacity={0.16} />
+    <Ellipse cx="66" cy="114" rx="40" ry="10" fill="#FFFFFF" opacity={0.22} />
+
+    {/* phone */}
+    <Rect x="34" y="30" width="64" height="90" rx="14" fill="#FFFFFF" opacity={0.95} />
+    <Rect x="42" y="40" width="48" height="62" rx="6" fill="#FFFFFF" opacity={0.3} />
+    <Circle cx="66" cy="58" r="11" fill="#FFFFFF" opacity={0.7} />
+    <Path d="M50 88c0-10 7.2-17 16-17s16 7 16 17z" fill="#FFFFFF" opacity={0.7} />
+    <Rect x="48" y="94" width="36" height="4" rx="2" fill="#FFFFFF" opacity={0.55} />
+
+    {/* checkmark badge, top-right of the phone */}
+    <Circle cx="102" cy="46" r="14" fill="#0EAD69" />
+    <Path d="M95 46l5 5 9-10" stroke="#FFFFFF" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+
+    {/* star badge, lower-right of the phone */}
+    <Circle cx="108" cy="92" r="12" fill="#FFC94A" />
+    <Path
+      d="M108 84.5l2.3 4.7 5.2 0.7-3.8 3.7 0.9 5.1-4.6-2.4-4.6 2.4 0.9-5.1-3.8-3.7 5.2-0.7z"
+      fill="#FFFFFF"
+    />
+
+    {/* sparkles */}
+    <Polygon points="24,50 26,56 32,58 26,60 24,66 22,60 16,58 22,56" fill="#FFFFFF" opacity={0.85} />
+    <Circle cx="112" cy="24" r="3" fill="#FFFFFF" opacity={0.8} />
+  </Svg>
+);
+
+// Small corner accents for HomeSrc.tsx's Roadmap Progress / Current
+// Streak stat mini-cards (see components/StatMiniCard.tsx) — much simpler
+// than every scene above since these sit at ~36-44px in the corner of an
+// already-small tile, not as the illustration a whole card is built
+// around. Flat, 2-3 shapes each, same "no gradients/strokes-as-outline"
+// convention as every other Home illustration in this file.
+export const ArtMountainPeak: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 48 48">
+    <Path d="M4 40L18 16l7 10 4-6 15 20z" fill="#0063f8" opacity={0.18} />
+    <Path d="M18 16l12 24H4z" fill="#0063f8" opacity={0.5} />
+    <Path d="M32 22l12 18H24z" fill="#0063f8" opacity={0.32} />
+    <Path d="M18 16l4 8-4 5-4-5z" fill="#FFFFFF" opacity={0.7} />
+  </Svg>
+);
+
+export const ArtStreakFlame: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 48 48">
+    <Path
+      d="M24 6c2 6-4 8-4 14a8 8 0 0 0 16 0c0-4-2-6-3-8 0 3-2 4-3 3 1-6-2-9-6-9z"
+      fill="#FFC94A"
+    />
+    <Path
+      d="M24 18c1 4-2 5-2 9a6 6 0 0 0 12 0c0-2-1-4-2-5 0 2-1.5 2.5-2 2 0-3.5-2-5-6-6z"
+      fill="#F2954A"
+    />
+  </Svg>
+);
+
 export const ArtMagnifyingDoc: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
     <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
