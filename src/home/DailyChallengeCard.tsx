@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
@@ -32,7 +32,16 @@ import ThemeContext from '../../ThemeContext';
 // row/card — title, type badge, a one-line prompt teaser — that navigates
 // to DailyChallengeScreen.tsx on tap, which owns the actual respond/skip
 // flow (moved there essentially unchanged).
-const DailyChallengeCard = memo(() => {
+// HOME RESTRUCTURE (AI-first hero direction): now also usable as one tile
+// in HomeSrc.tsx's unified "For You" row, alongside Career Fairs & Events/
+// Career Progress/Refer & Earn/Next Steps — those used to each be their own
+// titled section; `style` lets HomeSrc override this card's own width/
+// margin/marginTop to match every other tile in that shared row, same
+// override pattern ContinueLearningCard.tsx/CareerFairEventCard.tsx etc.
+// already support. Optional and appended last in the style array, so the
+// original no-style call site (none left after the restructure, but kept
+// for safety) still renders identically.
+const DailyChallengeCard = memo(({ style }: { style?: StyleProp<ViewStyle> } = {}) => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['home', 'common']);
@@ -98,7 +107,7 @@ const DailyChallengeCard = memo(() => {
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={[styles.card, isDarkMode && styles.cardDark]}
+      style={[styles.card, isDarkMode && styles.cardDark, style]}
       onPress={() => navigate('DailyChallenge')}>
       <Flex justify="flex-start" itemsCenter mb={8}>
         <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
