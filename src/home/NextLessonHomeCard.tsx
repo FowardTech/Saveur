@@ -119,7 +119,8 @@ const NextLessonHomeCard = memo(({ style, onVisibilityChange }: {
           -- this card is one of the explicitly excluded ones, opting out
           of GradientIconBadge's own new lighter +16 default to keep the
           darker look from the previous pass. */}
-      <GradientIconBadge color="#0063f8" size={30} radius={10} shade={-8} style={styles.iconWrap}>
+      {/* Blue-to-green primary rebrand (#32ad84). */}
+      <GradientIconBadge color="#32ad84" size={30} radius={10} shade={-8} style={styles.iconWrap}>
         <Icon pack="eva" name={primary.icon} style={[globalStyle.icon16, { tintColor: '#fff' }]} />
       </GradientIconBadge>
       <View style={globalStyle.flexOne}>

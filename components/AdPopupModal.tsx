@@ -182,7 +182,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     ...globalStyle.shadowBtn,
   },
+  // Blue-to-green primary rebrand (#32ad84).
   ctaPillText: {
-    color: '#0063f8',
+    color: '#32ad84',
   },
 });

@@ -225,7 +225,8 @@ const DreamCompanies = memo(() => {
               this cycled through a color-primary-transparent-100 tint
               circle and a GradientIconBadge; no badge/background now,
               plain plus glyph tinted platform blue (#0063f8) directly. */}
-          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#0063f8', marginRight: 12 }]} />
+          {/* Blue-to-green primary rebrand (#32ad84). */}
+          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#32ad84', marginRight: 12 }]} />
           <Text category="h9" bold style={globalStyle.flexOne}>
             {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
           </Text>

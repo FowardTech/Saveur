@@ -456,7 +456,8 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#0063f8',
+    // Blue-to-green primary rebrand (#32ad84).
+    borderColor: '#32ad84',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,

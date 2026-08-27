@@ -321,8 +321,10 @@ const Leaderboard = memo(() => {
                 </Text>
               </View>
               <View style={[styles.yourRankPill, { backgroundColor: theme['color-primary-transparent-100'] }]}>
-                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
-                <Text category="h9" bold ml={4} style={{ color: '#0063f8' }}>
+                {/* Blue-to-green primary rebrand (#32ad84) -- matches the pill's own
+                    color-primary-transparent-100 background above. */}
+                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#32ad84' }]} />
+                <Text category="h9" bold ml={4} style={{ color: '#32ad84' }}>
                   {currentUserRank ? `#${currentUserRank}` : t('home:leaderboard_unranked', { defaultValue: 'Unranked' })}
                 </Text>
               </View>

@@ -565,7 +565,8 @@ const VoiceCoachView = memo(({
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onInterrupt}
-          style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,99,248,0.10)' }]}>
+          // Blue-to-green primary rebrand (#32ad84).
+          style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(50,173,132,0.10)' }]}>
           <Text category="h10" bold style={{ color: theme['text-basic-color'] }}>
             {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap to interrupt' })}
           </Text>

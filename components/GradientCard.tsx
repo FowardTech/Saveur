@@ -33,7 +33,10 @@ export interface GradientCardProps {
   children?: React.ReactNode;
 }
 
-const DEFAULT_COLORS = ['#0063f8', '#1DA1F2'];
+// Blue-to-green primary rebrand -- first stop was color-primary-100
+// (#0063f8), now #32ad84. Second stop (#1DA1F2) is color-primary-200,
+// untouched by this rebrand (still the app's own secondary blue accent).
+const DEFAULT_COLORS = ['#32ad84', '#1DA1F2'];
 
 const GradientCard: React.FC<GradientCardProps> = ({
   colors = DEFAULT_COLORS,

@@ -145,8 +145,10 @@ const DailyChallengeScreen = memo(() => {
                 </View>
               </Flex>
               <View style={[styles.rewardBadge, challenge.completed ? styles.rewardBadgeEarned : null]}>
-                <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
-                <Text category="h10" bold ml={2} style={{ color: '#0063f8' }}>
+                {/* Blue-to-green primary rebrand (#32ad84) -- matches rewardBadge's
+                    own background below. */}
+                <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#32ad84' }]} />
+                <Text category="h10" bold ml={2} style={{ color: '#32ad84' }}>
                   {challenge.completed ? challenge.xpAwarded : configService.getCachedConfig().daily_challenge.xp_reward}
                 </Text>
               </View>
@@ -229,14 +231,16 @@ const themedStyles = StyleService.create({
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 10,
-    backgroundColor: 'rgba(0, 99, 248, 0.1)',
+    // Blue-to-green primary rebrand (#32ad84) -- matches the flash
+    // icon/XP text tinted above.
+    backgroundColor: 'rgba(50, 173, 132, 0.1)',
   },
   // Reward pill once the day's challenge is actually answered -- a
   // stronger tint than the "still up for grabs" pill above, same
   // completed/success-tinted convention this app's other progress pills
   // already use (see LearningCourses.tsx's weekActionPill).
   rewardBadgeEarned: {
-    backgroundColor: 'rgba(0, 99, 248, 0.18)',
+    backgroundColor: 'rgba(50, 173, 132, 0.18)',
   },
   progressTrack: {
     height: 8,

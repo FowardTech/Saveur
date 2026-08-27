@@ -124,7 +124,8 @@ const styles = {
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#0063f8',
+    // Blue-to-green primary rebrand (#32ad84).
+    backgroundColor: '#32ad84',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },

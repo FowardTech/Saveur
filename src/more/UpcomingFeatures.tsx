@@ -62,7 +62,8 @@ const UpcomingFeatures = () => {
                   <Icon
                     pack="eva"
                     name={item.icon}
-                    style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#0063f8' }]}
+                    // Blue-to-green primary rebrand (#32ad84).
+                    style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#32ad84' }]}
                   />
                 ) : (
                   <Image

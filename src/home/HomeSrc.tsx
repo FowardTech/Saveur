@@ -1018,21 +1018,24 @@ const HomeSrc = memo(() => {
         <Flex justify="space-between" mt={16}>
           <StatMiniCard
             icon="trending-up-outline"
-            iconTint="#0052D9"
+            // Blue-to-green primary rebrand -- was #0052D9 (a darker shade
+            // of the old primary blue), now #2B9973, the equivalent darker
+            // shade of the new brand green.
+            iconTint="#2B9973"
             title={t('home:roadmap_progress_stat_title', { defaultValue: 'Roadmap Progress' })}
             value={
               roadmap && currentRoadmapStep
                 ? t('home:roadmap_progress_stat_value', { defaultValue: 'Step {{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
                 : t('home:roadmap_progress_stat_value_none', { defaultValue: 'Not started' })
             }
-            valueColor="#0052D9"
+            valueColor="#2B9973"
             caption={
               roadmap
                 ? t('home:roadmap_progress_stat_caption', { defaultValue: 'Complete each step to reach {{role}}.', role: roadmap.targetRole })
                 : t('home:roadmap_progress_stat_caption_none', { defaultValue: 'Build a roadmap to start tracking progress.' })
             }
             progressPercent={roadmapPercent}
-            progressColor="#0052D9"
+            progressColor="#2B9973"
             backgroundColor="#E8F0FF"
             illustration={<ArtMountainPeak size={40} />}
             onPress={() => navigate('CareerRoadmap')}
