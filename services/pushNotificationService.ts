@@ -346,14 +346,29 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
     // service.py's send_due_reminders) -- resolve it against the user's
     // upcoming sessions to get the same interviewType/mode/difficulty/role/
     // company/durationMin HomeSrc.tsx's own "Upcoming Session" card tap
-    // already passes into MockInterviewSetup, so a push tap lands on the
-    // exact same pre-filled setup screen a manual tap would.
+    // already passes into MockInterviewSetup.
+    //
+    // BUG FIX (product report: "when the push notification shows the
+    // upcoming interview session... and a user clicks on it it takes them
+    // to the interview setup screen. No since its not yet time for the
+    // interview to take place [it] should not lead them to the interview
+    // until it is time") -- this reminder push fires ahead of the actual
+    // scheduledAt (see send_due_reminders' own lead-time window), so a tap
+    // was landing straight on MockInterviewSetup regardless of how much
+    // time was actually left. Same destination table backs both the real
+    // push tap AND the in-app notification-center row (see this
+    // function's own exported comment above), so this one change fixes
+    // both surfaces the report named. Now only jumps into setup once
+    // `now` has actually reached `scheduledAt` -- a still-early tap lands
+    // on Home instead, where the Upcoming Session card shows the real
+    // countdown, same as the "already started/canceled/expired" fallback
+    // below.
     const id = data.scheduled_interview_id;
     scheduledInterviewService
       .listUpcoming()
       .then(list => {
         const match = id ? list.find(s => s.id === id) : undefined;
-        if (match) {
+        if (match && Date.now() >= match.scheduledAt) {
           navigateToMockInterviewSetup({
             interviewType: match.interviewType,
             mode: match.mode,
@@ -363,9 +378,10 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
             durationMin: match.durationMin,
           });
         } else {
-          // Already started, canceled, or expired by the time the tap
-          // resolved -- Home (where the Upcoming Session card, or its
-          // empty state, lives) beats a dead end.
+          // Not yet time, already started, canceled, or expired by the
+          // time the tap resolved -- Home (where the Upcoming Session
+          // card, or its empty state, lives) beats a dead end or a
+          // premature interview screen.
           navigateToHome();
         }
       })
