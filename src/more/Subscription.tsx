@@ -970,32 +970,7 @@ const Subscription = memo(() => {
                 : null;
             const cardBody = (
               <>
-                {isRecommended ? (
-                  <View style={styles.popularRibbon}>
-                    <LinearGradient
-                      colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.popularRibbonGradient}>
-                      <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
-                      <Text category="h10" bold numberOfLines={1} style={{ color: PRO_GOLD_TEXT }}>
-                        {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
-                      </Text>
-                    </LinearGradient>
-                  </View>
-                ) : null}
-                {/* Bug report (screenshot): the gold ribbon's text/icon were
-                    getting cut off, specifically on the Chinese "最受欢迎"
-                    build -- CJK glyphs render with a taller natural line
-                    height than the Latin "MOST POPULAR" this ribbon was
-                    originally sized for, so the -12 negative offset (see
-                    popularRibbon below) no longer left enough clearance
-                    before this title row started, and the two visually
-                    collided/overlapped. Extra top margin here only for a
-                    recommended card guarantees clearance regardless of the
-                    active locale's line height, instead of fighting exact
-                    ribbon-height math per language. */}
-                <Flex justify="space-between" itemsCenter mb={8} style={isRecommended ? { marginTop: 8 } : undefined}>
+                <Flex justify="space-between" itemsCenter mb={8}>
                   <Text category="h6" bold style={isHero ? styles.heroText : undefined}>{plan.title}</Text>
                   {isCurrent ? (
                     <View style={[styles.currentBadge, { backgroundColor: theme['color-primary-500'] }]}>
@@ -1139,17 +1114,52 @@ const Subscription = memo(() => {
             // Flat solid-blue hero card (gradient fill removed — reserved
             // for the homescreen XP card only) — see the isHero comment
             // above for why only ever one plan at a time qualifies.
-            return isHero ? (
-              <View key={planKey} style={[styles.planCardHero, styles.planCardHeroInner]}>
+            const card = isHero ? (
+              <View style={[styles.planCardHero, styles.planCardHeroInner]}>
                 {cardBody}
               </View>
             ) : (
               <Layout
-                key={planKey}
                 level="2"
                 style={[styles.planCard, isCurrent && { borderColor: theme['color-primary-500'], borderWidth: 2 }]}>
                 {cardBody}
               </Layout>
+            );
+            // BUG FIX (product report, screenshot: the gold "MOST POPULAR"
+            // ribbon's icon/text were getting cut off) -- this ribbon used
+            // to live INSIDE the card View above, which carries a real iOS
+            // shadow (shadowColor/shadowRadius/shadowOpacity, see
+            // globalStyle.ts's cardShadow) combined with a borderRadius.
+            // That combination makes RN's iOS renderer clip subviews to the
+            // card's own rounded bounds even with no explicit `overflow:
+            // hidden` anywhere -- a known RN/iOS shadow+borderRadius
+            // interaction, not something fixable by tuning the ribbon's own
+            // offset or margins (tried that -- moving the ribbon itself, or
+            // padding the content below it, doesn't help when the clip is
+            // happening at the shadowed card's own layer). Rendering the
+            // ribbon as a sibling of the card, inside this plain
+            // `planCardWrapper` View (no shadow, no radius, so nothing here
+            // clips), instead of a child of it, is what actually keeps it
+            // fully visible while it still visually pokes up over the
+            // card's top edge.
+            return (
+              <View key={planKey} style={[styles.planCardWrapper, isRecommended && styles.planCardWrapperWithRibbon]}>
+                {card}
+                {isRecommended ? (
+                  <View style={styles.popularRibbon}>
+                    <LinearGradient
+                      colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={styles.popularRibbonGradient}>
+                      <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
+                      <Text category="h10" bold numberOfLines={1} style={{ color: PRO_GOLD_TEXT }}>
+                        {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
+                      </Text>
+                    </LinearGradient>
+                  </View>
+                ) : null}
+              </View>
             );
           })}
         </View>
@@ -1181,6 +1191,18 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginBottom: 14,
+  },
+  // Plain, un-shadowed wrapper around each card -- see the popularRibbon
+  // usage site's own comment for why the ribbon has to live out here as a
+  // sibling of the card rather than inside it.
+  planCardWrapper: {
+    position: 'relative',
+  },
+  planCardWrapperWithRibbon: {
+    // Reserves the room the ribbon (positioned `top: 0` here, see
+    // popularRibbon below) needs before the actual card starts, since the
+    // ribbon itself ignores this wrapper's padding (position: 'absolute').
+    paddingTop: 14,
   },
   planCard: {
     ...globalStyle.card,
@@ -1215,7 +1237,7 @@ const themedStyles = StyleService.create({
   // popularRibbonHeroText variants needed.
   popularRibbon: {
     position: 'absolute',
-    top: -12,
+    top: 0,
     alignSelf: 'center',
     borderRadius: 999,
     zIndex: 2,
