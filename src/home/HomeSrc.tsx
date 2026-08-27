@@ -315,15 +315,20 @@ const HomeSrc = memo(() => {
   // literals) rather than memoized, same as the isFeatureEnabled checks
   // this replaces, which were previously inlined directly in JSX.
   const forYouShortcuts = [
-    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail') },
-    { key: 'roadmap', icon: Images.iconLocation, label: t('home:pill_roadmap', { defaultValue: 'Roadmap' }), onPress: () => navigate('CareerRoadmap') },
-    { key: 'dna', icon: Images.iconAiStars, label: t('home:pill_career_dna', { defaultValue: 'Career DNA' }), onPress: () => navigate('CareerDna') },
-    { key: 'companies', icon: Images.iconHandshake, label: t('home:quick_action_dream_company', { defaultValue: 'Companies' }), onPress: () => navigate('DreamCompanies') },
+    // Product request: "give the Today's Tips card the background color
+    // #272e3b" -- the only tile in this row with a custom fill; every
+    // other tile stays the default background-basic-color-2. See the
+    // render loop below for how backgroundColor (when present) also
+    // switches the label to white for contrast against the dark fill.
+    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail'), backgroundColor: '#272e3b' as string | undefined },
+    { key: 'roadmap', icon: Images.iconLocation, label: t('home:pill_roadmap', { defaultValue: 'Roadmap' }), onPress: () => navigate('CareerRoadmap'), backgroundColor: undefined as string | undefined },
+    { key: 'dna', icon: Images.iconAiStars, label: t('home:pill_career_dna', { defaultValue: 'Career DNA' }), onPress: () => navigate('CareerDna'), backgroundColor: undefined as string | undefined },
+    { key: 'companies', icon: Images.iconHandshake, label: t('home:quick_action_dream_company', { defaultValue: 'Companies' }), onPress: () => navigate('DreamCompanies'), backgroundColor: undefined as string | undefined },
     ...(configService.isFeatureEnabled('learning_courses')
-      ? [{ key: 'courses', icon: Images.iconGraduationCap, label: t('home:quick_action_courses', { defaultValue: 'Courses' }), onPress: () => navigate('LearningCourses') }]
+      ? [{ key: 'courses', icon: Images.iconGraduationCap, label: t('home:quick_action_courses', { defaultValue: 'Courses' }), onPress: () => navigate('LearningCourses'), backgroundColor: undefined as string | undefined }]
       : []),
     ...(configService.isFeatureEnabled('salary_negotiation')
-      ? [{ key: 'salary', icon: Images.iconCoins, label: t('home:quick_action_salary', { defaultValue: 'Salary' }), onPress: () => navigate('SalaryNegotiation') }]
+      ? [{ key: 'salary', icon: Images.iconCoins, label: t('home:quick_action_salary', { defaultValue: 'Salary' }), onPress: () => navigate('SalaryNegotiation'), backgroundColor: undefined as string | undefined }]
       : []),
   ];
 
@@ -1035,10 +1040,20 @@ const HomeSrc = memo(() => {
             <TouchableOpacity
               key={item.key}
               activeOpacity={0.7}
-              style={[styles.forYouTile, { marginRight: forYouGap }]}
+              style={[
+                styles.forYouTile,
+                { marginRight: forYouGap },
+                item.backgroundColor ? { backgroundColor: item.backgroundColor } : undefined,
+              ]}
               onPress={item.onPress}>
               <Image source={item.icon} style={styles.forYouTileIcon as ImageStyle} resizeMode="contain" />
-              <Text category="h10" bold center numberOfLines={1} mt={8}>
+              <Text
+                category="h10"
+                bold
+                center
+                numberOfLines={1}
+                mt={8}
+                style={item.backgroundColor ? styles.forYouTileTextLight : undefined}>
                 {item.label}
               </Text>
             </TouchableOpacity>
@@ -1426,6 +1441,12 @@ const themedStyles = StyleService.create({
   // Progress/shortcuts/Next Steps use this directly; Daily Challenge/
   // Career Fairs & Events cards bring their own internal card style and
   // just take forYouCardWidth via an inline width override instead).
+  // Product request: "reduce the box shadow on the For You cards" --
+  // local override AFTER the globalStyle.card spread, scoped to just
+  // this row's tiles rather than touching the shared token every other
+  // card app-wide also reads (same "don't touch card app-wide unless
+  // explicitly asked" scope discipline as every prior shadow/radius
+  // pass). Lighter opacity/radius/offset/elevation, same shadowColor.
   forYouTile: {
     ...globalStyle.card,
     width: 150,
@@ -1434,10 +1455,19 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'background-basic-color-2',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   forYouTileIcon: {
     width: 32,
     height: 32,
+  },
+  // White label for the "Today's Tips" tile's #272e3b custom fill (see
+  // forYouShortcuts above) -- same pattern as referralTileText below.
+  forYouTileTextLight: {
+    color: '#fff',
   },
   // Refer & Earn tile — same purple-to-black gradient as before (see this
   // style's own prior comment history in git for the full "why this

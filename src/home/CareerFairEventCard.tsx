@@ -67,6 +67,10 @@ const themedStyles = StyleService.create({
   // fill, hairline border, no shadow" reasoning this matches.
   // FULL RESKIN: stopped cancelling out globalStyle.card's own shadow —
   // see ContinueLearningCard.tsx's own comment on this exact same change.
+  // Product request: "reduce the box shadow on the For You cards" (this
+  // card only ever appears inside HomeSrc.tsx's "For You" row) — same
+  // lighter override HomeSrc.tsx's own forYouTile style applies, scoped
+  // here rather than touching the shared globalStyle.card token.
   card: {
     ...globalStyle.card,
     borderRadius: 16,
@@ -75,6 +79,10 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: 'background-basic-color-2',
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 1,
   },
   logoWrap: {
     marginRight: 10,
