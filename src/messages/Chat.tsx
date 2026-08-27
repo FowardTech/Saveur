@@ -121,7 +121,7 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
 const Chat = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t, i18n: i18nInstance } = useTranslation(["message", "common", "more"]);
-  const { width, bottom } = useLayout();
+  const { width, bottom, height, top } = useLayout();
   const { keyboardShow } = useKeyboard();
   const [messages, setMessages] = React.useState<CoachIMessage[]>([]);
   const [isSending, setIsSending] = React.useState(false);
@@ -628,8 +628,22 @@ const Chat = memo(() => {
     // auto-compensation for ListEmptyComponent doesn't reach a
     // no-props useCallback component like this one). Without the
     // scaleY(-1) below, the whole greeting renders upside down.
+    //
+    // BUG FIX (product report, with screenshot: "I thought i told you to
+    // move these 3 items up to the middle why are they still down") --
+    // emptyState's own `flex: 1` + `justifyContent: 'center'` only centers
+    // within whatever height ITS PARENT actually gives it, and GiftedChat's
+    // inverted-list empty-component slot doesn't reliably stretch to the
+    // full chat viewport -- it was sizing to content and then getting
+    // anchored toward the bottom (the "start" of an inverted list is
+    // visually the bottom of the screen), which is exactly why centering
+    // never took visible effect. An explicit height (the real available
+    // chat area: screen height minus the safe-area insets and a rough
+    // header+input-toolbar allowance) gives this box real room to center
+    // within, independent of whatever its parent does.
+    const emptyStateHeight = Math.max(320, height - top - bottom - 150);
     return (
-      <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
+      <View style={[styles.emptyState, { height: emptyStateHeight, transform: [{ scaleY: -1 }] }]}>
         {/* REVERTED (product report: "I did not say you should touch the
             chat icon in the AI career coach screen, i am talking about the
             AI career coach card chat icon in the homescreen" -- the
@@ -675,7 +689,7 @@ const Chat = memo(() => {
             Video Practice" row (see AttachItem below, onMakeCall). */}
       </View>
     );
-  }, [initialPrompt, topics, t, theme, styles]);
+  }, [initialPrompt, topics, t, theme, styles, height, top, bottom]);
 
   // Product request: "there are some other places too in the app that you
   // can add some of those icons i uploaded too" -- was the Saveur brand
@@ -1074,8 +1088,11 @@ const themedStyles = StyleService.create({
   // vertically centered in the now-taller empty space below, not pinned
   // to the very top. justifyContent: 'center' replaces the old
   // paddingTop tuning entirely.
+  // `height` is set explicitly at the render call site now (see
+  // renderChatEmpty's own BUG FIX comment) rather than relying on flex:1
+  // to fill a parent that doesn't reliably stretch to the full chat
+  // viewport.
   emptyState: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,

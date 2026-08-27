@@ -176,9 +176,12 @@ const themedStyles = StyleService.create({
   // absolutely-positioned LinearGradient layered behind `inner`'s real
   // content at the JSX call site (see the BUG FIX comment there for why
   // it's not `inner` itself).
+  // Product report: "move the hero card up a little bit" -- marginTop
+  // 16 -> 6, tightening the gap to whatever renders above it on Home
+  // (the For You pill row).
   outer: {
     ...globalStyle.card,
-    marginTop: 16,
+    marginTop: 6,
     backgroundColor: '#1F7BFF',
   },
   // Product report: "reduce the height of the hero card" (asked twice --

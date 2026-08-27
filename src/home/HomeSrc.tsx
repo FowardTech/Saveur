@@ -1433,10 +1433,12 @@ const themedStyles = StyleService.create({
   // 220 -> 160 -> 145 to match MissionHeroCard.tsx's own tightened
   // padding/spacing. Solid fallback fill (matches the gradient's first
   // stop) since this placeholder doesn't render the real LinearGradient.
+  // Product report: "move the hero card up a little bit" -- marginTop
+  // 16 -> 6, matching MissionHeroCard.tsx's own `outer` style.
   missionHeroLoading: {
     height: 145,
     borderRadius: 16,
-    marginTop: 16,
+    marginTop: 6,
     backgroundColor: '#1F7BFF',
     alignItems: 'center',
     justifyContent: 'center',
