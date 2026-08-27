@@ -1,7 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
-import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import { globalStyle } from 'styles/globalStyle';
@@ -64,11 +63,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 
   return (
     <View style={styles.outer}>
-      <LinearGradient
-        colors={['#2B8CFF', '#0047B3']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.inner}>
+      <View style={styles.inner}>
         {/* Badge + illustration sit side by side in normal flow (not
             absolutely positioned) so the illustration can never overlap
             the title/subtitle/meta/progress/CTA below it, regardless of
@@ -142,7 +137,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
             {ctaLabel}
           </Text>
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
     </View>
   );
 };
@@ -150,8 +145,9 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 export default MissionHeroCard;
 
 const themedStyles = StyleService.create({
-  // Two-layer split (shadow-casting outer / gradient-clipping inner), same
-  // construction GradientCard.tsx already established for this app.
+  // Two-layer split (shadow-casting outer / color-clipping inner), same
+  // construction GradientCard.tsx established for this app -- flat solid
+  // fill now (gradient removed per product request), same blue as before.
   outer: {
     ...globalStyle.card,
     marginTop: 16,
@@ -161,6 +157,7 @@ const themedStyles = StyleService.create({
     borderRadius: 24,
     padding: 18,
     overflow: 'hidden',
+    backgroundColor: '#0052D9',
   },
   // Badge (left) + illustration (right), both in normal flow -- see the
   // JSX's own comment on why the illustration moved out of absolute
