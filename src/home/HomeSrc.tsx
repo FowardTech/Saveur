@@ -14,9 +14,9 @@ import CareerFairEventCard from './CareerFairEventCard';
 import { SkeletonHomeCardRow } from 'components/Skeleton';
 import NextLessonHomeCard from './NextLessonHomeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { ArtGiftBox, ArtWorkplaceCompass, ArtMountainPeak, ArtStreakFlame } from './HomeHeroArt';
-import MissionHeroCard from 'components/MissionHeroCard';
-import StatMiniCard from 'components/StatMiniCard';
+import { ArtGiftBox, ArtWorkplaceCompass } from './HomeHeroArt';
+import StatStrip from 'components/StatStrip';
+import ActionCard from 'components/ActionCard';
 import CoachPromptCard from 'components/CoachPromptCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
@@ -976,80 +976,57 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* HOME REDESIGN v2 (product reference — a content-rich "Today's
-            Mission" hero, a Roadmap Progress / Current Streak stat pair,
-            and an AI Coach card with suggested prompts, "use this look
-            and feel throughout the whole app"). This is the very first
-            content section on the page (verify-email banner aside) —
-            replaces the plainer single-row "Ask your AI Career Coach"
-            hero from the prior pass (see git history) with real,
-            per-user content instead of one static CTA. See missionHero's
-            own computation above for the full priority chain (today's
-            Daily Challenge, falling back to the current AI Career Roadmap
-            step, falling back to a generic coach prompt) and why there's
-            no fabricated time/difficulty field. */}
+        {/* HOME REDESIGN v3 (product ask: "search dribbble/behance, structure
+            the app like top-rated 2026 apps" -- research landed on a
+            structured-dashboard direction: a clearly separated "data zone"
+            you read (StatStrip below) above an "actions zone" you act on
+            (ActionCard + CoachPromptCard), instead of v2's one big
+            illustrated hero mixing both. See StatStrip.tsx/ActionCard.tsx's
+            own comments for the full reasoning. MissionHeroCard/
+            StatMiniCard (v2's components) are unused now, not deleted --
+            same rollback-point convention as every prior redesign pass. */}
+
+        {/* Data zone -- real numbers only, same honest-zero-state
+            convention as before. "Day X of Y" from the original reference
+            screenshot isn't available (RoadmapStep has no day field, only
+            `order`), so this shows "Step X of Y" instead of a fabricated
+            day count; XP is gamificationService's own real streak.xp. */}
+        <StatStrip
+          items={[
+            {
+              label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
+              value: roadmap && currentRoadmapStep
+                ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
+                : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
+            },
+            {
+              label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
+              value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
+            },
+            {
+              label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
+              value: `${streak?.xp ?? 0}`,
+            },
+          ]}
+        />
+
+        {/* Actions zone -- one clear "next action" card (real priority
+            chain: today's Daily Challenge, falling back to the current AI
+            Career Roadmap step, falling back to a generic coach prompt --
+            see missionHero's own computation above), then the AI Coach
+            card with suggested prompts right below it. */}
         {missionHeroLoading ? (
           <View style={styles.missionHeroLoading}>
-            <Spinner status="control" />
+            <Spinner status="primary" />
           </View>
         ) : (
-          <MissionHeroCard
-            badgeIcon={missionHero.badgeIcon}
-            badgeLabel={missionHero.badgeLabel}
+          <ActionCard
+            icon={missionHero.badgeIcon}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
-            metaLeft={missionHero.metaLeft}
-            metaRight={missionHero.metaRight}
-            progressPercent={missionHero.progressPercent}
-            progressLabel={missionHero.progressLabel}
-            ctaLabel={missionHero.ctaLabel}
-            ctaIcon={missionHero.ctaIcon}
             onPress={missionHero.onPress}
           />
         )}
-
-        {/* Roadmap Progress / Current Streak -- real numbers (roadmapPercent/
-            currentRoadmapStep from the effect above, streak from its own
-            effect above), same honest-zero-state convention as everything
-            else on this screen. "Day X of Y" from the reference isn't
-            available (RoadmapStep has no day field, only `order` — see
-            missionHero's own roadmap tier above), so this card shows
-            "Step X of Y" instead of a fabricated day count. */}
-        <Flex justify="space-between" mt={16}>
-          <StatMiniCard
-            icon="trending-up-outline"
-            iconTint="#0052D9"
-            title={t('home:roadmap_progress_stat_title', { defaultValue: 'Roadmap Progress' })}
-            value={
-              roadmap && currentRoadmapStep
-                ? t('home:roadmap_progress_stat_value', { defaultValue: 'Step {{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
-                : t('home:roadmap_progress_stat_value_none', { defaultValue: 'Not started' })
-            }
-            valueColor="#0052D9"
-            caption={
-              roadmap
-                ? t('home:roadmap_progress_stat_caption', { defaultValue: 'Complete each step to reach {{role}}.', role: roadmap.targetRole })
-                : t('home:roadmap_progress_stat_caption_none', { defaultValue: 'Build a roadmap to start tracking progress.' })
-            }
-            progressPercent={roadmapPercent}
-            progressColor="#0052D9"
-            backgroundColor="#E8F0FF"
-            illustration={<ArtMountainPeak size={40} />}
-            onPress={() => navigate('CareerRoadmap')}
-            style={{ marginRight: 12 }}
-          />
-          <StatMiniCard
-            icon="flash-outline"
-            iconTint="#B45309"
-            title={t('home:streak_stat_title', { defaultValue: 'Current Streak' })}
-            value={t('home:streak_stat_value', { defaultValue: '{{count}} Days', count: streak?.streakDays ?? 0 })}
-            valueColor="#B45309"
-            caption={t('home:streak_stat_caption', { defaultValue: 'Keep it going to unlock more badges.' })}
-            backgroundColor="#FFF3E0"
-            illustration={<ArtStreakFlame size={40} />}
-            onPress={() => navigate('Leaderboard')}
-          />
-        </Flex>
 
         {/* AI Coach card -- see coachPrompts above for the exact starter
             list and CoachPromptCard.tsx's own comment for how a tap
@@ -1407,20 +1384,19 @@ const themedStyles = StyleService.create({
   // git history for any of those styles' own prior comment history if a
   // future pass wants the old section-per-item layout back.
   //
-  // HOME REDESIGN v2 — replaces the plainer single-row coachHero/
-  // coachHeroIconWrap/coachHeroText/coachHeroSubText from the prior pass
-  // (now dead, see git history) with a loading placeholder for the new
-  // MissionHeroCard (the card itself owns its own styling — see
-  // components/MissionHeroCard.tsx — this is only shown for the brief
-  // window before missionHeroLoading resolves).
+  // HOME REDESIGN v3 — loading placeholder for the new ActionCard (see
+  // components/ActionCard.tsx), sized/styled to match its own flat,
+  // hairline-bordered row-card shape instead of v2's big colored block —
+  // only shown for the brief window before missionHeroLoading resolves.
   missionHeroLoading: {
-    height: 240,
+    height: 68,
     borderRadius: 16,
-    marginTop: 16,
-    backgroundColor: 'color-primary-500',
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.15)',
+    marginTop: 12,
+    backgroundColor: 'background-basic-color-2',
     alignItems: 'center',
     justifyContent: 'center',
-    ...globalStyle.shadowFade,
   },
   // Collapsed Continue card — full row width now (was topCardWidth's
   // fixed half-width, back when three of these sat side by side).

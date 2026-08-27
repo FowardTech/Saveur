@@ -65,10 +65,17 @@ const CoachPromptCard: React.FC<CoachPromptCardProps> = ({ title, subtitle, prom
 export default CoachPromptCard;
 
 const themedStyles = StyleService.create({
+  // STRUCTURED DASHBOARD REDESIGN (see StatStrip.tsx/ActionCard.tsx's own
+  // comments) -- flat hairline-bordered card instead of globalStyle.card's
+  // floating shadow, matching those two new components' restraint so the
+  // whole actions zone reads as one consistent flat system rather than
+  // mixing shadow-cards and flat-cards on the same screen.
   card: {
-    ...globalStyle.card,
     padding: 16,
-    marginTop: 24,
+    marginTop: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.15)',
     backgroundColor: 'background-basic-color-2',
   },
   headerRow: {
