@@ -358,7 +358,14 @@ const CareerRoadmap = memo(() => {
                 gradientTo="#0052D9"
                 style={styles.statsRing}>
                 <Text category="h7" bold>{roadmapPercent}%</Text>
-                <Text category="h10" status="placeholder" mt={2}>
+                {/* Product report: "reduce the font size of the complete
+                    text its touching the round progress bar" -- h10 (14px,
+                    already this app's smallest heading step) still didn't
+                    leave enough room inside the 84px ring alongside the
+                    "29%" line above it. Explicit fontSize={10}/lineHeight
+                    override (Text.tsx supports both) rather than a new,
+                    smaller category just for this one label. */}
+                <Text category="h10" status="placeholder" fontSize={10} lineHeight={12} mt={1}>
                   {t('more:roadmap_complete_label', { defaultValue: 'Complete' })}
                 </Text>
               </CircularProgress>
@@ -620,10 +627,15 @@ const themedStyles = StyleService.create({
     padding: 12,
   },
   // Donut + 2x2 stat-grid header (see the statsCard JSX above for what
-  // each tile shows). Plain globalStyle.card, same shadow/radius as every
-  // other neutral (non-pastel-fill) card in this app.
+  // each tile shows). globalStyle.card gives the shadow; product report
+  // ("I thought the container covering this progress stat has a border.
+  // Give it a shadow and a border") adds globalStyle.cardBorder on top --
+  // that's this app's existing hairline-border token, kept around
+  // specifically for cards that want both (see its own comment in
+  // styles/globalStyle.ts), rather than a one-off border value here.
   statsCard: {
     ...globalStyle.card,
+    ...globalStyle.cardBorder,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
