@@ -273,14 +273,16 @@ const MainBottomTab = memo(() => {
             )
           ) : null}
           {/* Redesign v2 (full reskin, "screenshot 3" reference —
-              "colorful pill bottom nav"): the active tab's icon now sits on
-              a filled brand-blue pill instead of the earlier flat black/
-              gray monochrome look (which itself replaced an even older
-              plain-blue-tint icon). Icon tints white on the pill so it
-              stays legible against the solid fill; inactive icons keep the
-              same neutral placeholder tint as before. Not pink — the
-              reskin reference's color is swapped for Saveur's own brand
-              blue (color-primary-100) per explicit instruction. */}
+              "colorful pill bottom nav"): the active tab's icon sits on a
+              filled pill instead of the earlier flat black/gray monochrome
+              look. Was brand-blue with a white icon; explicit follow-up
+              ("the active tab background color should not be blue, it
+              should be light gray and the icon black") swapped the pill to
+              a neutral light-gray fill with a black icon instead — icon
+              tint changed from text-primary-color (white, only legible on
+              a dark/blue fill) to text-basic-color (this app's near-black)
+              to match. Inactive icons keep the same neutral placeholder
+              tint as before. */}
           <View style={focused ? styles.activePill : undefined}>
             <Icon
               pack="assets"
@@ -289,7 +291,7 @@ const MainBottomTab = memo(() => {
                 width: 22,
                 height: 22,
                 tintColor: focused
-                  ? theme["text-primary-color"]
+                  ? theme["text-basic-color"]
                   : theme["text-placeholder-color"],
               }}
             />
@@ -452,7 +454,14 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   tabBarStyle: {
-    overflow: "hidden",
+    // BUG FIX (product report: "the chat icon in the bottom tab and the
+    // rounded blue container are cut off") -- `overflow: "hidden"` was
+    // clipping the Coach FAB circle (fabCircle below), which deliberately
+    // floats ABOVE this bar's own top edge via a negative marginTop. A
+    // View's solid backgroundColor already follows borderTopLeftRadius/
+    // borderTopRightRadius on its own in React Native without needing
+    // overflow:hidden to clip to it, so the rounded-corner look below is
+    // unaffected by removing this.
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     marginTop: -46,
@@ -497,12 +506,14 @@ const themedStyles = StyleService.create({
     borderWidth: 4,
     borderColor: "background-basic-color-2",
   },
-  // The colored pill behind the active tab's icon (see ButtonTab above).
+  // The pill behind the active tab's icon (see ButtonTab above) -- light
+  // gray fill + black icon (was brand blue + white icon; explicit
+  // follow-up, see ButtonTab's own comment).
   activePill: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "color-primary-100",
+    backgroundColor: "background-basic-color-3",
     justifyContent: "center",
     alignItems: "center",
   },
