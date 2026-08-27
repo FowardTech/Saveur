@@ -16,7 +16,7 @@ import NextLessonHomeCard from './NextLessonHomeCard';
 import AnnouncementBanner from './AnnouncementBanner';
 import { ArtGiftBox, ArtWorkplaceCompass } from './HomeHeroArt';
 import StatStrip from 'components/StatStrip';
-import ActionCard from 'components/ActionCard';
+import MissionHeroCard from 'components/MissionHeroCard';
 import CoachPromptCard from 'components/CoachPromptCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
@@ -1096,12 +1096,15 @@ const HomeSrc = memo(() => {
         {/* HOME REDESIGN v3 (product ask: "search dribbble/behance, structure
             the app like top-rated 2026 apps" -- research landed on a
             structured-dashboard direction: a clearly separated "data zone"
-            you read (StatStrip below) above an "actions zone" you act on
-            (ActionCard + CoachPromptCard), instead of v2's one big
-            illustrated hero mixing both. See StatStrip.tsx/ActionCard.tsx's
-            own comments for the full reasoning. MissionHeroCard/
-            StatMiniCard (v2's components) are unused now, not deleted --
-            same rollback-point convention as every prior redesign pass. */}
+            you read (StatStrip below) above an "actions zone" you act on.
+            See StatStrip.tsx's own comments for the full reasoning.
+            ActionCard (this zone's brief flat-row replacement) is unused
+            now, not deleted -- same rollback-point convention as every
+            prior redesign pass.
+            RESTORED (product report: "bring back this hero card", with
+            the original reference screenshot attached) -- the actions
+            zone's "next action" slot is MissionHeroCard again instead of
+            ActionCard's flat row. */}
 
         {/* Data zone -- real numbers only, same honest-zero-state
             convention as before. "Day X of Y" from the original reference
@@ -1140,13 +1143,20 @@ const HomeSrc = memo(() => {
             card with suggested prompts right below it. */}
         {missionHeroLoading ? (
           <View style={styles.missionHeroLoading}>
-            <Spinner status="primary" />
+            <Spinner status="control" />
           </View>
         ) : (
-          <ActionCard
-            icon={missionHero.badgeIcon}
+          <MissionHeroCard
+            badgeIcon={missionHero.badgeIcon}
+            badgeLabel={missionHero.badgeLabel}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
+            metaLeft={missionHero.metaLeft}
+            metaRight={missionHero.metaRight}
+            progressPercent={missionHero.progressPercent}
+            progressLabel={missionHero.progressLabel}
+            ctaLabel={missionHero.ctaLabel}
+            ctaIcon={missionHero.ctaIcon}
             onPress={missionHero.onPress}
           />
         )}
@@ -1417,17 +1427,15 @@ const themedStyles = StyleService.create({
   // git history for any of those styles' own prior comment history if a
   // future pass wants the old section-per-item layout back.
   //
-  // HOME REDESIGN v3 — loading placeholder for the new ActionCard (see
-  // components/ActionCard.tsx), sized/styled to match its own flat,
-  // hairline-bordered row-card shape instead of v2's big colored block —
-  // only shown for the brief window before missionHeroLoading resolves.
+  // RESTORED (see the render call site's own comment) -- back to
+  // MissionHeroCard's own colored-block footprint instead of the flat
+  // ActionCard placeholder this briefly was. Only shown for the brief
+  // window before missionHeroLoading resolves.
   missionHeroLoading: {
-    height: 68,
+    height: 220,
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
-    marginTop: 12,
-    backgroundColor: 'background-basic-color-2',
+    marginTop: 16,
+    backgroundColor: '#0052D9',
     alignItems: 'center',
     justifyContent: 'center',
   },

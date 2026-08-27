@@ -146,19 +146,21 @@ export default MissionHeroCard;
 
 const themedStyles = StyleService.create({
   // Two-layer split (shadow-casting outer / color-clipping inner), same
-  // construction GradientCard.tsx established for this app. Dark
-  // slate-navy fill (product request: "change the background of the hero
-  // card from blue to #272e3b") -- was the flat brand blue, #0052D9.
+  // construction GradientCard.tsx established for this app. RESTORED
+  // (product report: "bring back this hero card" -- with the original
+  // reference screenshot attached, which is blue, not the dark
+  // slate-navy #272e3b this had been changed to for one stretch of this
+  // app's history) -- back to the flat brand blue, #0052D9.
   outer: {
     ...globalStyle.card,
     marginTop: 16,
-    backgroundColor: '#272e3b',
+    backgroundColor: '#0052D9',
   },
   inner: {
     borderRadius: 16,
     padding: 18,
     overflow: 'hidden',
-    backgroundColor: '#272e3b',
+    backgroundColor: '#0052D9',
   },
   // Badge (left) + illustration (right), both in normal flow -- see the
   // JSX's own comment on why the illustration moved out of absolute
