@@ -888,7 +888,7 @@ const themedStyles = StyleService.create({
   },
   rejectedBox: {
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: 'color-warning-transparent-200',
   },
@@ -911,7 +911,7 @@ const themedStyles = StyleService.create({
   // Plain success-tinted card (gradient fill removed).
   curriculumDoneBox: {
     marginBottom: 8,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: 'color-success-transparent-200',
   },
   curriculumDoneBoxInner: {

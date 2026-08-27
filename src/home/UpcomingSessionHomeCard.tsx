@@ -234,7 +234,7 @@ const themedStyles = StyleService.create({
   // larger, softer corner language.
   card: {
     ...globalStyle.card,
-    borderRadius: 8,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

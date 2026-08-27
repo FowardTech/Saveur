@@ -86,7 +86,7 @@ const themedStyles = StyleService.create({
   content: {
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
     ...globalStyle.shadow,
     flexDirection: 'row',

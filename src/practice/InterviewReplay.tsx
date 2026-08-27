@@ -492,7 +492,7 @@ const themedStyles = StyleService.create({
     // video was recorded through that exact same front-camera view, so
     // played back at the same aspect ratio it was shot in.
     aspectRatio: 3 / 4,
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#000',
     marginBottom: 20,

@@ -688,7 +688,7 @@ const themedStyles = StyleService.create({
   },
   completeBanner: {
     marginBottom: 20,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: 'color-success-transparent-200',
   },
   completeBannerInner: {

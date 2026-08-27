@@ -209,7 +209,7 @@ const themedStyles = StyleService.create({
     paddingVertical: 80,
   },
   card: {
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 18,
   },
   // Icon-in-circle avatar (reference-redesign follow-up) -- same soft

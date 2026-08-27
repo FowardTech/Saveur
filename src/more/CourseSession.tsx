@@ -874,7 +874,7 @@ const themedStyles = StyleService.create({
     width: '100%',
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: 'color-success-transparent-200',
   },
   certCardInner: {

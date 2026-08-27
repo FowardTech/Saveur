@@ -611,7 +611,7 @@ const themedStyles = StyleService.create({
   // Plain success-tinted card (gradient fill removed).
   completeBanner: {
     marginBottom: 20,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: 'color-success-transparent-200',
   },
   completeBannerInner: {

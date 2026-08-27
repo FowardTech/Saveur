@@ -60,7 +60,7 @@ const InfoBox = memo(({icon, iconPack = 'eva', children, variant = 'neutral', st
       style={[
         {
           backgroundColor: bg,
-          borderRadius: 8,
+          borderRadius: 16,
           padding: 12,
         },
         variant === 'info' && {

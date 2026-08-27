@@ -1580,7 +1580,7 @@ const styles = StyleSheet.create({
   cameraWrap: {
     width: '100%',
     aspectRatio: 3 / 4,
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#000',
   },

@@ -741,12 +741,12 @@ const themedStyles = StyleService.create({
   testCaseRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 14,
     marginBottom: 10,
   },
   testBadge: {
-    borderRadius: 8,
+    borderRadius: 16,
     paddingVertical: 4,
     paddingHorizontal: 10,
     marginLeft: 12,
@@ -808,7 +808,7 @@ const editorChromeStyles = StyleSheet.create({
   sectionIconBadge: {
     width: 26,
     height: 26,
-    borderRadius: 8,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },

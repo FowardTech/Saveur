@@ -113,7 +113,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 8,
+    borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
   },

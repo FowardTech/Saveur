@@ -445,7 +445,7 @@ const themedStyles = StyleService.create({
   tipRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 12,
   },

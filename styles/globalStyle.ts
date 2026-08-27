@@ -176,8 +176,19 @@ export const globalStyle = StyleSheet.create({
   // separately in constants/theme/light.json's `background-page-body`
   // (#F0F0F0 -> #F5F6F8) — not here, since that's a background-color
   // token, not a shape one.
+  // FOLLOW-UP (explicit product request: "make the border radius of the
+  // cards 16px and the app background white") — 8 -> 16, same 46-file
+  // sweep re-applied on top of this token (every local `borderRadius: 8`
+  // override that pass introduced moved to 16 too, in one shot via the
+  // exact file list from that commit rather than a fresh app-wide grep,
+  // so nothing unrelated that happens to also be at 8px got touched).
+  // `background-page-body` moved again too, #F5F6F8 -> #FFFFFF (see
+  // light.json) — same color as a level=2 card now, but cardShadow above
+  // is already tuned for exactly that "zero page/card color contrast,
+  // shadow is the only thing defining a card" scenario (see this file's
+  // own "RESTORED" comment on cardShadow, written for that exact case).
   card: {
-    borderRadius: 8,
+    borderRadius: 16,
     ...cardShadow,
   },
   // Retained for any screen that explicitly wants the old hairline-border

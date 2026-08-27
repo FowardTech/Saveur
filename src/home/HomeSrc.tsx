@@ -1337,7 +1337,7 @@ const themedStyles = StyleService.create({
   // own comment), rather than the outlined-card treatment other design
   // systems favor for alerts.
   verifyBanner: {
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
     marginTop: 16,
     backgroundColor: 'rgba(180, 83, 9, 0.1)',
@@ -1363,7 +1363,7 @@ const themedStyles = StyleService.create({
     // and disturbing the no-banner-shown spacing too.
     marginTop: 16,
     marginBottom: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   // Real admin-uploaded image variant. Fixed aspect ratio rather than an
@@ -1384,7 +1384,7 @@ const themedStyles = StyleService.create({
   homeBannerFallback: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
@@ -1415,7 +1415,7 @@ const themedStyles = StyleService.create({
   // window before missionHeroLoading resolves).
   missionHeroLoading: {
     height: 240,
-    borderRadius: 8,
+    borderRadius: 16,
     marginTop: 16,
     backgroundColor: 'color-primary-500',
     alignItems: 'center',

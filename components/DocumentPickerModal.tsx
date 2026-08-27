@@ -126,7 +126,7 @@ const themedStyles = StyleService.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 8,
   },

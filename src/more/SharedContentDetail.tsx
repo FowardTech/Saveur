@@ -282,7 +282,7 @@ const themedStyles = StyleService.create({
     // Matches `card` above's own radius (now inherited from
     // styles/globalStyle.ts's `card` -- 14 -> 20, Google-style furnishing
     // pass) so this inner clip aligns with the outer card's rounded edge.
-    borderRadius: 8,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   video: {

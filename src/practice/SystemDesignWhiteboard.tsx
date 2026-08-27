@@ -304,7 +304,7 @@ const themedStyles = StyleService.create({
     marginTop: 4,
     marginBottom: 12,
     padding: 12,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: 'rgba(0, 99, 248, 0.08)',
   },
   card: {

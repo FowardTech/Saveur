@@ -500,7 +500,7 @@ const Chat = memo(() => {
         primaryStyle={{
           alignItems: "center",
           backgroundColor: theme["background-basic-color-3"],
-          borderRadius: 8,
+          borderRadius: 16,
           marginRight: 16,
           marginTop: 8,
           marginBottom: Platform.OS === "android" ? 8 : 24,
@@ -1293,7 +1293,7 @@ const themedStyles = StyleService.create({
     // one connected block with the pill right above it.
     marginTop: 84,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
   },
   emptySuggestedIconWrap: {

@@ -69,7 +69,7 @@ const themedStyles = StyleService.create({
   // see ContinueLearningCard.tsx's own comment on this exact same change.
   card: {
     ...globalStyle.card,
-    borderRadius: 8,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

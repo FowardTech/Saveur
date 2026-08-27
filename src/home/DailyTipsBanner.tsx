@@ -112,7 +112,7 @@ const themedStyles = StyleService.create({
   // own 24px since this is a much shorter single-row card.
   card: {
     ...globalStyle.card,
-    borderRadius: 8,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

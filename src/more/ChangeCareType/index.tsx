@@ -221,7 +221,7 @@ const themedStyles = StyleService.create({
     // the rest of the app's cards). Google-style furnishing pass (see
     // styles/globalStyle.ts's `card`) -- 14 -> 20, matching every other
     // card in the app again.
-    borderRadius: 8,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },

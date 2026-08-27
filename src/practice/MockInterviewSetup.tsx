@@ -811,7 +811,7 @@ const themedStyles = StyleService.create({
     borderWidth: 2,
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 8,
+    borderRadius: 16,
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 8,
@@ -827,7 +827,7 @@ const themedStyles = StyleService.create({
   personaCard: {
     width: '48%',
     borderWidth: 2,
-    borderRadius: 8,
+    borderRadius: 16,
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 8,
