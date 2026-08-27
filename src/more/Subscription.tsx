@@ -1235,13 +1235,23 @@ const themedStyles = StyleService.create({
   // plain white/dark card and the solid-blue hero card since it doesn't
   // depend on either background — no more separate popularRibbonHero/
   // popularRibbonHeroText variants needed.
+  // BUG FIX (product report, screenshot: "MOST POPUL[AR]" text getting cut
+  // off mid-word) -- this used to be `alignSelf: 'center'` on the pill
+  // itself while absolutely positioned with no `left`/`right`/`width` --
+  // RN can end up constraining an auto-sized absolutely-positioned view's
+  // cross-axis size to near-zero in that setup instead of letting it size
+  // to its own content. Spanning the full card width here (`left: 0, right:
+  // 0`) and centering the actual pill as an ordinary flex child
+  // (`alignItems: 'center'` below) instead lets the pill size itself off
+  // its own icon+text content, the standard/reliable way to center an
+  // intrinsically-sized badge inside an absolute overlay.
   popularRibbon: {
     position: 'absolute',
     top: 0,
-    alignSelf: 'center',
-    borderRadius: 999,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
     zIndex: 2,
-    ...globalStyle.shadowFade,
   },
   popularRibbonGradient: {
     borderRadius: 999,
@@ -1249,6 +1259,9 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     paddingVertical: 5,
     paddingHorizontal: 14,
+    // Shadow moved here from popularRibbon above -- that View is now just
+    // a full-width invisible positioning layer, not the visible pill shape.
+    ...globalStyle.shadowFade,
   },
   // Same gold gradient, compact pill, sits inline next to the yearly
   // plan's price (see savingsPercent above) — reference: "Save 77%" badge.
