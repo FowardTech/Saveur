@@ -85,7 +85,14 @@ function mapRoadmap(raw: WireRoadmap): CareerRoadmap {
 /** GET /api/v1/roadmap — the learner's already-saved roadmap, if any. */
 export async function getSavedRoadmap(): Promise<CareerRoadmap | null> {
   try {
-    const { data } = await apiClient.get<{ roadmap: WireRoadmap | null }>('/api/v1/roadmap');
+    // BUG FIX -- was missing `language`, unlike generateRoadmap() below.
+    // Note: this alone may not be enough (see docs/BACKEND_SPEC_ADDENDUM_
+    // 2026-07.md's new §21) -- a roadmap is generated once and stored, so
+    // the backend also needs to actually re-translate an already-generated
+    // roadmap's step text on GET, not just accept the param.
+    const { data } = await apiClient.get<{ roadmap: WireRoadmap | null }>('/api/v1/roadmap', {
+      params: { language: currentLanguage() },
+    });
     return data.roadmap ? mapRoadmap(data.roadmap) : null;
   } catch {
     return null;

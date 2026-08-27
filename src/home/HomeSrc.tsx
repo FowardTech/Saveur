@@ -332,6 +332,11 @@ const HomeSrc = memo(() => {
     ...(configService.isFeatureEnabled('salary_negotiation')
       ? [{ key: 'salary', icon: Images.iconCoins, label: t('home:quick_action_salary', { defaultValue: 'Salary' }), onPress: () => navigate('SalaryNegotiation'), gradientColors: undefined as [string, string] | undefined }]
       : []),
+    // Product request: "add leaderboard to the for you button pills that
+    // navigates to the leaderboard screen" -- same illustrated trophy
+    // graphic Leaderboard.tsx's own #1 podium spot uses (Images.trophy),
+    // rather than a generic Eva icon.
+    { key: 'leaderboard', icon: Images.trophy, label: t('home:pill_leaderboard', { defaultValue: 'Leaderboard' }), onPress: () => navigate('Leaderboard'), gradientColors: undefined as [string, string] | undefined },
   ];
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
@@ -1091,27 +1096,13 @@ const HomeSrc = memo(() => {
             </TouchableOpacity>
           ))}
 
-          {/* Refer & Earn -- same purple-to-black gradient/copy/
-              destination as before, condensed to this row's pill shape
-              (see forYouTile/forYouTileGradientClip/referralTileText
-              below). */}
-          {configService.isFeatureEnabled('referral_program') ? (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={[styles.forYouTile, styles.forYouTileGradientClip, { marginRight: forYouGap }]}
-              onPress={() => navigate('ReferralProgram')}>
-              <LinearGradient
-                colors={['#8B5CF6', '#5e40a2ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <ArtGiftBox size={20} />
-              <Text category="h10" bold numberOfLines={1} ml={8} style={styles.referralTileText}>
-                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
+          {/* Refer & Earn -- REMOVED from this row (product request: "remove
+              the referral pill from the for you pill and place a gift icon
+              beside the notification bell that navigates to the referral
+              screen instead" -- see the header's bell row below for the new
+              entry point). ArtGiftBox/referralTileText/the gradient clip
+              styles stay on disk, unused by this pill now -- same
+              rollback-point convention as every other redesign pass here. */}
 
           {/* Next Steps -- same destination (src/more/WhatsNext.tsx) as
               before, last in the row as the least time-sensitive item. */}

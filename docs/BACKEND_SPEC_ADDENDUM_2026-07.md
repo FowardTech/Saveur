@@ -567,3 +567,80 @@ GET /api/v1/job-alerts/<id>?language=zh
 
 (uses the literal field name `language`, not `responseLanguage` — this domain has no existing
 *programming*-language field to collide with, so it follows §16b's default convention.)
+
+### §21. Round 2 of the whole-app translation audit — more backend content sources, and one real "wired but not honored" finding
+
+A second live-testing pass on a Chinese-locale device (more screenshots) found several more spots
+still rendering English. Client-side is now fully audited and fixed everywhere a param was
+genuinely missing; what's left is entirely backend work. Grouping by root cause:
+
+**A. Endpoints where the client was missing the param (now fixed, client-side complete):**
+
+- `GET /api/v1/coding/problems` (`codingService.listProblems()`, the practice-hub problem list +
+  topic-pill source) — now sends `responseLanguage`, matching its siblings `getProblem()`/
+  `getNextProblem()` (§20 above already covers those two).
+- `GET /api/v1/roadmap` (`roadmapService.getSavedRoadmap()`, i.e. every load of an
+  already-generated Career Roadmap) — now sends `language`. **Important:** this alone probably
+  isn't sufficient — a roadmap is generated once server-side and stored (`generateRoadmap()`'s own
+  "first-write-wins" docstring), so simply accepting `language` on the GET won't retroactively
+  translate step titles/descriptions that were already generated in English. The backend needs to
+  either re-translate stored step text on GET when the requested language differs from the
+  generation-time language, or regenerate/re-translate lazily on first mismatched-language fetch.
+- `GET /api/v1/notifications` (`notificationService.listNotifications()`) — now sends `language`.
+  Same caveat as roadmap: notification title/message are backend-authored per-notification (no
+  client templating at all, confirmed in `src/home/Notification/*.tsx` — `{item.title}`/
+  `{item.message}` render raw), and were generated once at notification-creation time. The
+  "Today's goal tip" / "Today's Surprise Challenge" notification kinds rendered in English while a
+  same-screen "industry news ready" notification rendered correctly in Chinese — meaning
+  whatever's generating those first two kinds isn't honoring the user's `profile.locale` at
+  creation time yet, even though it evidently works for the industry-news kind. Worth diffing
+  those notification-generation code paths against each other.
+
+**B. Confirmed correctly wired client-side, backend not translating (no client fix possible):**
+
+- `POST /api/v1/whats-next/generate` (`whatsNextService.generatePlan()`) already sends `language`
+  — the negotiation talking points ("Leverage Amazon's Total Compensation Model" etc.,
+  `plan.negotiationPoints`) still come back in English. Backend needs to actually use the field for
+  this response section, not just accept it.
+- `GET /api/v1/billing/addons` (`billingService.listAddons()`) already sends `language` (§14) —
+  addon catalog title/description (e.g. "Coding Practice" / "Unlimited AI-led coding interview
+  practice sessions.") still English. Backend catalog entries need per-language content or a
+  translation pass, not just accepting the param.
+
+**C. New finding — a real bug, not just "not yet implemented": Upcoming Features / FAQ / About all share one broken translation path.**
+
+All three ("Saveur Collabo" teaser card on Home → really `UpcomingFeatures.tsx`'s
+`upcoming_features.items`, the FAQ screen, and the About screen) read from the same
+`GET /api/v1/content/config?language=zh` call (`configService.loadAppConfig()`). Every client-side
+mechanism was re-verified and is correct: the param is sent, `i18n`'s `languageChanged` listener
+re-calls `loadAppConfig()` on every language switch, and all three screens subscribe to config
+updates and re-render on a fresh fetch (`configService.subscribe()`). Despite that, content still
+renders 100% in English for all three — including one detail worth noting specifically: on the
+Upcoming Features teaser, the item's **subtitle** rendered correctly in Chinese while the **title**
+right next to it stayed English, which suggests the backend's translation pass over this admin
+content is applying inconsistently field-by-field, not just "not implemented yet." This needs
+backend-side debugging of whatever translates `about`/`faq`/`upcoming_features` inside
+`GET /api/v1/content/config` — the existing code comment claiming "backend already translates
+faq/about server-side" does not currently match observed behavior.
+
+### §22. `POST /api/v1/jd/analyze` + `POST /api/v1/jd/match` — JD Analyzer returning a raw 500
+
+Reported: JD Analyzer's "Analyze" button fails with a 500. Client-side request bodies for both
+calls (`services/jdService.ts`'s `analyzeJD()`/`matchJD()`, called together by
+`analyzeJobDescription()`) are well-formed — `{jd_text, language}`, no missing/malformed fields,
+and this isn't a recent client-side regression (neither `jdService.ts` nor `JDAnalyzer.tsx` has
+been touched in the pass that introduced the other issues in this document). Since it's a raw 500
+(not a 4xx), `apiClient.ts`'s response interceptor has no structured `{message}`/`{detail}`/
+`{error}` body to surface, so the user just sees a generic failure alert — the real error detail
+only exists in your backend logs.
+
+**Strongest lead:** `matchJD()`'s own docstring says it "compares a pasted job description against
+the user's stored resume." `JDAnalyzer.tsx` calls `analyzeJobDescription()` (and therefore
+`matchJD()`) unconditionally on every "Analyze" tap — there's no client-side guard checking whether
+the user actually has a resume on file first. If `/api/v1/jd/match` doesn't handle "no resume
+uploaded yet" as a clean, expected case (e.g. it tries to load/parse a resume record that doesn't
+exist and throws instead of returning a handled 4xx or a match with `missing_skills: []`), that
+would reproduce exactly this symptom for any user who opens JD Analyzer before ever generating or
+uploading a resume. Recommend checking server logs for the actual stack trace to confirm, and
+either way hardening that endpoint to return a proper 4xx (e.g. "Upload a resume first") instead of
+a raw 500 when the precondition isn't met.

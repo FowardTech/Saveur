@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {Image, View} from 'react-native';
-import {StyleService, useStyleSheet} from '@ui-kitten/components';
+import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
 import Text from 'components/Text';
@@ -44,7 +44,15 @@ const HeaderHome = memo(
     // request: "Replace the trophy icon... with image 2"), not a generic
     // Eva glyph, so both surfaces read as the same illustrated trophy.
     const _onLeaderboard = () => navigate('Leaderboard');
+    // Product request: "remove the referral pill from the for you pill and
+    // place a gift icon beside the notification bell that navigates to the
+    // referral screen" -- same gift-outline glyph the referral screen
+    // itself already used before its own illustrated-gift-box redesign
+    // (see ReferralProgram.tsx/DailyChallengeCard.tsx's own use of this
+    // exact icon), same trophy-button construction as _onLeaderboard above.
+    const _onReferral = () => navigate('ReferralProgram');
     const {t} = useTranslation(['home', 'common']);
+    const theme = useTheme();
     return (
       <Flex justify="space-between" itemsCenter mh={24} mt={24} mb={8}>
         {/* Redesign (product follow-up, ZipRecruiter reference screenshot —
@@ -77,6 +85,9 @@ const HeaderHome = memo(
         </View>
         <Flex onPress={_onLeaderboard} style={[styles.button, styles.trophyButton]}>
           <Image source={Images.trophy} style={styles.trophyIcon} resizeMode="contain" />
+        </Flex>
+        <Flex onPress={_onReferral} style={[styles.button, styles.trophyButton]}>
+          <Icon pack="eva" name="gift-outline" style={[styles.trophyIcon, {tintColor: theme['text-basic-color']}]} />
         </Flex>
         <Flex onPress={_onNotification} style={styles.button}>
           <NavigationAction

@@ -1,7 +1,12 @@
 import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {EKeyAsyncStorage, NotificationProps} from 'constants/Types';
 import apiClient from './apiClient';
+
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // notificationService — real backend implementation.
@@ -148,7 +153,14 @@ const writeCache = async (notifications: NotificationProps[]): Promise<void> => 
  */
 export async function listNotifications(): Promise<NotificationProps[]> {
   try {
-    const {data} = await apiClient.get<NotificationWire[]>('/api/v1/notifications');
+    // Sent proactively -- notification title/message are 100% backend-
+    // authored (see docs/BACKEND_SPEC_ADDENDUM_2026-07.md's new §21).
+    // This only helps if the backend also translates on GET; notifications
+    // that were already generated in English at creation time likely need
+    // a separate backend fix at generation time, not just this fetch.
+    const {data} = await apiClient.get<NotificationWire[]>('/api/v1/notifications', {
+      params: {language: currentLanguage()},
+    });
     const notifications = data.map(fromWire);
     await writeCache(notifications);
     return notifications;

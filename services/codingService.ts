@@ -299,11 +299,15 @@ export async function listProblems(filters?: {
   category?: string;
   bookmarkedOnly?: boolean;
 }): Promise<CodingProblemSummary[]> {
+  // BUG FIX -- was missing responseLanguage, unlike its siblings
+  // getProblem()/getNextProblem() above (same field-name-collision reason:
+  // this domain's `language` already means the *programming* language).
   const {data} = await apiClient.get<ProblemSummaryWire[]>('/api/v1/coding/problems', {
     params: {
       difficulty: filters?.difficulty,
       category: filters?.category,
       bookmarked_only: filters?.bookmarkedOnly ? 1 : undefined,
+      responseLanguage: currentLanguage(),
     },
   });
   return (data ?? []).map(p => ({

@@ -49,12 +49,51 @@ function difficultyLabel(t: (k: string, o?: any) => any, difficulty: string): st
   }
 }
 
-// "arrays" -> "Arrays", "dynamic_programming" -> "Dynamic Programming" —
-// categories are backend-defined snake_case slugs (coding_problems.py),
-// this is just a display-formatting helper, not a translation (category
-// names are effectively CS-vocabulary proper nouns, same reasoning
-// applied to interview stage names elsewhere in this app).
-function categoryLabel(category: string): string {
+// BUG FIX (product report: "why are the topic pills [Arrays, Binary
+// Search, ...] still in English") — this was deliberately NOT translated
+// before (see git history: "category names are effectively CS-vocabulary
+// proper nouns"), but product has since overridden that call ("no matter
+// the source, everything must be translated"). Same
+// `t('find:coding_category_*', {defaultValue: ...})` lookup pattern
+// difficultyLabel() above already uses for the same kind of small fixed
+// backend enum, covering every category slug seen in `coding_problems.py`
+// so far, falling back to the old split/capitalize formatting for any
+// future category the backend adds that isn't in this map yet (same
+// defensive fallback convention as getCareerGoalLabel/
+// getApplicationStageLabel elsewhere in this app).
+const CODING_CATEGORY_KEYS: Record<string, string> = {
+  arrays: 'find:coding_category_arrays',
+  strings: 'find:coding_category_strings',
+  hash_map: 'find:coding_category_hash_map',
+  two_pointers: 'find:coding_category_two_pointers',
+  sliding_window: 'find:coding_category_sliding_window',
+  binary_search: 'find:coding_category_binary_search',
+  sorting: 'find:coding_category_sorting',
+  stacks: 'find:coding_category_stacks',
+  queues: 'find:coding_category_queues',
+  linked_list: 'find:coding_category_linked_list',
+  trees: 'find:coding_category_trees',
+  graphs: 'find:coding_category_graphs',
+  heap: 'find:coding_category_heap',
+  dynamic_programming: 'find:coding_category_dynamic_programming',
+  greedy: 'find:coding_category_greedy',
+  backtracking: 'find:coding_category_backtracking',
+  recursion: 'find:coding_category_recursion',
+  math: 'find:coding_category_math',
+  bit_manipulation: 'find:coding_category_bit_manipulation',
+  matrix: 'find:coding_category_matrix',
+  design: 'find:coding_category_design',
+};
+
+function categoryLabel(t: (k: string, o?: any) => any, category: string): string {
+  const key = CODING_CATEGORY_KEYS[category];
+  if (key) return t(key, { defaultValue: fallbackCategoryLabel(category) });
+  return fallbackCategoryLabel(category);
+}
+
+// "arrays" -> "Arrays", "dynamic_programming" -> "Dynamic Programming" --
+// last-resort formatter for a category slug not in the map above yet.
+function fallbackCategoryLabel(category: string): string {
   return category
     .split('_')
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -220,7 +259,7 @@ const CodingPracticeHub = memo(() => {
                     {backgroundColor: active ? theme['background-basic-color-3'] : theme['background-basic-color-2']},
                   ]}>
                   <Text category="h10" status="basic">
-                    {categoryLabel(c)}
+                    {categoryLabel(t, c)}
                   </Text>
                 </TouchableOpacity>
               );
@@ -269,7 +308,7 @@ const CodingPracticeHub = memo(() => {
                     </Text>
                   </View>
                   <Text category="h10" status="placeholder" ml={8}>
-                    {categoryLabel(p.category)}
+                    {categoryLabel(t, p.category)}
                   </Text>
                 </Flex>
               </View>
