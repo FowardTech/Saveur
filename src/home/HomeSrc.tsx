@@ -1111,7 +1111,13 @@ const HomeSrc = memo(() => {
             see missionHero's own computation above). */}
         {missionHeroLoading ? (
           <View style={styles.missionHeroLoading}>
-            <Spinner status="control" />
+            {/* Product report: "remove only the linear gradient of the
+                hero card... the text inside the card should be black" --
+                the real card is a plain white card now (see
+                MissionHeroCard.tsx), not a blue fill, so this placeholder
+                matches (status="control"/white spinner would be invisible
+                on the new white placeholder background below). */}
+            <Spinner status="primary" />
           </View>
         ) : (
           <MissionHeroCard
@@ -1435,11 +1441,16 @@ const themedStyles = StyleService.create({
   // stop) since this placeholder doesn't render the real LinearGradient.
   // Product report: "move the hero card up a little bit" -- marginTop
   // 16 -> 6, matching MissionHeroCard.tsx's own `outer` style.
+  // Product report: "remove only the linear gradient of the hero card...
+  // give the card a box shadow and a border" -- matches MissionHeroCard's
+  // own new plain white/shadow/border look instead of a solid blue fill.
   missionHeroLoading: {
+    ...globalStyle.card,
+    ...globalStyle.cardBorder,
     height: 145,
     borderRadius: 16,
     marginTop: 6,
-    backgroundColor: '#1F7BFF',
+    backgroundColor: 'background-basic-color-2',
     alignItems: 'center',
     justifyContent: 'center',
   },

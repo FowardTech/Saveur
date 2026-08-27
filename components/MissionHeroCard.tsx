@@ -1,7 +1,6 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
-import LinearGradient from 'react-native-linear-gradient';
+import { TouchableOpacity, View } from 'react-native';
+import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 
 import Text from 'components/Text';
 import { globalStyle } from 'styles/globalStyle';
@@ -59,31 +58,25 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
   onPress,
 }) => {
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const showProgress = typeof progressPercent === 'number' && !!progressLabel;
   const clampedPercent = Math.max(0, Math.min(100, progressPercent ?? 0));
 
   return (
     <View style={styles.outer}>
       <View style={styles.inner}>
-        {/* BUG FIX (product report, with screenshot: "you are giving the
-            hero card an inner linear gradient that is making the contents
-            inside the hero card to be cut out or cut away") -- using
-            <LinearGradient> itself AS the flex container for `inner`
-            (padding + topRow/title/meta/progress/cta all as its direct
-            children) clipped the ArtMissionPhone SVG down to a sliver.
-            Same "make the hero card linear gradient" ask, but the safer
-            construction already proven elsewhere in this app (HomeSrc.tsx's
-            Refer & Earn tile / Today's Tips pill): a plain View still owns
-            the padding/flex layout, and the LinearGradient is just an
-            absolutely-positioned color layer behind it, not a layout
-            participant. Same blue gradient StatStrip's own "Step" tile
-            uses (#1F7BFF -> #0052D9). */}
-        <LinearGradient
-          colors={['#1F7BFF', '#0052D9']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={StyleSheet.absoluteFillObject}
-        />
+        {/* COLOR HISTORY: flat blue -> linear gradient -> product follow-up
+            ("remove only the linear gradient of the hero card. give the
+            card a box shadow and a border and the text inside the card
+            should be black"): no colored/gradient fill at all now -- see
+            `outer`/`inner`'s own style comments for the plain white
+            box-shadow-plus-border card this becomes, same as every other
+            card on Home. The "Today's Mission" badge pill and the Start
+            Task button's icon/label are explicitly left untouched per
+            that same request (only the button's own background changes --
+            see the button's own comment below), even though the badge's
+            translucent-white fill was originally tuned for a dark/colored
+            card background. */}
         {/* Badge + illustration sit side by side in normal flow (not
             absolutely positioned) so the illustration can never overlap
             the title/subtitle/meta/progress/CTA below it, regardless of
@@ -115,7 +108,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
-            <Icon pack="eva" name={metaLeft.icon} style={{ width: 15, height: 15, tintColor: 'rgba(255,255,255,0.85)' }} />
+            <Icon pack="eva" name={metaLeft.icon} style={{ width: 15, height: 15, tintColor: theme['text-hint-color'] }} />
             <View style={globalStyle.flexOne}>
               <Text category="h10" style={styles.metaLabel}>
                 {metaLeft.label}
@@ -127,7 +120,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
           </View>
           <View style={styles.metaDivider} />
           <View style={styles.metaItem}>
-            <Icon pack="eva" name={metaRight.icon} style={{ width: 15, height: 15, tintColor: 'rgba(255,255,255,0.85)' }} />
+            <Icon pack="eva" name={metaRight.icon} style={{ width: 15, height: 15, tintColor: theme['text-hint-color'] }} />
             <View style={globalStyle.flexOne}>
               <Text category="h10" style={styles.metaLabel}>
                 {metaRight.label}
@@ -142,10 +135,10 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
         {showProgress ? (
           <>
             <View style={styles.progressRow}>
-              <Text category="h10" bold style={styles.badgeText}>
+              <Text category="h10" bold style={styles.progressText}>
                 {progressLabel}
               </Text>
-              <Text category="h10" bold style={styles.badgeText}>
+              <Text category="h10" bold style={styles.progressText}>
                 {clampedPercent}%
               </Text>
             </View>
@@ -155,8 +148,19 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
           </>
         ) : null}
 
-        <TouchableOpacity activeOpacity={0.85} style={[styles.cta, !showProgress && styles.ctaNoProgress]} onPress={onPress}>
-          <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#0063f8', marginRight: 8 }} />
+        {/* Product report: "just change the background of the button to
+            the default blue" -- was a white pill with blue icon/label
+            (readable against the old blue/gradient card fill). Now filled
+            with theme['color-primary-100'] (this app's own "default
+            blue", same token CtaButton.tsx reads), so the icon/label flip
+            to white to stay legible against it -- the one necessary
+            consequence of actually changing this button's own background,
+            not a separate untouched-per-request change. */}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.cta, !showProgress && styles.ctaNoProgress, { backgroundColor: theme['color-primary-100'] }]}
+          onPress={onPress}>
+          <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#FFFFFF', marginRight: 8 }} />
           <Text category="h9" bold style={styles.ctaText}>
             {ctaLabel}
           </Text>
@@ -170,19 +174,21 @@ export default MissionHeroCard;
 
 const themedStyles = StyleService.create({
   // Two-layer split (shadow-casting outer / padding+content inner), same
-  // construction GradientCard.tsx established for this app -- `outer`'s
-  // own backgroundColor is just the opaque shadow-casting fallback
-  // (matches the gradient's first stop). The actual gradient fill is an
-  // absolutely-positioned LinearGradient layered behind `inner`'s real
-  // content at the JSX call site (see the BUG FIX comment there for why
-  // it's not `inner` itself).
+  // construction GradientCard.tsx established for this app.
+  // COLOR HISTORY: flat blue -> linear gradient -> product follow-up
+  // ("remove only the linear gradient of the hero card. give the card a
+  // box shadow and a border") -- globalStyle.cardBorder added alongside
+  // globalStyle.card's own shadow (same combo CareerRoadmap.tsx's
+  // statsCard uses), backgroundColor now the plain card fill every other
+  // Home card uses instead of a color/gradient.
   // Product report: "move the hero card up a little bit" -- marginTop
   // 16 -> 6, tightening the gap to whatever renders above it on Home
   // (the For You pill row).
   outer: {
     ...globalStyle.card,
+    ...globalStyle.cardBorder,
     marginTop: 6,
-    backgroundColor: '#1F7BFF',
+    backgroundColor: 'background-basic-color-2',
   },
   // Product report: "reduce the height of the hero card" (asked twice --
   // padding 18 -> 14 -> 12).
@@ -190,6 +196,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 12,
     overflow: 'hidden',
+    backgroundColor: 'background-basic-color-2',
   },
   // Badge (left) + illustration (right), both in normal flow -- see the
   // JSX's own comment on why the illustration moved out of absolute
@@ -209,14 +216,18 @@ const themedStyles = StyleService.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
+  // NOT touched per explicit request ("dont touch the today's mission
+  // pill") -- still white, tuned for the old dark/colored card fill.
   badgeText: {
     color: '#FFFFFF',
   },
+  // Product report: "the text inside the card should be black" -- was
+  // white (tuned for the old blue/gradient fill).
   title: {
-    color: '#FFFFFF',
+    color: 'text-basic-color',
   },
   subtitle: {
-    color: 'rgba(255,255,255,0.85)',
+    color: 'text-hint-color',
   },
   // Product report: "reduce the height of the hero card" (asked twice) --
   // marginTop 18 -> 10 -> 8.
@@ -230,18 +241,22 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     flex: 1,
   },
+  // Product report: "the text inside the card should be black" -- this
+  // divider/label/value trio was tuned for the old blue/gradient fill
+  // (translucent white); same hairline-gray/text-hint/text-basic set
+  // every other card's meta content in this app already uses.
   metaDivider: {
     width: 1,
     height: 28,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(128,128,128,0.2)',
     marginHorizontal: 14,
   },
   metaLabel: {
-    color: 'rgba(255,255,255,0.75)',
+    color: 'text-hint-color',
     marginLeft: 8,
   },
   metaValue: {
-    color: '#FFFFFF',
+    color: 'text-basic-color',
     marginLeft: 8,
     marginTop: 2,
   },
@@ -253,24 +268,33 @@ const themedStyles = StyleService.create({
     marginTop: 8,
     marginBottom: 6,
   },
+  // Product report: "the text inside the card should be black" -- new
+  // style split off from badgeText (which stays white, untouched, for
+  // the pill), since progressRow's own label/percentage text was
+  // previously sharing that same white style.
+  progressText: {
+    color: 'text-basic-color',
+  },
   progressTrack: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: 'rgba(128,128,128,0.15)',
     overflow: 'hidden',
   },
   progressFill: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'color-primary-100',
   },
   // Product report: "reduce the height of the hero card" (asked twice) --
   // paddingVertical 13 -> 10 -> 9, marginTop 18 -> 10 -> 8.
+  // backgroundColor is now set inline at the render call site (product
+  // report: "just change the background of the button to the default
+  // blue") -- was a hardcoded white pill here.
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
     borderRadius: 999,
     paddingVertical: 9,
     marginTop: 8,
@@ -281,13 +305,10 @@ const themedStyles = StyleService.create({
   ctaNoProgress: {
     marginTop: 12,
   },
-  // Submit-button color -- reverted back to the default brand blue along
-  // with CtaButton.tsx/globalStyle.shadowBtn ("change the submit buttons
-  // back to the default blue"). This CTA is a plain TouchableOpacity, not
-  // CtaButton itself (it needs a white pill fill instead of CtaButton's
-  // own solid-color fill), so the color is set directly here rather than
-  // through that component.
+  // Product report: "just change the background of the button to the
+  // default blue" -- with the button now filled blue (see the render
+  // call site), the label flips from blue to white to stay legible.
   ctaText: {
-    color: '#0063f8',
+    color: '#FFFFFF',
   },
 });
