@@ -36,6 +36,23 @@ const SCORE_KEYS = [
   'problem_solving', 'creativity', 'critical_thinking',
 ];
 
+// BUG FIX (product report: "make sure that whatever comes into the app
+// from external sources and everything internally must be auto
+// translated") -- these 7 keys were rendered as raw `key.replace('_', ' ')`
+// text (e.g. "problem solving"), always English regardless of locale. Every
+// one of them already has a real translated label under find:skill_* (see
+// src/find/SkillHeatMap.tsx's own use of the same set) -- just wasn't
+// reused here.
+const SCORE_KEY_I18N: Record<string, string> = {
+  confidence: 'find:skill_confidence',
+  communication: 'find:skill_communication',
+  technical: 'find:skill_technical',
+  leadership: 'find:skill_leadership',
+  problem_solving: 'find:skill_problem_solving',
+  creativity: 'find:skill_creativity',
+  critical_thinking: 'find:skill_critical_thinking',
+};
+
 // Viewer for one piece of content another Saveur user shared (product
 // request item — see services/sharesService.ts's module docstring).
 // Reached from src/more/SharedWithMe.tsx's inbox list, or directly from a
@@ -214,8 +231,8 @@ const SharedContentDetail = memo(() => {
                 </Text>
                 {SCORE_KEYS.map(key => (
                   <Flex key={key} justify="space-between" itemsCenter style={styles.scoreRow}>
-                    <Text category="h9-s" style={{textTransform: 'capitalize'}}>
-                      {key.replace('_', ' ')}
+                    <Text category="h9-s">
+                      {t(SCORE_KEY_I18N[key], {defaultValue: key.replace('_', ' ')})}
                     </Text>
                     <Flex itemsCenter>
                       {/* Redesign v2 (full reskin, components/StarRating.tsx)

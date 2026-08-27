@@ -449,7 +449,7 @@ const Leaderboard = memo(() => {
                       styles.podiumCard,
                       {
                         height: PODIUM_CARD_HEIGHT[rank],
-                        backgroundColor: theme[colors.card],
+                        borderColor: theme[colors.pill],
                       },
                     ]}>
                     <View style={[styles.rankBadge, { backgroundColor: theme[colors.pill] }]}>
@@ -664,14 +664,25 @@ const themedStyles = StyleService.create({
     flex: 1,
     marginHorizontal: 4,
   },
+  // BUG FIX (product report: "for the leaderboards i dont want the leaders
+  // cards to have different background colors. Instead they all should be
+  // white but their borders should be different colors") -- was a tinted
+  // fill per rank (theme[colors.card], e.g. mint/blue/orange). Now a fixed
+  // white fill every rank shares, with `borderColor: theme[colors.pill]`
+  // (the same saturated per-rank token the rank badge/star pill already
+  // use, e.g. #047857/#1D4ED8/#F2994A -- not the pale *-bg tint, which
+  // would barely read as a border) applied inline at the render call site
+  // for the actual color differentiation.
   podiumCard: {
     ...globalStyle.card,
     flex: 1,
     marginHorizontal: 4,
     borderRadius: 16,
+    borderWidth: 1.5,
     alignItems: 'center',
     paddingTop: 14,
     paddingHorizontal: 8,
+    backgroundColor: 'background-basic-color-2',
   },
   // Numbered rank badge, top-left corner of each podium card (reference
   // screenshot's own overlapping badge treatment).

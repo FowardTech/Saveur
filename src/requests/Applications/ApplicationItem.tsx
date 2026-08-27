@@ -18,6 +18,7 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
 import {Application_Stage_Enum, JobApplicationProps} from 'constants/Types';
 import {isRemoteLocation} from 'utils/jobLocation';
+import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
 
 export interface ApplicationItemProps {
   item: JobApplicationProps;
@@ -108,8 +109,15 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
             </Text>
           </View>
           <View style={[styles.stageTag, {backgroundColor: getStageBg(item.stage, theme)}]}>
+            {/* BUG FIX (product report: "make sure everything internally
+                must be auto translated") -- was the raw backend enum
+                literal (e.g. always "Applied" in English on every
+                locale), same class of bug as ApplicationsTab.tsx/
+                RequestsInPass.tsx already avoided by going through
+                getApplicationStageLabel (utils/interviewTypeLabels.ts),
+                which this render site had never been switched to. */}
             <Text category="h9" status={getStageStatus(item.stage) as any} bold>
-              {item.stage}
+              {getApplicationStageLabel(item.stage, t)}
             </Text>
           </View>
         </Flex>

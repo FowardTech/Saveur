@@ -842,14 +842,35 @@ const HomeSrc = memo(() => {
   const missionHeroLoading = roadmapLoading || dailyChallengeLoading;
   const missionHero = React.useMemo(() => {
     if (dailyChallenge && !dailyChallenge.skipped) {
-      const typeLabel = dailyChallenge.challengeType
-        .split(' ')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
+      // BUG FIX (product report, with screenshot: "why are we having code
+      // challenge twice and why is it have an underscore") -- title and
+      // the Focus meta stat below it were both rendering the exact same
+      // raw "Coding_problem" text. Two separate bugs stacked: (1)
+      // `.split(' ')` doesn't touch a snake_case backend slug like
+      // "coding_problem" -- there's no space to split on, so only the
+      // very first character of the whole string got capitalized; (2)
+      // showing that value as both the card's bold title AND the "Focus"
+      // stat right below it was a plain duplicate regardless of
+      // formatting. Fixed by (1) reusing the same config-driven id ->
+      // translated `name` lookup DailyChallengeScreen.tsx already uses
+      // (daily_challenge.types, admin-configured and pre-translated
+      // server-side for the current locale -- configService.ts sends the
+      // active i18n language on every config fetch), falling back to a
+      // real snake_case-aware formatter only if the id isn't in the
+      // current config; and (2) giving the card its own generic title so
+      // it no longer repeats the Focus stat -- matching the roadmap/coach
+      // branches below, where title and metaLeft are always two distinct
+      // pieces of information, never the same string twice.
+      const typeLabel =
+        configService.getCachedConfig().daily_challenge.types.find(tt => tt.id === dailyChallenge.challengeType)?.name ??
+        dailyChallenge.challengeType
+          .split('_')
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
       return {
         badgeIcon: 'flag-outline',
         badgeLabel: t('home:mission_badge', { defaultValue: "Today's Mission" }),
-        title: typeLabel,
+        title: t('home:mission_challenge_title', { defaultValue: 'Daily Challenge' }),
         subtitle: dailyChallenge.promptText,
         metaLeft: { icon: 'bulb-outline', label: t('home:mission_type_label', { defaultValue: 'Focus' }), value: typeLabel },
         metaRight: { icon: 'award-outline', label: t('home:mission_reward_label', { defaultValue: 'Reward' }), value: t('home:mission_xp_value', { defaultValue: '+{{xp}} XP', xp: dailyChallenge.xpAwarded }) },
