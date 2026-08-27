@@ -23,6 +23,8 @@ import {
   EyeOff,
   FileText,
   Filter,
+  Flame,
+  Footprints,
   GraduationCap,
   GripVertical,
   HeartHandshake,
@@ -138,6 +140,14 @@ const AssetIconsPack: IconPack<any> = {
     dollar: lucideIcon(DollarSign),
     minus: lucideIcon(Minus),
     plus: lucideIcon(Plus),
+    // Home's StatStrip icon badges (product request: "give this guys some
+    // illustration icons" -- Step/Streak/XP tiles). Flame reads as the
+    // conventional "streak" glyph (Duolingo etc.); Footprints as "steps
+    // along a path" for the roadmap-step tile -- see StatStrip.tsx/
+    // HomeSrc.tsx's own call site for how these render (tinted white on a
+    // per-stat gradient chip).
+    streak: lucideIcon(Flame),
+    step: lucideIcon(Footprints),
     tutoring: lucideIcon(GraduationCap),
     infant: lucideIcon(Baby),
     junior: lucideIcon(GraduationCap),

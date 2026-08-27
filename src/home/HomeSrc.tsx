@@ -1115,14 +1115,20 @@ const HomeSrc = memo(() => {
               value: roadmap && currentRoadmapStep
                 ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
                 : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
+              icon: 'step',
+              gradientColors: ['#1F7BFF', '#0052D9'],
             },
             {
               label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
               value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
+              icon: 'streak',
+              gradientColors: ['#FF9457', '#E24A2B'],
             },
             {
               label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
               value: `${streak?.xp ?? 0}`,
+              icon: 'rateFull',
+              gradientColors: ['#B57BFF', '#7C3AED'],
             },
           ]}
         />
