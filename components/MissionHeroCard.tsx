@@ -132,7 +132,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
         ) : null}
 
         <TouchableOpacity activeOpacity={0.85} style={[styles.cta, !showProgress && styles.ctaNoProgress]} onPress={onPress}>
-          <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#32ad84', marginRight: 8 }} />
+          <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#0063f8', marginRight: 8 }} />
           <Text category="h9" bold style={styles.ctaText}>
             {ctaLabel}
           </Text>
@@ -244,12 +244,13 @@ const themedStyles = StyleService.create({
   ctaNoProgress: {
     marginTop: 20,
   },
-  // Submit-button color (product request: "the blue submit buttons" -> the
-  // same #32ad84 CtaButton.tsx now uses -- this CTA is a plain
-  // TouchableOpacity, not CtaButton itself, since it needs a white pill
-  // fill instead of CtaButton's own solid-color fill, so the color is set
-  // directly here rather than through that component).
+  // Submit-button color -- reverted back to the default brand blue along
+  // with CtaButton.tsx/globalStyle.shadowBtn ("change the submit buttons
+  // back to the default blue"). This CTA is a plain TouchableOpacity, not
+  // CtaButton itself (it needs a white pill fill instead of CtaButton's
+  // own solid-color fill), so the color is set directly here rather than
+  // through that component.
   ctaText: {
-    color: '#32ad84',
+    color: '#0063f8',
   },
 });
