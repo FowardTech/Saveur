@@ -315,14 +315,14 @@ const HomeSrc = memo(() => {
   // literals) rather than memoized, same as the isFeatureEnabled checks
   // this replaces, which were previously inlined directly in JSX.
   const forYouShortcuts = [
-    // Product request: "change the today's tips background to a linear
-    // gradient color that you gave to the streak icon" -- was a flat
-    // #272e3b fill; now the same orange/red gradient StatStrip's own
-    // "Streak" tile uses. The only tile in this row with a custom fill --
-    // every other tile stays the default background-basic-color-2. See
-    // the render loop below for how gradientColors (when present) also
-    // switches the label to white for contrast against the gradient.
-    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail'), gradientColors: ['#FF9457', '#E24A2B'] as [string, string] | undefined },
+    // COLOR HISTORY: flat #272e3b custom fill -> the same orange/red
+    // gradient StatStrip's own "Streak" tile uses -> product follow-up
+    // ("remove the linear gradient on the today's tips pill button and
+    // let it be like the rest"): no custom fill at all now, same default
+    // background-basic-color-2 every other tile in this row uses. See the
+    // render loop below for how gradientColors (when present on some
+    // future tile) would render a gradient fill.
+    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail'), gradientColors: undefined as [string, string] | undefined },
     { key: 'roadmap', icon: Images.iconLocation, label: t('home:pill_roadmap', { defaultValue: 'Roadmap' }), onPress: () => navigate('CareerRoadmap'), gradientColors: undefined as [string, string] | undefined },
     { key: 'dna', icon: Images.iconAiStars, label: t('home:pill_career_dna', { defaultValue: 'Career DNA' }), onPress: () => navigate('CareerDna'), gradientColors: undefined as [string, string] | undefined },
     { key: 'companies', icon: Images.iconHandshake, label: t('home:quick_action_dream_company', { defaultValue: 'Companies' }), onPress: () => navigate('DreamCompanies'), gradientColors: undefined as [string, string] | undefined },

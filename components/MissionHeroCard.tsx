@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -64,18 +64,26 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 
   return (
     <View style={styles.outer}>
-      {/* Product report: "make the hero card linear gradient" -- was a
-          flat #0052D9 fill. Same blue gradient StatStrip's own "Step"
-          tile uses (#1F7BFF -> #0052D9), for a consistent brand gradient
-          across Home rather than a new one-off color pair. Two-layer
-          split (shadow-casting `outer` / gradient-clipping `inner`), same
-          construction GradientCard.tsx established for this app -- see
-          `outer`'s own style comment. */}
-      <LinearGradient
-        colors={['#1F7BFF', '#0052D9']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.inner}>
+      <View style={styles.inner}>
+        {/* BUG FIX (product report, with screenshot: "you are giving the
+            hero card an inner linear gradient that is making the contents
+            inside the hero card to be cut out or cut away") -- using
+            <LinearGradient> itself AS the flex container for `inner`
+            (padding + topRow/title/meta/progress/cta all as its direct
+            children) clipped the ArtMissionPhone SVG down to a sliver.
+            Same "make the hero card linear gradient" ask, but the safer
+            construction already proven elsewhere in this app (HomeSrc.tsx's
+            Refer & Earn tile / Today's Tips pill): a plain View still owns
+            the padding/flex layout, and the LinearGradient is just an
+            absolutely-positioned color layer behind it, not a layout
+            participant. Same blue gradient StatStrip's own "Step" tile
+            uses (#1F7BFF -> #0052D9). */}
+        <LinearGradient
+          colors={['#1F7BFF', '#0052D9']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={StyleSheet.absoluteFillObject}
+        />
         {/* Badge + illustration sit side by side in normal flow (not
             absolutely positioned) so the illustration can never overlap
             the title/subtitle/meta/progress/CTA below it, regardless of
@@ -153,7 +161,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
             {ctaLabel}
           </Text>
         </TouchableOpacity>
-      </LinearGradient>
+      </View>
     </View>
   );
 };
@@ -161,12 +169,13 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 export default MissionHeroCard;
 
 const themedStyles = StyleService.create({
-  // Two-layer split (shadow-casting outer / gradient-clipping inner), same
+  // Two-layer split (shadow-casting outer / padding+content inner), same
   // construction GradientCard.tsx established for this app -- `outer`'s
   // own backgroundColor is just the opaque shadow-casting fallback
-  // (matches the gradient's first stop), the actual fill is the
-  // LinearGradient rendered as `inner` at the JSX call site now (product
-  // report: "make the hero card linear gradient" -- was a flat #0052D9).
+  // (matches the gradient's first stop). The actual gradient fill is an
+  // absolutely-positioned LinearGradient layered behind `inner`'s real
+  // content at the JSX call site (see the BUG FIX comment there for why
+  // it's not `inner` itself).
   outer: {
     ...globalStyle.card,
     marginTop: 16,
