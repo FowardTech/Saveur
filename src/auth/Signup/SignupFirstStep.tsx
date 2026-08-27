@@ -138,7 +138,7 @@ const SignupFirstStep = memo(() => {
                       // Google-style furnishing pass (see styles/
                       // globalStyle.ts's `card`) -- 14 -> 20, matching that
                       // same chip's own update.
-                      borderRadius: 20,
+                      borderRadius: 8,
                       backgroundColor:
                         isChoose === i
                           ? theme['color-primary-500']

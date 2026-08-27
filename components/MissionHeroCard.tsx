@@ -154,7 +154,7 @@ const themedStyles = StyleService.create({
     backgroundColor: '#0052D9',
   },
   inner: {
-    borderRadius: 24,
+    borderRadius: 8,
     padding: 18,
     overflow: 'hidden',
     backgroundColor: '#0052D9',

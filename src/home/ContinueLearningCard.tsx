@@ -237,7 +237,7 @@ const themedStyles = StyleService.create({
   // layout, padding) on top now.
   card: {
     ...globalStyle.card,
-    borderRadius: 15,
+    borderRadius: 8,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 10,

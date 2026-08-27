@@ -299,7 +299,7 @@ const themedStyles = StyleService.create({
   // tiles specifically, per an earlier explicit follow-up.
   tile: {
     marginBottom: 16,
-    borderRadius: 24,
+    borderRadius: 8,
     paddingVertical: 30,
     paddingHorizontal: 18,
     overflow: 'hidden',

@@ -245,7 +245,7 @@ const styles = {
     width: '100%' as const,
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 20,
+    borderRadius: 8,
     padding: 24,
   },
   closeButton: {

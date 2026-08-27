@@ -69,7 +69,7 @@ export const SkeletonHomeCardRow = memo(({ style }: { style?: StyleProp<ViewStyl
         {
           flexDirection: 'row',
           alignItems: 'center',
-          borderRadius: 20,
+          borderRadius: 8,
           paddingVertical: 10,
           paddingHorizontal: 12,
           backgroundColor: theme['background-basic-color-2'],
@@ -101,7 +101,7 @@ export const SkeletonListRow = memo(({ style }: { style?: StyleProp<ViewStyle> }
     <View
       style={[
         {
-          borderRadius: 20,
+          borderRadius: 8,
           padding: 14,
           marginBottom: 12,
           backgroundColor: theme['background-basic-color-2'],

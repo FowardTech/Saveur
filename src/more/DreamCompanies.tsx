@@ -686,7 +686,7 @@ const themedStyles = StyleService.create({
   },
   expandedSubcard: {
     backgroundColor: 'background-basic-color-3',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 12,
     marginBottom: 12,
   },

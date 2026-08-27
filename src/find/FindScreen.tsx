@@ -454,7 +454,7 @@ const themedStyles = StyleService.create({
   // to a solid or tonal fill.
   scheduleCard: {
     ...globalStyle.card,
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1.5,
     borderColor: '#0063f8',
     flexDirection: 'row',
@@ -485,7 +485,7 @@ const themedStyles = StyleService.create({
   hero: {
     ...globalStyle.card,
     marginTop: 16,
-    borderRadius: 14,
+    borderRadius: 8,
     backgroundColor: 'color-primary-500',
     shadowOpacity: 0,
     elevation: 0,
@@ -495,7 +495,7 @@ const themedStyles = StyleService.create({
   // instead (see the JSX comment for why that matters for correct
   // sizing).
   heroInner: {
-    borderRadius: 14,
+    borderRadius: 8,
     overflow: 'hidden',
     position: 'relative',
     padding: 24,
@@ -515,7 +515,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 20,
+    borderRadius: 8,
     backgroundColor: 'background-basic-color-2',
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -540,7 +540,7 @@ const themedStyles = StyleService.create({
   typeCard: {
     ...globalStyle.card,
     width: '48%',
-    borderRadius: 22,
+    borderRadius: 8,
     // Redesign v2 (full reskin): opaque fill again so `card`'s shadow
     // renders correctly on Android (was 'transparent').
     backgroundColor: 'background-basic-color-2',

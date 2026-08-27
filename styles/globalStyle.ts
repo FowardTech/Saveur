@@ -165,8 +165,19 @@ export const globalStyle = StyleSheet.create({
   // work earlier — except this reference wants the shadow-lift look, not
   // the hairline-border look, against that same gray page. Border dropped
   // entirely; cardShadow re-enabled.
+  // TIGHTER CORNERS (explicit product request: "reduce the border radius
+  // of all cards to 8px") — 24 -> 8. Same single-token leverage as every
+  // other radius pass logged above: this one object is spread by ~60+
+  // card styles app-wide (MissionHeroCard/StatMiniCard/CoachPromptCard,
+  // CareerRoadmap's statsCard/stepCard, etc. all included), so changing
+  // it here is what actually makes "all cards" consistent in one pass
+  // instead of hunting down each screen's own copy. Companion request in
+  // the same message ("make the app background more lighter") is handled
+  // separately in constants/theme/light.json's `background-page-body`
+  // (#F0F0F0 -> #F5F6F8) — not here, since that's a background-color
+  // token, not a shape one.
   card: {
-    borderRadius: 24,
+    borderRadius: 8,
     ...cardShadow,
   },
   // Retained for any screen that explicitly wants the old hairline-border

@@ -1222,7 +1222,7 @@ const rowStyles = StyleService.create({
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20 (redundant with the shared default now, kept explicit for
     // clarity).
-    borderRadius: 20,
+    borderRadius: 8,
     padding: 14,
     marginBottom: 12,
   },
@@ -1319,7 +1319,7 @@ const themedStyles = StyleService.create({
     borderWidth: 2,
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 20,
+    borderRadius: 8,
     padding: 14,
     marginRight: 10,
   },

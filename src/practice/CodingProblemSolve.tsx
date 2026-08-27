@@ -491,7 +491,7 @@ const themedStyles = StyleService.create({
   testCaseRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 14,
     marginBottom: 10,
   },

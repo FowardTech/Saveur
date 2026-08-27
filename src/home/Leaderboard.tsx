@@ -571,7 +571,7 @@ const themedStyles = StyleService.create({
   yourStatsCard: {
     padding: 14,
     marginTop: 12,
-    borderRadius: 16,
+    borderRadius: 8,
   },
   yourStatsRing: {
     marginRight: 12,
@@ -605,7 +605,7 @@ const themedStyles = StyleService.create({
   // gradient, per the follow-up correction), rounded like every other
   // card in the app, houses the period tabs and the trophy badge.
   heroCard: {
-    borderRadius: 20,
+    borderRadius: 8,
     paddingTop: 16,
     paddingBottom: 20,
     paddingHorizontal: 16,
@@ -668,7 +668,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flex: 1,
     marginHorizontal: 4,
-    borderRadius: 18,
+    borderRadius: 8,
     alignItems: 'center',
     paddingTop: 14,
     paddingHorizontal: 8,
@@ -721,7 +721,7 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 8,
-    borderRadius: 12,
+    borderRadius: 8,
   },
   rankChip: {
     width: 28,

@@ -70,7 +70,7 @@ function ModalRequest({
             height: 334 * (height / 812),
             // Google-style furnishing pass (see styles/globalStyle.ts's
             // `card`) -- 14 -> 20.
-            borderRadius: 20,
+            borderRadius: 8,
             overflow: "hidden",
             // Was a decorative Image (Images.modalBg — scattered pastel
             // polka-dot/confetti shapes) covering the whole card. Plain
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     flex: 1,
     // Google-style furnishing pass (see styles/globalStyle.ts's `card`) --
     // 14 -> 20.
-    borderRadius: 20,
+    borderRadius: 8,
   },
   avatarView: {
     alignSelf: "center",

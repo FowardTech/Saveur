@@ -1293,7 +1293,7 @@ const themedStyles = StyleService.create({
     // one connected block with the pill right above it.
     marginTop: 84,
     padding: 16,
-    borderRadius: 18,
+    borderRadius: 8,
     backgroundColor: 'background-basic-color-2',
   },
   emptySuggestedIconWrap: {

@@ -331,7 +331,7 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   logRow: {
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 14,
     marginBottom: 12,
   },
