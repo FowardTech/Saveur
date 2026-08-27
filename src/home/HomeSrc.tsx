@@ -1028,6 +1028,108 @@ const HomeSrc = memo(() => {
           />
         )}
 
+        {/* HOME RESTRUCTURE: Career Fairs & Events, Career Progress, Daily
+            Challenge, Refer & Earn, and Next Steps used to each be their
+            own separately-titled section stacked all the way down the
+            page — folded into one "For You" horizontal row instead, same
+            "one clear focal point per screen, not a stack of equally-
+            weighted cards" principle as the collapsed Continue card
+            below. Career Progress and Daily Challenge are gone from this
+            row entirely (v2 redesign) — both now live in the mission
+            hero/stat-card pair above instead of a duplicate smaller tile
+            down here. Ordered by how timely/personal what's left is: the
+            newest Career Fairs & Events first, then the evergreen
+            shortcuts (Today's Tips/Roadmap/Career DNA/Companies/Courses/
+            Salary — see forYouShortcuts above, replaces the old pill row
+            + Career Toolkit section), then Refer & Earn and Next Steps
+            last as the least time-sensitive items. The shortcuts are
+            always present for a signed-in user, so this row is never
+            empty in practice — no top-level "is there anything at all"
+            gate needed, unlike the old Career Fairs & Events section it
+            now sits inside.
+
+            MOVED (product request: "take the For You section and place
+            above the AI Career Coach card") -- used to sit at the very
+            bottom of the page, after the admin banner and Continue
+            section; now right after the actions-zone ActionCard and
+            before CoachPromptCard. Nothing about the row itself changed,
+            only its position in the page. */}
+        <Text category="h8" bold mt={24} mb={12}>
+          {t('home:for_you_label', { defaultValue: 'For You' })}
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 6, paddingHorizontal: 10 }}
+          contentContainerStyle={{ paddingVertical: 10 }}>
+          {/* Career Fairs & Events -- up to 4 cards, same skeleton-while-
+              loading convention as before, just sized to this row's
+              shared tile width now instead of the old topCardWidth. */}
+          {careerEventsLoading ? (
+            <>
+              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
+              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
+            </>
+          ) : (
+            careerEvents.map(event => (
+              <CareerFairEventCard
+                key={event.id}
+                event={event}
+                onPress={onOpenCareerEvent}
+                style={{ width: forYouCardWidth, marginRight: forYouGap }}
+              />
+            ))
+          )}
+
+          {/* Evergreen shortcuts -- Today's Tips/Roadmap/Career DNA/
+              Companies/Courses/Salary (see forYouShortcuts above). */}
+          {forYouShortcuts.map(item => (
+            <TouchableOpacity
+              key={item.key}
+              activeOpacity={0.7}
+              style={[styles.forYouTile, { marginRight: forYouGap }]}
+              onPress={item.onPress}>
+              <Image source={item.icon} style={styles.forYouTileIcon as ImageStyle} resizeMode="contain" />
+              <Text category="h10" bold center numberOfLines={1} mt={8}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          {/* Refer & Earn -- same purple-to-black gradient/copy/
+              destination as before, condensed to this row's tile shape
+              (see forYouTile/referralTile/referralTileText below). */}
+          {configService.isFeatureEnabled('referral_program') ? (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[styles.forYouTile, styles.referralTile, { marginRight: forYouGap }]}
+              onPress={() => navigate('ReferralProgram')}>
+              <LinearGradient
+                colors={['#8B5CF6', '#5e40a2ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <ArtGiftBox size={32} />
+              <Text category="h10" bold center numberOfLines={2} mt={8} style={styles.referralTileText}>
+                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {/* Next Steps -- same destination (src/more/WhatsNext.tsx) as
+              before, last in the row as the least time-sensitive item. */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.forYouTile}
+            onPress={() => navigate('WhatsNext')}>
+            <ArtWorkplaceCompass size={30} />
+            <Text category="h10" bold center numberOfLines={1} mt={8}>
+              {t('more:whats_next_title', { defaultValue: "What's Next" })}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+
         {/* AI Coach card -- see coachPrompts above for the exact starter
             list and CoachPromptCard.tsx's own comment for how a tap
             deep-links straight into a real conversation instead of just
@@ -1160,96 +1262,6 @@ const HomeSrc = memo(() => {
           />
         </View>
 
-        {/* HOME RESTRUCTURE: Career Fairs & Events, Career Progress, Daily
-            Challenge, Refer & Earn, and Next Steps used to each be their
-            own separately-titled section stacked all the way down the
-            page — folded into one "For You" horizontal row instead, same
-            "one clear focal point per screen, not a stack of equally-
-            weighted cards" principle as the collapsed Continue card
-            above. Career Progress and Daily Challenge are gone from this
-            row entirely (v2 redesign) — both now live in the mission
-            hero/stat-card pair above instead of a duplicate smaller tile
-            down here. Ordered by how timely/personal what's left is: the
-            newest Career Fairs & Events first, then the evergreen
-            shortcuts (Today's Tips/Roadmap/Career DNA/Companies/Courses/
-            Salary — see forYouShortcuts above, replaces the old pill row
-            + Career Toolkit section), then Refer & Earn and Next Steps
-            last as the least time-sensitive items. The shortcuts are
-            always present for a signed-in user, so this row is never
-            empty in practice — no top-level "is there anything at all"
-            gate needed, unlike the old Career Fairs & Events section it
-            now sits inside. */}
-        <Text category="h8" bold mt={24} mb={12}>
-          {t('home:for_you_label', { defaultValue: 'For You' })}
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16, paddingHorizontal: 10 }}>
-          {/* Career Fairs & Events -- up to 4 cards, same skeleton-while-
-              loading convention as before, just sized to this row's
-              shared tile width now instead of the old topCardWidth. */}
-          {careerEventsLoading ? (
-            <>
-              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-            </>
-          ) : (
-            careerEvents.map(event => (
-              <CareerFairEventCard
-                key={event.id}
-                event={event}
-                onPress={onOpenCareerEvent}
-                style={{ width: forYouCardWidth, marginRight: forYouGap }}
-              />
-            ))
-          )}
-
-          {/* Evergreen shortcuts -- Today's Tips/Roadmap/Career DNA/
-              Companies/Courses/Salary (see forYouShortcuts above). */}
-          {forYouShortcuts.map(item => (
-            <TouchableOpacity
-              key={item.key}
-              activeOpacity={0.7}
-              style={[styles.forYouTile, { marginRight: forYouGap }]}
-              onPress={item.onPress}>
-              <Image source={item.icon} style={styles.forYouTileIcon as ImageStyle} resizeMode="contain" />
-              <Text category="h10" bold center numberOfLines={1} mt={8}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          {/* Refer & Earn -- same purple-to-black gradient/copy/
-              destination as before, condensed to this row's tile shape
-              (see forYouTile/referralTile/referralTileText below). */}
-          {configService.isFeatureEnabled('referral_program') ? (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={[styles.forYouTile, styles.referralTile, { marginRight: forYouGap }]}
-              onPress={() => navigate('ReferralProgram')}>
-              <LinearGradient
-                colors={['#8B5CF6', '#5e40a2ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <ArtGiftBox size={32} />
-              <Text category="h10" bold center numberOfLines={2} mt={8} style={styles.referralTileText}>
-                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {/* Next Steps -- same destination (src/more/WhatsNext.tsx) as
-              before, last in the row as the least time-sensitive item. */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.forYouTile}
-            onPress={() => navigate('WhatsNext')}>
-            <ArtWorkplaceCompass size={30} />
-            <Text category="h10" bold center numberOfLines={1} mt={8}>
-              {t('more:whats_next_title', { defaultValue: "What's Next" })}
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
