@@ -29,6 +29,7 @@ import * as billingService from 'services/billingService';
 import * as iapService from 'services/iapService';
 import { RootStackParamList, SubscriptionScreenNavigationProp } from 'navigation/types';
 import { stripeAppearance } from 'utils/stripeAppearance';
+import { localizeDigits } from 'utils/formatNumber';
 import { getSessionEntitlement } from 'services/entitlementsService';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
@@ -1002,7 +1003,7 @@ const Subscription = memo(() => {
                         end={{ x: 1, y: 1 }}
                         style={styles.saveBadgeGradient}>
                         <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
-                          {t('more:save_percent_badge', { defaultValue: 'SAVE {{percent}}%', percent: savingsPercent })}
+                          {localizeDigits(t('more:save_percent_badge', { defaultValue: 'SAVE {{percent}}%', percent: savingsPercent }))}
                         </Text>
                       </LinearGradient>
                     </View>

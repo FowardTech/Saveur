@@ -32,6 +32,7 @@ import * as goalsPreferencesService from 'services/goalsPreferencesService';
 import { WeeklyTargets } from 'services/goalsPreferencesService';
 import { AuthContext } from '../../AuthContext';
 import { getCareerGoalLabel } from 'utils/careerGoalLabels';
+import { localizeDigits } from 'utils/formatNumber';
 
 type TargetKey = keyof WeeklyTargets;
 
@@ -266,11 +267,11 @@ const GoalsScreen = memo(() => {
                     {t('more:goals_practice_sessions', { defaultValue: 'Practice sessions' })}
                   </Text>
                   <Text category="h10" status="placeholder" mt={2}>
-                    {t('more:goals_of_target_this_week', {
+                    {localizeDigits(t('more:goals_of_target_this_week', {
                       defaultValue: '{{done}} of {{target}} this week',
                       done: practiceThisWeek,
                       target: targets?.practiceSessions ?? 0,
-                    })}
+                    }))}
                   </Text>
                   <View style={styles.progressTrack}>
                     <View
@@ -302,11 +303,11 @@ const GoalsScreen = memo(() => {
                     {t('more:goals_applications', { defaultValue: 'Applications' })}
                   </Text>
                   <Text category="h10" status="placeholder" mt={2}>
-                    {t('more:goals_of_target_this_week', {
+                    {localizeDigits(t('more:goals_of_target_this_week', {
                       defaultValue: '{{done}} of {{target}} this week',
                       done: appliedThisWeek,
                       target: targets?.applications ?? 0,
-                    })}
+                    }))}
                   </Text>
                   <View style={styles.progressTrack}>
                     <View
@@ -359,7 +360,7 @@ const GoalsScreen = memo(() => {
                     {t('more:goals_current_streak', { defaultValue: 'Current streak' })}
                   </Text>
                   <Text category="h6" bold style={{ color: theme['text-basic-color'] }} mt={4}>
-                    {t('more:goals_days', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 })}
+                    {localizeDigits(t('more:goals_days', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }))}
                   </Text>
                 </View>
                 <View style={globalStyle.flexOne}>
@@ -367,10 +368,10 @@ const GoalsScreen = memo(() => {
                     {t('more:goals_longest_streak', { defaultValue: 'Longest streak' })}
                   </Text>
                   <Text category="h6" bold style={{ color: theme['text-basic-color'] }} mt={4}>
-                    {t('more:goals_days', {
+                    {localizeDigits(t('more:goals_days', {
                       defaultValue: '{{count}} days',
                       count: streak?.longestStreak ?? streak?.streakDays ?? 0,
-                    })}
+                    }))}
                   </Text>
                 </View>
               </Flex>

@@ -46,6 +46,7 @@ import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { AuthContext } from '../../AuthContext';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { getCareerGoalLabel } from 'utils/careerGoalLabels';
+import { formatNumber, localizeDigits } from 'utils/formatNumber';
 
 // Leaderboard preview's per-rank medal badge colors (module scope, same
 // reasoning as renderCheckInSpinner above). Ranks 1/2 use existing theme
@@ -321,7 +322,7 @@ const MyProgress = memo(() => {
                       gradientTo="#7EA8E2"
                       style={{ marginRight: 16 }}>
                       <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
-                        {t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent })}
+                        {localizeDigits(t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent }))}
                       </Text>
                     </CircularProgress>
                     <View style={globalStyle.flexOne}>
@@ -329,11 +330,11 @@ const MyProgress = memo(() => {
                         {roadmap.targetRole}
                       </Text>
                       <Text category="h10" status="placeholder" mt={4}>
-                        {t('find:goal_progress_steps_of', {
+                        {localizeDigits(t('find:goal_progress_steps_of', {
                           defaultValue: '{{completed}} of {{total}} steps complete',
                           completed: roadmap.completedCount,
                           total: roadmap.totalCount,
-                        })}
+                        }))}
                       </Text>
                     </View>
                   </Flex>
@@ -384,7 +385,7 @@ const MyProgress = memo(() => {
                   trackColor="rgba(255,255,255,0.6)"
                   color={theme[tileColorAt(0).text]}>
                   <Text category="h7" bold style={{ color: theme[tileColorAt(0).text] }}>
-                    {completed.length}
+                    {formatNumber(completed.length)}
                   </Text>
                 </CircularProgress>
                 <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(0).text] }}>
@@ -399,7 +400,7 @@ const MyProgress = memo(() => {
                   trackColor="rgba(255,255,255,0.6)"
                   color={theme[tileColorAt(2).text]}>
                   <Text category="h7" bold style={{ color: theme[tileColorAt(2).text] }}>
-                    {streakDays}
+                    {formatNumber(streakDays)}
                   </Text>
                 </CircularProgress>
                 <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(2).text] }}>
@@ -414,7 +415,7 @@ const MyProgress = memo(() => {
                   trackColor="rgba(255,255,255,0.6)"
                   color={theme[tileColorAt(1).text]}>
                   <Text category="h7" bold style={{ color: theme[tileColorAt(1).text] }}>
-                    {avgScore ?? '—'}
+                    {avgScore != null ? formatNumber(avgScore) : '—'}
                   </Text>
                 </CircularProgress>
                 <Text category="h10" bold center mt={8} style={{ color: theme[tileColorAt(1).text] }}>

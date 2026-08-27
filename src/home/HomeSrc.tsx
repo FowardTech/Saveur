@@ -50,6 +50,7 @@ import { Images } from 'assets/images';
 import ThemeContext from '../../ThemeContext';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
+import { formatNumber, localizeDigits } from 'utils/formatNumber';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -878,7 +879,7 @@ const HomeSrc = memo(() => {
         title: t('home:mission_challenge_title', { defaultValue: 'Daily Challenge' }),
         subtitle: dailyChallenge.promptText,
         metaLeft: { icon: 'bulb-outline', label: t('home:mission_type_label', { defaultValue: 'Focus' }), value: typeLabel },
-        metaRight: { icon: 'award-outline', label: t('home:mission_reward_label', { defaultValue: 'Reward' }), value: t('home:mission_xp_value', { defaultValue: '+{{xp}} XP', xp: dailyChallenge.xpAwarded }) },
+        metaRight: { icon: 'award-outline', label: t('home:mission_reward_label', { defaultValue: 'Reward' }), value: localizeDigits(t('home:mission_xp_value', { defaultValue: '+{{xp}} XP', xp: dailyChallenge.xpAwarded })) },
         progressPercent: dailyChallenge.completed ? 100 : 0,
         progressLabel: t('home:mission_progress_label', { defaultValue: 'Progress' }),
         ctaLabel: dailyChallenge.completed
@@ -894,7 +895,7 @@ const HomeSrc = memo(() => {
         badgeLabel: t('home:mission_badge_roadmap', { defaultValue: 'Your Next Step' }),
         title: currentRoadmapStep.title,
         subtitle: currentRoadmapStep.description,
-        metaLeft: { icon: ROADMAP_STEP_ICONS[currentRoadmapStep.type] ?? 'flag-outline', label: t('home:mission_step_label', { defaultValue: 'Step' }), value: t('home:mission_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount }) },
+        metaLeft: { icon: ROADMAP_STEP_ICONS[currentRoadmapStep.type] ?? 'flag-outline', label: t('home:mission_step_label', { defaultValue: 'Step' }), value: localizeDigits(t('home:mission_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })) },
         metaRight: { icon: 'flag-outline', label: t('home:mission_goal_label', { defaultValue: 'Goal' }), value: roadmap.targetRole },
         progressPercent: roadmapPercent,
         progressLabel: t('home:mission_progress_label', { defaultValue: 'Progress' }),
@@ -1157,20 +1158,20 @@ const HomeSrc = memo(() => {
             {
               label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
               value: roadmap && currentRoadmapStep
-                ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
+                ? localizeDigits(t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount }))
                 : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
               icon: 'step',
               gradientColors: ['#1F7BFF', '#0052D9'],
             },
             {
               label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
-              value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
+              value: localizeDigits(t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 })),
               icon: 'streak',
               gradientColors: ['#FF9457', '#E24A2B'],
             },
             {
               label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
-              value: `${streak?.xp ?? 0}`,
+              value: formatNumber(streak?.xp ?? 0),
               icon: 'rateFull',
               gradientColors: ['#B57BFF', '#7C3AED'],
             },

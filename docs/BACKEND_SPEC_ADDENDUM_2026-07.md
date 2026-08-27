@@ -644,3 +644,32 @@ would reproduce exactly this symptom for any user who opens JD Analyzer before e
 uploading a resume. Recommend checking server logs for the actual stack trace to confirm, and
 either way hardening that endpoint to return a proper 4xx (e.g. "Upload a resume first") instead of
 a raw 500 when the precondition isn't met.
+
+### §23. Round 3 — Interviewer Personality catalog confirmed same root cause as §21C; receipts/documents translation
+
+**Interviewer Personality picker** (`src/practice/MockInterviewSetup.tsx`'s persona grid --
+"Friendly Recruiter," "Skeptical Hiring Manager," etc.) reads `name`/`description` from
+`configService.getCachedConfig().interview_personas.items`, per its own code comment "already
+translated server-side for the current language." This is the exact same
+`GET /api/v1/content/config?language=zh` endpoint §21C already flagged for `upcoming_features`/
+`faq`/`about` — a fourth confirmed instance of the same broken/inconsistent per-field translation
+pass over admin-authored config content. Not a new bug, just more evidence for §21C's finding;
+fixing that one endpoint's translation logic should fix all four surfaces at once.
+
+**Documents/emails/receipts** (product request: "the emails, pdf, docx and receipts and documents
+must be translated to the user's preferred language too"). Audited every export/document-generation
+call site:
+
+- `POST /api/v1/resume/export` (PDF/DOCX resume download) and `POST /api/v1/resume/cover-letter`
+  (cover letter generation, then rendered verbatim by `.../cover-letter/export`) already send
+  `language` -- client-side correct, same "backend needs to actually honor it" caveat as everything
+  else in this doc.
+- `POST /api/v1/billing/payments/:id/send-receipt` (re-send receipt email) and
+  `GET /api/v1/billing/payments/:id/receipt.pdf` (receipt PDF download) were sending **no**
+  language signal at all -- fixed client-side, now send `language`.
+- Transactional emails your backend sends on its own (welcome email, password reset, purchase
+  confirmation, etc.) have **no client call site at all** to add a param to -- they're triggered
+  server-side by an event, not by a request from this app. These need to read `profile.locale`
+  (already stored, see §16's own note that this field already existed and was "wired but unused
+  before this pass") directly in whatever service constructs each email template, rather than
+  defaulting to English. Worth an explicit pass over every transactional email template.

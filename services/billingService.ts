@@ -577,9 +577,13 @@ export async function listPayments(): Promise<PaymentHistoryItemProps[]> {
  * email address it was sent to, so the caller can show "Sent to
  * you@example.com" without needing a separate profile lookup. */
 export async function sendReceiptEmail(paymentId: number): Promise<{sentTo: string}> {
+  // BUG FIX (product report: "emails, pdf, docx and receipts and
+  // documents must be translated to the user's preferred language") --
+  // was sending an empty body, so this receipt email had no way to know
+  // which language to render in.
   const {data} = await apiClient.post<{ok: boolean; sent_to: string}>(
     `/api/v1/billing/payments/${paymentId}/send-receipt`,
-    {},
+    {language: i18n.language || 'en'},
   );
   return {sentTo: data.sent_to};
 }
@@ -604,7 +608,10 @@ export async function downloadReceiptPdf(payment: PaymentHistoryItemProps): Prom
     );
   }
   const idToken = await user.getIdToken();
-  const url = `${API_BASE_URL}/api/v1/billing/payments/${payment.id}/receipt.pdf`;
+  // BUG FIX -- was missing language entirely (this PDF is fetched by
+  // RNBlobUtil directly, not through apiClient, so it needs the param on
+  // the URL itself rather than an axios `params` object).
+  const url = `${API_BASE_URL}/api/v1/billing/payments/${payment.id}/receipt.pdf?language=${encodeURIComponent(i18n.language || 'en')}`;
   const filename = `Saveur-Receipt-${payment.id}.pdf`;
   const headers = {Authorization: `Bearer ${idToken}`};
 

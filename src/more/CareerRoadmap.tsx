@@ -32,6 +32,7 @@ import CircularProgress from 'components/CircularProgress';
 import StatMiniCard from 'components/StatMiniCard';
 import * as gamificationService from 'services/gamificationService';
 import { GamificationStreakProps } from 'constants/Types';
+import { formatNumber, localizeDigits } from 'utils/formatNumber';
 
 // HOME REDESIGN follow-through (product ask: "use this look and feel
 // throughout the whole app" -- this screen is the direct target of
@@ -357,7 +358,7 @@ const CareerRoadmap = memo(() => {
                 gradientFrom="#1F7BFF"
                 gradientTo="#0052D9"
                 style={styles.statsRing}>
-                <Text category="h7" bold>{roadmapPercent}%</Text>
+                <Text category="h7" bold>{formatNumber(roadmapPercent)}%</Text>
                 {/* Product report: "reduce the font size of the complete
                     text its touching the round progress bar" -- h10 (14px,
                     already this app's smallest heading step) still didn't
@@ -375,7 +376,7 @@ const CareerRoadmap = memo(() => {
                     {t('more:roadmap_current_step', { defaultValue: 'Current Step' })}
                   </Text>
                   <Text category="h8" bold mt={2}>
-                    {currentStep ? currentStep.order : (roadmap.isComplete ? roadmap.totalCount : '—')}
+                    {currentStep ? formatNumber(currentStep.order) : (roadmap.isComplete ? formatNumber(roadmap.totalCount) : '—')}
                   </Text>
                 </View>
                 <View style={styles.statsGridItem}>
@@ -383,11 +384,11 @@ const CareerRoadmap = memo(() => {
                     {t('more:roadmap_completed_steps', { defaultValue: 'Completed' })}
                   </Text>
                   <Text category="h8" bold mt={2}>
-                    {t('more:roadmap_completed_of_total', {
+                    {localizeDigits(t('more:roadmap_completed_of_total', {
                       defaultValue: '{{completed}} of {{total}}',
                       completed: roadmap.completedCount,
                       total: roadmap.totalCount,
-                    })}
+                    }))}
                   </Text>
                 </View>
                 <View style={styles.statsGridItem}>
@@ -395,14 +396,14 @@ const CareerRoadmap = memo(() => {
                     {t('more:roadmap_streak', { defaultValue: 'Streak' })}
                   </Text>
                   <Text category="h8" bold mt={2}>
-                    {t('more:roadmap_streak_days', { defaultValue: '{{count}} Days', count: streak?.streakDays ?? 0 })}
+                    {localizeDigits(t('more:roadmap_streak_days', { defaultValue: '{{count}} Days', count: streak?.streakDays ?? 0 }))}
                   </Text>
                 </View>
                 <View style={styles.statsGridItem}>
                   <Text category="h10" status="placeholder">
                     {t('more:roadmap_total_steps', { defaultValue: 'Total Steps' })}
                   </Text>
-                  <Text category="h8" bold mt={2}>{roadmap.totalCount}</Text>
+                  <Text category="h8" bold mt={2}>{formatNumber(roadmap.totalCount)}</Text>
                 </View>
               </View>
             </View>
@@ -511,17 +512,17 @@ const CareerRoadmap = memo(() => {
                         icon={TYPE_META[group.type].icon}
                         iconTint={TYPE_META[group.type].tint}
                         title={t(`more:roadmap_type_${group.type}`, { defaultValue: TYPE_META[group.type].label })}
-                        value={t('more:roadmap_completed_of_total', {
+                        value={localizeDigits(t('more:roadmap_completed_of_total', {
                           defaultValue: '{{completed}} of {{total}}',
                           completed: group.completed,
                           total: group.total,
-                        })}
+                        }))}
                         valueColor={TYPE_META[group.type].tint}
-                        caption={t('more:roadmap_type_caption', {
+                        caption={localizeDigits(t('more:roadmap_type_caption', {
                           defaultValue: '{{completed}} of {{total}} steps complete',
                           completed: group.completed,
                           total: group.total,
-                        })}
+                        }))}
                         progressPercent={group.total > 0 ? Math.round((group.completed / group.total) * 100) : 0}
                         progressColor={TYPE_META[group.type].tint}
                         backgroundColor={TYPE_META[group.type].bg}

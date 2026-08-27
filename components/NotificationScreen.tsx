@@ -28,7 +28,12 @@ const NotificationScreen = memo(
     image,
   }: SuccessScreenType) => {
     const {width, height} = useLayout();
-    const sizeIMG = 160 * (width / 375);
+    // BUG FIX (product report, with screenshot: "Interview Complete" --
+    // the checkmark is too big, reduce it to a moderate size) -- 160 was
+    // this component's original full-hero-graphic sizing; 120 is closer to
+    // logoSize's (112) proportion below, still clearly the focal graphic
+    // but no longer dominating the whole top of the screen.
+    const sizeIMG = 120 * (width / 375);
     // Medium, not the old oversized 160-wide block the placeholder gradient
     // circle used to render at (and squashed non-square, 160x142, since
     // that placeholder wasn't actually meant to be a logo). This is a true

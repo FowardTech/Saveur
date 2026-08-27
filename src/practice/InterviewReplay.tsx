@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import Video, { VideoRef } from 'react-native-video';
+import { localizeDigits } from 'utils/formatNumber';
 import {
   TopNavigation,
   TopNavigationAction,
@@ -396,11 +397,11 @@ const InterviewReplay = memo(() => {
                 replay.codingResult.attempts.map((a, i) => (
                   <View key={i} style={i > 0 ? { marginTop: 28 } : undefined}>
                     <Text category="h7" bold mb={12}>
-                      {t('practice:coding_replay_problem_numbered', {
+                      {localizeDigits(t('practice:coding_replay_problem_numbered', {
                         defaultValue: 'Problem {{n}}{{title}}',
                         n: i + 1,
                         title: a.problemTitle ? ` — ${a.problemTitle}` : '',
-                      })}
+                      }))}
                     </Text>
                     {a.problemStatement ? (
                       <View style={styles.problemCard}>
@@ -413,11 +414,11 @@ const InterviewReplay = memo(() => {
                           <Text category="h8" bold>{t('practice:coding_replay_your_code', { defaultValue: 'Your Code' })}</Text>
                           {typeof a.testsTotal === 'number' && a.testsTotal > 0 ? (
                             <Text category="h10" bold status={a.testsPassed === a.testsTotal ? 'success' : 'warning'}>
-                              {t('practice:coding_replay_tests_passed', {
-                                defaultValue: `${a.testsPassed ?? 0} / ${a.testsTotal} tests passed`,
+                              {localizeDigits(t('practice:coding_replay_tests_passed', {
+                                defaultValue: '{{passed}} / {{total}} tests passed',
                                 passed: a.testsPassed ?? 0,
                                 total: a.testsTotal,
-                              })}
+                              }))}
                             </Text>
                           ) : null}
                         </Flex>
@@ -440,11 +441,11 @@ const InterviewReplay = memo(() => {
                         <Text category="h7" bold>{t('practice:coding_replay_your_code', { defaultValue: 'Your Code' })}</Text>
                         {typeof replay.codingResult.testsTotal === 'number' && replay.codingResult.testsTotal > 0 ? (
                           <Text category="h10" bold status={replay.codingResult.testsPassed === replay.codingResult.testsTotal ? 'success' : 'warning'}>
-                            {t('practice:coding_replay_tests_passed', {
-                              defaultValue: `${replay.codingResult.testsPassed ?? 0} / ${replay.codingResult.testsTotal} tests passed`,
+                            {localizeDigits(t('practice:coding_replay_tests_passed', {
+                              defaultValue: '{{passed}} / {{total}} tests passed',
                               passed: replay.codingResult.testsPassed ?? 0,
                               total: replay.codingResult.testsTotal,
-                            })}
+                            }))}
                           </Text>
                         ) : null}
                       </Flex>
