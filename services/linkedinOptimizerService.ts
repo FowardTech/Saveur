@@ -96,7 +96,13 @@ interface WirePrefill {
  * blank paste box in that case, same as before this existed.
  */
 export async function getPrefill(): Promise<PrefillResult | null> {
+  // BUG FIX (product report: LinkedIn Optimizer's "About Me" prefill text
+  // still showing English on a Chinese locale) -- this LLM-extraction call
+  // was the one call in this file NOT sending `language`, unlike
+  // optimizeProfile() below (line ~134). Same currentLanguage() param that
+  // one already sends.
   const { data, status } = await apiClient.get<WirePrefill>('/api/v1/linkedin/prefill', {
+    params: { language: currentLanguage() },
     validateStatus: s => s === 200 || s === 204,
   });
   if (status === 204 || !data) return null;

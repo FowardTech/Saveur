@@ -31,6 +31,7 @@ import * as applicationsService from 'services/applicationsService';
 import * as goalsPreferencesService from 'services/goalsPreferencesService';
 import { WeeklyTargets } from 'services/goalsPreferencesService';
 import { AuthContext } from '../../AuthContext';
+import { getCareerGoalLabel } from 'utils/careerGoalLabels';
 
 type TargetKey = keyof WeeklyTargets;
 
@@ -191,7 +192,7 @@ const GoalsScreen = memo(() => {
                     {t('more:goals_current_goal', { defaultValue: 'Current goal' })}
                   </Text>
                   <Text category="h9" bold mt={2} numberOfLines={1}>
-                    {goal ?? t('more:goals_no_goal_set', { defaultValue: 'Not set' })}
+                    {goal ? getCareerGoalLabel(goal, t) : t('more:goals_no_goal_set', { defaultValue: 'Not set' })}
                   </Text>
                 </View>
                 <Icon

@@ -206,6 +206,16 @@ export async function getProblem(
   slug?: string | null,
 ): Promise<CodingProblem> {
   try {
+    // NOTE: deliberately NOT sending `language` here (checked against
+    // docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16b's explicit endpoint list --
+    // GET /api/v1/coding/problem is not on it, only POST /coding/review and
+    // POST /coding/system-design are). Speculatively sending an unconfirmed
+    // param wouldn't actually translate anything (backend would just ignore
+    // it) and risks colliding with this same domain's *programming*-language
+    // field convention (see the responseLanguage note on reviewCode() below)
+    // if the backend ever reuses `language` for that here too. Needs a real
+    // backend contract addition first, same as every other endpoint in that
+    // list got.
     const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
       params: slug ? {slug} : sessionId ? {session_id: sessionId} : undefined,
     });

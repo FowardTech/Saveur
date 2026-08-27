@@ -740,7 +740,13 @@ export async function verifyGoogleAddon(productId: string, purchaseToken: string
 /** GET /api/v1/billing/addons — the Add-ons screen's catalog, each entry
  * already annotated with whether the current user has unlocked it. */
 export async function listAddons(): Promise<AddonProps[]> {
-  const {data} = await apiClient.get<AddonWire[]>('/api/v1/billing/addons');
+  // BUG FIX (product report: Add-ons screen's "Coding Practice" title/
+  // description still showing English on a Chinese locale) -- this catalog
+  // fetch was missing the same `language` param this file's config fetch
+  // above (line ~208) already sends.
+  const {data} = await apiClient.get<AddonWire[]>('/api/v1/billing/addons', {
+    params: {language: i18n.language || 'en'},
+  });
   return (data ?? []).map(fromAddonWire);
 }
 

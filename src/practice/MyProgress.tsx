@@ -45,6 +45,7 @@ import * as configService from 'services/configService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
 import { AuthContext } from '../../AuthContext';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { getCareerGoalLabel } from 'utils/careerGoalLabels';
 
 // Leaderboard preview's per-rank medal badge colors (module scope, same
 // reasoning as renderCheckInSpinner above). Ranks 1/2 use existing theme
@@ -268,8 +269,13 @@ const MyProgress = memo(() => {
                 <Flex wrap>
                   {goals.map(goal => (
                     <Layout key={goal} level="3" style={styles.goalChip}>
+                      {/* BUG FIX (product report, with screenshot: goal
+                          chip stayed "Promotion" in English on a Chinese
+                          locale) -- same profile.goals raw-string bug
+                          GoalsScreen.tsx had (see utils/careerGoalLabels.ts
+                          for the full root-cause story). */}
                       <Text category="h10" bold>
-                        {goal}
+                        {getCareerGoalLabel(goal, t)}
                       </Text>
                     </Layout>
                   ))}

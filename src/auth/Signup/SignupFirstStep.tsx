@@ -17,6 +17,7 @@ import useLayout from 'hooks/useLayout';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {AuthStackParamList} from 'navigation/types';
+import {CAREER_GOALS} from 'utils/careerGoalLabels';
 
 const SignupFirstStep = memo(() => {
   const {navigate} = useNavigation<NavigationProp<AuthStackParamList>>();
@@ -35,25 +36,16 @@ const SignupFirstStep = memo(() => {
   // signUp()/updateProfile() as UserProfileProps.locale, unchanged.
   const locale = i18n.language;
 
+  // BUG FIX -- was a locally-duplicated list of the same 10 goals kept "in
+  // sync by hand" with src/more/ChangeCareType/index.tsx (the "change it
+  // later" equivalent). Deduped onto the shared CAREER_GOALS list
+  // (utils/careerGoalLabels.ts), which also fixes the actual bug: `title`
+  // used to be forwarded to navigate()/updateProfile() as-is (see onChoose
+  // below), permanently baking in whatever language was active at signup
+  // and never re-translating on a later language change -- see that file's
+  // own top comment for the full story.
   const DATA = React.useMemo(
-    () => [
-      {id: 0, title: t('auth:goal_new_job', {defaultValue: 'Land a New Job'}), icon: 'briefcase-outline'},
-      {id: 1, title: t('auth:goal_career_change', {defaultValue: 'Career Change'}), icon: 'swap-outline'},
-      {id: 2, title: t('auth:goal_promotion', {defaultValue: 'Promotion'}), icon: 'trending-up-outline'},
-      {id: 3, title: t('auth:goal_return_to_work', {defaultValue: 'Return to Work'}), icon: 'log-in-outline'},
-      {id: 4, title: t('auth:goal_internship', {defaultValue: 'Internship / Grad Job'}), icon: 'book-open-outline'},
-      {id: 5, title: t('auth:goal_executive', {defaultValue: 'Executive Move'}), icon: 'star-outline'},
-      // Product request item: "We need to add more goal list to the goal
-      // section" — this 6-option list (unchanged since this screen
-      // shipped) didn't cover several common real career goals. Kept in
-      // sync with the same 6+4 list in src/more/ChangeCareType/index.tsx
-      // (the "change it later" equivalent of this screen) — see that
-      // file's own comment.
-      {id: 6, title: t('auth:goal_start_business', {defaultValue: 'Start a Business'}), icon: 'bulb-outline'},
-      {id: 7, title: t('auth:goal_relocate', {defaultValue: 'Relocate / Work Abroad'}), icon: 'globe-outline'},
-      {id: 8, title: t('auth:goal_grow_network', {defaultValue: 'Grow My Network'}), icon: 'people-outline'},
-      {id: 9, title: t('auth:goal_explore_options', {defaultValue: 'Explore My Options'}), icon: 'compass-outline'},
-    ],
+    () => CAREER_GOALS.map((g, id) => ({id, defaultValue: g.defaultValue, title: t(g.titleKey, {defaultValue: g.defaultValue}), icon: g.icon})),
     [t],
   );
   const [isChoose, setChoose] = React.useState<number>();
@@ -72,7 +64,12 @@ const SignupFirstStep = memo(() => {
     (i: number) => () => {
       setChoose(i);
       setTimeout(() => {
-        navigate('SignupSecondStep', {goal: DATA[i].title, locale});
+        // BUG FIX -- was DATA[i].title (the resolved display string); now
+        // the stable English defaultValue, same id getCareerGoalLabel
+        // expects on the read side (GoalsScreen.tsx). Nothing between here
+        // and updateProfile (SignupSecondStep -> SignupThirdStep) ever
+        // renders `goal` as visible text, so this is safe to change.
+        navigate('SignupSecondStep', {goal: DATA[i].defaultValue, locale});
       }, 1000);
     },
     [navigate, DATA, locale],

@@ -19,6 +19,7 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackParamList } from "navigation/types";
 import { AuthContext } from "../../../AuthContext";
 import { globalStyle } from "styles/globalStyle";
+import { CAREER_GOALS } from "utils/careerGoalLabels";
 
 // Same 6 goals + same eva outline icons as src/auth/Signup/SignupFirstStep.tsx
 // (the goal picker shown once, at signup) — this screen is the "change it
@@ -39,21 +40,11 @@ import { globalStyle } from "styles/globalStyle";
 // 6 cards at signup, by swapping the PNG ImageBackground for a plain themed
 // View using background-basic-color-2 / color-primary-500 — replicating
 // that fix here so the "change it later" screen matches.
-const GOALS = [
-  { titleKey: "auth:goal_new_job", defaultValue: "Land a New Job", icon: "briefcase-outline" },
-  { titleKey: "auth:goal_career_change", defaultValue: "Career Change", icon: "swap-outline" },
-  { titleKey: "auth:goal_promotion", defaultValue: "Promotion", icon: "trending-up-outline" },
-  { titleKey: "auth:goal_return_to_work", defaultValue: "Return to Work", icon: "log-in-outline" },
-  { titleKey: "auth:goal_internship", defaultValue: "Internship / Grad Job", icon: "book-open-outline" },
-  { titleKey: "auth:goal_executive", defaultValue: "Executive Move", icon: "star-outline" },
-  // Product request item: "We need to add more goal list to the goal
-  // section" — kept in sync with the same 4 additions in
-  // src/auth/Signup/SignupFirstStep.tsx (see that file's comment).
-  { titleKey: "auth:goal_start_business", defaultValue: "Start a Business", icon: "bulb-outline" },
-  { titleKey: "auth:goal_relocate", defaultValue: "Relocate / Work Abroad", icon: "globe-outline" },
-  { titleKey: "auth:goal_grow_network", defaultValue: "Grow My Network", icon: "people-outline" },
-  { titleKey: "auth:goal_explore_options", defaultValue: "Explore My Options", icon: "compass-outline" },
-];
+// Moved to utils/careerGoalLabels.ts (CAREER_GOALS) -- shared with
+// src/auth/Signup/SignupFirstStep.tsx and GoalsScreen.tsx's reverse-lookup
+// (see that file's own comment for the "was persisting the translated
+// string, not a stable id" bug this dedup + shared list also fixes).
+const GOALS = CAREER_GOALS;
 
 const ChangeCareType = () => {
   const theme = useTheme();
@@ -70,10 +61,14 @@ const ChangeCareType = () => {
 
   // Pre-select whatever the user already has saved (profile.goals[0]) rather
   // than always defaulting to the first card, so reopening this screen shows
-  // the real current choice.
+  // the real current choice. Matches against `defaultValue` (the stable
+  // English id saved going forward) first, then falls back to matching the
+  // resolved `title` (covers legacy data saved before this fix, still
+  // stored as whatever language was active at the time).
   const [active, setActive] = React.useState<number>(() => {
     const current = profile?.goals?.[0];
-    const idx = current ? items.findIndex(g => g.title === current) : -1;
+    if (!current) return 0;
+    const idx = items.findIndex(g => g.defaultValue === current || g.title === current);
     return idx >= 0 ? idx : 0;
   });
   const [isSaving, setIsSaving] = React.useState(false);
@@ -82,7 +77,14 @@ const ChangeCareType = () => {
     if (isSaving) return;
     setIsSaving(true);
     try {
-      await updateProfile({ goals: [items[active].title] });
+      // BUG FIX -- persist the stable English `defaultValue` (same
+      // convention Application_Stage_Enum/Interview_Type_Enum already use:
+      // a fixed identifier, translated only for display via
+      // getCareerGoalLabel/utils/careerGoalLabels.ts) instead of `title`,
+      // which was the ALREADY-RESOLVED string for whatever locale was
+      // active right now -- switching languages later could never
+      // re-translate a value baked into one language at save time.
+      await updateProfile({ goals: [items[active].defaultValue] });
       goBack();
     } catch (e: any) {
       Alert.alert(
