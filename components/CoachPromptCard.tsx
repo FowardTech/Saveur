@@ -30,8 +30,15 @@ const CoachPromptCard: React.FC<CoachPromptCardProps> = ({ title, subtitle, prom
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        <GradientIconBadge color="#0063f8" size={44} radius={16} shade={-8}>
-          <Icon pack="eva" name="message-circle-outline" style={{ width: 22, height: 22, tintColor: '#fff' }} />
+        {/* Product report ("the AI career coach card chat icon in the
+            homescreen, the one after the daily challenge card... the chat
+            icon background should be gray and the icon black") -- was a
+            solid brand-blue badge (shade=-8) with a white glyph. #F0F0F0
+            (this app's own color-basic-300 -- see appTheme.json) at
+            shade={0} keeps it exactly that flat light gray rather than
+            GradientIconBadge's default +16 lift pushing it toward white. */}
+        <GradientIconBadge color="#F0F0F0" size={44} radius={16} shade={0}>
+          <Icon pack="eva" name="message-circle-outline" style={{ width: 22, height: 22, tintColor: theme['text-basic-color'] }} />
         </GradientIconBadge>
         <View style={[globalStyle.flexOne, styles.headerText]}>
           <Text category="h9" bold numberOfLines={1}>

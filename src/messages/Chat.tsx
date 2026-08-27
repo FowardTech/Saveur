@@ -630,17 +630,14 @@ const Chat = memo(() => {
     // scaleY(-1) below, the whole greeting renders upside down.
     return (
       <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
-        {/* COLOR HISTORY: brand-blue solid fill -> illustrated color chat-
-            bubble PNG (Images.iconCoachChat, then Images.iconCoachChatBlue)
-            on a transparent backdrop. Product report: "the chat icon
-            background should be gray and the icon black" -- a baked
-            full-color PNG can't be tinted black, so this swaps to a real
-            vector glyph (same `comment` icon the Coach tab's own FAB uses,
-            see MainBottomTab.tsx's CoachFabIcon) that can, on a light-gray
-            circle (background-basic-color-3, same gray the tab bar's
-            active pill and the voice-mode pill button both use). */}
+        {/* REVERTED (product report: "I did not say you should touch the
+            chat icon in the AI career coach screen, i am talking about the
+            AI career coach card chat icon in the homescreen" -- the
+            gray-bg/black-icon ask was actually for Home's CoachPromptCard,
+            not this screen). Back to the illustrated blue chat-bubble PNG
+            this screen has used since the original reference-redesign. */}
         <View style={styles.emptyGlowWrap}>
-          <Icon pack="assets" name="comment" style={{ width: 40, height: 40, tintColor: theme['text-basic-color'] }} />
+          <Image source={Images.iconCoachChatBlue} resizeMode="contain" style={styles.emptyGlowIcon as ImageStyle} />
         </View>
         <Text category="h6" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
@@ -1063,34 +1060,34 @@ const themedStyles = StyleService.create({
     marginTop: 6,
   },
   // Empty-thread greeting (reference-redesign, see renderChatEmpty).
-  // Product follow-up: "The Saveur icon, the headline text and the
-  // suggested topic button should move a little bit up so that there can
-  // be space" -- paddingTop was 48, pushing the whole orb/headline/pill
-  // cluster down and leaving little room before the "Suggested for you"
-  // card + composer below it. 24 shifts that whole cluster up as one
-  // group (alignItems:'center' keeps it centered either way) without
-  // touching the spacing between the pieces themselves.
-  // Follow-up round 2 ("still move [it] up more"): 24 -> 8, same group,
-  // same reasoning, just a further nudge in the same direction.
-  // Follow-up round 3 (same ask again): 8 -> 0. This is flex:1 with
-  // alignItems:'center' and the default justifyContent:'flex-start', so
-  // paddingTop is the only thing holding the cluster down at all -- 0 is
-  // as far up as this one property can push it without going negative.
+  // COLOR/POSITION HISTORY: several earlier rounds nudged this cluster
+  // progressively higher via paddingTop (48 -> 24 -> 8 -> 0) while the
+  // "Start a video practice" card still anchored the bottom of the
+  // screen. That card is gone now (product report: "remove the start a
+  // video practice card"), and the immediate follow-up was the opposite
+  // complaint -- "the chat icon and the suggested pill button should move
+  // up to the center of the screen, they are too down" -- meaning
+  // vertically centered in the now-taller empty space below, not pinned
+  // to the very top. justifyContent: 'center' replaces the old
+  // paddingTop tuning entirely.
   emptyState: {
     flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingTop: 0,
   },
-  // Product report: "the chat icon background should be gray" -- see the
-  // JSX comment above for the full color history.
+  // REVERTED (product report: the gray-bg ask was for Home's
+  // CoachPromptCard, not this screen -- see the JSX comment above).
   emptyGlowWrap: {
     width: 88,
     height: 88,
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'background-basic-color-3',
+  },
+  emptyGlowIcon: {
+    width: 88,
+    height: 88,
   },
   // BUG FIX (product report: "too bold", "reduce the size"): `category`
   // was "h5" with the `bold` prop -- h5 was never actually added to this

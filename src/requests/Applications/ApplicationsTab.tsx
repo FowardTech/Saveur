@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {View} from 'react-native';
+import {ScrollView, View} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon, Button, Input} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -167,13 +167,28 @@ const ApplicationsTab = memo(() => {
           more features can we add to the Job application tracker that can
           make it worth being added as a premium plan"). Shown even with an
           empty list — "Add from email" in particular is a second on-ramp
-          into tracking alongside the existing WebView auto-detect flow. */}
-      <Flex justify="flex-start" wrap mb={hasAnyApplications ? 16 : 0}>
+          into tracking alongside the existing WebView auto-detect flow.
+          Product report: "the Add from email and Analytics button should
+          both be on the same level horizontally" -- was a wrapping Flex
+          row, which could drop "Analytics" to a second line on narrower
+          screens once both outline buttons' icon+label width added up. A
+          horizontal ScrollView guarantees they always stay on one row
+          (scrollable rather than wrapping) regardless of screen width. */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={{marginBottom: hasAnyApplications ? 16 : 0}}>
+        {/* Product report: "the Add from email button should be the
+            default blue and the text white" -- was appearance="outline"
+            status="basic" (a gray outline pill, matching Analytics/Compare
+            offers). Filled status="primary" is this app's standard brand-
+            blue fill with white label -- same CtaButton.tsx look, just
+            through the plain UI Kitten Button since this needs to keep its
+            own compact `size="small"` + icon accessory. */}
         <Button
           size="small"
-          appearance="outline"
-          status="basic"
-          style={{marginRight: 10, marginBottom: 10}}
+          status="primary"
+          style={{marginRight: 10}}
           accessoryLeft={props => <Icon {...props} pack="eva" name="email-outline" />}
           onPress={() => navigate('AddFromEmail')}>
           {t('request:add_from_email_cta', {defaultValue: 'Add from email'})}
@@ -183,7 +198,7 @@ const ApplicationsTab = memo(() => {
             size="small"
             appearance="outline"
             status="basic"
-            style={{marginRight: 10, marginBottom: 10}}
+            style={{marginRight: 10}}
             accessoryLeft={props => <Icon {...props} pack="eva" name="bar-chart-2-outline" />}
             onPress={() => navigate('ApplicationAnalytics')}>
             {t('request:analytics_cta', {defaultValue: 'Analytics'})}
@@ -194,13 +209,12 @@ const ApplicationsTab = memo(() => {
             size="small"
             appearance="outline"
             status="basic"
-            style={{marginBottom: 10}}
             accessoryLeft={props => <Icon {...props} pack="eva" name="award-outline" />}
             onPress={() => navigate('CompareOffers')}>
             {t('request:compare_offers_cta', {defaultValue: 'Compare offers'})}
           </Button>
         ) : null}
-      </Flex>
+      </ScrollView>
       {hasAnyApplications ? (
         <Input
           placeholder={t('request:search_applications', {defaultValue: 'Search by company, role, or location…'})}

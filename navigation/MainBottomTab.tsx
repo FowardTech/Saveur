@@ -284,9 +284,15 @@ const MainBottomTab = memo(() => {
               to match. Inactive icons keep the same neutral placeholder
               tint as before. */}
           <View style={focused ? styles.activePill : undefined}>
+            {/* Product report: "the active bottom tab icon should change to
+                line icons when active not filled" -- was `${icon}Active`
+                (see AssetIconsPack.tsx/lucideIcon.tsx's `filled: true`
+                variants) when focused, a solid glyph. Always the plain
+                outline `icon` name now; the pill background + tintColor
+                below are what signal "active", not the glyph's fill. */}
             <Icon
               pack="assets"
-              name={!focused ? icon : `${icon}Active`}
+              name={icon}
               style={{
                 width: 22,
                 height: 22,

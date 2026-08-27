@@ -43,12 +43,15 @@ const RequestsSrc = memo(() => {
   }, [activeIndex, shouldLoadComponent, styles.footer]);
   const ListHeaderComponent = React.useCallback(() => {
     return (
-      // No explicit `level` here defaulted to level="1" (near-white), which
-      // sat on top of Container's own level="3" page background (grayer) —
-      // showed up as a faint pale band right under the header (same bug as
-      // SharedWithMe.tsx's tabBarWrap). Transparent instead, so this sits
-      // directly on the page with no seam.
-      <Layout style={{backgroundColor: 'transparent'}}>
+      // Product report: "the container holding the applications and
+      // practice history tabs is transparent that should not be. It
+      // should be white background with bottom box shadow only" -- was
+      // transparent (see this block's own prior comment history, now
+      // superseded). White fill + a soft shadow on the bottom edge only
+      // (shadowOffset height positive, matching this app's other sticky
+      // header treatments) so this tab bar reads as a raised strip sitting
+      // above the page content below it.
+      <Layout style={styles.tabBarWrap}>
         <BasicTabBar
           style={styles.tabBar}
           activeIndex={activeIndex}
@@ -57,7 +60,7 @@ const RequestsSrc = memo(() => {
         />
       </Layout>
     );
-  }, [activeIndex, styles.tabBar, t]);
+  }, [activeIndex, styles.tabBar, styles.tabBarWrap, t]);
 
   return (
     <Container style={styles.container}>
@@ -83,6 +86,16 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   content: {},
+  // See ListHeaderComponent's own comment -- white fill + bottom-only
+  // shadow (iOS: shadowOffset/Opacity/Radius; Android: elevation).
+  tabBarWrap: {
+    backgroundColor: 'background-basic-color-2',
+    shadowColor: 'rgba(31, 41, 84, 0.35)',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
   tabBar: {
     marginTop: 12,
     paddingHorizontal: 12,
