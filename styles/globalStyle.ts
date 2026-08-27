@@ -220,16 +220,21 @@ export const globalStyle = StyleSheet.create({
   // blue even while everything else about the look changes" precedent as
   // CtaButton.tsx's own color history comment. Shape/shadow softness from
   // the reskin (radius, opacity, blur) all stay; only the tint reverted.
+  // THIRD PASS: retinted to green again, this time scoped correctly per
+  // CtaButton.tsx's own updated COLOR HISTORY comment ("all the blue
+  // SUBMIT buttons," not an app-wide primary-color rebrand) — this shadow
+  // tint only ever belongs to that one component's submit-button fill, so
+  // moving it in lockstep is exactly in-scope, unlike color-primary-*.
   shadowBtn: Platform.select({
     ios: {
-      shadowColor: 'rgba(0, 99, 248, 0.45)',
+      shadowColor: 'rgba(50, 173, 132, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,
     },
     android: {},
     default: {
-      shadowColor: 'rgba(0, 99, 248, 0.45)',
+      shadowColor: 'rgba(50, 173, 132, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,

@@ -132,7 +132,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
         ) : null}
 
         <TouchableOpacity activeOpacity={0.85} style={[styles.cta, !showProgress && styles.ctaNoProgress]} onPress={onPress}>
-          <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#0052D9', marginRight: 8 }} />
+          <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#32ad84', marginRight: 8 }} />
           <Text category="h9" bold style={styles.ctaText}>
             {ctaLabel}
           </Text>
@@ -146,18 +146,19 @@ export default MissionHeroCard;
 
 const themedStyles = StyleService.create({
   // Two-layer split (shadow-casting outer / color-clipping inner), same
-  // construction GradientCard.tsx established for this app -- flat solid
-  // fill now (gradient removed per product request), same blue as before.
+  // construction GradientCard.tsx established for this app. Dark
+  // slate-navy fill (product request: "change the background of the hero
+  // card from blue to #272e3b") -- was the flat brand blue, #0052D9.
   outer: {
     ...globalStyle.card,
     marginTop: 16,
-    backgroundColor: '#0052D9',
+    backgroundColor: '#272e3b',
   },
   inner: {
     borderRadius: 16,
     padding: 18,
     overflow: 'hidden',
-    backgroundColor: '#0052D9',
+    backgroundColor: '#272e3b',
   },
   // Badge (left) + illustration (right), both in normal flow -- see the
   // JSX's own comment on why the illustration moved out of absolute
@@ -243,7 +244,12 @@ const themedStyles = StyleService.create({
   ctaNoProgress: {
     marginTop: 20,
   },
+  // Submit-button color (product request: "the blue submit buttons" -> the
+  // same #32ad84 CtaButton.tsx now uses -- this CTA is a plain
+  // TouchableOpacity, not CtaButton itself, since it needs a white pill
+  // fill instead of CtaButton's own solid-color fill, so the color is set
+  // directly here rather than through that component).
   ctaText: {
-    color: '#0052D9',
+    color: '#32ad84',
   },
 });

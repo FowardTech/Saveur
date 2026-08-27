@@ -9,18 +9,25 @@ import { globalStyle } from 'styles/globalStyle';
 // ZipRecruiter-reference direction; that flatness is now replaced by this
 // softer look.
 //
-// COLOR HISTORY: this is Saveur's established brand blue (#0063f8) — a
-// mint-green fill was tried TWICE now (once standalone, once as part of a
-// full wellness-app-inspired reskin) and reverted BOTH times per explicit
-// follow-up ("i did not ask you to change the color of buttons to green,
-// revert back to the blue color they were before" / "dont forget to still
-// maintain the default blue color"). The wellness-app reskin's SHAPE
-// changes (rounder radius, softer shadow) stayed; only the color reverted
-// — see constants/theme/appTheme.json's color-primary-* scale, which is
-// the single place this and every other primary-colored element in the app
-// reads from. Since every primary button app-wide now renders through this
-// one component, this file is the single place that color/shadow lives —
-// no other file needs touching to adjust it.
+// COLOR HISTORY: mint-green was tried TWICE as an app-wide primary-color
+// rebrand (touching constants/theme/color-primary-*, which every icon/
+// badge/link in the app also reads from, not just buttons) and reverted
+// BOTH times per explicit follow-up ("i did not ask you to change the
+// color of buttons to green, revert back to the blue color they were
+// before" / "dont forget to still maintain the default blue color").
+//
+// THIRD REQUEST (explicit, scoped this time: "i did not say you should
+// make all the blue color this #32ad84 i said all the blue SUBMIT
+// buttons... i did not say you should change all the blue items to that
+// green color") — green (#32ad84) again, but as a literal hex HERE only,
+// deliberately NOT through constants/theme/appTheme.json's color-primary-*
+// (that stays the original brand blue, #0063f8, for every icon/badge/link/
+// illustration that also reads it). Since every primary SUBMIT button
+// app-wide now renders through this one component (see the codemod note
+// below), hardcoding the color on this file alone is what actually scopes
+// "submit buttons" correctly without recoloring anything else — no other
+// file needs touching to adjust it. globalStyle.shadowBtn (this button's
+// own shadow tint) moved to match, same file/reasoning.
 //
 // A thin wrapper around UI Kitten's own Button rather than a fully custom
 // component, so every prop that already works on <Button> (accessoryLeft/
@@ -54,13 +61,13 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
       accessoryLeft={loading ? renderLoadingSpinner : accessoryLeft}
       style={[
         {
-          // theme['color-primary-100'] and theme['color-primary-500'] are
-          // now the SAME value (see appTheme.json) -- either resolves to
-          // the current brand emerald. Kept as -100 (not -500) purely for
-          // continuity with every other direct color-primary-100 reference
-          // already in the app (see that token's own comment history).
-          backgroundColor: theme['color-primary-100'],
-          borderColor: theme['color-primary-100'],
+          // Literal hex, NOT theme['color-primary-100'] -- see this file's
+          // own COLOR HISTORY comment above for why: color-primary-* is
+          // still the original brand blue (every icon/badge/link that
+          // reads it stays blue), and this hardcoded green is scoped to
+          // submit buttons only.
+          backgroundColor: '#32ad84',
+          borderColor: '#32ad84',
           // FULL RESKIN (product request: match a new reference app's
           // look and feel — solid pill-shaped CTA buttons). Was radius 5
           // per an earlier, since-reversed request; explicitly confirmed
