@@ -73,10 +73,23 @@ async function verifyPurchaseServerSide(
  * Buys `sku` and, once the store reports success, verifies it against the
  * real backend (never trusts the client-side purchase event alone) before
  * finishing the transaction. Resolves with the backend's grant result;
- * rejects on cancel/failure — a user backing out of the native sheet
- * surfaces as a rejected promise with `code: 'UserCancelled'`
- * (RNIap.ErrorCode), same as Stripe PaymentSheet's 'Canceled' the caller
- * already special-cases elsewhere in this app.
+ * rejects on a real failure. A user backing out of the native sheet
+ * resolves with `{kind: 'cancelled'}` instead of rejecting — same as Stripe
+ * PaymentSheet's 'Canceled' the caller already special-cases elsewhere in
+ * this app.
+ *
+ * BUG FIX (product report, screenshot: tapping Subscribe then cancelling
+ * the native App Store sheet showed an error alert whose own OK button
+ * was frozen/unresponsive) — this used to reject with a generic Error
+ * ("User cancelled the purchase flow"), which Subscription.tsx/AddOns.tsx
+ * then immediately Alert.alert()'d on. Presenting a new alert that fast
+ * after the native purchase sheet's own dismiss animation is still
+ * finishing is a known iOS UIKit conflict (two view-controller
+ * presentations racing) that can leave the alert's buttons unresponsive.
+ * Resolving as a distinct, non-error `cancelled` kind lets both callers
+ * just return quietly instead — a deliberate cancel was never really an
+ * "error" worth alerting on anyway, matching the Stripe path's own
+ * behavior right below in each of those files.
  *
  * Deliberately does NOT use the library's `autoFinishTransactions` default
  * — finishing before our own backend confirms the grant would mark the
@@ -117,6 +130,10 @@ export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerif
       }
     });
     errorSub = RNIap.purchaseErrorListener((error: unknown) => {
+      if (RNIap.isUserCancelledError(error)) {
+        settle(() => resolve({kind: 'cancelled'}));
+        return;
+      }
       settle(() => reject(error));
     });
 

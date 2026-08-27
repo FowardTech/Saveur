@@ -690,7 +690,11 @@ function fromAddonWire(wire: AddonWire): AddonProps {
 export type IapVerifyResult =
   | (SubscriptionStatusProps & {kind: 'subscription'})
   | {kind: 'addon'; addonCode: string; unlocked: boolean; unlockedAddons: string[]}
-  | {kind: 'error'; error: string};
+  | {kind: 'error'; error: string}
+  // The user backed out of the native purchase sheet themselves — not a
+  // failure, see iapService.ts's purchase() for why this is its own kind
+  // rather than an error.
+  | {kind: 'cancelled'};
 
 interface IapVerifyWire {
   error?: string;

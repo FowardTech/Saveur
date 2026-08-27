@@ -33,11 +33,19 @@ const CoachPromptCard: React.FC<CoachPromptCardProps> = ({ title, subtitle, prom
         {/* Product report ("the AI career coach card chat icon in the
             homescreen, the one after the daily challenge card... the chat
             icon background should be gray and the icon black") -- was a
-            solid brand-blue badge (shade=-8) with a white glyph. #F0F0F0
-            (this app's own color-basic-300 -- see appTheme.json) at
-            shade={0} keeps it exactly that flat light gray rather than
-            GradientIconBadge's default +16 lift pushing it toward white. */}
-        <GradientIconBadge color="#F0F0F0" size={44} radius={16} shade={0}>
+            solid brand-blue badge (shade=-8) with a white glyph.
+            BUG FIX (follow-up product report, screenshot: "this chat icon
+            is looking bad in dark mode") -- the original fix for the ask
+            above hardcoded the flat light gray as a literal #F0F0F0 hex,
+            which doesn't flip for dark mode the way a theme token does; the
+            icon tint (`text-basic-color`) DOES flip to near-white in dark
+            mode, so the combo became a barely-visible white-on-light-gray
+            badge. `background-basic-color-3` is this same theme's own
+            "flat gray chip" token (already used a few lines down for the
+            prompt chips) -- it resolves to a light gray in light mode
+            (same look as before) and a proper dark gray in dark mode, so
+            the white icon tint actually reads against it. */}
+        <GradientIconBadge color={theme['background-basic-color-3']} size={44} radius={16} shade={0}>
           <Icon pack="eva" name="message-circle-outline" style={{ width: 22, height: 22, tintColor: theme['text-basic-color'] }} />
         </GradientIconBadge>
         <View style={[globalStyle.flexOne, styles.headerText]}>

@@ -453,6 +453,10 @@ const Subscription = memo(() => {
   const payWithIAP = async (plan: BillingPlanProps) => {
     if (!plan.code) return;
     const result = await iapService.purchaseSubscription(plan.code);
+    // The user backing out of the native App Store/Play sheet themselves
+    // isn't a failure worth alerting on — same treatment as Stripe
+    // PaymentSheet's 'Canceled' code further down this file.
+    if (result.kind === 'cancelled') return;
     if (result.kind === 'error') {
       throw new Error(result.error);
     }
@@ -974,13 +978,24 @@ const Subscription = memo(() => {
                       end={{ x: 1, y: 1 }}
                       style={styles.popularRibbonGradient}>
                       <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
-                      <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
+                      <Text category="h10" bold numberOfLines={1} style={{ color: PRO_GOLD_TEXT }}>
                         {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
                       </Text>
                     </LinearGradient>
                   </View>
                 ) : null}
-                <Flex justify="space-between" itemsCenter mb={8}>
+                {/* Bug report (screenshot): the gold ribbon's text/icon were
+                    getting cut off, specifically on the Chinese "最受欢迎"
+                    build -- CJK glyphs render with a taller natural line
+                    height than the Latin "MOST POPULAR" this ribbon was
+                    originally sized for, so the -12 negative offset (see
+                    popularRibbon below) no longer left enough clearance
+                    before this title row started, and the two visually
+                    collided/overlapped. Extra top margin here only for a
+                    recommended card guarantees clearance regardless of the
+                    active locale's line height, instead of fighting exact
+                    ribbon-height math per language. */}
+                <Flex justify="space-between" itemsCenter mb={8} style={isRecommended ? { marginTop: 8 } : undefined}>
                   <Text category="h6" bold style={isHero ? styles.heroText : undefined}>{plan.title}</Text>
                   {isCurrent ? (
                     <View style={[styles.currentBadge, { backgroundColor: theme['color-primary-500'] }]}>
@@ -1203,6 +1218,7 @@ const themedStyles = StyleService.create({
     top: -12,
     alignSelf: 'center',
     borderRadius: 999,
+    zIndex: 2,
     ...globalStyle.shadowFade,
   },
   popularRibbonGradient: {

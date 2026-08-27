@@ -135,6 +135,9 @@ const AddOns = memo(() => {
   // the way the Stripe path's confirmAddonPurchase is.
   const purchaseWithIAP = async (addon: AddonProps) => {
     const result = await iapService.purchaseAddon(addon.code);
+    // Same as the Stripe path's 'Canceled' check below — backing out of
+    // the native sheet isn't a failure worth alerting on.
+    if (result.kind === 'cancelled') return;
     if (result.kind === 'error') {
       throw new Error(result.error);
     }

@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Image, View} from 'react-native';
+import {View} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
@@ -8,7 +8,6 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
-import {Images} from 'assets/images';
 import {useTranslation} from 'react-i18next';
 
 // Was hardcoded to "Good morning!" regardless of actual time of day.
@@ -38,18 +37,12 @@ const HeaderHome = memo(
     const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
     const styles = useStyleSheet(themedStyles);
     const _onNotification = () => navigate('Notification');
-    // Product follow-up: "Add a trophy icon beside the notification icon
-    // to navigate to the leaderboard" — same real trophy graphic already
-    // used inside src/home/Leaderboard.tsx's own hero card (product
-    // request: "Replace the trophy icon... with image 2"), not a generic
-    // Eva glyph, so both surfaces read as the same illustrated trophy.
-    const _onLeaderboard = () => navigate('Leaderboard');
     // Product request: "remove the referral pill from the for you pill and
     // place a gift icon beside the notification bell that navigates to the
     // referral screen" -- same gift-outline glyph the referral screen
     // itself already used before its own illustrated-gift-box redesign
     // (see ReferralProgram.tsx/DailyChallengeCard.tsx's own use of this
-    // exact icon), same trophy-button construction as _onLeaderboard above.
+    // exact icon).
     const _onReferral = () => navigate('ReferralProgram');
     const {t} = useTranslation(['home', 'common']);
     const theme = useTheme();
@@ -83,16 +76,28 @@ const HeaderHome = memo(
             </Text>
           ) : null}
         </View>
-        <Flex onPress={_onLeaderboard} style={[styles.button, styles.trophyButton]}>
-          <Image source={Images.trophy} style={styles.trophyIcon} resizeMode="contain" />
-        </Flex>
-        <Flex onPress={_onReferral} style={[styles.button, styles.trophyButton]}>
-          <Icon pack="eva" name="gift-outline" style={[styles.trophyIcon, {tintColor: theme['text-basic-color']}]} />
+        {/* Product request: "Remove the trophy icon beside the gift icon" --
+            was `_onLeaderboard` navigating to Leaderboard.tsx; that
+            destination is still reachable from the "For You" row's own
+            Leaderboard pill (see HomeSrc.tsx), so nothing is lost, just
+            this one duplicate entry point here. */}
+        <Flex onPress={_onReferral} style={[styles.button, styles.headerIconButton]}>
+          <Icon pack="eva" name="gift-outline" style={[styles.headerIcon, {tintColor: theme['text-basic-color']}]} />
         </Flex>
         <Flex onPress={_onNotification} style={styles.button}>
+          {/* Bug fix (product report: "change the bell icon color to
+              black too") -- status="facebook" tinted this with
+              text-link-color (a blue), inconsistent with the gift icon
+              right next to it, which is deliberately tinted
+              text-basic-color (this app's "black" ink color, see that
+              icon's own comment). "basic" resolves to icon-basic-color,
+              which is set to the exact same value as text-basic-color in
+              both themes (constants/theme/light.json, dark.json) -- same
+              black in light mode, same off-white in dark mode, so the two
+              icons now always match. */}
           <NavigationAction
             icon="notification"
-            status="facebook"
+            status="basic"
             onPress={() => null}
             disabled
           />
@@ -140,10 +145,10 @@ const themedStyles = StyleService.create({
     ...globalStyle.center,
     borderRadius: 20,
   },
-  trophyButton: {
+  headerIconButton: {
     marginRight: 10,
   },
-  trophyIcon: {
+  headerIcon: {
     width: 22,
     height: 22,
   },
