@@ -220,18 +220,16 @@ export const globalStyle = StyleSheet.create({
   // blue even while everything else about the look changes" precedent as
   // CtaButton.tsx's own color history comment. Shape/shadow softness from
   // the reskin (radius, opacity, blur) all stay; only the tint reverted.
-  // Blue-to-green primary rebrand (#32ad84) -- was tinted toward the old
-  // brand blue per the comment above; same role, just the new brand color.
   shadowBtn: Platform.select({
     ios: {
-      shadowColor: 'rgba(50, 173, 132, 0.45)',
+      shadowColor: 'rgba(0, 99, 248, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,
     },
     android: {},
     default: {
-      shadowColor: 'rgba(50, 173, 132, 0.45)',
+      shadowColor: 'rgba(0, 99, 248, 0.45)',
       shadowOffset: { width: 0, height: 6 },
       shadowOpacity: 0.28,
       shadowRadius: 12.0,

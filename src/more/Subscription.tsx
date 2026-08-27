@@ -1257,8 +1257,7 @@ const themedStyles = StyleService.create({
   heroSubscribeButtonDisabled: {
     opacity: 0.6,
   },
-  // Blue-to-green primary rebrand (#32ad84).
   heroSubscribeButtonText: {
-    color: '#32ad84',
+    color: '#0063f8',
   },
 });

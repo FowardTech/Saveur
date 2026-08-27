@@ -92,9 +92,8 @@ const RecentActivityList = memo(() => {
             icons... give the icons themselves the platform blue") -- this
             cycled through a color-primary-transparent-100 tint circle and
             a GradientIconBadge; no badge/background now, plain glyph
-            tinted platform blue, now brand green as part of the blue-to-
-            green primary rebrand (#32ad84). */}
-        <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#32ad84' }]} />
+            tinted platform blue (#0063f8) directly. */}
+        <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
         <Text category="h7" bold ml={10}>
           {t('home:recent_activity_title', { defaultValue: 'Recent activity' })}
         </Text>

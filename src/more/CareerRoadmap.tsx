@@ -354,13 +354,8 @@ const CareerRoadmap = memo(() => {
                 size={84}
                 strokeWidth={8}
                 trackColor={theme['background-basic-color-3']}
-                // Blue-to-green primary rebrand -- "to" stop was #0052D9
-                // (a darker shade of the old primary blue), now #2B9973.
-                // gradientFrom (#1F7BFF) is left as-is -- not one of this
-                // rebrand's listed hexes; flagged for separate review since
-                // it now transitions from blue into green.
                 gradientFrom="#1F7BFF"
-                gradientTo="#2B9973"
+                gradientTo="#0052D9"
                 style={styles.statsRing}>
                 <Text category="h7" bold>{roadmapPercent}%</Text>
                 <Text category="h10" status="placeholder" mt={2}>

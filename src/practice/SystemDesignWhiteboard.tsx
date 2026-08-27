@@ -305,9 +305,7 @@ const themedStyles = StyleService.create({
     marginBottom: 12,
     padding: 12,
     borderRadius: 16,
-    // Blue-to-green primary rebrand (#32ad84) -- matches the icon's
-    // theme['color-primary-500'] tint at the JSX call site.
-    backgroundColor: 'rgba(50, 173, 132, 0.08)',
+    backgroundColor: 'rgba(0, 99, 248, 0.08)',
   },
   card: {
     ...globalStyle.card,

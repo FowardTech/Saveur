@@ -30,8 +30,7 @@ const CoachPromptCard: React.FC<CoachPromptCardProps> = ({ title, subtitle, prom
   return (
     <View style={styles.card}>
       <View style={styles.headerRow}>
-        {/* Blue-to-green primary rebrand (#32ad84). */}
-        <GradientIconBadge color="#32ad84" size={44} radius={16} shade={-8}>
+        <GradientIconBadge color="#0063f8" size={44} radius={16} shade={-8}>
           <Icon pack="eva" name="message-circle-outline" style={{ width: 22, height: 22, tintColor: '#fff' }} />
         </GradientIconBadge>
         <View style={[globalStyle.flexOne, styles.headerText]}>

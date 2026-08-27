@@ -34,9 +34,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
   size = 64,
   strokeWidth = 8,
   trackColor = 'rgba(39, 39, 85, 0.08)',
-  // Blue-to-green primary rebrand (#32ad84) -- default "primary progress"
-  // stroke color for any ring that doesn't pass its own color/gradient.
-  color = '#32ad84',
+  color = '#0063f8',
   gradientFrom,
   gradientTo,
   children,

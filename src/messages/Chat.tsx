@@ -1209,8 +1209,7 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 99,
-    // Blue-to-green primary rebrand (#32ad84) -- this pill acts as a button.
-    backgroundColor: 'rgba(50, 173, 132, 0.08)',
+    backgroundColor: 'rgba(0, 99, 248, 0.08)',
   },
   suggestedTopicsPillChevron: {
     marginLeft: 2,

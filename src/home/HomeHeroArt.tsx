@@ -94,11 +94,6 @@ import Svg, { Circle, Ellipse, Rect, Path, Line, Polygon } from 'react-native-sv
 // uses (that combination would have low contrast against a dark gradient
 // fill anyway).
 
-// BLUE-TO-GREEN PRIMARY REBRAND: every literal '#0063f8' below (this
-// file's own "brand blue", per the history above) is now '#32ad84' --
-// see constants/theme/appTheme.json's color-primary-100/500. Historical
-// comments above that quote the old hex are left as-is (they describe
-// what shipped at the time).
 interface ArtProps {
   size: number;
   // ArtPractice only (product follow-up: "why did you leave... the mic
@@ -133,10 +128,10 @@ export const ArtCareerCoach: React.FC<ArtProps> = ({ size }) => (
 // reads as one consistent outline drawing, not a filled glyph with
 // stroked accents around it.
 export const ArtPractice: React.FC<ArtProps> = ({ size, light }) => {
-  const strokeColor = light ? '#FFFFFF' : '#32ad84';
+  const strokeColor = light ? '#FFFFFF' : '#0063f8';
   return (
     <Svg width={size} height={size} viewBox="0 0 120 120">
-      {!light && <Circle cx="60" cy="60" r="48" fill="#32ad840f" />}
+      {!light && <Circle cx="60" cy="60" r="48" fill="#0063f80f" />}
       <Ellipse cx="60" cy="98" rx="22" ry="5" fill="rgba(0,0,0,0.06)" />
       <Rect
         x="47"
@@ -163,7 +158,7 @@ export const ArtPractice: React.FC<ArtProps> = ({ size, light }) => {
 
 export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#32ad840f" />
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
 
     {/* back building — shorter, light tint, sits behind/left of the front
         one for real depth instead of a single flat glyph */}
@@ -177,7 +172,7 @@ export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
 
     {/* front building — taller, this app's brand blue, a real window grid
         + a door */}
-    <Rect x="50" y="32" width="36" height="68" rx="5" fill="#32ad84" />
+    <Rect x="50" y="32" width="36" height="68" rx="5" fill="#0063f8" />
     <Rect x="58" y="42" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
     <Rect x="71" y="42" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
     <Rect x="58" y="56" width="7.5" height="7.5" rx="1.6" fill="#EAF2FF" />
@@ -187,7 +182,7 @@ export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
     <Rect x="64" y="86" width="8" height="14" rx="1.6" fill="#EAF2FF" opacity={0.75} />
 
     {/* ground line + soft shadow, grounds both buildings as one scene */}
-    <Rect x="20" y="100" width="70" height="3" rx="1.5" fill="#32ad8433" />
+    <Rect x="20" y="100" width="70" height="3" rx="1.5" fill="#0063f833" />
     <Ellipse cx="55" cy="106" rx="38" ry="4" fill="rgba(0,0,0,0.05)" />
 
     {/* "dream" badge — small gold star pinned to the tall building's roof,
@@ -211,7 +206,7 @@ export const ArtDreamCompany: React.FC<ArtProps> = ({ size }) => (
 // badges) rather than a static, generic book icon.
 export const ArtLearningCourses: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#32ad840f" />
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
     <Ellipse cx="60" cy="100" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
 
     {/* left page — lighter tint, sits behind the spine for real depth */}
@@ -221,7 +216,7 @@ export const ArtLearningCourses: React.FC<ArtProps> = ({ size }) => (
     <Rect x="27" y="78" width="18" height="4" rx="2" fill="#FFFFFF" />
 
     {/* right page — full brand blue, the "open" side facing forward */}
-    <Path d="M62 38 L100 46 L100 90 L62 96 Z" fill="#32ad84" />
+    <Path d="M62 38 L100 46 L100 90 L62 96 Z" fill="#0063f8" />
     <Rect x="69" y="58" width="24" height="4" rx="2" fill="#EAF2FF" />
     <Rect x="69" y="68" width="24" height="4" rx="2" fill="#EAF2FF" />
     <Rect x="69" y="78" width="18" height="4" rx="2" fill="#EAF2FF" />
@@ -319,12 +314,12 @@ export const ArtLockedGift: React.FC<ArtProps> = ({ size }) => (
 // more step and you're in."
 export const ArtEmailSent: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#32ad840f" />
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
     <Ellipse cx="60" cy="94" rx="32" ry="5" fill="rgba(0,0,0,0.06)" />
 
     {/* envelope body + folded flap, drawn as two triangles over the body
         so the flap reads as a real fold, not a printed line */}
-    <Rect x="26" y="42" width="68" height="46" rx="6" fill="#32ad84" />
+    <Rect x="26" y="42" width="68" height="46" rx="6" fill="#0063f8" />
     <Path d="M26 48 L60 72 L94 48" stroke="#EAF2FF" strokeWidth={4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
 
     {/* "sent/confirmed" badge, pinned to the envelope's corner */}
@@ -361,7 +356,7 @@ export const ArtTrophy: React.FC<ArtProps> = ({ size }) => (
 
     {/* sparkles */}
     <Path d="M26 30l2.4 5.6L34 38l-5.6 2.4L26 46l-2.4-5.6L18 38l5.6-2.4z" fill="#8B5CF6" />
-    <Circle cx="92" cy="26" r="4" fill="#32ad84" />
+    <Circle cx="92" cy="26" r="4" fill="#0063f8" />
   </Svg>
 );
 
@@ -371,14 +366,14 @@ export const ArtTrophy: React.FC<ArtProps> = ({ size }) => (
 // framing ("plans the real path to get there").
 export const ArtRoadmapPath: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#32ad840f" />
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
     <Ellipse cx="60" cy="100" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
 
     {/* winding road, drawn as one thick curved stroke with a lighter
         centerline dash on top */}
     <Path
       d="M22 92c8-14 0-22 12-30s6-18 18-24 8-16 22-18"
-      stroke="#32ad84"
+      stroke="#0063f8"
       strokeWidth={12}
       strokeLinecap="round"
       fill="none"
@@ -410,22 +405,22 @@ export const ArtRoadmapPath: React.FC<ArtProps> = ({ size }) => (
 // bottom sheet.
 export const ArtWorkplaceCompass: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="60" r="48" fill="#32ad840f" />
+    <Circle cx="60" cy="60" r="48" fill="#0063f80f" />
     <Ellipse cx="60" cy="104" rx="34" ry="5" fill="rgba(0,0,0,0.06)" />
 
     {/* compass */}
     <Circle cx="60" cy="50" r="30" fill="#EAF2FF" />
-    <Circle cx="60" cy="50" r="30" fill="none" stroke="#32ad84" strokeWidth={5} />
+    <Circle cx="60" cy="50" r="30" fill="none" stroke="#0063f8" strokeWidth={5} />
     <Path d="M60 28l7 22-7 22-7-22z" fill="#FFC94A" />
     <Path d="M60 28l7 22h-7z" fill="#F5B430" />
     <Path d="M60 72l-7-22h7z" fill="#7C4DEF" />
-    <Circle cx="60" cy="50" r="4" fill="#32ad84" />
+    <Circle cx="60" cy="50" r="4" fill="#0063f8" />
 
     {/* two colleagues, arriving together at the destination */}
     <Circle cx="40" cy="90" r="7" fill="#8B5CF6" />
     <Path d="M28 112c0-9.5 5.4-16 12-16s12 6.5 12 16z" fill="#8B5CF6" />
-    <Circle cx="80" cy="90" r="7" fill="#32ad84" />
-    <Path d="M68 112c0-9.5 5.4-16 12-16s12 6.5 12 16z" fill="#32ad84" />
+    <Circle cx="80" cy="90" r="7" fill="#0063f8" />
+    <Path d="M68 112c0-9.5 5.4-16 12-16s12 6.5 12 16z" fill="#0063f8" />
   </Svg>
 );
 
@@ -479,9 +474,9 @@ export const ArtMissionPhone: React.FC<ArtProps> = ({ size }) => (
 // convention as every other Home illustration in this file.
 export const ArtMountainPeak: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 48 48">
-    <Path d="M4 40L18 16l7 10 4-6 15 20z" fill="#32ad84" opacity={0.18} />
-    <Path d="M18 16l12 24H4z" fill="#32ad84" opacity={0.5} />
-    <Path d="M32 22l12 18H24z" fill="#32ad84" opacity={0.32} />
+    <Path d="M4 40L18 16l7 10 4-6 15 20z" fill="#0063f8" opacity={0.18} />
+    <Path d="M18 16l12 24H4z" fill="#0063f8" opacity={0.5} />
+    <Path d="M32 22l12 18H24z" fill="#0063f8" opacity={0.32} />
     <Path d="M18 16l4 8-4 5-4-5z" fill="#FFFFFF" opacity={0.7} />
   </Svg>
 );
@@ -501,17 +496,17 @@ export const ArtStreakFlame: React.FC<ArtProps> = ({ size }) => (
 
 export const ArtMagnifyingDoc: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
-    <Circle cx="60" cy="62" r="48" fill="#32ad840f" />
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
     <Ellipse cx="54" cy="100" rx="30" ry="5" fill="rgba(0,0,0,0.06)" />
 
     {/* document */}
     <Rect x="28" y="24" width="52" height="66" rx="5" fill="#EAF2FF" />
-    <Rect x="38" y="38" width="32" height="5" rx="2.5" fill="#32ad84" />
+    <Rect x="38" y="38" width="32" height="5" rx="2.5" fill="#0063f8" />
     <Rect x="38" y="50" width="32" height="5" rx="2.5" fill="#C7DBFF" />
     <Rect x="38" y="62" width="22" height="5" rx="2.5" fill="#C7DBFF" />
 
     {/* magnifying glass, overlapping the document's bottom-right corner */}
-    <Circle cx="76" cy="72" r="17" fill="none" stroke="#32ad84" strokeWidth={7} />
-    <Line x1="88" y1="84" x2="100" y2="96" stroke="#32ad84" strokeWidth={7} strokeLinecap="round" />
+    <Circle cx="76" cy="72" r="17" fill="none" stroke="#0063f8" strokeWidth={7} />
+    <Line x1="88" y1="84" x2="100" y2="96" stroke="#0063f8" strokeWidth={7} strokeLinecap="round" />
   </Svg>
 );

@@ -258,8 +258,7 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     paddingHorizontal: 24,
     width: '100%',
-    // Blue-to-green primary rebrand (#32ad84) -- matches borderColor above.
-    backgroundColor: 'rgba(50,173,132,0.08)',
+    backgroundColor: 'rgba(0,99,248,0.08)',
   },
   heroShareButton: {
     marginTop: 16,

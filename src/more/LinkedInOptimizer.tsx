@@ -223,11 +223,8 @@ const LinkedInOptimizer = memo(() => {
                   size={88}
                   strokeWidth={8}
                   trackColor={theme['background-basic-color-3']}
-                  // Blue-to-green primary rebrand -- "to" stop was #0063f8,
-                  // now #32ad84. gradientFrom (#1DA1F2) is color-primary-200,
-                  // untouched by this rebrand.
                   gradientFrom="#1DA1F2"
-                  gradientTo="#32ad84">
+                  gradientTo="#0063f8">
                   <Text category="h5" bold>{result.profileStrengthScore}%</Text>
                 </CircularProgress>
                 <Text category="h10" status="placeholder" mt={8}>{t('more:current_profile_strength', { defaultValue: 'Current profile strength' })}</Text>

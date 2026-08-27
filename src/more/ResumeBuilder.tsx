@@ -320,11 +320,8 @@ const ResumeBuilder = memo(() => {
                 strokeWidth={10}
                 stokeColor={theme['background-basic-color-3']}
                 progressStokeColor={theme['color-primary-500']}
-                // Blue-to-green primary rebrand -- "To" stop was #0063f8,
-                // now #32ad84. "From" stop (#1DA1F2) is color-primary-200,
-                // untouched by this rebrand.
                 progressGradientFrom="#1DA1F2"
-                progressGradientTo="#32ad84"
+                progressGradientTo="#0063f8"
               />
             </Flex>
             <Text category="h6" bold mb={16}>
