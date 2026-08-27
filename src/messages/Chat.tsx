@@ -44,7 +44,6 @@ import { ImportedFileInfo } from "services/resumeService";
 import { AuthContext } from "../../AuthContext";
 import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
-import * as notificationService from "services/notificationService";
 import i18n from "i18next";
 import { Images } from "assets/images";
 
@@ -149,23 +148,10 @@ const Chat = memo(() => {
   const voiceCoachEnabled = configService.isFeatureEnabled('voice_coach');
   const [mode, setMode] = React.useState<'voice' | 'text'>('text');
 
-  // Notification bell in this screen's header — product request: "the AI
-  // career coach should be the entering point anytime users open the
-  // app... that also means that the trophy icon and the notification icon
-  // should also be in the AI career coach screen." Same GET
-  // /api/v1/notifications unread-count fetch HeaderHome.tsx already runs
-  // for Home's own bell badge. (Trophy/Leaderboard REMOVED per a later
-  // follow-up — see the header JSX's own comment further down.)
-  const [unreadCount, setUnreadCount] = React.useState(0);
-  React.useEffect(() => {
-    notificationService
-      .listNotifications()
-      .then(list => setUnreadCount(list.filter(n => !n.read).length))
-      .catch(() => {
-        // Non-critical — the badge just stays at its last-known count.
-      });
-  }, []);
-  const onNotification = React.useCallback(() => navigate('Notification'), [navigate]);
+  // Notification bell REMOVED from this screen's header per product
+  // follow-up ("in the AI career coach screen you can remove the
+  // notification bell icon") — it's still reachable from Home's own
+  // header (HeaderHome.tsx), this was just a second copy here.
 
   // BUG FIX (product report, twice now: "it's just automatically going to
   // the chat screen instead of letting the user see the suggested
@@ -644,23 +630,17 @@ const Chat = memo(() => {
     // scaleY(-1) below, the whole greeting renders upside down.
     return (
       <View style={[styles.emptyState, { transform: [{ scaleY: -1 }] }]}>
-        {/* Product follow-up history: "the saveur logo background should be
-            the default blue color" -- brand blue (#0063f8) solid fill.
-            "replace the saveur icon in the AI career Coach with the chat
-            icon of the new icons i uploaded" -- BrandWordmark's Saveur "S"
-            mark swapped for an illustrated chat-bubble icon instead (first
-            landed on Images.iconCoachChat, the orange/red bubble). Local
-            edits then dropped emptyGlowWrap's solid blue backgroundColor
-            and grew the icon to fill the full 88x88 circle, since a
-            colored circle behind an already-colored bubble read as
-            competing fills.
-            "you are supposed to use the blue not the red icons" --
-            Images.iconCoachChat swapped for Images.iconCoachChatBlue (the
-            blue-teal bubble), matching the same fix already made to
-            HomeSrc.tsx's Career Toolkit Coach icon and this file's own
-            suggested-topics sheet (TOPIC_CHIP_STYLES[0]). */}
+        {/* COLOR HISTORY: brand-blue solid fill -> illustrated color chat-
+            bubble PNG (Images.iconCoachChat, then Images.iconCoachChatBlue)
+            on a transparent backdrop. Product report: "the chat icon
+            background should be gray and the icon black" -- a baked
+            full-color PNG can't be tinted black, so this swaps to a real
+            vector glyph (same `comment` icon the Coach tab's own FAB uses,
+            see MainBottomTab.tsx's CoachFabIcon) that can, on a light-gray
+            circle (background-basic-color-3, same gray the tab bar's
+            active pill and the voice-mode pill button both use). */}
         <View style={styles.emptyGlowWrap}>
-          <Image source={Images.iconCoachChatBlue} resizeMode="contain" style={styles.emptyGlowIcon as ImageStyle} />
+          <Icon pack="assets" name="comment" style={{ width: 40, height: 40, tintColor: theme['text-basic-color'] }} />
         </View>
         <Text category="h6" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
@@ -688,27 +668,13 @@ const Chat = memo(() => {
             <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
           </TouchableOpacity>
         ) : null}
-
-        {/* "Suggested for you" — a real existing feature (same Composer
-            action as "Start Video Practice" below, see onMakeCall), not a
-            fabricated content card. */}
-        <TouchableOpacity activeOpacity={0.7} onPress={onMakeCall} style={styles.emptySuggestedCard}>
-          <View style={styles.emptySuggestedIconWrap}>
-            <Icon pack="assets" name="call" style={[globalStyle.icon20, { tintColor: '#7EA8E2' }]} />
-          </View>
-          <View style={globalStyle.flexOne}>
-            <Text category="h9" bold>
-              {t("message:suggested_for_you_title", { defaultValue: "Start a video practice" })}
-            </Text>
-            <Text category="h10" status="placeholder" mt={2}>
-              {t("message:suggested_for_you_subtitle", { defaultValue: "Get real-time feedback on a mock interview" })}
-            </Text>
-          </View>
-          <Icon pack="assets" name="arrowRight" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
-        </TouchableOpacity>
+        {/* "Start a video practice" card REMOVED per product report ("in
+            screenshot 3 remove the start a video practice card") -- the
+            same action is still reachable via the attach-panel's "Start
+            Video Practice" row (see AttachItem below, onMakeCall). */}
       </View>
     );
-  }, [initialPrompt, topics, onMakeCall, t, theme, styles]);
+  }, [initialPrompt, topics, t, theme, styles]);
 
   // Product request: "there are some other places too in the app that you
   // can add some of those icons i uploaded too" -- was the Saveur brand
@@ -776,29 +742,6 @@ const Chat = memo(() => {
         accessoryLeft={<NavigationAction status="basic" />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
-            {/* Notification bell — product request: "the AI career coach
-                should be the entering point anytime users open the app...
-                the trophy icon and the notification icon should also be in
-                the AI career coach screen." Same badge HeaderHome.tsx
-                already exposes on Home, just laid out as a compact nav-bar
-                accessory here instead of Home's larger circular button.
-                Trophy (Leaderboard) REMOVED from here (product follow-up:
-                "remove the trophy icon from the AI career coach") --
-                Leaderboard is still reachable from Home's own header. */}
-            <TouchableOpacity activeOpacity={0.7} onPress={onNotification} style={styles.headerIconButton}>
-              <Icon
-                pack="assets"
-                name="notification"
-                style={[globalStyle.icon20, { tintColor: theme['icon-basic-color'] }]}
-              />
-              {unreadCount ? (
-                <View style={styles.headerNotifBadge}>
-                  <Text category="h9" status="primary" fontSize={11} lineHeight={13}>
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </Text>
-                </View>
-              ) : null}
-            </TouchableOpacity>
             {voiceCoachEnabled ? (
               // BUG FIX (product report: "the voice text in the AI career
               // coach should be like a button not a text. It should be
@@ -816,12 +759,12 @@ const Chat = memo(() => {
                 <Icon
                   pack="eva"
                   name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
-                  // Product report: "Sorry just give it a gray border and a
-                  // black text" (immediate follow-up, reversing the prior
-                  // blue border/text) -- icon/label now use this app's
-                  // theme-adaptive text-basic-color (near-black in light
-                  // mode, near-white in dark mode -- see components/Text.tsx),
-                  // matching the border's own gray below.
+                  // Product report: "give the voice pill button a light gray
+                  // background and a black text" -- icon/label use this
+                  // app's theme-adaptive text-basic-color (near-black in
+                  // light mode, near-white in dark mode -- see
+                  // components/Text.tsx), matching modeToggleButton's own
+                  // light-gray fill below.
                   style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
                 />
                 <Text
@@ -917,7 +860,11 @@ const Chat = memo(() => {
               }}
             />
             {showAction === true ? (
-              <Layout level={"3"}>
+              // Product report: "the background covering them has a gray
+              // color remove it and it should be plain white" -- was
+              // <Layout level="3"> (this app's gray elevated-surface
+              // token); a plain white fill instead.
+              <Layout style={{ backgroundColor: '#FFFFFF' }}>
                 <Flex margin={32}>
                   <AttachItem
                     title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
@@ -983,7 +930,9 @@ const Chat = memo(() => {
                     {t("message:topics_start_voice_hint", { defaultValue: "Tap a topic to start a voice conversation" })}
                   </Text>
                   <View style={styles.emptyTopicRow}>
-                    {topics.slice(0, 4).map((item, i) => {
+                    {/* Product report: "the suggested topics cards should
+                        not be more than 3" -- was slice(0, 4). */}
+                    {topics.slice(0, 3).map((item, i) => {
                       const chipStyle = TOPIC_CHIP_STYLES[i % TOPIC_CHIP_STYLES.length];
                       return (
                         <TouchableOpacity
@@ -1039,49 +988,20 @@ const themedStyles = StyleService.create({
   container: {
     flex: 1,
   },
-  // Notification header accessory (see accessoryRight above) — compact
-  // nav-bar-scale hit target, unlike HeaderHome.tsx's larger 40x40
-  // circular buttons which are sized for a full dashboard header row
-  // rather than a TopNavigation accessory slot.
-  headerIconButton: {
-    width: 32,
-    height: 32,
-    marginRight: 4,
-    ...globalStyle.center,
-  },
-  headerNotifBadge: {
-    position: "absolute",
-    borderRadius: 99,
-    backgroundColor: "button-basic-color",
-    width: 16,
-    height: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    top: 0,
-    right: 0,
-  },
-  // Voice/Text mode pill button (see accessoryRight above) — product
-  // request: "bake the button background the default blue color", the
-  // app's standard solid brand-blue fill in normal (text) mode; on the
-  // full-bleed voice-mode-background screen (already that same blue in
-  // light mode) a translucent white fill instead, so the button still
-  // reads as a distinct control against its own background there.
-  // Product report: "Remove the blue background from the voice button...
-  // Just give it a blue border and a blue text" -- was a solid
-  // `button-basic-color` fill with white icon/text; now an outline pill
-  // instead (no backgroundColor). Immediate follow-up: "Sorry just give it
-  // a gray border and a black text" -- borderColor swapped from brand blue
-  // to this app's standard card-border gray (rgba(128,128,128,0.3), same
-  // value globalStyle.card's own border uses) -- see the render call site
-  // for the matching icon/text color swap to theme-adaptive black.
+  // Voice/Text mode pill button (see accessoryRight above). COLOR HISTORY:
+  // solid brand-blue fill -> outline pill (blue border/text) -> gray
+  // border + black text (no fill) -> product report: "give the voice pill
+  // button beside it a light gray background and a black text" -- now a
+  // filled light-gray pill (background-basic-color-3, same gray the
+  // bottom tab bar's own active pill uses -- see MainBottomTab.tsx) with
+  // no separate border, since a filled pill doesn't need one.
   modeToggleButton: {
     flexDirection: "row",
     alignItems: "center",
     height: 32,
     paddingHorizontal: 10,
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: "rgba(128,128,128,0.3)",
+    backgroundColor: "background-basic-color-3",
   },
   modeToggleLabel: {
     marginLeft: 4,
@@ -1162,20 +1082,15 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 24,
     paddingTop: 0,
   },
-  // Product follow-up: solid brand blue (was a two-stop gradient — see the
-  // JSX comment above).
+  // Product report: "the chat icon background should be gray" -- see the
+  // JSX comment above for the full color history.
   emptyGlowWrap: {
     width: 88,
     height: 88,
     borderRadius: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    // backgroundColor: '#0063f8',
-  },
-  // See the REDESIGN comment at the render call site.
-  emptyGlowIcon: {
-    width: 88,
-    height: 88,
+    backgroundColor: 'background-basic-color-3',
   },
   // BUG FIX (product report: "too bold", "reduce the size"): `category`
   // was "h5" with the `bold` prop -- h5 was never actually added to this
@@ -1222,9 +1137,12 @@ const themedStyles = StyleService.create({
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(0,0,0,0.4)',
   },
+  // Product report: "the suggested topics card border radius is too
+  // much you need to reduce it" -- was 24, matches globalStyle.card's own
+  // 16px radius (this app's standard card corner) instead.
   topicsSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
     padding: 20,
     paddingBottom: 32,
     backgroundColor: 'background-basic-color-2',
@@ -1279,30 +1197,5 @@ const themedStyles = StyleService.create({
     borderColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  emptySuggestedCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    // Product follow-up: "move the logo, headline, and suggested topics
-    // pill up — they're too close to the Start a video practice card."
-    // The cluster above (emptyGlowWrap/emptyHeadline/suggestedTopicsPill)
-    // is already pinned as high as it can go (emptyState's paddingTop: 0,
-    // flex-start), so the only lever that actually reads as "more space
-    // above this card" is this card's own top margin — was 12, reads as
-    // one connected block with the pill right above it.
-    marginTop: 84,
-    padding: 16,
-    borderRadius: 16,
-    backgroundColor: 'background-basic-color-2',
-  },
-  emptySuggestedIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(126, 168, 226, 0.14)',
-    marginRight: 12,
   },
 });

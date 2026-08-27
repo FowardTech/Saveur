@@ -73,8 +73,13 @@ const themedStyles = StyleService.create({
     marginRight: 8,
     alignItems: "center",
   },
+  // Product report: "the plus icon, camera icon, image icon all should be
+  // light gray color. At least very visible light gray color" -- was
+  // button-basic-color (brand blue). color-basic-600 (#9393AA) is this
+  // app's own "visible mid-gray" token (see appTheme.json), rather than a
+  // pale gray that would read as barely-there against a white input bar.
   icon: {
-    tintColor: "button-basic-color",
+    tintColor: "color-basic-600",
     ...globalStyle.icon24,
     marginLeft: 16,
   },
