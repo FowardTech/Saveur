@@ -857,7 +857,7 @@ const HomeSrc = memo(() => {
         progressLabel: t('home:mission_progress_label', { defaultValue: 'Progress' }),
         ctaLabel: dailyChallenge.completed
           ? t('home:mission_cta_completed', { defaultValue: 'View Challenge' })
-          : t('home:mission_cta_start', { defaultValue: 'Start Task' }),
+          : t('home:mission_cta_start', { defaultValue: 'Start Here' }),
         ctaIcon: dailyChallenge.completed ? 'checkmark-circle-2-outline' : 'play-circle-outline',
         onPress: () => navigate('DailyChallenge'),
       };

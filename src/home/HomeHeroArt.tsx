@@ -429,25 +429,33 @@ export const ArtWorkplaceCompass: React.FC<ArtProps> = ({ size }) => (
 // glass over a document reads as "we're going to examine this posting."
 // HOME REDESIGN (product reference — a "Today's Mission" hero card: a
 // phone showing a profile, with a floating checkmark badge and a floating
-// star badge, standing on a small podium) — used by the new
-// MissionHeroCard.tsx on a saturated brand-blue fill, so every shape here
-// is translucent white (same "reads as an etched/frosted accent against
-// any gradient" reasoning ArtCareerCoach's own history comment already
-// established for this exact fill), with only the two floating badges in
-// real color (green check, gold star) for a bit of pop, matching the
-// reference's own restrained two-accent-color approach.
+// star badge, standing on a small podium) — originally built translucent-
+// white for a saturated brand-blue card fill.
+//
+// RETINTED (product follow-up: "the document icon you place at the top
+// right corner of the hero card is not visible") — MissionHeroCard.tsx's
+// card fill moved to white (background-basic-color-2) in an earlier pass,
+// which left every one of this illustration's white/translucent-white
+// shapes invisible against it (only the two opaque badge circles still
+// showed). Converted to the same solid-brand-tint-shapes-on-pale-backdrop
+// construction ArtDreamCompany/ArtMagnifyingDoc/ArtLearningCourses above
+// already use for white cards: solid brand-blue phone body, pale-blue
+// screen + profile glyph, same two real-color badges (green check, gold
+// star) for the pop accent.
 export const ArtMissionPhone: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
+    <Circle cx="70" cy="72" r="56" fill="#0063f80f" />
+
     {/* podium */}
-    <Ellipse cx="66" cy="120" rx="40" ry="10" fill="#FFFFFF" opacity={0.16} />
-    <Ellipse cx="66" cy="114" rx="40" ry="10" fill="#FFFFFF" opacity={0.22} />
+    <Ellipse cx="66" cy="120" rx="40" ry="10" fill="rgba(0,0,0,0.06)" />
+    <Ellipse cx="66" cy="114" rx="40" ry="10" fill="#C7DBFF" />
 
     {/* phone */}
-    <Rect x="34" y="30" width="64" height="90" rx="14" fill="#FFFFFF" opacity={0.95} />
-    <Rect x="42" y="40" width="48" height="62" rx="6" fill="#FFFFFF" opacity={0.3} />
-    <Circle cx="66" cy="58" r="11" fill="#FFFFFF" opacity={0.7} />
-    <Path d="M50 88c0-10 7.2-17 16-17s16 7 16 17z" fill="#FFFFFF" opacity={0.7} />
-    <Rect x="48" y="94" width="36" height="4" rx="2" fill="#FFFFFF" opacity={0.55} />
+    <Rect x="34" y="30" width="64" height="90" rx="14" fill="#0063f8" />
+    <Rect x="42" y="40" width="48" height="62" rx="6" fill="#EAF2FF" />
+    <Circle cx="66" cy="58" r="11" fill="#C7DBFF" />
+    <Path d="M50 88c0-10 7.2-17 16-17s16 7 16 17z" fill="#C7DBFF" />
+    <Rect x="48" y="94" width="36" height="4" rx="2" fill="#C7DBFF" />
 
     {/* checkmark badge, top-right of the phone */}
     <Circle cx="102" cy="46" r="14" fill="#0EAD69" />
@@ -461,8 +469,8 @@ export const ArtMissionPhone: React.FC<ArtProps> = ({ size }) => (
     />
 
     {/* sparkles */}
-    <Polygon points="24,50 26,56 32,58 26,60 24,66 22,60 16,58 22,56" fill="#FFFFFF" opacity={0.85} />
-    <Circle cx="112" cy="24" r="3" fill="#FFFFFF" opacity={0.8} />
+    <Polygon points="24,50 26,56 32,58 26,60 24,66 22,60 16,58 22,56" fill="#0063f8" opacity={0.5} />
+    <Circle cx="112" cy="24" r="3" fill="#0063f8" opacity={0.45} />
   </Svg>
 );
 

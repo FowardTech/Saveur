@@ -627,15 +627,12 @@ const themedStyles = StyleService.create({
     padding: 12,
   },
   // Donut + 2x2 stat-grid header (see the statsCard JSX above for what
-  // each tile shows). globalStyle.card gives the shadow; product report
-  // ("I thought the container covering this progress stat has a border.
-  // Give it a shadow and a border") adds globalStyle.cardBorder on top --
-  // that's this app's existing hairline-border token, kept around
-  // specifically for cards that want both (see its own comment in
-  // styles/globalStyle.ts), rather than a one-off border value here.
+  // each tile shows). COLOR HISTORY: shadow only -> shadow + hairline
+  // border (globalStyle.cardBorder) -> product follow-up ("give this
+  // card a box shadow and remove the border") -- back to shadow only,
+  // same globalStyle.card every other neutral card in this app uses.
   statsCard: {
     ...globalStyle.card,
-    ...globalStyle.cardBorder,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,

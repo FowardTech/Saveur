@@ -484,7 +484,7 @@ const ApplicationDetails = memo(() => {
                 <Text category="h10" style={globalStyle.flexOne} ml={10}>
                   {t('request:prep_card_research', {defaultValue: 'You’ve already researched {{company}} — review it', company: application.company})}
                 </Text>
-                <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon16, {tintColor: theme['text-hint-color']}]} />
+                <Icon pack="assets" name="chevronRight" style={[globalStyle.icon16, {tintColor: theme['text-hint-color']}]} />
               </TouchableOpacity>
             ) : null}
             {matchedContact ? (
@@ -498,7 +498,7 @@ const ApplicationDetails = memo(() => {
                 <Text category="h10" style={globalStyle.flexOne} ml={10}>
                   {t('request:prep_card_contact', {defaultValue: 'You know {{name}} at {{company}} — reach out', name: matchedContact.name, company: application.company})}
                 </Text>
-                <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon16, {tintColor: theme['text-hint-color']}]} />
+                <Icon pack="assets" name="chevronRight" style={[globalStyle.icon16, {tintColor: theme['text-hint-color']}]} />
               </TouchableOpacity>
             ) : null}
           </Layout>

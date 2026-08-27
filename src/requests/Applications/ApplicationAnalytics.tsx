@@ -158,8 +158,8 @@ const ApplicationAnalytics = memo(() => {
                           </Text>
                         </View>
                         <Icon
-                          pack="eva"
-                          name="chevron-right-outline"
+                          pack="assets"
+                          name="chevronRight"
                           style={[globalStyle.icon20, {tintColor: theme['text-hint-color'], marginLeft: 8}]}
                         />
                       </Flex>
