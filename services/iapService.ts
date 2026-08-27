@@ -110,7 +110,10 @@ async function verifyPurchaseServerSide(
  * purchase done with the store even if that grant call then failed,
  * leaving the user charged with nothing unlocked and no natural retry path
  * (re-requesting an already-finished non-consumable purchase is a
- * store-side no-op, not a fresh charge).
+ * store-side no-op, not a fresh charge). Backend confirmation still has to
+ * come first; see the `settle(...resolve...)` placement inside the
+ * purchaseUpdatedListener below for why finishing itself no longer has to
+ * finish *before* this promise resolves.
  */
 export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerifyResult> {
   return new Promise((resolve, reject) => {
@@ -137,8 +140,30 @@ export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerif
           settle(() => reject(new Error(result.error)));
           return;
         }
-        await RNIap.finishTransaction({purchase: purchased, isConsumable: false});
+        // BUG FIX (product report: a native "Purchase Successful" prompt
+        // appeared, verification against our own backend clearly
+        // succeeded, yet the Subscribe button's spinner just kept
+        // spinning forever and the plan never showed as active). Root
+        // cause: this used to `await RNIap.finishTransaction(...)` BEFORE
+        // this promise resolved — a native module call with no
+        // client-side timeout, and on at least one real device it never
+        // resolved or rejected at all, so `settle(() => resolve(result))`
+        // (previously sitting right after that await) never ran either,
+        // leaving Subscription.tsx's `payWithIAP` permanently pending and
+        // its caller's `checkoutPlanId` spinner state stuck on.
+        // verifyPurchaseServerSide above is the real point of no return —
+        // the backend has already durably recorded the entitlement grant
+        // by the time `result` exists — so there's nothing unsafe about
+        // resolving to the UI now and letting the store-side
+        // acknowledgement happen in the background instead of gating on
+        // it. A slow/failed finishTransaction here just means iOS/Android
+        // replays this transaction once more (next launch/next queue
+        // check), which finishes it again — harmless, unlike skipping
+        // verification itself.
         settle(() => resolve(result));
+        RNIap.finishTransaction({purchase: purchased, isConsumable: false}).catch(finishErr => {
+          console.warn('[iapService] finishTransaction failed (will retry via the store replaying it later):', finishErr);
+        });
       } catch (err) {
         settle(() => reject(err));
       }
