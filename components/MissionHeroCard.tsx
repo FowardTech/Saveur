@@ -71,12 +71,11 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
             should be black"): no colored/gradient fill at all now -- see
             `outer`/`inner`'s own style comments for the plain white
             box-shadow-plus-border card this becomes, same as every other
-            card on Home. The "Today's Mission" badge pill and the Start
-            Task button's icon/label are explicitly left untouched per
-            that same request (only the button's own background changes --
-            see the button's own comment below), even though the badge's
-            translucent-white fill was originally tuned for a dark/colored
-            card background. */}
+            card on Home. The "Today's Mission" badge pill's own fill
+            needed a follow-up fix (see badge's own style comment) -- its
+            old translucent-white tint was invisible against this new
+            white card, which read as "the background got removed" even
+            though that style was left completely untouched in this pass. */}
         {/* Badge + illustration sit side by side in normal flow (not
             absolutely positioned) so the illustration can never overlap
             the title/subtitle/meta/progress/CTA below it, regardless of
@@ -87,7 +86,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
             case, hiding it). */}
         <View style={styles.topRow}>
           <View style={styles.badge}>
-            <Icon pack="eva" name={badgeIcon} style={{ width: 13, height: 13, tintColor: '#FFFFFF', marginRight: 5 }} />
+            <Icon pack="eva" name={badgeIcon} style={{ width: 13, height: 13, tintColor: theme['text-basic-color'], marginRight: 5 }} />
             <Text category="h10" bold style={styles.badgeText}>
               {badgeLabel}
             </Text>
@@ -207,19 +206,32 @@ const themedStyles = StyleService.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
+  // BUG FIX (product report: "what about the background of the today's
+  // mission did you remove the background why? I did not ask you to
+  // remove the background") -- it was never actually removed (this style
+  // was left untouched in the previous pass, exactly as asked), but its
+  // rgba(255,255,255,0.18) fill was tuned for the old dark/blue card and
+  // reads as fully invisible on the new white card -- an 18%-opacity
+  // white tint over a white background is indistinguishable from no
+  // background at all. Same light-gray "neutral pill" fill this app
+  // already uses elsewhere for a badge sitting on a light surface (the
+  // bottom tab bar's active pill, the AI Coach voice-mode toggle button
+  // -- see MainBottomTab.tsx/Chat.tsx).
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'background-basic-color-3',
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
-  // NOT touched per explicit request ("dont touch the today's mission
-  // pill") -- still white, tuned for the old dark/colored card fill.
+  // White text/icon on the badge's own translucent-white fill was
+  // legible against the old dark card; now that the pill itself is a
+  // light gray fill, this needs to be dark to actually read (see badge's
+  // own comment above for the fill change).
   badgeText: {
-    color: '#FFFFFF',
+    color: 'text-basic-color',
   },
   // Product report: "the text inside the card should be black" -- was
   // white (tuned for the old blue/gradient fill).
