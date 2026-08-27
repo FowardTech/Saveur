@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import { globalStyle } from 'styles/globalStyle';
@@ -63,7 +64,18 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 
   return (
     <View style={styles.outer}>
-      <View style={styles.inner}>
+      {/* Product report: "make the hero card linear gradient" -- was a
+          flat #0052D9 fill. Same blue gradient StatStrip's own "Step"
+          tile uses (#1F7BFF -> #0052D9), for a consistent brand gradient
+          across Home rather than a new one-off color pair. Two-layer
+          split (shadow-casting `outer` / gradient-clipping `inner`), same
+          construction GradientCard.tsx established for this app -- see
+          `outer`'s own style comment. */}
+      <LinearGradient
+        colors={['#1F7BFF', '#0052D9']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.inner}>
         {/* Badge + illustration sit side by side in normal flow (not
             absolutely positioned) so the illustration can never overlap
             the title/subtitle/meta/progress/CTA below it, regardless of
@@ -79,16 +91,17 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
               {badgeLabel}
             </Text>
           </View>
-          {/* Product report: "reduce the height of the hero card" -- 64 ->
-              48, shrinking topRow's own height (the tallest single
-              element in this card) without cropping the art. */}
-          <ArtMissionPhone size={48} />
+          {/* Product report: "reduce the height of the hero card" (asked
+              twice) -- 64 -> 48 -> 42, shrinking topRow's own height (the
+              tallest single element in this card) without cropping the
+              art. */}
+          <ArtMissionPhone size={42} />
         </View>
 
-        <Text category="h6" bold numberOfLines={2} mt={8} style={styles.title}>
+        <Text category="h6" bold numberOfLines={2} mt={6} style={styles.title}>
           {title}
         </Text>
-        <Text category="h9-s" numberOfLines={2} mt={4} style={styles.subtitle}>
+        <Text category="h9-s" numberOfLines={2} mt={3} style={styles.subtitle}>
           {subtitle}
         </Text>
 
@@ -140,7 +153,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
             {ctaLabel}
           </Text>
         </TouchableOpacity>
-      </View>
+      </LinearGradient>
     </View>
   );
 };
@@ -148,23 +161,23 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
 export default MissionHeroCard;
 
 const themedStyles = StyleService.create({
-  // Two-layer split (shadow-casting outer / color-clipping inner), same
-  // construction GradientCard.tsx established for this app. RESTORED
-  // (product report: "bring back this hero card" -- with the original
-  // reference screenshot attached, which is blue, not the dark
-  // slate-navy #272e3b this had been changed to for one stretch of this
-  // app's history) -- back to the flat brand blue, #0052D9.
+  // Two-layer split (shadow-casting outer / gradient-clipping inner), same
+  // construction GradientCard.tsx established for this app -- `outer`'s
+  // own backgroundColor is just the opaque shadow-casting fallback
+  // (matches the gradient's first stop), the actual fill is the
+  // LinearGradient rendered as `inner` at the JSX call site now (product
+  // report: "make the hero card linear gradient" -- was a flat #0052D9).
   outer: {
     ...globalStyle.card,
     marginTop: 16,
-    backgroundColor: '#0052D9',
+    backgroundColor: '#1F7BFF',
   },
-  // Product report: "reduce the height of the hero card" -- padding 18 -> 14.
+  // Product report: "reduce the height of the hero card" (asked twice --
+  // padding 18 -> 14 -> 12).
   inner: {
     borderRadius: 16,
-    padding: 14,
+    padding: 12,
     overflow: 'hidden',
-    backgroundColor: '#0052D9',
   },
   // Badge (left) + illustration (right), both in normal flow -- see the
   // JSX's own comment on why the illustration moved out of absolute
@@ -193,12 +206,12 @@ const themedStyles = StyleService.create({
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
   },
-  // Product report: "reduce the height of the hero card" -- marginTop
-  // 18 -> 10.
+  // Product report: "reduce the height of the hero card" (asked twice) --
+  // marginTop 18 -> 10 -> 8.
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   metaItem: {
     flexDirection: 'row',
@@ -220,12 +233,12 @@ const themedStyles = StyleService.create({
     marginLeft: 8,
     marginTop: 2,
   },
-  // Product report: "reduce the height of the hero card" -- marginTop
-  // 18 -> 10.
+  // Product report: "reduce the height of the hero card" (asked twice) --
+  // marginTop 18 -> 10 -> 8.
   progressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
+    marginTop: 8,
     marginBottom: 6,
   },
   progressTrack: {
@@ -239,22 +252,22 @@ const themedStyles = StyleService.create({
     borderRadius: 3,
     backgroundColor: '#FFFFFF',
   },
-  // Product report: "reduce the height of the hero card" -- paddingVertical
-  // 13 -> 10, marginTop 18 -> 10.
+  // Product report: "reduce the height of the hero card" (asked twice) --
+  // paddingVertical 13 -> 10 -> 9, marginTop 18 -> 10 -> 8.
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 999,
-    paddingVertical: 10,
-    marginTop: 10,
+    paddingVertical: 9,
+    marginTop: 8,
   },
   // A little extra breathing room above the CTA when the progress block
   // (which normally supplies its own marginTop above the CTA) is skipped
   // entirely -- otherwise the CTA sits right under the meta row.
   ctaNoProgress: {
-    marginTop: 14,
+    marginTop: 12,
   },
   // Submit-button color -- reverted back to the default brand blue along
   // with CtaButton.tsx/globalStyle.shadowBtn ("change the submit buttons

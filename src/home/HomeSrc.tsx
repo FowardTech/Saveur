@@ -315,20 +315,22 @@ const HomeSrc = memo(() => {
   // literals) rather than memoized, same as the isFeatureEnabled checks
   // this replaces, which were previously inlined directly in JSX.
   const forYouShortcuts = [
-    // Product request: "give the Today's Tips card the background color
-    // #272e3b" -- the only tile in this row with a custom fill; every
-    // other tile stays the default background-basic-color-2. See the
-    // render loop below for how backgroundColor (when present) also
-    // switches the label to white for contrast against the dark fill.
-    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail'), backgroundColor: '#272e3b' as string | undefined },
-    { key: 'roadmap', icon: Images.iconLocation, label: t('home:pill_roadmap', { defaultValue: 'Roadmap' }), onPress: () => navigate('CareerRoadmap'), backgroundColor: undefined as string | undefined },
-    { key: 'dna', icon: Images.iconAiStars, label: t('home:pill_career_dna', { defaultValue: 'Career DNA' }), onPress: () => navigate('CareerDna'), backgroundColor: undefined as string | undefined },
-    { key: 'companies', icon: Images.iconHandshake, label: t('home:quick_action_dream_company', { defaultValue: 'Companies' }), onPress: () => navigate('DreamCompanies'), backgroundColor: undefined as string | undefined },
+    // Product request: "change the today's tips background to a linear
+    // gradient color that you gave to the streak icon" -- was a flat
+    // #272e3b fill; now the same orange/red gradient StatStrip's own
+    // "Streak" tile uses. The only tile in this row with a custom fill --
+    // every other tile stays the default background-basic-color-2. See
+    // the render loop below for how gradientColors (when present) also
+    // switches the label to white for contrast against the gradient.
+    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail'), gradientColors: ['#FF9457', '#E24A2B'] as [string, string] | undefined },
+    { key: 'roadmap', icon: Images.iconLocation, label: t('home:pill_roadmap', { defaultValue: 'Roadmap' }), onPress: () => navigate('CareerRoadmap'), gradientColors: undefined as [string, string] | undefined },
+    { key: 'dna', icon: Images.iconAiStars, label: t('home:pill_career_dna', { defaultValue: 'Career DNA' }), onPress: () => navigate('CareerDna'), gradientColors: undefined as [string, string] | undefined },
+    { key: 'companies', icon: Images.iconHandshake, label: t('home:quick_action_dream_company', { defaultValue: 'Companies' }), onPress: () => navigate('DreamCompanies'), gradientColors: undefined as [string, string] | undefined },
     ...(configService.isFeatureEnabled('learning_courses')
-      ? [{ key: 'courses', icon: Images.iconGraduationCap, label: t('home:quick_action_courses', { defaultValue: 'Courses' }), onPress: () => navigate('LearningCourses'), backgroundColor: undefined as string | undefined }]
+      ? [{ key: 'courses', icon: Images.iconGraduationCap, label: t('home:quick_action_courses', { defaultValue: 'Courses' }), onPress: () => navigate('LearningCourses'), gradientColors: undefined as [string, string] | undefined }]
       : []),
     ...(configService.isFeatureEnabled('salary_negotiation')
-      ? [{ key: 'salary', icon: Images.iconCoins, label: t('home:quick_action_salary', { defaultValue: 'Salary' }), onPress: () => navigate('SalaryNegotiation'), backgroundColor: undefined as string | undefined }]
+      ? [{ key: 'salary', icon: Images.iconCoins, label: t('home:quick_action_salary', { defaultValue: 'Salary' }), onPress: () => navigate('SalaryNegotiation'), gradientColors: undefined as [string, string] | undefined }]
       : []),
   ];
 
@@ -981,17 +983,132 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-{/* HOME REDESIGN v4 (product report: "reduce the height of the hero
-            card and now place the step, streak and XP cards, then turn
-            the for you cards back to pill buttons and bring it
-            immediately below the hero cards") -- MissionHeroCard leads
-            again (see its own comment for the height reduction), StatStrip
-            (Step/Streak/XP) sits right under it, then the "For You" row
-            (now restyled back to compact pill buttons -- see forYouTile's
-            own comment below) immediately after that, then the AI Coach
-            card. ActionCard (a brief flat-row replacement for the hero
-            card) stays unused on disk, not deleted -- same rollback-point
-            convention as every prior redesign pass. */}
+{/* HOME REDESIGN v5 (product report: "take the for you button pills and
+            put them above the hero card") -- the "For You" row now leads,
+            then MissionHeroCard, then StatStrip (Step/Streak/XP) right
+            under it, then the AI Coach card. ActionCard (a brief flat-row
+            replacement for the hero card) stays unused on disk, not
+            deleted -- same rollback-point convention as every prior
+            redesign pass.
+
+            Career Fairs & Events, Refer & Earn, and Next Steps used to
+            each be their own separately-titled section stacked all the
+            way down the page — folded into one "For You" horizontal row
+            instead. Career Progress and Daily Challenge live in the
+            mission hero/stat-card pair below instead of a duplicate tile
+            here. Ordered by how timely/personal what's left is: the
+            newest Career Fairs & Events first, then the evergreen
+            shortcuts (Today's Tips/Roadmap/Career DNA/Companies/Courses/
+            Salary — see forYouShortcuts above), then Refer & Earn and
+            Next Steps last.
+
+            The shortcut/referral/next-steps tiles (forYouTile) are
+            compact horizontal pills (icon + label inline, fully rounded)
+            per an earlier "turn the for you cards back to pill buttons"
+            request; CareerFairEventCard keeps its own richer row-card
+            look (title/subtitle/logo), since it was never part of that
+            pill row. */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginBottom: 6, paddingHorizontal: 10 }}
+          contentContainerStyle={{ paddingVertical: 10 }}>
+          {/* Career Fairs & Events -- up to 4 cards, same skeleton-while-
+              loading convention as before, just sized to this row's
+              shared tile width now instead of the old topCardWidth. */}
+          {careerEventsLoading ? (
+            <>
+              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
+              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
+            </>
+          ) : (
+            careerEvents.map(event => (
+              <CareerFairEventCard
+                key={event.id}
+                event={event}
+                onPress={onOpenCareerEvent}
+                style={{ width: forYouCardWidth, marginRight: forYouGap }}
+              />
+            ))
+          )}
+
+          {/* Evergreen shortcuts -- Today's Tips/Roadmap/Career DNA/
+              Companies/Courses/Salary (see forYouShortcuts above).
+              Product request: "change the today's tips background to a
+              linear gradient color that you gave to the streak icon" --
+              any item with gradientColors renders a LinearGradient fill
+              (clipped to the pill via forYouTileGradientClip) instead of
+              the default flat background-basic-color-2, same pattern the
+              Refer & Earn tile below already used. */}
+          {forYouShortcuts.map(item => (
+            <TouchableOpacity
+              key={item.key}
+              activeOpacity={0.7}
+              style={[
+                styles.forYouTile,
+                item.gradientColors ? styles.forYouTileGradientClip : undefined,
+                { marginRight: forYouGap },
+              ]}
+              onPress={item.onPress}>
+              {item.gradientColors ? (
+                <LinearGradient
+                  colors={item.gradientColors}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+              ) : null}
+              <Image source={item.icon} style={styles.forYouTileIcon as ImageStyle} resizeMode="contain" />
+              <Text
+                category="h10"
+                bold
+                numberOfLines={1}
+                ml={8}
+                style={item.gradientColors ? styles.forYouTileTextLight : undefined}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          {/* Refer & Earn -- same purple-to-black gradient/copy/
+              destination as before, condensed to this row's pill shape
+              (see forYouTile/forYouTileGradientClip/referralTileText
+              below). */}
+          {configService.isFeatureEnabled('referral_program') ? (
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[styles.forYouTile, styles.forYouTileGradientClip, { marginRight: forYouGap }]}
+              onPress={() => navigate('ReferralProgram')}>
+              <LinearGradient
+                colors={['#8B5CF6', '#5e40a2ff']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <ArtGiftBox size={20} />
+              <Text category="h10" bold numberOfLines={1} ml={8} style={styles.referralTileText}>
+                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
+              </Text>
+            </TouchableOpacity>
+          ) : null}
+
+          {/* Next Steps -- same destination (src/more/WhatsNext.tsx) as
+              before, last in the row as the least time-sensitive item. */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            style={styles.forYouTile}
+            onPress={() => navigate('WhatsNext')}>
+            <ArtWorkplaceCompass size={20} />
+            <Text category="h10" bold numberOfLines={1} ml={8}>
+              {t('more:whats_next_title', { defaultValue: "What's Next" })}
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+
+        {/* MissionHeroCard -- one clear "next action" card (real priority
+            chain: today's Daily Challenge, falling back to the current AI
+            Career Roadmap step, falling back to a generic coach prompt --
+            see missionHero's own computation above). */}
         {missionHeroLoading ? (
           <View style={styles.missionHeroLoading}>
             <Spinner status="control" />
@@ -1041,107 +1158,6 @@ const HomeSrc = memo(() => {
             },
           ]}
         />
-
-        {/* Career Fairs & Events, Refer & Earn, and Next Steps used to each
-            be their own separately-titled section stacked all the way down
-            the page — folded into one "For You" horizontal row instead.
-            Career Progress and Daily Challenge live in the mission hero/
-            stat-card pair above instead of a duplicate tile here. Ordered
-            by how timely/personal what's left is: the newest Career Fairs
-            & Events first, then the evergreen shortcuts (Today's Tips/
-            Roadmap/Career DNA/Companies/Courses/Salary — see
-            forYouShortcuts above), then Refer & Earn and Next Steps last.
-
-            Product report: "turn the for you cards back to pill buttons
-            and bring it immediately below the hero cards" -- the shortcut/
-            referral/next-steps tiles (forYouTile) go back to a compact
-            horizontal pill shape (icon + label inline, fully rounded)
-            instead of the stacked icon-over-label square tile they'd
-            become; CareerFairEventCard keeps its own richer row-card look
-            (title/subtitle/logo), since it was never part of the old pill
-            row this is reverting to. Row itself now sits directly below
-            the hero/stat-card pair instead of after them further down. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 6, paddingHorizontal: 10 }}
-          contentContainerStyle={{ paddingVertical: 10 }}>
-          {/* Career Fairs & Events -- up to 4 cards, same skeleton-while-
-              loading convention as before, just sized to this row's
-              shared tile width now instead of the old topCardWidth. */}
-          {careerEventsLoading ? (
-            <>
-              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-            </>
-          ) : (
-            careerEvents.map(event => (
-              <CareerFairEventCard
-                key={event.id}
-                event={event}
-                onPress={onOpenCareerEvent}
-                style={{ width: forYouCardWidth, marginRight: forYouGap }}
-              />
-            ))
-          )}
-
-          {/* Evergreen shortcuts -- Today's Tips/Roadmap/Career DNA/
-              Companies/Courses/Salary (see forYouShortcuts above). */}
-          {forYouShortcuts.map(item => (
-            <TouchableOpacity
-              key={item.key}
-              activeOpacity={0.7}
-              style={[
-                styles.forYouTile,
-                { marginRight: forYouGap },
-                item.backgroundColor ? { backgroundColor: item.backgroundColor } : undefined,
-              ]}
-              onPress={item.onPress}>
-              <Image source={item.icon} style={styles.forYouTileIcon as ImageStyle} resizeMode="contain" />
-              <Text
-                category="h10"
-                bold
-                numberOfLines={1}
-                ml={8}
-                style={item.backgroundColor ? styles.forYouTileTextLight : undefined}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          {/* Refer & Earn -- same purple-to-black gradient/copy/
-              destination as before, condensed to this row's pill shape
-              (see forYouTile/referralTile/referralTileText below). */}
-          {configService.isFeatureEnabled('referral_program') ? (
-            <TouchableOpacity
-              activeOpacity={0.85}
-              style={[styles.forYouTile, styles.referralTile, { marginRight: forYouGap }]}
-              onPress={() => navigate('ReferralProgram')}>
-              <LinearGradient
-                colors={['#8B5CF6', '#5e40a2ff']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-              <ArtGiftBox size={20} />
-              <Text category="h10" bold numberOfLines={1} ml={8} style={styles.referralTileText}>
-                {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
-              </Text>
-            </TouchableOpacity>
-          ) : null}
-
-          {/* Next Steps -- same destination (src/more/WhatsNext.tsx) as
-              before, last in the row as the least time-sensitive item. */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.forYouTile}
-            onPress={() => navigate('WhatsNext')}>
-            <ArtWorkplaceCompass size={20} />
-            <Text category="h10" bold numberOfLines={1} ml={8}>
-              {t('more:whats_next_title', { defaultValue: "What's Next" })}
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
 
         {/* AI Coach card -- see coachPrompts above for the exact starter
             list and CoachPromptCard.tsx's own comment for how a tap
@@ -1413,13 +1429,15 @@ const themedStyles = StyleService.create({
   // MissionHeroCard's own colored-block footprint instead of the flat
   // ActionCard placeholder this briefly was. Only shown for the brief
   // window before missionHeroLoading resolves.
-  // Product report: "reduce the height of the hero card" -- 220 -> 160 to
-  // match MissionHeroCard.tsx's own tightened padding/spacing.
+  // Product report: "reduce the height of the hero card" (asked twice) --
+  // 220 -> 160 -> 145 to match MissionHeroCard.tsx's own tightened
+  // padding/spacing. Solid fallback fill (matches the gradient's first
+  // stop) since this placeholder doesn't render the real LinearGradient.
   missionHeroLoading: {
-    height: 160,
+    height: 145,
     borderRadius: 16,
     marginTop: 16,
-    backgroundColor: '#0052D9',
+    backgroundColor: '#1F7BFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1472,18 +1490,21 @@ const themedStyles = StyleService.create({
     width: 20,
     height: 20,
   },
-  // White label for the "Today's Tips" tile's #272e3b custom fill (see
-  // forYouShortcuts above) -- same pattern as referralTileText below.
+  // White label for any For You pill using a gradient fill (Today's Tips,
+  // Refer & Earn) instead of the default flat background -- see
+  // forYouShortcuts above / forYouTileGradientClip below.
   forYouTileTextLight: {
     color: '#fff',
   },
-  // Refer & Earn tile — same purple-to-black gradient as before (see this
-  // style's own prior comment history in git for the full "why this
-  // gradient" story), just fit to forYouTile's shape now. No
+  // Shared by every For You pill that renders a LinearGradient fill
+  // (absolute-filled, see each render call site) instead of a flat
+  // backgroundColor -- Today's Tips (product request: "change the
+  // today's tips background to a linear gradient") and Refer & Earn.
+  // Clips the gradient to the pill's own rounded corners; no
   // globalStyle.card shadow needed (product precedent: "remove the box
-  // shadow from the referral card") — overridden back off here since
+  // shadow from the referral card") -- overridden back off here since
   // forYouTile's own spread turns it back on by default.
-  referralTile: {
+  forYouTileGradientClip: {
     overflow: 'hidden',
     shadowOpacity: 0,
     elevation: 0,
