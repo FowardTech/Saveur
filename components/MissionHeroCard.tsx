@@ -79,13 +79,16 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
               {badgeLabel}
             </Text>
           </View>
-          <ArtMissionPhone size={64} />
+          {/* Product report: "reduce the height of the hero card" -- 64 ->
+              48, shrinking topRow's own height (the tallest single
+              element in this card) without cropping the art. */}
+          <ArtMissionPhone size={48} />
         </View>
 
-        <Text category="h6" bold numberOfLines={2} mt={14} style={styles.title}>
+        <Text category="h6" bold numberOfLines={2} mt={8} style={styles.title}>
           {title}
         </Text>
-        <Text category="h9-s" numberOfLines={2} mt={6} style={styles.subtitle}>
+        <Text category="h9-s" numberOfLines={2} mt={4} style={styles.subtitle}>
           {subtitle}
         </Text>
 
@@ -156,9 +159,10 @@ const themedStyles = StyleService.create({
     marginTop: 16,
     backgroundColor: '#0052D9',
   },
+  // Product report: "reduce the height of the hero card" -- padding 18 -> 14.
   inner: {
     borderRadius: 16,
-    padding: 18,
+    padding: 14,
     overflow: 'hidden',
     backgroundColor: '#0052D9',
   },
@@ -189,10 +193,12 @@ const themedStyles = StyleService.create({
   subtitle: {
     color: 'rgba(255,255,255,0.85)',
   },
+  // Product report: "reduce the height of the hero card" -- marginTop
+  // 18 -> 10.
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 18,
+    marginTop: 10,
   },
   metaItem: {
     flexDirection: 'row',
@@ -214,10 +220,12 @@ const themedStyles = StyleService.create({
     marginLeft: 8,
     marginTop: 2,
   },
+  // Product report: "reduce the height of the hero card" -- marginTop
+  // 18 -> 10.
   progressRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 18,
+    marginTop: 10,
     marginBottom: 6,
   },
   progressTrack: {
@@ -231,20 +239,22 @@ const themedStyles = StyleService.create({
     borderRadius: 3,
     backgroundColor: '#FFFFFF',
   },
+  // Product report: "reduce the height of the hero card" -- paddingVertical
+  // 13 -> 10, marginTop 18 -> 10.
   cta: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 999,
-    paddingVertical: 13,
-    marginTop: 18,
+    paddingVertical: 10,
+    marginTop: 10,
   },
   // A little extra breathing room above the CTA when the progress block
-  // (which normally supplies its own marginTop:18 above the CTA) is
-  // skipped entirely -- otherwise the CTA sits right under the meta row.
+  // (which normally supplies its own marginTop above the CTA) is skipped
+  // entirely -- otherwise the CTA sits right under the meta row.
   ctaNoProgress: {
-    marginTop: 20,
+    marginTop: 14,
   },
   // Submit-button color -- reverted back to the default brand blue along
   // with CtaButton.tsx/globalStyle.shadowBtn ("change the submit buttons

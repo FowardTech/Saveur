@@ -981,35 +981,86 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-{/* HOME RESTRUCTURE: Career Fairs & Events, Career Progress, Daily
-            Challenge, Refer & Earn, and Next Steps used to each be their
-            own separately-titled section stacked all the way down the
-            page — folded into one "For You" horizontal row instead, same
-            "one clear focal point per screen, not a stack of equally-
-            weighted cards" principle as the collapsed Continue card
-            below. Career Progress and Daily Challenge are gone from this
-            row entirely (v2 redesign) — both now live in the mission
-            hero/stat-card pair above instead of a duplicate smaller tile
-            down here. Ordered by how timely/personal what's left is: the
-            newest Career Fairs & Events first, then the evergreen
-            shortcuts (Today's Tips/Roadmap/Career DNA/Companies/Courses/
-            Salary — see forYouShortcuts above, replaces the old pill row
-            + Career Toolkit section), then Refer & Earn and Next Steps
-            last as the least time-sensitive items. The shortcuts are
-            always present for a signed-in user, so this row is never
-            empty in practice — no top-level "is there anything at all"
-            gate needed, unlike the old Career Fairs & Events section it
-            now sits inside.
+{/* HOME REDESIGN v4 (product report: "reduce the height of the hero
+            card and now place the step, streak and XP cards, then turn
+            the for you cards back to pill buttons and bring it
+            immediately below the hero cards") -- MissionHeroCard leads
+            again (see its own comment for the height reduction), StatStrip
+            (Step/Streak/XP) sits right under it, then the "For You" row
+            (now restyled back to compact pill buttons -- see forYouTile's
+            own comment below) immediately after that, then the AI Coach
+            card. ActionCard (a brief flat-row replacement for the hero
+            card) stays unused on disk, not deleted -- same rollback-point
+            convention as every prior redesign pass. */}
+        {missionHeroLoading ? (
+          <View style={styles.missionHeroLoading}>
+            <Spinner status="control" />
+          </View>
+        ) : (
+          <MissionHeroCard
+            badgeIcon={missionHero.badgeIcon}
+            badgeLabel={missionHero.badgeLabel}
+            title={missionHero.title}
+            subtitle={missionHero.subtitle}
+            metaLeft={missionHero.metaLeft}
+            metaRight={missionHero.metaRight}
+            progressPercent={missionHero.progressPercent}
+            progressLabel={missionHero.progressLabel}
+            ctaLabel={missionHero.ctaLabel}
+            ctaIcon={missionHero.ctaIcon}
+            onPress={missionHero.onPress}
+          />
+        )}
 
-            MOVED (product request: "take the For You section and place
-            above the AI Career Coach card") -- used to sit at the very
-            bottom of the page, after the admin banner and Continue
-            section; now right after the actions-zone ActionCard and
-            before CoachPromptCard. Nothing about the row itself changed,
-            only its position in the page. */}
-        {/* <Text category="h8" bold mt={24} mb={12}>
-          {t('home:for_you_label', { defaultValue: 'For You' })}
-        </Text> */}
+        {/* Data zone -- real numbers only, same honest-zero-state
+            convention as before. "Day X of Y" from the original reference
+            screenshot isn't available (RoadmapStep has no day field, only
+            `order`), so this shows "Step X of Y" instead of a fabricated
+            day count; XP is gamificationService's own real streak.xp. */}
+        <StatStrip
+          items={[
+            {
+              label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
+              value: roadmap && currentRoadmapStep
+                ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
+                : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
+              icon: 'step',
+              gradientColors: ['#1F7BFF', '#0052D9'],
+            },
+            {
+              label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
+              value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
+              icon: 'streak',
+              gradientColors: ['#FF9457', '#E24A2B'],
+            },
+            {
+              label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
+              value: `${streak?.xp ?? 0}`,
+              icon: 'rateFull',
+              gradientColors: ['#B57BFF', '#7C3AED'],
+            },
+          ]}
+        />
+
+        {/* Career Fairs & Events, Refer & Earn, and Next Steps used to each
+            be their own separately-titled section stacked all the way down
+            the page — folded into one "For You" horizontal row instead.
+            Career Progress and Daily Challenge live in the mission hero/
+            stat-card pair above instead of a duplicate tile here. Ordered
+            by how timely/personal what's left is: the newest Career Fairs
+            & Events first, then the evergreen shortcuts (Today's Tips/
+            Roadmap/Career DNA/Companies/Courses/Salary — see
+            forYouShortcuts above), then Refer & Earn and Next Steps last.
+
+            Product report: "turn the for you cards back to pill buttons
+            and bring it immediately below the hero cards" -- the shortcut/
+            referral/next-steps tiles (forYouTile) go back to a compact
+            horizontal pill shape (icon + label inline, fully rounded)
+            instead of the stacked icon-over-label square tile they'd
+            become; CareerFairEventCard keeps its own richer row-card look
+            (title/subtitle/logo), since it was never part of the old pill
+            row this is reverting to. Row itself now sits directly below
+            the hero/stat-card pair instead of after them further down. */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -1050,9 +1101,8 @@ const HomeSrc = memo(() => {
               <Text
                 category="h10"
                 bold
-                center
                 numberOfLines={1}
-                mt={8}
+                ml={8}
                 style={item.backgroundColor ? styles.forYouTileTextLight : undefined}>
                 {item.label}
               </Text>
@@ -1060,7 +1110,7 @@ const HomeSrc = memo(() => {
           ))}
 
           {/* Refer & Earn -- same purple-to-black gradient/copy/
-              destination as before, condensed to this row's tile shape
+              destination as before, condensed to this row's pill shape
               (see forYouTile/referralTile/referralTileText below). */}
           {configService.isFeatureEnabled('referral_program') ? (
             <TouchableOpacity
@@ -1073,8 +1123,8 @@ const HomeSrc = memo(() => {
                 end={{ x: 1, y: 1 }}
                 style={StyleSheet.absoluteFillObject}
               />
-              <ArtGiftBox size={32} />
-              <Text category="h10" bold center numberOfLines={2} mt={8} style={styles.referralTileText}>
+              <ArtGiftBox size={20} />
+              <Text category="h10" bold numberOfLines={1} ml={8} style={styles.referralTileText}>
                 {t('home:referral_card_title', { defaultValue: 'Refer & Earn' })}
               </Text>
             </TouchableOpacity>
@@ -1086,80 +1136,12 @@ const HomeSrc = memo(() => {
             activeOpacity={0.8}
             style={styles.forYouTile}
             onPress={() => navigate('WhatsNext')}>
-            <ArtWorkplaceCompass size={30} />
-            <Text category="h10" bold center numberOfLines={1} mt={8}>
+            <ArtWorkplaceCompass size={20} />
+            <Text category="h10" bold numberOfLines={1} ml={8}>
               {t('more:whats_next_title', { defaultValue: "What's Next" })}
             </Text>
           </TouchableOpacity>
         </ScrollView>
-
-        {/* HOME REDESIGN v3 (product ask: "search dribbble/behance, structure
-            the app like top-rated 2026 apps" -- research landed on a
-            structured-dashboard direction: a clearly separated "data zone"
-            you read (StatStrip below) above an "actions zone" you act on.
-            See StatStrip.tsx's own comments for the full reasoning.
-            ActionCard (this zone's brief flat-row replacement) is unused
-            now, not deleted -- same rollback-point convention as every
-            prior redesign pass.
-            RESTORED (product report: "bring back this hero card", with
-            the original reference screenshot attached) -- the actions
-            zone's "next action" slot is MissionHeroCard again instead of
-            ActionCard's flat row. */}
-
-        {/* Data zone -- real numbers only, same honest-zero-state
-            convention as before. "Day X of Y" from the original reference
-            screenshot isn't available (RoadmapStep has no day field, only
-            `order`), so this shows "Step X of Y" instead of a fabricated
-            day count; XP is gamificationService's own real streak.xp. */}
-        <StatStrip
-          items={[
-            {
-              label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
-              value: roadmap && currentRoadmapStep
-                ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
-                : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
-              icon: 'step',
-              gradientColors: ['#1F7BFF', '#0052D9'],
-            },
-            {
-              label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
-              value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
-              icon: 'streak',
-              gradientColors: ['#FF9457', '#E24A2B'],
-            },
-            {
-              label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
-              value: `${streak?.xp ?? 0}`,
-              icon: 'rateFull',
-              gradientColors: ['#B57BFF', '#7C3AED'],
-            },
-          ]}
-        />
-
-        {/* Actions zone -- one clear "next action" card (real priority
-            chain: today's Daily Challenge, falling back to the current AI
-            Career Roadmap step, falling back to a generic coach prompt --
-            see missionHero's own computation above), then the AI Coach
-            card with suggested prompts right below it. */}
-        {missionHeroLoading ? (
-          <View style={styles.missionHeroLoading}>
-            <Spinner status="control" />
-          </View>
-        ) : (
-          <MissionHeroCard
-            badgeIcon={missionHero.badgeIcon}
-            badgeLabel={missionHero.badgeLabel}
-            title={missionHero.title}
-            subtitle={missionHero.subtitle}
-            metaLeft={missionHero.metaLeft}
-            metaRight={missionHero.metaRight}
-            progressPercent={missionHero.progressPercent}
-            progressLabel={missionHero.progressLabel}
-            ctaLabel={missionHero.ctaLabel}
-            ctaIcon={missionHero.ctaIcon}
-            onPress={missionHero.onPress}
-          />
-        )}
 
         {/* AI Coach card -- see coachPrompts above for the exact starter
             list and CoachPromptCard.tsx's own comment for how a tap
@@ -1431,8 +1413,10 @@ const themedStyles = StyleService.create({
   // MissionHeroCard's own colored-block footprint instead of the flat
   // ActionCard placeholder this briefly was. Only shown for the brief
   // window before missionHeroLoading resolves.
+  // Product report: "reduce the height of the hero card" -- 220 -> 160 to
+  // match MissionHeroCard.tsx's own tightened padding/spacing.
   missionHeroLoading: {
-    height: 220,
+    height: 160,
     borderRadius: 16,
     marginTop: 16,
     backgroundColor: '#0052D9',
@@ -1461,26 +1445,32 @@ const themedStyles = StyleService.create({
   // card app-wide also reads (same "don't touch card app-wide unless
   // explicitly asked" scope discipline as every prior shadow/radius
   // pass). Lighter opacity/radius/offset/elevation, same shadowColor.
+  // Product report: "turn the for you cards back to pill buttons" -- was a
+  // fixed-width (150) square tile with the icon stacked above a centered
+  // label. Now a compact horizontal pill: icon + label inline, fully
+  // rounded, sized to its own content (no fixed width) -- the original
+  // "Uber-Eats-style pill row" shape this row had before the tile-card
+  // redesign (see forYouShortcuts' own comment). Shadow/border from the
+  // prior tile-card passes ("reduce the box shadow" / "give the for you
+  // cards border") are kept as-is, just on the new pill shape.
   forYouTile: {
     ...globalStyle.card,
-    width: 150,
-    minHeight: 96,
-    padding: 14,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
     backgroundColor: 'background-basic-color-2',
     shadowOpacity: 0.18,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
-    // Product request: "give the for you cards border" -- same hairline
-    // border StatStrip/ActionCard/CoachPromptCard already use.
     borderWidth: 1,
     borderColor: 'rgba(128,128,128,0.15)',
   },
   forYouTileIcon: {
-    width: 32,
-    height: 32,
+    width: 20,
+    height: 20,
   },
   // White label for the "Today's Tips" tile's #272e3b custom fill (see
   // forYouShortcuts above) -- same pattern as referralTileText below.
