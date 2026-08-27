@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "До завершения этой сессии код отправлен не был.",
+  "coding_replay_problem": "Задача",
+  "coding_replay_problem_numbered": "Задача {{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}} тестов пройдено",
+  "coding_replay_your_code": "Ваш код",
   "delete_video_failed": "Не удалось удалить видео",
   "delete_video_message": "Это навсегда удалит записанное видео. Транскрипт и баллы останутся без изменений.",
   "delete_video_title": "Удалить это видео?",

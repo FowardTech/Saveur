@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "Vor Ende dieser Sitzung wurde kein Code eingereicht.",
+  "coding_replay_problem": "Aufgabe",
+  "coding_replay_problem_numbered": "Aufgabe {{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}} Tests bestanden",
+  "coding_replay_your_code": "Dein Code",
   "delete_video_failed": "Video konnte nicht gelöscht werden",
   "delete_video_message": "Dies entfernt das aufgezeichnete Video dauerhaft. Dein Transkript und deine Bewertungen bleiben unberührt.",
   "delete_video_title": "Dieses Video löschen?",

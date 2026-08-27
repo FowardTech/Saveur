@@ -205,6 +205,8 @@
   "negotiation_strengths": "Что сработало",
   "negotiation_summary": "Итоги переговоров",
   "new_profile": "Новый профиль",
+  "next_problem_cta": "Следующая задача",
+  "next_problem_failed": "Не удалось загрузить следующую задачу",
   "no_career_goal_set": "Вы ещё не установили карьерную цель.",
   "no_interview_session": "Нет сеанса собеседования для показа отзыва.",
   "no_output": "(нет вывода)",

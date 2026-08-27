@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "이 세션이 종료되기 전에 제출된 코드가 없습니다.",
+  "coding_replay_problem": "문제",
+  "coding_replay_problem_numbered": "문제 {{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}}개 테스트 통과",
+  "coding_replay_your_code": "내 코드",
   "delete_video_failed": "동영상을 삭제할 수 없습니다",
   "delete_video_message": "녹화된 동영상이 영구적으로 삭제됩니다. 스크립트와 점수는 그대로 유지됩니다.",
   "delete_video_title": "이 동영상을 삭제하시겠어요?",

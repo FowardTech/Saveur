@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "لم يتم إرسال أي كود قبل انتهاء هذه الجلسة.",
+  "coding_replay_problem": "المسألة",
+  "coding_replay_problem_numbered": "المسألة {{n}}{{title}}",
+  "coding_replay_tests_passed": "اجتياز {{passed}} / {{total}} من الاختبارات",
+  "coding_replay_your_code": "الكود الخاص بك",
   "delete_video_failed": "تعذر حذف الفيديو",
   "delete_video_message": "سيؤدي هذا إلى حذف الفيديو المسجل نهائيًا. يبقى النص والنتائج دون تغيير.",
   "delete_video_title": "هل تريد حذف هذا الفيديو؟",

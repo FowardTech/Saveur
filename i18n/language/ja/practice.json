@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "このセッションが終了するまでにコードは提出されませんでした。",
+  "coding_replay_problem": "問題",
+  "coding_replay_problem_numbered": "問題{{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}} 件のテストに合格",
+  "coding_replay_your_code": "あなたのコード",
   "delete_video_failed": "動画を削除できませんでした",
   "delete_video_message": "録画された動画は完全に削除されます。文字起こしとスコアはそのまま残ります。",
   "delete_video_title": "この動画を削除しますか？",

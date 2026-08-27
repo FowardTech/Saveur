@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "Nessun codice è stato inviato prima della fine di questa sessione.",
+  "coding_replay_problem": "Problema",
+  "coding_replay_problem_numbered": "Problema {{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}} test superati",
+  "coding_replay_your_code": "Il tuo codice",
   "delete_video_failed": "Impossibile eliminare il video",
   "delete_video_message": "Questo rimuove definitivamente il video registrato. La trascrizione e i punteggi rimangono intatti.",
   "delete_video_title": "Eliminare questo video?",

@@ -205,6 +205,8 @@
   "negotiation_strengths": "What worked",
   "negotiation_summary": "Negotiation Summary",
   "new_profile": "New Profile",
+  "next_problem_cta": "Next Problem",
+  "next_problem_failed": "Could not load next problem",
   "no_career_goal_set": "You haven't set a career goal yet.",
   "no_interview_session": "No interview session to show feedback for.",
   "no_output": "(no output)",

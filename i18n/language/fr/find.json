@@ -205,6 +205,8 @@
   "negotiation_strengths": "Ce qui a fonctionné",
   "negotiation_summary": "Résumé de la négociation",
   "new_profile": "Nouveau profil",
+  "next_problem_cta": "Problème suivant",
+  "next_problem_failed": "Impossible de charger le problème suivant",
   "no_career_goal_set": "Vous n'avez pas encore défini d'objectif de carrière.",
   "no_interview_session": "Aucune session d'entretien pour laquelle afficher des retours.",
   "no_output": "(aucune sortie)",

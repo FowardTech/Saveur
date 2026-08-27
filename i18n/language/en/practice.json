@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "No code was submitted before this session ended.",
+  "coding_replay_problem": "Problem",
+  "coding_replay_problem_numbered": "Problem {{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}} tests passed",
+  "coding_replay_your_code": "Your Code",
   "delete_video_failed": "Could not delete video",
   "delete_video_message": "This removes the recorded video permanently. Your transcript and scores stay untouched.",
   "delete_video_title": "Delete this video?",

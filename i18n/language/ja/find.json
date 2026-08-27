@@ -205,6 +205,8 @@
   "negotiation_strengths": "うまくいった点",
   "negotiation_summary": "交渉の要約",
   "new_profile": "新しいプロフィール",
+  "next_problem_cta": "次の問題",
+  "next_problem_failed": "次の問題を読み込めませんでした",
   "no_career_goal_set": "まだキャリア目標を設定していません。",
   "no_interview_session": "フィードバックを表示する面接セッションがありません。",
   "no_output": "（出力なし）",

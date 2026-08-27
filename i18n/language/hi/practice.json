@@ -1,4 +1,9 @@
 {
+  "coding_replay_no_submission": "इस सत्र के समाप्त होने से पहले कोई कोड सबमिट नहीं किया गया।",
+  "coding_replay_problem": "समस्या",
+  "coding_replay_problem_numbered": "समस्या {{n}}{{title}}",
+  "coding_replay_tests_passed": "{{passed}} / {{total}} परीक्षण पास हुए",
+  "coding_replay_your_code": "आपका कोड",
   "delete_video_failed": "वीडियो नहीं हटाया जा सका",
   "delete_video_message": "इससे रिकॉर्ड किया गया वीडियो स्थायी रूप से हट जाएगा। आपकी ट्रांसक्रिप्ट और स्कोर सुरक्षित रहेंगे।",
   "delete_video_title": "क्या इस वीडियो को हटाएं?",
