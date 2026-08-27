@@ -83,6 +83,11 @@ const themedStyles = StyleService.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
+    // Product request: "give the for you cards border" -- this card only
+    // ever appears inside HomeSrc.tsx's For You row, same hairline border
+    // as that row's own forYouTile style.
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.15)',
   },
   logoWrap: {
     marginRight: 10,

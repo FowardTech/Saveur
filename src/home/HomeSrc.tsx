@@ -1459,6 +1459,10 @@ const themedStyles = StyleService.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 2,
+    // Product request: "give the for you cards border" -- same hairline
+    // border StatStrip/ActionCard/CoachPromptCard already use.
+    borderWidth: 1,
+    borderColor: 'rgba(128,128,128,0.15)',
   },
   forYouTileIcon: {
     width: 32,
