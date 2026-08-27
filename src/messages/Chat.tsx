@@ -639,7 +639,11 @@ const Chat = memo(() => {
         <View style={styles.emptyGlowWrap}>
           <Image source={Images.iconCoachChatBlue} resizeMode="contain" style={styles.emptyGlowIcon as ImageStyle} />
         </View>
-        <Text category="h6" center mt={18} style={styles.emptyHeadline}>
+        {/* Product report: "reduce the size of the greeting text its too
+            big" -- was category="h6" (20px, see constants/theme/
+            mapping.json's text-heading-6-font-size). "h7" (18px) is one
+            step down this app's real type scale. */}
+        <Text category="h7" center mt={18} style={styles.emptyHeadline}>
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
         </Text>
 
