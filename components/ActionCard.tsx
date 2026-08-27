@@ -43,7 +43,11 @@ const ActionCard: React.FC<ActionCardProps> = ({ icon, title, subtitle, onPress,
           {subtitle}
         </Text>
       </View>
-      <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]} />
+      {/* pack="assets" name="chevronRight" (NOT pack="eva") --
+          "chevron-right-outline" isn't registered in the eva pack; this
+          exact mistake has crashed this app before (see
+          CareerDna.tsx/CourseSession.tsx's own fix comments). */}
+      <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]} />
     </TouchableOpacity>
   );
 };
