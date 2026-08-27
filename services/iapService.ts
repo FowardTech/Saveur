@@ -53,7 +53,21 @@ async function verifyPurchaseServerSide(
   purchase: Purchase,
   mode: 'subscription' | 'product',
 ): Promise<IapVerifyResult> {
-  if (purchase.platform === 'ios') {
+  // BUG FIX (product report: real-device iOS purchases were verified
+  // against the Google endpoint — /api/v1/billing/iap/google/verify — and
+  // predictably 503'd, since this app never configures Google Play
+  // credentials for an iOS build). Root cause: this used to check
+  // `purchase.platform === 'ios'`, but react-native-iap v16's Nitro-backed
+  // Purchase type (PurchaseIOS/PurchaseAndroid, both extending
+  // PurchaseCommon) has no `platform` field at all — see
+  // type-bridge.js's convertNitroPurchaseToPurchase(), whose returned
+  // object literals only ever set `store`, never `platform`. That check
+  // was therefore always `undefined === 'ios'` → always false, silently
+  // routing every purchase (iOS included) down the Android/Google branch
+  // below. `store` (an IapStore: 'apple' | 'google' | 'horizon' |
+  // 'amazon' | 'unknown') is the field that's actually populated, so that's
+  // what has to be checked instead.
+  if (purchase.store === 'apple') {
     // purchase.id is the StoreKit 2 transaction id react-native-iap
     // surfaces on iOS — exactly what the backend's Apple verify endpoint
     // (App Store Server API's get_transaction_info) expects. Apple's
@@ -201,9 +215,11 @@ export async function restorePurchases(): Promise<{restoredCount: number; errors
       // subscription endpoint first (the more common IAP kind in this
       // app) and fall back to the product endpoint on an
       // unknown_product_id — the backend catalog lookup is the real
-      // authority either way.
+      // authority either way. (See the `store`-vs-`platform` note in
+      // verifyPurchaseServerSide above — Purchase has no `platform` field
+      // at runtime, so this has to key off `store` too.)
       let result = await verifyPurchaseServerSide(p, 'subscription');
-      if (result.kind === 'error' && result.error === 'unknown_product_id' && p.platform === 'android') {
+      if (result.kind === 'error' && result.error === 'unknown_product_id' && p.store === 'google') {
         result = await verifyPurchaseServerSide(p, 'product');
       }
       if (result.kind === 'error') {
