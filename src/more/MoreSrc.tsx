@@ -563,21 +563,19 @@ const MoreSrc = memo(() => {
               same "this reskin request supersedes an earlier, since-
               superseded decision" reasoning as CtaButton.tsx's pill shape
               and MainBottomTab.tsx's FAB above. */}
-          <View style={[globalStyle.card, styles.sectionCard]}>
+          <View style={styles.sectionCard}>
             {DATA_DETAILS.map((item, i) => (
-              <React.Fragment key={i}>
-                <ButtonOptional
-                  icon={item.icon}
-                  title={item.title}
-                  status={item.status}
-                  iconColor={item.iconColor}
-                  onPress={item.onPress}
-                  navigateSrc={item.navigateSrc}
-                  badgeCount={item.badgeCount}
-                  badgeDot={item.badgeDot}
-                />
-                {i < DATA_DETAILS.length - 1 ? <View style={styles.rowDivider} /> : null}
-              </React.Fragment>
+              <ButtonOptional
+                key={i}
+                icon={item.icon}
+                title={item.title}
+                status={item.status}
+                iconColor={item.iconColor}
+                onPress={item.onPress}
+                navigateSrc={item.navigateSrc}
+                badgeCount={item.badgeCount}
+                badgeDot={item.badgeDot}
+              />
             ))}
           </View>
         </View>
@@ -585,19 +583,17 @@ const MoreSrc = memo(() => {
           <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:application')}
           </Text>
-          <View style={[globalStyle.card, styles.sectionCard]}>
+          <View style={styles.sectionCard}>
             {DATA_APPLICATION.map((item, i) => (
-              <React.Fragment key={i}>
-                <ButtonOptional
-                  icon={item.icon}
-                  title={item.title}
-                  status={item.status}
-                  iconColor={item.iconColor}
-                  onPress={item.onPress}
-                  navigateSrc={item.navigateSrc}
-                />
-                <View style={styles.rowDivider} />
-              </React.Fragment>
+              <ButtonOptional
+                key={i}
+                icon={item.icon}
+                title={item.title}
+                status={item.status}
+                iconColor={item.iconColor}
+                onPress={item.onPress}
+                navigateSrc={item.navigateSrc}
+              />
             ))}
             <ButtonOptional
               withToggle
@@ -609,7 +605,6 @@ const MoreSrc = memo(() => {
               onPress={toggleTheme}
               navigateSrc={undefined}
             />
-            <View style={styles.rowDivider} />
             {/* Master push-notification opt-out. Was nowhere in the app —
                 once a push arrived, there was no in-app way to stop future
                 ones short of disabling notifications at the OS level.
@@ -712,26 +707,18 @@ const themedStyles = StyleService.create({
   sectionHeading: {
     marginBottom: 12,
   },
-  // The grouped white shadow-card each section's rows now sit inside —
-  // see the render call site's own comment for why this now overrides
-  // this screen's prior "remove the card/border, make it flat" history.
-  // `overflow: hidden` clips ButtonOptional's own row backgrounds/ripple
-  // to the card's rounded corners; paddingVertical: 4 keeps the first/
-  // last row's own vertical padding from making the card's top/bottom
-  // edge feel too loose.
+  // Product report: "the item container in the settings should be full
+  // 100 width and the bottom lines should be removed" -- was a grouped
+  // white rounded shadow-card (globalStyle.card spread) inset from the
+  // screen edges by Content's own page padding, with a hairline divider
+  // between every row. Both are gone now: marginHorizontal cancels out
+  // Content's padder (see components/Content.tsx's CONTENT_PADDER) so
+  // this section's rows bleed to the true screen edges (ButtonOptional's
+  // own row padding still keeps the icon/text/chevron off that edge), and
+  // there's no more per-row divider line at all -- see the render call
+  // site, which no longer renders one between rows.
   sectionCard: {
-    backgroundColor: 'background-basic-color-2',
-    paddingVertical: 4,
-    overflow: 'hidden',
-  },
-  // Hairline separator between rows inside a sectionCard — globalStyle.
-  // divider only sets a border color (see that token's own comment), so
-  // the actual 1px line + inset (so it doesn't touch the card's rounded
-  // corners) is defined here.
-  rowDivider: {
-    height: 1,
-    marginHorizontal: 20,
-    backgroundColor: 'rgba(128,128,128,0.15)',
+    marginHorizontal: -16,
   },
   // Sign-out gets its own standalone card below the grouped list (see the
   // render call site's own comment) rather than sitting inside the

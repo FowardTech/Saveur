@@ -166,11 +166,15 @@ const ButtonOptional = ({
       ) : (
         // Product request: was arrowRight (a full arrow, shaft + head) —
         // swapped for a plain chevron, the more conventional "opens a
-        // sub-screen" affordance for a settings list row.
+        // sub-screen" affordance for a settings list row. Product follow-up
+        // ("the chevron icons color should be very light gray"): was
+        // text-basic-color (near-black) -- color-basic-400 (#E0E0E0, this
+        // app's own palest gray step) reads as a quiet trailing affordance
+        // rather than competing with the row's icon/title for attention.
         <Icon
           pack="assets"
           name="chevronRight"
-          style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]}
+          style={[globalStyle.icon20, {tintColor: theme['color-basic-400']}]}
         />
       )}
     </Flex>
