@@ -512,3 +512,58 @@ translated *text* — the app's layout itself still renders left-to-right (icons
 direction). A true RTL mirror is a separate native change (`I18nManager.forceRTL` + restart, plus
 auditing every screen's layout assumptions) that hasn't been done. Flagging this so it isn't
 mistaken for a translation bug when Arabic is selected.
+
+### §20. Two more content sources need the §16b language contract: coding problems + job alerts
+
+A follow-up translation audit (whole-app pass, screenshots from a live Chinese-locale test) found
+two real content sources still always rendering in English regardless of the user's language,
+neither of which was in scope for §16b's endpoint list. Product confirmed both should be
+translated. Client-side is already sending the field on both (harmless no-op until backend
+implements it — same pattern §16's TTS rollout used before ElevenLabs voice mapping existed).
+
+**1. `GET /api/v1/coding/problem` — coding-interview problem statements.**
+
+This endpoint returns the technical prompt (`title`, `description`, category, etc.) shown in
+`src/practice/CodingInterview.tsx` and the free-practice hub. It was never added to §16b's list,
+and — important — **it can't use the field name `language`**, because this same coding domain
+already has `POST /api/v1/coding/review`'s pre-existing `language` field meaning the *programming*
+language (e.g. `"python"`). The client now sends the UI/response language as **`responseLanguage`**
+instead, identical to how `reviewCode()` already disambiguates this exact collision. Needs:
+
+```
+GET /api/v1/coding/problem?responseLanguage=zh[&slug=...|session_id=...|next=1&exclude=...]
+```
+
+with the problem-generation/selection prompt instructed to respond only in that language, same
+"append 'Respond only in {language_name}.'" convention §16 established. Uses the same
+`LANGUAGE_NAMES` map §16c already asked you to extend to all 12 codes — no new mapping needed if
+that's done.
+
+**2. `GET /api/v1/job-alerts` (list + single-by-id) — real external job listings.**
+
+Unlike everything else in §16b, this is **not** AI-generated copy — `title`/`company`/`location`
+etc. are real postings pulled from external job boards (Indeed, LinkedIn, etc. per the existing
+integration). Product explicitly asked for these to be translated too, but flagging two things
+that make this a different shape of problem than the rest of §16b:
+
+- **Cost/caching:** this is unbounded, continuously-refreshed external content, not a bounded set
+  of AI replies to one user's request. Translating on every fetch for every locale would multiply
+  translation-API cost by 12x across your whole matching pipeline. Recommend translating
+  on-demand (only for the locale actually requested) and caching the translated
+  title/company/location alongside the listing (e.g. keyed by `(listing_id, language)`) rather than
+  pre-translating the full catalog up front.
+- **Accuracy risk:** machine-translating a real job title/company name can misrepresent the actual
+  posting (translated title may not match how that role is actually advertised in the target
+  market, company names generally shouldn't be translated at all — only `title` and `location`
+  should go through translation, `company` should probably pass through unchanged). Worth a
+  product review of the translated output before this ships broadly.
+
+Client now sends:
+
+```
+GET /api/v1/job-alerts?limit=15[&cursor=...]&language=zh
+GET /api/v1/job-alerts/<id>?language=zh
+```
+
+(uses the literal field name `language`, not `responseLanguage` — this domain has no existing
+*programming*-language field to collide with, so it follows §16b's default convention.)

@@ -1,6 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import i18n from 'i18next';
 import {EKeyAsyncStorage, JobAlertProps} from 'constants/Types';
 import apiClient from './apiClient';
+
+function currentLanguage(): string {
+  return i18n.language || 'en';
+}
 
 // ---------------------------------------------------------------------------
 // jobAlertsService — real backend implementation of "Google-Alert-style" job
@@ -105,7 +110,9 @@ function fromWire(wire: JobAlertWire): JobAlertProps {
  * service which fail soft to a cache.
  */
 export async function getJobAlertById(id: string): Promise<JobAlertProps> {
-  const {data} = await apiClient.get<JobAlertWire>(`/api/v1/job-alerts/${id}`);
+  const {data} = await apiClient.get<JobAlertWire>(`/api/v1/job-alerts/${id}`, {
+    params: {language: currentLanguage()},
+  });
   return fromWire(data);
 }
 
@@ -190,8 +197,15 @@ function extractNextCursor(raw: unknown): string | null {
  */
 export async function listJobAlerts(cursor?: string): Promise<JobAlertsPage> {
   try {
+    // Product decision: real external job listings (title/company/location,
+    // pulled from job boards) should be translated into the user's language
+    // too, not left in the listing's original language. Backend doesn't
+    // implement this yet -- sent proactively (see docs/BACKEND_SPEC_ADDENDUM_
+    // 2026-07.md's new §16d for the full contract this needs, including the
+    // caching/accuracy caveats specific to translating unbounded external
+    // content, unlike this app's own AI-generated copy).
     const {data} = await apiClient.get<unknown>('/api/v1/job-alerts', {
-      params: {limit: JOB_ALERTS_PAGE_SIZE, ...(cursor ? {cursor} : {})},
+      params: {limit: JOB_ALERTS_PAGE_SIZE, ...(cursor ? {cursor} : {}), language: currentLanguage()},
     });
     const alerts = extractItems(data).map(fromWire);
     if (!cursor) {

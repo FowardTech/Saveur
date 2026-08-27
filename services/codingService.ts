@@ -206,18 +206,20 @@ export async function getProblem(
   slug?: string | null,
 ): Promise<CodingProblem> {
   try {
-    // NOTE: deliberately NOT sending `language` here (checked against
-    // docs/BACKEND_SPEC_ADDENDUM_2026-07.md §16b's explicit endpoint list --
-    // GET /api/v1/coding/problem is not on it, only POST /coding/review and
-    // POST /coding/system-design are). Speculatively sending an unconfirmed
-    // param wouldn't actually translate anything (backend would just ignore
-    // it) and risks colliding with this same domain's *programming*-language
-    // field convention (see the responseLanguage note on reviewCode() below)
-    // if the backend ever reuses `language` for that here too. Needs a real
-    // backend contract addition first, same as every other endpoint in that
-    // list got.
+    // Product decision: coding problem statements SHOULD be translated too
+    // (confirmed explicitly, since "language" already means *programming*
+    // language on this endpoint's sibling /coding/review call, see that
+    // note below). Sent as `responseLanguage`, same field name/convention
+    // reviewCode() already uses to avoid that exact collision. Backend
+    // doesn't implement this yet (see docs/BACKEND_SPEC_ADDENDUM_2026-07.md's
+    // new §16d) -- same "client sends it now, harmless no-op until backend
+    // catches up" pattern this app already used for TTS's `language` field
+    // (§16 in that same doc) before ElevenLabs voice mapping existed.
     const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
-      params: slug ? {slug} : sessionId ? {session_id: sessionId} : undefined,
+      params: {
+        ...(slug ? {slug} : sessionId ? {session_id: sessionId} : undefined),
+        responseLanguage: currentLanguage(),
+      },
     });
     const testCases = (data.test_cases ?? []).map(c => ({
       input: c.stdin ?? '',
@@ -254,7 +256,7 @@ export async function getProblem(
 export async function getNextProblem(excludeSlugs: string[]): Promise<CodingProblem> {
   try {
     const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
-      params: {next: 1, exclude: excludeSlugs.join(',')},
+      params: {next: 1, exclude: excludeSlugs.join(','), responseLanguage: currentLanguage()},
     });
     const testCases = (data.test_cases ?? []).map(c => ({
       input: c.stdin ?? '',
