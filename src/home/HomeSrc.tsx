@@ -976,59 +976,7 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-        {/* HOME REDESIGN v3 (product ask: "search dribbble/behance, structure
-            the app like top-rated 2026 apps" -- research landed on a
-            structured-dashboard direction: a clearly separated "data zone"
-            you read (StatStrip below) above an "actions zone" you act on
-            (ActionCard + CoachPromptCard), instead of v2's one big
-            illustrated hero mixing both. See StatStrip.tsx/ActionCard.tsx's
-            own comments for the full reasoning. MissionHeroCard/
-            StatMiniCard (v2's components) are unused now, not deleted --
-            same rollback-point convention as every prior redesign pass. */}
-
-        {/* Data zone -- real numbers only, same honest-zero-state
-            convention as before. "Day X of Y" from the original reference
-            screenshot isn't available (RoadmapStep has no day field, only
-            `order`), so this shows "Step X of Y" instead of a fabricated
-            day count; XP is gamificationService's own real streak.xp. */}
-        <StatStrip
-          items={[
-            {
-              label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
-              value: roadmap && currentRoadmapStep
-                ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
-                : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
-            },
-            {
-              label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
-              value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
-            },
-            {
-              label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
-              value: `${streak?.xp ?? 0}`,
-            },
-          ]}
-        />
-
-        {/* Actions zone -- one clear "next action" card (real priority
-            chain: today's Daily Challenge, falling back to the current AI
-            Career Roadmap step, falling back to a generic coach prompt --
-            see missionHero's own computation above), then the AI Coach
-            card with suggested prompts right below it. */}
-        {missionHeroLoading ? (
-          <View style={styles.missionHeroLoading}>
-            <Spinner status="primary" />
-          </View>
-        ) : (
-          <ActionCard
-            icon={missionHero.badgeIcon}
-            title={missionHero.title}
-            subtitle={missionHero.subtitle}
-            onPress={missionHero.onPress}
-          />
-        )}
-
-        {/* HOME RESTRUCTURE: Career Fairs & Events, Career Progress, Daily
+{/* HOME RESTRUCTURE: Career Fairs & Events, Career Progress, Daily
             Challenge, Refer & Earn, and Next Steps used to each be their
             own separately-titled section stacked all the way down the
             page — folded into one "For You" horizontal row instead, same
@@ -1054,9 +1002,9 @@ const HomeSrc = memo(() => {
             section; now right after the actions-zone ActionCard and
             before CoachPromptCard. Nothing about the row itself changed,
             only its position in the page. */}
-        <Text category="h8" bold mt={24} mb={12}>
+        {/* <Text category="h8" bold mt={24} mb={12}>
           {t('home:for_you_label', { defaultValue: 'For You' })}
-        </Text>
+        </Text> */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -1129,6 +1077,58 @@ const HomeSrc = memo(() => {
             </Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* HOME REDESIGN v3 (product ask: "search dribbble/behance, structure
+            the app like top-rated 2026 apps" -- research landed on a
+            structured-dashboard direction: a clearly separated "data zone"
+            you read (StatStrip below) above an "actions zone" you act on
+            (ActionCard + CoachPromptCard), instead of v2's one big
+            illustrated hero mixing both. See StatStrip.tsx/ActionCard.tsx's
+            own comments for the full reasoning. MissionHeroCard/
+            StatMiniCard (v2's components) are unused now, not deleted --
+            same rollback-point convention as every prior redesign pass. */}
+
+        {/* Data zone -- real numbers only, same honest-zero-state
+            convention as before. "Day X of Y" from the original reference
+            screenshot isn't available (RoadmapStep has no day field, only
+            `order`), so this shows "Step X of Y" instead of a fabricated
+            day count; XP is gamificationService's own real streak.xp. */}
+        <StatStrip
+          items={[
+            {
+              label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
+              value: roadmap && currentRoadmapStep
+                ? t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount })
+                : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
+            },
+            {
+              label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
+              value: t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 }),
+            },
+            {
+              label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
+              value: `${streak?.xp ?? 0}`,
+            },
+          ]}
+        />
+
+        {/* Actions zone -- one clear "next action" card (real priority
+            chain: today's Daily Challenge, falling back to the current AI
+            Career Roadmap step, falling back to a generic coach prompt --
+            see missionHero's own computation above), then the AI Coach
+            card with suggested prompts right below it. */}
+        {missionHeroLoading ? (
+          <View style={styles.missionHeroLoading}>
+            <Spinner status="primary" />
+          </View>
+        ) : (
+          <ActionCard
+            icon={missionHero.badgeIcon}
+            title={missionHero.title}
+            subtitle={missionHero.subtitle}
+            onPress={missionHero.onPress}
+          />
+        )}
 
         {/* AI Coach card -- see coachPrompts above for the exact starter
             list and CoachPromptCard.tsx's own comment for how a tap
