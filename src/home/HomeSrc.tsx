@@ -1018,47 +1018,29 @@ const HomeSrc = memo(() => {
             deleted -- same rollback-point convention as every prior
             redesign pass.
 
-            Career Fairs & Events, Refer & Earn, and Next Steps used to
-            each be their own separately-titled section stacked all the
-            way down the page — folded into one "For You" horizontal row
-            instead. Career Progress and Daily Challenge live in the
-            mission hero/stat-card pair below instead of a duplicate tile
-            here. Ordered by how timely/personal what's left is: the
-            newest Career Fairs & Events first, then the evergreen
-            shortcuts (Today's Tips/Roadmap/Career DNA/Companies/Courses/
-            Salary — see forYouShortcuts above), then Refer & Earn and
-            Next Steps last.
+            Refer & Earn and Next Steps used to each be their own
+            separately-titled section stacked all the way down the page —
+            folded into one "For You" horizontal pill row instead. Career
+            Progress and Daily Challenge live in the mission hero/stat-card
+            pair below instead of a duplicate tile here.
 
-            The shortcut/referral/next-steps tiles (forYouTile) are
-            compact horizontal pills (icon + label inline, fully rounded)
-            per an earlier "turn the for you cards back to pill buttons"
-            request; CareerFairEventCard keeps its own richer row-card
-            look (title/subtitle/logo), since it was never part of that
-            pill row. */}
+            HOME REDESIGN v6 (product report: "the screenshot above the
+            Events are showing on the same row as the for you button
+            pills... bring the Events below it") -- Career Fairs & Events
+            used to lead this same horizontal ScrollView as its own set of
+            wider cards ahead of the pills; that put two visually different
+            card styles (rich row-cards vs. compact pills) in one scroll
+            region, and on a small viewport an Events card could visually
+            crowd/clip the first pill in the same row. Events now renders
+            as its OWN horizontal row directly below the pills row instead
+            -- still capped at 4 cards, still self-contained
+            (careerEventsLoading/careerEvents state above), just no longer
+            sharing a ScrollView with the pill row. */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           style={{ marginBottom: 6, paddingHorizontal: 10 }}
           contentContainerStyle={{ paddingVertical: 10 }}>
-          {/* Career Fairs & Events -- up to 4 cards, same skeleton-while-
-              loading convention as before, just sized to this row's
-              shared tile width now instead of the old topCardWidth. */}
-          {careerEventsLoading ? (
-            <>
-              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-              <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-            </>
-          ) : (
-            careerEvents.map(event => (
-              <CareerFairEventCard
-                key={event.id}
-                event={event}
-                onPress={onOpenCareerEvent}
-                style={{ width: forYouCardWidth, marginRight: forYouGap }}
-              />
-            ))
-          )}
-
           {/* Evergreen shortcuts -- Today's Tips/Roadmap/Career DNA/
               Companies/Courses/Salary (see forYouShortcuts above).
               Product request: "change the today's tips background to a
@@ -1117,6 +1099,36 @@ const HomeSrc = memo(() => {
             </Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* Career Fairs & Events -- own row now, directly below the pills
+            (see the v6 restructure comment above the pills ScrollView).
+            Nothing renders at all while there are zero events AND loading
+            has finished, same "section just doesn't exist" convention as
+            before -- only the skeleton (while loading) or real cards (once
+            loaded) take up any space. */}
+        {careerEventsLoading || careerEvents.length > 0 ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginBottom: 6, paddingHorizontal: 10 }}
+            contentContainerStyle={{ paddingVertical: 10 }}>
+            {careerEventsLoading ? (
+              <>
+                <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
+                <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
+              </>
+            ) : (
+              careerEvents.map(event => (
+                <CareerFairEventCard
+                  key={event.id}
+                  event={event}
+                  onPress={onOpenCareerEvent}
+                  style={{ width: forYouCardWidth, marginRight: forYouGap }}
+                />
+              ))
+            )}
+          </ScrollView>
+        ) : null}
 
         {/* MissionHeroCard -- one clear "next action" card (real priority
             chain: today's Daily Challenge, falling back to the current AI
