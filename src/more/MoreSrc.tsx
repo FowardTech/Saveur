@@ -276,6 +276,13 @@ const MoreSrc = memo(() => {
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
       featureKey: 'networking',
+      // Product request: "the Networking Assistant icon in the settings
+      // should have a count badge too so that users can know that new
+      // events are in the networking assistant screen" — same
+      // badgeCount pattern Job Alerts already uses above, backed by the
+      // same GET /api/v1/more/badges call (see
+      // services/moreMenuBadgesService.ts).
+      badgeCount: badges?.careerEventsUnreadCount,
       onPress: () => navigate('NetworkingAssistant'),
     },
     {

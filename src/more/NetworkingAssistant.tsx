@@ -10,6 +10,7 @@ import {
   Input,
   Icon,
   Spinner,
+  ViewPager,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -20,6 +21,8 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import BasicTabBar from 'components/BasicTabBar';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import { globalStyle } from 'styles/globalStyle';
 import { NetworkingContactProps, CareerEventProps } from 'constants/Types';
 import { RootStackParamList } from 'navigation/types';
@@ -32,26 +35,43 @@ import CtaButton from 'components/CtaButton';
 
 const emptyForm = {name: '', company: '', role: '', note: ''};
 
-// Networking contacts tracker (list/add/edit/delete — still local/mocked,
-// see services/networkingService.ts) plus a real AI-drafted outreach message
-// generator per contact, backed by POST /api/v1/networking/message. List + a
-// lightweight inline add/edit form; "Mark as contacted today" bumps
+// Networking Assistant — Career Events (product request: "add the fetching
+// of career events using eventbrite api... determined by the target roles
+// and countries") plus a contacts tracker (list/add/edit/delete — still
+// local/mocked, see services/networkingService.ts) with a real AI-drafted
+// outreach message generator per contact, backed by POST
+// /api/v1/networking/message. "Mark as contacted today" bumps
 // lastContactedDate so the Home dashboard's "Networker" badge (unlocked at
 // 3+ contacts) and a future follow-up reminder feature have a real signal
 // to work off of.
+//
+// TABS (product request: "we need to separate the career Events and the
+// Your contacts into separate tabs. And the Career event should have a
+// count badge to indicate new event that just came in") — these used to be
+// two sections stacked on one scrolling page. Same ViewPager + BasicTabBar
+// pattern src/requests/RequestsSrc.tsx already uses for Applications/
+// Practice History. Career Events' load/refresh/save state is lifted up to
+// THIS component (rather than owned inside CareerEventsTab itself) purely
+// so the unread count can feed BasicTabBar's badgeCounts — the badge lives
+// in the tab bar, one level above either tab's own content, so whichever
+// component owns the events list has to be at least that high. Contacts
+// state has no such need and stays fully inside ContactsTab.
 const NetworkingAssistant = memo(() => {
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const { t, i18n } = useTranslation(['more', 'common']);
+  const { t } = useTranslation(['more', 'common']);
   const { isPro } = React.useContext(AuthContext);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
-  // Career Events (product request: "add the fetching of career events
-  // using eventbrite api... I want this to be in the networking assistant
-  // screen"). Own loading/refreshing state, separate from the contacts
-  // list below — a slow events fetch (server-side auto-refresh trigger on
-  // GET, see careerEventsService.listCareerEvents) shouldn't block the
-  // contacts list from rendering, and vice versa.
+  const [activeIndex, setActiveIndex] = React.useState(0);
+  const shouldLoadComponent = React.useCallback(
+    (index: number) => index === activeIndex,
+    [activeIndex],
+  );
+
+  // Career Events — own loading/refreshing state, separate from the
+  // contacts list below — a slow events fetch (server-side auto-refresh
+  // trigger on GET, see careerEventsService.listCareerEvents) shouldn't
+  // block the contacts list from rendering, and vice versa.
   const [events, setEvents] = React.useState<CareerEventProps[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState(true);
   const [isRefreshingEvents, setIsRefreshingEvents] = React.useState(false);
@@ -80,8 +100,9 @@ const NetworkingAssistant = memo(() => {
   // return new results immediately). Re-focusing this screen later (e.g.
   // coming back from the WebView after viewing an event) re-fetches, same
   // "refresh on focus" convention src/home/DailyTipsBanner.tsx uses, so a
-  // pass that finished in the background while the user was elsewhere gets
-  // picked up without a manual pull.
+  // pass that finished in the background (or the new scheduled sweep — see
+  // Saveur-Backend's app/scheduler.py's career_events_refresh tick) while
+  // the user was elsewhere gets picked up without a manual pull.
   React.useEffect(() => {
     const unsubscribe = navigation.addListener('focus', loadEvents);
     return unsubscribe;
@@ -149,8 +170,16 @@ const NetworkingAssistant = memo(() => {
     }
   };
 
+  // Product request: "the Career event should have a count badge to
+  // indicate new event that just came in" — CareerEvent.read (see
+  // Saveur-Backend's app/models/career_event.py) already exists per-event
+  // for exactly this, same as JobAlert.read_at; no separate "unread count"
+  // endpoint needed here since the full list (with each item's `read`
+  // flag) is already loaded for the tab's own content.
+  const unreadEventsCount = events.filter(e => !e.read).length;
+
   const [contacts, setContacts] = React.useState<NetworkingContactProps[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoadingContacts, setIsLoadingContacts] = React.useState(true);
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [editingId, setEditingId] = React.useState<NetworkingContactProps['id'] | null>(null);
   const [form, setForm] = React.useState(emptyForm);
@@ -168,12 +197,12 @@ const NetworkingAssistant = memo(() => {
   const [generateMessageError, setGenerateMessageError] = React.useState<string | null>(null);
 
   const loadContacts = React.useCallback(async () => {
-    setIsLoading(true);
+    setIsLoadingContacts(true);
     try {
       const list = await networkingService.listContacts();
       setContacts(list);
     } finally {
-      setIsLoading(false);
+      setIsLoadingContacts(false);
     }
   }, []);
 
@@ -244,7 +273,7 @@ const NetworkingAssistant = memo(() => {
             name: contact.name,
             company: contact.company,
             role: contact.role,
-          }),
+          }).toString(),
     );
     setMessageTone('friendly');
     setGeneratedMessage(null);
@@ -278,10 +307,10 @@ const NetworkingAssistant = memo(() => {
   if (!isPro) {
     return (
       <ProLockGate
-        title={t('more:networking_assistant_title', { defaultValue: 'Networking Assistant' })}
+        title={t('more:networking_assistant_title', { defaultValue: 'Networking Assistant' }).toString()}
         description={t('more:networking_assistant_pro_gate_description', {
           defaultValue: 'Track contacts, log outreach, and get AI-drafted messages tailored to each one — Networking Assistant is a Basic feature.',
-        })}
+        }).toString()}
       />
     );
   }
@@ -289,121 +318,209 @@ const NetworkingAssistant = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('more:networking_assistant', { defaultValue: 'Networking Assistant' })}
+        title={t('more:networking_assistant', { defaultValue: 'Networking Assistant' }).toString()}
         accessoryLeft={<NavigationAction />}
-        accessoryRight={<NavigationAction icon="plusImg" size="small" onPress={onOpenAdd} />}
+        // The "+" (add contact) only makes sense on the Contacts tab —
+        // Career Events has its own refresh affordance inside that tab
+        // instead (see CareerEventsTab below).
+        accessoryRight={
+          activeIndex === 1
+            ? <NavigationAction icon="plusImg" size="small" onPress={onOpenAdd} />
+            : undefined
+        }
       />
-      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        {/* Product request item: "I want forms like this in the app to
-            appear as bottom sheets just like it is in the Resume
-            Evolution" — was an inline card that pushed the contact list
-            down the screen while open; now a slide-up Modal sheet, same
-            Modal + KeyboardAvoidingView + rounded Layout pattern as
-            src/more/ResumeVariants.tsx's "+ New Variant" sheet (see also
-            DreamCompanies.tsx / JobAlerts.tsx, converted the same way).
-            `isFormOpen` still drives the same two triggers (the header "+"
-            icon via onOpenAdd, and each contact card's "Edit" link via
-            onOpenEdit) — only what showing it actually looks like changed. */}
-        <Modal visible={isFormOpen} transparent animationType="slide" onRequestClose={onCancelForm}>
-          <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <Layout level="1" style={styles.modalSheet}>
-              {/* Product request: "all bottom sheets should have a close
-                  button" -- this sheet's only dismiss affordance used to be
-                  the "Cancel" button at the very bottom, past two-plus
-                  screens' worth of fields on a long contact form. A close
-                  X next to the title, same header pattern every other
-                  bottom sheet in the app uses, gives an immediate way out
-                  without scrolling down first. */}
-              <Flex justify="space-between" itemsCenter mb={12}>
-                <Text category="h7" bold>
-                  {editingId != null
-                    ? t('more:edit_contact', { defaultValue: 'Edit Contact' })
-                    : t('more:add_contact', { defaultValue: 'Add Contact' })}
-                </Text>
-                <TouchableOpacity onPress={onCancelForm} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
-                </TouchableOpacity>
-              </Flex>
-              <Input
-                placeholder={t('more:contact_name', { defaultValue: 'Name' })}
-                value={form.name}
-                onChangeText={name => setForm(prev => ({ ...prev, name }))}
-                style={styles.formInput}
-                textStyle={globalStyle.inputText}
-              />
-              <Input
-                placeholder={t('more:contact_company', { defaultValue: 'Company' })}
-                value={form.company}
-                onChangeText={company => setForm(prev => ({ ...prev, company }))}
-                style={styles.formInput}
-                textStyle={globalStyle.inputText}
-              />
-              <Input
-                placeholder={t('more:contact_role', { defaultValue: 'Role' })}
-                value={form.role}
-                onChangeText={role => setForm(prev => ({ ...prev, role }))}
-                style={styles.formInput}
-                textStyle={globalStyle.inputText}
-              />
-              <Input
-                placeholder={t('more:contact_note', { defaultValue: 'Note (how you met, follow-up plan…)' })}
-                value={form.note}
-                onChangeText={note => setForm(prev => ({ ...prev, note }))}
-                multiline
-                textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
-                style={styles.formInput}
-              />
-              <Flex justify="flex-start" mt={4}>
-                <CtaButton
-                  children={isSaving ? t('more:saving', { defaultValue: 'Saving…' }) : t('common:save', { defaultValue: 'Save' })}
-                  disabled={isSaving || !form.name.trim()}
-                  onPress={onSave}
-                  style={{ marginRight: 12 }}
-                />
-                <Button
-                  children={t('common:cancel', { defaultValue: 'Cancel' })}
-                  status="basic"
-                  appearance="ghost"
-                  onPress={onCancelForm}
-                />
-              </Flex>
-            </Layout>
-          </KeyboardAvoidingView>
-        </Modal>
 
-        {/* Career Events (product request: "add the fetching of career
-            events using eventbrite api... I want this to be in the
-            networking assistant screen. The career event fetched must be
-            determined by the target roles and countries... (Target Role &
-            Countries and Job alert)") — its own section above the existing
-            Contacts list, same "most dynamic content first" placement
-            Home's own sections follow. Each card opens the real Eventbrite
-            page in-app (WebViewScreen), same "stay in the app" treatment
-            Job Alerts gives its own apply links. */}
-        <Flex justify="space-between" itemsCenter mb={12}>
-          <Text category="h7" bold>
-            {t('more:career_events_title', { defaultValue: 'Career Events' })}
-          </Text>
-          <TouchableOpacity onPress={onRefreshEvents} disabled={isRefreshingEvents} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            {isRefreshingEvents ? (
+      <Layout style={styles.tabBarWrap}>
+        <BasicTabBar
+          style={styles.tabBar}
+          activeIndex={activeIndex}
+          onChange={setActiveIndex}
+          tabs={[
+            t('more:career_events_title', { defaultValue: 'Career Events' }),
+            t('more:networking_contacts_title', { defaultValue: 'Your Contacts' }),
+          ]}
+          badgeCounts={[unreadEventsCount, undefined]}
+        />
+      </Layout>
+
+      <ViewPager
+        selectedIndex={activeIndex}
+        onSelect={setActiveIndex}
+        style={globalStyle.flexOne}
+        swipeEnabled={false}
+        shouldLoadComponent={shouldLoadComponent}>
+        <CareerEventsTab
+          events={events}
+          isLoading={isLoadingEvents}
+          isRefreshing={isRefreshingEvents}
+          savingEventId={savingEventId}
+          onRefresh={onRefreshEvents}
+          onOpenEvent={onOpenEvent}
+          onToggleSaved={onToggleEventSaved}
+        />
+        <ContactsTab
+          contacts={contacts}
+          isLoading={isLoadingContacts}
+          onOpenEdit={onOpenEdit}
+          onDelete={onDelete}
+          onMarkContactedToday={onMarkContactedToday}
+          messageContactId={messageContactId}
+          messageContext={messageContext}
+          setMessageContext={setMessageContext}
+          messageTone={messageTone}
+          setMessageTone={setMessageTone}
+          generatedMessage={generatedMessage}
+          isGeneratingMessage={isGeneratingMessage}
+          generateMessageError={generateMessageError}
+          onOpenGenerateMessage={onOpenGenerateMessage}
+          onCloseGenerateMessage={onCloseGenerateMessage}
+          onGenerateMessage={onGenerateMessage}
+        />
+      </ViewPager>
+
+      {/* Product request item: "I want forms like this in the app to
+          appear as bottom sheets just like it is in the Resume
+          Evolution" — was an inline card that pushed the contact list
+          down the screen while open; now a slide-up Modal sheet, same
+          Modal + KeyboardAvoidingView + rounded Layout pattern as
+          src/more/ResumeVariants.tsx's "+ New Variant" sheet (see also
+          DreamCompanies.tsx / JobAlerts.tsx, converted the same way).
+          `isFormOpen` still drives the same two triggers (the header "+"
+          icon via onOpenAdd, and each contact card's "Edit" link via
+          onOpenEdit) — only what showing it actually looks like changed.
+          Kept at this top level (not inside ContactsTab) since it's
+          triggered from the TopNavigation header above, outside the
+          ViewPager entirely. */}
+      <Modal visible={isFormOpen} transparent animationType="slide" onRequestClose={onCancelForm}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={styles.modalSheet}>
+            {/* Product request: "all bottom sheets should have a close
+                button" -- this sheet's only dismiss affordance used to be
+                the "Cancel" button at the very bottom, past two-plus
+                screens' worth of fields on a long contact form. A close
+                X next to the title, same header pattern every other
+                bottom sheet in the app uses, gives an immediate way out
+                without scrolling down first. */}
+            <Flex justify="space-between" itemsCenter mb={12}>
+              <Text category="h7" bold>
+                {editingId != null
+                  ? t('more:edit_contact', { defaultValue: 'Edit Contact' })
+                  : t('more:add_contact', { defaultValue: 'Add Contact' })}
+              </Text>
+              <ModalCloseButton onPress={onCancelForm} />
+            </Flex>
+            <Input
+              placeholder={t('more:contact_name', { defaultValue: 'Name' }).toString()}
+              value={form.name}
+              onChangeText={name => setForm(prev => ({ ...prev, name }))}
+              style={styles.formInput}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              placeholder={t('more:contact_company', { defaultValue: 'Company' }).toString()}
+              value={form.company}
+              onChangeText={company => setForm(prev => ({ ...prev, company }))}
+              style={styles.formInput}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              placeholder={t('more:contact_role', { defaultValue: 'Role' }).toString()}
+              value={form.role}
+              onChangeText={role => setForm(prev => ({ ...prev, role }))}
+              style={styles.formInput}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              placeholder={t('more:contact_note', { defaultValue: 'Note (how you met, follow-up plan…)' }).toString()}
+              value={form.note}
+              onChangeText={note => setForm(prev => ({ ...prev, note }))}
+              multiline
+              textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
+              style={styles.formInput}
+            />
+            <Flex justify="flex-start" mt={4}>
+              <CtaButton
+                children={isSaving ? t('more:saving', { defaultValue: 'Saving…' }) : t('common:save', { defaultValue: 'Save' })}
+                disabled={isSaving || !form.name.trim()}
+                onPress={onSave}
+                style={{ marginRight: 12 }}
+              />
+              <Button
+                children={t('common:cancel', { defaultValue: 'Cancel' })}
+                status="basic"
+                appearance="ghost"
+                onPress={onCancelForm}
+              />
+            </Flex>
+          </Layout>
+        </KeyboardAvoidingView>
+      </Modal>
+    </Container>
+  );
+});
+
+export default NetworkingAssistant;
+
+// Small standalone piece so it can grab `theme` without the parent needing
+// to pass it down just for this one icon.
+const ModalCloseButton = memo(({ onPress }: { onPress: () => void }) => {
+  const theme = useTheme();
+  return (
+    <TouchableOpacity onPress={onPress} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+      <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+    </TouchableOpacity>
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Career Events tab (product request: "add the fetching of career events
+// using eventbrite api... The career event fetched must be determined by
+// the target roles and countries... (Target Role & Countries and Job
+// alert)"). Purely presentational — all loading/refresh/save state lives in
+// the parent (see that component's own comment for why: the unread count
+// feeds the tab bar's badge, one level above this component). Each card
+// opens the real event page in-app (WebViewScreen), same "stay in the app"
+// treatment Job Alerts gives its own apply links.
+// ---------------------------------------------------------------------------
+interface CareerEventsTabProps {
+  events: CareerEventProps[];
+  isLoading: boolean;
+  isRefreshing: boolean;
+  savingEventId: string | null;
+  onRefresh: () => void;
+  onOpenEvent: (event: CareerEventProps) => void;
+  onToggleSaved: (event: CareerEventProps) => void;
+}
+
+const CareerEventsTab = memo(
+  ({ events, isLoading, isRefreshing, savingEventId, onRefresh, onOpenEvent, onToggleSaved }: CareerEventsTabProps) => {
+    const theme = useTheme();
+    const styles = useStyleSheet(themedStyles);
+    const { t, i18n } = useTranslation(['more', 'common']);
+
+    return (
+      <Content padder contentContainerStyle={styles.content}>
+        <Flex justify="flex-end" itemsCenter mb={12}>
+          <TouchableOpacity onPress={onRefresh} disabled={isRefreshing} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            {isRefreshing ? (
               <Spinner size="tiny" />
             ) : (
               <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
             )}
           </TouchableOpacity>
         </Flex>
-        {isLoadingEvents ? (
+        {isLoading ? (
           // Product request: "I want skeleton loader in app" — was a bare
           // centered Spinner; two placeholder rows shaped like the real
           // event cards below read as "content is coming" more clearly
           // than a spinner, and cost nothing extra to build (shared
           // Skeleton component).
-          <View style={{ marginBottom: 24 }}>
+          <View>
             <SkeletonListRow style={styles.contactCard} />
             <SkeletonListRow style={[styles.contactCard, { marginBottom: 0 }]} />
           </View>
         ) : events.length === 0 ? (
-          <Layout level="2" style={[styles.contactCard, { marginBottom: 24 }]}>
+          <Layout level="2" style={styles.contactCard}>
             <Text category="h9-s" status="placeholder">
               {t('more:no_career_events', {
                 defaultValue: "No career events found yet for your target roles and countries — check back soon, or tap refresh above.",
@@ -411,49 +528,107 @@ const NetworkingAssistant = memo(() => {
             </Text>
           </Layout>
         ) : (
-          <View style={{ marginBottom: 24 }}>
-            {events.map(event => (
-              <TouchableOpacity key={event.id} activeOpacity={0.8} onPress={() => onOpenEvent(event)}>
-                <Layout level="2" style={styles.contactCard}>
-                  <Flex justify="space-between" itemsCenter mb={4}>
-                    <Text category="h8" bold style={globalStyle.flexOne} numberOfLines={2}>
+          events.map(event => (
+            <TouchableOpacity key={event.id} activeOpacity={0.8} onPress={() => onOpenEvent(event)}>
+              <Layout level="2" style={styles.contactCard}>
+                <Flex justify="flex-start" itemsCenter mb={event.eventDate ? 8 : 0}>
+                  {/* BUG FIX (product report: "why are the logo of the
+                      event source not displaying on the left here in the
+                      networking assistant but the logos are displaying on
+                      the ones shown in the homescreen?") — this card used
+                      to render title/organizer/date only, with no logo at
+                      all, unlike src/home/CareerFairEventCard.tsx (Home's
+                      compact preview of this exact same list), which
+                      already used CompanyLogoAvatar against
+                      CareerEvent.to_dict()'s logo_url (resolved
+                      server-side from `source`, the discovering
+                      platform's real domain — see that model's own
+                      comment). Same component, same prop, now used here
+                      too, so both surfaces show the same logo. */}
+                  <CompanyLogoAvatar
+                    logoUrl={event.logoUrl}
+                    companyName={event.organizer || event.title}
+                    size="small"
+                    fallbackIcon="building-outline"
+                    style={{ marginRight: 10 }}
+                  />
+                  <View style={globalStyle.flexOne}>
+                    <Text category="h8" bold numberOfLines={2}>
                       {event.title}
                     </Text>
-                    <TouchableOpacity
-                      onPress={() => onToggleEventSaved(event)}
-                      disabled={savingEventId === event.id}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      style={{ marginLeft: 8 }}>
-                      <Icon
-                        pack="eva"
-                        name={event.saved ? 'star' : 'star-outline'}
-                        style={[globalStyle.icon20, { tintColor: event.saved ? '#f59e0b' : theme['text-hint-color'] }]}
-                      />
-                    </TouchableOpacity>
-                  </Flex>
-                  {event.organizer || event.location ? (
-                    <Text category="h9-s" status="placeholder" mb={4}>
-                      {[event.organizer, event.location].filter(Boolean).join(' · ')}
-                    </Text>
-                  ) : null}
-                  {event.eventDate ? (
-                    <Flex justify="flex-start" itemsCenter>
-                      <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'], marginRight: 4, width: 12, height: 12 }]} />
-                      <Text category="h10" status="placeholder">
-                        {new Date(event.eventDate).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    {event.organizer || event.location ? (
+                      <Text category="h9-s" status="placeholder" mt={2} numberOfLines={1}>
+                        {[event.organizer, event.location].filter(Boolean).join(' · ')}
                       </Text>
-                    </Flex>
-                  ) : null}
-                </Layout>
-              </TouchableOpacity>
-            ))}
-          </View>
+                    ) : null}
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => onToggleSaved(event)}
+                    disabled={savingEventId === event.id}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={{ marginLeft: 8 }}>
+                    <Icon
+                      pack="eva"
+                      name={event.saved ? 'star' : 'star-outline'}
+                      style={[globalStyle.icon20, { tintColor: event.saved ? '#f59e0b' : theme['text-hint-color'] }]}
+                    />
+                  </TouchableOpacity>
+                </Flex>
+                {event.eventDate ? (
+                  <Flex justify="flex-start" itemsCenter>
+                    <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'], marginRight: 4, width: 12, height: 12 }]} />
+                    <Text category="h10" status="placeholder">
+                      {new Date(event.eventDate).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </Text>
+                  </Flex>
+                ) : null}
+              </Layout>
+            </TouchableOpacity>
+          ))
         )}
+      </Content>
+    );
+  },
+);
 
-        <Text category="h7" bold mb={12}>
-          {t('more:networking_contacts_title', { defaultValue: 'Your Contacts' })}
-        </Text>
+// ---------------------------------------------------------------------------
+// Your Contacts tab — list/add/edit/delete + AI-drafted outreach message
+// generator. Fully self-contained aside from the shared add/edit Modal,
+// which lives in the parent (triggered from the TopNavigation header, see
+// that component's own comment).
+// ---------------------------------------------------------------------------
+interface ContactsTabProps {
+  contacts: NetworkingContactProps[];
+  isLoading: boolean;
+  onOpenEdit: (contact: NetworkingContactProps) => void;
+  onDelete: (id: NetworkingContactProps['id']) => void;
+  onMarkContactedToday: (contact: NetworkingContactProps) => void;
+  messageContactId: NetworkingContactProps['id'] | null;
+  messageContext: string;
+  setMessageContext: (value: string) => void;
+  messageTone: MessageTone;
+  setMessageTone: (value: MessageTone) => void;
+  generatedMessage: string | null;
+  isGeneratingMessage: boolean;
+  generateMessageError: string | null;
+  onOpenGenerateMessage: (contact: NetworkingContactProps) => void;
+  onCloseGenerateMessage: () => void;
+  onGenerateMessage: (contact: NetworkingContactProps) => void;
+}
 
+const ContactsTab = memo(
+  ({
+    contacts, isLoading, onOpenEdit, onDelete, onMarkContactedToday,
+    messageContactId, messageContext, setMessageContext, messageTone, setMessageTone,
+    generatedMessage, isGeneratingMessage, generateMessageError,
+    onOpenGenerateMessage, onCloseGenerateMessage, onGenerateMessage,
+  }: ContactsTabProps) => {
+    const theme = useTheme();
+    const styles = useStyleSheet(themedStyles);
+    const { t, i18n } = useTranslation(['more', 'common']);
+
+    return (
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {isLoading ? (
           // Product request: "I want skeleton loader in app" — this list
           // used to render nothing at all (not even a spinner) for the
@@ -531,7 +706,7 @@ const NetworkingAssistant = memo(() => {
                   })}
                 </Text>
                 <Input
-                  placeholder={t('more:message_context', { defaultValue: "Context (why you're reaching out)" })}
+                  placeholder={t('more:message_context', { defaultValue: "Context (why you're reaching out)" }).toString()}
                   value={messageContext}
                   onChangeText={setMessageContext}
                   multiline
@@ -585,11 +760,9 @@ const NetworkingAssistant = memo(() => {
           </Layout>
         ))}
       </Content>
-    </Container>
-  );
-});
-
-export default NetworkingAssistant;
+    );
+  },
+);
 
 const themedStyles = StyleService.create({
   container: {
@@ -597,6 +770,20 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  // Same "raised strip" treatment RequestsSrc.tsx's own tabBarWrap uses —
+  // white fill + a soft shadow on the bottom edge only.
+  tabBarWrap: {
+    backgroundColor: 'background-basic-color-2',
+    shadowColor: 'rgba(31, 41, 84, 0.35)',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+  },
+  tabBar: {
+    marginTop: 12,
+    paddingHorizontal: 12,
   },
   // Redesign v2 (full reskin): `card` carries a real shadow again, which
   // needs an opaque fill on Android — dropped the 'transparent' overrides

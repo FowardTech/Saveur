@@ -3,27 +3,33 @@ import apiClient from './apiClient';
 // ---------------------------------------------------------------------------
 // moreMenuBadgesService — backs the More menu's unread badges (product
 // request item: "I want the job alert, daily industry news and Weekly
-// reports count badge so that users can know when new updates arrive").
+// reports count badge so that users can know when new updates arrive";
+// Career Events added later per "the Networking Assistant icon in the
+// settings should have a count badge too so that users can know that new
+// events are in the networking assistant screen").
 //
 // One GET /api/v1/more/badges call (see Saveur-Backend's
-// app/api/more_badges.py) rather than three separate ones — the More screen
+// app/api/more_badges.py) rather than four separate ones — the More screen
 // fetches this once on mount/focus and fans the result out to each row.
 // ---------------------------------------------------------------------------
 
 export interface MoreMenuBadges {
   jobAlertsUnreadCount: number;
+  careerEventsUnreadCount: number;
   dailyIndustryNewsUnread: boolean;
   weeklyCareerReportUnread: boolean;
 }
 
 interface MoreMenuBadgesWire {
   job_alerts_unread_count?: number;
+  career_events_unread_count?: number;
   daily_industry_news_unread?: boolean;
   weekly_career_report_unread?: boolean;
 }
 
 const EMPTY_BADGES: MoreMenuBadges = {
   jobAlertsUnreadCount: 0,
+  careerEventsUnreadCount: 0,
   dailyIndustryNewsUnread: false,
   weeklyCareerReportUnread: false,
 };
@@ -33,6 +39,7 @@ export async function getMoreMenuBadges(): Promise<MoreMenuBadges> {
     const {data} = await apiClient.get<MoreMenuBadgesWire>('/api/v1/more/badges');
     return {
       jobAlertsUnreadCount: Number(data?.job_alerts_unread_count) || 0,
+      careerEventsUnreadCount: Number(data?.career_events_unread_count) || 0,
       dailyIndustryNewsUnread: Boolean(data?.daily_industry_news_unread),
       weeklyCareerReportUnread: Boolean(data?.weekly_career_report_unread),
     };
