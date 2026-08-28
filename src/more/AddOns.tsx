@@ -18,11 +18,9 @@ import * as billingService from 'services/billingService';
 import {AddonProps} from 'services/billingService';
 import * as iapService from 'services/iapService';
 import * as interviewService from 'services/interviewService';
-import {getSessionEntitlement} from 'services/entitlementsService';
 import {Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum} from 'constants/Types';
 import {RootStackParamList} from 'navigation/types';
 import {stripeAppearance} from 'utils/stripeAppearance';
-import {AuthContext} from '../../AuthContext';
 
 // Matches Subscription.tsx's own STRIPE_RETURN_URL — same urlScheme:
 // 'saveur' registered natively (ios/Info.plist, AndroidManifest.xml).
@@ -50,7 +48,6 @@ const AddOns = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<any>();
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
-  const {subscription} = React.useContext(AuthContext);
 
   const highlightCode: string | undefined = route.params?.highlightCode;
 
@@ -73,25 +70,22 @@ const AddOns = memo(() => {
   // below). CodingInterview.tsx itself now has the "More Practice" link
   // into CodingPracticeHub, so that hub is still reachable, just from the
   // main screen rather than from here directly.
+  // BUG FIX (product report: "the 3 practice session is still displaying
+  // even when no free session left in that month for the user") — this
+  // used to also run a free-session-cap check (getSessionEntitlement)
+  // before starting the session, even though this button only ever renders
+  // once the coding_practice add-on is already unlocked (see the render
+  // below). That meant a user who'd already paid for Coding Practice could
+  // still get blocked here with "you've used your free sessions" once
+  // their unrelated shared monthly pool (from mock interviews elsewhere)
+  // ran dry — the exact opposite of what "activated" is supposed to mean
+  // for a purchased add-on. Removed entirely for this path — matches
+  // FindScreen.tsx's onStartCodingPractice and Saveur-Backend's
+  // app/api/interviews.py create_session(), both fixed the same way.
   const onOpenCodingPractice = async () => {
     if (isStartingCoding) return;
     setIsStartingCoding(true);
     try {
-      const entitlement = await getSessionEntitlement(subscription);
-      if (!entitlement.canStart) {
-        Alert.alert(
-          t('find:free_limit_reached_title', {defaultValue: "You've used your free sessions"}),
-          t('find:free_limit_reached_body', {
-            limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
-          }),
-          [
-            {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
-            {text: t('find:upgrade_to_pro', {defaultValue: 'Upgrade to Basic'}), onPress: () => navigate('Subscription')},
-          ],
-        );
-        return;
-      }
       const {sessionId} = await interviewService.startSession({
         interviewType: Interview_Type_Enum.Coding,
         mode: Practice_Mode_Enum.Text,

@@ -134,6 +134,30 @@ const MockInterviewSetup = memo(() => {
     };
   }, [subscription]);
 
+  // BUG FIX (same product report as onStart's addon-ordering fix above):
+  // the free-session banner below used to render off of remainingFreeSessions
+  // alone, with no regard for whether the CURRENTLY selected interviewType is
+  // even drawn from that pool. For Coding once its coding_practice add-on is
+  // owned, it isn't -- so showing "You've used all your free sessions this
+  // month" while Coding is selected was actively misleading (that pool being
+  // empty has no bearing on Coding anymore). Tracks ownership for whichever
+  // type is currently selected so the banner can hide itself in that case.
+  const [selectedTypeAddonOwned, setSelectedTypeAddonOwned] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    const requiredAddon = addonCodeForInterviewType(interviewType);
+    if (!requiredAddon) {
+      setSelectedTypeAddonOwned(false);
+      return;
+    }
+    hasAddon(requiredAddon).then(owned => {
+      if (!cancelled) setSelectedTypeAddonOwned(owned);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [interviewType]);
+
   // Product report: "the company list in the interview setup is very
   // US-centric" — regionCompanies puts the user's own regional employers
   // (from their signup/JobPreferences preferredCountries) ahead of the
@@ -288,24 +312,6 @@ const MockInterviewSetup = memo(() => {
     }
     setIsStarting(true);
     try {
-      const entitlement = await getSessionEntitlement(subscription);
-      if (!entitlement.canStart) {
-        Alert.alert(
-          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
-          t('find:free_limit_reached_body', {
-            limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
-          }),
-          [
-            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
-            {
-              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }),
-              onPress: () => navigate('Subscription'),
-            },
-          ],
-        );
-        return;
-      }
       // Paid Add-on gate (product request: "for the coding practice ... I
       // want them to be in a separate screen called add-ons and they
       // should be paid for") — same mapping/pattern as FindScreen.tsx's
@@ -313,8 +319,21 @@ const MockInterviewSetup = memo(() => {
       // un-gated once its paid feature (the drawing canvas) was removed,
       // see entitlementsService.ts's addonCodeForInterviewType comment.
       // Every other interviewType is unaffected either way (returns null).
+      //
+      // BUG FIX (product report: "the 3 practice session is still
+      // displaying even when no free session left in that month for the
+      // user") — this addon check used to run AFTER the free-session-cap
+      // check below, so a user who already paid for the coding_practice
+      // add-on still got blocked by "you've used your free sessions" once
+      // their shared monthly pool ran out, even though the add-on is
+      // supposed to unlock Coding for good, independent of that pool (see
+      // Saveur-Backend's app/api/interviews.py create_session() — same
+      // reordering applied there). Now checked FIRST, and an owned add-on
+      // skips the free-session-cap check entirely instead of still needing
+      // headroom in that pool on top of it.
       const requiredAddon = addonCodeForInterviewType(interviewType);
-      if (requiredAddon && !(await hasAddon(requiredAddon))) {
+      const addonOwned = requiredAddon ? await hasAddon(requiredAddon) : false;
+      if (requiredAddon && !addonOwned) {
         Alert.alert(
           t('find:addon_required_title_generic', { defaultValue: 'This is a paid add-on' }),
           t('find:addon_required_body', {
@@ -329,6 +348,27 @@ const MockInterviewSetup = memo(() => {
           ],
         );
         return;
+      }
+
+      if (!addonOwned) {
+        const entitlement = await getSessionEntitlement(subscription);
+        if (!entitlement.canStart) {
+          Alert.alert(
+            t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
+            t('find:free_limit_reached_body', {
+              limit: entitlement.sessionsLimit ?? 5,
+              defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
+            }),
+            [
+              { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
+              {
+                text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }),
+                onPress: () => navigate('Subscription'),
+              },
+            ],
+          );
+          return;
+        }
       }
       const { sessionId, firstQuestion, firstQuestionId } = await interviewService.startSession({
         interviewType,
@@ -398,7 +438,7 @@ const MockInterviewSetup = memo(() => {
         accessoryLeft={<NavigationAction />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
-        {!isPro && remainingFreeSessions !== null ? (
+        {!isPro && remainingFreeSessions !== null && !selectedTypeAddonOwned ? (
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => navigate('Subscription')}

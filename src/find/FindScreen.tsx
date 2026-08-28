@@ -66,30 +66,23 @@ const FindScreen = memo(() => {
     if (isStartingCoding) return;
     setIsStartingCoding(true);
     try {
-      const entitlement = await getSessionEntitlement(subscription);
-      if (!entitlement.canStart) {
-        Alert.alert(
-          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
-          t('find:free_limit_reached_body', {
-            limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
-          }),
-          [
-            { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
-            {
-              text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }),
-              onPress: () => navigate('Subscription'),
-            },
-          ],
-        );
-        return;
-      }
       // Paid Add-on gate (product request: "for the coding practice and
       // system design whiteboard I want them to be in a separate screen
-      // called add-ons and they should be paid for") — checked AFTER the
-      // free-session-limit gate above (a Pro user with no add-on should see
-      // "buy the add-on", not "upgrade to Pro", which they already are), and
-      // BEFORE starting a real session, same insertion point as that check.
+      // called add-ons and they should be paid for") — Coding is gated
+      // SOLELY by this add-on now, with no free-session-limit check at all
+      // (see BUG FIX below).
+      //
+      // BUG FIX (product report: "the 3 practice session is still
+      // displaying even when no free session left in that month for the
+      // user") — this used to ALSO run a free-session-limit check (before
+      // or after this one), so a user who already paid for the
+      // coding_practice add-on still got blocked with "you've used your
+      // free sessions" whenever that shared monthly pool ran out — even
+      // though the add-on is supposed to unlock Coding for good,
+      // independent of that pool entirely. Removed that check for this
+      // path — matching Saveur-Backend's app/api/interviews.py
+      // create_session(), which now skips its own free-session-cap check
+      // entirely for any interview type gated by an owned add-on.
       const codingUnlocked = await hasAddon(ADDON_CODES.codingPractice);
       if (!codingUnlocked) {
         Alert.alert(
