@@ -51,6 +51,7 @@ import {
   Quote,
   Repeat,
   RotateCcw,
+  ScanFace,
   Search,
   Send,
   Settings,
@@ -201,6 +202,10 @@ const AssetIconsPack: IconPack<any> = {
     seniorCare: lucideIcon(UserCheck),
     housekeeping: lucideIcon(Home),
     increase: lucideIcon(TrendingUp),
+    // AI Career Twin (src/more/AICareerTwin.tsx) — a scan/identity-capture
+    // glyph fits the "your aggregated profile" concept better than a plain
+    // person icon, and isn't already used elsewhere in this pack.
+    aiCareerTwin: lucideIcon(ScanFace),
     like_comment: lucideIcon(ThumbsUp),
     like_comment_active: lucideIcon(ThumbsUp, true),
     first_aid: lucideIcon(HeartPulse),

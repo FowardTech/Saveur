@@ -414,6 +414,17 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('CareerDna'),
     },
     {
+      // AI Career Twin (product decision: made Premium-only) — a working
+      // backend + client service existed with no screen wired up to it at
+      // all until this pass; see services/aiTwinService.ts's own comment.
+      title: t('more:ai_career_twin', {defaultValue: 'AI Career Twin'}),
+      icon: 'aiCareerTwin',
+      status: 'success',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('AICareerTwin'),
+    },
+    {
       title: t('more:student_verification', {defaultValue: 'Student Package and Verification'}),
       icon: 'bgCheck',
       status: 'twitter',

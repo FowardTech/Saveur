@@ -364,6 +364,10 @@ export type RootStackParamList = {
   // as "Career DNA" and "Career Genome") — a living behavioral profile the
   // AI builds from real usage signals. See services/careerDnaService.ts.
   CareerDna: undefined;
+  // AI Career Twin — one aggregated profile merged from every resume-family
+  // row already on the account, plus free-form Q&A grounded in it. See
+  // services/aiTwinService.ts and src/more/AICareerTwin.tsx.
+  AICareerTwin: undefined;
   // Dream Company Dashboard (product request item) — a persisted, tracked
   // list of target companies with cached research + prep progress. See
   // services/dreamCompaniesService.ts.
