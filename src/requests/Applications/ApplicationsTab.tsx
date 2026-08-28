@@ -22,23 +22,24 @@ import CtaButton from 'components/CtaButton';
 // Interviewing) and "closed" (Offer / Rejected) groups, mirroring the old
 // static DATA_APPLICATIONS_ACTIVE/CLOSED grouping.
 //
-// Application Tracker is a Pro Premium feature (Pro Premium or Pro Yearly —
-// see saveur-backend/app/services/entitlements_service.py's module
-// docstring) per explicit product decision — was previously ungated
-// entirely (app/api/tracker.py had no @require_pro/@require_premium at
-// all). This tab is one of two (alongside Practice History, which stays
-// free) inside RequestsSrc's ViewPager, so it can't just early-return a
-// full-screen ProLockGate like JobAlerts.tsx/LearningCourses.tsx do — that
-// component brings its own TopNavigation, which would duplicate/clash with
-// RequestsSrc's. Renders a compact locked card in the same spot the list
-// would occupy instead.
+// Application Tracker is a Basic (Pro) feature — product decision: "if Job
+// alert is a pro plan then application tracker should be a pro plan too."
+// This used to be gated to Pro Premium/Premium Yearly only instead (before
+// that, it was ungated entirely — app/api/tracker.py had no @require_pro/
+// @require_premium at all). Now the exact same @require_pro gate as
+// app/api/job_alerts.py's routes, Basic and up. This tab is one of two
+// (alongside Practice History, which stays free) inside RequestsSrc's
+// ViewPager, so it can't just early-return a full-screen ProLockGate like
+// JobAlerts.tsx/LearningCourses.tsx do — that component brings its own
+// TopNavigation, which would duplicate/clash with RequestsSrc's. Renders a
+// compact locked card in the same spot the list would occupy instead.
 const ApplicationsTab = memo(() => {
   const {navigate} =
     useNavigation<NavigationProp<MainBottomTabStackParamList & RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
   const {t} = useTranslation(['request', 'common']);
-  const {isPremium} = React.useContext(AuthContext);
+  const {isPro} = React.useContext(AuthContext);
 
   const [applications, setApplications] = React.useState<JobApplicationProps[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -46,7 +47,7 @@ const ApplicationsTab = memo(() => {
   const [query, setQuery] = React.useState('');
 
   React.useEffect(() => {
-    if (!isPremium) {
+    if (!isPro) {
       setIsLoading(false);
       return;
     }
@@ -70,7 +71,7 @@ const ApplicationsTab = memo(() => {
     return () => {
       cancelled = true;
     };
-  }, [isPremium]);
+  }, [isPro]);
 
   // Client-side search — matches company, role, location, or the stage's
   // display label (not the raw enum value, for the same translated-locale
@@ -113,7 +114,7 @@ const ApplicationsTab = memo(() => {
     });
   };
 
-  if (!isPremium) {
+  if (!isPro) {
     return (
       <View style={styles.container}>
         <Flex vertical itemsCenter style={styles.lockCard}>
@@ -123,18 +124,18 @@ const ApplicationsTab = memo(() => {
             style={[globalStyle.icon40, {tintColor: theme['text-basic-color']}]}
           />
           <Text category="h6" bold center mt={16}>
-            {t('request:application_tracker_pro_gate_title', {defaultValue: 'This is a Premium feature'})}
+            {t('request:application_tracker_pro_gate_title', {defaultValue: 'This is a Basic feature'})}
           </Text>
           <Text category="h9-s" status="placeholder" center mt={8} mb={24}>
             {t('request:application_tracker_pro_gate_body', {
-              defaultValue: "Track every job you've applied for, all the way to offer — Application Tracker is a Premium feature.",
+              defaultValue: "Track every job you've applied for, all the way to offer — Application Tracker is a Saveur Basic feature.",
             })}
           </Text>
           <CtaButton
             accessoryLeft={props => <Icon {...props} pack="eva" name="lock-outline" />}
             accessoryRight={props => <Icon {...props} pack="eva" name="arrow-forward-outline" />}
             onPress={() => navigate('Subscription')}>
-            {renderCenteredLabel(t('request:see_pro_premium_plans', {defaultValue: 'See Premium plans'}), {stretch: false})}
+            {renderCenteredLabel(t('request:see_pro_premium_plans', {defaultValue: 'See Basic plans'}), {stretch: false})}
           </CtaButton>
         </Flex>
       </View>
