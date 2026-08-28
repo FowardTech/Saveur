@@ -127,7 +127,25 @@ const styles = StyleSheet.create({
     // label that 32 was clipping the bottom of via this container's own
     // overflow:'hidden'.
     maxHeight: 40,
-    flex: 1,
+    // BUG FIX (product report: "the Network Assistant title header
+    // container is covering the tabs" -- the tab bar wasn't showing up
+    // AT ALL, even after a clean rebuild ruled out a stale bundle) --
+    // `flex: 1` here doesn't do what it looks like it does. This
+    // component (a Flex/TouchableOpacity) sits directly inside a plain
+    // `<Layout>` wrapper (NetworkingAssistant.tsx's tabBarWrap,
+    // RequestsSrc.tsx's ListHeaderComponent) that has no fixed height of
+    // its own -- it sizes to its content, the default column-flex
+    // behavior. Give a child `flex: 1` (flex-grow: 1, flex-basis: 0%) in
+    // that situation and Yoga has no defined "extra space" to grow into,
+    // so it resolves the child's height to 0 -- not "shows past its
+    // content", literally zero, hence the tab bar rendering as if it
+    // didn't exist at all, with the screen's content appearing to butt
+    // right up against the header above it. This was never actually
+    // needed for `justifyContent: 'space-between'` to spread the tabs
+    // across the full width either -- RN's default `alignItems: 'stretch'`
+    // on the parent Layout already gives this element 100% width with no
+    // `flex` needed; `flex: 1` was only ever fighting itself here.
+    flex: undefined,
   },
   boxAni: {
     height: 2,
