@@ -1436,10 +1436,15 @@ const LiveInterviewSession = memo(() => {
                 { backgroundColor: isMuted ? theme['color-danger-500'] : theme['background-basic-color-2'] },
               ]}
             >
+              {/* BUG FIX ("check the whole app" for the same
+                  text-primary-color regression) -- the muted state fills
+                  this button with a solid color-danger-500 red, so its
+                  icon needs text-control-color (white), not
+                  text-primary-color (now blue -- wrong contrast on red). */}
               <Icon
                 pack="assets"
                 name={isMuted ? 'mute' : 'call'}
-                style={[globalStyle.icon24, { tintColor: isMuted ? theme['text-primary-color'] : theme['text-basic-color'] }]}
+                style={[globalStyle.icon24, { tintColor: isMuted ? theme['text-control-color'] : theme['text-basic-color'] }]}
               />
             </TouchableOpacity>
           )}

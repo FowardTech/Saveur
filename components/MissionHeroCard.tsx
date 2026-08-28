@@ -185,7 +185,16 @@ const themedStyles = StyleService.create({
   // (the For You pill row).
   outer: {
     ...globalStyle.card,
-    ...globalStyle.cardBorder,
+    // Product report: "I want you to give this challenge a border" --
+    // globalStyle.cardBorder (1.2px @ rgba(128,128,128,0.3)) is
+    // technically already spread in here, but at 30% opacity against this
+    // card's own background it reads as no border at all, just a plain
+    // fill. Switched to `border-card-default`, the token the rest of the
+    // app actually uses for a real, visible card border (see e.g.
+    // src/messages/Chat.tsx's own comment: "the border-card-default token
+    // every card border in the app..."), at full opacity.
+    borderWidth: 1,
+    borderColor: 'border-card-default',
     marginTop: 6,
     backgroundColor: 'background-basic-color-2',
   },

@@ -1037,7 +1037,14 @@ const themedStyles = StyleService.create({
     fontFamily: "PlusJakartaSans-Regular",
   },
   rightTextStyle: {
-    color: "text-primary-color",
+    // BUG FIX (product report: "check the whole app" for the same
+    // text-primary-color regression already found elsewhere) -- this is
+    // the outgoing (user's own) chat bubble, filled with
+    // theme["button-basic-color"] below (see containerToStyle). That's
+    // the same #0063f8 blue text-primary-color now resolves to, so every
+    // message the user sent was rendering invisible. text-control-color
+    // is this app's real "always white on a colored surface" token.
+    color: "text-control-color",
     fontSize: 15,
     fontWeight: "400",
     lineHeight: 24,

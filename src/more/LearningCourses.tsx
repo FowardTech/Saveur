@@ -532,11 +532,18 @@ const LearningCourses = memo(() => {
                           category="h10"
                           bold
                           style={{
+                            // BUG FIX ("check the whole app" for the same
+                            // text-primary-color regression) -- the
+                            // active (not locked/complete) branch sits on
+                            // a color-primary-100 pill above, the same
+                            // #0063f8 text-primary-color now resolves to.
+                            // text-control-color is white regardless of
+                            // theme, correct for a solid colored pill.
                             color: isWeekComplete
                               ? theme['color-success-500']
                               : locked
                               ? theme['text-placeholder-color']
-                              : theme['text-primary-color'],
+                              : theme['text-control-color'],
                           }}>
                           {locked
                             ? t('more:locked', { defaultValue: 'Locked' })
@@ -728,11 +735,14 @@ const LearningCourses = memo(() => {
                         category="h10"
                         bold
                         style={{
+                          // Same fix as the week-row pill above -- solid
+                          // color-primary-100 pill needs text-control-color,
+                          // not text-primary-color (now the same blue).
                           color: isTierComplete
                             ? theme['color-success-500']
                             : !unlocked
                             ? theme['text-placeholder-color']
-                            : theme['text-primary-color'],
+                            : theme['text-control-color'],
                         }}>
                         {!unlocked
                           ? t('more:locked', { defaultValue: 'Locked' })

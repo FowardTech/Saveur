@@ -82,7 +82,13 @@ const SwiperCard = ({
           onPress={onDelete}>
           <AnimatedView
             style={[{transform: [{scale: scaleDelete}]}, styles.deleteAction]}>
-            <Text category="h6" status={'primary'}>
+            {/* BUG FIX ("check the whole app" for the same
+                text-primary-color regression) -- this swipe panel is a
+                solid color fill (styles.deleteAction, below), so its
+                label needs status="control" (white regardless of theme),
+                not status="primary" (now blue, and invisible against a
+                same-hue fill in some cases). */}
+            <Text category="h6" status={'control'}>
               {deleteLabel ?? t('common:delete', { defaultValue: 'Delete' })}
             </Text>
           </AnimatedView>
@@ -93,7 +99,9 @@ const SwiperCard = ({
           activeOpacity={0.54}>
           <AnimatedView
             style={[{transform: [{scale: scaleEdit}]}, styles.editAction]}>
-            <Text category="h6" status={'primary'}>
+            {/* Same fix as the delete label above -- solid color fill
+                needs status="control", not status="primary". */}
+            <Text category="h6" status={'control'}>
               {editLabel ?? t('common:edit', { defaultValue: 'Edit' })}
             </Text>
           </AnimatedView>

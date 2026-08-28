@@ -110,7 +110,15 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
         // 'normal' keeps the exact filename lookup intact; the label still
         // reads as bold because PlusJakartaSans-Medium is already a heavier
         // cut than the app's Regular body text.
-        const labelStyle = [evaProps?.style, { color: theme['text-primary-color'], fontWeight: 'normal' as const }];
+        // BUG FIX (product report: "regenerate text button is not
+        // showing... check the whole app") -- was theme['text-primary-color'],
+        // which now resolves to the same blue (#0063f8) as this button's
+        // own solid-blue fill (theme['color-primary-100']), making every
+        // CtaButton label in the app invisible in light mode. This button
+        // is meant to always be white-on-blue regardless of theme --
+        // text-control-color is the token for that, and isn't affected by
+        // text-primary-color's other (correct, intentional) uses elsewhere.
+        const labelStyle = [evaProps?.style, { color: theme['text-control-color'], fontWeight: 'normal' as const }];
         return typeof children === 'function'
           ? (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle })
           : <KittenText {...evaProps} style={labelStyle}>{children as React.ReactNode}</KittenText>;

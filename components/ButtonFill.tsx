@@ -155,35 +155,48 @@ const ButtonFill = ({
       | 'neutral'
       | 'white-blue',
   ): string => {
+    // BUG FIX (product report: "check the whole app" for the same
+    // text-primary-color regression already found elsewhere) -- every
+    // case here except 'white'/'white-blue' puts this icon on a solid,
+    // OPAQUE colored circle (getColor() above: button-basic-color,
+    // color-danger-100, color-success-100, etc.) and was always meant to
+    // be a white icon on that circle. text-primary-color now resolves to
+    // blue (see light.json), which for 'basic' is the exact same hex as
+    // its own circle (#0063f8 on #0063f8 -- fully invisible) and just low-
+    // contrast/wrong for the others. text-control-color is this app's
+    // real "always white on a colored surface" token.
+    // 'white' and 'white-blue' are left as-is -- getColor() gives BOTH of
+    // those a white/near-white circle (background-basic-color-2), so a
+    // blue icon there is the correct, intentional look, not a regression.
     switch (status) {
       case 'basic':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'danger':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'placeholder':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'success':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'facebook':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'twitter':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'twitter-3':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'warning':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'white':
         return theme['text-primary-color'];
       case 'transparent':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'neutral':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'green':
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
       case 'white-blue':
         return theme['text-link-color'];
       default:
-        return theme['text-primary-color'];
+        return theme['text-control-color'];
     }
   };
   const sizePx = getSize(size);
@@ -277,6 +290,9 @@ const themedStyles = StyleService.create({
     ...globalStyle.shadow,
   },
   icon: {
-    tintColor: 'text-primary-color',
+    // Always overridden by the inline tintColor from getTintColor() above
+    // -- kept in sync with that function's new default (text-control-color)
+    // purely for hygiene/consistency, not because this has any visible effect.
+    tintColor: 'text-control-color',
   },
 });

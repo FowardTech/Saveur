@@ -105,7 +105,11 @@ const NavigationAction = memo(
         case 'facebook':
           return themes['text-link-color'];
         case 'white':
-          return themes['text-primary-color'];
+          // Hygiene fix -- no live status="white" call sites today, but
+          // text-primary-color no longer means white (see light.json);
+          // text-control-color is the token that actually always resolves
+          // to white, matching this case's own name/intent.
+          return themes['text-control-color'];
         default:
           return themes['color-primary-100'];
       }

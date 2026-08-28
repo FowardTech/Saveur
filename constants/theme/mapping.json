@@ -443,8 +443,8 @@
               "basic": {
                 "borderColor": "button-basic-color",
                 "backgroundColor": "button-basic-color",
-                "textColor": "text-primary-color",
-                "iconTintColor": "text-primary-color",
+                "textColor": "text-control-color",
+                "iconTintColor": "text-control-color",
                 "state": {
                   "focused": {
                     "borderColor": "red",
@@ -524,7 +524,7 @@
               "twitter": {
                 "borderColor": "transparent",
                 "backgroundColor": "text-twitter-color",
-                "textColor": "text-primary-color",
+                "textColor": "text-control-color",
                 "iconTintColor": "button-outline-text",
                 "state": {
                   "focused": {
@@ -5705,7 +5705,7 @@
                   "checked": {
                     "borderColor": "color-success-100",
                     "backgroundColor": "color-success-100",
-                    "iconTintColor": "text-primary-color"
+                    "iconTintColor": "text-control-color"
                   },
                   "focused": {
                     "borderColor": "color-primary-transparent-focus-border",
@@ -5747,7 +5747,7 @@
                   "checked": {
                     "borderColor": "color-primary-default-border",
                     "backgroundColor": "color-primary-default",
-                    "iconTintColor": "text-primary-color"
+                    "iconTintColor": "text-control-color"
                   },
                   "focused": {
                     "borderColor": "color-primary-transparent-focus-border",

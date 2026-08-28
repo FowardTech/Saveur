@@ -78,10 +78,16 @@ const WeekStrip = memo(({ checkedInToday, onDayPress }: WeekStripProps) => {
                 ? { backgroundColor: theme['color-primary-100'] }
                 : { backgroundColor: theme['background-basic-color-3'] },
             ]}>
+            {/* BUG FIX (product report: "check the whole app" for the same
+                text-primary-color regression) -- today's circle is filled
+                with theme['color-primary-100'] above, the same #0063f8 as
+                text-primary-color now resolves to, so today's date number
+                was invisible. text-control-color is this app's real
+                "always white on a colored surface" token. */}
             <Text
               category="h9-s"
               bold
-              style={{ color: d.isToday ? theme['text-primary-color'] : theme['text-basic-color'] }}>
+              style={{ color: d.isToday ? theme['text-control-color'] : theme['text-basic-color'] }}>
               {d.dateNum}
             </Text>
           </View>
