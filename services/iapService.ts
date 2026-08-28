@@ -21,6 +21,38 @@ import {IapVerifyResult} from './billingService';
 // configured in App Store Connect / Play Console (see docs/IAP_SETUP.md).
 // ---------------------------------------------------------------------------
 
+// BUG FIX (product report: tapping "Unlock" on an add-on "just kept
+// loading and loading", never even showing the native purchase sheet) —
+// RNIap.fetchProducts() below is a native module call with no client-side
+// timeout of its own; if it never resolves or rejects (seen already with
+// finishTransaction elsewhere in this file — apparently not the only
+// react-native-iap v16 Nitro call that can silently hang on some real
+// devices), the `.then`/`.catch` chain that would otherwise turn "product
+// not found" into a clear thrown Error never runs at all, leaving the
+// caller (Subscription.tsx/AddOns.tsx's onSelectPlan/onPurchase) awaiting
+// a promise that's never going to settle — exactly a permanently-spinning
+// button with no error shown. This is a purely defensive backstop (a
+// legitimate slow network lookup should still finish well inside this
+// window) that turns a silent infinite hang into an honest, actionable
+// failure instead.
+const FETCH_PRODUCTS_TIMEOUT_MS = 15000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      value => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      err => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
+
 let connectionPromise: Promise<boolean> | null = null;
 
 /** Idempotent — safe to call from every screen that needs IAP; only the
@@ -195,7 +227,13 @@ export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerif
       // gives a much clearer error up front if the sku genuinely doesn't
       // exist anywhere (typo, wrong environment, catalog/config code
       // mismatch) instead of the vague native message.
-      .then(() => RNIap.fetchProducts({skus: [sku], type}))
+      .then(() =>
+        withTimeout(
+          RNIap.fetchProducts({skus: [sku], type}),
+          FETCH_PRODUCTS_TIMEOUT_MS,
+          `Timed out looking up "${sku}" from the store — see FETCH_PRODUCTS_TIMEOUT_MS's own comment above. Check that this exact product ID exists in App Store Connect / Play Console (and, for iOS, under Features → In-App Purchases specifically for a one-time add-on — that's a separate section from Subscriptions) and try again.`,
+        ),
+      )
       .then(products => {
         if (!products?.length) {
           throw new Error(
