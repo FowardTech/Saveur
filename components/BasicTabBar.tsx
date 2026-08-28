@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
-import { Layout, useTheme } from '@ui-kitten/components';
+import { useTheme } from '@ui-kitten/components';
 
 import Text from 'components/Text';
 import ProgressBar from 'components/ProgressBar';
@@ -61,8 +61,36 @@ const BasicTabBar = ({ style, activeIndex, onChange, tabs, badgeCounts }: Props)
                 color/weight, the override wins since it's applied after —
                 see components/Text.tsx). The underline/progress indicator
                 below keeps its accent color; only the label text itself
-                changed, per the literal ask. */}
-            <Flex itemsCenter mh={12} mb={8}>
+                changed, per the literal ask.
+
+                BUG FIX (product report: "the active tab background and
+                color is not nice in dark mode and in light mode it just
+                changes to black background") — the active tab previously
+                had no deliberate background treatment at all; the only
+                thing painting a background near it was a stray, unstyled
+                `<Layout />` sitting between this Flex and the underline
+                below (removed here). That bare Layout defaults to
+                UI Kitten's level="1" background (background-basic-color-1
+                -- a real, if faint, painted color, not "no color"),
+                identically for every tab regardless of active state, so it
+                wasn't even the thing distinguishing the active tab -- it
+                was just unrelated dead weight. The active tab now gets its
+                own explicit, deliberate pill: a subtle brand-blue tint
+                (color-primary-transparent-100, a low-opacity overlay that
+                reads correctly against both light.json's and dark.json's
+                background colors, unlike a flat theme color that can
+                clash with one theme or the other) behind just its own
+                label, so switching tabs shows a clear, theme-consistent
+                highlight instead of an incidental background block. */}
+            <Flex
+              itemsCenter
+              mh={12}
+              mb={8}
+              ph={activeIndex === i ? 10 : 0}
+              pv={activeIndex === i ? 4 : 0}
+              border={activeIndex === i ? 8 : 0}
+              style={activeIndex === i ? {backgroundColor: theme['color-primary-transparent-100']} : undefined}
+            >
               <Text
                 category="h8"
                 status="placeholder"
@@ -80,7 +108,6 @@ const BasicTabBar = ({ style, activeIndex, onChange, tabs, badgeCounts }: Props)
                 </View>
               ) : null}
             </Flex>
-            <Layout />
             <RenderProgress />
           </TouchableOpacity>
         );
@@ -95,7 +122,11 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: 'space-between',
     overflow: 'hidden',
-    maxHeight: 32,
+    // Was 32 -- the active tab's new pill background (see the render
+    // block's own comment) adds a few px of vertical padding around its
+    // label that 32 was clipping the bottom of via this container's own
+    // overflow:'hidden'.
+    maxHeight: 40,
     flex: 1,
   },
   boxAni: {
