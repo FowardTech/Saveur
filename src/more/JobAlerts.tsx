@@ -206,11 +206,34 @@ const JobAlerts = memo(() => {
 
   // Keep the editor's local draft in sync if the real profile changes out
   // from under it (e.g. loaded after this screen already mounted).
+  //
+  // BUG FIX (product report: "the target roles and countries users
+  // entered in the target role and countries screen[] overrid[es] the
+  // number of roles and countries capped in the job alert settings...
+  // enters 4 roles and 4 countries [and] it overrides the 1 target role
+  // and 3 countries cap in the job alert") — this used to load
+  // profile.desiredRoles/preferredCountries RAW, with no regard for
+  // maxDesiredRoles/maxPreferredCountries above. addRole/toggleCountry
+  // below already stop a user from ADDING past the cap, but a profile can
+  // still legitimately have MORE than the current tier allows already
+  // saved on it — e.g. it was set while on Premium (10/10) and the account
+  // has since downgraded to Basic (1/3), or it was set via
+  // JobPreferences.tsx while on the free tier (which allows up to 5 roles/
+  // 3 countries, since that screen's free-tier default is intentionally
+  // NOT folded down to Basic's tighter cap — see that file's own comment)
+  // and the user then subscribed straight to Basic. Either way, this
+  // screen used to still show and let the user edit/save ALL of them,
+  // which reads exactly like the cap being "overridden" even though
+  // Saveur-Backend's job_search_service.py was already truncating what
+  // actually got used for live discovery at read time — the settings UI
+  // itself just never reflected that same truncation. Sliced here so the
+  // editor can never display (or re-save) more than the account's current
+  // real cap, regardless of how the stored profile got ahead of it.
   React.useEffect(() => {
-    setDesiredRoles(profile?.desiredRoles ?? []);
-    setPreferredCountries(profile?.preferredCountries ?? []);
+    setDesiredRoles((profile?.desiredRoles ?? []).slice(0, maxDesiredRoles));
+    setPreferredCountries((profile?.preferredCountries ?? []).slice(0, maxPreferredCountries));
     setDailyLimit(Math.min(Math.max(profile?.jobAlertDailyLimit ?? 15, 15), 50));
-  }, [profile?.desiredRoles, profile?.preferredCountries, profile?.jobAlertDailyLimit]);
+  }, [profile?.desiredRoles, profile?.preferredCountries, profile?.jobAlertDailyLimit, maxDesiredRoles, maxPreferredCountries]);
 
   // Loads (or reloads) page 1 — used on mount, pull-to-refresh, and after
   // saving preferences. Always replaces the list and resets pagination

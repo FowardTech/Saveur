@@ -74,13 +74,22 @@ const JobPreferences = memo(() => {
   );
 
   const [query, setQuery] = React.useState('');
+  // BUG FIX (product report: "the target roles and countries... overrides
+  // the... cap in the job alert" — see JobAlerts.tsx's identical fix for
+  // the fuller story): a profile can have more roles/countries already
+  // saved than the CURRENT tier allows (e.g. set while on a higher tier,
+  // then downgraded) — this used to load them here raw, letting the editor
+  // display/re-save past the real cap. Sliced to maxPreferredCountries/
+  // maxDesiredRoles (computed above from the account's current tier) so
+  // this screen can never show more than what's actually allowed right
+  // now, same as JobAlerts.tsx.
   const [preferredCountries, setPreferredCountries] = React.useState<string[]>(
-    () => profile?.preferredCountries ?? [],
+    () => (profile?.preferredCountries ?? []).slice(0, maxPreferredCountries),
   );
 
   const [roleDraft, setRoleDraft] = React.useState('');
   const [desiredRoles, setDesiredRoles] = React.useState<string[]>(
-    () => profile?.desiredRoles ?? [],
+    () => (profile?.desiredRoles ?? []).slice(0, maxDesiredRoles),
   );
   const [isSaving, setIsSaving] = React.useState(false);
 

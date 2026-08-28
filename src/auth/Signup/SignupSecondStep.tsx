@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {Alert, TouchableOpacity, View} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -30,13 +30,37 @@ import CtaButton from 'components/CtaButton';
 // no native map dependency needed. The list itself now lives in
 // constants/countries.ts so src/more/JobPreferences.tsx (the "change it
 // later" settings screen) shares the exact same list instead of drifting.
+//
+// BUG FIX (product report: "the target roles and countries users entered
+// in the target role and countries screen[] overrid[es] the number of
+// roles and countries capped in the job alert settings" — a user could add
+// e.g. 4 roles/4 countries here with zero client-side limit) — addRole/
+// toggleCountry used to have no cap at all, unlike src/more/JobPreferences.
+// tsx's "change it later" equivalent of this exact same screen (which
+// already guards both with a tier-aware max — see that file's own
+// comment). A brand-new signup has no subscription yet at all (always the
+// free tier at this point in the flow — see Saveur-Backend's app/api/
+// users.py's /sync endpoint, which always creates a plan="free"
+// Subscription row for a new user), so these use the same FREE-tier
+// numbers entitlements_service.job_role_country_caps()/JobPreferences.tsx
+// both default to (5 roles/3 countries) rather than needing AuthContext's
+// isPro/isPremium here (there's no signed-in subscription to read yet).
+// Server-side truncation (app/api/users.py's update_me, invoked by
+// SignupThirdStep.tsx's updateProfile() call right after this) was always
+// the real backstop and already capped what actually got SAVED — but
+// leaving this screen itself uncapped meant a new user could freely pick
+// well past the limit here and only find out afterward that most of it
+// silently got dropped, instead of being guided to the real limit while
+// still picking.
+const MAX_DESIRED_ROLES_FREE = 5;
+const MAX_PREFERRED_COUNTRIES_FREE = 3;
 
 const SignupSecondStep = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<AuthStackParamList, 'SignupSecondStep'>>();
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
-  const {t} = useTranslation(['auth', 'common', 'success', 'countries']);
+  const {t} = useTranslation(['auth', 'common', 'success', 'countries', 'more']);
 
   // COUNTRIES (constants/countries.ts) stays a fixed list of stable English
   // canonical values -- that's what's actually stored (preferredCountries)
@@ -66,6 +90,19 @@ const SignupSecondStep = memo(() => {
   const addRole = () => {
     const trimmed = roleDraft.trim();
     if (!trimmed) return;
+    if (
+      desiredRoles.length >= MAX_DESIRED_ROLES_FREE
+      && !desiredRoles.some(r => r.toLowerCase() === trimmed.toLowerCase())
+    ) {
+      Alert.alert(
+        t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}).toString(),
+        t('more:job_alerts_max_roles_body', {
+          count: MAX_DESIRED_ROLES_FREE,
+          defaultValue: `You can target up to ${MAX_DESIRED_ROLES_FREE} roles at once. Remove one to add another.`,
+        }).toString(),
+      );
+      return;
+    }
     setDesiredRoles(prev => (prev.some(r => r.toLowerCase() === trimmed.toLowerCase()) ? prev : [...prev, trimmed]));
     setRoleDraft('');
   };
@@ -82,9 +119,20 @@ const SignupSecondStep = memo(() => {
   );
 
   const toggleCountry = (country: string) => {
-    setPreferredCountries(prev =>
-      prev.includes(country) ? prev.filter(c => c !== country) : [...prev, country],
-    );
+    setPreferredCountries(prev => {
+      if (prev.includes(country)) return prev.filter(c => c !== country);
+      if (prev.length >= MAX_PREFERRED_COUNTRIES_FREE) {
+        Alert.alert(
+          t('more:job_alerts_max_reached_title', {defaultValue: "That's the max for now"}).toString(),
+          t('more:job_alerts_max_countries_body', {
+            count: MAX_PREFERRED_COUNTRIES_FREE,
+            defaultValue: `You can pick up to ${MAX_PREFERRED_COUNTRIES_FREE} countries at once. Remove one to add another.`,
+          }).toString(),
+        );
+        return prev;
+      }
+      return [...prev, country];
+    });
   };
 
   const onContinue = () => {
