@@ -127,6 +127,12 @@ export async function getSessionEntitlement(
 
 export const ADDON_CODES = {
   codingPractice: 'coding_practice',
+  // PRODUCT DECISION: Practical Scenarios moved off the shared free-session
+  // monthly cap (see getSessionEntitlement above) onto its own one-time
+  // paid add-on, same treatment as Coding Practice — see
+  // PracticalScenarioSetup.tsx's onStart and Saveur-Backend's
+  // app/api/practical.py create_session() for the matching backend gate.
+  practicalScenario: 'practical_scenario',
 } as const;
 
 export type AddonCode = (typeof ADDON_CODES)[keyof typeof ADDON_CODES];

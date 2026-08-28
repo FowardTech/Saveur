@@ -22,8 +22,7 @@ import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as practicalService from 'services/practicalService';
 import { PracticalType } from 'services/practicalService';
-import { getSessionEntitlement } from 'services/entitlementsService';
-import { AuthContext } from '../../AuthContext';
+import { ADDON_CODES, hasAddon } from 'services/entitlementsService';
 import CtaButton from 'components/CtaButton';
 
 // Practical Scenarios setup — "coding practice already gives software
@@ -58,7 +57,6 @@ const PracticalScenarioSetup = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
-  const { subscription } = React.useContext(AuthContext);
 
   const [type, setType] = React.useState<PracticalType>('healthcare');
   const [role, setRole] = React.useState('');
@@ -68,17 +66,24 @@ const PracticalScenarioSetup = memo(() => {
     if (isStarting) return;
     setIsStarting(true);
     try {
-      const entitlement = await getSessionEntitlement(subscription);
-      if (!entitlement.canStart) {
+      // PRODUCT DECISION: Practical Scenarios is now its own one-time paid
+      // add-on, independent of subscription tier/free-session cap — same
+      // treatment as Coding Practice. Same alert/navigate-to-AddOns pattern
+      // as MockInterviewSetup.tsx's addonCodeForInterviewType gate; see
+      // Saveur-Backend's app/api/practical.py create_session() for the
+      // matching backend @require_addon gate.
+      if (!(await hasAddon(ADDON_CODES.practicalScenario))) {
         Alert.alert(
-          t('find:free_limit_reached_title', { defaultValue: "You've used your free sessions" }),
-          t('find:free_limit_reached_body', {
-            limit: entitlement.sessionsLimit ?? 5,
-            defaultValue: `Free plans include ${entitlement.sessionsLimit ?? 5} practice sessions a month. Upgrade to Basic for unlimited practice.`,
+          t('find:addon_required_title_generic', { defaultValue: 'This is a paid add-on' }),
+          t('find:addon_required_body', {
+            defaultValue: 'Purchase the add-on once to unlock it for good.',
           }),
           [
             { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
-            { text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade to Basic' }), onPress: () => navigate('Subscription') },
+            {
+              text: t('more:addons_title', { defaultValue: 'Add-ons' }),
+              onPress: () => navigate('AddOns', { highlightCode: ADDON_CODES.practicalScenario }),
+            },
           ],
         );
         return;
