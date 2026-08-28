@@ -183,8 +183,13 @@ const MainBottomTab = memo(() => {
   const [menuBadgeCount, setMenuBadgeCount] = React.useState<number | undefined>(undefined);
   const refreshMenuBadges = React.useCallback(async () => {
     const badges = await getMoreMenuBadges();
+    // careerEventsUnreadCount was missing from this sum, which meant the
+    // Menu tab's badge stayed hidden whenever unread Career Events were
+    // the only pending item (fix for "the badge count on the menu in the
+    // bottom tab not showing the count").
     const total =
       badges.jobAlertsUnreadCount +
+      badges.careerEventsUnreadCount +
       (badges.dailyIndustryNewsUnread ? 1 : 0) +
       (badges.weeklyCareerReportUnread ? 1 : 0);
     setMenuBadgeCount(total > 0 ? total : undefined);
@@ -226,7 +231,15 @@ const MainBottomTab = memo(() => {
           <Icon
             pack="assets"
             name={focused ? "commentActive" : "comment"}
-            style={{ width: 24, height: 24, tintColor: theme["text-primary-color"] }}
+            // Was theme["text-primary-color"] — that token now resolves to
+            // the same blue (#0063f8) as fabCircle's own background (see
+            // constants/theme/light.json's text-primary-color fix for the
+            // "search the web" bug), so the icon went fully invisible in
+            // light mode (dark mode was fine since its text-primary-color
+            // is still white). text-control-color is the token this app
+            // already uses elsewhere for "always white, on a colored
+            // surface" and isn't touched by that other fix.
+            style={{ width: 24, height: 24, tintColor: theme["text-control-color"] }}
           />
         </View>
       </View>
@@ -266,7 +279,14 @@ const MainBottomTab = memo(() => {
           {numberNotification ? (
             focused ? null : (
               <View style={styles.notification}>
-                <Text center category="h9" status="primary" fontSize={11} lineHeight={13}>
+                {/* Was status="primary" — that was only ever "white text"
+                    as a side effect of text-primary-color happening to be
+                    white; now that token is blue in light mode (see the
+                    "search the web" fix), so this rendered invisible
+                    blue-on-blue against the notification bubble's own
+                    button-basic-color background. status="control" is the
+                    real "always white on a colored surface" token. */}
+                <Text center category="h9" status="control" fontSize={11} lineHeight={13}>
                   {numberNotification > 9 ? '9+' : numberNotification}
                 </Text>
               </View>

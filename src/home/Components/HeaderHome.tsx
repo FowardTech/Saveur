@@ -103,7 +103,13 @@ const HeaderHome = memo(
           />
           {notification ? (
             <Flex style={styles.notification} itemsCenter border={24}>
-              <Text category="h9" status={'primary'} fontSize={11} lineHeight={13}>
+              {/* Was status="primary" -- that used to render white only
+                  because text-primary-color used to equal white; it's now
+                  blue (see the light.json "search the web" fix), so this
+                  count went blue-on-red instead of white-on-red.
+                  status="control" is the token this app uses elsewhere for
+                  "always white on a colored surface". */}
+              <Text category="h9" status={'control'} fontSize={11} lineHeight={13}>
                 {notification > 9 ? '9+' : notification}
               </Text>
             </Flex>
