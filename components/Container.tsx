@@ -81,13 +81,28 @@ const Container: React.FC<ContainerProps> = ({
   // visibly different gray for cards to read as distinct surfaces.
   const bodyBackgroundOverride =
     level === undefined && appTheme !== "dark" ? { backgroundColor: theme["background-page-body"] } : null;
+  // BUG FIX (product report: "the container holding pages together is
+  // overlapping and hiding some part of the content under each screen
+  // title header... move the overall container down a little bit") — this
+  // is the one shared Container every screen's TopNavigation + Content
+  // sits inside, so its top safe-area padding is exactly "the overall
+  // container" the report means. `top` alone (the raw safe-area-inset
+  // value — just tall enough to clear the status bar/notch itself) left no
+  // breathing room between the very top edge and the header content above
+  // it, which on several screens read as the first bit of the TopNavigation
+  // row (or the screen content just below it) sitting too close to/under
+  // the notch/status bar. EXTRA_TOP_CLEARANCE adds a small fixed cushion
+  // on top of the real inset instead of replacing it, so this still adapts
+  // correctly per-device (notch vs. no notch) rather than hardcoding one
+  // absolute number for every phone.
+  const EXTRA_TOP_CLEARANCE = 8;
   return (
     <Layout
       level={resolvedLevel}
       {...props}
       style={[
         { flex: 1 },
-        useSafeArea && { paddingTop: top, paddingBottom: bottom },
+        useSafeArea && { paddingTop: top + EXTRA_TOP_CLEARANCE, paddingBottom: bottom },
         bodyBackgroundOverride,
         style,
       ]}
