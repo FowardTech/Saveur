@@ -2,26 +2,39 @@ import React, { memo, useEffect, useState } from 'react';
 import { Image, ImageStyle, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
-import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
+import { StyleService, useStyleSheet } from '@ui-kitten/components';
 
 import Text from 'components/Text';
 import CtaButton from 'components/CtaButton';
 import useLayout from 'hooks/useLayout';
 import { globalStyle } from 'styles/globalStyle';
 import { getOnboardingImage } from 'services/onboardingImageService';
+import OnboardingCluster, { CLUSTER_COLORS } from 'components/OnboardingCluster';
 
 interface LearningCoursesOnboardingProps {
   onGetStarted(): void;
 }
 
-// SYMPHONY REDESIGN (explicit product request: "for the onboarding screens
-// of the job alert and learning course i dont want photos... design their
-// onboarding screens like the main app onboarding" — same reasoning as the
-// identical rebuild in JobAlertsOnboarding.tsx, see that file's comment for
-// the full context). Replaces the earlier icon-cluster default (open book +
-// graduation cap) with a plain mock preview of the feature's own course
-// list — a stylized "here's what you're about to see" dashboard preview
-// instead of a decorative illustration or stock photo.
+const AVATAR_QUERY = 'auto=format&fit=crop&crop=faces&w=200&h=200&q=80';
+const AVATAR_URIS: [string, string] = [
+  `https://images.unsplash.com/photo-1760351561007-526f5353cc76?${AVATAR_QUERY}`,
+  `https://images.unsplash.com/photo-1758598304525-a1b42e0f1701?${AVATAR_QUERY}`,
+];
+const BADGES: [{ icon: string; bg: string }, { icon: string; bg: string }, { icon: string; bg: string }] = [
+  { icon: 'book-open-outline', bg: CLUSTER_COLORS.orange },
+  { icon: 'award-outline', bg: CLUSTER_COLORS.pink },
+  { icon: 'trending-up-outline', bg: CLUSTER_COLORS.blue },
+];
+
+// SYMPHONY REDESIGN follow-up (explicit product correction, with 2
+// Symphony reference screenshots — same context/reasoning as
+// JobAlertsOnboarding.tsx's own comment, see that file). Replaces BOTH the
+// earlier icon-cluster default (open book + graduation cap) AND the
+// "dashboard preview mock" this screen was rebuilt with just one pass ago
+// (a misreading of the same original request) — now uses the exact same
+// avatar+icon cluster component the main signup carousel uses (see
+// components/OnboardingCluster.tsx), so all 3 onboarding surfaces share
+// one visual language.
 //
 // Rendered by LearningCourses.tsx in place of its real content the first
 // time this screen mounts, gated on
@@ -38,7 +51,6 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
   const { t } = useTranslation(['more', 'common']);
   const { width, height, bottom } = useLayout();
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   const [remoteImage, setRemoteImage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -62,11 +74,7 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
     };
   }, []);
 
-  const MOCK_COURSES = [
-    { title: 'Ace the Behavioral Interview', progress: 0.7 },
-    { title: 'Resume Writing Fundamentals', progress: 0.35 },
-    { title: 'Salary Negotiation Basics', progress: 0 },
-  ];
+  const clusterSize = Math.min(width * 0.78, 300);
 
   return (
     <View style={[styles.container, { width, height }]}>
@@ -78,39 +86,12 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
         />
       ) : (
         <View style={[styles.heroWrap, { width, height }]}>
-          {/* Dashboard-style mock — a plain card shaped like the real
-              Learning Courses list, with 3 placeholder course rows and
-              progress bars, so this reads as "a preview of the actual
-              feature" rather than a decorative illustration. Titles/
-              progress are obviously generic placeholders, not presented as
-              real course data. */}
-          <View style={styles.mockCard}>
-            <View style={styles.mockCardHeader}>
-              <Icon pack="eva" name="book-open-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-100'] }]} />
-              <Text category="h9" bold ml={8}>
-                {t('more:learning_courses', { defaultValue: 'My Courses' })}
-              </Text>
-            </View>
-            {MOCK_COURSES.map((course, i) => (
-              <View key={i} style={[styles.mockRow, i === MOCK_COURSES.length - 1 && styles.mockRowLast]}>
-                <View style={globalStyle.flexOne}>
-                  <Text category="h9" bold numberOfLines={1}>
-                    {course.title}
-                  </Text>
-                  <View style={styles.progressTrack}>
-                    <View style={[styles.progressFill, { width: `${Math.round(course.progress * 100)}%` }]} />
-                  </View>
-                </View>
-                {course.progress >= 1 ? (
-                  <Icon pack="eva" name="checkmark-circle-2" style={[globalStyle.icon16, { tintColor: theme['color-primary-100'] }]} />
-                ) : (
-                  <Text category="h10" status="placeholder" ml={10}>
-                    {Math.round(course.progress * 100)}%
-                  </Text>
-                )}
-              </View>
-            ))}
-          </View>
+          <OnboardingCluster
+            avatarUris={AVATAR_URIS}
+            badges={BADGES}
+            accentColor={CLUSTER_COLORS.green}
+            size={clusterSize}
+          />
           <Text category="h2" bold center mh={32} mt={28} style={styles.heroTitle}>
             {t('more:learning_onboarding_title', { defaultValue: 'Flavour your career with short courses' })}
           </Text>
@@ -154,43 +135,6 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingBottom: 140,
-  },
-  // SYMPHONY REDESIGN — a plain white/dark card, no border (Symphony's own
-  // "no borders" rule), moderate rounded corners matching every other card
-  // this pass introduced.
-  mockCard: {
-    ...globalStyle.card,
-    width: 280,
-    padding: 16,
-    backgroundColor: 'background-basic-color-2',
-  },
-  mockCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  mockRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.12)',
-  },
-  mockRowLast: {
-    borderBottomWidth: 0,
-    paddingBottom: 0,
-  },
-  progressTrack: {
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: 'rgba(128,128,128,0.16)',
-    marginTop: 6,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: 'color-primary-100',
   },
   heroTitle: {
     fontSize: 30,

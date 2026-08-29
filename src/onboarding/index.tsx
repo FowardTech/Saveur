@@ -27,6 +27,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Dots from './Dots';
 import Flex from 'components/Flex';
+import OnboardingCluster, { CLUSTER_COLORS } from 'components/OnboardingCluster';
 import { RootStackParamList } from 'navigation/types';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { globalStyle } from 'styles/globalStyle';
@@ -83,79 +84,117 @@ const Onboarding = memo(() => {
     translationX.value = event.contentOffset.x;
   });
 
-  // SYMPHONY REDESIGN (explicit product request, with Symphony reference
-  // screenshots: "there are real photos like avatars used there do the
-  // same you can pick photos from online"). This carousel has been through
-  // several illustration approaches (see git history — hand-built design-
-  // kit artwork, product-supplied hero-composition PNGs, then a bundled
-  // icon-cluster pairing via OnboardingIconArt.tsx, all now retired). This
-  // pass replaces all of that with real photographs — one per slide,
-  // matching the actual idea each slide's title/subtitle communicates —
-  // sourced from Unsplash (free-to-use license, no attribution required),
-  // instead of any illustrated/iconographic art. Every URL below was
-  // fetched and confirmed to be a genuinely free (non-Unsplash+) licensed
-  // photo before being used here.
+  // SYMPHONY REDESIGN follow-up (explicit product correction, with 2
+  // Symphony reference screenshots: "Cant you see the onboarding of
+  // symphony that it has photos like avatars and then it has icons that
+  // represents what the app it doing... it has 3 real images all in small
+  // avatars and then 2 icons in different color background... Do exactly
+  // how the symphony did theirs"). The previous pass (one full-bleed photo
+  // per slide) was a misread of that original request — the actual
+  // reference is a scattered cluster of small circular real-photo avatars
+  // mixed with colored icon badges (see components/OnboardingCluster.tsx
+  // for the shared composition, now also reused by JobAlertsOnboarding.tsx
+  // and LearningCoursesOnboarding.tsx so all 3 onboarding surfaces share
+  // one visual language). Each slide gets its own pair of avatar photos
+  // (rotating through the same 5 license-verified Unsplash photos so every
+  // one of them appears twice across the 5 slides) and 3 icons chosen to
+  // represent that slide's specific feature.
   //
-  // Each photo is requested pre-cropped server-side to a consistent 4:5
-  // portrait (`w`/`h`/`fit=crop&crop=faces` query params — Unsplash's own
-  // imgix-based CDN) so every slide's photo card is the same shape
-  // regardless of the source photo's own original aspect ratio, and so the
-  // face/subject of the photo is what the crop keeps centered rather than
-  // an arbitrary corner.
+  // Photos still sourced from Unsplash (free-to-use license, no
+  // attribution required, verified non-Unsplash+ before use) — only the
+  // crop changed, from a 4:5 portrait to a square (avatars are circular),
+  // via the same imgix query-param convention.
   //
   // The admin-upload override mechanism (Admin > Content > Onboarding >
-  // Signup Carousel) is UNCHANGED — see overrideImageUri above and its
-  // render call site below — an admin-uploaded photo for a slide still
-  // wins over this default every time; only the DEFAULT changed.
-  //
-  // Per-slide photo reasoning (same 5 ideas the old icon pairing used,
-  // see git history for that mapping):
-  //  1. Interview practice with an AI coach -- a woman mid video-call,
-  //     talking and gesturing (the live conversation itself).
-  //  2. Instant feedback -- someone smiling at their own screen (the
-  //     moment of seeing positive, useful feedback).
-  //  3. First-hand Job Alert -- someone smiling at their phone (the
-  //     alert notification landing).
-  //  4. Get past the resume scanners -- a close hand-and-notebook/laptop
-  //     shot (working on the actual document).
-  //  5. Learn one course at a time -- two people studying together at a
-  //     laptop (the learning itself).
-  const PHOTO_QUERY = 'auto=format&fit=crop&crop=faces&w=1000&h=1250&q=80';
-  const DATA = [
+  // Signup Carousel) is UNCHANGED in spirit but simplified in effect: an
+  // admin-uploaded photo for a slide still wins over this default every
+  // time (see overrideImageUri above and its render call site below), just
+  // rendered as a single full photo card instead of a cluster when present
+  // — asking an admin to upload multiple avatar photos plus icon choices
+  // through that same one-image-per-slide upload flow isn't realistic, so
+  // an override intentionally falls back to the older single-photo layout
+  // rather than trying to force it into this multi-piece composition.
+  const AVATAR_QUERY = 'auto=format&fit=crop&crop=faces&w=200&h=200&q=80';
+  const PHOTOS = [
+    `https://images.unsplash.com/photo-1752650733337-cb0189176fb9?${AVATAR_QUERY}`,
+    `https://images.unsplash.com/photo-1758598304525-a1b42e0f1701?${AVATAR_QUERY}`,
+    `https://images.unsplash.com/photo-1758874383904-c3c409aeb32d?${AVATAR_QUERY}`,
+    `https://images.unsplash.com/photo-1724985284026-dd2451e4857a?${AVATAR_QUERY}`,
+    `https://images.unsplash.com/photo-1760351561007-526f5353cc76?${AVATAR_QUERY}`,
+  ];
+  const DATA: Array<{
+    id: number;
+    title: string;
+    subtitle: string;
+    configKey: keyof SignupOnboardingImagesConfig;
+    avatarUris: [string, string];
+    badges: [{ icon: string; bg: string }, { icon: string; bg: string }, { icon: string; bg: string }];
+    accentColor: string;
+  }> = [
     {
       id: 0,
-      title: t('intro:title_1'),
-      subtitle: t('intro:subtitle_1'),
-      configKey: 'interview' as const,
-      photoUri: `https://images.unsplash.com/photo-1752650733337-cb0189176fb9?${PHOTO_QUERY}`,
+      title: t('intro:title_1').toString(),
+      subtitle: t('intro:subtitle_1').toString(),
+      configKey: 'interview',
+      avatarUris: [PHOTOS[0], PHOTOS[1]],
+      badges: [
+        { icon: 'mic-outline', bg: CLUSTER_COLORS.blue },
+        { icon: 'message-circle-outline', bg: CLUSTER_COLORS.pink },
+        { icon: 'checkmark-circle-2', bg: CLUSTER_COLORS.green },
+      ],
+      accentColor: CLUSTER_COLORS.orange,
     },
     {
       id: 1,
-      title: t('intro:title_2'),
-      subtitle: t('intro:subtitle_2'),
-      configKey: 'feedback' as const,
-      photoUri: `https://images.unsplash.com/photo-1758598304525-a1b42e0f1701?${PHOTO_QUERY}`,
+      title: t('intro:title_2').toString(),
+      subtitle: t('intro:subtitle_2').toString(),
+      configKey: 'feedback',
+      avatarUris: [PHOTOS[1], PHOTOS[2]],
+      badges: [
+        { icon: 'trending-up-outline', bg: CLUSTER_COLORS.green },
+        { icon: 'star-outline', bg: CLUSTER_COLORS.blue },
+        { icon: 'bar-chart-outline', bg: CLUSTER_COLORS.orange },
+      ],
+      accentColor: CLUSTER_COLORS.pink,
     },
     {
       id: 2,
-      title: t('intro:title_3'),
-      subtitle: t('intro:subtitle_3'),
-      configKey: 'job_alert' as const,
-      photoUri: `https://images.unsplash.com/photo-1758874383904-c3c409aeb32d?${PHOTO_QUERY}`,
+      title: t('intro:title_3').toString(),
+      subtitle: t('intro:subtitle_3').toString(),
+      configKey: 'job_alert',
+      avatarUris: [PHOTOS[2], PHOTOS[3]],
+      badges: [
+        { icon: 'bell-outline', bg: CLUSTER_COLORS.pink },
+        { icon: 'briefcase-outline', bg: CLUSTER_COLORS.blue },
+        { icon: 'search-outline', bg: CLUSTER_COLORS.green },
+      ],
+      accentColor: CLUSTER_COLORS.orange,
     },
     {
       id: 3,
-      title: t('intro:title_4'),
-      subtitle: t('intro:subtitle_4'),
-      configKey: 'resume_scan' as const,
-      photoUri: `https://images.unsplash.com/photo-1724985284026-dd2451e4857a?${PHOTO_QUERY}`,
+      title: t('intro:title_4').toString(),
+      subtitle: t('intro:subtitle_4').toString(),
+      configKey: 'resume_scan',
+      avatarUris: [PHOTOS[3], PHOTOS[4]],
+      badges: [
+        { icon: 'file-text-outline', bg: CLUSTER_COLORS.blue },
+        { icon: 'edit-2-outline', bg: CLUSTER_COLORS.orange },
+        { icon: 'checkmark-circle-2', bg: CLUSTER_COLORS.green },
+      ],
+      accentColor: CLUSTER_COLORS.pink,
     },
     {
       id: 4,
-      title: t('intro:title_5'),
-      subtitle: t('intro:subtitle_5'),
-      configKey: 'learning' as const,
-      photoUri: `https://images.unsplash.com/photo-1760351561007-526f5353cc76?${PHOTO_QUERY}`,
+      title: t('intro:title_5').toString(),
+      subtitle: t('intro:subtitle_5').toString(),
+      configKey: 'learning',
+      avatarUris: [PHOTOS[4], PHOTOS[0]],
+      badges: [
+        { icon: 'book-open-outline', bg: CLUSTER_COLORS.orange },
+        { icon: 'award-outline', bg: CLUSTER_COLORS.pink },
+        { icon: 'trending-up-outline', bg: CLUSTER_COLORS.blue },
+      ],
+      accentColor: CLUSTER_COLORS.green,
     },
   ];
 
@@ -265,15 +304,30 @@ const Onboarding = memo(() => {
                 };
               });
               const overrideUri = overrideImageUri(i.configKey);
-              const photoWidth = width * 0.7;
+              const clusterSize = Math.min(width * 0.78, 300);
               return (
                 <Animated.View key={index} style={style}>
-                  <View style={[styles.photoWrap, { width: photoWidth, height: photoWidth * 1.25 }]}>
-                    <Image
-                      source={{ uri: overrideUri || i.photoUri }}
-                      resizeMode="cover"
-                      style={{ width: '100%', height: '100%' }}
-                    />
+                  <View style={styles.heroWrap}>
+                    {overrideUri ? (
+                      // Admin-uploaded override — falls back to the older
+                      // single full-photo card (see DATA's own comment on
+                      // why this doesn't try to force an override into the
+                      // cluster layout).
+                      <View style={[styles.photoWrap, { width: clusterSize * 0.75, height: clusterSize * 0.94 }]}>
+                        <Image
+                          source={{ uri: overrideUri }}
+                          resizeMode="cover"
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      </View>
+                    ) : (
+                      <OnboardingCluster
+                        avatarUris={i.avatarUris}
+                        badges={i.badges}
+                        accentColor={i.accentColor}
+                        size={clusterSize}
+                      />
+                    )}
                   </View>
                   <Text category="h4" bold mh={24} mt={28} style={styles.title}>
                     {i.title}
@@ -315,15 +369,19 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     flexGrow: 1,
   },
-  // SYMPHONY REDESIGN — the real photo card each slide now leads with,
-  // replacing both the old admin-override full-image box and the
-  // OnboardingIconArt icon-cluster default (see DATA's own comment above).
-  // A fixed 4:5 portrait (matches the `w`/`h` crop params baked into every
-  // photoUri above) with the same moderate rounded-corner radius the rest
-  // of this redesign uses everywhere else — no border (Symphony's own "no
-  // borders" rule), no drop shadow (a real photo already reads as content
-  // on its own, unlike a flat icon that needed a card fill/shadow to not
-  // look like it's floating in empty space).
+  // Centers whichever hero the slide renders (OnboardingCluster, or the
+  // single-photo admin-override fallback) in the same fixed space every
+  // slide reserves, so the title/subtitle below always start at the same
+  // vertical position regardless of which one is showing.
+  heroWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Admin-override fallback only now (see DATA's own comment) — the
+  // default hero is components/OnboardingCluster.tsx instead. Same
+  // moderate rounded-corner radius the rest of this redesign uses
+  // everywhere else — no border (Symphony's own "no borders" rule), no
+  // drop shadow (a real photo already reads as content on its own).
   photoWrap: {
     alignSelf: 'center',
     borderRadius: 24,
