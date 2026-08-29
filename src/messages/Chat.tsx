@@ -129,6 +129,34 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
   suggestedAction: msg.suggestedAction,
 });
 
+// Product report: "when user type a question I want a text showing AI
+// Thinking appearing in the chat just like in every AI apps letting the
+// user know that the AI is thinking" -- a fixed, recognizable id so onSend
+// (below) can reliably find-and-remove this one specific message once the
+// real reply (or an error) arrives, without touching anything else in the
+// thread. Rendered through the exact same renderBubble/renderAvatar path
+// as any other coach message (see onSend) rather than a special-cased
+// component, so it looks like a real, if temporary, message from the coach
+// -- same "AI is typing" convention most chat apps use.
+const THINKING_MESSAGE_ID = "ai-thinking-indicator";
+// Cast (not a direct contextual return-type match) same as this file's own
+// existing `as unknown as X` escape hatch elsewhere -- CoachIMessage
+// extends the package root's IMessage, which is one of the 9 pre-existing
+// broken exports (see the import block's own comment), so TS doesn't
+// actually see `_id`/`text`/`createdAt`/`user` as real members of
+// CoachIMessage at all (only its own suggestedCourseTopic/suggestedAction
+// are). toGiftedMessage above already hits this same "excess property"
+// wall and is left as a pre-existing, already-tolerated baseline error;
+// this new literal uses the assertion form instead specifically so it
+// doesn't add a second, brand-new instance of that same class of error.
+const buildThinkingMessage = (label: string) =>
+  ({
+    _id: THINKING_MESSAGE_ID,
+    text: label,
+    createdAt: Date.now(),
+    user: COACH_USER,
+  } as unknown as CoachIMessage);
+
 // Real AI coach chat — see services/coachService.ts, backed by
 // POST /api/v1/coach/advice. History is cached to AsyncStorage so it
 // survives navigating away from this screen and back (the cache itself is
@@ -188,6 +216,21 @@ const Chat = memo(() => {
     coachService.getChatHistory().then(history => {
       // GiftedChat renders newest-first.
       setMessages([...history].reverse().map(toGiftedMessage));
+      // BUG FIX (product report: "once they have started a conversation
+      // with the AI then the chat icon should no longer display. It should
+      // only display when the user have not started a conversation with
+      // the coach"): this partially REVERSES the "always show the
+      // greeting regardless of history" decision above (see showGreeting's
+      // own comment) -- that fix's actual goal, suggested topics always
+      // being reachable, is now covered instead by suggestedTopicsBar
+      // (rendered further down, pinned to the very top of the screen
+      // regardless of history), so it's safe to let a returning user with
+      // a real prior conversation land on their real thread again instead
+      // of the icon+headline landing screen every single time they open
+      // this tab.
+      if (history.length > 0) {
+        setShowGreeting(false);
+      }
     });
   }, []);
 
@@ -211,6 +254,15 @@ const Chat = memo(() => {
     setShowGreeting(false);
     // Optimistically show the user's message immediately.
     setMessages(previous => GiftedChat.append(previous, [draft]));
+    // Product report: "when user type a question I want a text showing AI
+    // Thinking appearing in the chat" — a real (temporary) message in the
+    // thread itself, appended right after the user's own so it shows up
+    // directly below it while the request is in flight.
+    setMessages(previous =>
+      GiftedChat.append(previous, [
+        buildThinkingMessage(t("message:ai_thinking", { defaultValue: "AI is thinking…" })),
+      ]),
+    );
     setIsSending(true);
     try {
       const { coachMessage } = await coachService.sendMessage(draft.text, {
@@ -219,12 +271,24 @@ const Chat = memo(() => {
         desiredRoles: profile?.desiredRoles,
         preferredCountries: profile?.preferredCountries,
       });
-      setMessages(previous => GiftedChat.append(previous, [toGiftedMessage(coachMessage)]));
+      // Swap the thinking placeholder out for the real reply in one update
+      // (filter it out, then append the real message) rather than a
+      // separate "remove" step first — avoids a one-frame flash where
+      // neither the placeholder nor the real reply is visible.
+      setMessages(previous =>
+        GiftedChat.append(
+          previous.filter((m: any) => m._id !== THINKING_MESSAGE_ID),
+          [toGiftedMessage(coachMessage)],
+        ),
+      );
     } catch (e: any) {
       // Real network call now — the coach can actually fail (offline, 5xx,
       // timeout). The user's message stays visible (optimistic append above
       // already happened, and coachService persists it too) but no reply
       // arrives, so surface it instead of leaving the chat hanging silently.
+      // The thinking placeholder is removed either way — it must never be
+      // left sitting in the thread as if it were a real, permanent message.
+      setMessages(previous => previous.filter((m: any) => m._id !== THINKING_MESSAGE_ID));
       Alert.alert(
         t("message:coach_unavailable_title", { defaultValue: "Coach unavailable" }),
         e?.message ?? t("message:coach_unavailable_body", {
@@ -568,6 +632,13 @@ const Chat = memo(() => {
             // or didn't carry (an explicit prop always overrides same-name
             // keys from an earlier spread in JSX).
             placeholder={t("message:chat_input_placeholder", { defaultValue: "Type a message..." }).toString()}
+            // BUG FIX (see chatTextInput's own comment -- same root cause):
+            // a real floor value here as well, on TOP of chatTextInput's
+            // `minHeight`, since Composer.js applies `{height: composerHeight}`
+            // as the LAST style in its own array (after textInputStyle),
+            // meaning a bad/zero composerHeight from GiftedChat's own
+            // tracking would otherwise win over minHeight regardless.
+            composerHeight={Math.max(composerProps.composerHeight ?? 0, 24)}
             textInputStyle={styles.chatTextInput}
             placeholderTextColor={theme["text-hint-color"]}
           />
@@ -729,28 +800,18 @@ const Chat = memo(() => {
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
         </Text>
 
-        {/* Product follow-up: "move the suggested topic to be in a bottom
-            sheet so the suggested topic text will be like a button pill at
-            the center down a little bit so that the screen will be more
-            clean and tidy." Was a permanently-visible card (a header, a
-            voice hint, and the 4-circle row all stacked on the greeting
-            screen itself — see this block's own git history for that
-            "too many content, card-ify it" pass). Now just this one pill;
-            the actual card content moved into topicsSheet, rendered
-            outside this scaleY-flipped view further down (see that
-            Modal's own comment). */}
-        {topics.length > 0 ? (
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => setTopicsSheetVisible(true)}
-            style={styles.suggestedTopicsPill}>
-            <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
-            <Text category="h9" bold ml={6} style={{ color: theme['color-primary-500'] }}>
-              {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
-            </Text>
-            <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
-          </TouchableOpacity>
-        ) : null}
+        {/* Product follow-up (moved out of this box entirely -- see
+            suggestedTopicsBar further down, rendered as its own persistent
+            row pinned to the very top of the screen): "the suggested
+            topics pill should always appear at the very top of the screen
+            aligned in the center of the screen so that if user want to
+            start a conversation from there they can" -- was permanently
+            embedded in this greeting box, which per the chat-history check
+            in the getChatHistory effect above (setShowGreeting(false) when
+            history.length > 0) only renders at all for a user who's never
+            actually talked to the coach. A returning user with real
+            history skips this whole box, so the pill needed a home that
+            isn't inside it. */}
         {/* "Start a video practice" card REMOVED per product report ("in
             screenshot 3 remove the start a video practice card"). Was
             still reachable via the attach panel's own "Start Video
@@ -881,6 +942,34 @@ const Chat = memo(() => {
         />
       ) : (
         <>
+          {/* Product report: "the suggested topics pill should always
+              appear at the very top of the screen aligned in the center of
+              the screen so that if user want to start a conversation from
+              there they can" -- pulled out of renderChatEmpty's own box
+              (see that callback's own comment) into a real, always-mounted
+              row here instead, so it's reachable both for a first-time
+              user (still seeing the icon+headline greeting underneath it)
+              and a returning user with real history (who no longer sees
+              that greeting at all, per hasPriorHistory above -- this pill
+              is now their only on-screen way back into the topics list
+              without typing something first). Renders as a normal
+              (non-absolute) row directly under the header, so it just
+              pushes the message list down by its own height rather than
+              floating over content. */}
+          {topics.length > 0 ? (
+            <View style={styles.suggestedTopicsBar}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setTopicsSheetVisible(true)}
+                style={[styles.suggestedTopicsPill, styles.suggestedTopicsPillTop]}>
+                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                <Text category="h9" bold ml={6} style={{ color: theme['color-primary-500'] }}>
+                  {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
+                </Text>
+                <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
+              </TouchableOpacity>
+            </View>
+          ) : null}
           {/* Was a KeyboardAwareScrollView (scrollEnabled={false}, used only for
           its automatic keyboard-follow behavior, never for actual
           scrolling) — that's still a ScrollView, and GiftedChat renders its
@@ -1185,11 +1274,29 @@ const themedStyles = StyleService.create({
   // unset value here would fall back to the OS's own default TextInput
   // fill instead -- same reasoning the old textInputStyle prop used to
   // rely on, kept here now that this screen renders Composer directly).
+  // BUG FIX (product report: "you removed the input field? There is no
+  // where for the user to type" -- the composer was still in the render
+  // tree, just rendering at an invisible/collapsed height): gifted-chat's
+  // real Composer sizes its TextInput off a style array that ends with
+  // `[..., textInputStyle, {height: composerHeight}]` (see
+  // node_modules/react-native-gifted-chat/lib/Composer.js) -- `composerHeight`
+  // is a value GiftedChat itself tracks via onContentSizeChange callbacks
+  // tied to its OWN default single-row <InputToolbar> layout. This screen
+  // bypasses <InputToolbar> entirely for the 2-row card (see
+  // renderInputToolbar's own comment), so that internal state was never
+  // reliably reaching a real, non-zero value in this custom layout --
+  // rendering a TextInput with no usable height, i.e. invisible, with
+  // nothing to type into and no visible placeholder even though one was
+  // being passed. `minHeight` here is a hard floor underneath whatever
+  // `composerHeight` resolves to, independent of GiftedChat's own
+  // tracking -- guarantees the field always has real, tappable, visible
+  // room no matter what.
   chatTextInput: {
     color: "text-basic-color",
     backgroundColor: "transparent",
     fontSize: 15,
     lineHeight: 20,
+    minHeight: 24,
     paddingHorizontal: 0,
     paddingTop: 0,
     paddingBottom: 0,
@@ -1340,6 +1447,19 @@ const themedStyles = StyleService.create({
   },
   suggestedTopicsPillChevron: {
     marginLeft: 2,
+  },
+  // Persistent top-of-screen placement (see the JSX comment right above
+  // where this renders) -- the pill's own `marginTop: 28` above was tuned
+  // for sitting further down inside the vertically-centered greeting box;
+  // zeroed out here since suggestedTopicsBar already supplies its own
+  // top spacing for this different placement.
+  suggestedTopicsPillTop: {
+    marginTop: 0,
+  },
+  suggestedTopicsBar: {
+    alignItems: 'center',
+    paddingTop: 10,
+    paddingBottom: 6,
   },
   // Bottom sheet the pill above opens (see that TouchableOpacity's own
   // comment + the Modal further down this file for the full "why"). Same
