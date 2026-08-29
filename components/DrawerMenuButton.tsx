@@ -1,8 +1,7 @@
 import React, {memo} from 'react';
 import {TouchableOpacity, StyleSheet} from 'react-native';
 import {Icon, useTheme} from '@ui-kitten/components';
-import {DrawerActions} from '@react-navigation/native';
-import {useNavigation} from '@react-navigation/native';
+import {useAppDrawer} from 'navigation/DrawerContext';
 
 // SYMPHONY REDESIGN (drawer nav shell) — the app's bottom tab bar is gone,
 // replaced by a left drawer (Home/Chat/More — see navigation/MainDrawer.tsx)
@@ -11,16 +10,21 @@ import {useNavigation} from '@react-navigation/native';
 // src/more/MoreSrc.tsx), matching the reference app's own header layout
 // ("☰" top-left on every main screen).
 //
-// `navigation.dispatch(DrawerActions.openDrawer())` rather than a plain
-// `navigation.openDrawer()` call — these 3 screens are all nested several
-// navigators deep under the actual Drawer.Navigator (e.g. HomeSrc sits
-// inside HomeStackNavigator, which sits inside the Drawer's own "Home"
-// screen), so they don't have a drawer-flavored `navigation` object
-// directly. `dispatch` with a drawer-specific action bubbles UP the
-// navigation tree automatically until it reaches an ancestor navigator that
-// can actually handle it (the Drawer), which is the standard React
-// Navigation pattern for this exact "deeply nested screen needs to control
-// an ancestor navigator" case — no manual `getParent()` chain needed.
+// `useAppDrawer().open()` rather than react-navigation's
+// `navigation.dispatch(DrawerActions.openDrawer())` — this app does NOT use
+// @react-navigation/drawer (see navigation/DrawerContext.tsx's own top
+// comment for the full story: that package's last v6 release is
+// structurally incompatible with this app's installed
+// react-native-reanimated@~4.3.2, both of its internal implementations
+// being dead ends). The drawer here is a small custom Context
+// (navigation/DrawerContext.tsx) paired with a custom sliding overlay
+// (components/AppDrawerOverlay.tsx), rendered as a sibling of the screen
+// navigator rather than as an ancestor drawer navigator — so there's no
+// drawer-flavored navigator anywhere in the tree for a `dispatch` action to
+// bubble up to. `useAppDrawer()` reaches that Context directly regardless of
+// how deeply nested the calling screen is (HomeSrc sits inside
+// HomeStackNavigator, which sits inside MainDrawer's own "Home" tab screen,
+// same nesting depth as before), the same way `useNavigation()` did.
 //
 // Not built on top of `components/NavigationAction.tsx` — that component
 // hardcodes `pack="assets"` (this app's own bespoke icon set, PNG-backed),
@@ -29,14 +33,11 @@ import {useNavigation} from '@react-navigation/native';
 // lucide-react-native's vector `Menu` icon — no new binary asset needed),
 // so this button renders that directly.
 const DrawerMenuButton = memo(() => {
-  const navigation = useNavigation();
+  const {open} = useAppDrawer();
   const theme = useTheme();
-  const onPress = React.useCallback(() => {
-    navigation.dispatch(DrawerActions.openDrawer());
-  }, [navigation]);
   return (
     <TouchableOpacity
-      onPress={onPress}
+      onPress={open}
       activeOpacity={0.7}
       hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
       style={styles.button}>

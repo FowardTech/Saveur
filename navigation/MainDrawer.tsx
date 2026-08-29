@@ -2,11 +2,7 @@ import React, {memo} from 'react';
 import {AppState, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
-import {
-  createDrawerNavigator,
-  DrawerContentComponentProps,
-} from '@react-navigation/drawer';
-import {CommonActions} from '@react-navigation/native';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import Text from 'components/Text';
 import useLayout from 'hooks/useLayout';
@@ -27,6 +23,9 @@ import VerifyEmailGate from 'src/auth/VerifyEmailGate';
 import ProLockGate from 'components/ProLockGate';
 import {AuthContext} from '../AuthContext';
 import {MainBottomTabStackParamList} from './types';
+import {navigationRef} from './navigationRef';
+import {DrawerProvider, useAppDrawer} from './DrawerContext';
+import AppDrawerOverlay from 'components/AppDrawerOverlay';
 
 // SYMPHONY REDESIGN: replaces the old bottom tab bar (see this file's own
 // git history — the previous implementation lived at ./MainBottomTab.tsx,
@@ -36,7 +35,22 @@ import {MainBottomTabStackParamList} from './types';
 // screenshots... home icon, chat icon, a more icon that leads to the
 // settings screen."
 //
-// Screen names/structure inside this navigator are UNCHANGED from the old
+// NOT built on @react-navigation/drawer — see navigation/DrawerContext.tsx's
+// own top comment for the full story: that package's last-ever v6 release
+// (6.7.2) has two internal implementations, and BOTH are dead ends against
+// this app's installed react-native-reanimated@~4.3.2 ("legacy" explicitly
+// throws on any Reanimated 3+ install; "modern" imports
+// `useAnimatedGestureHandler`, a hook Reanimated 4 removed entirely — real
+// crash confirmed on-device, then confirmed structurally via grepping
+// node_modules for both). Instead, this is a plain `createBottomTabNavigator`
+// (the exact same, already-proven navigator type the old bottom tab bar
+// used) with its own visual tab bar hidden (`tabBar={() => null}`), wrapped
+// in a small custom `<DrawerProvider>` (navigation/DrawerContext.tsx) whose
+// open/close state drives `<AppDrawerOverlay>` (components/AppDrawerOverlay.tsx
+// — the actual sliding panel, animated with Reanimated's current,
+// non-deprecated APIs only).
+//
+// Screen names/structure inside the tab navigator are UNCHANGED from the old
 // bottom-tab version on purpose — Home/Practice/Coach/Interviews/Profile,
 // same components, same gating logic. React Navigation resolves a screen
 // by name by walking UP the tree the same way regardless of whether the
@@ -62,7 +76,7 @@ const CoachProLockGate = () => {
   );
 };
 
-const Drawer = createDrawerNavigator<MainBottomTabStackParamList>();
+const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 
 // The 3 visible drawer rows (product request: "home icon, chat icon, a
 // more icon"). `route` is the underlying screen name (unchanged from the
@@ -70,8 +84,14 @@ const Drawer = createDrawerNavigator<MainBottomTabStackParamList>();
 // are the drawer-facing rename. Badge is only ever set on "More" (see
 // menuBadgeCount below), same aggregated Job Alerts/Career Events/Daily
 // Industry News/Weekly Career Report count the old Menu tab icon showed.
+// Deliberately narrowed to the 3 literal routes actually offered here
+// (rather than `keyof MainBottomTabStackParamList`) so onNavigate below can
+// switch on `route` and get real per-screen params-shape checking from
+// navigationRef.navigate's own discriminated-union typing, instead of a
+// generic keyof losing that narrowing.
+type DrawerRoute = 'Home' | 'Coach' | 'Profile';
 interface DrawerNavItem {
-  route: keyof MainBottomTabStackParamList;
+  route: DrawerRoute;
   label: string;
   icon: string;
   badge?: number;
@@ -90,11 +110,15 @@ const DRAWER_DIVIDER = 'rgba(255,255,255,0.08)';
 const DRAWER_ACTIVE_BG = 'rgba(0,99,248,0.22)';
 const DRAWER_ACCENT = '#3D8BFF';
 
-const CustomDrawerContent = memo((props: DrawerContentComponentProps) => {
+interface CustomDrawerContentProps {
+  activeRoute: keyof MainBottomTabStackParamList;
+  onNavigate: (route: DrawerRoute) => void;
+}
+
+const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContentProps) => {
   const {t} = useTranslation(['common']);
   const {top, bottom} = useLayout();
   const {profile, isPro} = React.useContext(AuthContext);
-  const activeRouteName = props.state.routes[props.state.index]?.name;
 
   const items: DrawerNavItem[] = [
     {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
@@ -106,10 +130,6 @@ const CustomDrawerContent = memo((props: DrawerContentComponentProps) => {
     },
   ];
 
-  const onNavigate = (route: keyof MainBottomTabStackParamList) => {
-    props.navigation.dispatch(CommonActions.navigate({name: route}));
-  };
-
   return (
     <View style={[styles.drawer, {backgroundColor: DRAWER_BG, paddingTop: top + 16, paddingBottom: bottom + 16}]}>
       <View style={styles.brandRow}>
@@ -120,7 +140,7 @@ const CustomDrawerContent = memo((props: DrawerContentComponentProps) => {
 
       <View style={styles.navList}>
         {items.map(item => {
-          const focused = activeRouteName === item.route;
+          const focused = activeRoute === item.route;
           return (
             <TouchableOpacity
               key={item.route}
@@ -177,10 +197,11 @@ const CustomDrawerContent = memo((props: DrawerContentComponentProps) => {
   );
 });
 
-const MainDrawer = memo(() => {
+const MainDrawerContent = memo(() => {
   const {isSignedIn, emailVerified, isPro} = React.useContext(AuthContext);
   const {visible, show, hide} = useModal();
   const {t} = useTranslation(['common']);
+  const {isOpen, close} = useAppDrawer();
   // Same "an unverified user can't use practice/coach/interview tools, but
   // Profile/More always stays reachable" gate the old bottom tab bar
   // enforced — see VerifyEmailGate.tsx.
@@ -212,14 +233,44 @@ const MainDrawer = memo(() => {
     };
   }, [isSignedIn]);
 
+  // Tracks which top-level screen is currently focused, for the custom
+  // drawer's own active-row highlight. Previously read straight off
+  // react-navigation's own DrawerContentComponentProps.state (the drawer
+  // content was a child of the Drawer.Navigator, with that state handed to
+  // it automatically) — now that the drawer content renders as a sibling
+  // overlay instead of a nested drawer screen (see this file's top
+  // comment), there's no such props object to read, so each Tab.Screen's
+  // own `focus` listener below updates this directly. Safe to seed from
+  // `initialTab` since this component doesn't mount until initialTab has
+  // resolved for a signed-in user (see the `if (isSignedIn && !initialTab)`
+  // guard below) — for a signed-out user it's simply unused (no drawer to
+  // show).
+  const [activeTab, setActiveTab] = React.useState<keyof MainBottomTabStackParamList>(initialTab ?? 'Home');
+
+  const onNavigate = React.useCallback(
+    (route: DrawerRoute) => {
+      if (route === 'Home') {
+        navigationRef.navigate('MainBottomTab', {screen: 'Home'});
+      } else if (route === 'Coach') {
+        navigationRef.navigate('MainBottomTab', {screen: 'Coach', params: undefined});
+      } else {
+        navigationRef.navigate('MainBottomTab', {screen: 'Profile', params: {screen: 'MoreSrc'}});
+      }
+      // The library-based drawer used to auto-close itself as part of its
+      // own internal navigate() handling — our overlay has no such built-in
+      // behavior, so closing after navigating has to be explicit here.
+      close();
+    },
+    [close],
+  );
+
   // Feedback-ready popup — used to trigger off the "Interviews" bottom-tab
   // icon becoming focused (see the old MainBottomTab.tsx's ButtonTab). Now
   // that Interviews is a hidden (non-drawer-listed) screen reached from
-  // More's menu instead of a visible tab icon, the trigger moves to a
-  // `listeners.focus` callback on that Drawer.Screen definition below —
-  // screen focus events fire the same way regardless of whether a screen
-  // has a visible nav icon, so this is a relocation, not a behavior
-  // change.
+  // More's menu instead of a visible tab icon, the trigger stays on that
+  // screen's own `listeners.focus` below — screen focus events fire the
+  // same way regardless of whether a screen has a visible nav icon, so
+  // this is unchanged behavior.
   const [feedbackNotif, setFeedbackNotif] = React.useState<NotificationProps | null>(null);
   const checkFeedbackNotification = React.useCallback(async () => {
     try {
@@ -269,59 +320,56 @@ const MainDrawer = memo(() => {
 
   return (
     <View style={styles.container}>
-      <Drawer.Navigator
+      <Tab.Navigator
         initialRouteName={initialTab ?? 'Home'}
-        // Drop the built-in header entirely — each of the 3 visible root
-        // screens (HomeSrc, Chat, MoreSrc) renders its own header with its
-        // own DrawerMenuButton to open this drawer (see that component's
-        // own comment on why `navigation.dispatch(DrawerActions.
-        // openDrawer())` is used there instead of relying on a
-        // react-navigation-provided header button).
-        screenOptions={{
-          headerShown: false,
-          drawerType: 'front',
-          overlayColor: 'rgba(0,0,0,0.4)',
-          // The root Stack navigator (AppContainer.tsx) already applies
-          // TransitionPresets.SlideFromRightIOS app-wide, which enables an
-          // edge-swipe "go back" PanGestureHandler on the LEFT edge of
-          // every screen — the same edge this drawer wants to open from.
-          // swipeEdgeWidth kept at RNGH's own default (~50px) is fine in
-          // practice since that root gesture only actually fires on
-          // screens with something to go back TO, but if a future report
-          // says the drawer won't open via edge-swipe on some screen,
-          // that stack-level gesture is the first thing to check (see
-          // AppContainer.tsx's own SystemDesignWhiteboard `gestureEnabled:
-          // false` override for the exact same class of conflict).
-        }}
-        drawerContent={props => <CustomDrawerContent {...props} />}>
-        <Drawer.Screen
+        // No built-in tab bar at all — each of the 3 visible root screens
+        // (HomeSrc, Chat, MoreSrc) renders its own header with its own
+        // DrawerMenuButton (see that component's own comment) to open the
+        // custom overlay drawer rendered below instead.
+        tabBar={() => null}
+        screenOptions={{headerShown: false}}>
+        <Tab.Screen
           name="Home"
           component={isGated ? VerifyEmailGate : HomeStackNavigator}
+          listeners={{focus: () => setActiveTab('Home')}}
         />
-        <Drawer.Screen
+        <Tab.Screen
           name="Coach"
           component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesNavigator}
+          listeners={{focus: () => setActiveTab('Coach')}}
         />
         {/* Hidden from the drawer's own visible list (see
             CustomDrawerContent above, which only ever renders Home/Coach/
             Profile) but still fully real, functional screens — reached via
             src/more/MoreSrc.tsx's "Practice Interviews"/"Applications"
             rows now that there's no bottom tab bar to put them on. */}
-        <Drawer.Screen
+        <Tab.Screen
           name="Practice"
           component={isGated ? VerifyEmailGate : FindScreen}
+          listeners={{focus: () => setActiveTab('Practice')}}
         />
-        <Drawer.Screen
+        <Tab.Screen
           name="Interviews"
           component={isGated ? VerifyEmailGate : RequestsBottomNavigator}
-          listeners={{focus: () => checkFeedbackNotification()}}
+          listeners={{
+            focus: () => {
+              setActiveTab('Interviews');
+              checkFeedbackNotification();
+            },
+          }}
         />
-        <Drawer.Screen
+        <Tab.Screen
           name="Profile"
           component={MoreNavigator}
-          listeners={{blur: () => refreshMenuBadges()}}
+          listeners={{
+            focus: () => setActiveTab('Profile'),
+            blur: () => refreshMenuBadges(),
+          }}
         />
-      </Drawer.Navigator>
+      </Tab.Navigator>
+      <AppDrawerOverlay visible={isOpen} onRequestClose={close}>
+        <CustomDrawerContent activeRoute={activeTab} onNavigate={onNavigate} />
+      </AppDrawerOverlay>
       <ModalRequest
         visible={visible}
         show={show}
@@ -335,6 +383,12 @@ const MainDrawer = memo(() => {
     </View>
   );
 });
+
+const MainDrawer = memo(() => (
+  <DrawerProvider>
+    <MainDrawerContent />
+  </DrawerProvider>
+));
 
 export default MainDrawer;
 
