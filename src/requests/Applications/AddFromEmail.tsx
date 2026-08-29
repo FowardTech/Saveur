@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {Alert, View} from 'react-native';
-import {TopNavigation, StyleService, useStyleSheet, useTheme, Input, Icon, Spinner} from '@ui-kitten/components';
+import {TopNavigation, StyleService, useStyleSheet, Input, Button, Spinner} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
 import Flex from 'components/Flex';
+import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import {EmailConnectionProps, CalendarConnectionProps} from 'constants/Types';
@@ -19,6 +20,29 @@ import {EmailProvider} from 'services/emailConnectionService';
 import * as calendarConnectionService from 'services/calendarConnectionService';
 import {CalendarProvider} from 'services/calendarConnectionService';
 import * as configService from 'services/configService';
+
+// SYMPHONY REDESIGN follow-up (product request, with reference screenshot:
+// "The connect to google gmail, calendar, outlook mail and calendar should
+// be like cards... Make sure to add the real google logo and outlook logos
+// just like the way it is in the screenshot") — real brand marks via the
+// same geticon.dev lookup CompanyLogoAvatar already uses for employer
+// logos elsewhere in this app (see that component's own comment / Saveur-
+// Backend's company_logo_service.py for why geticon.dev specifically).
+// Built client-side here rather than through a backend call since these 4
+// providers are fixed constants, not per-user data — no round trip
+// needed. Google serves distinct per-product favicons off its own
+// subdomains (mail.google.com vs calendar.google.com), which is what
+// actually gets Gmail's red icon and Calendar's own icon instead of one
+// generic Google "G" for both; Outlook doesn't split as cleanly, so both
+// rows resolve to the same Outlook mark, which is still correct branding.
+const PROVIDER_LOGO_DOMAIN: Record<'gmail' | 'outlook_mail' | 'google_calendar' | 'outlook_calendar', string> = {
+  gmail: 'mail.google.com',
+  outlook_mail: 'outlook.com',
+  google_calendar: 'calendar.google.com',
+  outlook_calendar: 'outlook.com',
+};
+const providerLogoUrl = (key: keyof typeof PROVIDER_LOGO_DOMAIN) =>
+  `https://geticon.dev/?url=${PROVIDER_LOGO_DOMAIN[key]}`;
 
 // Premium Job Tracker feature (product follow-up: "auto-detect status
 // changes by scanning the user's inbox... the direct answer to 'why pay for
@@ -43,7 +67,6 @@ import * as configService from 'services/configService';
 // reasoning as job_alerts' own two-switch design on the backend).
 const AddFromEmail = memo(() => {
   const {goBack, navigate} = useNavigation<NavigationProp<RootStackParamList>>();
-  const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['request', 'common']);
 
@@ -163,39 +186,65 @@ const AddFromEmail = memo(() => {
     }
   };
 
-  const renderRow = (opts: {
+  // SYMPHONY REDESIGN follow-up -- see the module-level comment above
+  // PROVIDER_LOGO_DOMAIN for the full "why cards + real logos" story. Was
+  // a single shared card with plain divided rows (one email-outline glyph
+  // reused for all 4 providers) -- now each provider is its OWN card with
+  // its real brand mark, a one-line description, and a real bordered
+  // Button (matching the reference screenshot) instead of a text link.
+  const renderConnectorCard = (opts: {
+    logoKey: keyof typeof PROVIDER_LOGO_DOMAIN;
     label: string;
+    subtitle: string;
     conn: EmailConnectionProps | CalendarConnectionProps | null;
     isConnecting: boolean;
     isDisconnecting: boolean;
     onConnect: () => void;
     onDisconnect: () => void;
   }) => (
-    <Flex justify="space-between" itemsCenter style={styles.providerRow}>
-      <Flex justify="flex-start" itemsCenter style={globalStyle.flexOne}>
-        <Icon pack="eva" name="email-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
-        <Text category="h9" ml={10} numberOfLines={1} style={globalStyle.flexOne}>
+    <View style={[globalStyle.card, styles.providerCard]}>
+      <CompanyLogoAvatar
+        logoUrl={providerLogoUrl(opts.logoKey)}
+        companyName={opts.label}
+        size="medium"
+        shape="rounded"
+        fallbackIcon="building-outline"
+        style={styles.providerLogo}
+      />
+      <View style={globalStyle.flexOne}>
+        <Text category="h9" bold numberOfLines={1}>
+          {opts.label}
+        </Text>
+        <Text category="h10" status="placeholder" mt={2} numberOfLines={2}>
           {opts.conn?.isActive
             ? t('request:connect_inbox_connected_as', {defaultValue: 'Connected — {{email}}', email: opts.conn.emailAddress ?? opts.label})
-            : opts.label}
+            : opts.subtitle}
         </Text>
-      </Flex>
+      </View>
       {opts.conn?.isActive ? (
         opts.isDisconnecting ? (
           <Spinner size="small" />
         ) : (
-          <Text category="h10" status="danger" bold onPress={opts.onDisconnect}>
+          <Button
+            size="small"
+            appearance="outline"
+            status="danger"
+            onPress={opts.onDisconnect}>
             {t('request:disconnect', {defaultValue: 'Disconnect'})}
-          </Text>
+          </Button>
         )
       ) : opts.isConnecting ? (
         <Spinner size="small" />
       ) : (
-        <Text category="h10" status="link" bold onPress={opts.onConnect}>
+        <Button
+          size="small"
+          appearance="outline"
+          status="basic"
+          onPress={opts.onConnect}>
           {t('request:connect', {defaultValue: 'Connect'})}
-        </Text>
+        </Button>
       )}
-    </Flex>
+    </View>
   );
 
   const showOutlookMail = configService.isFeatureEnabled('outlook_inbox_scan');
@@ -205,8 +254,10 @@ const AddFromEmail = memo(() => {
   const anyConnectRowVisible = showOutlookMail || showGmail || showGoogleCalendar || showOutlookCalendar;
   const rows: React.ReactNode[] = [];
   if (showOutlookMail) {
-    rows.push(renderRow({
+    rows.push(renderConnectorCard({
+      logoKey: 'outlook_mail',
       label: t('request:connect_outlook', {defaultValue: 'Outlook'}),
+      subtitle: t('request:connect_outlook_subtitle', {defaultValue: 'Automatically detect application updates in your Outlook inbox.'}),
       conn: emailConnections?.find(c => c.provider === 'outlook') ?? null,
       isConnecting: connectingEmailProvider === 'outlook',
       isDisconnecting: disconnectingEmailProvider === 'outlook',
@@ -215,8 +266,10 @@ const AddFromEmail = memo(() => {
     }));
   }
   if (showGmail) {
-    rows.push(renderRow({
+    rows.push(renderConnectorCard({
+      logoKey: 'gmail',
       label: t('request:connect_gmail', {defaultValue: 'Gmail'}),
+      subtitle: t('request:connect_gmail_subtitle', {defaultValue: 'Automatically detect application updates in your Gmail inbox.'}),
       conn: emailConnections?.find(c => c.provider === 'gmail') ?? null,
       isConnecting: connectingEmailProvider === 'gmail',
       isDisconnecting: disconnectingEmailProvider === 'gmail',
@@ -225,8 +278,10 @@ const AddFromEmail = memo(() => {
     }));
   }
   if (showGoogleCalendar) {
-    rows.push(renderRow({
+    rows.push(renderConnectorCard({
+      logoKey: 'google_calendar',
       label: t('request:connect_google_calendar', {defaultValue: 'Google Calendar'}),
+      subtitle: t('request:connect_google_calendar_subtitle', {defaultValue: 'See interview invites and manage your schedule.'}),
       conn: calendarConnections?.find(c => c.provider === 'google') ?? null,
       isConnecting: connectingCalendarProvider === 'google',
       isDisconnecting: disconnectingCalendarProvider === 'google',
@@ -235,8 +290,10 @@ const AddFromEmail = memo(() => {
     }));
   }
   if (showOutlookCalendar) {
-    rows.push(renderRow({
+    rows.push(renderConnectorCard({
+      logoKey: 'outlook_calendar',
       label: t('request:connect_outlook_calendar', {defaultValue: 'Outlook Calendar'}),
+      subtitle: t('request:connect_outlook_calendar_subtitle', {defaultValue: 'See interview invites and manage your schedule.'}),
       conn: calendarConnections?.find(c => c.provider === 'outlook') ?? null,
       isConnecting: connectingCalendarProvider === 'outlook',
       isDisconnecting: disconnectingCalendarProvider === 'outlook',
@@ -270,14 +327,12 @@ const AddFromEmail = memo(() => {
                 defaultValue: 'Automatically track application emails and interview invites as they arrive — no copy-pasting. We only read job-related messages/events; everything else is left alone.',
               })}
             </Text>
-            <View style={[globalStyle.card, styles.connectCard]}>
-              {rows.map((row, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 ? <View style={styles.providerDivider} /> : null}
-                  {row}
-                </React.Fragment>
-              ))}
-            </View>
+            {/* Each provider is now its own card (see renderConnectorCard's
+                own comment) instead of one shared card with divided rows,
+                matching the reference screenshot. */}
+            {rows.map((row, i) => (
+              <React.Fragment key={i}>{row}</React.Fragment>
+            ))}
 
             <Flex justify="flex-start" itemsCenter mt={24} mb={12}>
               <View style={styles.orLine} />
@@ -329,16 +384,17 @@ const themedStyles = StyleService.create({
   content: {
     paddingBottom: 60,
   },
-  connectCard: {
+  // SYMPHONY REDESIGN follow-up (see renderConnectorCard's own comment) --
+  // was a single shared card (`connectCard`) with divided rows
+  // (`providerRow`/`providerDivider`); each provider is its own card now.
+  providerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
+    marginBottom: 12,
   },
-  providerRow: {
-    minHeight: 28,
-  },
-  providerDivider: {
-    height: 1,
-    backgroundColor: 'rgba(128,128,128,0.15)',
-    marginVertical: 12,
+  providerLogo: {
+    marginRight: 12,
   },
   orLine: {
     flex: 1,

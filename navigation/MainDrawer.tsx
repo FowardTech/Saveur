@@ -5,6 +5,7 @@ import {useTranslation} from 'react-i18next';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
 import Text from 'components/Text';
+import BrandWordmark from 'components/BrandWordmark';
 import useLayout from 'hooks/useLayout';
 import UserAvatar from 'components/UserAvatar';
 import ModalRequest from 'components/ModalRequest';
@@ -132,10 +133,17 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
 
   return (
     <View style={[styles.drawer, {backgroundColor: DRAWER_BG, paddingTop: top + 16, paddingBottom: bottom + 16}]}>
+      {/* BUG FIX (product report: "you just wrote the name of the app what
+          about the logo. You just wrote saveur but you did not place the
+          logo beside it") -- was bare "Saveur" text, no mark at all.
+          BrandWordmark already renders the real logo + wordmark together
+          (used the same way on Login.tsx/VerifyEmailGate.tsx) -- `markColor`
+          swaps in the transparent-background mark art (Images.logoMark)
+          tinted solid white instead of its default baked-in light-gray
+          badge, same "line logo on a colored surface" treatment
+          AppRatingModal.tsx already uses for its own dark background. */}
       <View style={styles.brandRow}>
-        <Text category="h5" bold style={{color: DRAWER_TEXT}}>
-          Saveur
-        </Text>
+        <BrandWordmark size={32} color={DRAWER_TEXT} markColor={DRAWER_TEXT} />
       </View>
 
       <View style={styles.navList}>

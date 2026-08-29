@@ -8,11 +8,26 @@ import {
   IMessage,
   Send,
   InputToolbarProps,
-  InputToolbar,
   SendProps,
   MessageImage,
   BubbleProps,
 } from "react-native-gifted-chat";
+// SYMPHONY REDESIGN follow-up (product report: "the input field is above
+// the plus icon and the voice pill" -- Symphony's own reference card is a
+// genuine 2-row layout: the real text field on its own row up top, the
+// "+"/Speak-pill/Send controls on a row below it). gifted-chat's own
+// <InputToolbar> (imported above) only ever lays those out in ONE row
+// (actions, composer, send, left to right -- see that package's own
+// InputToolbar.js), so matching the reference means not using
+// <InputToolbar> as the outer wrapper at all anymore; this screen builds
+// its own 2-row card in renderInputToolbar below and drops the real
+// gifted-chat Composer (the actual TextInput) into its top row directly.
+// Imported from this subpath rather than the package root because the
+// root index's own type exports are already broken for this whole
+// package in this app (see the 9 baseline "has no exported member"
+// errors on the import block above, pre-existing and untouched here) --
+// Composer.d.ts's own dedicated types resolve cleanly on their own.
+import { Composer as GiftedComposer, ComposerProps as GiftedComposerProps } from "react-native-gifted-chat/lib/Composer";
 import {
   Icon,
   StyleService,
@@ -495,47 +510,57 @@ const Chat = memo(() => {
   // reachable elsewhere in the app (Practice tab, MyProgress from other
   // entry points), just not from here anymore.
 
-  // SYMPHONY REDESIGN follow-up (product report, with 4 reference
-  // screenshots: "let it be like a card with box shadow containing the
-  // text field, the plus sign... and then the mic icon"). Was a plain
-  // background-basic-color-3 pill with a hairline divider ABOVE the whole
-  // toolbar and a separate 3-icon Composer row absolutely positioned to
-  // its left via a marginLeft-reservation hack (see Composer.tsx's own
-  // git history) — that whole arrangement is what read as "clumsy" per
-  // the product report. Now one real card: `primaryStyle` itself carries
-  // the white fill, rounded corners, hairline border, and shadow (see
-  // globalStyle.card's own tokens), with the "+" trigger (renderActions)
-  // and the Speak pill/Send icon (renderSend) as normal row siblings of
-  // the text input inside it — no more absolute positioning or manual
-  // width reservation needed. `containerStyle` is just transparent
-  // padding around that card now, not a bar of its own, so the old
-  // top-divider hairline is gone too (a floating card doesn't need one).
+  // SYMPHONY REDESIGN follow-up ROUND 2 (product report, direct pixel
+  // comparison against the reference: "the text box does not have a
+  // height but the one in symphony has a height... the input field is
+  // above the plus icon and the voice pill and the box has a box shadow
+  // and the border radius is not 999 round"). Round 1 (see git history)
+  // put the "+"/text field/Speak pill/Send icon all on ONE row inside
+  // gifted-chat's own <InputToolbar> (primaryStyle carrying a pill-radius
+  // card) -- closer to the reference than the original 3-loose-icons
+  // layout, but still not a real match: Symphony's own card is a genuine
+  // TWO-row layout (the text field alone on top, controls below), has
+  // real height/padding rather than a thin pill, a moderate corner radius
+  // instead of a full pill, and a real drop shadow. gifted-chat's
+  // <InputToolbar> component only ever lays actions/composer/send out in
+  // one row (see that package's own InputToolbar.js) -- there's no prop
+  // to split them across two rows -- so matching the reference means not
+  // using <InputToolbar> as the wrapper at all: this drops gifted-chat's
+  // own real Composer (the actual TextInput, imported above from its own
+  // subpath) into a hand-built 2-row card instead.
   const renderInputToolbar = React.useCallback(
-    (props: InputToolbarProps) => (
-      <InputToolbar
-        {...props}
-        containerStyle={{
-          backgroundColor: "transparent",
-          borderTopWidth: 0,
-        }}
-        primaryStyle={[
-          {
-            alignItems: "center",
-            backgroundColor: theme["background-basic-color-2"],
-            borderRadius: 24,
-            borderWidth: 1,
-            borderColor: theme["border-card-default"],
-            marginHorizontal: 16,
-            paddingLeft: 4,
-            paddingRight: 8,
-            marginTop: 8,
-            marginBottom: Platform.OS === "android" ? 8 : 24,
-          },
-          globalStyle.shadowFade,
-        ]}
-        renderActions={() => <Composer onShowAction={() => setShowAction(!showAction)} />}
-      />
-    ),
+    (props: InputToolbarProps) => {
+      // `props` here is gifted-chat's merged runtime object (InputToolbar
+      // props + Composer props + onSend/text/onTextChanged/etc -- see
+      // node_modules/react-native-gifted-chat/lib/GiftedChat/index.js's
+      // own inputToolbarProps construction). The exported InputToolbarProps
+      // TYPE doesn't declare the Composer fields even though the real
+      // object always has them at runtime (this package's whole type
+      // surface is already broken in this app -- see the 9 baseline
+      // "has no exported member" errors on the import block above), so a
+      // cast is needed to hand it to the real Composer/Send below with
+      // the fields they actually expect.
+      const composerProps = props as unknown as GiftedComposerProps;
+      const sendProps = props as unknown as SendProps<IMessage>;
+      return (
+        <View
+          style={[
+            styles.chatInputCard,
+            { marginBottom: Platform.OS === "android" ? 8 : 24 },
+          ]}>
+          <GiftedComposer
+            {...composerProps}
+            textInputStyle={styles.chatTextInput}
+            placeholderTextColor={theme["text-hint-color"]}
+          />
+          <View style={styles.chatInputControlsRow}>
+            <Composer onShowAction={() => setShowAction(!showAction)} />
+            <View style={globalStyle.flexOne} />
+            {renderSend(sendProps)}
+          </View>
+        </View>
+      );
+    },
     // BUG FIX (product report, screenshot: "This is displaying as dark
     // mode in light mode"): `theme` was missing from this dependency
     // list, so this callback's colors were frozen at whatever theme was
@@ -546,7 +571,7 @@ const Chat = memo(() => {
     // ThemeContext's toggleTheme) kept seeing the old dark
     // background-basic-color-2/3 fill on this input row forever, even
     // though every other theme-aware surface on the screen updated fine.
-    [showAction, Platform.OS, theme]
+    [showAction, Platform.OS, theme, styles, renderSend]
   );
 
   // Tapping a coach reply's "Learn more about X" chip (see renderCustomView
@@ -868,23 +893,12 @@ const Chat = memo(() => {
               renderChatEmpty={renderChatEmpty}
               messagesContainerStyle={{ paddingBottom: 32 }}
               renderInputToolbar={renderInputToolbar}
-              // gifted-chat's Composer has its own hardcoded default text color
-              // (dark gray/black) with no idea this app has a dark theme --
-              // without these it renders unreadable dark-on-dark text in the
-              // input pill. textInputStyle covers what's actually typed;
-              // placeholderTextColor covers the empty-state hint text.
-              // BUG FIX (product report, with screenshot: "this is not
-              // looking good in dark mode" — the input pill itself): the
-              // real TextInput gifted-chat renders here has no
-              // backgroundColor of its own in the library's source, so it
-              // was falling back to the OS's own default fill (a light/
-              // white Android EditText background) instead of showing
-              // renderInputToolbar's primaryStyle color through it.
-              // `transparent` lets that dark `background-basic-color-3`
-              // pill color show through cleanly in both themes, rather than
-              // duplicating that theme token in a second place here.
-              textInputStyle={{ color: theme['text-basic-color'], backgroundColor: 'transparent' }}
-              placeholderTextColor={theme['text-hint-color']}
+              // textInputStyle/placeholderTextColor REMOVED from here --
+              // renderInputToolbar's own JSX now sets both directly on the
+              // real Composer it renders (styles.chatTextInput / theme
+              // text-hint-color), since this screen builds that whole card
+              // itself now instead of delegating to gifted-chat's own
+              // <InputToolbar> (see that callback's ROUND 2 comment).
               // BUG FIX (product report: "Coach Text chat is not translating —
               // renders in English even when the language is changed"): with no
               // `placeholder` prop, gifted-chat's Composer falls back to its own
@@ -1118,6 +1132,62 @@ const themedStyles = StyleService.create({
     backgroundColor: "color-primary-500",
     marginRight: 8,
   },
+  // SYMPHONY REDESIGN follow-up ROUND 2 -- see renderInputToolbar's own
+  // comment for the full "why this replaced <InputToolbar>" story. This
+  // is the whole card: real height (padding, not a thin pill), a
+  // moderate corner radius (NOT 999/fully round -- product report was
+  // explicit about this), and a REAL drop shadow. Every other card
+  // surface in this app currently uses globalStyle.shadowFade, which is a
+  // deliberate app-wide no-op per that token's own comment (a prior flat-
+  // design pass) -- this card is a direct, explicit exception to that,
+  // since the product report specifically asked for a visible box shadow
+  // here to match the reference, not the app's usual flat look.
+  chatInputCard: {
+    backgroundColor: "background-basic-color-2",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "border-card-default",
+    marginHorizontal: 16,
+    marginTop: 8,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 8,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  // The real gifted-chat Composer (the actual TextInput), now on its own
+  // top row inside chatInputCard instead of a separate gray pill --
+  // product report: "the input field should not be gray since the input
+  // box is white let it be white too." `backgroundColor: transparent`
+  // lets the white card fill show through directly (gifted-chat's
+  // Composer has no background of its own in the library's source, so an
+  // unset value here would fall back to the OS's own default TextInput
+  // fill instead -- same reasoning the old textInputStyle prop used to
+  // rely on, kept here now that this screen renders Composer directly).
+  chatTextInput: {
+    color: "text-basic-color",
+    backgroundColor: "transparent",
+    fontSize: 15,
+    lineHeight: 20,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+    marginTop: 0,
+    marginBottom: 0,
+  },
+  // Controls row (product report: "the input field is above the plus
+  // icon and the voice pill") -- sits BELOW chatTextInput now, holding
+  // the "+" trigger on the left and the Speak pill/Send icon on the
+  // right, instead of all four elements sharing one row with the text
+  // field.
+  chatInputControlsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+  },
   containerSend: {
     backgroundColor: "transparent",
   },
@@ -1154,11 +1224,18 @@ const themedStyles = StyleService.create({
     paddingVertical: 12,
     paddingHorizontal: 8
   },
+  // BUG FIX (product report: "the send icon is supposed to be color
+  // should be dark gray not blue") -- was button-basic-color (brand
+  // blue). text-hint-color (#5C5C78) is this app's real "dark gray" text
+  // token (distinct from color-basic-600's lighter #9393AA, which the "+"
+  // icon uses -- see Composer.tsx). marginBottom/marginRight dropped:
+  // those were tuned for the old absolutely-positioned pill layout: this
+  // icon now sits as a plain, vertically-centered sibling inside
+  // chatInputControlsRow instead.
   iconSend: {
-    tintColor: "button-basic-color",
+    tintColor: "text-hint-color",
     ...globalStyle.icon24,
-    marginBottom: 10,
-    marginRight: 12,
+    marginLeft: 8,
   },
   coachAvatar: {
     marginRight: 4,

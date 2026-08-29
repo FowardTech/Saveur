@@ -750,7 +750,11 @@ const HomeSrc = memo(() => {
         // gradient icon; the roadmap-step and generic-coach-nudge
         // branches below keep their existing tinted eva icon, since the
         // product ask specifically named "Daily Challenge."
-        heroIconImage: Images.iconListStack,
+        // BUG FIX (product report: "the explore is the one thats supposed
+        // to have the list icon and the daily challenge supposed to have
+        // the lightning icon you need to correct that") -- was
+        // iconListStack; swapped with Explore's own icon below.
+        heroIconImage: Images.iconLightning,
         onPress: () => navigate('DailyChallenge'),
       };
     }
@@ -982,7 +986,7 @@ const HomeSrc = memo(() => {
             components/ActionCard.tsx's `iconImage` prop). */}
         <ActionCard
           icon="message-circle-outline"
-          iconImage={Images.iconLightning}
+          iconImage={Images.iconCoachChatBlue}
           title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
           subtitle={t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' }).toString()}
           onPress={onPressCoachSend}
@@ -1000,9 +1004,14 @@ const HomeSrc = memo(() => {
           onPress={onPressPractice}
         />
 
+        {/* BUG FIX (product report: "the explore is the one thats supposed
+            to have the list icon and the daily challenge supposed to have
+            the lightning icon you need to correct that") -- was
+            iconCoachChatBlue, swapped with the Daily Challenge card's
+            heroIconImage above. */}
         <ActionCard
           icon="grid-outline"
-          iconImage={Images.iconCoachChatBlue}
+          iconImage={Images.iconListStack}
           title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
           subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
           onPress={onPressExploreMore}
