@@ -10,6 +10,7 @@ import {
 import {useTranslation} from 'react-i18next';
 
 import Container from 'components/Container';
+import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import keyExtractor from 'utils/keyExtractor';
 import BasicTabBar from 'components/BasicTabBar';
@@ -64,7 +65,16 @@ const RequestsSrc = memo(() => {
 
   return (
     <Container style={styles.container}>
-      <TopNavigation title={t('request:title').toString()} />
+      {/* BUG FIX (product report: "check any other screen that does not
+          have a back button... since we have remove the bottom tab
+          navigation") -- same root cause/fix as FindScreen.tsx's own
+          comment: this is the "Interviews" tab (Applications/Practice
+          History), reached only via MoreSrc.tsx's row tap now that the
+          bottom tab bar is gone, previously with no way back. Plain
+          default goBack() resolves at the hidden tab navigator's own
+          level (backBehavior="history"), returning to whichever of
+          Home/Coach/Profile was open before. */}
+      <TopNavigation title={t('request:title').toString()} accessoryLeft={() => <NavigationAction />} />
       <FlatList
         renderItem={() => <></>}
         stickyHeaderIndices={[0]}

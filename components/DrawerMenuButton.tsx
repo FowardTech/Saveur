@@ -38,11 +38,15 @@ import {useAppDrawer} from 'navigation/DrawerContext';
 // fill — now a real white/dark-elevated circular button (background-
 // basic-color-2, same "always white" card-surface token used everywhere
 // else this pass), matching the reference app's own filled hamburger
-// button. `marginTop: -2` is a small optical nudge: a filled circle reads
-// visually lower than a bare glyph of the same box size next to a text
-// baseline (the greeting/title text it sits beside in HeaderHome.tsx/
-// Chat.tsx/MoreSrc.tsx all already place this in the same row via
-// itemsCenter), so this pulls it back up to read as level.
+// button.
+//
+// A same-direction "-2 optical nudge" was tried here first (moving the
+// whole button up slightly), but the follow-up report ("the text is not
+// leveling with the menu thumbnail... the text will be moving up above
+// the level of the menu thumbnail") makes clear the greeting TEXT is what
+// sits too low, not this button — nudging the button up as well would
+// only have widened that gap. Reverted back to a plain, unshifted button;
+// the real fix is on the text side (see HeaderHome.tsx's own comment).
 const DrawerMenuButton = memo(() => {
   const {open} = useAppDrawer();
   const theme = useTheme();
@@ -70,7 +74,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -2,
   },
   icon: {
     width: 22,

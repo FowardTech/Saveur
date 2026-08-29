@@ -65,16 +65,19 @@ const HeaderHome = memo(
             below h1 (see components/Text.tsx's category union — there's no
             h3/h4 gap to fill, h1 at 34px reads too large for a two-line
             wrapped greeting on a narrow screen). */}
-        <View style={globalStyle.flexOne}>
-          {/* SYMPHONY REDESIGN follow-up (product report: "the greeting is
-              too big you need to reduce it to at least 17px") -- was 26px
-              (see the bug-fix history above, itself a pin-back from an
-              even larger 30px app-wide bump). Matches the reference app's
-              own modest, single-line greeting size instead of a big bold
-              hero headline. category="h2"/bold kept (weight/family), only
-              the explicit size/line-height overridden -- same override
-              mechanism the previous pin-back already established. */}
-          <Text category="h2" bold fontSize={17} lineHeight={24}>
+        <View style={[globalStyle.flexOne, styles.greetingWrap]}>
+          {/* SYMPHONY REDESIGN follow-up (product report: "you still have
+              to reduce the size of the greeting... the text is not
+              leveling with the menu thumbnail"). Two separate fixes: (1)
+              size down again, 17 -> 15 (was already pinned back once from
+              26px, still read as too big) and (2) the wrapping View below
+              gets a small negative marginTop (see `greetingWrap`) to pull
+              the whole text block up level with DrawerMenuButton's 40px
+              icon circle -- a bold custom font's own internal leading sits
+              the glyphs visibly lower inside a same-height box than a
+              perfectly centered icon does, which itemsCenter alone can't
+              correct for. */}
+          <Text category="h2" bold fontSize={15} lineHeight={19}>
             {t(greetingKey())}
             {name ? `, ${name}` : ''}
           </Text>
@@ -131,6 +134,15 @@ const HeaderHome = memo(
 export default HeaderHome;
 
 const themedStyles = StyleService.create({
+  // SYMPHONY REDESIGN follow-up (explicit product request: "the text is
+  // not leveling with the menu thumbnail... the text will be moving up
+  // above the level of the menu thumbnail") -- pulls the greeting block up
+  // relative to DrawerMenuButton's 40px icon circle, which itemsCenter
+  // alone doesn't fully account for once a bold custom font's own internal
+  // leading is factored in (see the render call site's own comment).
+  greetingWrap: {
+    marginTop: -4,
+  },
   notification: {
     // Was 14x14 with a 14px-font label -- the digit(s) were larger than
     // their own badge, so counts (especially "9+") clipped. 20x20 is the

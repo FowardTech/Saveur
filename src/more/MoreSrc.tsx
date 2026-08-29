@@ -592,17 +592,20 @@ const MoreSrc = memo(() => {
     },
   ];
   return (
-    // Product report: "I want the menu screen background to be completely
-    // white" — Container defaults to level="3" (light gray, #F0F0F0 — see
-    // Container.tsx's own comment on why: white cards need a gray backdrop
-    // to read as "raised" elsewhere in the app). Scoped to just this screen
-    // via an explicit level override rather than touching Container's
-    // default (that gray-vs-white call was already made deliberately, and
-    // reverted once before, for every OTHER screen) — level="2" resolves to
-    // color-basic-100 (#FFFFFF) in light mode. Dark mode is unaffected
-    // (Container's own default already uses level="1", its correct base
-    // surface, whenever the app theme is dark).
-    <Container style={styles.container} level={appTheme === 'dark' ? undefined : '2'}>
+    // SYMPHONY REDESIGN follow-up (explicit product request: "give the
+    // settings screen the same app background so that the white cards can
+    // be seen"). Was forced to level="2" (solid white) by an earlier,
+    // since-superseded product report ("I want the menu screen background
+    // to be completely white") — that made sense back when this screen's
+    // rows were a single flat list with no cards of their own, but now
+    // every row IS its own white card (see rowCard's own comment above),
+    // so a white screen background left them with zero contrast, exactly
+    // the bug reported. Back to Container's own default now (level="3",
+    // light gray in light mode / level="1" in dark mode — see
+    // Container.tsx's own comment), same background every other screen in
+    // the app uses, so these white cards read as raised cards again
+    // instead of disappearing into the page.
+    <Container style={styles.container}>
       <Content padder contentContainerStyle={styles.content}>
         {/* SYMPHONY REDESIGN follow-up (explicit product request: "move
             the menu thumbnail icon up to be on the same level with the

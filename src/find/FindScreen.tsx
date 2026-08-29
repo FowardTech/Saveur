@@ -15,6 +15,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
+import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { DATA_INTERVIEW_TYPES } from 'constants/Data';
@@ -236,7 +237,23 @@ const FindScreen = memo(() => {
 
   return (
     <Container style={styles.container}>
-      <TopNavigation title={t('find:title')} />
+      {/* BUG FIX (product report: "the practice screen does not have a back
+          button how do you want a user to go back to home" -- since the
+          bottom tab bar was replaced by a left drawer, this screen and
+          RequestsSrc.tsx (Interviews/Applications) are the only 2 tabs
+          inside the same hidden tab navigator that AREN'T one of the 3
+          drawer-visible root screens (Home/Chat/More, each of which draws
+          its own DrawerMenuButton) -- reached only via a row tap from
+          src/more/MoreSrc.tsx, with previously no way back at all. Plain
+          default goBack() (no onPress override) resolves at this tab
+          navigator's own level per React Navigation's default
+          backBehavior="history" for bottom-tabs (see navigation/
+          MainDrawer.tsx's Tab.Navigator -- no override there), which
+          switches back to whichever of Home/Coach/Profile was actually
+          open right before the user tapped into Practice -- not a fixed
+          "always go to Home" jump, but the correct "undo that last tab
+          switch" back. */}
+      <TopNavigation title={t('find:title')} accessoryLeft={() => <NavigationAction />} />
       <Content contentContainerStyle={styles.content} padder>
         {/* Product request: "Take the upcoming session card where user can
             schedule session and place it at the top of the practice
