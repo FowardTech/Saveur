@@ -13,9 +13,19 @@ interface AttachItemProps {
   title: string;
   _onPress?(): void;
   icon: string;
+  bg: string;
 }
 
-const AttachItem = memo(({ title, _onPress, icon }: AttachItemProps) => {
+// SYMPHONY REDESIGN follow-up (explicit product request, with reference
+// screenshot: "The icons in screenshot 2 should have a background of
+// different colors too and the container housing them looks so bad and i
+// want them to pop"). Was one flat, identical dark-navy fill (#272e3b) on
+// all three of this row's icons (see the render call site's own history
+// comment on why that color was picked in the first place) — every icon
+// now takes its own `bg` color instead, same vivid solid-fill treatment
+// components/OnboardingCluster.tsx's badges use, so the row reads as 3
+// distinct actions instead of one monotone block.
+const AttachItem = memo(({ title, _onPress, icon, bg }: AttachItemProps) => {
   const styles = useStyleSheet(themedStyles);
 
   return (
@@ -24,14 +34,9 @@ const AttachItem = memo(({ title, _onPress, icon }: AttachItemProps) => {
       activeOpacity={0.54}
       onPress={_onPress}
     >
-      {/* Product report: "the attach icon, start a video practice icon and
-          the view my progress icon should all be in this background
-          color: #272e3b" -- was three different pastel per-icon tints
-          (facebook/twitter/success brand colors, repurposed here). One
-          flat literal fill for all three now, per icon prop. */}
       <ImageBackground
         source={Images.fill}
-        imageStyle={{ tintColor: '#272e3b' }}
+        imageStyle={{ tintColor: bg }}
         style={styles.logo}
       >
         <Icon pack="assets" name={icon} style={styles.icon} />

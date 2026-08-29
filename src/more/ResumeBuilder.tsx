@@ -30,7 +30,7 @@ import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
-import { accentColorForKey, accentTintBg } from 'utils/accentPalette';
+import { accentColorForKey } from 'utils/accentPalette';
 
 // BUG FIX (product report: "resume builder screen — some content still in
 // English regardless of language"): these titles were plain hardcoded
@@ -246,11 +246,20 @@ const ResumeBuilder = memo(() => {
               activeOpacity={0.7}
               onPress={() => onImport(opt.key)}
               style={styles.importCard}>
-              <View style={[styles.importIconWrap, { backgroundColor: accentTintBg(accent) }]}>
+              {/* SYMPHONY follow-up (explicit product request: "I love the
+                  way you gave the icons in this onboarding different color
+                  backgrounds. I want the icons in the Resume builder...
+                  to have backgrounds like that") — was a light ~12% tint
+                  behind a colored icon (accentTintBg); now a solid fill
+                  behind a white icon, matching components/
+                  OnboardingCluster.tsx's badge treatment exactly. Same
+                  ACCENT_PALETTE/accentColorForKey so each import source
+                  still keeps a stable color, just rendered bolder. */}
+              <View style={[styles.importIconWrap, { backgroundColor: accent }]}>
                 <Icon
                   pack="assets"
                   name={opt.icon}
-                  style={[globalStyle.icon24, { tintColor: accent }]}
+                  style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]}
                 />
               </View>
               <Text category="h9" mt={8} bold center>

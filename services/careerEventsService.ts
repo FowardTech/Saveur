@@ -101,6 +101,30 @@ function extractItems(raw: unknown): CareerEventWire[] {
   return [];
 }
 
+// BUG FIX (product report: "for the events fetched you are still fetching
+// events that the dates have passed. You have to fetch events that the
+// dates are in the future. Fetching events that their dates have passed...
+// on the day the event already starts does not make any sense") — the
+// backend's GET /api/v1/career-events already filters past-dated events at
+// read time (see Saveur-Backend's app/api/career_events.py list_events),
+// but that only takes effect once this fix is actually deployed there, and
+// this client had zero safety net of its own if a stale/past-dated event
+// ever slipped through (a not-yet-redeployed backend, a clock-skew edge
+// case, etc). A defensive client-side filter closes that gap regardless of
+// backend deploy state: an unsaved event with a real eventDate in the past
+// is dropped here before it ever reaches the screen. Mirrors the backend's
+// own exceptions so the two layers never disagree — an event with no
+// parsed date at all still shows (nothing to judge it against, same as the
+// backend's `event_date IS NULL` bypass), and a user's own "saved"
+// bookmark still shows past its date too (the backend's own
+// SAVED_EVENT_RETENTION_DAYS grace window is the single source of truth
+// for exactly how long, not duplicated here).
+function isUpcomingOrUndated(event: CareerEventProps): boolean {
+  if (!event.eventDate) return true;
+  if (event.saved) return true;
+  return event.eventDate >= Date.now();
+}
+
 /**
  * GET /api/v1/career-events. Offline fallback (network failure with nothing
  * better to show) returns the last cached list.
@@ -108,12 +132,12 @@ function extractItems(raw: unknown): CareerEventWire[] {
 export async function listCareerEvents(): Promise<CareerEventProps[]> {
   try {
     const {data} = await apiClient.get<unknown>('/api/v1/career-events');
-    const events = extractItems(data).map(fromWire);
+    const events = extractItems(data).map(fromWire).filter(isUpcomingOrUndated);
     await writeCache(events);
     return events;
   } catch (error) {
     const cached = await readCache();
-    if (cached) return cached;
+    if (cached) return cached.filter(isUpcomingOrUndated);
     throw error;
   }
 }

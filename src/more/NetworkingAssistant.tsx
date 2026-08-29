@@ -330,18 +330,22 @@ const NetworkingAssistant = memo(() => {
         }
       />
 
-      <Layout style={styles.tabBarWrap}>
-        <BasicTabBar
-          style={styles.tabBar}
-          activeIndex={activeIndex}
-          onChange={setActiveIndex}
-          tabs={[
-            t('more:career_events_title', { defaultValue: 'Career Events' }),
-            t('more:networking_contacts_title', { defaultValue: 'Your Contacts' }),
-          ]}
-          badgeCounts={[unreadEventsCount, undefined]}
-        />
-      </Layout>
+      {/* SYMPHONY REDESIGN follow-up (product report: "remove the white
+          background covering the tabs. Just make the tabs button pills
+          thats enough") -- reverses the earlier white-card-with-shadow
+          wrapper (see this block's superseded comment history, same
+          reversal as RequestsSrc.tsx's own tab bar). Just the pill tabs
+          now, no wrapping card. */}
+      <BasicTabBar
+        style={styles.tabBar}
+        activeIndex={activeIndex}
+        onChange={setActiveIndex}
+        tabs={[
+          t('more:career_events_title', { defaultValue: 'Career Events' }),
+          t('more:networking_contacts_title', { defaultValue: 'Your Contacts' }),
+        ]}
+        badgeCounts={[unreadEventsCount, undefined]}
+      />
 
       <ViewPager
         selectedIndex={activeIndex}
@@ -557,7 +561,16 @@ const CareerEventsTab = memo(
                       {event.title}
                     </Text>
                     {event.organizer || event.location ? (
-                      <Text category="h9-s" status="placeholder" mt={2} numberOfLines={1}>
+                      // BUG FIX (product report: "make the sub title of the
+                      // event less bold so that we know which one is the
+                      // title of the event and which one is the details")
+                      // -- was h9-s/full opacity, close enough in size and
+                      // darkness to event.title's own bold h8 line above it
+                      // to read as similarly heavy at a glance. Dropped a
+                      // size step (h10, matching the date line right below
+                      // it) and given reduced opacity so it clearly recedes
+                      // behind the bold title instead of competing with it.
+                      <Text category="h10" status="placeholder" opacity={0.7} mt={2} numberOfLines={1}>
                         {[event.organizer, event.location].filter(Boolean).join(' · ')}
                       </Text>
                     ) : null}
@@ -577,7 +590,7 @@ const CareerEventsTab = memo(
                 {event.eventDate ? (
                   <Flex justify="flex-start" itemsCenter>
                     <Icon pack="eva" name="calendar-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'], marginRight: 4, width: 12, height: 12 }]} />
-                    <Text category="h10" status="placeholder">
+                    <Text category="h10" status="placeholder" opacity={0.7}>
                       {new Date(event.eventDate).toLocaleDateString(i18n.language, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </Text>
                   </Flex>
@@ -770,16 +783,6 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
-  },
-  // Same "raised strip" treatment RequestsSrc.tsx's own tabBarWrap uses —
-  // white fill + a soft shadow on the bottom edge only.
-  tabBarWrap: {
-    backgroundColor: 'background-basic-color-2',
-    shadowColor: 'rgba(31, 41, 84, 0.35)',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
   },
   tabBar: {
     marginTop: 12,

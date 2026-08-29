@@ -18,7 +18,6 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
-import { accentTintBg } from 'utils/accentPalette';
 import EmptyState from 'components/EmptyState';
 import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
@@ -170,14 +169,20 @@ const GoalsScreen = memo(() => {
           <>
             {/* Product follow-up ("the color style and blend is not
                 consistent throughout the app... use it in certain other
-                places too") — same pastel-icon-badge header treatment
-                RecentActivityList.tsx uses on Home ("Recent activity"),
-                one fixed accent per section rather than a hashed/cycled
-                color, since these are 3 fixed, semantically distinct
-                sections (not a repeating list). */}
+                places too") — one fixed accent per section rather than a
+                hashed/cycled color, since these are 3 fixed, semantically
+                distinct sections (not a repeating list).
+                SYMPHONY follow-up (explicit product request: "I love the
+                way you gave the icons in this onboarding different color
+                backgrounds. I want the icons in... goal cards, to have
+                backgrounds like that") — was a light ~12% tint behind a
+                colored icon (accentTintBg); now a solid fill behind a
+                white icon, matching components/OnboardingCluster.tsx's
+                badge treatment exactly. Same 3 fixed colors as before,
+                just bolder. */}
             <Flex justify="flex-start" itemsCenter mb={12}>
-              <View style={[styles.sectionIconWrap, { backgroundColor: accentTintBg('#0063f8') }]}>
-                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
+              <View style={[styles.sectionIconWrap, { backgroundColor: '#0063f8' }]}>
+                <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
               <Text category="h6" bold ml={10}>
                 {t('more:goals_section_career', { defaultValue: 'Career' })}
@@ -253,8 +258,8 @@ const GoalsScreen = memo(() => {
             </Layout>
 
             <Flex justify="flex-start" itemsCenter mt={28} mb={12}>
-              <View style={[styles.sectionIconWrap, { backgroundColor: accentTintBg('#F59E0B') }]}>
-                <Icon pack="eva" name="flag-outline" style={[globalStyle.icon16, { tintColor: '#F59E0B' }]} />
+              <View style={[styles.sectionIconWrap, { backgroundColor: '#F59E0B' }]}>
+                <Icon pack="eva" name="flag-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
               <Text category="h6" bold ml={10}>
                 {t('more:goals_section_weekly_targets', { defaultValue: 'Weekly targets' })}
@@ -346,8 +351,8 @@ const GoalsScreen = memo(() => {
             </Layout>
 
             <Flex justify="flex-start" itemsCenter mt={28} mb={12}>
-              <View style={[styles.sectionIconWrap, { backgroundColor: accentTintBg('#10B981') }]}>
-                <Icon pack="eva" name="trending-up-outline" style={[globalStyle.icon16, { tintColor: '#10B981' }]} />
+              <View style={[styles.sectionIconWrap, { backgroundColor: '#10B981' }]}>
+                <Icon pack="eva" name="trending-up-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
               <Text category="h6" bold ml={10}>
                 {t('more:goals_section_progress', { defaultValue: 'Progress' })}

@@ -329,10 +329,13 @@ const Onboarding = memo(() => {
                       />
                     )}
                   </View>
-                  <Text category="h4" bold mh={24} mt={28} style={styles.title}>
+                  {/* BUG FIX (product report: "I want the description header
+                      text and sub text to be centered not aligned to the
+                      left") */}
+                  <Text category="h4" bold center mh={24} mt={28} style={styles.title}>
                     {i.title}
                   </Text>
-                  <Text category="h8" status="placeholder" mh={24} mt={8} style={styles.subtitle}>
+                  <Text category="h8" status="placeholder" center mh={24} mt={8} style={styles.subtitle}>
                     {i.subtitle}
                   </Text>
                 </Animated.View>

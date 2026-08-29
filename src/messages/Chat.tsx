@@ -34,6 +34,7 @@ import useKeyboard from "hooks/useKeyboard";
 import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { RootStackParamList, MessagesStackParamList } from "navigation/types";
 import AttachItem from "./Components/AttachItem";
+import { CLUSTER_COLORS } from "components/OnboardingCluster";
 import Text from "components/Text";
 import { CoachChatMessageProps, Practice_Mode_Enum, SuggestedActionId } from "constants/Types";
 import * as coachService from "services/coachService";
@@ -350,9 +351,37 @@ const Chat = memo(() => {
     // active on first mount too.
   }, [theme, width]);
   const renderSend = (props: SendProps<IMessage>) => (
-    <Send {...props} containerStyle={styles.containerSend}>
-      <Icon pack="assets" name="send" style={styles.iconSend} />
-    </Send>
+    <Flex itemsCenter>
+      {/* SYMPHONY REDESIGN follow-up (product report: "instead of us
+          having the voice pill button at the top right corner, lets have
+          it inside the text input box like that" -- reference screenshot
+          4). Only shown in Text mode (this whole input toolbar is
+          unmounted in Voice mode, replaced by VoiceCoachView -- see the
+          mode branch below), so tapping it switches TO Voice mode; the
+          header accessoryRight above still holds the only way to switch
+          back FROM Voice mode, since VoiceCoachView has no toggle of its
+          own. */}
+      {voiceCoachEnabled ? (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setMode('voice')}
+          style={styles.modeToggleButtonInline}>
+          <Icon
+            pack="eva"
+            name="mic-outline"
+            style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
+          />
+          <Text
+            category="h9"
+            style={[styles.modeToggleLabel, { color: theme['text-basic-color'] }]}>
+            {t("message:mode_voice", { defaultValue: "Speak" })}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+      <Send {...props} containerStyle={styles.containerSend}>
+        <Icon pack="assets" name="send" style={styles.iconSend} />
+      </Send>
+    </Flex>
   );
 
   // Appends a small confirmation bubble after a successful attach/camera/
@@ -763,37 +792,32 @@ const Chat = memo(() => {
         accessoryLeft={<DrawerMenuButton />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
-            {voiceCoachEnabled ? (
-              // BUG FIX (product report: "the voice text in the AI career
-              // coach should be like a button not a text. It should be
-              // like button") — this used to be a bare NavigationAction
-              // with just a `title` (see that component's own render
-              // logic: passing `title` with no `icon` renders nothing but
-              // plain Text in a TouchableOpacity, no button chrome at
-              // all). Now a real pill button: icon + label on a filled
-              // background, so it reads as a tappable mode switch instead
-              // of a stray blue link floating in the header.
+            {/* SYMPHONY REDESIGN follow-up (explicit product request, with
+                reference screenshot: "I want the Text box in the AI career
+                coach screen to be like the one in screenshot 4. So instead
+                of us having the voice pill button at the top right
+                corner, lets have it inside the text input box"). Moved
+                into the text-input row itself now (see renderSend below)
+                — but ONLY for Text mode; Voice mode has no text input row
+                at all (VoiceCoachView replaces the whole GiftedChat area,
+                see the render branch below), so this header pill still
+                has to be the way back to Text mode while actually IN
+                Voice mode. Without this, there would be no way to leave
+                Voice mode at all once voiceCoachEnabled is on. */}
+            {voiceCoachEnabled && mode === 'voice' ? (
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setMode(m => (m === 'voice' ? 'text' : 'voice'))}
                 style={styles.modeToggleButton}>
                 <Icon
                   pack="eva"
-                  name={mode === 'voice' ? 'message-square-outline' : 'mic-outline'}
-                  // Product report: "give the voice pill button a light gray
-                  // background and a black text" -- icon/label use this
-                  // app's theme-adaptive text-basic-color (near-black in
-                  // light mode, near-white in dark mode -- see
-                  // components/Text.tsx), matching modeToggleButton's own
-                  // light-gray fill below.
+                  name="message-square-outline"
                   style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
                 />
                 <Text
                   category="h9"
                   style={[styles.modeToggleLabel, { color: theme['text-basic-color'] }]}>
-                  {mode === 'voice'
-                    ? t("message:mode_text", { defaultValue: "Text" })
-                    : t("message:mode_voice", { defaultValue: "Voice" })}
+                  {t("message:mode_text", { defaultValue: "Text" })}
                 </Text>
               </TouchableOpacity>
             ) : null}
@@ -881,25 +905,31 @@ const Chat = memo(() => {
               }}
             />
             {showAction === true ? (
-              // Product report: "the background covering them has a gray
-              // color remove it and it should be plain white" -- was
-              // <Layout level="3"> (this app's gray elevated-surface
-              // token); a plain white fill instead.
-              <Layout style={{ backgroundColor: '#FFFFFF' }}>
+              // SYMPHONY REDESIGN follow-up (explicit product request, with
+              // reference screenshot: "the container housing them looks so
+              // bad and i want them to pop"). Was a bare flat rectangle
+              // (plain white fill, no rounding, no shadow) sitting directly
+              // above the message input — now a real rounded-top sheet with
+              // a soft lift, so it reads as a deliberate panel that slid up
+              // rather than a plain strip of background.
+              <Layout style={styles.attachSheet}>
                 <Flex margin={32}>
                   <AttachItem
                     title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
                     icon={"attach"}
+                    bg={CLUSTER_COLORS.blue}
                     _onPress={onAttach}
                   />
                   <AttachItem
                     title={t("message:start_video_practice", { defaultValue: "Start Video Practice" })}
                     icon={"call"}
+                    bg={CLUSTER_COLORS.pink}
                     _onPress={onMakeCall}
                   />
                   <AttachItem
                     title={t("message:view_my_progress", { defaultValue: "View My Progress" })}
                     icon={"payment"}
+                    bg={CLUSTER_COLORS.green}
                     _onPress={onViewProgress}
                   />
                 </Flex>
@@ -1009,6 +1039,22 @@ const themedStyles = StyleService.create({
   container: {
     flex: 1,
   },
+  // SYMPHONY REDESIGN follow-up (explicit product request, with reference
+  // screenshot: "the container housing them looks so bad and i want them
+  // to pop"). Was a bare flat rectangle (`{backgroundColor: '#FFFFFF'}`
+  // inline, no rounding at all) — rounded top corners now make it read as
+  // a real sheet that slid up rather than a plain strip. `...
+  // globalStyle.shadowFade` spread for consistency with every other
+  // raised surface in the app (currently a no-op per this app's own
+  // app-wide flat-design pass — see globalStyle.ts's cardShadow comment —
+  // but wired the same way so a future shadow reintroduction picks this
+  // up automatically too).
+  attachSheet: {
+    backgroundColor: 'background-basic-color-2',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    ...globalStyle.shadowFade,
+  },
   // Voice/Text mode pill button (see accessoryRight above). COLOR HISTORY:
   // solid brand-blue fill -> outline pill (blue border/text) -> gray
   // border + black text (no fill) -> product report: "give the voice pill
@@ -1026,6 +1072,20 @@ const themedStyles = StyleService.create({
   },
   modeToggleLabel: {
     marginLeft: 4,
+  },
+  // SYMPHONY REDESIGN follow-up (reference screenshot 4: "+ icon, mic
+  // icon, Speak pill, all inside one input bar") — same pill visual as
+  // modeToggleButton above but sized/positioned to sit inline inside the
+  // input toolbar next to the Send icon (see renderSend) instead of
+  // floating in the header.
+  modeToggleButtonInline: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    backgroundColor: "background-basic-color-3",
+    marginRight: 8,
   },
   composer: {
     position: "absolute",

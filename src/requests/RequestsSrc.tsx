@@ -4,7 +4,6 @@ import {
   TopNavigation,
   StyleService,
   useStyleSheet,
-  Layout,
   ViewPager,
 } from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
@@ -44,24 +43,20 @@ const RequestsSrc = memo(() => {
   }, [activeIndex, shouldLoadComponent, styles.footer]);
   const ListHeaderComponent = React.useCallback(() => {
     return (
-      // Product report: "the container holding the applications and
-      // practice history tabs is transparent that should not be. It
-      // should be white background with bottom box shadow only" -- was
-      // transparent (see this block's own prior comment history, now
-      // superseded). White fill + a soft shadow on the bottom edge only
-      // (shadowOffset height positive, matching this app's other sticky
-      // header treatments) so this tab bar reads as a raised strip sitting
-      // above the page content below it.
-      <Layout style={styles.tabBarWrap}>
-        <BasicTabBar
-          style={styles.tabBar}
-          activeIndex={activeIndex}
-          onChange={setActiveIndex}
-          tabs={[t('request:applications'), t('request:practice_history')]}
-        />
-      </Layout>
+      // SYMPHONY REDESIGN follow-up (product report: "remove the white
+      // background covering the tabs. Just make the tabs button pills
+      // thats enough") -- reverses the earlier white-card-with-shadow
+      // wrapper (see this block's superseded comment history) per this
+      // explicit new instruction. Just the pill tabs now, no wrapping
+      // card, sitting directly on the screen's own background.
+      <BasicTabBar
+        style={styles.tabBar}
+        activeIndex={activeIndex}
+        onChange={setActiveIndex}
+        tabs={[t('request:applications'), t('request:practice_history')]}
+      />
     );
-  }, [activeIndex, styles.tabBar, styles.tabBarWrap, t]);
+  }, [activeIndex, styles.tabBar, t]);
 
   return (
     <Container style={styles.container}>
@@ -96,16 +91,6 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   content: {},
-  // See ListHeaderComponent's own comment -- white fill + bottom-only
-  // shadow (iOS: shadowOffset/Opacity/Radius; Android: elevation).
-  tabBarWrap: {
-    backgroundColor: 'background-basic-color-2',
-    shadowColor: 'rgba(31, 41, 84, 0.35)',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-  },
   tabBar: {
     marginTop: 12,
     paddingHorizontal: 12,
