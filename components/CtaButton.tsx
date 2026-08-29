@@ -62,6 +62,16 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           // app (see that token's own comment history).
           backgroundColor: theme['color-primary-100'],
           borderColor: theme['color-primary-100'],
+          // SYMPHONY REDESIGN follow-up (explicit product request: "all
+          // the buttons I see still has 50% rounded borders" — applies
+          // app-wide, not just the Settings screen's small tag buttons).
+          // Reverses the full-pill decision from the FULL RESKIN pass
+          // (see this comment's own prior history below) back to a
+          // moderate rounded-rectangle radius, matching mapping.json's
+          // Button "filled" size variants (same 14px, changed alongside
+          // this so the library's own <Button> and this CtaButton wrapper
+          // stay visually identical, as they're meant to).
+          //
           // FULL RESKIN (product request: match a new reference app's
           // look and feel — solid pill-shaped CTA buttons). Was radius 5
           // per an earlier, since-reversed request; explicitly confirmed
@@ -69,7 +79,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           // COLOR HISTORY comment above — blue survived this pass too,
           // only the shape changed back to a full pill) rather than the
           // reference's black fill.
-          borderRadius: 999,
+          borderRadius: 14,
         },
         globalStyle.shadowBtn,
         style,

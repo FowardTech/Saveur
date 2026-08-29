@@ -66,13 +66,15 @@ const HeaderHome = memo(
             h3/h4 gap to fill, h1 at 34px reads too large for a two-line
             wrapped greeting on a narrow screen). */}
         <View style={globalStyle.flexOne}>
-          {/* Bug fix: an app-wide font-size pass bumped h2 26->30px, but this
-              greeting was already sized right at 26px (see comment above) —
-              pinned back to its original size/line-height with an explicit
-              override rather than reverting h2 globally, since h2 is also
-              used by onboarding/login/signup/feedback screens that DO want
-              the larger size. */}
-          <Text category="h2" bold fontSize={26} lineHeight={38}>
+          {/* SYMPHONY REDESIGN follow-up (product report: "the greeting is
+              too big you need to reduce it to at least 17px") -- was 26px
+              (see the bug-fix history above, itself a pin-back from an
+              even larger 30px app-wide bump). Matches the reference app's
+              own modest, single-line greeting size instead of a big bold
+              hero headline. category="h2"/bold kept (weight/family), only
+              the explicit size/line-height overridden -- same override
+              mechanism the previous pin-back already established. */}
+          <Text category="h2" bold fontSize={17} lineHeight={24}>
             {t(greetingKey())}
             {name ? `, ${name}` : ''}
           </Text>
