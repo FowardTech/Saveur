@@ -1258,13 +1258,13 @@ const themedStyles = StyleService.create({
     marginTop: 8,
     paddingHorizontal: 14,
     paddingTop: 10,
-    // Product report (screenshot): "this card needs more padding bottom.
-    // The icons are extending outside the card" -- 8 wasn't enough room
-    // under chatInputControlsRow's own icons (the "+" trigger and the
-    // Voice pill/send icon, all ~20-24px tall) before the card's rounded
-    // bottom edge, so they visually poked past it instead of sitting
-    // inside the card like the composer row above them does.
-    paddingBottom: 16,
+    // Product report (screenshot, twice now): "this card needs more
+    // padding bottom. The icons are extending outside the card" -- was 8,
+    // then 16, still not enough room under chatInputControlsRow's own
+    // icons (the "+" trigger and the Voice pill/send icon, all ~20-24px
+    // tall) before the card's rounded bottom edge. Going meaningfully
+    // bigger this time rather than nudging by a few px again.
+    paddingBottom: 28,
     shadowColor: "#000000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12,
