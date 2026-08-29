@@ -291,4 +291,16 @@ export const Images = {
   iconAgendaDocument: require('./img_icon_agenda_document.png'),
   iconShieldCheck: require('./img_icon_shield_check.png'),
   iconOpenBook: require('./img_icon_open_book.png'),
+  // SYMPHONY REDESIGN follow-up (product request, with 4 reference icon
+  // images: "replace the icons used for the daily challenge, AI Career
+  // Coach, Practice and Explore with these icons") -- 2 new icons from the
+  // same "ICON COLLECTIONS" gradient pack the rest of this file's iconX
+  // entries come from (icons8-list-100.png / icons8-3d-lightning-100.png).
+  // The other 2 requested icons (a sparkle/stars badge for Practice, a
+  // speech-bubble badge for Explore) were already in this pack under
+  // iconAiStars / iconCoachChatBlue above -- reused here rather than
+  // duplicated. See components/ActionCard.tsx's own comment for how these
+  // render untinted (same as every other iconX entry in this block).
+  iconListStack: require('./img_icon_list_stack.png'),
+  iconLightning: require('./img_icon_lightning_3d.png'),
 };

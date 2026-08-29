@@ -744,6 +744,13 @@ const HomeSrc = memo(() => {
           ? t('home:mission_cta_completed', { defaultValue: 'View Challenge' })
           : t('home:mission_cta_start', { defaultValue: 'Start Here' }),
         ctaIcon: dailyChallenge.completed ? 'checkmark-circle-2-outline' : 'play-circle-outline',
+        // SYMPHONY REDESIGN follow-up (product request, with reference
+        // image: "replace the icons used for the daily challenge... with
+        // these icons") -- only this branch gets the new full-color
+        // gradient icon; the roadmap-step and generic-coach-nudge
+        // branches below keep their existing tinted eva icon, since the
+        // product ask specifically named "Daily Challenge."
+        heroIconImage: Images.iconListStack,
         onPress: () => navigate('DailyChallenge'),
       };
     }
@@ -759,6 +766,7 @@ const HomeSrc = memo(() => {
         progressLabel: t('home:mission_progress_label', { defaultValue: 'Progress' }),
         ctaLabel: t('home:mission_cta_roadmap', { defaultValue: 'Continue Roadmap' }),
         ctaIcon: 'play-circle-outline',
+        heroIconImage: undefined,
         onPress: () => navigate('CareerRoadmap'),
       };
     }
@@ -773,6 +781,7 @@ const HomeSrc = memo(() => {
       progressLabel: undefined,
       ctaLabel: t('home:mission_cta_coach', { defaultValue: 'Ask Now' }),
       ctaIcon: 'message-circle-outline',
+      heroIconImage: undefined,
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
     };
   }, [dailyChallenge, roadmap, currentRoadmapStep, roadmapPercent, t, navigate]);
@@ -879,7 +888,7 @@ const HomeSrc = memo(() => {
             Only shows once a real, active placement="home_banner" ad
             exists — no banner at all until the admin creates one, and a
             tap always has real content to navigate AdDetails to. */}
-        {homeBanner ? (
+        {/* {homeBanner ? (
           <TouchableOpacity
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: homeBannerWidth }]}
@@ -944,7 +953,7 @@ const HomeSrc = memo(() => {
               </View>
             )}
           </TouchableOpacity>
-        ) : null}
+        ) : null} */}
 
         {/* The 4 cards (see this section's own module-level comment above
             for the full "why"). Card 1 is the only dynamic one — the same
@@ -958,14 +967,22 @@ const HomeSrc = memo(() => {
         ) : (
           <ActionCard
             icon={missionHero.ctaIcon ?? missionHero.badgeIcon}
+            iconImage={missionHero.heroIconImage}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
             onPress={missionHero.onPress}
           />
         )}
 
+        {/* SYMPHONY REDESIGN follow-up (product request, with 4 reference
+            icon images: "replace the icons used for the daily challenge,
+            AI Career Coach, Practice and Explore with these icons") --
+            each of these 3 always-visible cards gets its own full-color
+            gradient icon now instead of a tinted eva glyph (see
+            components/ActionCard.tsx's `iconImage` prop). */}
         <ActionCard
           icon="message-circle-outline"
+          iconImage={Images.iconLightning}
           title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
           subtitle={t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' }).toString()}
           onPress={onPressCoachSend}
@@ -973,6 +990,7 @@ const HomeSrc = memo(() => {
 
         <ActionCard
           icon="mic-outline"
+          iconImage={Images.iconAiStars}
           title={t('home:practice_card_title', { defaultValue: 'Practice Interviews' })}
           subtitle={
             streak && streak.streakDays > 0
@@ -984,6 +1002,7 @@ const HomeSrc = memo(() => {
 
         <ActionCard
           icon="grid-outline"
+          iconImage={Images.iconCoachChatBlue}
           title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
           subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
           onPress={onPressExploreMore}
