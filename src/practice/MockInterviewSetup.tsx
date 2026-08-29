@@ -273,7 +273,18 @@ const MockInterviewSetup = memo(() => {
         [
           { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
           {
-            text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade' }),
+            // BUG FIX (product report: "why is it saying upgrade to
+            // basic instead of saying upgrade to premium on that
+            // prompt") -- was find:upgrade_to_pro, a key SHARED with the
+            // free-session-limit gate elsewhere in this same file, whose
+            // actual translation is "Upgrade to Basic" (this dialog's own
+            // `defaultValue` of 'Upgrade' never took effect, since i18n
+            // only falls back to defaultValue when the key is missing
+            // entirely, not when it just says something else). This
+            // dialog is specifically the Video-is-a-Premium-feature gate
+            // (Basic doesn't unlock it, per this function's own comment
+            // above), so it needs its own key.
+            text: t('find:upgrade_to_premium', { defaultValue: 'Upgrade to Premium' }),
             onPress: () => navigate('Subscription'),
           },
         ],
@@ -294,7 +305,18 @@ const MockInterviewSetup = memo(() => {
         [
           { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
           {
-            text: t('find:upgrade_to_pro', { defaultValue: 'Upgrade' }),
+            // BUG FIX (product report: "why is it saying upgrade to
+            // basic instead of saying upgrade to premium on that
+            // prompt") -- was find:upgrade_to_pro, a key SHARED with the
+            // free-session-limit gate elsewhere in this same file, whose
+            // actual translation is "Upgrade to Basic" (this dialog's own
+            // `defaultValue` of 'Upgrade' never took effect, since i18n
+            // only falls back to defaultValue when the key is missing
+            // entirely, not when it just says something else). This
+            // dialog is specifically the Video-is-a-Premium-feature gate
+            // (Basic doesn't unlock it, per this function's own comment
+            // above), so it needs its own key.
+            text: t('find:upgrade_to_premium', { defaultValue: 'Upgrade to Premium' }),
             onPress: () => navigate('Subscription'),
           },
         ],
