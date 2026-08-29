@@ -4,7 +4,6 @@ import {View, TouchableOpacity} from 'react-native';
 import Text from 'components/Text';
 import {
   useStyleSheet,
-  useTheme,
   StyleService,
   Layout,
   Icon,
@@ -16,7 +15,7 @@ import dayjs from 'utils/dayjs';
 import {useTranslation} from 'react-i18next';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from 'navigation/types';
-import {Application_Stage_Enum, JobApplicationProps} from 'constants/Types';
+import {JobApplicationProps} from 'constants/Types';
 import {isRemoteLocation} from 'utils/jobLocation';
 import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
 
@@ -24,56 +23,20 @@ export interface ApplicationItemProps {
   item: JobApplicationProps;
 }
 
-// Maps a tracked application's real backend stage (services/
-// applicationsService.ts's listApplications) to this design system's status
-// color tokens for the stage pill below.
-const getStageStatus = (stage: Application_Stage_Enum) => {
-  switch (stage) {
-    case Application_Stage_Enum.Applied:
-      return 'info';
-    case Application_Stage_Enum.Interviewing:
-      return 'warning';
-    case Application_Stage_Enum.Offer:
-      return 'success';
-    case Application_Stage_Enum.Rejected:
-      return 'danger';
-    default:
-      return 'basic';
-  }
-};
-
-// Product report ("make the applied pills look better") — the stage pill
-// used to be a flat background-basic-color-3 gray no matter the stage, with
-// only the TEXT color (via getStageStatus above) hinting at Applied/
-// Interviewing/Offer/Rejected. Same "tinted background, not just tinted
-// text" treatment PracticeSessionItem.tsx's statusTag already uses for its
-// own success/warning pill — a stage now reads at a glance from the pill's
-// color alone, not just from parsing the label text.
-// Falls back to the solid -100 tint if a -transparent-200 token isn't
-// resolved for a given status — same defensive pattern already used for
-// this exact "info" status elsewhere (src/home/Notification/
-// ApplicationItem.tsx's colorFor), since 'info' specifically isn't
-// overridden in this app's own light.json/dark.json (see PaymentHistory.tsx's
-// comment on that) and comes entirely from Eva's base theme merge.
-const getStageBg = (stage: Application_Stage_Enum, theme: Record<string, string>) => {
-  switch (getStageStatus(stage)) {
-    case 'info':
-      return theme['color-info-transparent-200'] ?? theme['color-info-100'];
-    case 'warning':
-      return theme['color-warning-transparent-200'] ?? theme['color-warning-100'];
-    case 'success':
-      return theme['color-success-transparent-200'] ?? theme['color-success-100'];
-    case 'danger':
-      return theme['color-danger-transparent-200'] ?? theme['color-danger-100'];
-    default:
-      return theme['background-basic-color-3'];
-  }
-};
+// SYMPHONY REDESIGN follow-up (explicit product report: "I told you i dont
+// want color pills again. Why are you still putting colored pills in the
+// applications screen") — this used to color-code the stage pill's text AND
+// background per Applied/Interviewing/Offer/Rejected (see getStageBg below,
+// now removed). Same "no per-status color-coding, plain neutral pill"
+// direction already applied to the analysis chips in JDAnalyzer.tsx and to
+// PracticeSessionItem.tsx's statusTag — a stage now reads only from its
+// label text, same as every other pill in the app after that pass.
+// getApplicationStageLabel (utils/interviewTypeLabels.ts) still handles the
+// actual per-stage text/translation.
 
 const ApplicationItem = ({item}: ApplicationItemProps) => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   const {t} = useTranslation(['request', 'common']);
   return (
     <TouchableOpacity
@@ -108,7 +71,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
               {item.company}
             </Text>
           </View>
-          <View style={[styles.stageTag, {backgroundColor: getStageBg(item.stage, theme)}]}>
+          <View style={styles.stageTag}>
             {/* BUG FIX (product report: "make sure everything internally
                 must be auto translated") -- was the raw backend enum
                 literal (e.g. always "Applied" in English on every
@@ -116,7 +79,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
                 RequestsInPass.tsx already avoided by going through
                 getApplicationStageLabel (utils/interviewTypeLabels.ts),
                 which this render site had never been switched to. */}
-            <Text category="h9" status={getStageStatus(item.stage) as any} bold>
+            <Text category="h9" bold>
               {getApplicationStageLabel(item.stage, t)}
             </Text>
           </View>
@@ -139,7 +102,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
               </Text>
               {isRemoteLocation(item.location) ? (
                 <View style={styles.remoteTag}>
-                  <Text category="h10" bold status="info">
+                  <Text category="h10" bold>
                     {t('request:remote_tag', {defaultValue: 'Remote'})}
                   </Text>
                 </View>
@@ -211,22 +174,29 @@ const themedStyles = StyleService.create({
     height: 14,
     tintColor: 'text-placeholder-color',
   },
-  // "Remote" tag next to the location text — same small pill treatment
-  // as stageTag below, just a distinct info-blue tint so it doesn't read
-  // as another pipeline-stage badge.
+  // "Remote" tag next to the location text — same small pill treatment as
+  // stageTag below. SYMPHONY REDESIGN follow-up ("I don't want color pills
+  // again"): was a color-primary-transparent-100 blue tint; now the same
+  // flat neutral gray as stageTag so it doesn't read as a status color.
   remoteTag: {
     marginLeft: 8,
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: 'color-primary-transparent-100',
+    backgroundColor: 'background-basic-color-3',
   },
-  // backgroundColor is now set inline per-stage (see getStageBg above) —
-  // was a flat background-basic-color-3 gray for every stage, so this base
-  // style only carries the shape now.
+  // SYMPHONY REDESIGN follow-up ("I told you i dont want color pills
+  // again... why are you still putting colored pills in the applications
+  // screen") — was a per-stage color background set inline via getStageBg
+  // (now removed). This card's container is a white level="2" Layout, so a
+  // flat background-basic-color-3 gray (not white) is used here so the
+  // pill still reads as a distinct badge rather than disappearing into the
+  // card behind it — same reasoning as PracticeSessionItem.tsx's
+  // statusTag, see that file's own comment.
   stageTag: {
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
+    backgroundColor: 'background-basic-color-3',
   },
 });

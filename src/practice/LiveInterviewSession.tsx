@@ -1638,9 +1638,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Product report ("increase the width of the video screen in the video
+  // session screen"): was `aspectRatio: 3/4` (portrait -- narrower than
+  // tall). Combined with the `maxHeight: cameraMaxHeight` cap set inline in
+  // the JSX (see this screen's own comment on that -- added earlier to fix
+  // the camera hiding behind the header), a portrait ratio meant the box's
+  // effective on-screen WIDTH was being computed DOWN from that height cap
+  // (width = cappedHeight * 0.75) rather than filling the row's actual
+  // available width -- on a typical phone that worked out to roughly 250px
+  // wide out of ~340-380px available, reading as much narrower than it had
+  // room to be. Flipping to a landscape 4:3 ratio (width:height, wider than
+  // tall) makes WIDTH the binding constraint instead across realistic phone
+  // width/height ranges -- the box now fills the full available row width,
+  // with height derived from it (and still comfortably under
+  // cameraMaxHeight, so the original header-overlap fix stays intact
+  // without needing its own change).
   cameraWrap: {
     width: '100%',
-    aspectRatio: 3 / 4,
+    aspectRatio: 4 / 3,
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#000',

@@ -6,7 +6,6 @@ import {
   useStyleSheet,
   Input,
   Icon,
-  Button,
   CheckBox,
 } from '@ui-kitten/components';
 import {
@@ -21,6 +20,7 @@ import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
 import BrandWordmark from 'components/BrandWordmark';
 import CtaButton from 'components/CtaButton';
+import SocialAuthButton from 'components/SocialAuthButton';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
 import {Controller, useForm} from 'react-hook-form';
 import {RuleEmail, RulePassword} from 'utils/rules';
@@ -271,24 +271,18 @@ const Login = memo(() => {
         <Text category="h8-s" status={'placeholder'} mt={40} mb={24} center>
           {t('auth:or')}
         </Text>
-        <View style={styles.facebook}>
-          <Icon pack="eva" name={'globe-2-outline'} style={styles.logoSocial} />
-          <Button
-            status="outline"
-            disabled={isSocialSubmitting}
-            onPress={onGoogle}
-            children={<Text>{`${t('auth:google_login')}`}</Text>}
-          />
-        </View>
-        <View>
-          <Icon pack="eva" name={'briefcase-outline'} style={styles.logoSocial} />
-          <Button
-            status="outline"
-            disabled={isSocialSubmitting}
-            onPress={onLinkedIn}
-            children={<Text>{`${t('auth:linkedin_login')}`}</Text>}
-          />
-        </View>
+        <SocialAuthButton
+          provider="google"
+          label={t('auth:google_login')}
+          disabled={isSocialSubmitting}
+          onPress={onGoogle}
+        />
+        <SocialAuthButton
+          provider="linkedin"
+          label={t('auth:linkedin_login')}
+          disabled={isSocialSubmitting}
+          onPress={onLinkedIn}
+        />
       </KeyboardAwareScrollView>
       <Flex center mt={20} mb={bottom + 16} style={styles.bottom}>
         <Text category="h8-s">{t('auth:dont_have_an_account')}</Text>
@@ -321,22 +315,20 @@ const themedStyles = StyleService.create({
   // fields across the app (search boxes, JD Analyzer, Job Preferences,
   // etc.). Now shares that same convention instead of its own one-off
   // underline style.
+  // Product report ("the input fields should have a gray border"): local
+  // override, not a change to globalStyle.inputField itself (that shared
+  // token is intentionally borderless post-SYMPHONY-REDESIGN and is spread
+  // by ~15 other screens that were never asked to change).
   email: {
     ...globalStyle.inputField,
+    borderWidth: 1,
+    borderColor: 'border-card-default',
     marginBottom: 24,
   },
   password: {
     ...globalStyle.inputField,
-  },
-  facebook: {
-    marginBottom: 16,
-    flex: 1,
-  },
-  logoSocial: {
-    position: 'absolute',
-    left: 16,
-    top: 14,
-    color: 'color-primary-100'
+    borderWidth: 1,
+    borderColor: 'border-card-default',
   },
   // Was `position: 'absolute', bottom: 0` — floating this row fixed at the
   // very bottom of the screen regardless of scroll position, which is what

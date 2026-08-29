@@ -550,6 +550,24 @@ const Chat = memo(() => {
           ]}>
           <GiftedComposer
             {...composerProps}
+            // BUG FIX (product report: "the input field in the AI career
+            // coach has no placeholder. How will users know that there is
+            // an input field in the input box"): `composerProps.placeholder`
+            // SHOULD already carry the real translated placeholder through
+            // from `<GiftedChat placeholder={...}>` below via gifted-chat's
+            // own object-rest spread into this callback's `props` -- but
+            // that chain now crosses 3 layers (GiftedChat's internal
+            // inputToolbarProps -> this callback's `props` -> a cast to
+            // GiftedComposerProps -> spread here), any one of which silently
+            // dropping the key would leave the field with no visible
+            // affordance at all, which is exactly what was reported. Wiring
+            // the same translated string explicitly and directly here
+            // removes that whole chain as a dependency -- this is now the
+            // single source of truth for the composer's placeholder,
+            // guaranteed to win regardless of what {...composerProps} did
+            // or didn't carry (an explicit prop always overrides same-name
+            // keys from an earlier spread in JSX).
+            placeholder={t("message:chat_input_placeholder", { defaultValue: "Type a message..." }).toString()}
             textInputStyle={styles.chatTextInput}
             placeholderTextColor={theme["text-hint-color"]}
           />
@@ -571,7 +589,7 @@ const Chat = memo(() => {
     // ThemeContext's toggleTheme) kept seeing the old dark
     // background-basic-color-2/3 fill on this input row forever, even
     // though every other theme-aware surface on the screen updated fine.
-    [showAction, Platform.OS, theme, styles, renderSend]
+    [showAction, Platform.OS, theme, styles, renderSend, t]
   );
 
   // Tapping a coach reply's "Learn more about X" chip (see renderCustomView

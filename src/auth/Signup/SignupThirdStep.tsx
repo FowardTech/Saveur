@@ -6,7 +6,6 @@ import {
   useStyleSheet,
   Input,
   Icon,
-  Button,
   CheckBox,
 } from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
@@ -25,6 +24,7 @@ import {AuthStackParamList, RootStackParamList} from 'navigation/types';
 import {mapFirebaseAuthError} from 'utils/authErrors';
 import {AuthContext} from '../../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import SocialAuthButton from 'components/SocialAuthButton';
 import {globalStyle} from 'styles/globalStyle';
 
 const SignupThirdStep = memo(() => {
@@ -379,24 +379,18 @@ const SignupThirdStep = memo(() => {
           <Text category="h8-s" status={'placeholder'} mt={32} mb={24} center>
             {t('auth:or')}
           </Text>
-          <View style={styles.social}>
-            <Icon pack="eva" name={'globe-2-outline'} style={styles.logoSocial} />
-            <Button
-              status="outline"
-              disabled={isSocialSubmitting}
-              onPress={onGoogle}
-              children={<Text>{`${t('auth:google_login')}`}</Text>}
-            />
-          </View>
-          <View>
-            <Icon pack="eva" name={'briefcase-outline'} style={styles.logoSocial} />
-            <Button
-              status="outline"
-              disabled={isSocialSubmitting}
-              onPress={onLinkedIn}
-              children={<Text>{`${t('auth:linkedin_login')}`}</Text>}
-            />
-          </View>
+          <SocialAuthButton
+            provider="google"
+            label={t('auth:google_login')}
+            disabled={isSocialSubmitting}
+            onPress={onGoogle}
+          />
+          <SocialAuthButton
+            provider="linkedin"
+            label={t('auth:linkedin_login')}
+            disabled={isSocialSubmitting}
+            onPress={onLinkedIn}
+          />
         </Content>
       </AnimatedAppearance>
     </Container>
@@ -416,18 +410,15 @@ const themedStyles = StyleService.create({
   // design") — matches the shared boxed border+background+radius-12 look
   // (globalStyle.inputField) used elsewhere in the app, instead of its own
   // one-off bottom-underline style.
+  // Product report ("the input fields should have a gray border"): local
+  // override, not a change to globalStyle.inputField itself (see
+  // Login.tsx's identical `email`/`password` override for the same
+  // reasoning).
   input: {
     ...globalStyle.inputField,
+    borderWidth: 1,
+    borderColor: 'border-card-default',
     marginBottom: 24,
-  },
-  social: {
-    marginBottom: 16,
-  },
-  logoSocial: {
-    position: 'absolute',
-    left: 16,
-    top: 14,
-    color: 'color-primary-100'
   },
   termsRow: {
     flexDirection: 'row',

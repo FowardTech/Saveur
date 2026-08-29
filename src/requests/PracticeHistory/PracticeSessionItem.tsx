@@ -2,7 +2,6 @@ import React from 'react';
 import {TouchableOpacity} from 'react-native';
 import {
   useStyleSheet,
-  useTheme,
   StyleService,
   Layout,
   Icon,
@@ -25,7 +24,6 @@ export interface PracticeSessionItemProps {
 const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   const {t} = useTranslation(['find', 'common']);
 
   // Completed sessions open their real feedback. A "Scheduled" (upcoming)
@@ -55,16 +53,7 @@ const PracticeSessionItem = ({item}: PracticeSessionItemProps) => {
           <Text
             category="h9"
             bold
-            status={item.status === 'Completed' ? 'success' : 'warning'}
-            style={[
-              styles.statusTag,
-              {
-                backgroundColor:
-                  item.status === 'Completed'
-                    ? theme['color-success-transparent-200']
-                    : theme['color-warning-transparent-200'],
-              },
-            ]}>
+            style={styles.statusTag}>
             {item.status === 'Completed'
               ? `${item.overallScore ?? '--'}%`
               : getSessionStatusLabel(item.status, t)}
@@ -101,11 +90,23 @@ const themedStyles = StyleService.create({
     marginBottom: 10,
     padding: 12,
   },
+  // SYMPHONY REDESIGN follow-up ("I told you i dont want color pills
+  // again... why are you still putting colored pills") — was a
+  // status-driven color-success/warning text + matching
+  // color-success/warning-transparent-200 background. Same "no
+  // per-status color-coding" direction as the analysis chips in
+  // JDAnalyzer.tsx (see that file's own comment), but this pill sits on
+  // top of an already-white level="2" card, so background-basic-color-3
+  // (a flat neutral gray, same token ApplicationItem.tsx's stageTag falls
+  // back to for its own "no stage" case) is used instead of white so the
+  // pill still reads as a distinct badge rather than disappearing into
+  // the card behind it.
   statusTag: {
     paddingVertical: 4,
     paddingHorizontal: 10,
     borderRadius: 8,
     overflow: 'hidden',
+    backgroundColor: 'background-basic-color-3',
   },
   icon: {
     width: 14,
