@@ -7,7 +7,7 @@ import {
   useTheme,
   Button,
 } from '@ui-kitten/components';
-import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NavigationProp, StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, {
   useSharedValue,
@@ -156,7 +156,7 @@ const CLOSING_STATEMENT = () =>
 const CAMERA_FRAME_FLUSH_INTERVAL_MS = 5000;
 
 const LiveInterviewSession = memo(() => {
-  const { navigate, goBack } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { navigate, goBack, dispatch } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<LiveInterviewSessionScreenNavigationProp>();
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common']);
@@ -1033,14 +1033,32 @@ const LiveInterviewSession = memo(() => {
       // comment for why: it must fire no matter how long the recording
       // takes to finalize, not just when it beats a fixed UI-wait ceiling.
     } finally {
-      // Product request: "success screens aside the success screens for
-      // the subscription payment" — a completed mock interview used to
-      // land directly on Feedback with zero acknowledgment that the
-      // session itself was done; same dedicated-success-screen treatment
-      // signup/password-reset/subscription payment already get, via the
-      // same shared SuccessScr/NotificationScreen this app already uses
-      // for those (see src/SuccessScr.tsx).
-      navigate('SuccessScr', {
+      // BUG FIX (product report: "some screens don't have back buttons and
+      // we can't navigate back... interview screens"): this used to be a
+      // plain navigate(), which leaves THIS screen sitting underneath
+      // SuccessScr/InterviewFeedback in the stack, still mounted (React
+      // Navigation keeps pushed screens alive in the background, it
+      // doesn't unmount them). Its `isEnding` state (set true at the top
+      // of this function) never resets — nothing here ever sets it back to
+      // false, because the whole point is this screen has already
+      // finished. If the user then tapped back from Feedback (through
+      // SuccessScr) and landed back on THIS now-stale screen, both the X
+      // button (onCloseAttempt) and the End Interview button early-return
+      // on `if (isEnding) return`, so neither did anything -- a real
+      // "stuck, can't go back" screen, exactly what was reported. `replace`
+      // removes this screen from the stack entirely the moment the session
+      // ends, so there's no stale instance left to navigate back into --
+      // going back from Feedback now lands cleanly on MockInterviewSetup.
+      //
+      // Original comment, still accurate: product request: "success
+      // screens aside the success screens for the subscription payment" —
+      // a completed mock interview used to land directly on Feedback with
+      // zero acknowledgment that the session itself was done; same
+      // dedicated-success-screen treatment signup/password-reset/
+      // subscription payment already get, via the same shared
+      // SuccessScr/NotificationScreen this app already uses for those (see
+      // src/SuccessScr.tsx).
+      dispatch(StackActions.replace('SuccessScr', {
         successScr: {
           title: t('find:interview_complete_title', { defaultValue: 'Interview complete!' }) as string,
           description: t('find:interview_complete_body', {
@@ -1056,7 +1074,7 @@ const LiveInterviewSession = memo(() => {
           ],
           buttonsViewStyle: { marginHorizontal: 32 },
         },
-      });
+      }));
     }
   };
 

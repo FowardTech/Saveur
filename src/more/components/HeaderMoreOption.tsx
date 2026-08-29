@@ -115,15 +115,19 @@ const themedStyles = StyleService.create({
   sectionHeading: {
     marginBottom: 12,
   },
+  // SYMPHONY REDESIGN follow-up (explicit product correction, with
+  // reference screenshot: "I told you i want the settings items to be
+  // white cards just like the screenshot i showed you. No borders and
+  // reduce the border radius.") — same fix as MoreSrc.tsx's own rowCard:
+  // dropped the border, radius down from the app-wide 20 to 14.
   card: {
     ...globalStyle.card,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     marginBottom: 12,
     backgroundColor: 'background-basic-color-2',
-    borderWidth: 1,
-    borderColor: 'border-card-default',
   },
   avatar: {
     marginRight: 14,

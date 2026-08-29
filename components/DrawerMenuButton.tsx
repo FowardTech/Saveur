@@ -32,6 +32,17 @@ import {useAppDrawer} from 'navigation/DrawerContext';
 // the `eva` pack instead (assets/LucideEvaIconsPack.tsx, backed by
 // lucide-react-native's vector `Menu` icon — no new binary asset needed),
 // so this button renders that directly.
+// SYMPHONY REDESIGN follow-up (explicit product request: "move the menu
+// thumbnail icon up to be on the same level with the greetings and its
+// supposed to have white background"). Was a bare transparent icon, no
+// fill — now a real white/dark-elevated circular button (background-
+// basic-color-2, same "always white" card-surface token used everywhere
+// else this pass), matching the reference app's own filled hamburger
+// button. `marginTop: -2` is a small optical nudge: a filled circle reads
+// visually lower than a bare glyph of the same box size next to a text
+// baseline (the greeting/title text it sits beside in HeaderHome.tsx/
+// Chat.tsx/MoreSrc.tsx all already place this in the same row via
+// itemsCenter), so this pulls it back up to read as level.
 const DrawerMenuButton = memo(() => {
   const {open} = useAppDrawer();
   const theme = useTheme();
@@ -40,7 +51,7 @@ const DrawerMenuButton = memo(() => {
       onPress={open}
       activeOpacity={0.7}
       hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-      style={styles.button}>
+      style={[styles.button, {backgroundColor: theme['background-basic-color-2']}]}>
       <Icon
         pack="eva"
         name="menu-outline"
@@ -56,11 +67,13 @@ const styles = StyleSheet.create({
   button: {
     width: 40,
     height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: -2,
   },
   icon: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
   },
 });

@@ -5,6 +5,7 @@ import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Text from 'components/Text';
+import Flex from 'components/Flex';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import {NavigationProp, useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -603,11 +604,20 @@ const MoreSrc = memo(() => {
     // surface, whenever the app theme is dark).
     <Container style={styles.container} level={appTheme === 'dark' ? undefined : '2'}>
       <Content padder contentContainerStyle={styles.content}>
-        {/* SYMPHONY REDESIGN (drawer nav shell) — More is one of the 3
-            drawer root screens (Home/Chat/More); this is its own way to
-            open the drawer now that there's no bottom tab bar. See
-            components/DrawerMenuButton.tsx's own comment. */}
-        <DrawerMenuButton />
+        {/* SYMPHONY REDESIGN follow-up (explicit product request: "move
+            the menu thumbnail icon up to be on the same level with the
+            greetings"). Was its own standalone row sitting above
+            HeaderMoreOption with nothing beside it — the only one of the
+            3 drawer root screens (Home/Chat/More) where the menu icon
+            wasn't already level with a title/greeting in the same row
+            (HeaderHome.tsx's greeting, Chat.tsx's TopNavigation title).
+            Paired with a real screen title here now, same pattern. */}
+        <Flex justify="flex-start" itemsCenter mb={16}>
+          <DrawerMenuButton />
+          <Text category="h5" bold ml={8}>
+            {t('more:settings_title', {defaultValue: 'Settings'})}
+          </Text>
+        </Flex>
         <HeaderMoreOption
           name={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}
           avatarUrl={profile?.avatarUrl}
@@ -772,33 +782,35 @@ const themedStyles = StyleService.create({
   sectionHeading: {
     marginBottom: 12,
   },
-  // SYMPHONY REDESIGN: each settings row now sits inside its OWN rounded
-  // card (see the render call site's own comment for the full "why" and
-  // the superseded "full 100% width, no border radius" flat-list history
-  // this replaces) — same shape/border/fill as components/ActionCard.tsx's
-  // `card` style (kept as its own local style here rather than importing
-  // ActionCard itself, since ButtonOptional already owns the row's actual
-  // icon/badge/toggle/chevron layout — this is just the card shell wrapped
-  // around it). `overflow: hidden` keeps ButtonOptional's row content from
-  // spilling past this card's own rounded corners.
+  // SYMPHONY REDESIGN follow-up (explicit product correction, with
+  // reference screenshot: "I told you i want the settings items to be
+  // white cards just like the screenshot i showed you. No borders and
+  // reduce the border radius."). The borderWidth/borderColor added in the
+  // prior pass contradicted this app's own established "no borders on
+  // cards" rule (see globalStyle.ts's own `card`/`cardBorder` history) —
+  // removed. Radius knocked down from globalStyle.card's app-wide 20 to
+  // 14 (same moderate radius CtaButton.tsx/mapping.json's buttons already
+  // settled on this session), overriding the spread below since this is a
+  // deliberately smaller radius than the shared 20px token, not a change
+  // to the token itself. `overflow: hidden` keeps ButtonOptional's row
+  // content from spilling past this card's own rounded corners.
   rowCard: {
     ...globalStyle.card,
+    borderRadius: 14,
     marginBottom: 12,
     backgroundColor: 'background-basic-color-2',
-    borderWidth: 1,
-    borderColor: 'border-card-default',
     overflow: 'hidden',
   },
   // Sign-out gets its own standalone card below the grouped list (see the
   // render call site's own comment) rather than sitting inside the
-  // Application card — same rowCard shell/border as every other row above.
+  // Application card — same rowCard shell as every other row above (no
+  // border, 14px radius, same product correction as rowCard above).
   logoutRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
+    borderRadius: 14,
     backgroundColor: 'background-basic-color-2',
-    borderWidth: 1,
-    borderColor: 'border-card-default',
     paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 20,

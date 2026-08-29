@@ -357,8 +357,8 @@ const JDAnalyzer = memo(() => {
             </Text>
             <View style={styles.chipsWrap}>
               {result.missingSkills.map((skill, i) => (
-                <View key={i} style={[styles.chip, { backgroundColor: theme['color-danger-transparent-200'] }]}>
-                  <Text category="h9" status="danger" bold>
+                <View key={i} style={styles.chip}>
+                  <Text category="h9" bold>
                     {skill}
                   </Text>
                 </View>
@@ -370,13 +370,8 @@ const JDAnalyzer = memo(() => {
             </Text>
             <View style={styles.chipsWrap}>
               {result.keywordSuggestions.map((word, i) => (
-                <View key={i} style={[styles.chip, { backgroundColor: theme['color-success-transparent-200'] }]}>
-                  {/* BUG FIX (illegible green pill text): `status="success"`
-                      resolves to this app's palette's lightest green shade,
-                      almost invisible against this same pale green fill.
-                      `color-success-200` is the darker shade already used
-                      elsewhere for legible text-on-light-fill. */}
-                  <Text category="h9" bold style={{color: theme['color-success-200']}}>
+                <View key={i} style={styles.chip}>
+                  <Text category="h9" bold>
                     {word}
                   </Text>
                 </View>
@@ -483,12 +478,27 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  // SYMPHONY REDESIGN follow-up (explicit product request: "the analysis
+  // pills in the resume builder, JD analyzer and many other places are
+  // colored pills. I want you to make them all to be white pills with
+  // black texts no background" — read as: no per-status color-coding
+  // (danger/success tints), a plain white fill instead. Was
+  // color-danger-transparent-200 / color-success-transparent-200 per chip
+  // with matching red/green text; both fully removed at the render call
+  // site above (no per-chip backgroundColor override, no status/color
+  // prop on the Text) — this is now the ONLY styling every chip gets.
+  // background-basic-color-2 reads as a plain white card against this
+  // screen's gray Container background (same "white-on-gray, no border"
+  // convention used everywhere else in this pass), and Text's own default
+  // color is already the theme's near-black ink, so no extra color prop
+  // is needed for "black text".
   chip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+    backgroundColor: 'background-basic-color-2',
   },
   buildResumeCard: {
     ...globalStyle.card,

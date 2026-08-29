@@ -222,8 +222,8 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
           </Text>
           <View style={styles.chipsWrap}>
             {gaps.map((skill, i) => (
-              <View key={i} style={[styles.chip, {backgroundColor: theme['color-danger-transparent-200']}]}>
-                <Text category="h9" status="danger" bold>
+              <View key={i} style={styles.chip}>
+                <Text category="h9" bold>
                   {skill}
                 </Text>
               </View>
@@ -297,12 +297,24 @@ const themedStyles = StyleService.create({
   chipsStack: {
     gap: 10,
   },
+  // SYMPHONY REDESIGN follow-up (explicit product request: "the analysis
+  // pills in the resume builder, JD analyzer and many other places are
+  // colored pills... make them all to be white pills with black texts no
+  // background"). Was color-danger-transparent-200 with status="danger"
+  // text (removed at the render call site above) — background-basic-
+  // color-3 rather than JDAnalyzer.tsx's plain -color-2: this screen's
+  // page itself is white (not the gray Container level JDAnalyzer uses —
+  // see qualificationChip's own comment just below), so a pure white chip
+  // would have no contrast at all; -3 is the same neutral gray fill
+  // qualificationChip already uses right above this in the same list, for
+  // a visually consistent "plain, no color-coding" pill either way.
   chip: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
+    backgroundColor: 'background-basic-color-3',
   },
   qualificationChip: {
     paddingVertical: 12,

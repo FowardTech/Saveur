@@ -469,7 +469,15 @@ const CareerDna = memo(() => {
   );
 });
 
-function ChipSection({ title, items, status, styles, theme }: {
+// SYMPHONY REDESIGN follow-up (explicit product request: "the analysis
+// pills in the resume builder, JD analyzer and many other places are
+// colored pills... make them all to be white pills with black texts no
+// background"). `status` prop kept (still passed by every call site above)
+// but no longer drives any color — every chip renders the same plain
+// white fill / default black text regardless of which section it's in,
+// same convention as JDAnalyzer.tsx/GenerateResume.tsx/JobFitAnalysis.tsx's
+// own chip styles.
+function ChipSection({ title, items, styles }: {
   title: string; items: string[]; status: 'success' | 'link'; styles: any; theme: Record<string, string>;
 }) {
   return (
@@ -477,13 +485,8 @@ function ChipSection({ title, items, status, styles, theme }: {
       <Text category="h9" bold status="placeholder" mb={8}>{title}</Text>
       <Flex justify="flex-start" wrap>
         {items.map((item, i) => (
-          <View
-            key={i}
-            style={[
-              styles.chip,
-              { backgroundColor: status === 'success' ? theme['color-success-transparent-200'] : theme['color-primary-transparent-200'] },
-            ]}>
-            <Text category="h10" bold status={status}>{item}</Text>
+          <View key={i} style={styles.chip}>
+            <Text category="h10" bold>{item}</Text>
           </View>
         ))}
       </Flex>
@@ -525,6 +528,7 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 12,
     marginRight: 8,
     marginBottom: 8,
+    backgroundColor: 'background-basic-color-2',
   },
   // "Recommended next steps" rows (product request item) — flat rows
   // inside the card, not separate cards each, since these are meant to

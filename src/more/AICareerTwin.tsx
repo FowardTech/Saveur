@@ -167,8 +167,8 @@ const AICareerTwin = memo(() => {
                 </Text>
                 <Flex justify="flex-start" wrap>
                   {profile.skills.map((skill, i) => (
-                    <View key={i} style={[styles.chip, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-                      <Text category="h10" bold status="link">{skill}</Text>
+                    <View key={i} style={styles.chip}>
+                      <Text category="h10" bold>{skill}</Text>
                     </View>
                   ))}
                 </Flex>
@@ -274,12 +274,21 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginBottom: 16,
   },
+  // SYMPHONY REDESIGN follow-up (explicit product request: "the analysis
+  // pills in the resume builder, JD analyzer and many other places are
+  // colored pills... make them all to be white pills with black texts no
+  // background"). Was color-primary-transparent-200 (blue tint) with
+  // status="link" text (removed at the render call site above) — plain
+  // white/black now, same convention as every other analysis-chip screen
+  // this pass touched (JDAnalyzer, GenerateResume, JobFitAnalysis,
+  // CareerDna).
   chip: {
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 12,
     marginRight: 8,
     marginBottom: 8,
+    backgroundColor: 'background-basic-color-2',
   },
   listRow: {
     marginTop: 14,

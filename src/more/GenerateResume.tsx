@@ -617,19 +617,13 @@ const GenerateResume = memo(() => {
                       key={i}
                       activeOpacity={0.6}
                       onPress={() => addSuggestedSkill(skill)}
-                      style={[styles.chip, styles.suggestedChip, { backgroundColor: theme['color-warning-transparent-200'] }]}>
+                      style={[styles.chip, styles.suggestedChip]}>
                       <Icon
                         pack="eva"
                         name="plus-outline"
                         style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 4 }]}
                       />
-                      {/* BUG FIX (illegible orange pill text): `status=
-                          "warning"` resolves to this app's only warning
-                          shade (#FE9870, a light peach), almost invisible
-                          against this same peach-tinted fill. `color-
-                          warning-700` (added to appTheme.json) is a proper
-                          darkened burnt-orange with real contrast. */}
-                      <Text category="h9" bold style={{color: theme['color-warning-700']}}>
+                      <Text category="h9" bold>
                         {skill}
                       </Text>
                     </TouchableOpacity>
@@ -1281,9 +1275,17 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  // SYMPHONY REDESIGN follow-up (explicit product request: "the analysis
+  // pills in the resume builder, JD analyzer and many other places are
+  // colored pills... make them all to be white pills with black texts no
+  // background"). Was color-warning-transparent-200 fill with darkened
+  // warning-colored text (see the render call site's own now-removed BUG
+  // FIX comment) — plain white/black now, same as editableChip right
+  // above and JDAnalyzer.tsx's chip style.
   suggestedChip: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'background-basic-color-2',
   },
   contactGrid: {
     flexDirection: 'row',
