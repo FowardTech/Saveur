@@ -54,6 +54,7 @@ import {
   LogOut,
   Mail,
   Map,
+  Menu,
   MessageCircle,
   MessageSquare,
   Mic,
@@ -218,6 +219,15 @@ const LucideEvaIconsPack: IconPack<any> = {
     'lock-outline': lucideIcon(Lock),
     'log-in-outline': lucideIcon(LogIn),
     'log-out-outline': lucideIcon(LogOut),
+    // SYMPHONY REDESIGN (drawer nav shell) — the app's first real hamburger-
+    // menu icon, used by the new drawer's open button (see
+    // navigation/MainDrawer.tsx). 'menu-outline' was previously used
+    // (incorrectly) as a drag-handle name, never actually registered here,
+    // and abandoned in favor of 'grip-outline' for that case (see the
+    // 'grip-outline' entry's own comment above) — that abandonment doesn't
+    // block reusing the name now for its actual, correct meaning (an app
+    // nav menu button), which is a new use case, not a repeat of that bug.
+    'menu-outline': lucideIcon(Menu),
     'message-circle-outline': lucideIcon(MessageCircle),
     'message-square-outline': lucideIcon(MessageSquare),
     'mic-outline': lucideIcon(Mic),

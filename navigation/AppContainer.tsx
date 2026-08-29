@@ -7,7 +7,12 @@ import Onboarding from 'src/onboarding';
 import {AuthContext} from '../AuthContext';
 import SuccessScr from 'src/SuccessScr';
 import AuthNavigator from './AuthNavigator';
-import MainBottomTab from './MainBottomTab';
+// SYMPHONY REDESIGN: swapped the bottom-tab implementation for a left
+// drawer (./MainDrawer.tsx) — see that file's own top comment for why the
+// local name `MainBottomTab` (and every screen/route it contains) stays
+// unchanged. ./MainBottomTab.tsx itself is kept in the repo, unimported,
+// purely as a reference for the old tab-bar layout during this redesign.
+import MainBottomTab from './MainDrawer';
 import SelectLanguage from 'src/home/MyFavorites/SelectLanguage';
 import Notification from 'src/home/Notification';
 import MessagesNavigator from './MessagesNavigator';

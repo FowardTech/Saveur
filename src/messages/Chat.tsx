@@ -24,7 +24,7 @@ import {
 import { useTranslation } from "react-i18next";
 import useLayout from "hooks/useLayout";
 import Container from "components/Container";
-import NavigationAction from "components/NavigationAction";
+import DrawerMenuButton from "components/DrawerMenuButton";
 import { globalStyle } from "styles/globalStyle";
 import { Platform } from "react-native";
 import Flex from "components/Flex";
@@ -754,7 +754,13 @@ const Chat = memo(() => {
             {t("message:ai_coach_name", { defaultValue: "AI Career Coach" })}
           </Text>
         )}
-        accessoryLeft={<NavigationAction status="basic" />}
+        // SYMPHONY REDESIGN (drawer nav shell) — Chat/Coach is one of the 3
+        // drawer root screens (Home/Chat/More); this was a plain back
+        // button (NavigationAction with no onPress defaults to goBack()),
+        // which never had anywhere real to go back TO — MessagesStackParamList
+        // only ever has this one screen. Now a real, functional affordance:
+        // opens the drawer, matching Home/More's own headers.
+        accessoryLeft={<DrawerMenuButton />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
             {voiceCoachEnabled ? (

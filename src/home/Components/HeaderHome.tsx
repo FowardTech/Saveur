@@ -6,6 +6,7 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import DrawerMenuButton from 'components/DrawerMenuButton';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
 import {useTranslation} from 'react-i18next';
@@ -48,6 +49,11 @@ const HeaderHome = memo(
     const theme = useTheme();
     return (
       <Flex justify="space-between" itemsCenter mh={24} mt={24} mb={8}>
+        {/* SYMPHONY REDESIGN (drawer nav shell) — Home is one of the 3
+            drawer root screens (Home/Chat/More); this is its own way to
+            open the drawer now that there's no bottom tab bar. See
+            components/DrawerMenuButton.tsx's own comment. */}
+        <DrawerMenuButton />
         {/* Redesign (product follow-up, ZipRecruiter reference screenshot —
             "Good evening, Ayotunde" as one big bold greeting, no avatar
             circle at all on this screen). Was a small h8-s "Good morning"

@@ -11,6 +11,7 @@ import {NavigationProp, useFocusEffect, useNavigation} from '@react-navigation/n
 import {RootStackParamList} from 'navigation/types';
 import {EKeyAsyncStorage, accountScopedKey} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
+import DrawerMenuButton from 'components/DrawerMenuButton';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
 import ThemeContext from '../../ThemeContext';
 import {AuthContext} from '../../AuthContext';
@@ -172,6 +173,45 @@ const MoreSrc = memo(() => {
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
       navigateSrc: 'ProfileSrc',
+    },
+    {
+      // SYMPHONY REDESIGN (drawer nav shell): Practice used to be its own
+      // bottom-tab icon (see navigation/MainBottomTab.tsx's "Practice" tab,
+      // now hidden — replaced by a 3-item Home/Chat/More drawer with no
+      // bottom nav at all). Every feature that isn't Home/Chat now needs
+      // a real entry point somewhere inside More, so this row is that
+      // entry point. Route name ('Practice') and destination (FindScreen)
+      // are unchanged — it's still the same screen nested in the same
+      // place in the navigation tree, just reached via this row's
+      // navigate() instead of a tab press.
+      title: t('more:tab_practice', {defaultValue: 'Practice Interviews'}),
+      icon: 'search',
+      status: 'facebook',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      // Fully-qualified nested navigate (matches onReplayTour's own
+      // `navigate('MainBottomTab', {screen: 'Home'})` above) rather than a
+      // bare `navigate('Practice')` -- 'Practice' isn't a RootStackParamList
+      // key (it only exists inside MainBottomTabStackParamList), so the bare
+      // form wouldn't type-check against this file's
+      // `NavigationProp<RootStackParamList>`.
+      onPress: () => navigate('MainBottomTab', {screen: 'Practice'}),
+    },
+    {
+      // Same story as Practice above — was the "Applications" bottom tab
+      // (route name "Interviews", see MainBottomTab.tsx's own comment on
+      // why the route name and label differ), now only reachable from here.
+      title: t('more:tab_interviews', {defaultValue: 'Applications'}),
+      icon: 'bookmark',
+      status: 'facebook',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      // Interviews' own nested param list has no `| undefined` (see
+      // navigation/types.tsx's MainBottomTabStackParamList) -- has to be
+      // given a starting nested screen, same as navigationRef.ts's own
+      // `navigate('MainBottomTab', {screen: 'Interviews', params: {screen:
+      // 'RequestsSrc'}})` for a "content_shared"/application-tracker push.
+      onPress: () => navigate('MainBottomTab', {screen: 'Interviews', params: {screen: 'RequestsSrc'}}),
     },
     {
       // Product follow-up: Home was redesigned down to two big entry-point
@@ -563,6 +603,11 @@ const MoreSrc = memo(() => {
     // surface, whenever the app theme is dark).
     <Container style={styles.container} level={appTheme === 'dark' ? undefined : '2'}>
       <Content padder contentContainerStyle={styles.content}>
+        {/* SYMPHONY REDESIGN (drawer nav shell) — More is one of the 3
+            drawer root screens (Home/Chat/More); this is its own way to
+            open the drawer now that there's no bottom tab bar. See
+            components/DrawerMenuButton.tsx's own comment. */}
+        <DrawerMenuButton />
         <HeaderMoreOption
           name={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}
           avatarUrl={profile?.avatarUrl}
