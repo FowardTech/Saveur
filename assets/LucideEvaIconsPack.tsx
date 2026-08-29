@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   CheckSquare2,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Circle,
   CircleDot,
@@ -149,6 +150,16 @@ const LucideEvaIconsPack: IconPack<any> = {
     'checkmark-outline': lucideIcon(Check),
     'checkmark-square-2-outline': lucideIcon(CheckSquare2),
     'chevron-down-outline': lucideIcon(ChevronDown),
+    // BUG FIX (real crash report, screenshot: "Icon: 'chevron-right-outline'
+    // icon is not registered in pack 'eva'") — components/ActionCard.tsx's
+    // trailing chevron (the new Symphony-style launcher card used by
+    // HomeSrc.tsx's 4 cards) used this name but it was never added here,
+    // same "screen added after this pass" gap this file's own header
+    // comment warns about — this exact name/component combination already
+    // crashed once before elsewhere in this app's history (see
+    // PersonalizationCard.tsx's own past fix, referenced in the
+    // 'cube-outline' entry's comment above) and evidently regressed.
+    'chevron-right-outline': lucideIcon(ChevronRight),
     'chevron-up-outline': lucideIcon(ChevronUp),
     'clipboard-outline': lucideIcon(Clipboard),
     'clock-outline': lucideIcon(Clock),
