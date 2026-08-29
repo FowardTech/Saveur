@@ -1,69 +1,100 @@
-import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
-import { StyleService, useStyleSheet, Icon, useTheme } from '@ui-kitten/components';
+import React, {memo} from 'react';
+import {TouchableOpacity, View, ViewStyle, StyleProp} from 'react-native';
+import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 
 import Text from 'components/Text';
-import { globalStyle } from 'styles/globalStyle';
+import {globalStyle} from 'styles/globalStyle';
 
-// STRUCTURED DASHBOARD REDESIGN (product ask: "search dribbble/behance,
-// structure the app like top-rated 2026 apps" -- see StatStrip.tsx's own
-// comment for the full "data zone above, actions zone below" reasoning
-// this pairs with). This is the actions zone's primary item -- a single,
-// restrained row card (small tinted icon, title, subtitle, trailing
-// chevron) instead of the previous pass's big illustrated hero
-// (MissionHeroCard, still on disk, unused now -- kept as a rollback
-// point rather than deleted, same as every prior redesign pass in this
-// app). One accent color only, no progress bar/meta row duplicating what
-// StatStrip above already shows -- the "one clear next action" pattern
-// Betterment/Noom-style coaching apps and fintech dashboards both use.
-// Generic and reusable, same as every other Home v2/v3 component.
+// SYMPHONY REDESIGN — the simple, full-width "launcher" card the reference
+// app builds its Home and Settings screens out of almost entirely: a
+// leading icon in a soft blue-tinted circle, a bold title + one-line muted
+// subtitle, and an optional trailing badge/toggle/chevron. One shared
+// component (product request: "the same look and feel throughout the whole
+// app... including... every single screen") so Home's launcher cards
+// (src/home/HomeSrc.tsx) and the Settings screen's menu rows
+// (src/more/MoreSrc.tsx) render with the exact same shape instead of two
+// different card styles.
+//
+// Deliberately minimal — no meta rows, no progress bars, no illustrations
+// (see MissionHeroCard.tsx for that richer treatment, still used
+// separately) — matching the explicit ask: "just have 3 or 4 horizontal
+// cards, that's enough."
 export interface ActionCardProps {
-  icon: string; // eva icon pack name
+  icon: string;
+  // 'eva' (lucide-backed, assets/LucideEvaIconsPack.tsx) for new call
+  // sites; 'assets' for this app's older bespoke PNG icon set (MoreSrc.tsx
+  // rows still use their own existing 'assets' icon names — no need to
+  // re-author 30+ icons for this pass).
+  iconPack?: 'eva' | 'assets';
   title: string;
-  subtitle: string;
+  subtitle?: string;
   onPress: () => void;
-  accentColor?: string;
+  disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
+  // Trailing slot — a chevron by default, but a caller can pass its own
+  // (a Toggle, a "PRO" pill, a badge dot) instead. Keeping this as a
+  // slot rather than baking in every possible trailing widget keeps this
+  // component simple while still covering MoreSrc.tsx's existing
+  // toggle/badge/pro-badge rows.
+  trailing?: React.ReactNode;
 }
 
-const ActionCard: React.FC<ActionCardProps> = ({ icon, title, subtitle, onPress, accentColor = 'color-primary-500' }) => {
-  const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
-  const resolvedAccent = theme[accentColor] ?? accentColor;
-
-  return (
-    <TouchableOpacity activeOpacity={0.8} style={styles.card} onPress={onPress}>
-      <View style={[styles.iconWrap, { backgroundColor: `${resolvedAccent}1A` }]}>
-        <Icon pack="eva" name={icon} style={{ width: 20, height: 20, tintColor: resolvedAccent }} />
-      </View>
-      <View style={[globalStyle.flexOne, styles.textCol]}>
-        <Text category="h9" bold numberOfLines={1}>
-          {title}
-        </Text>
-        <Text category="h10" status="placeholder" numberOfLines={1} mt={2}>
-          {subtitle}
-        </Text>
-      </View>
-      {/* pack="assets" name="chevronRight" (NOT pack="eva") --
-          "chevron-right-outline" isn't registered in the eva pack; this
-          exact mistake has crashed this app before (see
-          CareerDna.tsx/CourseSession.tsx's own fix comments). */}
-      <Icon pack="assets" name="chevronRight" style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]} />
-    </TouchableOpacity>
-  );
-};
+const ActionCard: React.FC<ActionCardProps> = memo(
+  ({icon, iconPack = 'eva', title, subtitle, onPress, disabled, style, trailing}) => {
+    const styles = useStyleSheet(themedStyles);
+    const theme = useTheme();
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={onPress}
+        disabled={disabled}
+        style={[styles.card, style, disabled ? styles.disabled : undefined]}>
+        <View style={styles.iconWrap}>
+          <Icon
+            pack={iconPack}
+            name={icon}
+            style={[globalStyle.icon16, {tintColor: theme['color-primary-100']}]}
+          />
+        </View>
+        <View style={globalStyle.flexOne}>
+          <Text category="h8" bold numberOfLines={1}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text category="h10" numberOfLines={1} mt={2} style={styles.subtitle}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        {trailing !== undefined ? (
+          trailing
+        ) : (
+          <Icon
+            pack="eva"
+            name="chevron-right-outline"
+            style={[styles.chevron, {tintColor: theme['color-basic-400']}]}
+          />
+        )}
+      </TouchableOpacity>
+    );
+  },
+);
 
 export default ActionCard;
 
 const themedStyles = StyleService.create({
   card: {
+    ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
+    padding: 16,
+    marginBottom: 12,
     backgroundColor: 'background-basic-color-2',
-    padding: 14,
+    borderWidth: 1,
+    borderColor: 'border-card-default',
+  },
+  disabled: {
+    opacity: 0.6,
   },
   iconWrap: {
     width: 40,
@@ -71,9 +102,15 @@ const themedStyles = StyleService.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 14,
+    backgroundColor: 'color-primary-transparent-100',
   },
-  textCol: {
-    marginLeft: 12,
-    marginRight: 8,
+  subtitle: {
+    color: 'text-hint-color',
+  },
+  chevron: {
+    width: 18,
+    height: 18,
+    marginLeft: 6,
   },
 });

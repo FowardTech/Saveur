@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Image, ImageStyle, InteractionManager, ScrollView, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
+import { Alert, AppState, Image, ImageStyle, InteractionManager, StyleSheet, TouchableOpacity, View, useWindowDimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
@@ -8,16 +8,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import Content, { CONTENT_PADDER } from 'components/Content';
 import Container from 'components/Container';
 import HeaderHome from './Components/HeaderHome';
-import ContinueLearningCard from './ContinueLearningCard';
-import UpcomingSessionHomeCard from './UpcomingSessionHomeCard';
-import CareerFairEventCard from './CareerFairEventCard';
-import { SkeletonHomeCardRow } from 'components/Skeleton';
-import NextLessonHomeCard from './NextLessonHomeCard';
 import AnnouncementBanner from './AnnouncementBanner';
-import { ArtGiftBox, ArtWorkplaceCompass } from './HomeHeroArt';
-import StatStrip from 'components/StatStrip';
-import MissionHeroCard from 'components/MissionHeroCard';
-import CoachPromptCard from 'components/CoachPromptCard';
+import ActionCard from 'components/ActionCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
 import * as gamificationService from 'services/gamificationService';
@@ -27,13 +19,12 @@ import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
-import { AdvertisementProps, CareerEventProps, EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
+import { AdvertisementProps, EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
 import * as notificationService from 'services/notificationService';
 import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
-import * as careerEventsService from 'services/careerEventsService';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
@@ -50,7 +41,7 @@ import { Images } from 'assets/images';
 import ThemeContext from '../../ThemeContext';
 import { AuthContext } from '../../AuthContext';
 import * as configService from 'services/configService';
-import { formatNumber, localizeDigits } from 'utils/formatNumber';
+import { localizeDigits } from 'utils/formatNumber';
 
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
@@ -80,10 +71,7 @@ const ROADMAP_STEP_ICONS: Record<string, string> = {
 // mechanism (this file used to have several dashboard widgets whose data-
 // loading useCallbacks fed straight into mount effects with `t` in their own
 // dependency arrays — the exact loop that made this matter).
-// 'more' added for whats_next_title -- the "What's Next" link card in the
-// "Next Steps" section reuses that screen's own translated title rather
-// than duplicating a fresh Home-specific string for the exact same name.
-const HOME_I18N_NAMESPACES = ['home', 'common', 'more'] as const;
+const HOME_I18N_NAMESPACES = ['home', 'common'] as const;
 
 // This screen has been through several redesigns (v1: "two-big-card 'what
 // do you want to do' landing screen"; v2: greeting header + QuickActionGrid
@@ -209,136 +197,6 @@ const HomeSrc = memo(() => {
       // Non-critical -- the streak stat card below just falls back to 0.
     });
   }, [isSignedIn]);
-
-  // Product request: "targeted career fairs and events card to display
-  // under the continue & Upcoming cards... maximum of 4 recently posted
-  // event/career fair cards." listCareerEvents() already returns
-  // soonest-event-first (see careerEventsService.ts's own docstring), which
-  // isn't the same ordering as "recently posted" — re-sorted by createdAt
-  // (when THIS APP discovered it, not when the event itself happens)
-  // descending, then capped at 4, so this preview genuinely shows the
-  // newest finds rather than whichever happens to be soonest. Self-fetched
-  // here (not a separate self-contained card component like
-  // ContinueLearningCard/UpcomingSessionHomeCard above) since HomeSrc
-  // already owns list-fetching for its other sections (e.g. roadmap right
-  // above) — CareerFairEventCard itself stays a plain presentational card.
-  const [careerEvents, setCareerEvents] = React.useState<CareerEventProps[]>([]);
-  // Product request: "I want skeleton loader in app" — without this, the
-  // whole "Career Fairs & Events" section (title included, see its
-  // `careerEvents.length > 0` gate below) just doesn't exist at all until
-  // the very first fetch resolves, so a user who genuinely has events
-  // waiting for them saw nothing for that whole window instead of a
-  // placeholder. Only shown while a first real answer is still pending —
-  // once loaded, an empty result still means "nothing to show" (same as
-  // today), not a stuck skeleton.
-  const [careerEventsLoading, setCareerEventsLoading] = React.useState(true);
-  const loadCareerEvents = React.useCallback(() => {
-    if (!isSignedIn) {
-      setCareerEventsLoading(false);
-      return;
-    }
-    careerEventsService.listCareerEvents()
-      .then(list => {
-        const recent = [...list].sort((a, b) => b.createdAt - a.createdAt).slice(0, 4);
-        setCareerEvents(recent);
-      })
-      .catch(() => {
-        // Non-critical -- same "section just doesn't render" fallback as
-        // every other best-effort Home fetch (e.g. roadmap above).
-      })
-      .finally(() => setCareerEventsLoading(false));
-  }, [isSignedIn]);
-  React.useEffect(() => { loadCareerEvents(); }, [loadCareerEvents]);
-  useFocusEffect(
-    React.useCallback(() => {
-      loadCareerEvents();
-    }, [loadCareerEvents]),
-  );
-  const onOpenCareerEvent = React.useCallback((event: CareerEventProps) => {
-    if (!event.read) {
-      careerEventsService.markCareerEventsRead([event.id]).catch(() => undefined);
-      setCareerEvents(prev => prev.map(e => (e.id === event.id ? { ...e, read: true } : e)));
-    }
-    navigate('WebViewScreen', { url: event.url, title: event.title });
-  }, [navigate]);
-
-  // HOME RESTRUCTURE (product ask: the screen was "too cluttered,
-  // generic, wrong hierarchy" for launch — this file used to have a
-  // "grid of 2/3" horizontal row for Continue & Upcoming PLUS five more
-  // separately-titled sections below it (Career Toolkit, Career Fairs &
-  // Events, Career Progress, Daily Challenge, Refer & Earn, Next Steps —
-  // see git history for the full prior v3 layout this replaces). Chose the
-  // "AI-first hero" direction: one prominent Ask Your Coach hero (new,
-  // right below the verify-email banner), ONE collapsed "continue where
-  // you left off" card instead of three side by side, and everything else
-  // folded into a single "For You" horizontal row below it — matching how
-  // top AI apps (ChatGPT/Perplexity home screens) lead with one clear
-  // focal action instead of a stack of equally-weighted dashboard cards.
-  //
-  // Continue-card priority: was three cards side by side, each already
-  // self-hiding on its own (UpcomingSessionHomeCard/ContinueLearningCard/
-  // NextLessonHomeCard all support onVisibilityChange — this exact prop
-  // existed here once before, see the BUG FIX history these three files'
-  // own comments still carry, then got removed when nothing read it
-  // anymore). Reintroduced here for real this time: only the single
-  // highest-priority card that actually has content renders visibly
-  // (upcoming session > continue learning > next lesson, same order the
-  // old row displayed them in left to right) — the other two stay
-  // mounted (so they keep fetching/self-updating) but collapsed to zero
-  // height via forYouHiddenCard below, rather than unmounted, so
-  // whichever one becomes relevant later doesn't need a fresh fetch.
-  const [upcomingSessionHasContent, setUpcomingSessionHasContent] = React.useState(false);
-  const [continueLearningHasContent, setContinueLearningHasContent] = React.useState(false);
-  const [nextLessonHasContent, setNextLessonHasContent] = React.useState(false);
-  const activeContinueCard = upcomingSessionHasContent
-    ? 'upcoming'
-    : continueLearningHasContent
-    ? 'continue'
-    : nextLessonHasContent
-    ? 'next'
-    : null;
-
-  // Shared sizing for the new "For You" row (Career Progress/Daily
-  // Challenge/Career Fairs & Events/shortcut tiles/Refer & Earn/Next
-  // Steps all now live here as same-width tiles instead of each being
-  // its own full-width titled section) — fixed rather than derived from
-  // screen width (unlike the old topCardWidth this replaces) since this
-  // row is meant to peek the next tile at the screen edge, not fit an
-  // exact number per screen.
-  const forYouGap = 12;
-  const forYouCardWidth = 150;
-
-  // Evergreen shortcut tiles in the "For You" row — replaces both the old
-  // Uber-Eats-style pill row (Today's Tips/Roadmap/Career DNA) and the
-  // Career Toolkit section (Companies/Courses/Salary; Coach dropped from
-  // this list since it's now the page's own hero above, not a shortcut
-  // among others). Recomputed each render (cheap — a handful of object
-  // literals) rather than memoized, same as the isFeatureEnabled checks
-  // this replaces, which were previously inlined directly in JSX.
-  const forYouShortcuts = [
-    // COLOR HISTORY: flat #272e3b custom fill -> the same orange/red
-    // gradient StatStrip's own "Streak" tile uses -> product follow-up
-    // ("remove the linear gradient on the today's tips pill button and
-    // let it be like the rest"): no custom fill at all now, same default
-    // background-basic-color-2 every other tile in this row uses. See the
-    // render loop below for how gradientColors (when present on some
-    // future tile) would render a gradient fill.
-    { key: 'tips', icon: Images.iconLightbulbHead, label: t('home:pill_todays_tips', { defaultValue: "Today's Tips" }), onPress: () => navigate('GoalTipDetail'), gradientColors: undefined as [string, string] | undefined },
-    { key: 'roadmap', icon: Images.iconLocation, label: t('home:pill_roadmap', { defaultValue: 'Roadmap' }), onPress: () => navigate('CareerRoadmap'), gradientColors: undefined as [string, string] | undefined },
-    { key: 'dna', icon: Images.iconAiStars, label: t('home:pill_career_dna', { defaultValue: 'Career DNA' }), onPress: () => navigate('CareerDna'), gradientColors: undefined as [string, string] | undefined },
-    { key: 'companies', icon: Images.iconHandshake, label: t('home:quick_action_dream_company', { defaultValue: 'Companies' }), onPress: () => navigate('DreamCompanies'), gradientColors: undefined as [string, string] | undefined },
-    ...(configService.isFeatureEnabled('learning_courses')
-      ? [{ key: 'courses', icon: Images.iconGraduationCap, label: t('home:quick_action_courses', { defaultValue: 'Courses' }), onPress: () => navigate('LearningCourses'), gradientColors: undefined as [string, string] | undefined }]
-      : []),
-    ...(configService.isFeatureEnabled('salary_negotiation')
-      ? [{ key: 'salary', icon: Images.iconCoins, label: t('home:quick_action_salary', { defaultValue: 'Salary' }), onPress: () => navigate('SalaryNegotiation'), gradientColors: undefined as [string, string] | undefined }]
-      : []),
-    // Product request: "add leaderboard to the for you button pills that
-    // navigates to the leaderboard screen" -- same illustrated trophy
-    // graphic Leaderboard.tsx's own #1 podium spot uses (Images.trophy),
-    // rather than a generic Eva icon.
-    { key: 'leaderboard', icon: Images.trophy, label: t('home:pill_leaderboard', { defaultValue: 'Leaderboard' }), onPress: () => navigate('Leaderboard'), gradientColors: undefined as [string, string] | undefined },
-  ];
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -919,20 +777,14 @@ const HomeSrc = memo(() => {
     };
   }, [dailyChallenge, roadmap, currentRoadmapStep, roadmapPercent, t, navigate]);
 
-  // Coach card suggested prompts -- generic, always-relevant conversation
-  // starters (not personalized/fetched — Saveur has no "suggested
-  // prompts" endpoint), each one deep-links into Chat.tsx with itself as
-  // `initialPrompt` (see CoachPromptCard.tsx's own comment).
-  const coachPrompts = [
-    t('home:coach_prompt_resume', { defaultValue: 'How can I improve my resume?' }),
-    t('home:coach_prompt_interview', { defaultValue: 'Help me prepare for an interview' }),
-    t('home:coach_prompt_skills', { defaultValue: 'What skills should I learn next?' }),
-  ];
-  const onPressCoachPrompt = React.useCallback((prompt: string) => {
-    navigate('MainBottomTab', { screen: 'Coach', params: { screen: 'Chat', params: { initialPrompt: prompt } } });
-  }, [navigate]);
   const onPressCoachSend = React.useCallback(() => {
     navigate('MainBottomTab', { screen: 'Coach' });
+  }, [navigate]);
+  const onPressPractice = React.useCallback(() => {
+    navigate('MainBottomTab', { screen: 'Practice' });
+  }, [navigate]);
+  const onPressExploreMore = React.useCallback(() => {
+    navigate('MainBottomTab', { screen: 'Profile', params: { screen: 'MoreSrc' } });
   }, [navigate]);
 
   return (
@@ -954,32 +806,43 @@ const HomeSrc = memo(() => {
         notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
-        {/* Home redesign v3 (see this file's module comment + the effects
-            above for the full "why"), section titles renamed in a later
-            follow-up to read as this app's own career-coaching vocabulary
-            rather than generic dashboard labels.
-            CURRENT top-to-bottom order (RESTRUCTURE pass, product follow-up
-            "Remove the career tool kit from the whole card and place it
-            immediately after homebanner. And then remove the todays focus
-            content totally" -- see the toolkitCard/toolkitCardDark styles'
-            own comment for what got removed entirely rather than moved):
-            verify-email banner (time-sensitive account action, not a
-            content card) -> admin Home banner (conditional) -> "Career
-            Toolkit" (4 shortcuts, now its own standalone section right
-            after the banner) -> "Continue & Upcoming" (3-card horizontal
-            row) -> "Career Progress" (Progress Toward Goal ring) ->
-            DailyChallengeCard (self-contained, own doc comment) -> Refer &
-            Earn promo -> "Next Steps" (a standing link into WhatsNext.tsx).
-            "Today's Career Focus" (the old streak/mic-icon hero this
-            screen used to open with) is GONE, not relocated -- see git
-            history if a future pass wants it back.
-            REMOVED from Home in the original v3 pass (still reachable
-            elsewhere, not deleted from the app): DailyNewsBanner/
-            DailyTipsBanner, the old streak-stats grid, and
-            RecentActivityList. DailyChallengeCard was ALSO removed in that
-            pass with no other entry point left anywhere in the app --
-            restored here (product follow-up: "add more content after the
-            your progress card") rather than staying orphaned. */}
+        {/* SYMPHONY REDESIGN (explicit product request, with reference
+            screenshots: "that homescreen has too much content... make it
+            simple... just have 3 or 4 horizontal cards, that's enough...
+            you don't have to retain the contents there, recreate and
+            determine the contents in each card"). This replaces the entire
+            prior multi-section body — a "For You" shortcut-pill row, a
+            separate Career Fairs & Events row, StatStrip, CoachPromptCard,
+            and a collapsed 3-card "Continue/Upcoming" row (see git history
+            for that full v3-v6 layout and every one of its own past
+            product-driven iterations) — with exactly 4 plain launcher
+            cards (components/ActionCard.tsx), matching the reference app's
+            own simple full-width row-card home screen:
+              1. Today's Focus — the existing real priority chain (today's
+                 Daily Challenge -> current AI Career Roadmap step -> a
+                 generic coach nudge), unchanged (see missionHero above),
+                 just rendered in the new plain card shape instead of
+                 MissionHeroCard's richer badge/meta/progress-ring layout.
+              2. AI Career Coach — always-visible entry point into Chat
+                 (previously only ever showed via CoachPromptCard/the
+                 mission-hero's own fallback tier).
+              3. Practice Interviews — into the Practice tab, subtitle shows
+                 the real streak (gamificationService.getStreak(), fetched
+                 above) when there is one.
+              4. Explore More — into the More/Profile tab, now the home for
+                 everything else (Job Alerts, Resume Builder, Career
+                 Roadmap, etc. — see MoreSrc.tsx).
+            Career Fairs & Events (still real, still fetched elsewhere) and
+            the Continue/Upcoming-session cards are no longer surfaced on
+            Home at all — the former stays reachable from Networking
+            Assistant (More menu), the latter's own screens
+            (UpcomingSessionHomeCard/ContinueLearningCard/NextLessonHomeCard)
+            stay on disk unused, same rollback-point convention every prior
+            Home redesign in this file's history has followed.
+            The admin-configured marketing banner (homeBanner below) and
+            the time-sensitive verify-email banner are UNCHANGED — neither
+            is "content clutter" in the sense being simplified here, they're
+            a conditional admin feature and an account-status prompt. */}
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -1010,203 +873,11 @@ const HomeSrc = memo(() => {
           </Flex>
         ) : null}
 
-{/* HOME REDESIGN v5 (product report: "take the for you button pills and
-            put them above the hero card") -- the "For You" row now leads,
-            then MissionHeroCard, then StatStrip (Step/Streak/XP) right
-            under it, then the AI Coach card. ActionCard (a brief flat-row
-            replacement for the hero card) stays unused on disk, not
-            deleted -- same rollback-point convention as every prior
-            redesign pass.
-
-            Refer & Earn and Next Steps used to each be their own
-            separately-titled section stacked all the way down the page —
-            folded into one "For You" horizontal pill row instead. Career
-            Progress and Daily Challenge live in the mission hero/stat-card
-            pair below instead of a duplicate tile here.
-
-            HOME REDESIGN v6 (product report: "the screenshot above the
-            Events are showing on the same row as the for you button
-            pills... bring the Events below it") -- Career Fairs & Events
-            used to lead this same horizontal ScrollView as its own set of
-            wider cards ahead of the pills; that put two visually different
-            card styles (rich row-cards vs. compact pills) in one scroll
-            region, and on a small viewport an Events card could visually
-            crowd/clip the first pill in the same row. Events now renders
-            as its OWN horizontal row directly below the pills row instead
-            -- still capped at 4 cards, still self-contained
-            (careerEventsLoading/careerEvents state above), just no longer
-            sharing a ScrollView with the pill row. */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={{ marginBottom: 6, paddingHorizontal: 10 }}
-          contentContainerStyle={{ paddingVertical: 10 }}>
-          {/* Evergreen shortcuts -- Today's Tips/Roadmap/Career DNA/
-              Companies/Courses/Salary (see forYouShortcuts above).
-              Product request: "change the today's tips background to a
-              linear gradient color that you gave to the streak icon" --
-              any item with gradientColors renders a LinearGradient fill
-              (clipped to the pill via forYouTileGradientClip) instead of
-              the default flat background-basic-color-2, same pattern the
-              Refer & Earn tile below already used. */}
-          {forYouShortcuts.map(item => (
-            <TouchableOpacity
-              key={item.key}
-              activeOpacity={0.7}
-              style={[
-                styles.forYouTile,
-                item.gradientColors ? styles.forYouTileGradientClip : undefined,
-                { marginRight: forYouGap },
-              ]}
-              onPress={item.onPress}>
-              {item.gradientColors ? (
-                <LinearGradient
-                  colors={item.gradientColors}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFillObject}
-                />
-              ) : null}
-              <Image source={item.icon} style={styles.forYouTileIcon as ImageStyle} resizeMode="contain" />
-              <Text
-                category="h10"
-                bold
-                numberOfLines={1}
-                ml={8}
-                style={item.gradientColors ? styles.forYouTileTextLight : undefined}>
-                {item.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          {/* Refer & Earn -- REMOVED from this row (product request: "remove
-              the referral pill from the for you pill and place a gift icon
-              beside the notification bell that navigates to the referral
-              screen instead" -- see the header's bell row below for the new
-              entry point). ArtGiftBox/referralTileText/the gradient clip
-              styles stay on disk, unused by this pill now -- same
-              rollback-point convention as every other redesign pass here. */}
-
-          {/* Next Steps -- same destination (src/more/WhatsNext.tsx) as
-              before, last in the row as the least time-sensitive item. */}
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={styles.forYouTile}
-            onPress={() => navigate('WhatsNext')}>
-            <ArtWorkplaceCompass size={20} />
-            <Text category="h10" bold numberOfLines={1} ml={8}>
-              {t('more:whats_next_title', { defaultValue: "What's Next" })}
-            </Text>
-          </TouchableOpacity>
-        </ScrollView>
-
-        {/* Career Fairs & Events -- own row now, directly below the pills
-            (see the v6 restructure comment above the pills ScrollView).
-            Nothing renders at all while there are zero events AND loading
-            has finished, same "section just doesn't exist" convention as
-            before -- only the skeleton (while loading) or real cards (once
-            loaded) take up any space. */}
-        {careerEventsLoading || careerEvents.length > 0 ? (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginBottom: 6, paddingHorizontal: 10 }}
-            contentContainerStyle={{ paddingVertical: 10 }}>
-            {careerEventsLoading ? (
-              <>
-                <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-                <SkeletonHomeCardRow style={{ width: forYouCardWidth, marginRight: forYouGap }} />
-              </>
-            ) : (
-              careerEvents.map(event => (
-                <CareerFairEventCard
-                  key={event.id}
-                  event={event}
-                  onPress={onOpenCareerEvent}
-                  style={{ width: forYouCardWidth, marginRight: forYouGap }}
-                />
-              ))
-            )}
-          </ScrollView>
-        ) : null}
-
-        {/* MissionHeroCard -- one clear "next action" card (real priority
-            chain: today's Daily Challenge, falling back to the current AI
-            Career Roadmap step, falling back to a generic coach prompt --
-            see missionHero's own computation above). */}
-        {missionHeroLoading ? (
-          <View style={styles.missionHeroLoading}>
-            {/* Product report: "remove only the linear gradient of the
-                hero card... the text inside the card should be black" --
-                the real card is a plain white card now (see
-                MissionHeroCard.tsx), not a blue fill, so this placeholder
-                matches (status="control"/white spinner would be invisible
-                on the new white placeholder background below). */}
-            <Spinner status="primary" />
-          </View>
-        ) : (
-          <MissionHeroCard
-            badgeIcon={missionHero.badgeIcon}
-            badgeLabel={missionHero.badgeLabel}
-            title={missionHero.title}
-            subtitle={missionHero.subtitle}
-            metaLeft={missionHero.metaLeft}
-            metaRight={missionHero.metaRight}
-            progressPercent={missionHero.progressPercent}
-            progressLabel={missionHero.progressLabel}
-            ctaLabel={missionHero.ctaLabel}
-            ctaIcon={missionHero.ctaIcon}
-            onPress={missionHero.onPress}
-          />
-        )}
-
-        {/* Data zone -- real numbers only, same honest-zero-state
-            convention as before. "Day X of Y" from the original reference
-            screenshot isn't available (RoadmapStep has no day field, only
-            `order`), so this shows "Step X of Y" instead of a fabricated
-            day count; XP is gamificationService's own real streak.xp. */}
-        <StatStrip
-          items={[
-            {
-              label: t('home:stat_strip_step_label', { defaultValue: 'Step' }),
-              value: roadmap && currentRoadmapStep
-                ? localizeDigits(t('home:stat_strip_step_value', { defaultValue: '{{order}} of {{total}}', order: currentRoadmapStep.order, total: roadmap.totalCount }))
-                : t('home:stat_strip_step_value_none', { defaultValue: '—' }),
-              icon: 'step',
-              gradientColors: ['#1F7BFF', '#0052D9'],
-            },
-            {
-              label: t('home:stat_strip_streak_label', { defaultValue: 'Streak' }),
-              value: localizeDigits(t('home:stat_strip_streak_value', { defaultValue: '{{count}} days', count: streak?.streakDays ?? 0 })),
-              icon: 'streak',
-              gradientColors: ['#FF9457', '#E24A2B'],
-            },
-            {
-              label: t('home:stat_strip_xp_label', { defaultValue: 'XP' }),
-              value: formatNumber(streak?.xp ?? 0),
-              icon: 'rateFull',
-              gradientColors: ['#B57BFF', '#7C3AED'],
-            },
-          ]}
-        />
-
-        {/* AI Coach card -- see coachPrompts above for the exact starter
-            list and CoachPromptCard.tsx's own comment for how a tap
-            deep-links straight into a real conversation instead of just
-            opening a blank thread. */}
-        <CoachPromptCard
-          title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
-          subtitle={t('home:coach_card_subtitle', { defaultValue: 'Ask anything about your job search' })}
-          prompts={coachPrompts}
-          onPressPrompt={onPressCoachPrompt}
-          onPressSend={onPressCoachSend}
-        />
-
         {/* Admin-configured Home banner (see the effect above for the full
-            "why" + how this differs from AnnouncementBanner). Deliberately
-            rendered above "Today's Career Focus" per explicit product
-            placement. Only shows once a real, active placement="home_banner"
-            ad exists — no banner at all until the admin creates one, and a
+            "why" + how this differs from AnnouncementBanner). Kept above
+            the 4 launcher cards, same prominent placement it's always had.
+            Only shows once a real, active placement="home_banner" ad
+            exists — no banner at all until the admin creates one, and a
             tap always has real content to navigate AdDetails to. */}
         {homeBanner ? (
           <TouchableOpacity
@@ -1275,53 +946,48 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         ) : null}
 
-        {/* HOME RESTRUCTURE: the Uber-Eats-style pill row (Today's Tips /
-            Roadmap / Career DNA) and the standalone "Career Toolkit"
-            section (Coach / Companies / Courses / Salary) that used to sit
-            here are both gone as their own titled sections — Coach is now
-            the hero above, and the rest (Tips/Roadmap/Career DNA/
-            Companies/Courses/Salary) are shortcut tiles inside the unified
-            "For You" row below (see forYouShortcuts and its render call).
-            See git history for either section's prior full implementation
-            if a future pass wants a standalone version back. */}
+        {/* The 4 cards (see this section's own module-level comment above
+            for the full "why"). Card 1 is the only dynamic one — the same
+            real priority chain (daily challenge -> roadmap step -> generic
+            coach nudge) this screen has always computed, just rendered
+            plainly now instead of through MissionHeroCard's richer layout. */}
+        {missionHeroLoading ? (
+          <View style={styles.cardLoading}>
+            <Spinner status="primary" />
+          </View>
+        ) : (
+          <ActionCard
+            icon={missionHero.ctaIcon ?? missionHero.badgeIcon}
+            title={missionHero.title}
+            subtitle={missionHero.subtitle}
+            onPress={missionHero.onPress}
+          />
+        )}
 
-        {/* HOME RESTRUCTURE: was a 3-card horizontal row (Upcoming Session /
-            Continue Learning / Next Lesson) — collapsed to ONE full-width
-            card, whichever is actually the most relevant right now
-            (activeContinueCard above), matching the "AI-first hero"
-            direction's "one resume card" principle instead of three
-            equal-weight cards competing side by side. All three children
-            stay mounted unconditionally (each already self-fetches/self-
-            hides on its own) so their onVisibilityChange keeps firing —
-            only the winning one is visually shown; the other two collapse
-            to zero height via forYouHiddenCard rather than unmounting, so
-            switching priority later (e.g. a session gets cancelled) doesn't
-            need a fresh fetch. Title only shows when there's something to
-            show at all. */}
-        {activeContinueCard ? (
-          <Text category="h8" bold mt={24} mb={12}>
-            {t('home:continue_and_upcoming_label', { defaultValue: 'Continue' })}
-          </Text>
-        ) : null}
-        <View style={activeContinueCard !== 'upcoming' ? styles.forYouHiddenCard : undefined}>
-          <UpcomingSessionHomeCard
-            style={styles.continueCardFull}
-            onVisibilityChange={setUpcomingSessionHasContent}
-          />
-        </View>
-        <View style={activeContinueCard !== 'continue' ? styles.forYouHiddenCard : undefined}>
-          <ContinueLearningCard
-            style={styles.continueCardFull}
-            onVisibilityChange={setContinueLearningHasContent}
-          />
-        </View>
-        <View style={activeContinueCard !== 'next' ? styles.forYouHiddenCard : undefined}>
-          <NextLessonHomeCard
-            style={styles.continueCardFull}
-            onVisibilityChange={setNextLessonHasContent}
-          />
-        </View>
+        <ActionCard
+          icon="message-circle-outline"
+          title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
+          subtitle={t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' }).toString()}
+          onPress={onPressCoachSend}
+        />
 
+        <ActionCard
+          icon="mic-outline"
+          title={t('home:practice_card_title', { defaultValue: 'Practice Interviews' })}
+          subtitle={
+            streak && streak.streakDays > 0
+              ? localizeDigits(t('home:practice_card_subtitle_streak', { defaultValue: '{{count}}-day streak — keep it going', count: streak.streakDays }))
+              : t('home:practice_card_subtitle_default', { defaultValue: 'Sharpen your skills with a mock interview' }).toString()
+          }
+          onPress={onPressPractice}
+        />
+
+        <ActionCard
+          icon="grid-outline"
+          title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
+          subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
+          onPress={onPressExploreMore}
+        />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
@@ -1445,109 +1111,19 @@ const themedStyles = StyleService.create({
     width: 40,
     height: 40,
   },
-  // HOME RESTRUCTURE ("AI-first hero" direction) — the styles below
-  // replace referralCard/referralTextWrap/referralText, toolkitCard/
-  // toolkitCardDark/quickActionsRow/quickActionItem/quickActionIcon,
-  // pillRow/pillButton/pillButtonLast/pillIcon, progressCard/
-  // progressHero/progressHeroLoading, and whatsNextCard/whatsNextIconWrap
-  // — all now dead and removed (folded into the new AI Coach hero, the
-  // collapsed Continue card, and the unified For You row — see this
-  // file's own module comment and the JSX at each render call site). See
-  // git history for any of those styles' own prior comment history if a
-  // future pass wants the old section-per-item layout back.
-  //
-  // RESTORED (see the render call site's own comment) -- back to
-  // MissionHeroCard's own colored-block footprint instead of the flat
-  // ActionCard placeholder this briefly was. Only shown for the brief
-  // window before missionHeroLoading resolves.
-  // Product report: "reduce the height of the hero card" (asked twice) --
-  // 220 -> 160 -> 145 to match MissionHeroCard.tsx's own tightened
-  // padding/spacing. Solid fallback fill (matches the gradient's first
-  // stop) since this placeholder doesn't render the real LinearGradient.
-  // Product report: "move the hero card up a little bit" -- marginTop
-  // 16 -> 6, matching MissionHeroCard.tsx's own `outer` style.
-  // Product report: "remove only the linear gradient of the hero card...
-  // give the card a box shadow and a border" -- matches MissionHeroCard's
-  // own new plain white/shadow/border look instead of a solid blue fill.
-  missionHeroLoading: {
+  // SYMPHONY REDESIGN — placeholder shown only for the brief window before
+  // missionHeroLoading resolves, sized/shaped to match the real ActionCard
+  // it's standing in for (see components/ActionCard.tsx's own `card` style)
+  // rather than the old richer MissionHeroCard footprint this used to
+  // reserve space for.
+  cardLoading: {
     ...globalStyle.card,
-    ...globalStyle.cardBorder,
-    height: 145,
-    borderRadius: 16,
-    marginTop: 6,
+    height: 72,
+    marginBottom: 12,
     backgroundColor: 'background-basic-color-2',
+    borderWidth: 1,
+    borderColor: 'border-card-default',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  // Collapsed Continue card — full row width now (was topCardWidth's
-  // fixed half-width, back when three of these sat side by side).
-  continueCardFull: {
-    width: '100%',
-  },
-  // The two non-winning Continue candidates stay mounted (so they keep
-  // fetching/self-updating — see activeContinueCard's own comment above)
-  // but collapse to zero visual footprint instead of unmounting.
-  forYouHiddenCard: {
-    height: 0,
-    overflow: 'hidden',
-  },
-  // Shared tile shape for every item in the "For You" row (Career
-  // Progress/shortcuts/Next Steps use this directly; Daily Challenge/
-  // Career Fairs & Events cards bring their own internal card style and
-  // just take forYouCardWidth via an inline width override instead).
-  // Product request: "reduce the box shadow on the For You cards" --
-  // local override AFTER the globalStyle.card spread, scoped to just
-  // this row's tiles rather than touching the shared token every other
-  // card app-wide also reads (same "don't touch card app-wide unless
-  // explicitly asked" scope discipline as every prior shadow/radius
-  // pass). Lighter opacity/radius/offset/elevation, same shadowColor.
-  // Product report: "turn the for you cards back to pill buttons" -- was a
-  // fixed-width (150) square tile with the icon stacked above a centered
-  // label. Now a compact horizontal pill: icon + label inline, fully
-  // rounded, sized to its own content (no fixed width) -- the original
-  // "Uber-Eats-style pill row" shape this row had before the tile-card
-  // redesign (see forYouShortcuts' own comment). Shadow/border from the
-  // prior tile-card passes ("reduce the box shadow" / "give the for you
-  // cards border") are kept as-is, just on the new pill shape.
-  forYouTile: {
-    ...globalStyle.card,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 999,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: 'background-basic-color-2',
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: 'rgba(128,128,128,0.15)',
-  },
-  forYouTileIcon: {
-    width: 20,
-    height: 20,
-  },
-  // White label for any For You pill using a gradient fill (Today's Tips,
-  // Refer & Earn) instead of the default flat background -- see
-  // forYouShortcuts above / forYouTileGradientClip below.
-  forYouTileTextLight: {
-    color: '#fff',
-  },
-  // Shared by every For You pill that renders a LinearGradient fill
-  // (absolute-filled, see each render call site) instead of a flat
-  // backgroundColor -- Today's Tips (product request: "change the
-  // today's tips background to a linear gradient") and Refer & Earn.
-  // Clips the gradient to the pill's own rounded corners; no
-  // globalStyle.card shadow needed (product precedent: "remove the box
-  // shadow from the referral card") -- overridden back off here since
-  // forYouTile's own spread turns it back on by default.
-  forYouTileGradientClip: {
-    overflow: 'hidden',
-    shadowOpacity: 0,
-    elevation: 0,
-  },
-  referralTileText: {
-    color: '#fff',
   },
 });

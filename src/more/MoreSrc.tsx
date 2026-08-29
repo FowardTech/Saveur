@@ -617,19 +617,23 @@ const MoreSrc = memo(() => {
           <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:myDetails')}
           </Text>
-          {/* FULL RESKIN (product request: match a new reference app's
-              look and feel — settings rows grouped into a white rounded
-              shadow-card per section, not the previous flat edge-to-edge
-              list). Explicitly confirmed to override this screen's own
-              extensive "remove the card/border, make it flat" history
-              (see `details`/`application`'s own style comments below) —
-              same "this reskin request supersedes an earlier, since-
-              superseded decision" reasoning as CtaButton.tsx's pill shape
-              and MainBottomTab.tsx's FAB above. */}
-          <View style={styles.sectionCard}>
-            {DATA_DETAILS.map((item, i) => (
+          {/* SYMPHONY REDESIGN (explicit product request, with reference
+              screenshots: "I want the settings screen items to be in form
+              of cards just the way you see it in the symphony
+              screenshot"). Each row is now its OWN separate rounded card
+              with real spacing between them (see `rowCard` below), not one
+              grouped section card with hairline dividers between rows —
+              supersedes the "full 100% width, no border radius, no
+              dividers" flat-list decision this screen's own history
+              carries (see the superseded `sectionCard` comment this
+              replaces), same "an explicit reskin request supersedes an
+              earlier, since-superseded decision" reasoning as CtaButton.tsx's
+              pill shape and MainDrawer.tsx's own history. ButtonOptional
+              itself is UNCHANGED — its own transparent background just
+              shows this wrapping card's white/dark fill through. */}
+          {DATA_DETAILS.map((item, i) => (
+            <View key={i} style={styles.rowCard}>
               <ButtonOptional
-                key={i}
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
@@ -639,17 +643,16 @@ const MoreSrc = memo(() => {
                 badgeCount={item.badgeCount}
                 badgeDot={item.badgeDot}
               />
-            ))}
-          </View>
+            </View>
+          ))}
         </View>
         <View style={styles.application}>
           <Text category="h6" bold style={styles.sectionHeading}>
             {t('more:application')}
           </Text>
-          <View style={styles.sectionCard}>
-            {DATA_APPLICATION.map((item, i) => (
+          {DATA_APPLICATION.map((item, i) => (
+            <View key={i} style={styles.rowCard}>
               <ButtonOptional
-                key={i}
                 icon={item.icon}
                 title={item.title}
                 status={item.status}
@@ -657,7 +660,9 @@ const MoreSrc = memo(() => {
                 onPress={item.onPress}
                 navigateSrc={item.navigateSrc}
               />
-            ))}
+            </View>
+          ))}
+          <View style={styles.rowCard}>
             <ButtonOptional
               withToggle
               icon="darkMode"
@@ -668,13 +673,15 @@ const MoreSrc = memo(() => {
               onPress={toggleTheme}
               navigateSrc={undefined}
             />
-            {/* Master push-notification opt-out. Was nowhere in the app —
-                once a push arrived, there was no in-app way to stop future
-                ones short of disabling notifications at the OS level.
-                Persisted server-side (User.notifications_enabled,
-                PATCH /api/users/me) and enforced in
-                app/services/push_service.py, not just a decorative local
-                switch. */}
+          </View>
+          {/* Master push-notification opt-out. Was nowhere in the app —
+              once a push arrived, there was no in-app way to stop future
+              ones short of disabling notifications at the OS level.
+              Persisted server-side (User.notifications_enabled,
+              PATCH /api/users/me) and enforced in
+              app/services/push_service.py, not just a decorative local
+              switch. */}
+          <View style={styles.rowCard}>
             <ButtonOptional
               withToggle
               icon="notification"
@@ -756,13 +763,8 @@ const themedStyles = StyleService.create({
     paddingBottom: 80,
   },
 
-  // FULL RESKIN: no longer bleeds past Content's 24px page margin — rows
-  // are grouped into a real card now (sectionCard below), so they sit
-  // inset like every other card on the reskinned app instead of reaching
-  // the physical screen edges. See sectionCard's own comment for the
-  // superseded "flat, edge-to-edge, no card" history this replaces.
   details: {
-    marginBottom: 32,
+    marginBottom: 20,
   },
   application: {
     marginBottom: 16,
@@ -770,30 +772,33 @@ const themedStyles = StyleService.create({
   sectionHeading: {
     marginBottom: 12,
   },
-  // Product report: "the item container in the settings should be full
-  // 100 width and the bottom lines should be removed" -- was a grouped
-  // white rounded shadow-card (globalStyle.card spread) inset from the
-  // screen edges by Content's own page padding, with a hairline divider
-  // between every row. Both are gone now: marginHorizontal cancels out
-  // Content's padder (see components/Content.tsx's CONTENT_PADDER) so
-  // this section's rows bleed to the true screen edges (ButtonOptional's
-  // own row padding still keeps the icon/text/chevron off that edge), and
-  // there's no more per-row divider line at all -- see the render call
-  // site, which no longer renders one between rows.
-  sectionCard: {
-    marginHorizontal: -16,
+  // SYMPHONY REDESIGN: each settings row now sits inside its OWN rounded
+  // card (see the render call site's own comment for the full "why" and
+  // the superseded "full 100% width, no border radius" flat-list history
+  // this replaces) — same shape/border/fill as components/ActionCard.tsx's
+  // `card` style (kept as its own local style here rather than importing
+  // ActionCard itself, since ButtonOptional already owns the row's actual
+  // icon/badge/toggle/chevron layout — this is just the card shell wrapped
+  // around it). `overflow: hidden` keeps ButtonOptional's row content from
+  // spilling past this card's own rounded corners.
+  rowCard: {
+    ...globalStyle.card,
+    marginBottom: 12,
+    backgroundColor: 'background-basic-color-2',
+    borderWidth: 1,
+    borderColor: 'border-card-default',
+    overflow: 'hidden',
   },
   // Sign-out gets its own standalone card below the grouped list (see the
   // render call site's own comment) rather than sitting inside the
-  // Application card — was matched to ButtonOptional's OWN now-superseded
-  // flat/transparent row style; now it's a full card row like everything
-  // else, so backgroundColor comes from globalStyle.card's spread instead
-  // of staying transparent.
+  // Application card — same rowCard shell/border as every other row above.
   logoutRow: {
     width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'background-basic-color-2',
+    borderWidth: 1,
+    borderColor: 'border-card-default',
     paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 20,
