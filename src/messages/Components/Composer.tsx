@@ -1,64 +1,37 @@
 import React from "react";
-import { View, TouchableOpacity, ViewStyle, StyleProp } from "react-native";
+import { TouchableOpacity, ViewStyle, StyleProp } from "react-native";
 import { useStyleSheet, StyleService, Icon } from "@ui-kitten/components";
 import { globalStyle } from "styles/globalStyle";
-import useKeyboard from "hooks/useKeyboard";
-import Animated, {
-  Easing,
-  interpolate,
-  useAnimatedStyle,
-  useDerivedValue,
-  withSpring,
-  withTiming,
-} from "react-native-reanimated";
-import Flex from "components/Flex";
+
 interface ComposerProps {
   style?: StyleProp<ViewStyle>;
   onShowAction(): void;
-  onCamera?(): void;
-  onPhotoLibrary?(): void;
 }
 
-const Composer = ({ style, onShowAction, onCamera, onPhotoLibrary }: ComposerProps) => {
+// SYMPHONY REDESIGN follow-up (product report, with reference screenshots:
+// "let it be like a card with box shadow containing the text field, the
+// plus sign which when its clicked it pops up all the items"). Was a
+// 3-icon row (+, camera, photo library) that collapsed/expanded on
+// keyboard show, absolutely positioned to the left of the input pill via
+// a marginLeft-reservation hack on Chat.tsx's own primaryStyle — that
+// whole setup is what the product report meant by the input row looking
+// "clumsy." Camera/photo library are now entries INSIDE the attach sheet
+// this "+" opens (see Chat.tsx's showAction Layout), matching Symphony's
+// own reference screenshot, so this is just the single, permanent "+"
+// trigger now — rendered through InputToolbar's real `renderActions` slot
+// (see Chat.tsx's renderInputToolbar) instead of the old absolute-
+// position/marginLeft trick, so it can sit as a normal sibling of the
+// text input inside one unified card instead of floating above it.
+const Composer = ({ style, onShowAction }: ComposerProps) => {
   const styles = useStyleSheet(themedStyles);
-  const { keyboardShow } = useKeyboard();
-  const animatedAction = useDerivedValue(() => {
-    if (keyboardShow) {
-      return withTiming(1, {
-        duration: 500,
-        easing: Easing.bezier(0.1, 0.3, 0.5, 1),
-      });
-    } else {
-      return withSpring(0);
-    }
-  }, [keyboardShow]);
-
-  const styleAni = useAnimatedStyle(() => {
-    const width = interpolate(animatedAction.value, [0, 0.5, 1], [40, 20, 0]);
-    const opacity = interpolate(animatedAction.value, [0, 0.9, 1], [1, 0, 0]);
-    return {
-      width: width,
-      opacity: opacity,
-    };
-  });
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.content}>
-        <TouchableOpacity activeOpacity={0.54} onPress={onShowAction}>
-          <Icon pack="assets" name="addMore" style={styles.icon} />
-        </TouchableOpacity>
-        <Animated.View style={styleAni}>
-          <Flex>
-            <TouchableOpacity onPress={onCamera}>
-              <Icon pack="assets" name="camera" style={styles.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onPhotoLibrary}>
-              <Icon pack="assets" name="photoLibrary" style={styles.icon} />
-            </TouchableOpacity>
-          </Flex>
-        </Animated.View>
-      </View>
-    </View>
+    <TouchableOpacity
+      activeOpacity={0.6}
+      onPress={onShowAction}
+      style={[styles.container, style]}
+    >
+      <Icon pack="assets" name="addMore" style={styles.icon} />
+    </TouchableOpacity>
   );
 };
 
@@ -66,21 +39,14 @@ export default Composer;
 
 const themedStyles = StyleService.create({
   container: {
-    ...globalStyle.flexDirection,
-  },
-  content: {
-    flexDirection: "row",
-    marginRight: 8,
-    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
   },
   // Product report: "the plus icon, camera icon, image icon all should be
-  // light gray color. At least very visible light gray color" -- was
-  // button-basic-color (brand blue). color-basic-600 (#9393AA) is this
-  // app's own "visible mid-gray" token (see appTheme.json), rather than a
-  // pale gray that would read as barely-there against a white input bar.
+  // light gray color. At least very visible light gray color" — color-
+  // basic-600 (#9393AA) is this app's own "visible mid-gray" token.
   icon: {
     tintColor: "color-basic-600",
     ...globalStyle.icon24,
-    marginLeft: 16,
   },
 });

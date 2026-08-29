@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Alert, Image, ImageSourcePropType, ImageStyle, Modal, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Alert, Image, ImageSourcePropType, ImageStyle, Modal, TouchableOpacity, View } from "react-native";
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from "@react-native-documents/picker";
 import * as ImagePicker from "react-native-image-picker";
 import {
@@ -36,7 +36,7 @@ import { RootStackParamList, MessagesStackParamList } from "navigation/types";
 import AttachItem from "./Components/AttachItem";
 import { CLUSTER_COLORS } from "components/OnboardingCluster";
 import Text from "components/Text";
-import { CoachChatMessageProps, Practice_Mode_Enum, SuggestedActionId } from "constants/Types";
+import { CoachChatMessageProps, SuggestedActionId } from "constants/Types";
 import * as coachService from "services/coachService";
 import { SuggestedTopic } from "services/coachService";
 import { ACTION_META, actionTitle, runSuggestedAction } from "services/suggestedActions";
@@ -366,14 +366,21 @@ const Chat = memo(() => {
           activeOpacity={0.7}
           onPress={() => setMode('voice')}
           style={styles.modeToggleButtonInline}>
+          {/* BUG FIX (product report: "the icon on it should not be mic
+              it should be the same icon for speak") -- was mic-outline (a
+              literal microphone), which reads as "record audio," not
+              "speak/waveform" the way Symphony's own reference pill does.
+              activity-outline (a zigzag waveform line, lucide's "Activity"
+              glyph -- see assets/LucideEvaIconsPack.tsx) is this app's
+              closest existing match to that. */}
           <Icon
             pack="eva"
-            name="mic-outline"
-            style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
+            name="activity-outline"
+            style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]}
           />
           <Text
             category="h9"
-            style={[styles.modeToggleLabel, { color: theme['text-basic-color'] }]}>
+            style={[styles.modeToggleLabel, { color: '#FFFFFF' }]}>
             {t("message:mode_voice", { defaultValue: "Speak" })}
           </Text>
         </TouchableOpacity>
@@ -481,63 +488,52 @@ const Chat = memo(() => {
     });
   }, [uploadAttachment, t]);
 
-  // Routes to the real, already-working video interview flow
-  // (LiveInterviewSession, Video mode) via MockInterviewSetup so the user can
-  // still pick a role/company/duration first — rather than the old
-  // VideoCall.tsx, a leftover static-image placeholder from the pre-Saveur
-  // template with no real camera, session, or AI question flow at all.
-  const onMakeCall = React.useCallback(() => {
-    navigate("MockInterviewSetup", { mode: Practice_Mode_Enum.Video });
-  }, [navigate]);
-  const onViewProgress = React.useCallback(() => {
-    navigate("MyProgress");
-  }, [navigate]);
+  // onMakeCall/onViewProgress REMOVED (product report: "Remove the start
+  // video practice icon and the view my progress icon we dont need
+  // that") — this attach sheet's own comment (where the rows they backed
+  // used to live) has the fuller "why." Both destinations are still
+  // reachable elsewhere in the app (Practice tab, MyProgress from other
+  // entry points), just not from here anymore.
 
+  // SYMPHONY REDESIGN follow-up (product report, with 4 reference
+  // screenshots: "let it be like a card with box shadow containing the
+  // text field, the plus sign... and then the mic icon"). Was a plain
+  // background-basic-color-3 pill with a hairline divider ABOVE the whole
+  // toolbar and a separate 3-icon Composer row absolutely positioned to
+  // its left via a marginLeft-reservation hack (see Composer.tsx's own
+  // git history) — that whole arrangement is what read as "clumsy" per
+  // the product report. Now one real card: `primaryStyle` itself carries
+  // the white fill, rounded corners, hairline border, and shadow (see
+  // globalStyle.card's own tokens), with the "+" trigger (renderActions)
+  // and the Speak pill/Send icon (renderSend) as normal row siblings of
+  // the text input inside it — no more absolute positioning or manual
+  // width reservation needed. `containerStyle` is just transparent
+  // padding around that card now, not a bar of its own, so the old
+  // top-divider hairline is gone too (a floating card doesn't need one).
   const renderInputToolbar = React.useCallback(
     (props: InputToolbarProps) => (
       <InputToolbar
         {...props}
         containerStyle={{
-          backgroundColor: theme["background-basic-color-2"],
-          // BUG FIX (product report, screenshot: "The dividing line at the
-          // top is too white make it a little faint") — gifted-chat's
-          // InputToolbar has its own default top border (a flat gray,
-          // #b2b2b2) that this screen never overrode, so it rendered at
-          // full opacity regardless of theme — glaringly bright against
-          // this screen's dark background-basic-color-2 fill. Same scoped
-          // `border-card-default` token every card border in the app
-          // already uses (light: a soft #E7E7F0 hairline; dark: #3A3A57) —
-          // a hairline width instead of gifted-chat's default 1pt reads as
-          // a faint seam instead of a hard line.
-          borderTopColor: theme["border-card-default"],
-          borderTopWidth: StyleSheet.hairlineWidth,
+          backgroundColor: "transparent",
+          borderTopWidth: 0,
         }}
-        primaryStyle={{
-          alignItems: "center",
-          backgroundColor: theme["background-basic-color-3"],
-          borderRadius: 16,
-          marginRight: 16,
-          marginTop: 8,
-          marginBottom: Platform.OS === "android" ? 8 : 24,
-          marginLeft: keyboardShow ? 56 : 144,
-        }}
-        accessoryStyle={{
-          position: "absolute",
-          bottom: 0,
-        }}
-        renderAccessory={() => (
-          <Composer
-            onShowAction={() => setShowAction(!showAction)}
-            onCamera={onCamera}
-            onPhotoLibrary={onPhotoLibrary}
-            style={[
-              styles.composer,
-              {
-                bottom: Platform.OS == "ios" ? bottom : 16,
-              },
-            ]}
-          />
-        )}
+        primaryStyle={[
+          {
+            alignItems: "center",
+            backgroundColor: theme["background-basic-color-2"],
+            borderRadius: 24,
+            borderWidth: 1,
+            borderColor: theme["border-card-default"],
+            marginHorizontal: 16,
+            paddingLeft: 4,
+            paddingRight: 8,
+            marginTop: 8,
+            marginBottom: Platform.OS === "android" ? 8 : 24,
+          },
+          globalStyle.shadowFade,
+        ]}
+        renderActions={() => <Composer onShowAction={() => setShowAction(!showAction)} />}
       />
     ),
     // BUG FIX (product report, screenshot: "This is displaying as dark
@@ -550,7 +546,7 @@ const Chat = memo(() => {
     // ThemeContext's toggleTheme) kept seeing the old dark
     // background-basic-color-2/3 fill on this input row forever, even
     // though every other theme-aware surface on the screen updated fine.
-    [showAction, Platform.OS, keyboardShow, onCamera, onPhotoLibrary, theme]
+    [showAction, Platform.OS, theme]
   );
 
   // Tapping a coach reply's "Learn more about X" chip (see renderCustomView
@@ -713,9 +709,13 @@ const Chat = memo(() => {
           </TouchableOpacity>
         ) : null}
         {/* "Start a video practice" card REMOVED per product report ("in
-            screenshot 3 remove the start a video practice card") -- the
-            same action is still reachable via the attach-panel's "Start
-            Video Practice" row (see AttachItem below, onMakeCall). */}
+            screenshot 3 remove the start a video practice card"). Was
+            still reachable via the attach panel's own "Start Video
+            Practice" row for a while after that -- that row is gone too
+            now (product report: "Remove the start video practice icon
+            and the view my progress icon we dont need that"), so this
+            action isn't surfaced anywhere on this screen anymore; it's
+            still reachable from the Practice tab directly. */}
       </View>
     );
   }, [initialPrompt, topics, t, theme, styles, height, top, bottom]);
@@ -906,33 +906,48 @@ const Chat = memo(() => {
             />
             {showAction === true ? (
               // SYMPHONY REDESIGN follow-up (explicit product request, with
-              // reference screenshot: "the container housing them looks so
-              // bad and i want them to pop"). Was a bare flat rectangle
-              // (plain white fill, no rounding, no shadow) sitting directly
-              // above the message input — now a real rounded-top sheet with
-              // a soft lift, so it reads as a deliberate panel that slid up
-              // rather than a plain strip of background.
+              // reference screenshots: "when they click on the plus icon
+              // it should pop up like the one in screenshot 3" — Symphony's
+              // own "Add Attachment" sheet, a vertical list of full-width
+              // rows rather than the old 3-across icon-tile grid this used
+              // to be — see AttachItem.tsx's own comment for that layout
+              // change). Also trimmed to just the 3 items the product
+              // report kept ("File attachment, image icon, camera icon...
+              // Remove the start video practice icon and the view my
+              // progress icon we dont need that") — onMakeCall/
+              // onViewProgress (and their rows) are gone; the real
+              // onCamera/onPhotoLibrary handlers (previously their own
+              // persistent icons in the input row itself, see Composer.tsx)
+              // now live here instead, matching where Symphony puts them.
               <Layout style={styles.attachSheet}>
-                <Flex margin={32}>
-                  <AttachItem
-                    title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
-                    icon={"attach"}
-                    bg={CLUSTER_COLORS.blue}
-                    _onPress={onAttach}
-                  />
-                  <AttachItem
-                    title={t("message:start_video_practice", { defaultValue: "Start Video Practice" })}
-                    icon={"call"}
-                    bg={CLUSTER_COLORS.pink}
-                    _onPress={onMakeCall}
-                  />
-                  <AttachItem
-                    title={t("message:view_my_progress", { defaultValue: "View My Progress" })}
-                    icon={"payment"}
-                    bg={CLUSTER_COLORS.green}
-                    _onPress={onViewProgress}
-                  />
+                <Flex justify="space-between" itemsCenter mb={4}>
+                  <Text category="h8" bold>
+                    {t("message:add_attachment_title", { defaultValue: "Add Attachment" })}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => setShowAction(false)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                    <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+                  </TouchableOpacity>
                 </Flex>
+                <AttachItem
+                  title={t("message:attach_resume_files", { defaultValue: "Attach Resume / Files" })}
+                  icon={"attach"}
+                  bg={CLUSTER_COLORS.blue}
+                  _onPress={onAttach}
+                />
+                <AttachItem
+                  title={t("message:photo_library", { defaultValue: "Photo Library" })}
+                  icon={"photoLibrary"}
+                  bg={CLUSTER_COLORS.pink}
+                  _onPress={onPhotoLibrary}
+                />
+                <AttachItem
+                  title={t("message:take_photo", { defaultValue: "Take Photo" })}
+                  icon={"camera"}
+                  bg={CLUSTER_COLORS.green}
+                  _onPress={onCamera}
+                />
               </Layout>
             ) : null}
             {/* Suggested-topics bottom sheet (product follow-up: "move the
@@ -1053,6 +1068,13 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
+    // Was padding via a wrapping `<Flex margin={32}>` around the old
+    // 3-across icon-tile grid -- now that the sheet is a real vertical
+    // list (see AttachItem.tsx's own comment), the padding lives directly
+    // on the sheet itself instead.
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 32,
     ...globalStyle.shadowFade,
   },
   // Voice/Text mode pill button (see accessoryRight above). COLOR HISTORY:
@@ -1078,19 +1100,23 @@ const themedStyles = StyleService.create({
   // modeToggleButton above but sized/positioned to sit inline inside the
   // input toolbar next to the Send icon (see renderSend) instead of
   // floating in the header.
+  // BUG FIX (product report: "the voice pill should have the default blue
+  // background color and the icon on it should not be mic it should be
+  // the same icon for speak") -- was the same neutral background-basic-
+  // color-3 gray as the header's own Text-mode toggle (modeToggleButton
+  // above); this one now uses the app's real primary blue instead, since
+  // it's the sole always-visible CTA in the new unified input card and
+  // needs to read as the primary action, not an equal-weight secondary
+  // control. Icon/label swapped to white to stay legible on the solid
+  // blue fill (see renderSend's own icon name change).
   modeToggleButtonInline: {
     flexDirection: "row",
     alignItems: "center",
     height: 28,
     paddingHorizontal: 10,
     borderRadius: 14,
-    backgroundColor: "background-basic-color-3",
+    backgroundColor: "color-primary-500",
     marginRight: 8,
-  },
-  composer: {
-    position: "absolute",
-    left: 0,
-    zIndex: 10,
   },
   containerSend: {
     backgroundColor: "transparent",
