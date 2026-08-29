@@ -1,4 +1,4 @@
-import {Platform, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
 
 // Redesign v2 (full reskin, product request item — explicit reference:
 // "screenshot 3", described as soft shadows / big rounded cards / colorful
@@ -49,30 +49,38 @@ import {Platform, StyleSheet} from 'react-native';
 // separately zeroed by an explicit "Android only" removal request before
 // the full cross-platform removal landed, so `elevation: 3` (not 4) is
 // the actual last-known-good Android value to restore.
-const cardShadow = Platform.select({
-  ios: {
-    shadowColor: 'rgba(31, 41, 84, 0.35)',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 10.0,
-  },
-  android: {
-    elevation: 3,
-  },
-  default: {
-    shadowColor: 'rgba(31, 41, 84, 0.35)',
-    shadowOffset: {
-      width: 0,
-      height: 6,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 10.0,
-    elevation: 3,
-  },
-}) as object;
+// SYMPHONY REDESIGN, FOUNDATION PASS (explicit product request: rebuild the
+// whole app's look around a reference app called "Symphony by Wix" — 3
+// colors only (black/blue/white + gray page background), no borders
+// anywhere, bigger rounded corners, "the same look and feel... throughout
+// the whole app"). Symphony's own cards/rows have NO drop shadow at all —
+// they're flat white shapes sitting on a light gray page, differentiated
+// purely by that fill-vs-page contrast (the same way `card`'s own border
+// radius below now leans on `background-page-body` being gray again). This
+// used to carry a real soft shadow (see this constant's own extensive
+// history below, kept for context on how many times this exact
+// shadow-vs-border-vs-flat decision has flip-flopped) — flattened to `{}`
+// on every platform for this pass since a from-scratch reference redesign
+// is exactly the kind of change that history was always going to need
+// eventually. If a future request asks for shadows back, everything that
+// reads `cardShadow` picks it up in one place again.
+//
+// ORIGINAL HISTORY (why this constant looked the way it did before this
+// pass) — full reskin ("screenshot 3": soft shadows / big rounded cards /
+// colorful pill nav) added a soft ambient shadow back after an earlier
+// flat-bordered ZipRecruiter-style direction had zeroed it; tuned lighter
+// than an even older pre-ZipRecruiter shadow (lower opacity, bigger
+// radius, no directional offset). Product follow-up ("give the white
+// cards box shadow back") restored it a second time after a brief zeroing,
+// once `background-page-body` went back to pure white and cards needed a
+// shadow (not page contrast) to read as cards at all. NOTE on Android, for
+// whenever shadows return: `elevation` needs an opaque backgroundColor on
+// the same View — any card whose fill is translucent needs the two-layer
+// split called out in even older comment history here (HomeSrc.tsx
+// checkInCard, LearningCourses.tsx rejectedBox/curriculumDoneBox,
+// ReferralProgram.tsx creditCard, CareerRoadmap.tsx completeBanner,
+// CourseSession.tsx certCard).
+const cardShadow = {} as object;
 
 export const globalStyle = StyleSheet.create({
   flexOne: {
@@ -187,26 +195,32 @@ export const globalStyle = StyleSheet.create({
   // is already tuned for exactly that "zero page/card color contrast,
   // shadow is the only thing defining a card" scenario (see this file's
   // own "RESTORED" comment on cardShadow, written for that exact case).
+  // SYMPHONY REDESIGN: 16 -> 20 -- bigger, softer rounded corners matching
+  // the reference app's cards/rows (Settings screen's Profile/Free Plan/
+  // Connectors rows, Home's workspace card, etc.). `...cardShadow` now
+  // contributes nothing (see that constant's own comment) — kept spread
+  // here rather than deleted so a future shadow reintroduction is a
+  // one-line change again, not a re-hunt across ~60+ call sites.
   card: {
-    borderRadius: 16,
+    borderRadius: 20,
     ...cardShadow,
   },
-  // Retained for any screen that explicitly wants the old hairline-border
-  // look instead of a shadow (none currently do on purpose, but a couple of
-  // screens were spreading `card`'s border sub-values directly rather than
-  // the whole object — grep `rgba(128,128,128,0.3)` before deleting this).
+  // SYMPHONY REDESIGN: emptied out -- "no borders" was explicit in this
+  // pass's own product request, and Symphony's own cards/rows have no
+  // visible border at all (see `card`'s own comment: white-on-gray fill
+  // contrast is what defines a card now, not a shadow OR a border). Kept
+  // as a real (if now-empty) object rather than deleted, since it's still
+  // spread by a few call sites and an empty object there is harmless —
+  // grep `globalStyle.cardBorder` before removing those spreads entirely.
   //
-  // ORIGINAL HISTORY (why `card` looked the way it did before this pass):
-  // "remove the box shadow from the white cards" -> border-only, page white;
-  // "give all the white cards a border" -> hairline border added;
-  // "increase the grayness of the border" -> alpha 0.15 -> 0.3;
+  // ORIGINAL HISTORY (why `cardBorder` looked the way it did before this
+  // pass): "remove the box shadow from the white cards" -> border-only,
+  // page white; "give all the white cards a border" -> hairline border
+  // added; "increase the grayness of the border" -> alpha 0.15 -> 0.3;
   // "remove the border, page went gray" -> borderWidth 0, page #F2F2F7;
   // "page back to white, borders back at 1.5" -> borderWidth 1.2 (typo'd as
   // 1.5 in the ask, 1.2 is what actually shipped), border restored.
-  cardBorder: {
-    borderWidth: 1.2,
-    borderColor: 'rgba(128,128,128,0.3)',
-  },
+  cardBorder: {},
   // Redesign v2 (full reskin): primary buttons get the same soft ambient
   // lift as cards now, tinted toward the brand blue instead of the
   // neutral card shadow (see CtaButton.tsx, the only thing that reads
@@ -226,22 +240,12 @@ export const globalStyle = StyleSheet.create({
   // submit buttons back to the default blue"), moving in lockstep with
   // CtaButton.tsx's own backgroundColor/borderColor revert since this
   // shadow tint only ever belongs to that one component's fill.
-  shadowBtn: Platform.select({
-    ios: {
-      shadowColor: 'rgba(0, 99, 248, 0.45)',
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.28,
-      shadowRadius: 12.0,
-    },
-    android: {},
-    default: {
-      shadowColor: 'rgba(0, 99, 248, 0.45)',
-      shadowOffset: { width: 0, height: 6 },
-      shadowOpacity: 0.28,
-      shadowRadius: 12.0,
-      elevation: 6,
-    },
-  }) as object,
+  // SYMPHONY REDESIGN: emptied out, same reasoning as `cardShadow` above —
+  // the reference app's own black/blue CTA buttons ("Get Started", "Start
+  // Building a Team", "Log In") are completely flat, no glow/lift shadow
+  // at all. Kept as a real (if now-empty) object, spread by CtaButton.tsx,
+  // so a future shadow reintroduction is one line here again.
+  shadowBtn: {} as object,
   // Same soft ambient shadow as `card`, for filter/chip pills that sit on
   // top of other content (e.g. floating filter bars) and need to visually
   // separate from what's behind them.
@@ -295,11 +299,18 @@ export const globalStyle = StyleSheet.create({
   // text -- which follows `text-basic-color`, near-white in dark mode --
   // stays legible against it). borderWidth/borderColor/borderRadius all
   // untouched, so the visible border stays exactly as it was.
+  // SYMPHONY REDESIGN: borderWidth 1 -> 0 ("no borders" is explicit in
+  // this pass), borderRadius 5 -> 14 (bigger rounded corners matching the
+  // reference app's fields). A field still needs to read as a field with
+  // no border and no page-color contrast to lean on if it ever sits on a
+  // gray page with a white fill... but it does have that contrast (this
+  // resolves to background-basic-color-2 -- white/dark-card -- against
+  // Container's now-gray `background-page-body`), the same
+  // fill-vs-page-contrast trick `card` above uses instead of a border.
   inputField: {
-    borderWidth: 1,
-    borderColor: 'rgba(39, 39, 85, 0.15)',
+    borderWidth: 0,
     backgroundColor: 'background-basic-color-2',
-    borderRadius: 5,
+    borderRadius: 14,
   },
   // Follow-up correction: paddingHorizontal/paddingVertical used to live on
   // `inputField` above, applied to the Input's OUTER container/border box —
