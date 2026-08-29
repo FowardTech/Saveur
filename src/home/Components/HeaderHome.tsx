@@ -134,14 +134,15 @@ const HeaderHome = memo(
 export default HeaderHome;
 
 const themedStyles = StyleService.create({
-  // SYMPHONY REDESIGN follow-up (explicit product request: "the text is
-  // not leveling with the menu thumbnail... the text will be moving up
-  // above the level of the menu thumbnail") -- pulls the greeting block up
-  // relative to DrawerMenuButton's 40px icon circle, which itemsCenter
-  // alone doesn't fully account for once a bold custom font's own internal
-  // leading is factored in (see the render call site's own comment).
+  // SYMPHONY REDESIGN follow-up (explicit product request, 2nd round:
+  // "give the greeting a margin top so that it moves down a bit to be on
+  // the same horizontal level with the menu thumbnail"). The FIRST attempt
+  // at this (a -4 negative marginTop, moving the block UP) was itself a
+  // response to an earlier report that the text sat too low — that nudge
+  // overshot, leaving the greeting sitting too HIGH above the icon instead.
+  // Flipped to a small positive marginTop now, per this direct follow-up.
   greetingWrap: {
-    marginTop: -4,
+    marginTop: 4,
   },
   notification: {
     // Was 14x14 with a 14px-font label -- the digit(s) were larger than

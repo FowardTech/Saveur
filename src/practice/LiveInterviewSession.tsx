@@ -24,6 +24,7 @@ import i18n from 'i18next';
 
 import Text from 'components/Text';
 import Container from 'components/Container';
+import useLayout from 'hooks/useLayout';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList, LiveInterviewSessionScreenNavigationProp } from 'navigation/types';
@@ -160,6 +161,25 @@ const LiveInterviewSession = memo(() => {
   const route = useRoute<LiveInterviewSessionScreenNavigationProp>();
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common']);
+  // BUG FIX (product report, video mode, with screenshot: "the video screen
+  // top part is being cut off. The top part is hiding behind the screen
+  // title header") — cameraWrap below used to be sized purely from
+  // `aspectRatio: 3/4` against `width: '100%'`, with no ceiling on the
+  // resulting height. On a typical phone that works out to roughly 450-500px
+  // tall; add the header, the company/follow-up labels, the question text
+  // (up to 4 lines) and the footer (timer + controls) on top of that and the
+  // total routinely exceeds `body`'s actual available height (`body` is
+  // `flex:1, justifyContent:'center'`, so it silently overflows in BOTH
+  // directions when its content is taller than the space it has — RN Views
+  // don't clip overflow by default). The overflow at the top is what read as
+  // "the video is hiding behind the header": the top sliver of the camera
+  // preview was rendering underneath the TopNavigation row above it.
+  // `cameraMaxHeight` gives the camera box a real ceiling (a fraction of the
+  // actual screen height, not the fixed aspect ratio) so it — plus
+  // everything else in `body` — reliably fits without overflowing into the
+  // header, on any device.
+  const { height: screenHeight } = useLayout();
+  const cameraMaxHeight = screenHeight * 0.4;
 
   const { sessionId, interviewType, mode, company, durationMin, firstQuestion, firstQuestionId } =
     route.params ?? { sessionId: '' };
@@ -475,13 +495,31 @@ const LiveInterviewSession = memo(() => {
           }
         }
       }
-      if (isVoiceMode || isVideoMode) {
-        // Speak a brief acknowledgment (only when a real answer was
-        // actually captured) or a neutral transition (silent turn, or
-        // Video mode which can never confirm one way or the other), and
-        // WAIT for it to finish before moving on — this is the "AI
-        // responding to what you said" beat, and awaiting it (rather than
-        // firing-and-forgetting) is what keeps it from being cut off.
+      // BUG FIX (product report: "the AI always say the word 'lets
+      // continue' even when the user have not said anything... I asked the
+      // AI interviewer a question back as response [and] it will just say
+      // lets continue without addressing the question I asked... It does
+      // that every time"). This used to ALWAYS speak one of
+      // ACKNOWLEDGMENT_KEYS/NEUTRAL_TRANSITION_KEYS here — a fixed, random,
+      // purely canned line with zero awareness of what the candidate
+      // actually said — and only THEN fetch+speak the real next question
+      // via advanceQuestion() below (handled by the separate effect that
+      // watches `question`). But the backend's own next-question generation
+      // (interviews.py's _generate_question) is ALREADY explicitly
+      // instructed to weave "any brief acknowledgment of the candidate's
+      // last answer" into that same generated line, built from the real
+      // conversation history — including a question the candidate asked
+      // back, since that's part of `history` too. So the canned line here
+      // was never actually the "AI responding to what you said" moment; it
+      // was a redundant, robotic-sounding filler spoken BEFORE the one
+      // response that's actually grounded in what was said. Only speak it
+      // now when there's no real session to fall back on the LOCAL static
+      // question bank (see advanceQuestion's own `if (sessionId)` branch) —
+      // a case with genuinely zero LLM involvement, where SOME kind of
+      // transition is still better than an abrupt cut. Whenever a real
+      // session exists, skip straight to advanceQuestion() and let its
+      // LLM-generated question carry the acknowledgment itself.
+      if ((isVoiceMode || isVideoMode) && !sessionId) {
         setIsAiSpeaking(true);
         try {
           await speakSmart(hasRealAnswer ? pickAcknowledgment() : pickNeutralTransition());
@@ -1146,7 +1184,7 @@ const LiveInterviewSession = memo(() => {
       <View style={styles.body}>
         {isVideoMode ? (
           <>
-            <View style={styles.cameraWrap}>
+            <View style={[styles.cameraWrap, { maxHeight: cameraMaxHeight }]}>
               {cameraPermissionState === 'checking' ? (
                 <Flex vertical center justify="center" style={styles.cameraStateFill}>
                   <ActivityIndicator size="large" color={theme['color-primary-500']} />
@@ -1622,8 +1660,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
+  // BUG FIX (product report: "I want those badges to be a little bit
+  // transparent not too visible so that it wont distract the user during
+  // interview") — was 0.55 alpha, solid enough to read as a normal opaque
+  // UI chip sitting on top of the video the whole session. Lower alpha now
+  // (see stabilizeBadge in services/videoAnalysisService.ts for the other
+  // half of this fix — these no longer flicker constantly either) so a
+  // badge reads as a light, unobtrusive overlay rather than something
+  // competing for attention with the actual interview.
   liveIndicatorPill: {
-    backgroundColor: 'rgba(0,0,0,0.55)',
+    backgroundColor: 'rgba(0,0,0,0.32)',
     borderRadius: 16,
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -1632,9 +1678,11 @@ const styles = StyleSheet.create({
   },
   // Warmer, more attention-grabbing fill than the neutral pill above —
   // this one only ever appears when something's actually wrong (see the
-  // conditional pill's own comment), so it should read as a real flag.
+  // conditional pill's own comment), so it should still read as a real
+  // flag even after the same transparency pass above — kept noticeably
+  // more opaque than the neutral pill (0.5 vs 0.32), just not fully solid.
   liveIndicatorPillWarning: {
-    backgroundColor: 'rgba(230,83,53,0.75)',
+    backgroundColor: 'rgba(230,83,53,0.5)',
   },
   footer: {
     paddingHorizontal: 24,

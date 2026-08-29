@@ -350,6 +350,55 @@ export function useVideoInterviewAnalysis() {
   const lastUiUpdateRef = React.useRef(0);
   const [liveMetrics, setLiveMetrics] = React.useState<LiveVideoMetrics>(INITIAL_LIVE_METRICS);
 
+  // BUG FIX (product report, video mode: "one of the indicator badges is
+  // always blinking every time... it should only [change] when the user is
+  // doing something... not that it will just be blinking unnecessarily").
+  // Root cause: every field below was fed straight from a SINGLE frame's
+  // raw ML Kit reading, throttled only in how OFTEN the UI could re-render
+  // (LIVE_METRICS_THROTTLE_MS, 250ms) — never in whether a reading was
+  // actually a real, sustained change. A boundary reading (e.g. eye-open
+  // probability sitting right at the 0.4 threshold during a normal blink,
+  // or yaw/pitch wobbling a couple degrees either side of the eye-contact
+  // cutoff) flips the boolean back and forth on essentially every
+  // throttled update, which is exactly what reads as "always blinking."
+  // `stabilizeBadge` below requires a NEW value to be seen consistently for
+  // BADGE_STABILITY_MS before it's actually committed to `liveMetrics` —
+  // one noisy frame no longer flips a badge; the user has to actually hold
+  // the new state (eyes actually closed, actually looked away, etc.) for
+  // it to register. `committedBadgeRef` mirrors the last COMMITTED value
+  // of each field in a ref (not React state) so this can run synchronously
+  // inside the per-frame callback below without a stale-closure problem.
+  const BADGE_STABILITY_MS = 600;
+  type StableBadgeKey = 'isLookingAtCamera' | 'isSmiling' | 'isFaceVisible' | 'isEyesClosed' | 'hasMultipleFaces';
+  const committedBadgeRef = React.useRef<Record<StableBadgeKey, boolean>>({
+    isLookingAtCamera: INITIAL_LIVE_METRICS.isLookingAtCamera,
+    isSmiling: INITIAL_LIVE_METRICS.isSmiling,
+    isFaceVisible: INITIAL_LIVE_METRICS.isFaceVisible,
+    isEyesClosed: INITIAL_LIVE_METRICS.isEyesClosed,
+    hasMultipleFaces: INITIAL_LIVE_METRICS.hasMultipleFaces,
+  });
+  const pendingBadgeFlipRef = React.useRef<Partial<Record<StableBadgeKey, {value: boolean; since: number}>>>({});
+  const stabilizeBadge = React.useCallback((key: StableBadgeKey, raw: boolean, now: number): boolean => {
+    const committed = committedBadgeRef.current[key];
+    if (raw === committed) {
+      delete pendingBadgeFlipRef.current[key];
+      return committed;
+    }
+    const pending = pendingBadgeFlipRef.current[key];
+    if (!pending || pending.value !== raw) {
+      // A new (or newly-reversed) reading — start the clock, but don't
+      // commit yet.
+      pendingBadgeFlipRef.current[key] = {value: raw, since: now};
+      return committed;
+    }
+    if (now - pending.since >= BADGE_STABILITY_MS) {
+      delete pendingBadgeFlipRef.current[key];
+      committedBadgeRef.current[key] = raw;
+      return raw;
+    }
+    return committed;
+  }, []);
+
   const refreshLiveMetrics = React.useCallback(
     (partial?: Partial<LiveVideoMetrics>, force?: boolean) => {
       const now = Date.now();
@@ -383,7 +432,11 @@ export function useVideoInterviewAnalysis() {
         noFaceFrameCountRef.current += 1;
         lastYawRef.current = null;
         lastPitchRef.current = null;
-        refreshLiveMetrics({isFaceVisible: false, hasMultipleFaces: false});
+        const noFaceNow = Date.now();
+        refreshLiveMetrics({
+          isFaceVisible: stabilizeBadge('isFaceVisible', false, noFaceNow),
+          hasMultipleFaces: stabilizeBadge('hasMultipleFaces', false, noFaceNow),
+        });
         return;
       }
       if (faces.length > 1) {
@@ -455,14 +508,14 @@ export function useVideoInterviewAnalysis() {
       }
 
       refreshLiveMetrics({
-        isLookingAtCamera: looking,
-        isSmiling: smiling,
-        isFaceVisible: true,
-        isEyesClosed: eyesClosed,
-        hasMultipleFaces: faces.length > 1,
+        isLookingAtCamera: stabilizeBadge('isLookingAtCamera', looking, now),
+        isSmiling: stabilizeBadge('isSmiling', smiling, now),
+        isFaceVisible: stabilizeBadge('isFaceVisible', true, now),
+        isEyesClosed: stabilizeBadge('isEyesClosed', eyesClosed, now),
+        hasMultipleFaces: stabilizeBadge('hasMultipleFaces', faces.length > 1, now),
       });
     },
-    [refreshLiveMetrics],
+    [refreshLiveMetrics, stabilizeBadge],
   );
 
   /**
@@ -502,6 +555,18 @@ export function useVideoInterviewAnalysis() {
     sessionStartRef.current = Date.now();
     isAnalyzingRef.current = true;
     setLiveMetrics(INITIAL_LIVE_METRICS);
+    // Reset the badge-stability tracking (see stabilizeBadge's own comment)
+    // alongside the metrics themselves, so a new session starts clean
+    // rather than requiring its first real change to fight a stale
+    // "committed" value left over from whenever the last session ended.
+    committedBadgeRef.current = {
+      isLookingAtCamera: INITIAL_LIVE_METRICS.isLookingAtCamera,
+      isSmiling: INITIAL_LIVE_METRICS.isSmiling,
+      isFaceVisible: INITIAL_LIVE_METRICS.isFaceVisible,
+      isEyesClosed: INITIAL_LIVE_METRICS.isEyesClosed,
+      hasMultipleFaces: INITIAL_LIVE_METRICS.hasMultipleFaces,
+    };
+    pendingBadgeFlipRef.current = {};
     // No longer starts a speech recognizer here — see this file's header
     // comment for why running one concurrently with VisionCamera's
     // recording was the actual root cause of "no audio in the replay".
