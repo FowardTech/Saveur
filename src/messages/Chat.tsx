@@ -455,15 +455,23 @@ const Chat = memo(() => {
           <Icon
             pack="eva"
             name="activity-outline"
-            style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]}
+            style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
           />
           <Text
             category="h9"
-            style={[styles.modeToggleLabel, { color: '#FFFFFF' }]}>
+            style={[styles.modeToggleLabel, { color: theme['text-basic-color'] }]}>
             {t("message:mode_voice", { defaultValue: "Speak" })}
           </Text>
         </TouchableOpacity>
       ) : null}
+      {/* Product report: "Replace the paper plane icon with the send pill
+          and give it a background color of default blue" -- was a bare
+          icon with no fill of its own (see iconSend's own comment for why
+          it used to be dark-gray-on-white); now a real filled pill,
+          shape-matched to the Voice pill right beside it (same height/
+          radius), with the app's default primary blue fill -- the same
+          token modeToggleButtonInline used to carry before the follow-up
+          right below swapped it out for gray. */}
       <Send {...props} containerStyle={styles.containerSend}>
         <Icon pack="assets" name="send" style={styles.iconSend} />
       </Send>
@@ -1222,21 +1230,22 @@ const themedStyles = StyleService.create({
   // input toolbar next to the Send icon (see renderSend) instead of
   // floating in the header.
   // BUG FIX (product report: "the voice pill should have the default blue
-  // background color and the icon on it should not be mic it should be
-  // the same icon for speak") -- was the same neutral background-basic-
-  // color-3 gray as the header's own Text-mode toggle (modeToggleButton
-  // above); this one now uses the app's real primary blue instead, since
-  // it's the sole always-visible CTA in the new unified input card and
-  // needs to read as the primary action, not an equal-weight secondary
-  // control. Icon/label swapped to white to stay legible on the solid
-  // blue fill (see renderSend's own icon name change).
+  // background color...") -- was background-basic-color-3 gray, briefly
+  // switched to the app's real primary blue in that pass.
+  // FOLLOW-UP (product report: "change the background of the voice pill to
+  // gray") -- reversed back to a neutral gray now that the Send pill right
+  // beside it (see renderSend/containerSend) carries the blue "primary
+  // action" fill instead, so the two controls don't compete for the same
+  // visual weight. Icon/label switched from white back to this app's real
+  // dark text token to stay legible against the light gray fill (white on
+  // background-basic-color-3 would be near-invisible).
   modeToggleButtonInline: {
     flexDirection: "row",
     alignItems: "center",
     height: 28,
     paddingHorizontal: 10,
     borderRadius: 14,
-    backgroundColor: "color-primary-500",
+    backgroundColor: "background-basic-color-3",
     marginRight: 8,
   },
   // SYMPHONY REDESIGN follow-up ROUND 2 -- see renderInputToolbar's own
@@ -1319,8 +1328,19 @@ const themedStyles = StyleService.create({
     alignItems: "center",
     marginTop: 6,
   },
+  // BUG FIX (product report: "Replace the paper plane icon with the send
+  // pill and give it a background color of default blue") -- was
+  // transparent (a bare icon, no fill of its own). Shape-matched to the
+  // Voice pill right beside it (modeToggleButtonInline -- same height/
+  // radius), filled with this app's real primary blue instead of that
+  // pill's now-gray one, so Send reads as the primary action in the row.
   containerSend: {
-    backgroundColor: "transparent",
+    height: 28,
+    width: 28,
+    borderRadius: 14,
+    backgroundColor: "color-primary-500",
+    alignItems: "center",
+    justifyContent: "center",
   },
   leftTextStyle: {
     color: "text-basic-color",
@@ -1357,16 +1377,18 @@ const themedStyles = StyleService.create({
   },
   // BUG FIX (product report: "the send icon is supposed to be color
   // should be dark gray not blue") -- was button-basic-color (brand
-  // blue). text-hint-color (#5C5C78) is this app's real "dark gray" text
-  // token (distinct from color-basic-600's lighter #9393AA, which the "+"
-  // icon uses -- see Composer.tsx). marginBottom/marginRight dropped:
-  // those were tuned for the old absolutely-positioned pill layout: this
-  // icon now sits as a plain, vertically-centered sibling inside
-  // chatInputControlsRow instead.
+  // blue), then dark gray on a transparent/white background.
+  // FOLLOW-UP (product report: "give it a background color of default
+  // blue") -- containerSend (above) now fills the whole control with the
+  // primary blue pill, so the icon itself goes back to white (this app's
+  // real "always legible on a colored surface" convention -- see
+  // rightTextStyle's own comment for the same token elsewhere). Smaller
+  // than the old 24px bare icon (20px) since it now has to fit inside a
+  // 28px round pill with room around it, not stand alone.
   iconSend: {
-    tintColor: "text-hint-color",
-    ...globalStyle.icon24,
-    marginLeft: 8,
+    tintColor: "#FFFFFF",
+    width: 18,
+    height: 18,
   },
   coachAvatar: {
     marginRight: 4,
