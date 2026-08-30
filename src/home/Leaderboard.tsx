@@ -301,7 +301,7 @@ const Leaderboard = memo(() => {
                 size={60}
                 strokeWidth={6}
                 trackColor="#7EA8E21f"
-                gradientFrom="#9DBFEF"
+                gradientFrom="#517fc0ff"
                 gradientTo="#7EA8E2"
                 style={styles.yourStatsRing}>
                 <Text category="h9" bold style={{ color: theme['text-basic-color'] }}>

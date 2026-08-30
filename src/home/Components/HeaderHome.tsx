@@ -48,7 +48,7 @@ const HeaderHome = memo(
     const {t} = useTranslation(['home', 'common']);
     const theme = useTheme();
     return (
-      <Flex justify="space-between" itemsCenter mh={24} mt={24} mb={8}>
+      <Flex justify="space-between" itemsCenter mh={24} mt={0} mb={8}>
         {/* SYMPHONY REDESIGN (drawer nav shell) — Home is one of the 3
             drawer root screens (Home/Chat/More); this is its own way to
             open the drawer now that there's no bottom tab bar. See
@@ -142,7 +142,8 @@ const themedStyles = StyleService.create({
   // overshot, leaving the greeting sitting too HIGH above the icon instead.
   // Flipped to a small positive marginTop now, per this direct follow-up.
   greetingWrap: {
-    marginTop: 4,
+    marginTop: 30,
+    padding:5,
   },
   notification: {
     // Was 14x14 with a 14px-font label -- the digit(s) were larger than

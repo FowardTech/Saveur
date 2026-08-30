@@ -103,7 +103,7 @@ const themedStyles = StyleService.create({
     padding: 16,
     marginBottom: 12,
     backgroundColor: 'background-basic-color-2',
-    borderWidth: 1,
+    // borderWidth: 1,
     // BUG FIX (product report: "the cards in the homescreen should have
     // the default blue border") -- was 'border-card-default', a neutral
     // gray token (see constants/theme/appTheme.json/dark.json) shared with

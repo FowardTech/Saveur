@@ -726,9 +726,9 @@ const JobAlerts = memo(() => {
             ) : (
             <>
             <Flex justify="space-between" itemsCenter mb={4} mt={16}>
-              <Text category="h8" bold>
+              {/* <Text category="h8" bold>
                 {t('more:job_alerts_daily_limit_label', {defaultValue: 'Max new alerts per day'})}
-              </Text>
+              </Text> */}
               {/* Was status="primary", which resolves to `text-primary-color`
                   -- a near-white/white token meant for text sitting ON a
                   colored surface (e.g. a filled button), not plain text
@@ -740,11 +740,11 @@ const JobAlerts = memo(() => {
                   -- this isn't a pill or a link, just a plain settings
                   value, so text-basic-color instead (still readable against
                   the card background in both themes). */}
-              <Text category="h8" bold style={{color: theme['text-basic-color']}}>
+              {/* <Text category="h8" bold style={{color: theme['text-basic-color']}}>
                 {Math.round(dailyLimit)}
-              </Text>
+              </Text> */}
             </Flex>
-            <Slider
+            {/* <Slider
               value={dailyLimit}
               minimumValue={15}
               maximumValue={50}
@@ -754,13 +754,13 @@ const JobAlerts = memo(() => {
               minimumTrackTintColor={theme['color-primary-500']}
               maximumTrackTintColor={theme['background-basic-color-3']}
               thumbTintColor={theme['color-primary-500']}
-            />
-            <Text category="h10" status="placeholder" mb={4}>
+            /> */}
+            {/* <Text category="h10" status="placeholder" mb={4}>
               {t('more:job_alerts_daily_limit_hint', {
                 defaultValue:
                   "Choose anywhere from 15 to 50 — once you hit this many new matches in a day, we'll stop adding more until tomorrow.",
               })}
-            </Text>
+            </Text> */}
             </>
             )}
 

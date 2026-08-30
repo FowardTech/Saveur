@@ -141,7 +141,7 @@ const VerifyEmailGate = memo(() => {
             own) sat flush left as a result. `itemsCenter` is Flex's actual
             alignItems:'center' prop. */}
         <Flex vertical itemsCenter justify="center" style={{flex: 1}}>
-          <BrandWordmark markOnly size={64} />
+          {/* <BrandWordmark markOnly size={64} /> */}
           {/* Product request: "add illustrations like the gift box
               wherever needed" — was a bare "email-outline" Eva icon. An
               envelope with a confirmed/sent badge reads as encouraging

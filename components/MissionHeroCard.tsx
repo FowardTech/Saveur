@@ -105,7 +105,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
           {subtitle}
         </Text>
 
-        <View style={styles.metaRow}>
+        {/* <View style={styles.metaRow}>
           <View style={styles.metaItem}>
             <Icon pack="eva" name={metaLeft.icon} style={{ width: 15, height: 15, tintColor: theme['text-hint-color'] }} />
             <View style={globalStyle.flexOne}>
@@ -129,7 +129,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
               </Text>
             </View>
           </View>
-        </View>
+        </View> */}
 
         {showProgress ? (
           <>

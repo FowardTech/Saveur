@@ -1257,8 +1257,9 @@ const themedStyles = StyleService.create({
     borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 14,
+    width: 160,
+    // paddingVertical: 5,
+    paddingHorizontal: 5,
     // Shadow moved here from popularRibbon above -- that View is now just
     // a full-width invisible positioning layer, not the visible pill shape.
     ...globalStyle.shadowFade,
@@ -1272,8 +1273,9 @@ const themedStyles = StyleService.create({
   },
   saveBadgeGradient: {
     borderRadius: 999,
-    paddingVertical: 3,
-    paddingHorizontal: 9,
+    // paddingVertical: 15,
+    paddingHorizontal: 5,
+    width: 100
   },
   // Flat solid-blue hero card (gradient fill removed).
   // Product report: "colored cards like this are not supposed to have box

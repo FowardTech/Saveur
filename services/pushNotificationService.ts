@@ -611,6 +611,15 @@ let tokenRefreshRegistered = false;
 export async function registerForPushNotifications(): Promise<void> {
   try {
     const granted = await requestPermission();
+    // Product report: "check the token generated if it's actually
+    // generating" -- every step below only ever logged on FAILURE, so a
+    // fully successful run produced zero console output, indistinguishable
+    // from this function never having run at all. Added a log at each real
+    // step (permission granted, token generated, token reached the
+    // backend) so watching the Xcode/Metro console during a real sign-in
+    // now shows exactly how far registration actually got, not just
+    // whether it eventually failed somewhere.
+    console.log('[push] permission granted:', granted);
     if (!granted) {
       console.warn('[push] permission not granted — device token was not registered');
       return;
@@ -634,8 +643,18 @@ export async function registerForPushNotifications(): Promise<void> {
       console.warn('[push] messaging().getToken() returned empty — device token was not registered');
       return;
     }
+    // Confirms the token was actually generated on-device (the OS/APNs
+    // handshake succeeded) BEFORE this even tries to reach the backend —
+    // if this line never prints, the problem is on-device (capability/
+    // provisioning/permission), not the backend or Firebase console
+    // config. Full token intentionally logged (not masked) since this is
+    // Metro/Xcode's local dev console, not a shipped log — makes it
+    // copy-pasteable straight into Firebase Console's "Cloud Messaging >
+    // Send test message" for a direct send-to-this-device test.
+    console.log('[push] FCM token generated:', token);
     try {
       await notificationService.registerDeviceToken(token);
+      console.log('[push] device token registered with backend successfully');
     } catch (err) {
       // This is the one most likely to explain "I'm not getting
       // notifications" silently — a failed POST here means the backend

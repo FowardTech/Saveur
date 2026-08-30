@@ -143,8 +143,8 @@ const themedStyles = StyleService.create({
   // REDESIGN comment at the render call site for why this replaced the old
   // icon16 (18x18) info glyph in the first place.
   announcementIcon: {
-    width: 30,
-    height: 30,
+    width: 20,
+    height: 20,
     marginTop: 1,
   },
 });
