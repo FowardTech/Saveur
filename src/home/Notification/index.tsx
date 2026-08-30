@@ -223,7 +223,8 @@ const themedStyles = StyleService.create({
   },
   content: {
     flexGrow: 1,
-    paddingTop: 16,
+    paddingTop: 10,
     paddingBottom: 40,
+   
   },
 });

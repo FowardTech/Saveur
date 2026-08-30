@@ -57,6 +57,7 @@ export default Applications;
 const themedStyles = StyleService.create({
   container: {
     flex: 1,
+    marginTop:-45,
   },
   emptyContent: {
     alignItems: 'center',

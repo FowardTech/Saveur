@@ -104,7 +104,7 @@ const themedStyles = StyleService.create({
   card: {
     ...globalStyle.card,
     flexDirection: 'row',
-    padding: 14,
+    padding: 8,
     marginBottom: 12,
   },
   iconCircle: {
