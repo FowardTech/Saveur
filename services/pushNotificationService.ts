@@ -1,4 +1,4 @@
-import {Platform, PermissionsAndroid, Alert} from 'react-native';
+import {Platform, PermissionsAndroid} from 'react-native';
 import messaging, {FirebaseMessagingTypes} from '@react-native-firebase/messaging';
 import notifee, {AndroidImportance, AndroidStyle, EventType} from '@notifee/react-native';
 import i18n from 'i18next';
@@ -83,20 +83,6 @@ import * as dailyCheckinService from './dailyCheckinService';
 // (a push permission issue still shouldn't block sign-in or throw a user-
 // facing error), but every catch now at least logs what failed.
 // ---------------------------------------------------------------------------
-
-// Product report: "I have relaunched but I can't find anything [in the
-// console], could you check it yourself" -- console.log requires the
-// device to be tethered to Xcode or Metro with the right console panel
-// open, which isn't always obvious to find/get attached in time to catch a
-// one-shot registration that runs right after sign-in. An on-device Alert
-// needs none of that setup -- it's impossible to miss regardless of how
-// the app was launched. __DEV__-gated so this never shows for a real user
-// in a release/TestFlight/App Store build, only while actively debugging
-// this exact issue on a development build.
-function debugAlert(title: string, message?: string): void {
-  if (!__DEV__) return;
-  Alert.alert(title, message);
-}
 
 async function requestPermission(): Promise<boolean> {
   // Android 13+ (API 33) requires a separate OS runtime permission prompt
@@ -636,7 +622,6 @@ export async function registerForPushNotifications(): Promise<void> {
     console.log('[push] permission granted:', granted);
     if (!granted) {
       console.warn('[push] permission not granted — device token was not registered');
-      debugAlert('Push: permission NOT granted', 'The OS notification permission prompt was declined (or previously denied) — check Settings > Saveur > Notifications on this device.');
       return;
     }
 
@@ -656,7 +641,6 @@ export async function registerForPushNotifications(): Promise<void> {
     const token = await messaging().getToken();
     if (!token) {
       console.warn('[push] messaging().getToken() returned empty — device token was not registered');
-      debugAlert('Push: no token generated', 'messaging().getToken() returned empty — this is an on-device APNs/capability problem (check Push Notifications capability + provisioning profile in Xcode), not a backend or Firebase console issue.');
       return;
     }
     // Confirms the token was actually generated on-device (the OS/APNs
@@ -668,18 +652,15 @@ export async function registerForPushNotifications(): Promise<void> {
     // copy-pasteable straight into Firebase Console's "Cloud Messaging >
     // Send test message" for a direct send-to-this-device test.
     console.log('[push] FCM token generated:', token);
-    debugAlert('Push: FCM token generated', token);
     try {
       await notificationService.registerDeviceToken(token);
       console.log('[push] device token registered with backend successfully');
-      debugAlert('Push: registered with backend', 'POST /notifications/device-token succeeded.');
     } catch (err) {
       // This is the one most likely to explain "I'm not getting
       // notifications" silently — a failed POST here means the backend
       // never has a token to send a push to at all, no matter what it does
       // server-side afterward.
       console.warn('[push] registerDeviceToken failed', err);
-      debugAlert('Push: backend registration FAILED', `A token was generated fine, but POST /notifications/device-token failed: ${(err as any)?.message ?? String(err)}`);
     }
 
     if (!tokenRefreshRegistered) {
@@ -695,6 +676,5 @@ export async function registerForPushNotifications(): Promise<void> {
     // block sign-in or surface a user-facing error — but now at least
     // logged so it's visible while debugging instead of invisible.
     console.warn('[push] registerForPushNotifications failed', err);
-    debugAlert('Push: registration threw', String((err as any)?.message ?? err));
   }
 }
