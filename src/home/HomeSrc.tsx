@@ -1030,7 +1030,7 @@ const HomeSrc = memo(() => {
               : t('home:practice_card_subtitle_default', { defaultValue: 'Sharpen your skills with a mock interview' }).toString()
           }
           onPress={onPressPractice}
-          gradientColors={['#C2410C', '#FB923C']}
+          gradientColors={['#FB923C', '#FB923C']}
           gradientLocations={[0, 1]}
         />
 
@@ -1038,13 +1038,26 @@ const HomeSrc = memo(() => {
             to have the list icon and the daily challenge supposed to have
             the lightning icon you need to correct that") -- was
             iconCoachChatBlue, swapped with the Daily Challenge card's
-            heroIconImage above. */}
+            heroIconImage above.
+            FOLLOW-UP (product request: "give the Explore Card... the
+            default blue background and the icons white just the way we
+            did for Practice card") -- same treatment as the Practice card
+            above: gradientColors set to the app's real primary blue
+            (color-primary-500, #0063F8) repeated as both stops, a flat
+            solid fill via ActionCard's gradient path rather than an actual
+            two-tone blend, matching Practice's own flat single-color
+            gradient. iconImage dropped -- it was Images.iconListStack, a
+            full-color illustration that can't be tinted (see ActionCard's
+            iconImage prop comment) -- so this now falls through to the
+            plain `icon="grid-outline"` eva glyph, which ActionCard already
+            renders solid white whenever gradientColors is set. */}
         <ActionCard
           icon="grid-outline"
-          iconImage={Images.iconListStack}
           title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
           subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
           onPress={onPressExploreMore}
+          gradientColors={['#0063F8', '#0063F8']}
+          gradientLocations={[0, 1]}
         />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
