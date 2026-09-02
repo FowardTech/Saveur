@@ -52,40 +52,60 @@ import ThemeContext from '../../ThemeContext';
 // comes in before it fires, that's treated as the end of the user's turn,
 // and the accumulated transcript is sent to the coach.
 //
-// Interruption / barge-in: while the AI's reply is being spoken (TTS), the
-// mic is deliberately NOT listening — the reply audio itself would
-// otherwise very likely get picked back up as "user speech" (no on-device
-// echo cancellation has been verified for this app's audio session
-// configuration; see speechService.ts's notes on iOS audio-session
-// category switching between TTS and STT). Real, low-risk interruption is
-// instead a visible tap (the orb itself, or the "Interrupt" pill below it)
-// — tapping either immediately stops playback and hands the mic back.
+// Interruption / barge-in: SECOND attempt at true "speak to interrupt" —
+// per explicit product direction after the first attempt was reverted
+// ("No i still want the speak to interupt thats the standard"). The first
+// attempt kept the mic running through TTS playback (via speak()'s
+// `preserveRecordingSession` option, the same trick LiveInterviewSession's
+// Video mode uses for VisionCamera) but only ever touched the iOS
+// AVAudioSession's CATEGORY (.playAndRecord + options) — never its MODE.
+// On a real device that shipped with total silence AND a dead mic: no
+// AVAudioSessionMode means no OS-level acoustic echo cancellation, and a
+// raw category-only .playAndRecord session apparently couldn't reliably do
+// either half of simultaneous record+playback, not just fail to filter out
+// the echo.
 //
-// REVERTED (real-device report: "The AI voice is not talking even though
-// its indicating that its speaking but i cant hear anything and its not
-// even capturing my voice" — i.e. total silence AND a dead mic, not just a
-// missed interruption). This screen briefly tried a genuine concurrent
-// mic+TTS "speak to interrupt" model (keep the mic running through
-// playback via speak()'s `preserveRecordingSession` option, the same trick
-// LiveInterviewSession's Video mode uses to keep VisionCamera's own
-// .playAndRecord session alive across an utterance). That trick works for
-// VisionCamera's session; it does NOT work for react-native-voice's here —
-// this was flagged as genuinely unverified risk before it shipped (see git
-// history on this file), and the real-device test confirms it broke BOTH
-// halves of the turn at once, not just the interrupt feature: on-device TTS
-// with no Tts.setDucking(true) call (skipped specifically by
-// preserveRecordingSession) routes through the earpiece receiver instead of
-// the speaker on a session that's also fighting for .playAndRecord from
-// Voice.start(), and the STT tap on that same contested session stopped
-// reliably delivering buffers too. Back to the proven sequential
-// stop-mic -> speak -> restart-mic handoff, and ElevenLabs voice restored
-// (no more preserveRecordingSession on any speak() call in this file).
-// Speak-to-interrupt may be worth revisiting later with real native-level
-// audio session work (a proper AVAudioSession .playAndRecord + voice-
-// processing/echo-cancellation configuration), but that's a bigger,
-// separate change — not a safe thing to re-attempt blind from this
-// environment again.
+// This attempt adds the missing piece natively instead of trying to
+// approximate it in JS: patches/@dev-amirzubair+react-native-voice+
+// 1.0.4.patch (applied via patch-package's postinstall hook) sets
+// AVAudioSessionModeVoiceChat on the shared session inside
+// @dev-amirzubair/react-native-voice's own setupAudioSession (ios/Voice/
+// Voice.mm), with a matching reset in resetAudioSession. .voiceChat is
+// Apple's own purpose-built mode for exactly this — it engages the
+// system's Voice-Processing I/O audio unit (real-time echo cancellation +
+// automatic gain control), the same signal path VoIP/voice-assistant apps
+// use to listen and speak at once. This is a NATIVE file change: it needs
+// a full rebuild (Xcode recompile at minimum), not just a JS/Metro reload,
+// before it can do anything.
+//
+// With that in place, the mic is now started BEFORE speaking and kept
+// running straight through it (every speak() call below passes
+// `preserveRecordingSession: true`, and turns no longer call stt.stop()
+// before speaking or stt.start() again after — the same recognition
+// session just keeps going). "Real" barge-in — the user just starts
+// talking, no tap needed — is detected by the effects below watching
+// stt.transcript while phase is 'speaking': once the recognizer reports
+// actual words (not just any volume; BARGE_IN_MIN_CHARS) after a short
+// grace period (BARGE_IN_GRACE_MS, so the coach's own first syllable can't
+// immediately trip it), interruptSpeaking() cuts the coach off and hands
+// the turn back instantly — the same effect as tapping the orb/pill
+// (onInterrupt below), just triggered by voice instead of a tap.
+//
+// Still can't be verified from this environment without a real-device
+// test. If this also fails, the next step is native-side device debugging
+// (Xcode console / Instruments during an actual barge-in attempt), not
+// another blind JS-only iteration.
 const SILENCE_DEBOUNCE_MS = 1300;
+// Grace period after entering 'speaking' before barge-in detection arms —
+// gives the coach's own opening syllable a moment to not immediately read
+// as "the user is talking over me".
+const BARGE_IN_GRACE_MS = 600;
+// Minimum recognized-transcript length to count as a real barge-in, not
+// recognizer noise — deliberately a transcript-length check (real words the
+// recognizer is confident enough about to report), not a raw mic-volume
+// check, which the coach's own voice bleeding into the mic could trip on
+// its own even with echo cancellation engaged.
+const BARGE_IN_MIN_CHARS = 3;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
 
@@ -173,6 +193,13 @@ const VoiceCoachView = memo(({
   // Set right after the coach speaks a "want me to take you there?" offer;
   // checked (and always cleared) at the start of the very next turn.
   const pendingActionRef = React.useRef<SuggestedActionId | null>(null);
+  // True the instant a barge-in (real speech, or a tap) cuts the coach off
+  // mid-utterance; reset to false right before every new 'speaking' phase
+  // begins. Checked by sendTurn/the intro greeting right after their own
+  // `await speechService.speak(...)` resolves, so they know NOT to treat
+  // that resolution as "the coach finished naturally" — see interruptSpeaking
+  // below for what already happened by the time they check this.
+  const interruptedRef = React.useRef(false);
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -212,6 +239,23 @@ const VoiceCoachView = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Lighter-weight sibling of startListening() for the (now normal) case
+  // where the mic was never actually stopped for speaking in the first
+  // place — every speak() call below runs with `preserveRecordingSession:
+  // true`, so by the time a turn finishes naturally the recognition session
+  // is already running. Calling stt.start() again on top of an
+  // already-active session is exactly the "already started!" native race
+  // this codebase has fought hard to avoid elsewhere (see speechService.ts's
+  // lastVoiceStartAtRef/guardedVoiceStart doc comments) — this just clears
+  // stale error/transcript state and flips the UI back to 'listening'
+  // without touching the native session at all.
+  const resumeListening = React.useCallback(() => {
+    setErrorMsg(null);
+    stt.reset();
+    setPhase('listening');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sendTurn = React.useCallback(
     async (finalText: string) => {
       const trimmed = finalText.trim();
@@ -231,14 +275,22 @@ const VoiceCoachView = memo(({
             defaultValue: 'Great, taking you there now.',
           });
           setLastCoachLine(confirmLine);
+          interruptedRef.current = false;
           setPhase('speaking');
-          await stt.stop();
           try {
-            await speechService.speak(confirmLine);
+            await speechService.speak(confirmLine, undefined, { preserveRecordingSession: true });
           } catch {
             // best-effort
           }
           if (!isActiveRef.current) return;
+          if (interruptedRef.current) {
+            // Barge-in cut the confirmation off mid-sentence — the mic is
+            // already listening (interruptSpeaking already flipped phase
+            // back to 'listening'); let normal silence-based turn detection
+            // pick up whatever the user is actually saying instead of
+            // forcing the navigation through anyway.
+            return;
+          }
           onSuggestedAction?.(pendingAction);
           return;
         }
@@ -275,11 +327,11 @@ const VoiceCoachView = memo(({
       }
       if (!isActiveRef.current) return;
       setLastCoachLine(replyText);
+      interruptedRef.current = false;
       setPhase('speaking');
-      await stt.stop();
       let spokeFailed = false;
       try {
-        await speechService.speak(replyText);
+        await speechService.speak(replyText, undefined, { preserveRecordingSession: true });
       } catch {
         // speak() already falls back to on-device TTS internally on a
         // remote failure -- reaching this catch means BOTH the real voice
@@ -303,17 +355,28 @@ const VoiceCoachView = memo(({
         }
       }
       if (!isActiveRef.current) return;
+      if (interruptedRef.current) {
+        // Barge-in cut the coach off mid-reply — interruptSpeaking already
+        // stopped playback and flipped phase back to 'listening' on its own
+        // (mic never stopped, so there's no restart to do here); the
+        // silence-debounce effect above will pick up whatever the user was
+        // already saying once they pause. Skip resumeListening()/the
+        // spokeFailed pause entirely — both are for the "finished normally"
+        // path, and clearing the transcript here would throw away the
+        // barge-in words that triggered this in the first place.
+        return;
+      }
       if (spokeFailed) {
-        // startListening() clears errorMsg as its very first line (correct
+        // resumeListening() clears errorMsg as its very first line (correct
         // for a stale mic-start error) -- without this pause it would wipe
         // the message this catch block JUST set before it had any chance
-        // to actually be seen, since the restart below fires immediately.
+        // to actually be seen, since the resume below fires immediately.
         // The mic isn't blocked from re-arming by this, it's just given a
         // moment to be readable first.
         await new Promise(resolve => setTimeout(resolve, 2500));
         if (!isActiveRef.current) return;
       }
-      startListening();
+      resumeListening();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [userContext, onSuggestedAction],
@@ -365,18 +428,53 @@ const VoiceCoachView = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  const onInterrupt = React.useCallback(async () => {
-    if (phaseRef.current !== 'speaking') return;
-    // BUG FIX (see speechService.stopSpeaking's own comment on this round's
-    // fresh "captures fine in Mock Interview, never in Coach" report) —
-    // stopSpeaking() is now a genuinely awaitable teardown instead of
-    // fire-and-forget; awaiting it here means startListening()'s own 700ms
-    // settle delay starts counting from a *confirmed* stop instead of
-    // racing an in-flight one on top of it.
-    await speechService.stopSpeaking();
-    startListening();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // Single source of truth for "the coach got cut off mid-utterance" —
+  // used by both the manual tap (onInterrupt below) and the real-voice
+  // barge-in detection effects further down. Deliberately NOT async/awaited:
+  // the mic is never stopped for 'speaking' anymore (every speak() call runs
+  // with preserveRecordingSession: true), so there's no restart to sequence
+  // after the stop — the only thing that has to happen is killing the
+  // audio and flipping the UI back, both of which should feel instant,
+  // especially for a real barge-in where the user is already mid-sentence.
+  const interruptSpeaking = React.useCallback(() => {
+    interruptedRef.current = true;
+    speechService.stopSpeaking();
+    setErrorMsg(null);
+    setPhase('listening');
   }, []);
+
+  const onInterrupt = React.useCallback(() => {
+    if (phaseRef.current !== 'speaking') return;
+    interruptSpeaking();
+  }, [interruptSpeaking]);
+
+  // Arms real (no-tap) barge-in detection a short grace period after the
+  // coach starts speaking — see BARGE_IN_GRACE_MS's own doc comment above
+  // for why the delay matters.
+  const bargeInArmedRef = React.useRef(false);
+  React.useEffect(() => {
+    bargeInArmedRef.current = false;
+    if (phase !== 'speaking') return;
+    const timer = setTimeout(() => {
+      bargeInArmedRef.current = true;
+    }, BARGE_IN_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  // The actual barge-in: once armed, any real recognized speech while the
+  // coach is still talking means the user started talking over it. This
+  // only has anything to react to because the mic is now kept running
+  // through TTS playback (see this file's header comment for the native
+  // AVAudioSessionModeVoiceChat patch that's supposed to make that safe) —
+  // previously the mic was fully stopped for the entire 'speaking' phase,
+  // so there was nothing here to detect.
+  React.useEffect(() => {
+    if (phase !== 'speaking') return;
+    if (!bargeInArmedRef.current) return;
+    if (stt.transcript.trim().length < BARGE_IN_MIN_CHARS) return;
+    interruptSpeaking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stt.transcript, phase]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -408,7 +506,14 @@ const VoiceCoachView = memo(({
         // it won't repeat on a later visit to Voice mode, including if the
         // user's very first coach interaction happened in Text mode
         // instead.
+        let introSpoken = false;
         let introSpeakFailed = false;
+        // Only meaningful when introSpoken is true — whether stt.start()
+        // below actually succeeded, so the final branch knows whether the
+        // mic is genuinely live (resumeListening() is safe) or never
+        // actually started (needs a real startListening() instead, same as
+        // the no-intro path — see that branch's own comment).
+        let micStartedForIntro = false;
         try {
           const history = await coachService.getChatHistory();
           if (isActiveRef.current && coachService.isFirstEverCoachVisit(history)) {
@@ -417,9 +522,17 @@ const VoiceCoachView = memo(({
                 "Hi, I'm Saveur — your AI career coach. I'm listening whenever you're ready to talk.",
             });
             setLastCoachLine(intro);
+            interruptedRef.current = false;
             setPhase('speaking');
+            introSpoken = true;
+            // Unlike every later turn (which enters 'speaking' already
+            // listening, courtesy of the previous turn's still-running
+            // session), nothing has started the mic yet on a fresh mount —
+            // it has to be started here, BEFORE speaking, for barge-in to
+            // have anything to detect during this very first utterance.
+            if (isActiveRef.current) micStartedForIntro = await stt.start();
             try {
-              await speechService.speak(intro);
+              await speechService.speak(intro, undefined, { preserveRecordingSession: true });
             } catch {
               // Both the remote voice and the on-device fallback failed --
               // same "genuinely nothing was spoken" case as sendTurn's own
@@ -440,12 +553,40 @@ const VoiceCoachView = memo(({
           // best-effort — a failed history fetch shouldn't block listening
         }
         if (introSpeakFailed) {
-          // Same reasoning as sendTurn's own pause -- startListening()
-          // clears errorMsg immediately, which would otherwise wipe this
-          // message before it was ever visible.
+          // Same reasoning as sendTurn's own pause -- resumeListening()/
+          // startListening() clear errorMsg immediately, which would
+          // otherwise wipe this message before it was ever visible.
           await new Promise(resolve => setTimeout(resolve, 2500));
         }
-        if (isActiveRef.current) startListening();
+        if (!isActiveRef.current) return;
+        if (introSpoken) {
+          if (interruptedRef.current) {
+            // interruptSpeaking() already flipped phase to 'listening'
+            // itself (and can only have fired from an actually-running mic
+            // session or a tap) -- nothing left to do.
+          } else if (micStartedForIntro) {
+            // Mic is already running (started above) -- resumeListening(),
+            // NOT startListening(), which would try to start a SECOND
+            // concurrent recognition session on top of the one already
+            // active for barge-in and fail with "already started".
+            resumeListening();
+          } else {
+            // stt.start() failed for the intro (permission issue, or some
+            // other startup failure) -- the coach still spoke (through the
+            // speaker, just without barge-in this one turn), but the mic
+            // was never actually live, so resumeListening() would falsely
+            // show "listening" over a dead mic. Fall back to a real
+            // startListening() so the user's first real turn gets an actual
+            // attempt (and surfaces the error if it fails again), same as
+            // the no-intro path below.
+            startListening();
+          }
+        } else {
+          // Returning user, no first-time greeting spoken -- mic was never
+          // started at all yet, so this is the one case that still needs a
+          // real startListening().
+          startListening();
+        }
       })();
       return () => {
         isActiveRef.current = false;
@@ -657,7 +798,7 @@ const VoiceCoachView = memo(({
           onPress={onInterrupt}
           style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,99,248,0.10)' }]}>
           <Text category="h10" bold style={{ color: theme['text-basic-color'] }}>
-            {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap to interrupt' })}
+            {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap, or just speak, to interrupt' })}
           </Text>
         </TouchableOpacity>
       ) : null}

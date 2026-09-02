@@ -520,6 +520,20 @@ export function useSpeechToText() {
   const [transcript, setTranscript] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const transcriptRef = React.useRef('');
+  // BARGE-IN (AI Coach voice screen, second attempt — see
+  // src/messages/VoiceCoachView.tsx's own header comment for the full
+  // history, including a first attempt that shipped without the native
+  // AVAudioSessionModeVoiceChat patch and produced total audio+mic silence
+  // on a real device). Exposes live mic input level so a caller keeping the
+  // mic running THROUGH the AI's own TTS playback (which is now possible
+  // with echo cancellation engaged — see patches/@dev-amirzubair+
+  // react-native-voice+1.0.4.patch) can tell "the user just started talking
+  // over the AI" apart from "the AI's own voice bleeding into the mic" by
+  // requiring a sustained volume spike plus real recognized text, not just
+  // any signal at all. A plain ref (not state) — this updates many times a
+  // second via onSpeechVolumeChanged and re-rendering on every tick would be
+  // wasteful; callers read .current from inside their own effects/intervals.
+  const volumeRef = React.useRef(0);
   // BUG FIX (product report: "The Voice to text is typing the users word
   // multiple times") — react-native-voice's onSpeechResults delivers each
   // *session's* full recognized-so-far text on every call, not just the
@@ -728,6 +742,7 @@ export function useSpeechToText() {
     };
     Voice.onSpeechVolumeChanged = (e: { value?: number }) => {
       markAlive();
+      volumeRef.current = e?.value ?? 0;
       const now = Date.now();
       if (now - volumeLogThrottle > 1000) {
         volumeLogThrottle = now;
@@ -1072,5 +1087,5 @@ export function useSpeechToText() {
     setTranscript('');
   }, []);
 
-  return {isListening, transcript, error, start, stop, reset};
+  return {isListening, transcript, error, start, stop, reset, volumeRef};
 }
