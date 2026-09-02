@@ -161,25 +161,13 @@ const LiveInterviewSession = memo(() => {
   const route = useRoute<LiveInterviewSessionScreenNavigationProp>();
   const theme = useTheme();
   const { t } = useTranslation(['find', 'common']);
-  // BUG FIX (product report, video mode, with screenshot: "the video screen
-  // top part is being cut off. The top part is hiding behind the screen
-  // title header") — cameraWrap below used to be sized purely from
-  // `aspectRatio: 3/4` against `width: '100%'`, with no ceiling on the
-  // resulting height. On a typical phone that works out to roughly 450-500px
-  // tall; add the header, the company/follow-up labels, the question text
-  // (up to 4 lines) and the footer (timer + controls) on top of that and the
-  // total routinely exceeds `body`'s actual available height (`body` is
-  // `flex:1, justifyContent:'center'`, so it silently overflows in BOTH
-  // directions when its content is taller than the space it has — RN Views
-  // don't clip overflow by default). The overflow at the top is what read as
-  // "the video is hiding behind the header": the top sliver of the camera
-  // preview was rendering underneath the TopNavigation row above it.
-  // `cameraMaxHeight` gives the camera box a real ceiling (a fraction of the
-  // actual screen height, not the fixed aspect ratio) so it — plus
-  // everything else in `body` — reliably fits without overflowing into the
-  // header, on any device.
-  const { height: screenHeight } = useLayout();
-  const cameraMaxHeight = screenHeight * 0.4;
+  // Video mode's old "cut off behind the header" fix (a `cameraMaxHeight`
+  // ceiling on a boxed, non-full-screen camera preview) no longer applies —
+  // Video mode now renders full-bleed (see the `if (isVideoMode) return`
+  // branch below), so there's no boxed preview left to cap. `safeTop`/
+  // `safeBottom` (device safe-area insets) now position that branch's
+  // floating glass header/controls/caption card instead.
+  const { top: safeTop, bottom: safeBottom } = useLayout();
 
   const { sessionId, interviewType, mode, company, durationMin, firstQuestion, firstQuestionId } =
     route.params ?? { sessionId: '' };
@@ -307,6 +295,17 @@ const LiveInterviewSession = memo(() => {
   // See onEnd()'s ordering: stopVideoRecording() -> stopAnalysis() ->
   // THEN this flips false.
   const [isCameraActive, setIsCameraActive] = React.useState(true);
+  // Cosmetic "camera off" toggle for the redesigned floating video-call
+  // controls (product request: "the video interface should cover the full
+  // screen and the buttons should float on the screen"), deliberately
+  // SEPARATE from isCameraActive above — that one gates the real
+  // FaceDetectorCamera `isActive` prop, and per that state's own comment,
+  // flipping it mid-session risks a corrupt/truncated recording. This one
+  // only swaps the on-screen preview for a covered placeholder; the real
+  // camera keeps running/recording underneath exactly as before, so
+  // toggling it can never affect the saved recording or the live face
+  // analysis feeding InterviewFeedback.tsx.
+  const [isCameraPreviewHidden, setIsCameraPreviewHidden] = React.useState(false);
   // True only while the real recorded video is uploading, right after the
   // interview ends (Video mode only) — surfaced as a brief status line so
   // "Ending…" doesn't look stuck while a multi-minute recording finishes
@@ -879,9 +878,13 @@ const LiveInterviewSession = memo(() => {
   // VisionCamera's own recording for the microphone, which is the actual
   // fix for "no audio in the replay"). There's nothing left for a
   // client-side mute to meaningfully pause — the camera keeps recording
-  // real audio the whole interview regardless — so the mute control is
-  // hidden for Video mode below (isTextMode || isVideoMode ? null : ...)
-  // rather than kept as a button that visibly does nothing.
+  // real audio the whole interview regardless — so the mute control was
+  // never offered for Video mode. Video mode now has its own entirely
+  // separate full-bleed render path (the `if (isVideoMode) return (...)`
+  // early return above) that never reaches this footer at all, so the
+  // `isTextMode ? null : ...` check below only ever needs to distinguish
+  // Text mode (no mute either — nothing to mute, there's no mic use in
+  // Text mode) from Voice mode.
   const onToggleMute = () => {
     setIsMuted(prev => {
       const next = !prev;
@@ -1160,6 +1163,271 @@ const LiveInterviewSession = memo(() => {
   // cleanly inside the ternary below.
   const cameraDevice = videoAnalysis.device;
 
+  // REDESIGN (product request: "I want the video interview screen to look
+  // like the screenshot above. The video interface should cover the full
+  // screen and the buttons should float on the screen... but the container
+  // should be like a glass container") -- Video mode gets its own,
+  // completely separate full-bleed render path instead of sharing the
+  // TopNavigation-header + boxed-camera-in-a-scrolling-body layout Voice/
+  // Text mode still use below. Safe to early-return here: every hook in
+  // this component has already run by this point in the function body (all
+  // useState/useEffect/useMemo calls are above this line), so this doesn't
+  // violate the rules of hooks.
+  //
+  // Deliberately NOT included, both for real functional reasons (not just
+  // left out by oversight):
+  //   - Mute: Video mode's audio literally can't be muted mid-recording
+  //     client-side -- see onToggleMute's own comment further down, which
+  //     is why the old layout already hid the mute button in Video mode.
+  //   - Flip camera: videoAnalysisService.ts's face-detection pipeline
+  //     (useCameraDevice('front')) is hardcoded to the front camera on
+  //     purpose -- it's what drives the live Smiling/Eye-contact badges
+  //     below AND InterviewFeedback.tsx's eye-contact/smile scoring after
+  //     the session. A working flip control would silently break the
+  //     interview's own core analysis feature, so it's left out entirely
+  //     rather than shipped half-working.
+  //   - Live "voice to text" captions of the user's own answer: Video mode
+  //     deliberately does NOT run the on-device speech recognizer
+  //     (services/speechService.ts's Voice.start(), used for the Voice-mode
+  //     transcript quote below) -- see this file's own comment above
+  //     videoSpeechSource, and services/videoAnalysisService.ts's removed
+  //     "Fillers: N" pill comment: Voice.start() switches iOS's shared
+  //     AVAudioSession to .playAndRecord, which was CONFIRMED (via device
+  //     logs, a real repro) to fight VisionCamera's own concurrent
+  //     .playAndRecord recording session for control of the mic -- the
+  //     actual root cause of recorded video interviews previously coming
+  //     back with no audio track at all, already fixed once by removing
+  //     that exact code path. Turning it back on here to satisfy the
+  //     caption request would silently reintroduce that same bug. The
+  //     question text itself is still shown as a glass caption card below
+  //     (that part of the request is honored); a live transcript of the
+  //     user's spoken answer is not, and would need a non-mic-conflicting
+  //     transcription path (e.g. server-side, off the uploaded recording)
+  //     to do safely -- flagging this rather than guessing.
+  if (isVideoMode) {
+    return (
+      <Container style={styles.container}>
+        <View style={styles.videoFullScreen}>
+          {cameraPermissionState === 'checking' ? (
+            <Flex vertical center justify="center" style={styles.videoStateFill}>
+              <ActivityIndicator size="large" color={theme['color-primary-500']} />
+              <Text category="h9-s" center mt={12} status="placeholder">
+                {t('find:live_requesting_camera', { defaultValue: 'Requesting camera access…' })}
+              </Text>
+            </Flex>
+          ) : cameraPermissionState === 'denied' ? (
+            <Flex vertical center justify="center" style={[styles.videoStateFill, styles.cameraStatePadded]}>
+              <Icon
+                pack="eva"
+                name="video-off-outline"
+                style={[globalStyle.icon40, { tintColor: theme['text-placeholder-color'] }]}
+              />
+              <Text category="h8" bold center mt={16}>
+                {t('find:live_camera_access_needed', { defaultValue: 'Camera access needed' })}
+              </Text>
+              <Text category="h9-s" center mt={8} status="placeholder">
+                {t('find:live_camera_access_description', {
+                  defaultValue: 'Enable Camera and Microphone access in Settings to run a video mock interview.',
+                })}
+              </Text>
+              <CtaButton style={{ marginTop: 20 }} size="small" onPress={() => Linking.openSettings()}>
+                {t('find:live_open_settings', { defaultValue: 'Open Settings' })}
+              </CtaButton>
+            </Flex>
+          ) : !cameraDevice ? (
+            <Flex vertical center justify="center" style={styles.videoStateFill}>
+              <Text category="h9-s" center status="placeholder">
+                {t('find:live_no_camera', { defaultValue: 'No front camera found on this device.' })}
+              </Text>
+            </Flex>
+          ) : (
+            <>
+              <FaceDetectorCamera
+                ref={videoAnalysis.cameraRef}
+                style={StyleSheet.absoluteFill}
+                device={cameraDevice}
+                format={videoAnalysis.format}
+                isActive={isCameraActive}
+                video
+                audio
+                videoBitRate="low"
+                faceDetectionOptions={videoAnalysis.faceDetectionOptions}
+                faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}
+                onError={(e) => console.warn('[LiveInterviewSession] camera error', e.code, e.message)}
+              />
+
+              {/* Cosmetic "camera off" cover -- see isCameraPreviewHidden's
+                  own comment above. The real camera above keeps
+                  running/recording the whole time this is shown; only the
+                  local self-view is covered. */}
+              {isCameraPreviewHidden ? (
+                <View style={styles.cameraPreviewCover}>
+                  <Icon
+                    pack="eva"
+                    name="video-off-outline"
+                    style={[globalStyle.icon40, { tintColor: 'rgba(255,255,255,0.7)' }]}
+                  />
+                </View>
+              ) : null}
+
+              <View style={[styles.liveIndicatorRow, { top: safeTop + 68 }]}>
+                <View style={styles.liveIndicatorPill}>
+                  <Text category="h10" status="control" bold>
+                    {videoAnalysis.liveMetrics.isSmiling
+                      ? t('find:live_smiling', { defaultValue: '😊 Smiling' })
+                      : t('find:live_looking', { defaultValue: '🙂 Looking' })}
+                  </Text>
+                </View>
+                <View style={styles.liveIndicatorPill}>
+                  <Text category="h10" status="control" bold>
+                    {videoAnalysis.liveMetrics.isLookingAtCamera
+                      ? t('find:live_eye_contact', { defaultValue: '👀 Eye contact' })
+                      : t('find:live_look_at_camera', { defaultValue: 'Look at camera' })}
+                  </Text>
+                </View>
+                {!videoAnalysis.liveMetrics.isFaceVisible ? (
+                  <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
+                    <Text category="h10" status="control" bold>
+                      {t('find:live_face_not_visible', { defaultValue: "😕 Can't see you" })}
+                    </Text>
+                  </View>
+                ) : videoAnalysis.liveMetrics.hasMultipleFaces ? (
+                  <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
+                    <Text category="h10" status="control" bold>
+                      {t('find:live_multiple_faces', { defaultValue: '👥 Multiple faces' })}
+                    </Text>
+                  </View>
+                ) : videoAnalysis.liveMetrics.isEyesClosed ? (
+                  <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
+                    <Text category="h10" status="control" bold>
+                      {t('find:live_eyes_closed', { defaultValue: '😴 Eyes closed' })}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+            </>
+          )}
+
+          {/* Floating glass header -- replaces the opaque TopNavigation bar
+              for Video mode only; Voice/Text mode keep it unchanged below. */}
+          <View style={[styles.floatingHeaderRow, { top: safeTop + 12 }]}>
+            <TouchableOpacity activeOpacity={0.8} onPress={onCloseAttempt} style={styles.glassCircleBtn}>
+              <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]} />
+            </TouchableOpacity>
+            {interviewType === Interview_Type_Enum.SystemDesign ? (
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() => navigate('SystemDesignWhiteboard')}
+                style={styles.glassCircleBtn}
+              >
+                <Icon pack="eva" name="edit-2-outline" style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
+          {/* Floating timer + recording dot, glass pill, top-center. */}
+          <View style={[styles.floatingTimerRow, { top: safeTop + 16 }]} pointerEvents="none">
+            <View style={styles.timerPill}>
+              {isRecording ? (
+                <View style={[styles.recDotInline, { backgroundColor: theme['color-danger-100'] }]} />
+              ) : null}
+              <Text category="h10" bold style={styles.captionAccentText}>
+                {mm}:{ss}
+              </Text>
+            </View>
+          </View>
+
+          {/* Floating glass caption card -- question/company/follow-up text,
+              product request: "the voice to text should be writing on the
+              screen but the container should be like a glass container"
+              (see this block's own top comment for why a live transcript of
+              the user's own answer specifically isn't wired in here). */}
+          <View style={[styles.captionGlassCard, { bottom: safeBottom + 148 }]}>
+            {company ? (
+              <Text category="h10" center bold style={styles.captionAccentText}>
+                {t('find:live_practicing_for', { defaultValue: 'Practicing for {{company}}', company })}
+              </Text>
+            ) : null}
+            {isFollowUp ? (
+              <Text category="h10" center mt={company ? 4 : 0} style={styles.captionMutedText}>
+                {t('find:live_followup_question', { defaultValue: 'Follow-up question {{n}}', n: questionIndex + 1 })}
+              </Text>
+            ) : null}
+            <Text
+              category="h9-s"
+              center
+              mt={company || isFollowUp ? 6 : 0}
+              numberOfLines={4}
+              ellipsizeMode="tail"
+              style={styles.captionQuestionText}
+            >
+              {question}
+            </Text>
+          </View>
+
+          {isUploadingVideo ? (
+            <View style={[styles.savingStatusBadge, { bottom: safeBottom + 148 + 96 }]} pointerEvents="none">
+              <Text category="h10" center style={styles.captionMutedText}>
+                {t('find:live_saving_recording', { defaultValue: 'Saving your recording…' })}
+              </Text>
+            </View>
+          ) : null}
+
+          {/* Floating glass bottom controls -- camera-preview toggle (real,
+              cosmetic-only, see isCameraPreviewHidden's comment above) +
+              End Interview (same red pill as before, just floating now
+              instead of sitting in an opaque footer bar). */}
+          <View style={[styles.floatingControlsRow, { bottom: safeBottom + 24 }]}>
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setIsCameraPreviewHidden(v => !v)}
+              style={[styles.glassCircleBtn, { marginRight: 24 }]}
+            >
+              <Icon
+                pack="eva"
+                name={isCameraPreviewHidden ? 'video-off-outline' : 'video-outline'}
+                style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={onEnd}
+              disabled={isEnding}
+              style={[styles.endBtn, { backgroundColor: theme['color-danger-500'], opacity: isEnding ? 0.6 : 1 }]}
+            >
+              <Text category="h8" bold status="control">
+                {isEnding
+                  ? t('find:live_ending', { defaultValue: 'Ending…' })
+                  : t('find:live_end_interview', { defaultValue: 'End Interview' })}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Hidden ElevenLabs player -- see videoSpeechSource's own comment
+           near the top of this component. */}
+        {videoSpeechSource ? (
+          <Video
+            source={{ uri: videoSpeechSource.uri, headers: videoSpeechSource.headers }}
+            paused={videoSpeechPaused}
+            disableAudioSessionManagement
+            ignoreSilentSwitch="ignore"
+            style={styles.hiddenSpeechPlayer}
+            onEnd={() => {
+              setVideoSpeechPaused(true);
+              videoSpeechResolveRef.current?.();
+              videoSpeechResolveRef.current = null;
+            }}
+            onError={() => {
+              videoSpeechResolveRef.current?.();
+              videoSpeechResolveRef.current = null;
+            }}
+          />
+        ) : null}
+      </Container>
+    );
+  }
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -1182,178 +1450,7 @@ const LiveInterviewSession = memo(() => {
         }
       />
       <View style={styles.body}>
-        {isVideoMode ? (
-          <>
-            <View style={[styles.cameraWrap, { maxHeight: cameraMaxHeight }]}>
-              {cameraPermissionState === 'checking' ? (
-                <Flex vertical center justify="center" style={styles.cameraStateFill}>
-                  <ActivityIndicator size="large" color={theme['color-primary-500']} />
-                  <Text category="h9-s" center mt={12} status="placeholder">
-                    {t('find:live_requesting_camera', { defaultValue: 'Requesting camera access…' })}
-                  </Text>
-                </Flex>
-              ) : cameraPermissionState === 'denied' ? (
-                <Flex vertical center justify="center" style={[styles.cameraStateFill, styles.cameraStatePadded]}>
-                  <Icon
-                    pack="eva"
-                    name="video-off-outline"
-                    style={[globalStyle.icon40, { tintColor: theme['text-placeholder-color'] }]}
-                  />
-                  <Text category="h8" bold center mt={16}>
-                    {t('find:live_camera_access_needed', { defaultValue: 'Camera access needed' })}
-                  </Text>
-                  <Text category="h9-s" center mt={8} status="placeholder">
-                    {t('find:live_camera_access_description', {
-                      defaultValue: 'Enable Camera and Microphone access in Settings to run a video mock interview.',
-                    })}
-                  </Text>
-                  <CtaButton
-                    style={{ marginTop: 20 }}
-                    size="small"
-                    onPress={() => Linking.openSettings()}
-                  >
-                    {t('find:live_open_settings', { defaultValue: 'Open Settings' })}
-                  </CtaButton>
-                </Flex>
-              ) : !cameraDevice ? (
-                <Flex vertical center justify="center" style={styles.cameraStateFill}>
-                  <Text category="h9-s" center status="placeholder">
-                    {t('find:live_no_camera', { defaultValue: 'No front camera found on this device.' })}
-                  </Text>
-                </Flex>
-              ) : (
-                <>
-                  <FaceDetectorCamera
-                    ref={videoAnalysis.cameraRef}
-                    style={StyleSheet.absoluteFill}
-                    device={cameraDevice}
-                    // Required on Android whenever videoBitRate is set (see
-                    // videoAnalysisService.ts's format/useCameraFormat
-                    // comment) — Android throws format/format-required and
-                    // fails camera init entirely without this, which is what
-                    // was causing the black-screen-with-no-preview report.
-                    format={videoAnalysis.format}
-                    isActive={isCameraActive}
-                    // Enables the real video+audio recording pipeline this
-                    // screen now drives via videoAnalysis.startVideoRecording/
-                    // stopVideoRecording (services/videoAnalysisService.ts) —
-                    // without these two, startRecording() has nothing to
-                    // record. videoBitRate="low" keeps a multi-minute
-                    // talking-head recording upload-able; both props pass
-                    // straight through to the underlying VisionCamera (see
-                    // react-native-vision-camera-face-detector's Camera.tsx:
-                    // `<VisionCamera {...props} ref={ref} .../>`).
-                    // Plain, constant props again — audio is safe as a
-                    // one-shot `true` here because by the time this
-                    // component ever mounts, cameraPermissionState is
-                    // already 'granted' via the REVISED permission effect
-                    // above, which now itself waits for
-                    // VisionCameraBase.getMicrophonePermissionStatus() to
-                    // confirm 'granted' before flipping that state. So
-                    // VisionCamera's one-shot audio configuration attempt
-                    // (see that effect's own comment) already happens at a
-                    // safe, settled moment on this component's very FIRST
-                    // commit — no later hot-reconfiguration of a live
-                    // session needed, which is what the previous version of
-                    // this fix did and which caused a new "video couldn't
-                    // be saved" regression.
-                    video
-                    audio
-                    videoBitRate="low"
-                    faceDetectionOptions={videoAnalysis.faceDetectionOptions}
-                    faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}
-                    // Camera init failures are rare after the format fix
-                    // above, but still worth a console trail (device logs)
-                    // rather than being silently swallowed — no on-screen
-                    // banner though, that was a one-time diagnostic aid for
-                    // tracking down the format/format-required bug and is
-                    // no longer needed now that it's fixed.
-                    onError={(e) => console.warn('[LiveInterviewSession] camera error', e.code, e.message)}
-                  />
-                  <View style={styles.liveIndicatorRow}>
-                    <View style={styles.liveIndicatorPill}>
-                      <Text category="h10" status="control" bold>
-                        {videoAnalysis.liveMetrics.isSmiling
-                          ? t('find:live_smiling', { defaultValue: '😊 Smiling' })
-                          : t('find:live_looking', { defaultValue: '🙂 Looking' })}
-                      </Text>
-                    </View>
-                    <View style={styles.liveIndicatorPill}>
-                      <Text category="h10" status="control" bold>
-                        {videoAnalysis.liveMetrics.isLookingAtCamera
-                          ? t('find:live_eye_contact', { defaultValue: '👀 Eye contact' })
-                          : t('find:live_look_at_camera', { defaultValue: 'Look at camera' })}
-                      </Text>
-                    </View>
-                    {/* BUG FIX (product report: "it's only flagging the eye
-                        contact — it should flag any other things that it
-                        thinks could make the user lose focus") — a single
-                        conditional pill (not three permanent ones, which
-                        would clutter the preview) for whichever real,
-                        ML-Kit-derived focus-loss signal is most severe right
-                        now. Priority: no face at all > someone else in
-                        frame > eyes closed — excessive head-movement stays
-                        summary-only (see InterviewFeedback.tsx) rather than
-                        live, since a single frame-to-frame jump is too
-                        noisy to flag moment-to-moment without it just
-                        flickering constantly. */}
-                    {!videoAnalysis.liveMetrics.isFaceVisible ? (
-                      <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
-                        <Text category="h10" status="control" bold>
-                          {t('find:live_face_not_visible', { defaultValue: "😕 Can't see you" })}
-                        </Text>
-                      </View>
-                    ) : videoAnalysis.liveMetrics.hasMultipleFaces ? (
-                      <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
-                        <Text category="h10" status="control" bold>
-                          {t('find:live_multiple_faces', { defaultValue: '👥 Multiple faces' })}
-                        </Text>
-                      </View>
-                    ) : videoAnalysis.liveMetrics.isEyesClosed ? (
-                      <View style={[styles.liveIndicatorPill, styles.liveIndicatorPillWarning]}>
-                        <Text category="h10" status="control" bold>
-                          {t('find:live_eyes_closed', { defaultValue: '😴 Eyes closed' })}
-                        </Text>
-                      </View>
-                    ) : null}
-                    {/* Was a live "Fillers: N" pill, driven by
-                        videoAnalysisService's on-device speech recognizer —
-                        removed along with that recognizer (see
-                        services/videoAnalysisService.ts's header comment):
-                        it was fighting VisionCamera's own recording for the
-                        microphone the entire interview, which is the actual
-                        cause of recorded interviews coming back with no
-                        audio. Only the two purely visual (ML Kit,
-                        audio-session-free) indicators remain. */}
-                  </View>
-                </>
-              )}
-            </View>
-            {company ? (
-              <Text category="h10" center mt={16} bold status="link">
-                {t('find:live_practicing_for', { defaultValue: 'Practicing for {{company}}', company })}
-              </Text>
-            ) : null}
-            {isFollowUp ? (
-              <Text category="h10" center mt={company ? 4 : 16} status="placeholder">
-                {t('find:live_followup_question', {
-                  defaultValue: 'Follow-up question {{n}}',
-                  n: questionIndex + 1,
-                })}
-              </Text>
-            ) : null}
-            <Text
-              category="h9-s"
-              center
-              mt={company || isFollowUp ? 6 : 16}
-              maxWidth={300}
-              numberOfLines={4}
-              ellipsizeMode="tail"
-              style={{ color: theme['text-placeholder-color'] }}>
-              {question}
-            </Text>
-          </>
-        ) : isTextMode ? (
+        {isTextMode ? (
           <View style={styles.textModeWrap}>
             {company ? (
               <Text category="h10" center mb={4} bold status="link">
@@ -1483,7 +1580,7 @@ const LiveInterviewSession = memo(() => {
           </Text>
         ) : null}
         <Flex justify="center" itemsCenter>
-          {isTextMode || isVideoMode ? null : (
+          {isTextMode ? null : (
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={onToggleMute}
@@ -1638,32 +1735,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Product report ("increase the width of the video screen in the video
-  // session screen"): was `aspectRatio: 3/4` (portrait -- narrower than
-  // tall). Combined with the `maxHeight: cameraMaxHeight` cap set inline in
-  // the JSX (see this screen's own comment on that -- added earlier to fix
-  // the camera hiding behind the header), a portrait ratio meant the box's
-  // effective on-screen WIDTH was being computed DOWN from that height cap
-  // (width = cappedHeight * 0.75) rather than filling the row's actual
-  // available width -- on a typical phone that worked out to roughly 250px
-  // wide out of ~340-380px available, reading as much narrower than it had
-  // room to be. Flipping to a landscape 4:3 ratio (width:height, wider than
-  // tall) makes WIDTH the binding constraint instead across realistic phone
-  // width/height ranges -- the box now fills the full available row width,
-  // with height derived from it (and still comfortably under
-  // cameraMaxHeight, so the original header-overlap fix stays intact
-  // without needing its own change).
-  cameraWrap: {
-    width: '100%',
-    aspectRatio: 4 / 3,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: '#000',
-  },
-  cameraStateFill: {
-    flex: 1,
-    width: '100%',
-  },
   cameraStatePadded: {
     paddingHorizontal: 24,
   },
@@ -1729,5 +1800,99 @@ const styles = StyleSheet.create({
     // Color applied inline at the usage site (theme['color-danger-100']) —
     // this is a plain StyleSheet.create block, not ui-kitten's themed
     // StyleService, so it can't resolve a theme token string on its own.
+  },
+  // --- Video mode redesign (product request: full-screen camera, floating
+  // glass controls) -- everything below is only ever used by the
+  // `if (isVideoMode) return (...)` early-return branch above.
+  videoFullScreen: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  videoStateFill: {
+    flex: 1,
+    width: '100%',
+  },
+  cameraPreviewCover: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.88)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingHeaderRow: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  // "Glass container" look (explicit product request) -- translucent white
+  // fill + a faint border, standing in for a real blur view (no
+  // BlurView/backdrop-filter dependency in this app currently) the same
+  // way other frosted-looking surfaces in this app fake it.
+  glassCircleBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  floatingTimerRow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  timerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+  },
+  recDotInline: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  captionGlassCard: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.16)',
+  },
+  captionAccentText: {
+    color: '#FFFFFF',
+  },
+  captionMutedText: {
+    color: 'rgba(255,255,255,0.7)',
+  },
+  captionQuestionText: {
+    color: 'rgba(255,255,255,0.92)',
+  },
+  savingStatusBadge: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    alignItems: 'center',
+  },
+  floatingControlsRow: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
