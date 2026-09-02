@@ -26,6 +26,14 @@ export interface ReferralSummary {
   pendingCount: number;
   rewardedCount: number;
   creditEarnedCents: number;
+  // Product question: "how does the referral... work... now that the
+  // subscription is through apple connect not stripe anymore?" -- tells
+  // ReferralProgram.tsx HOW creditEarnedCents above actually gets applied
+  // for THIS user (see Saveur-Backend's referral_service.py's
+  // _grant_reward): a Stripe invoice credit for a Stripe/web subscriber,
+  // or bonusProUntil below for an Apple/Google (IAP) subscriber.
+  billingProvider: 'apple' | 'google' | 'stripe' | null;
+  bonusProUntil: string | null;
 }
 
 interface ReferralSummaryWire {
@@ -37,6 +45,8 @@ interface ReferralSummaryWire {
   pending_count: number;
   rewarded_count: number;
   credit_earned_cents: number;
+  billing_provider: 'apple' | 'google' | 'stripe' | null;
+  bonus_pro_until: string | null;
 }
 
 function fromWire(w: ReferralSummaryWire): ReferralSummary {
@@ -49,6 +59,8 @@ function fromWire(w: ReferralSummaryWire): ReferralSummary {
     pendingCount: w.pending_count,
     rewardedCount: w.rewarded_count,
     creditEarnedCents: w.credit_earned_cents,
+    billingProvider: w.billing_provider ?? null,
+    bonusProUntil: w.bonus_pro_until ?? null,
   };
 }
 

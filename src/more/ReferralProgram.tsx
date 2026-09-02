@@ -184,9 +184,29 @@ const ReferralProgram = memo(() => {
                     })}
                   </Text>
                   <Text category="h10" status="placeholder" mt={4}>
-                    {t('more:referral_credit_auto_applied', {
-                      defaultValue: 'Automatically applied to your next Saveur invoice.',
-                    })}
+                    {/* BUG FIX (product question: "how does the referral...
+                        work... now that the subscription is through apple
+                        connect not stripe anymore?") -- this always said
+                        "applied to your next Saveur invoice," true for a
+                        Stripe/web subscriber but never actually true for an
+                        Apple/Google subscriber (there is no Saveur
+                        "invoice" for them to apply anything to). See
+                        services/referralService.ts's billingProvider/
+                        bonusProUntil for what's actually happening on the
+                        backend now (Saveur-Backend's referral_service.py's
+                        _grant_reward). */}
+                    {summary.billingProvider === 'apple' || summary.billingProvider === 'google'
+                      ? summary.bonusProUntil
+                        ? t('more:referral_credit_bonus_days', {
+                          defaultValue: 'Applied as free Saveur Basic access through {{date}}.',
+                          date: new Date(summary.bonusProUntil).toLocaleDateString(),
+                        })
+                        : t('more:referral_credit_bonus_days_generic', {
+                          defaultValue: 'Applied as free Saveur Basic access days, on top of your App Store/Play Store subscription.',
+                        })
+                      : t('more:referral_credit_auto_applied', {
+                        defaultValue: 'Automatically applied to your next Saveur invoice.',
+                      })}
                   </Text>
                 </Layout>
               </View>
