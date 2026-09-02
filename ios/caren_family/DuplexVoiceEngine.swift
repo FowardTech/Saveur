@@ -290,13 +290,22 @@ class DuplexVoiceEngine: RCTEventEmitter {
   private func startRecognitionRequest(with recognizer: SFSpeechRecognizer) {
     let request = SFSpeechAudioBufferRecognitionRequest()
     request.shouldReportPartialResults = true
-    // On-device recognition where available keeps this fully offline and
-    // avoids adding network latency into the barge-in detection loop --
-    // falls back to server-based recognition automatically if the device/
-    // locale doesn't support on-device.
-    if #available(iOS 13.0, *) {
-      request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
-    }
+    // REVERTED (real-device report: every single recognition attempt
+    // errored out immediately with "Siri and Dictation are disabled",
+    // confirmed via this file's own new error-emission -- see
+    // recentRecognitionErrorTimestamps's comment). This used to force
+    // on-device-only recognition whenever recognizer.supportsOnDeviceRecognition
+    // reported true -- but that property can apparently report true even
+    // when the on-device Siri/dictation model isn't actually usable on this
+    // device/account, and forcing it produces a hard, immediate failure
+    // instead of a graceful fallback. The existing, already-working
+    // @dev-amirzubair/react-native-voice-based coach screen (services/
+    // speechService.ts) never sets this at all -- it just lets
+    // SFSpeechRecognizer pick automatically (on-device, server, or hybrid,
+    // whichever is actually available), which is presumably exactly why
+    // recognition works fine there on this same device. Leaving this unset
+    // here now matches that same proven-working default instead of
+    // opting into a mode this device apparently can't actually serve.
     recognitionRequest = request
 
     recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
