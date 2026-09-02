@@ -42,6 +42,12 @@ export interface FeatureFlags {
   student_verification: boolean;
   career_roadmap: boolean;
   practical_scenarios: boolean;
+  // Product request: "I want to be able to activate and deactivate the
+  // system design practice from the admin" — see FindScreen.tsx (Practice
+  // tab tile) and MockInterviewSetup.tsx (interview-type picker), both
+  // filtered on this; Saveur-Backend's app/api/interviews.py's
+  // create_session() also enforces it server-side.
+  system_design_practice: boolean;
   interview_laboratory: boolean;
   career_dna: boolean;
   dream_company_dashboard: boolean;
@@ -280,6 +286,7 @@ const DEFAULT_CONFIG: AppConfig = {
     student_verification: true,
     career_roadmap: true,
     practical_scenarios: true,
+    system_design_practice: true,
     interview_laboratory: true,
     career_dna: true,
     dream_company_dashboard: true,

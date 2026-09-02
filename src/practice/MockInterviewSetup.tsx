@@ -535,7 +535,16 @@ const MockInterviewSetup = memo(() => {
           {t('find:interview_type')}
         </Text>
         <View style={styles.chipsWrap}>
-          {DATA_INTERVIEW_TYPES.map((item, i) => {
+          {/* Admin-configurable (product request: "I want to be able to
+              activate and deactivate the system design practice from the
+              admin") -- see the Feature Flags page / services/
+              configService.ts. Backend also enforces this independently in
+              create_session() (Saveur-Backend's app/api/interviews.py) so
+              a stale/cached client can't start a session for a type an
+              admin just turned off. */}
+          {DATA_INTERVIEW_TYPES.filter(
+            item => item.type !== Interview_Type_Enum.SystemDesign || configService.isFeatureEnabled('system_design_practice'),
+          ).map((item, i) => {
             const active = item.type === interviewType;
             return (
               <TouchableOpacity

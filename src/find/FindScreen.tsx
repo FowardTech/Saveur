@@ -225,7 +225,16 @@ const FindScreen = memo(() => {
           tint: { bg: 'rgba(139, 92, 246, 0.08)', fg: '#8B5CF6' },
         }]
       : []),
-    { title: t('find:system_design_whiteboard', { defaultValue: 'System Design' }), icon: 'grid-outline', onPress: onStartSystemDesignPractice, loading: isStartingSystemDesign },
+    // Admin-configurable (product request: "I want to be able to activate
+    // and deactivate the system design practice from the admin") -- see
+    // the Feature Flags page / services/configService.ts, same
+    // conditional-spread pattern as Coding Practice above. Backend also
+    // enforces this independently in create_session() (see
+    // Saveur-Backend's app/api/interviews.py) so a stale/cached client
+    // can't start a session for a type an admin just turned off.
+    ...(configService.isFeatureEnabled('system_design_practice')
+      ? [{ title: t('find:system_design_whiteboard', { defaultValue: 'System Design' }), icon: 'grid-outline', onPress: onStartSystemDesignPractice, loading: isStartingSystemDesign }]
+      : []),
     // Practical Scenarios (product request) — the hands-on equivalent of
     // Coding Practice for non-engineering tracks. Routes to a setup screen
     // (pick a field + role) rather than starting immediately like Coding
