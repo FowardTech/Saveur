@@ -10,6 +10,7 @@ import Animated, {
   useAnimatedStyle,
   withRepeat,
   withTiming,
+  withDelay,
   Easing,
 } from 'react-native-reanimated';
 
@@ -51,15 +52,55 @@ import ThemeContext from '../../ThemeContext';
 // comes in before it fires, that's treated as the end of the user's turn,
 // and the accumulated transcript is sent to the coach.
 //
-// Interruption / barge-in: while the AI's reply is being spoken (TTS), the
-// mic is deliberately NOT listening — the reply audio itself would
-// otherwise very likely get picked back up as "user speech" (no on-device
-// echo cancellation has been verified for this app's audio session
-// configuration; see speechService.ts's notes on iOS audio-session
-// category switching between TTS and STT). Real, low-risk interruption is
-// instead a visible tap (the orb itself, or the "Interrupt" pill below it)
-// — tapping either immediately stops playback and hands the mic back.
+// Interruption / barge-in (product request: "instead of the interrupt
+// button the user can just speak to interrupt instead of pressing the
+// interrupt button just like in chatgpt and other AI conversation app").
+//
+// Previously the mic was deliberately kept OFF while the AI's reply played
+// (TTS), specifically because no on-device echo cancellation has been
+// verified for this app's audio session configuration — see
+// speechService.ts's notes on iOS audio-session category switching between
+// TTS and STT — and the only way this screen knew how to switch categories
+// was the fully sequential stop-mic -> speak -> restart-mic handoff every
+// other screen uses. Real concurrent barge-in needs the mic to genuinely
+// stay live THROUGH playback, which that sequential handoff can't do.
+//
+// This now reuses the one place in the codebase that already does that
+// safely: LiveInterviewSession's Video mode keeps react-native-vision-
+// camera's own .playAndRecord session alive across an on-device TTS
+// utterance via speak()'s `preserveRecordingSession` option (see
+// speakOnDevice's own comment for the full history — it skips the
+// Tts.setDucking(true) call that would otherwise force the audio session
+// back to .playback and knock out whatever else is using the mic). The mic
+// here is react-native-voice's own session rather than VisionCamera's, but
+// the same principle applies: start the mic FIRST, then speak with
+// `preserveRecordingSession: true` so speak() never re-asserts a category
+// that would cut the mic's tap. Concretely: the mic (`stt`) is started once
+// per screen visit and then left running continuously across
+// listening/thinking/speaking — it is only ever stopped on background/
+// unmount/hard error, never around an individual reply — and every speak()
+// call in this file now always uses `preserveRecordingSession: true`,
+// which means the AI Coach's voice is the on-device engine rather than the
+// nicer ElevenLabs one for the whole time this concurrent-mic approach is
+// in effect (ElevenLabs playback, react-native-nitro-sound, does its own
+// audio-session setup with no override and is documented elsewhere in this
+// file's history as actively fighting a concurrent .playAndRecord session
+// for control of the shared AVAudioSession — not safe to use here).
+//
+// Residual risk, called out explicitly rather than hidden: this is the
+// first time this app has ever run STT and TTS concurrently on the same
+// audio session, and it has NOT been verified on a real device from this
+// environment. The AI's own voice could still get picked back up by the
+// mic and misread as the user trying to interrupt — mitigated (not
+// eliminated) below by (a) a short grace period after speech starts before
+// auto-interrupt arms at all, and (b) requiring a real, non-trivial
+// recognized phrase (not a stray fragment) before treating it as a genuine
+// interruption. The original tap-to-interrupt pill is kept as a guaranteed
+// fallback specifically because of this — see onInterrupt below, now
+// shared by both the tap and the voice-triggered path.
 const SILENCE_DEBOUNCE_MS = 1300;
+const BARGE_IN_GRACE_MS = 700;
+const BARGE_IN_MIN_CHARS = 3;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
 
@@ -147,6 +188,19 @@ const VoiceCoachView = memo(({
   // Set right after the coach speaks a "want me to take you there?" offer;
   // checked (and always cleared) at the start of the very next turn.
   const pendingActionRef = React.useRef<SuggestedActionId | null>(null);
+  // Set by onInterrupt (tap OR voice-triggered barge-in) right before it
+  // stops playback; read once by the speak() caller in sendTurn right after
+  // its `await speechService.speak(...)` resolves, then cleared, so that
+  // code can tell "the reply finished because it was cut off" apart from
+  // "the reply finished normally" and skip its own startListening()/
+  // navigate-on-confirm follow-up in the interrupted case (see sendTurn's
+  // own comment at that check for why running both would be unsafe).
+  const interruptedRef = React.useRef(false);
+  // Barge-in: true once the short post-speech-start grace period (see
+  // BARGE_IN_GRACE_MS) has elapsed for the CURRENT speaking turn — reset on
+  // every transition into 'speaking'. Kept as a ref (not state) since it's
+  // read from inside the transcript-watching effect below, not rendered.
+  const bargeInArmedRef = React.useRef(false);
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -206,13 +260,21 @@ const VoiceCoachView = memo(({
           });
           setLastCoachLine(confirmLine);
           setPhase('speaking');
-          await stt.stop();
+          // Mic stays running (barge-in — see this file's header comment);
+          // only start it defensively if it somehow isn't already.
+          if (!stt.isListening) await stt.start();
           try {
-            await speechService.speak(confirmLine);
+            await speechService.speak(confirmLine, i18n.language, { preserveRecordingSession: true });
           } catch {
             // best-effort
           }
           if (!isActiveRef.current) return;
+          if (interruptedRef.current) {
+            // User spoke/tapped over the confirmation — don't navigate out
+            // from under whatever they were actually trying to say.
+            interruptedRef.current = false;
+            return;
+          }
           onSuggestedAction?.(pendingAction);
           return;
         }
@@ -250,10 +312,12 @@ const VoiceCoachView = memo(({
       if (!isActiveRef.current) return;
       setLastCoachLine(replyText);
       setPhase('speaking');
-      await stt.stop();
+      // Mic stays running (barge-in — see this file's header comment); only
+      // start it defensively if it somehow isn't already listening.
+      if (!stt.isListening) await stt.start();
       let spokeFailed = false;
       try {
-        await speechService.speak(replyText);
+        await speechService.speak(replyText, i18n.language, { preserveRecordingSession: true });
       } catch {
         // speak() already falls back to on-device TTS internally on a
         // remote failure -- reaching this catch means BOTH the real voice
@@ -277,6 +341,19 @@ const VoiceCoachView = memo(({
         }
       }
       if (!isActiveRef.current) return;
+      if (interruptedRef.current) {
+        // onInterrupt (tap OR voice-triggered — see this file's header
+        // comment) already stopped playback and moved phase back to
+        // 'listening' itself, deliberately WITHOUT resetting the mic/
+        // transcript, so whatever the user had already started saying as
+        // they interrupted isn't thrown away. Calling startListening()
+        // here on top of that would both wipe that transcript and risk a
+        // double Voice.start() against an already-running session (see
+        // speechService.ts's guardedVoiceStart/lastVoiceStartAtRef doc
+        // comments on that exact race) — skip it entirely.
+        interruptedRef.current = false;
+        return;
+      }
       if (spokeFailed) {
         // startListening() clears errorMsg as its very first line (correct
         // for a stale mic-start error) -- without this pause it would wipe
@@ -287,7 +364,18 @@ const VoiceCoachView = memo(({
         await new Promise(resolve => setTimeout(resolve, 2500));
         if (!isActiveRef.current) return;
       }
-      startListening();
+      // Mic never stopped for a normal (non-interrupted) reply — just reset
+      // the transcript for a clean new turn and flip back to 'listening'
+      // rather than calling the full startListening() (which would
+      // needlessly re-run stt.start()'s 700ms settle delay and risk the
+      // same double-start race noted above).
+      if (stt.isListening) {
+        stt.reset();
+        setErrorMsg(null);
+        setPhase('listening');
+      } else {
+        startListening();
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [userContext, onSuggestedAction],
@@ -339,17 +427,63 @@ const VoiceCoachView = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
-  const onInterrupt = async () => {
-    if (phase !== 'speaking') return;
+  // Shared by both interrupt paths: a manual tap (the orb or the pill
+  // below) AND voice-triggered barge-in (the effect right after this one).
+  // Deliberately does NOT call startListening() — the mic (`stt`) is never
+  // stopped around a reply anymore (see this file's header comment), so
+  // there's nothing to restart, and doing so anyway would both reset the
+  // transcript (throwing away whatever the user had already started saying
+  // as they interrupted) and risk a double Voice.start() against an
+  // already-running session (see speechService.ts's guardedVoiceStart/
+  // lastVoiceStartAtRef doc comments on that exact race). Just stop
+  // playback and flip back to 'listening' so the existing silence-debounce
+  // effect picks up wherever the live transcript already is.
+  const onInterrupt = React.useCallback(async () => {
+    if (phaseRef.current !== 'speaking') return;
+    interruptedRef.current = true;
     // BUG FIX (see speechService.stopSpeaking's own comment on this round's
     // fresh "captures fine in Mock Interview, never in Coach" report) —
     // stopSpeaking() is now a genuinely awaitable teardown instead of
-    // fire-and-forget; awaiting it here means startListening()'s own 700ms
-    // settle delay starts counting from a *confirmed* stop instead of
-    // racing an in-flight one on top of it.
+    // fire-and-forget.
     await speechService.stopSpeaking();
-    startListening();
-  };
+    if (!isActiveRef.current) return;
+    setErrorMsg(null);
+    setPhase('listening');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Barge-in arming: gives the mic (which is now running continuously
+  // through 'speaking' — see this file's header comment) a short window at
+  // the start of every reply before auto-interrupt can fire at all. Mainly
+  // a guard against the coach's own voice's very first, loudest onset being
+  // misread as the user starting to talk over it; a real interruption
+  // attempt is never going to be this fast anyway.
+  React.useEffect(() => {
+    bargeInArmedRef.current = false;
+    if (phase !== 'speaking') return;
+    const timer = setTimeout(() => {
+      bargeInArmedRef.current = true;
+    }, BARGE_IN_GRACE_MS);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  // Barge-in detection: while the coach is speaking, stt.transcript (reset
+  // to '' right before this turn's reply was requested — see sendTurn) only
+  // ever accumulates whatever the still-live mic picks up DURING playback.
+  // Once armed (above) and holding a real, non-trivial recognized phrase —
+  // not just a stray one- or two-character fragment, which is more likely
+  // noise/echo bleed than genuine speech — treat that as the user talking
+  // over the coach and interrupt, same as a manual tap. See this file's
+  // header comment for the residual self-echo risk this can't fully rule
+  // out given this is the first time this app has run STT and TTS
+  // concurrently.
+  React.useEffect(() => {
+    if (phase !== 'speaking') return;
+    if (!bargeInArmedRef.current) return;
+    if (stt.transcript.trim().length < BARGE_IN_MIN_CHARS) return;
+    onInterrupt();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stt.transcript, phase]);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -391,8 +525,14 @@ const VoiceCoachView = memo(({
             });
             setLastCoachLine(intro);
             setPhase('speaking');
+            // Start the mic before speaking (not after) so it's already
+            // live for barge-in on this very first line too — see this
+            // file's header comment on the preserveRecordingSession
+            // ordering this depends on. Best-effort: if it fails to start,
+            // the intro still plays, just without barge-in support for it.
+            if (isActiveRef.current) await stt.start();
             try {
-              await speechService.speak(intro);
+              await speechService.speak(intro, i18n.language, { preserveRecordingSession: true });
             } catch {
               // Both the remote voice and the on-device fallback failed --
               // same "genuinely nothing was spoken" case as sendTurn's own
@@ -418,7 +558,21 @@ const VoiceCoachView = memo(({
           // message before it was ever visible.
           await new Promise(resolve => setTimeout(resolve, 2500));
         }
-        if (isActiveRef.current) startListening();
+        if (!isActiveRef.current) return;
+        if (interruptedRef.current) {
+          // Same reasoning as sendTurn's identical check — onInterrupt
+          // already moved phase to 'listening' itself; don't reset/restart
+          // the mic on top of it.
+          interruptedRef.current = false;
+          return;
+        }
+        if (stt.isListening) {
+          stt.reset();
+          setErrorMsg(null);
+          setPhase('listening');
+        } else {
+          startListening();
+        }
       })();
       return () => {
         isActiveRef.current = false;
@@ -485,6 +639,44 @@ const VoiceCoachView = memo(({
     opacity: 0.35 - pulse.value * 0.2,
   }));
 
+  // Product request: "the ripple animation that moves as the AI coach
+  // talks... just like in other AI apps" — clarified (via direct follow-up)
+  // to mean a general lively/active ripple effect while the coach is
+  // speaking, NOT anything driven by the actual audio's pitch/amplitude —
+  // react-native-nitro-sound's playback API exposes no amplitude/frequency
+  // data at all (only duration/currentPosition), so real pitch-reactivity
+  // isn't available without new native work; not needed given the
+  // clarified ask. Two rings, each expanding outward and fading as it
+  // grows, staggered so a new one kicks off while the previous is still
+  // mid-fade — the standard "sonar ping" look most voice-assistant UIs use
+  // for "I'm actively talking". Only driven (and only rendered — see the
+  // JSX below) while phase === 'speaking'; reset to invisible otherwise so
+  // there's nothing left over to flash when speaking starts again.
+  const ripple1 = useSharedValue(0);
+  const ripple2 = useSharedValue(0);
+  React.useEffect(() => {
+    if (phase === 'speaking') {
+      ripple1.value = 0;
+      ripple2.value = 0;
+      ripple1.value = withRepeat(withTiming(1, { duration: 1500, easing: Easing.out(Easing.quad) }), -1, false);
+      ripple2.value = withDelay(
+        750,
+        withRepeat(withTiming(1, { duration: 1500, easing: Easing.out(Easing.quad) }), -1, false),
+      );
+    } else {
+      ripple1.value = 0;
+      ripple2.value = 0;
+    }
+  }, [phase, ripple1, ripple2]);
+  const rippleStyle1 = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + ripple1.value * 0.6 }],
+    opacity: (1 - ripple1.value) * 0.55,
+  }));
+  const rippleStyle2 = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + ripple2.value * 0.6 }],
+    opacity: (1 - ripple2.value) * 0.55,
+  }));
+
   const statusLabel =
     phase === 'listening'
       ? stt.transcript
@@ -520,6 +712,31 @@ const VoiceCoachView = memo(({
             style={styles.haloFill}
           />
         </Animated.View>
+        {/* Ripple rings — only rendered while the coach is actually
+            speaking (see rippleStyle1/2's own comment above for why); not
+            conditioned on the shared values themselves since those get
+            reset to 0 (not unmounted) when phase changes, which would
+            otherwise leave a static ring visible at rest. */}
+        {phase === 'speaking' ? (
+          <>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.rippleRing,
+                rippleStyle1,
+                { borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(90,150,255,0.55)' },
+              ]}
+            />
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                styles.rippleRing,
+                rippleStyle2,
+                { borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(90,150,255,0.55)' },
+              ]}
+            />
+          </>
+        ) : null}
         {/* Redesign (explicit product request — "replace the pink circle
             design... with image 4"): was a two-layer purple/pink
             LinearGradient sphere (base gradient + a glossy highlight
@@ -567,7 +784,7 @@ const VoiceCoachView = memo(({
           onPress={onInterrupt}
           style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,99,248,0.10)' }]}>
           <Text category="h10" bold style={{ color: theme['text-basic-color'] }}>
-            {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap to interrupt' })}
+            {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap, or just speak, to interrupt' })}
           </Text>
         </TouchableOpacity>
       ) : null}
@@ -602,6 +819,17 @@ const styles = StyleSheet.create({
   haloFill: {
     width: '100%',
     height: '100%',
+  },
+  // Sized to HALO_SIZE (not ORB_SIZE) for the same reason `halo` above is —
+  // an absolutely-positioned child this exact size as its HALO_SIZE parent
+  // sits flush at (0,0) and is already centered with no manual top/left
+  // math needed.
+  rippleRing: {
+    position: 'absolute',
+    width: HALO_SIZE,
+    height: HALO_SIZE,
+    borderRadius: HALO_SIZE / 2,
+    borderWidth: 2,
   },
   orb: {
     width: ORB_SIZE,

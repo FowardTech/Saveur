@@ -99,5 +99,5 @@
   "voice_status_speaking": "Speaking…",
   "voice_status_starting": "Starting…",
   "voice_status_thinking": "Thinking…",
-  "voice_tap_to_interrupt": "Tap to interrupt"
+  "voice_tap_to_interrupt": "Tap, or just speak, to interrupt"
 }

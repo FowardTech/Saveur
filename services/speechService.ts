@@ -537,6 +537,14 @@ export function useSpeechToText() {
   // ends (see commitSessionTranscript below), so cross-session
   // accumulation still works but within-session duplication doesn't.
   const sessionTranscriptRef = React.useRef('');
+  // Feature: AI Coach voice barge-in (VoiceCoachView.tsx) — exposes the raw,
+  // continuously-updating mic input level from onSpeechVolumeChanged (see
+  // that handler below) as a plain ref rather than reactive state, since it
+  // fires multiple times a second and would otherwise force this hook's
+  // consumer to re-render at that rate for no reason. Not currently used to
+  // gate anything in this hook itself — VoiceCoachView reads it directly for
+  // its own, screen-specific interrupt heuristics.
+  const volumeRef = React.useRef(0);
   // DIAGNOSTIC + SELF-HEALING (product report: "AI coach isn't picking up
   // anything at all" -- confirmed via the no-speech nudge that Voice.start()
   // reports success but no transcript ever arrives, on a device where this
@@ -728,6 +736,7 @@ export function useSpeechToText() {
     };
     Voice.onSpeechVolumeChanged = (e: { value?: number }) => {
       markAlive();
+      volumeRef.current = e?.value ?? 0;
       const now = Date.now();
       if (now - volumeLogThrottle > 1000) {
         volumeLogThrottle = now;
@@ -1072,5 +1081,5 @@ export function useSpeechToText() {
     setTranscript('');
   }, []);
 
-  return {isListening, transcript, error, start, stop, reset};
+  return {isListening, transcript, error, start, stop, reset, volumeRef};
 }
