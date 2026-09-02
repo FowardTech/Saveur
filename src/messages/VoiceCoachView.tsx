@@ -143,6 +143,23 @@ import ThemeContext from '../../ThemeContext';
 // (Android) paths equally, since both share this same debounce effect.
 const SILENCE_DEBOUNCE_MS = 1000;
 
+// BUG FIX (product report: "I waited up to like 5 minutes and it still did
+// not capture my voice") — duplexVoiceService.start() (a native-module
+// bridge promise, ios/caren_family/DuplexVoiceEngine.swift's own `start`
+// handler) had no timeout of its own anywhere in this file. If that native
+// promise never calls back its resolve/reject block for any reason — the
+// exact class of bug utils/withTimeout.ts was originally built for (see its
+// own header comment: "a native-module bridge promise... that never fires
+// would hang that await forever") — the await below would hang indefinitely
+// with phase stuck at its default 'idle' ("Starting…" on screen the whole
+// time) and no error ever shown: indistinguishable from "just not working,"
+// with zero signal to the user or to us. 20s is generous enough to cover
+// real (if unusually slow) AVAudioSession/engine setup — confirmed
+// resolving well under 1s on a real device under normal conditions — without
+// leaving the user staring at "Starting…" for anywhere near the 5 minutes
+// reported.
+const DUPLEX_START_TIMEOUT_MS = 20000;
+
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
 
 const ORB_SIZE = 176;
@@ -748,7 +765,21 @@ const VoiceCoachView = memo(({
       return;
     }
     // active === true.
-    if (hasEngagedRef.current) {
+    // BUG FIX (product report: "I waited up to like 5 minutes and it still
+    // did not capture my voice") -- this used to treat ANY prior engagement
+    // (hasEngagedRef.current alone) as "the engine is already up, just
+    // resume." But if the FIRST attempt to start the duplex engine (below)
+    // ever failed or timed out, duplexStartedRef.current stays false
+    // forever, and every later toggle back into Voice mode was silently
+    // treated as a safe resume (just a phase change, no native call)
+    // instead of actually retrying the real engine start -- so once the
+    // first attempt failed, nothing the user did (including toggling back
+    // and forth, exactly what they'd naturally try) could ever recover.
+    // Now only treated as a safe resume once the engine has actually
+    // confirmed started at least once (duplexStartedRef.current); otherwise
+    // this falls through to the real start attempt below, same as a
+    // first-ever engagement.
+    if (hasEngagedRef.current && (!duplexSupported || duplexStartedRef.current)) {
       // Re-entering Voice mode after a toggle within this same screen
       // visit. Duplex: the engine never stopped, so this is just a phase
       // change, not a native call — clear out anything that sneaked into
@@ -765,11 +796,41 @@ const VoiceCoachView = memo(({
     (async () => {
       if (duplexSupported && !duplexStartedRef.current) {
         try {
-          await duplexVoiceService.start();
+          // See DUPLEX_START_TIMEOUT_MS's own comment above -- races the
+          // real native start() against a plain timer instead of awaiting
+          // it unconditionally, so a hung native promise surfaces a real
+          // error instead of leaving the screen silently stuck on
+          // "Starting…". Promise.race attaches a handler to BOTH promises
+          // it's given (same guarantee utils/withTimeout.ts's own comment
+          // documents), so a late resolve/reject from the losing side here
+          // never produces an unhandled-rejection warning.
+          let timedOut = false;
+          await Promise.race([
+            duplexVoiceService.start(),
+            new Promise<void>(resolve => {
+              setTimeout(() => {
+                timedOut = true;
+                resolve();
+              }, DUPLEX_START_TIMEOUT_MS);
+            }),
+          ]);
+          if (timedOut) {
+            // Cast: i18n.t()'s TS return type is `DefaultTFuncReturn`
+            // (string | null) even though a defaultValue guarantees a real
+            // string back at runtime -- Error's constructor wants a plain
+            // string, same minor type-vs-runtime gap this codebase already
+            // works around elsewhere (e.g. HomeSrc.tsx's `.toString()` on
+            // several `t()` calls passed to props typed as plain string).
+            throw new Error(
+              i18n.t('message:voice_mic_start_timeout', {
+                defaultValue: 'Voice mode is taking too long to start. Please try again.',
+              }) as string,
+            );
+          }
           duplexStartedRef.current = true;
           if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() resolved');
         } catch (e: any) {
-          if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected', e?.message ?? e);
+          if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected/timed out', e?.message ?? e);
           if (isActiveRef.current) {
             setErrorMsg(
               e?.message ??
@@ -777,6 +838,15 @@ const VoiceCoachView = memo(({
             );
             setPhase('idle');
           }
+          // Best-effort: whether this was a real rejection or the timeout
+          // above firing while start() was still in flight (which may yet
+          // resolve "successfully" on the native side after the fact),
+          // force a clean teardown so the NEXT attempt (toggling back to
+          // Voice mode retries this whole block -- see the
+          // hasEngagedRef/duplexStartedRef check above) starts from a known
+          // state instead of layering a second start() on top of one that
+          // might still be mid-flight.
+          duplexVoiceService.stop().catch(() => {});
           return; // nothing else here can work without the engine
         }
       }
