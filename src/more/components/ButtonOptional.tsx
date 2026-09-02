@@ -1,6 +1,7 @@
 import React from 'react';
-import {Alert, View} from 'react-native';
+import {Alert, StyleSheet, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import {
@@ -32,20 +33,27 @@ export interface ButtonOptionalProps {
   // rounded-square badge behind each row's icon, white glyph on top). This
   // prop had a long back-and-forth history — ButtonFill's circular
   // shadowed squircle originally, then dropped entirely for a flat
-  // no-chip glyph, then this colored badge.
-  // REVERTED (product follow-up: "The icons background color are still
-  // looking awful to me... What if we remove the backgrounds from the
-  // icons... and give the icons themselves... the ones in the menu the
-  // black color they were before") — the badge is gone again, all the way
-  // back to the flat no-chip glyph this prop's own history already cycled
-  // through once. No longer read anywhere; kept in the type only so
+  // no-chip glyph, then this colored badge, then reverted again ("remove
+  // the backgrounds from the icons... give the icons the black color they
+  // were before"). No longer read anywhere; kept in the type only so
   // MoreSrc.tsx's DATA_DETAILS/DATA_APPLICATION entries (which still pass
-  // it, now inert) don't need a separate sweep to strip it.
+  // it, now inert) don't need a separate sweep to strip it. `gradientColors`
+  // below is the REAL badge prop again now.
   iconBackgroundColor?: string;
-  // Back in real use (see iconBackgroundColor's own REVERTED comment
-  // above) — this is now the icon glyph's actual tint again, the same
-  // plain theme-adaptive black/white color (MoreSrc.tsx's ICON_GLYPH)
-  // every row used before the badge redesign.
+  // REDESIGN, ROUND 2 (product request: "give all the icons in the setting
+  // a lineargradient background. Like the screenshot above" — the iOS
+  // Settings app, each row's icon on its own colored rounded-square badge).
+  // Opt-in two-stop gradient (MoreSrc.tsx cycles a fixed palette across all
+  // its rows via index) rendered behind the icon glyph -- see the render
+  // call site below for how it's layered. When set, the glyph itself
+  // renders solid white (matches ActionCard.tsx's own gradient-variant
+  // icon tinting) since a white line icon is the only thing guaranteed
+  // legible against an arbitrary saturated color.
+  gradientColors?: string[];
+  // Back in real use (see iconBackgroundColor's own comment above) — the
+  // icon glyph's tint when no gradientColors is passed, the same plain
+  // theme-adaptive black/white color (MoreSrc.tsx's ICON_GLYPH) every row
+  // used before the badge redesign.
   iconColor?: string;
   iconBorderColor?: string;
   // Small unread indicator on the icon's top-right corner (product request
@@ -89,10 +97,12 @@ const ButtonOptional = ({
   checked,
   navigateSrc,
   iconColor,
+  gradientColors,
   badgeCount,
   badgeDot,
   showProBadge,
 }: ButtonOptionalProps) => {
+  const isGradient = !!gradientColors?.length;
   const theme = useTheme();
   const {t} = useTranslation(['more', 'common']);
   const {navigate, goBack} =
@@ -115,19 +125,32 @@ const ButtonOptional = ({
       itemsCenter
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
-        <View style={styles.iconWrap}>
-          {/* REVERTED (product follow-up: "remove the backgrounds from the
-              icons... the ones in the menu the black color they were
-              before") — no more colored badge behind this; back to a
-              plain, unwrapped icon glyph tinted with iconColor (MoreSrc.tsx
-              passes its own ICON_GLYPH, the theme-adaptive
-              text-basic-color every row used pre-redesign — near-black in
-              light mode, near-white in dark mode). Falls back to
-              text-basic-color directly if a caller doesn't pass one. */}
+        <View style={[styles.iconWrap, isGradient && styles.iconWrapGradient]}>
+          {/* REDESIGN, ROUND 2 (see gradientColors' own prop comment) — a
+              colored rounded-square badge behind the icon again, per
+              explicit product request with the iOS Settings app as the
+              reference. Same "gradient as an absoluteFill sibling layer
+              behind the real content, not as the layout container itself"
+              pattern already established and fixed once before in this
+              codebase (ActionCard.tsx's own gradient variant, Home
+              banner's homeBannerFallback) — LinearGradient doesn't
+              reliably size itself to wrap arbitrary content the way a
+              plain View does, so it's never used AS iconWrap here, just
+              painted to exactly fill iconWrap's own fixed 32x32 box
+              (overflow: hidden on iconWrapGradient clips it to that box's
+              rounded corners). */}
+          {isGradient ? (
+            <LinearGradient
+              colors={gradientColors as [string, string, ...string[]]}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={StyleSheet.absoluteFillObject}
+            />
+          ) : null}
           <Icon
             pack="assets"
             name={icon}
-            style={{width: 20, height: 20, tintColor: iconColor ?? theme['text-basic-color']}}
+            style={{width: 20, height: 20, tintColor: isGradient ? '#FFFFFF' : iconColor ?? theme['text-basic-color']}}
           />
           {badgeCount ? (
             <View style={styles.badgeCount}>
@@ -220,15 +243,25 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     marginTop: 2,
   },
-  // Fixed-size box around the plain icon glyph (see the REVERTED comment
-  // at the render call site) -- gives the row a consistent icon column
-  // width/alignment even without a badge behind it, and gives
-  // badgeCount/badgeDot below a stable box to corner-anchor against.
+  // Fixed-size box around the icon glyph -- gives the row a consistent icon
+  // column width/alignment whether or not a gradient badge is behind it,
+  // and gives badgeCount/badgeDot below a stable box to corner-anchor
+  // against.
   iconWrap: {
     width: 28,
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Gradient variant (see gradientColors' own comment) -- sized/rounded to
+  // read as the iOS Settings app's own rounded-square icon badge.
+  // overflow: 'hidden' is what clips the absolutely-filled LinearGradient
+  // sibling to this box's own borderRadius.
+  iconWrapGradient: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    overflow: 'hidden',
   },
   // Same corner-badge idea as HeaderHome.tsx's bell badge, re-tuned for the
   // plain 28x28 icon box above (was tuned for a 32x32 colored badge during

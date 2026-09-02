@@ -1013,7 +1013,14 @@ const HomeSrc = memo(() => {
             gradient illustration (can't be tinted, see that prop's own
             comment) — dropped so this falls through to the plain `icon`
             eva glyph below instead, which ActionCard already renders in
-            solid white on the gradient variant. */}
+            solid white on the gradient variant.
+            FOLLOW-UP (product request: "change the linear gradient for the
+            practice card... to orange lineargradient instead of purple") —
+            was ['#45009D', '#8C00E5'] (dark purple -> light purple). Same
+            dark-to-light two-stop shape, same locations={[0,1]} blend and
+            15deg angle (both still just props on ActionCard, unaffected by
+            a color swap), just an orange pair instead: #C2410C (a deep
+            burnt orange) -> #FB923C (a lighter warm orange). */}
         <ActionCard
           icon="mic-outline"
           title={t('home:practice_card_title', { defaultValue: 'Practice Interviews' })}
@@ -1023,7 +1030,7 @@ const HomeSrc = memo(() => {
               : t('home:practice_card_subtitle_default', { defaultValue: 'Sharpen your skills with a mock interview' }).toString()
           }
           onPress={onPressPractice}
-          gradientColors={['#45009D', '#8C00E5']}
+          gradientColors={['#C2410C', '#FB923C']}
           gradientLocations={[0, 1]}
         />
 

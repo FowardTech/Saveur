@@ -1,8 +1,9 @@
 import React, {memo} from 'react';
-import {Alert, TouchableOpacity, View} from 'react-native';
+import {Alert, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon, StyleService, useStyleSheet, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
@@ -164,6 +165,26 @@ const MoreSrc = memo(() => {
   // separate sweep to strip every single one.
   const ICON_BG = theme['background-basic-color-2'];
   const ICON_GLYPH = theme['text-basic-color'];
+  // REDESIGN, ROUND 2 (product request: "give all the icons in the setting
+  // a lineargradient background. Like the screenshot above" — the iOS
+  // Settings app's own colored rounded-square icon badges). A fixed
+  // palette of two-stop (dark -> light, same hue) gradients, cycled by row
+  // index (see gradientFor below) across every row on this screen —
+  // matches the reference's own approach of a handful of recurring colors
+  // reused across ~15 rows rather than one unique color per row.
+  const ICON_GRADIENTS: [string, string][] = [
+    ['#0047AB', '#3B9DFF'], // blue
+    ['#C2410C', '#FB923C'], // orange
+    ['#15803D', '#4ADE80'], // green
+    ['#6D28D9', '#A78BFA'], // purple
+    ['#BE123C', '#FB7185'], // red/pink
+    ['#0E7490', '#22D3EE'], // teal/cyan
+    ['#B45309', '#FBBF24'], // amber
+    ['#3730A3', '#818CF8'], // indigo
+    ['#374151', '#9CA3AF'], // slate/gray
+    ['#78350F', '#D97706'], // brown
+  ];
+  const gradientFor = (index: number) => ICON_GRADIENTS[index % ICON_GRADIENTS.length];
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
     {
       // Also where account deletion now lives (see ProfileSrc.tsx) — moved
@@ -651,6 +672,7 @@ const MoreSrc = memo(() => {
                 title={item.title}
                 status={item.status}
                 iconColor={item.iconColor}
+                gradientColors={gradientFor(i)}
                 onPress={item.onPress}
                 navigateSrc={item.navigateSrc}
                 badgeCount={item.badgeCount}
@@ -670,6 +692,7 @@ const MoreSrc = memo(() => {
                 title={item.title}
                 status={item.status}
                 iconColor={item.iconColor}
+                gradientColors={gradientFor(DATA_DETAILS.length + i)}
                 onPress={item.onPress}
                 navigateSrc={item.navigateSrc}
               />
@@ -682,6 +705,7 @@ const MoreSrc = memo(() => {
               title={t('more:switch-dark-mode')}
               status={'danger'}
               iconColor={ICON_GLYPH}
+              gradientColors={gradientFor(DATA_DETAILS.length + DATA_APPLICATION.length)}
               checked={darkMode}
               onPress={toggleTheme}
               navigateSrc={undefined}
@@ -701,6 +725,7 @@ const MoreSrc = memo(() => {
               title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
               status={'facebook'}
               iconColor={ICON_GLYPH}
+              gradientColors={gradientFor(DATA_DETAILS.length + DATA_APPLICATION.length + 1)}
               checked={notificationsEnabled}
               onPress={onToggleNotifications}
               navigateSrc={undefined}
@@ -748,20 +773,29 @@ const MoreSrc = memo(() => {
               styles.logoutRow,
               {opacity: isSigningOut ? 0.6 : 1},
             ]}>
-            {/* REVERTED (product follow-up: "remove the backgrounds from
-                the icons... the ones in the menu the black color they
-                were before") — this is the one row on this screen
-                rendering its own icon by hand instead of through
-                ButtonOptional (see the comment above), so it needs the
-                same plain-glyph-no-badge treatment applied manually to
+            {/* REDESIGN, ROUND 2 (product request: "give all the icons in
+                the setting a lineargradient background") — this is the one
+                row on this screen rendering its own icon by hand instead
+                of through ButtonOptional (see the comment above), so it
+                needs the same gradient-badge treatment applied manually to
                 stay consistent with every row above it (see
-                ButtonOptional.tsx's own REVERTED comment for the full
-                history). */}
-            <Icon
-              pack="eva"
-              name="log-out-outline"
-              style={{width: 20, height: 20, tintColor: ICON_GLYPH}}
-            />
+                ButtonOptional.tsx's own iconWrapGradient/gradientColors
+                comments for the full pattern). Red/pink — the same
+                destructive-action color convention iOS's own Settings app
+                uses for its Sign Out row. */}
+            <View style={styles.logoutIconWrap}>
+              <LinearGradient
+                colors={['#BE123C', '#FB7185']}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={StyleSheet.absoluteFillObject}
+              />
+              <Icon
+                pack="eva"
+                name="log-out-outline"
+                style={{width: 18, height: 18, tintColor: '#FFFFFF'}}
+              />
+            </View>
             {/* Matches ButtonOptional.tsx's own row-label treatment -- this
                 is the one row on this screen that renders its own Text
                 directly instead of going through ButtonOptional (see the
@@ -834,5 +868,18 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 20,
     paddingVertical: 14,
     marginTop: 20,
+  },
+  // Matches ButtonOptional.tsx's own iconWrapGradient exactly (32x32,
+  // rounded-square, overflow:hidden to clip the absolutely-filled
+  // LinearGradient sibling below to these corners) — this row renders its
+  // icon by hand (see the render call site's own comment) so it needs the
+  // same box, duplicated here since it isn't exported from that component.
+  logoutIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
