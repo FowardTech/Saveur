@@ -425,43 +425,47 @@ class DuplexVoiceEngine: RCTEventEmitter {
     }
   }
 
+  // Shared by both speech paths (on-device TTS's streamed buffers below,
+  // and ElevenLabs' single big decoded buffer further down) -- converts
+  // any source PCM buffer to playerConnectFormat (see setupEngineIfNeeded's
+  // own comment on why that format is read back from the actual
+  // connection rather than guessed). Returns nil (after emitting an error)
+  // on failure, rather than silently scheduling a mismatched buffer --
+  // this exact class of mismatch is what caused the chipmunk-speed bug
+  // fixed above; a loud conversion error is far preferable to quietly
+  // playing something wrong again.
+  private func convertBuffer(_ buffer: AVAudioPCMBuffer, to targetFormat: AVAudioFormat, context: String) -> AVAudioPCMBuffer? {
+    if buffer.format == targetFormat {
+      return buffer
+    }
+    guard let converter = AVAudioConverter(from: buffer.format, to: targetFormat) else {
+      emitError("\(context): no converter", nil)
+      return nil
+    }
+    let ratio = targetFormat.sampleRate / buffer.format.sampleRate
+    let outCapacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 1024
+    guard let outBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: outCapacity) else { return nil }
+    var conversionError: NSError?
+    var consumed = false
+    converter.convert(to: outBuffer, error: &conversionError) { _, outStatus in
+      if consumed {
+        outStatus.pointee = .noDataNow
+        return nil
+      }
+      consumed = true
+      outStatus.pointee = .haveData
+      return buffer
+    }
+    if let conversionError = conversionError {
+      emitError("\(context): convert", conversionError)
+      return nil
+    }
+    return outBuffer
+  }
+
   private func scheduleSynthesizedBuffer(_ buffer: AVAudioPCMBuffer, generation: Int) {
     guard let targetFormat = playerConnectFormat else { return }
-
-    let bufferToSchedule: AVAudioPCMBuffer
-    if buffer.format == targetFormat {
-      bufferToSchedule = buffer
-    } else {
-      // HIGHEST-UNCERTAINTY SPOT (see this file's header comment) --
-      // AVSpeechSynthesizer's buffer format isn't guaranteed to match
-      // playerConnectFormat (the output hardware's negotiated format).
-      // Converting explicitly rather than assuming they match, so a
-      // mismatch shows up as a conversion error (loggable) instead of
-      // silent/garbled playback.
-      guard let converter = AVAudioConverter(from: buffer.format, to: targetFormat) else {
-        emitError("scheduleSynthesizedBuffer: no converter", nil)
-        return
-      }
-      let ratio = targetFormat.sampleRate / buffer.format.sampleRate
-      let outCapacity = AVAudioFrameCount(Double(buffer.frameLength) * ratio) + 1024
-      guard let outBuffer = AVAudioPCMBuffer(pcmFormat: targetFormat, frameCapacity: outCapacity) else { return }
-      var conversionError: NSError?
-      var consumed = false
-      converter.convert(to: outBuffer, error: &conversionError) { _, outStatus in
-        if consumed {
-          outStatus.pointee = .noDataNow
-          return nil
-        }
-        consumed = true
-        outStatus.pointee = .haveData
-        return buffer
-      }
-      if let conversionError = conversionError {
-        emitError("scheduleSynthesizedBuffer: convert", conversionError)
-        return
-      }
-      bufferToSchedule = outBuffer
-    }
+    guard let bufferToSchedule = convertBuffer(buffer, to: targetFormat, context: "scheduleSynthesizedBuffer") else { return }
 
     guard generation == speechGeneration else { return }
     playerNode.scheduleBuffer(bufferToSchedule, completionHandler: nil)
@@ -480,5 +484,122 @@ class DuplexVoiceEngine: RCTEventEmitter {
       self.emit("onSpeakingState", ["speaking": false])
       resolve(nil)
     }
+  }
+
+  // MARK: - ElevenLabs / remote-audio speaking. Phase 2 -- built and
+  // tested in isolation via DuplexVoiceTestScreen.tsx's own "Speak
+  // (ElevenLabs)" button ONLY after phase 1 (on-device TTS through this
+  // same engine) was confirmed working on a real device -- see this
+  // file's header comment. `uri`/`headers` are resolved entirely in JS
+  // (services/duplexVoiceService.ts, reusing services/speechService.ts's
+  // existing fetchElevenLabsAudioUrl -- same backend call, same Firebase
+  // auth header, already proven working for the OLD TTS pipeline) so
+  // this native side has no auth/API logic of its own to duplicate or get
+  // wrong -- it only has to download the already-resolved URL, decode it,
+  // and play it through the SAME duplex engine as on-device speech.
+  @objc(speakRemoteAudio:headers:resolver:rejecter:)
+  func speakRemoteAudio(uri: String, headers: NSDictionary, resolve: @escaping RCTPromiseResolveBlock, reject: @escaping RCTPromiseRejectBlock) {
+    guard let url = URL(string: uri) else {
+      reject("duplex_bad_url", "Invalid audio URL", nil)
+      return
+    }
+    guard isEngineSetUp else {
+      reject("duplex_not_started", "start() must resolve before speakRemoteAudio()", nil)
+      return
+    }
+    speechGeneration += 1
+    let generation = speechGeneration
+    isSpeaking = true
+    emit("onSpeakingState", ["speaking": true])
+
+    var request = URLRequest(url: url)
+    for (key, value) in headers {
+      if let k = key as? String, let v = value as? String {
+        request.setValue(v, forHTTPHeaderField: k)
+      }
+    }
+
+    URLSession.shared.dataTask(with: request) { [weak self] data, _, error in
+      guard let self = self else { return }
+      // A newer speak()/speakRemoteAudio()/stop() call (or a manual
+      // interrupt) superseded this one while the download was in flight --
+      // same token-guard pattern used throughout this file.
+      guard generation == self.speechGeneration else { return }
+
+      let finishFailure: (String, String, Error?) -> Void = { code, message, err in
+        DispatchQueue.main.async {
+          guard generation == self.speechGeneration else { return }
+          self.isSpeaking = false
+          self.emit("onSpeakingState", ["speaking": false])
+          reject(code, message, err)
+        }
+      }
+
+      if let error = error {
+        finishFailure("duplex_remote_fetch_failed", error.localizedDescription, error)
+        return
+      }
+      guard let data = data, !data.isEmpty else {
+        finishFailure("duplex_remote_fetch_empty", "Empty audio response", nil)
+        return
+      }
+
+      // AVAudioFile can decode common compressed formats (MP3/AAC/etc,
+      // via ExtAudioFile under the hood) but only from a file URL, not raw
+      // Data in memory -- writing to a temp file first is the standard,
+      // documented way to decode an in-memory compressed audio blob with
+      // this API.
+      let tmpURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".audio")
+      do {
+        try data.write(to: tmpURL)
+        defer { try? FileManager.default.removeItem(at: tmpURL) }
+
+        let audioFile = try AVAudioFile(forReading: tmpURL)
+        // .processingFormat is AVAudioFile's own already-DECODED (PCM)
+        // format -- reading into a buffer of this format is what actually
+        // does the MP3/AAC decode; convertBuffer() below still separately
+        // handles the (likely, given this is a different source encoder)
+        // sample-rate/channel mismatch between THIS format and
+        // playerConnectFormat.
+        let sourceFormat = audioFile.processingFormat
+        guard let sourceBuffer = AVAudioPCMBuffer(pcmFormat: sourceFormat, frameCapacity: AVAudioFrameCount(audioFile.length)) else {
+          throw NSError(domain: "DuplexVoiceEngine", code: 3, userInfo: [NSLocalizedDescriptionKey: "Could not allocate decode buffer"])
+        }
+        try audioFile.read(into: sourceBuffer)
+
+        DispatchQueue.main.async {
+          guard generation == self.speechGeneration else { return }
+          guard let targetFormat = self.playerConnectFormat,
+                let bufferToSchedule = self.convertBuffer(sourceBuffer, to: targetFormat, context: "speakRemoteAudio") else {
+            self.isSpeaking = false
+            self.emit("onSpeakingState", ["speaking": false])
+            reject("duplex_remote_decode_failed", "Could not convert decoded audio to the engine's playback format", nil)
+            return
+          }
+          var settled = false
+          // Unlike on-device TTS's streamed empty-buffer "finished" signal
+          // (see speak() above), this is ONE complete buffer scheduled
+          // once -- .dataPlayedBack gives a completion callback tied to
+          // actual audible playback finishing, not just the data being
+          // handed off to the render graph, which is the more accurate of
+          // the two for "the user can no longer hear this" purposes.
+          self.playerNode.scheduleBuffer(bufferToSchedule, at: nil, options: [], completionCallbackType: .dataPlayedBack) { _ in
+            DispatchQueue.main.async {
+              guard generation == self.speechGeneration else { return }
+              guard !settled else { return }
+              settled = true
+              self.isSpeaking = false
+              self.emit("onSpeakingState", ["speaking": false])
+              resolve(nil)
+            }
+          }
+          if !self.playerNode.isPlaying {
+            self.playerNode.play()
+          }
+        }
+      } catch {
+        finishFailure("duplex_remote_decode_failed", error.localizedDescription, error)
+      }
+    }.resume()
   }
 }

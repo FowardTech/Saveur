@@ -1,4 +1,7 @@
 import {NativeEventEmitter, NativeModules, Platform} from 'react-native';
+import i18n from 'i18next';
+
+import {fetchElevenLabsAudioUrl} from './speechService';
 
 // ---------------------------------------------------------------------------
 // duplexVoiceService — thin JS wrapper over the native DuplexVoiceEngine
@@ -87,6 +90,50 @@ export async function speak(text: string): Promise<void> {
 export async function stopSpeaking(): Promise<void> {
   if (!nativeModule) throw NOT_SUPPORTED_ERROR;
   return nativeModule.stopSpeaking();
+}
+
+/**
+ * PHASE 2: the real ElevenLabs voice, played through this SAME duplex
+ * engine (not react-native-nitro-sound's separate player, which -- like
+ * react-native-tts before it -- has no way to be heard by this engine's
+ * echo canceller; see DuplexVoiceEngine.swift's header comment for why
+ * that mattered). Reuses services/speechService.ts's own
+ * fetchElevenLabsAudioUrl for the URL + Firebase auth header -- same
+ * backend call (POST /api/v1/tts/speak) and same auth handling already
+ * proven working for the old TTS pipeline, so there's no duplicated
+ * networking/auth logic here, just decode-and-play on the native side
+ * (see speakRemoteAudio in DuplexVoiceEngine.swift).
+ *
+ * Throws (never silently resolves) on any failure -- missing URL, fetch
+ * failure, decode failure -- so speakWithFallback() below can catch it
+ * and fall back to on-device speech, same contract as speechService.ts's
+ * own speakRemote().
+ */
+export async function speakRemote(text: string, language: string = i18n.language): Promise<void> {
+  if (!nativeModule) throw NOT_SUPPORTED_ERROR;
+  const source = await fetchElevenLabsAudioUrl(text, language);
+  if (!source) {
+    throw new Error('ElevenLabs TTS backend did not return a usable audio URL.');
+  }
+  return nativeModule.speakRemoteAudio(source.uri, source.headers);
+}
+
+/**
+ * The eventual drop-in for VoiceCoachView.tsx's current speechService.speak()
+ * call: tries the real ElevenLabs voice first, falls back to on-device
+ * speech on any failure (offline, backend/ElevenLabs error, decode
+ * failure) -- so a live conversation never just goes silent, same
+ * reasoning as speechService.ts's own speak(). NOT wired into
+ * VoiceCoachView yet -- see this file's header comment; exposed here so
+ * DuplexVoiceTestScreen.tsx can exercise the full real-voice path in
+ * isolation first.
+ */
+export async function speakWithFallback(text: string, language: string = i18n.language): Promise<void> {
+  try {
+    await speakRemote(text, language);
+  } catch {
+    await speak(text);
+  }
 }
 
 export function addTranscriptListener(handler: (event: TranscriptEvent) => void) {

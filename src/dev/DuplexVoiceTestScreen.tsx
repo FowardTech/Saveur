@@ -110,6 +110,18 @@ const DuplexVoiceTestScreen = memo(() => {
     appendLog('stopSpeaking() called (manual interrupt)');
   }, [appendLog]);
 
+  const onSpeakElevenLabs = React.useCallback(async () => {
+    appendLog('speakRemote() called — fetching ElevenLabs audio…');
+    try {
+      await duplexVoiceService.speakRemote(
+        'This is a test of the real ElevenLabs voice, played through the duplex engine. While I am still talking, try saying something and watch the transcript below.',
+      );
+      appendLog('speakRemote() resolved (finished naturally, not interrupted)');
+    } catch (e: any) {
+      appendLog(`speakRemote() failed: ${e?.message ?? e}`);
+    }
+  }, [appendLog]);
+
   return (
     <Container>
       <TopNavigation title="Duplex Voice Test (dev only)" accessoryLeft={() => <NavigationAction />} />
@@ -132,6 +144,9 @@ const DuplexVoiceTestScreen = memo(() => {
               </Button>
               <Button onPress={onSpeak} disabled={!started} style={{margin: 4}}>
                 Speak
+              </Button>
+              <Button onPress={onSpeakElevenLabs} disabled={!started} style={{margin: 4}}>
+                Speak (ElevenLabs)
               </Button>
               <Button onPress={onInterrupt} disabled={!speaking} status="warning" style={{margin: 4}}>
                 Interrupt

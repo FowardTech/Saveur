@@ -30,4 +30,9 @@ RCT_EXTERN_METHOD(speak:(NSString *)text
 RCT_EXTERN_METHOD(stopSpeaking:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 
+RCT_EXTERN_METHOD(speakRemoteAudio:(NSString *)uri
+                  headers:(NSDictionary *)headers
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+
 @end
