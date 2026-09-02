@@ -369,6 +369,21 @@ class DuplexVoiceEngine: RCTEventEmitter {
       self.isSpeaking = true
       self.emit("onSpeakingState", ["speaking": true])
 
+      // BUG FIX (real-device crash: "DuplexVoiceEngine.speak(): Tried to
+      // resolve a promise more than once"). AVSpeechSynthesizer.write's
+      // buffer callback delivers its "finished" signal as an empty buffer
+      // -- but in practice this can fire more than once for a single
+      // write() call (observed on a real device; Apple doesn't document a
+      // strict exactly-once guarantee here, and stopSpeaking(at:) firing
+      // mid-synthesis is a plausible second source of it). The
+      // `generation` check above guards against a NEWER speak()/stop()
+      // call's callback firing after this one was superseded, but it
+      // can't tell two calls to the SAME still-current generation's
+      // callback apart -- only a plain local flag, independent of
+      // generation, guarantees resolve() is only ever actually invoked
+      // once no matter how many times this fires.
+      var settled = false
+
       let utterance = AVSpeechUtterance(string: text)
       utterance.voice = AVSpeechSynthesisVoice(language: self.currentLocaleIdentifier())
       utterance.rate = AVSpeechUtteranceDefaultSpeechRate
@@ -387,6 +402,8 @@ class DuplexVoiceEngine: RCTEventEmitter {
           // documented end-of-utterance signal for this API.
           DispatchQueue.main.async {
             guard generation == self.speechGeneration else { return }
+            guard !settled else { return }
+            settled = true
             self.isSpeaking = false
             self.emit("onSpeakingState", ["speaking": false])
             resolve(nil)
