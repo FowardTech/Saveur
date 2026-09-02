@@ -1206,7 +1206,28 @@ const LiveInterviewSession = memo(() => {
   //     to do safely -- flagging this rather than guessing.
   if (isVideoMode) {
     return (
-      <Container style={styles.container}>
+      // BUG FIX (product report, with screenshot: "the camera frame is
+      // supposed to extend and cover the whole top of the device screen"
+      // and "[the timer/pills/caption/controls] not looking organized and
+      // professional"). Container defaults to useSafeArea={true}, which
+      // pads ITSELF by the device's safe-area inset (top/bottom) — but
+      // every floating element below (header row, timer, status pills,
+      // caption card, bottom controls) ALSO adds its own safeTop/
+      // safeBottom offset on top of that, since RN positions an
+      // absolutely-positioned child relative to its parent's PADDING box,
+      // not just its border box. That's the safe-area inset being counted
+      // TWICE: once by Container's own padding pushing the whole
+      // full-bleed camera view down/up before it even starts, and again by
+      // each floating element's own manual offset — exactly what the
+      // screenshot showed (a plain, camera-less gap at the very top, and
+      // everything else sitting lower/more cramped than intended).
+      // useSafeArea={false} here removes Container's own padding — the
+      // camera now genuinely fills the full device screen including under
+      // the notch/status bar and home indicator — while every floating
+      // element's own explicit safeTop/safeBottom math (already correct on
+      // its own) is what keeps THEM clear of those same areas, counted
+      // exactly once.
+      <Container style={styles.container} useSafeArea={false}>
         <View style={styles.videoFullScreen}>
           {cameraPermissionState === 'checking' ? (
             <Flex vertical center justify="center" style={styles.videoStateFill}>
@@ -1270,7 +1291,20 @@ const LiveInterviewSession = memo(() => {
                 </View>
               ) : null}
 
+              {/* BUG FIX (product report: "the timer, the other 2 pills are
+                  supposed to be on the same line") — the recording timer
+                  used to float in its own separate centered row above this
+                  one; it's now the first pill in this same row instead of
+                  a second, disconnected line. */}
               <View style={[styles.liveIndicatorRow, { top: safeTop + 68 }]}>
+                <View style={styles.timerPill}>
+                  {isRecording ? (
+                    <View style={[styles.recDotInline, { backgroundColor: theme['color-danger-100'] }]} />
+                  ) : null}
+                  <Text category="h10" bold style={styles.captionAccentText}>
+                    {mm}:{ss}
+                  </Text>
+                </View>
                 <View style={styles.liveIndicatorPill}>
                   <Text category="h10" status="control" bold>
                     {videoAnalysis.liveMetrics.isSmiling
@@ -1325,24 +1359,19 @@ const LiveInterviewSession = memo(() => {
             ) : null}
           </View>
 
-          {/* Floating timer + recording dot, glass pill, top-center. */}
-          <View style={[styles.floatingTimerRow, { top: safeTop + 16 }]} pointerEvents="none">
-            <View style={styles.timerPill}>
-              {isRecording ? (
-                <View style={[styles.recDotInline, { backgroundColor: theme['color-danger-100'] }]} />
-              ) : null}
-              <Text category="h10" bold style={styles.captionAccentText}>
-                {mm}:{ss}
-              </Text>
-            </View>
-          </View>
-
           {/* Floating glass caption card -- question/company/follow-up text,
               product request: "the voice to text should be writing on the
               screen but the container should be like a glass container"
               (see this block's own top comment for why a live transcript of
               the user's own answer specifically isn't wired in here). */}
-          <View style={[styles.captionGlassCard, { bottom: safeBottom + 148 }]}>
+          {/* BUG FIX (product report: "the transparent transcribe, the
+              camera icon and the end interview button are supposed to move
+              down very well... not looking organized and professional") —
+              was anchored much higher above the bottom controls, leaving an
+              oversized, awkward gap between the two clusters. Lowered and
+              given a deliberate, consistent gap to the controls row below
+              instead. */}
+          <View style={[styles.captionGlassCard, { bottom: safeBottom + 110 }]}>
             {company ? (
               <Text category="h10" center bold style={styles.captionAccentText}>
                 {t('find:live_practicing_for', { defaultValue: 'Practicing for {{company}}', company })}
@@ -1366,7 +1395,7 @@ const LiveInterviewSession = memo(() => {
           </View>
 
           {isUploadingVideo ? (
-            <View style={[styles.savingStatusBadge, { bottom: safeBottom + 148 + 96 }]} pointerEvents="none">
+            <View style={[styles.savingStatusBadge, { bottom: safeBottom + 110 + 80 }]} pointerEvents="none">
               <Text category="h10" center style={styles.captionMutedText}>
                 {t('find:live_saving_recording', { defaultValue: 'Saving your recording…' })}
               </Text>
@@ -1377,7 +1406,7 @@ const LiveInterviewSession = memo(() => {
               cosmetic-only, see isCameraPreviewHidden's comment above) +
               End Interview (same red pill as before, just floating now
               instead of sitting in an opaque footer bar). */}
-          <View style={[styles.floatingControlsRow, { bottom: safeBottom + 24 }]}>
+          <View style={[styles.floatingControlsRow, { bottom: safeBottom + 28 }]}>
             <TouchableOpacity
               activeOpacity={0.8}
               onPress={() => setIsCameraPreviewHidden(v => !v)}
@@ -1839,12 +1868,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  floatingTimerRow: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
   timerPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1854,6 +1877,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.2)',
+    // Now the first pill in the same row as the Looking/Look-at-camera
+    // pills (see liveIndicatorRow's own comment) instead of sitting alone
+    // in its own centered row — needs the same right/bottom spacing those
+    // already use so it doesn't sit flush against the next pill or wrap.
+    marginRight: 8,
+    marginBottom: 8,
   },
   recDotInline: {
     width: 8,
