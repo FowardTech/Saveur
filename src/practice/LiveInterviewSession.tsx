@@ -260,7 +260,20 @@ const LiveInterviewSession = memo(() => {
   }, []);
 
   const speakVideoMode = React.useCallback(async (text: string): Promise<void> => {
-    const source = await speechService.fetchElevenLabsAudioUrl(text, i18n.language);
+    // BUG FIX (product report: "the AI interviewer is not talking") --
+    // fetchElevenLabsAudioUrl never throws (it catches internally and
+    // returns null on any failure), but it had no timeout of its own here
+    // either -- it rides on apiClient's default 20s axios timeout (see
+    // apiClient.ts), so a slow/stalled network response (not a hard
+    // failure, just a stall) could leave the interview visibly silent for
+    // up to 20 seconds before the on-device fallback below ever kicked in.
+    // Same withTimeout(..., ms, fallback) pattern this file already uses
+    // extensively in onEnd() for exactly this class of "don't let one slow
+    // network call freeze the experience" problem -- bounds the wait to a
+    // much shorter, still-generous 8s before falling back to the on-device
+    // voice, same fallback speechService.speak() already reaches on any
+    // other kind of ElevenLabs failure.
+    const source = await withTimeout(speechService.fetchElevenLabsAudioUrl(text, i18n.language), 8000, null);
     if (!source) {
       // Fetch failed (offline, backend/ElevenLabs error, timeout) — same
       // safety net Video mode has always had: the on-device voice, not a
@@ -1295,8 +1308,16 @@ const LiveInterviewSession = memo(() => {
                   supposed to be on the same line") — the recording timer
                   used to float in its own separate centered row above this
                   one; it's now the first pill in this same row instead of
-                  a second, disconnected line. */}
-              <View style={[styles.liveIndicatorRow, { top: safeTop + 68 }]}>
+                  a second, disconnected line.
+                  BUG FIX (follow-up product report: "the pills should be on
+                  the same level horizontally with the close button") — was
+                  a full row's height below the close button's own row
+                  (safeTop + 68 vs its safeTop + 12); now the same `top` as
+                  floatingHeaderRow below, with `left` shifted past the
+                  close button's own 48px-wide glass circle (see
+                  glassCircleBtn) + a gap, instead of starting flush at the
+                  screen edge underneath it. */}
+              <View style={[styles.liveIndicatorRow, { top: safeTop + 12, left: 76 }]}>
                 <View style={styles.timerPill}>
                   {isRecording ? (
                     <View style={[styles.recDotInline, { backgroundColor: theme['color-danger-100'] }]} />
