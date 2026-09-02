@@ -211,12 +211,24 @@ class DuplexVoiceEngine: RCTEventEmitter {
       self.emitError("setVoiceProcessingEnabled(output)", error)
     }
 
-    // Decided AFTER enabling voice processing, deliberately -- voice
-    // processing can change the node's negotiated format (commonly forces
-    // mono, and can change sample rate), so querying it before would risk
-    // configuring the graph for a format that's about to change out from
-    // under it.
-    let connectFormat = outputNode.inputFormat(forBus: 0)
+    // BUG FIX (real-device report: TTS played back "chipmunk"-fast/sped-up
+    // -- the classic symptom of a sample-rate mismatch: audio generated at
+    // one rate, played back as though it were a different, higher rate).
+    // This used to query outputNode.inputFormat(forBus: 0) -- the
+    // HARDWARE I/O node's format -- which is tied to live negotiation with
+    // the actual audio route and, per this real-device result, apparently
+    // doesn't reliably reflect the true operating format at the moment
+    // it's queried here (before the engine has even started). Every TTS
+    // buffer was then being "correctly" converted to that WRONG target
+    // rate, so the conversion itself wasn't the bug -- the target it was
+    // converting to was. mainMixerNode's own outputFormat is the standard
+    // reference format for a node feeding INTO the mix (this is the
+    // pattern Apple's own AVAudioEngine sample code uses for exactly this
+    // "generate buffers, schedule on a player node, mix into main output"
+    // setup) -- it's a stable, well-defined value that doesn't depend on
+    // live hardware I/O negotiation the way the physical node's format
+    // does, so it isn't subject to the same before-start() staleness risk.
+    let connectFormat = audioEngine.mainMixerNode.outputFormat(forBus: 0)
     playerConnectFormat = connectFormat
 
     audioEngine.attach(playerNode)
