@@ -605,8 +605,24 @@ const Subscription = memo(() => {
     // Apple/Google own the renewal toggle for their own billed
     // subscriptions — there's no Stripe subscription row to schedule a
     // cancellation on. Same native-management redirect as onManageBilling.
+    // BUG FIX (product report, with screenshot: an on-screen "Uncaught (in
+    // promise)... Unknown std::runtime_error error" crash overlay every
+    // time Cancel subscription was tapped) -- this call was fire-and-forget
+    // with no .catch/try-catch, unlike every other call site of the same
+    // iapService.openNativeSubscriptionManagement() (onManageBilling above,
+    // onSelectPlan below), both of which await it inside a try/catch.
+    // RNIap.deepLinkToSubscriptions() can reject with a native
+    // std::runtime_error (e.g. no store account signed in, or no
+    // subscription for the store to deep-link to) -- with nothing to catch
+    // that rejection, it surfaced as this raw native red-box error instead
+    // of a normal in-app alert.
     if (subscription?.provider === 'apple' || subscription?.provider === 'google') {
-      iapService.openNativeSubscriptionManagement();
+      iapService.openNativeSubscriptionManagement().catch((error: any) => {
+        Alert.alert(
+          t('more:cancel_subscription_failed_title', { defaultValue: "Couldn't cancel subscription" }),
+          error?.message ?? t('common:try_again_later', { defaultValue: 'Please try again in a moment.' }),
+        );
+      });
       return;
     }
     Alert.alert(
@@ -641,8 +657,16 @@ const Subscription = memo(() => {
 
   const onResumeSubscription = React.useCallback(async () => {
     if (isResuming) return;
+    // BUG FIX -- same unhandled-rejection issue as onCancelSubscription
+    // above's own comment (this call site had the identical fire-and-forget
+    // bug for the "resume/turn auto-renew back on" path).
     if (subscription?.provider === 'apple' || subscription?.provider === 'google') {
-      iapService.openNativeSubscriptionManagement();
+      iapService.openNativeSubscriptionManagement().catch((error: any) => {
+        Alert.alert(
+          t('more:resume_subscription_failed_title', { defaultValue: "Couldn't turn auto-renew back on" }),
+          error?.message ?? t('common:try_again_later', { defaultValue: 'Please try again in a moment.' }),
+        );
+      });
       return;
     }
     setIsResuming(true);
