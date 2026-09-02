@@ -10,17 +10,25 @@
      drawable has no such platform-side auto-sizing: this <item>'s
      width/height directly control the on-screen box.
 
-     @mipmap/ic_launcher_foreground is used as the source (not a separate
-     splash_logo asset) — it has ~62% content occupancy (the new logo's own
-     safe-zone padding). Box size below (248dp) is chosen so the actual
-     visible glyph still renders at the same ~154dp this was previously
-     tuned to (248 * 0.62 ≈ 154), same moderate size as before — only the
-     asset and background color changed (new blue-S logo on light gray,
-     replacing the old white-on-blue mark), not the on-screen scale that
-     was already verified to sit clear of the screen edges. -->
+     Product request ("I want the splash screen to be like [reference]...
+     The saveur logo and the app name will be on the same horizontal
+     level") — was the solo "S" mark alone (@mipmap/ic_launcher_foreground,
+     the app icon's own foreground layer). This Android launch background is
+     a static drawable (no runtime text layout the way the iOS storyboards'
+     Auto Layout row can do — see LaunchScreen.storyboard/BootSplash.
+     storyboard's own matching comments for that side), so there's no way to
+     lay a live text label out next to the mark here; @drawable/
+     splash_logo_wordmark is a single pre-rendered PNG (drawable-mdpi/
+     -hdpi/-xhdpi/-xxhdpi/-xxxhdpi, generated from this same logo mark +
+     the app's own MontserratAlternates-Black wordmark font, matching the
+     iOS storyboards' lockup) with the mark and "Saveur" already composited
+     side by side. Box below sized to that asset's own real 402x100dp
+     aspect ratio (was a 248x248dp square for the old solo glyph) so the
+     bitmap renders at its native proportions without being stretched or
+     letterboxed by a mismatched box shape. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <item android:gravity="center" android:width="248dp" android:height="248dp">
-        <bitmap android:src="@mipmap/ic_launcher_foreground" android:gravity="center" />
+    <item android:gravity="center" android:width="402dp" android:height="100dp">
+        <bitmap android:src="@drawable/splash_logo_wordmark" android:gravity="center" />
     </item>
 </layer-list>
