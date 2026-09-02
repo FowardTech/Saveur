@@ -251,10 +251,51 @@ class DuplexVoiceEngine: RCTEventEmitter {
       audioEngine.inputNode.removeTap(onBus: 0)
       audioEngine.stop()
     }
+    // BUG FIX (real-device report: BOTH this engine's own recognition AND
+    // the completely separate, previously-proven @dev-amirzubair/react-
+    // native-voice pipeline used elsewhere in the app -- e.g. Mock
+    // Interview's Voice mode, which shares NO code with this file at all
+    // -- stopped capturing any speech whatsoever after this screen was
+    // ever visited, with zero errors from either side. setupEngineIfNeeded
+    // above calls setVoiceProcessingEnabled(true) on both nodes (swaps
+    // their audio unit to iOS's Voice-Processing I/O unit) AND sets the
+    // shared AVAudioSession's mode to .voiceChat -- a session-level
+    // setting, not scoped to this module, that applies aggressive,
+    // VoIP-tuned audio processing (AGC / noise suppression) to WHATEVER
+    // uses that session next. Neither was ever being undone here --
+    // audioEngine.stop() and setActive(false) alone don't reset either
+    // one. Since the AVAudioSession is one shared, process-global
+    // resource, any other capture activated afterward (including a
+    // totally different native module on a totally different screen)
+    // would inherit this same .voiceChat-tuned session instead of a clean,
+    // neutral one -- degrading or outright killing its own capture with
+    // nothing anywhere surfacing an error. This also explains why the
+    // problem didn't improve across several JS-only fixes already shipped
+    // this round: this native session state persists across JS/Metro
+    // reloads, and only clears on a genuine app relaunch -- so a bad
+    // session left by an early test attempt would keep poisoning every
+    // later attempt regardless of what changed in JS. Explicitly reversing
+    // both -- voice processing off, session mode back to .default -- is
+    // what setup should have been paired with here from the start.
+    do {
+      try audioEngine.inputNode.setVoiceProcessingEnabled(false)
+    } catch {
+      emitError("teardown: setVoiceProcessingEnabled(input, false)", error)
+    }
+    do {
+      try audioEngine.outputNode.setVoiceProcessingEnabled(false)
+    } catch {
+      emitError("teardown: setVoiceProcessingEnabled(output, false)", error)
+    }
     isEngineSetUp = false
     isSpeaking = false
     emit("onListeningState", ["listening": false])
     emit("onSpeakingState", ["speaking": false])
+    do {
+      try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default, options: [])
+    } catch {
+      emitError("teardown: reset session mode", error)
+    }
     try? AVAudioSession.sharedInstance().setActive(false, options: [.notifyOthersOnDeactivation])
   }
 
