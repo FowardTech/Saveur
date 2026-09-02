@@ -104,6 +104,17 @@ type PendingNavigation =
   // (Saveur-Backend's roadmap_progress_service.py) — same gap as
   // stale_applications above; both reuse the existing WhatsNext
   // destination post_offer_checkin already lands on.
+  // coach_checkin push tap (Saveur-Backend's coach_checkin_service.py —
+  // product request: "I want the AI Career coach to always send regular
+  // push notifications to the user to ask how things are going and if
+  // whenever they are ready to talk"). Lands on the Coach tab's default
+  // Chat screen (same MainBottomTab -> Coach route Home's "Today's Career
+  // Focus" card uses — see MainBottomTabStackParamList.Coach's own comment)
+  // rather than the separate top-level `MessagesStack` in
+  // RootStackParamList, so the tab bar highlights Coach and the existing
+  // VerifyEmailGate/CoachProLockGate gating still applies. No special params
+  // -- this is just "open the coach", not a specific canned message.
+  | {name: 'CoachChat'}
   // Used by AuthContext.tsx's LinkedIn cold-start sign-in fallback — see its
   // comment for why: the Stack.Navigator's `initialRouteName` prop only
   // matters on first mount, so simply flipping `isSignedIn` to true after
@@ -172,6 +183,8 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('MainBottomTab', {screen: 'Interviews', params: {screen: 'RequestsSrc'}});
   } else if (nav.name === 'NetworkingAssistant') {
     navigationRef.navigate('NetworkingAssistant');
+  } else if (nav.name === 'CoachChat') {
+    navigationRef.navigate('MainBottomTab', {screen: 'Coach', params: undefined});
   } else {
     // Mirrors Login.tsx's nextScreen() reset — MainBottomTab becomes the
     // only entry in history, so there's no way to "back" into the Login
@@ -315,6 +328,12 @@ export function navigateToWhatsNext(): void {
  * comment above. */
 export function navigateToNextStepRecommendation(): void {
   queueOrNavigate({name: 'NextStepRecommendation'});
+}
+
+/** coach_checkin push tap -- see the PendingNavigation union's own
+ * comment above. */
+export function navigateToCoachChat(): void {
+  queueOrNavigate({name: 'CoachChat'});
 }
 
 /** Daily leaderboard + tip push tap (Saveur-Backend's

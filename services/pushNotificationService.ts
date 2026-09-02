@@ -28,6 +28,7 @@ import {
   navigateToApplicationsList,
   navigateToCareerEventWebView,
   navigateToNetworkingAssistant,
+  navigateToCoachChat,
 } from 'navigation/navigationRef';
 import * as notificationService from './notificationService';
 import * as scheduledInterviewService from './scheduledInterviewService';
@@ -314,6 +315,16 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // this push to surface the sheet.
   if (data?.type === 'student_checkin') {
     navigateToHome();
+    return;
+  }
+  // AI Coach recurring check-in push (Saveur-Backend's
+  // coach_checkin_service.py — product request: "I want the AI Career coach
+  // to always send regular push notifications to the user to ask how things
+  // are going and if whenever they are ready to talk"). Straight to the
+  // Coach tab's Chat screen — nothing to parse out of the payload, this is
+  // just "come talk to your coach", not a specific canned message.
+  if (data?.type === 'coach_checkin') {
+    navigateToCoachChat();
     return;
   }
   // Post-graduation "what's next" recommendation (product request: "after
