@@ -40,5 +40,6 @@
   "color-success-700": "#22C482",
   "text-twitter-color": "#53D0EC",
   "border-card-default": "#3A3A57",
-  "color-accent-purple-bg": "#2A2140"
+  "color-accent-purple-bg": "#2A2140",
+  "color-primary-transparent-200": "rgba(94, 152, 255, 0.28)"
 }

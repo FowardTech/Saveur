@@ -58,6 +58,7 @@ import { ACTION_META, actionTitle, runSuggestedAction } from "services/suggested
 import * as resumeService from "services/resumeService";
 import { ImportedFileInfo } from "services/resumeService";
 import { AuthContext } from "../../AuthContext";
+import ThemeContext from "../../ThemeContext";
 import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
 import i18n from "i18next";
@@ -111,11 +112,18 @@ const COACH_SUGGESTED_COURSE_MODULES = 5;
 // "message" topics, a rocket for "trending up"/momentum topics (no literal
 // trending-up-chart icon in the pack), a lightbulb-in-a-head for "idea"
 // topics, and a briefcase-and-gear for "job/career" topics.
-const TOPIC_CHIP_STYLES: { bg: string; image: ImageSourcePropType }[] = [
-  { bg: 'rgba(139, 92, 246, 0.08)', image: Images.iconCoachChatBlue },
-  { bg: 'rgba(126, 168, 226, 0.12)', image: Images.iconRocket },
-  { bg: 'rgba(216, 90, 48, 0.08)', image: Images.iconLightbulbHead },
-  { bg: 'rgba(29, 158, 117, 0.08)', image: Images.iconBriefcaseGear },
+// BUG FIX (product report: "The AI chat bubbles are not looking good on
+// dark mode") -- `bg` alone was tuned at 8-12% alpha to sit as a pale
+// pastel wash on a WHITE page; against this app's dark background
+// (#1B1B2E) that alpha reads as a near-invisible flat blob instead of a
+// distinct colored circle. `bgDark` roughly triples the alpha (same hue)
+// so each circle still reads as its own color on a dark background too --
+// see the usage site below for which one actually gets picked.
+const TOPIC_CHIP_STYLES: { bg: string; bgDark: string; image: ImageSourcePropType }[] = [
+  { bg: 'rgba(139, 92, 246, 0.08)', bgDark: 'rgba(139, 92, 246, 0.28)', image: Images.iconCoachChatBlue },
+  { bg: 'rgba(126, 168, 226, 0.12)', bgDark: 'rgba(126, 168, 226, 0.32)', image: Images.iconRocket },
+  { bg: 'rgba(216, 90, 48, 0.08)', bgDark: 'rgba(216, 90, 48, 0.28)', image: Images.iconLightbulbHead },
+  { bg: 'rgba(29, 158, 117, 0.08)', bgDark: 'rgba(29, 158, 117, 0.28)', image: Images.iconBriefcaseGear },
 ];
 
 // Maps a persisted CoachChatMessageProps (see services/coachService.ts) to
@@ -170,6 +178,18 @@ const Chat = memo(() => {
   const [messages, setMessages] = React.useState<CoachIMessage[]>([]);
   const [isSending, setIsSending] = React.useState(false);
   const theme = useTheme();
+  // BUG FIX (product report: "The AI chat bubbles are not looking good on
+  // dark mode") -- a handful of decorative colors on this screen (the
+  // suggested-topic circles, the suggested-topics pill, the topic mic
+  // badge, the topics-sheet backdrop) are hand-picked low-alpha rgba()
+  // literals tuned to sit on a WHITE page, not theme tokens -- they don't
+  // automatically adapt the way theme['...'] lookups do. At 8-12% alpha
+  // they were nearly invisible against this app's dark background
+  // (#1B1B2E), reading as flat near-black blobs / a barely-there pill
+  // instead of the distinct pastel accents they are in light mode. See
+  // each usage site below for the specific dark-mode value chosen.
+  const { theme: appThemeName } = React.useContext(ThemeContext);
+  const isDarkMode = appThemeName === 'dark';
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MessagesStackParamList, 'Chat'>>();
   const { initialPrompt, openTopicsSheet } = route.params ?? {};
@@ -989,7 +1009,16 @@ const Chat = memo(() => {
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setTopicsSheetVisible(true)}
-                style={[styles.suggestedTopicsPill, styles.suggestedTopicsPillTop]}>
+                style={[
+                  styles.suggestedTopicsPill,
+                  styles.suggestedTopicsPillTop,
+                  // BUG FIX (product report: "The AI chat bubbles are not
+                  // looking good on dark mode") -- the base 8% alpha blue
+                  // was tuned for a white page and was nearly invisible
+                  // against this app's dark background, leaving what
+                  // looked like bare unstyled text instead of a pill.
+                  isDarkMode && { backgroundColor: 'rgba(94, 152, 255, 0.22)' },
+                ]}>
                 <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
                 <Text category="h9" bold ml={6} style={{ color: theme['color-primary-500'] }}>
                   {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
@@ -1155,9 +1184,9 @@ const Chat = memo(() => {
                           activeOpacity={0.7}
                           onPress={() => onTapTopic(item.title)}
                           style={styles.emptyTopicButton}>
-                          <View style={[styles.emptyTopicCircle, { backgroundColor: chipStyle.bg }]}>
+                          <View style={[styles.emptyTopicCircle, { backgroundColor: isDarkMode ? chipStyle.bgDark : chipStyle.bg }]}>
                             <Image source={chipStyle.image} resizeMode="contain" style={styles.emptyTopicIcon as ImageStyle} />
-                            <View style={styles.emptyTopicMicBadge}>
+                            <View style={[styles.emptyTopicMicBadge, isDarkMode && styles.emptyTopicMicBadgeDark]}>
                               <Icon pack="eva" name="mic-outline" style={{ width: 10, height: 10, tintColor: '#fff' }} />
                             </View>
                           </View>
@@ -1582,6 +1611,20 @@ const themedStyles = StyleService.create({
     backgroundColor: 'rgba(0,0,0,0.45)',
     borderWidth: 1.5,
     borderColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  // BUG FIX (product report: "The AI chat bubbles are not looking good on
+  // dark mode") -- the badge above pairs a near-black fill with a white
+  // ring, tuned for contrast against a light pastel circle. Against the
+  // topic circle's own already-dark dark-mode fill (see TOPIC_CHIP_STYLES'
+  // bgDark), the black badge nearly disappeared into the surrounding dark
+  // page, leaving what looked like a stray white ring artifact rather than
+  // an intentional mic badge -- this swaps in a lighter fill + a
+  // dark-tinted ring instead so the badge stays legible as its own shape.
+  emptyTopicMicBadgeDark: {
+    backgroundColor: 'rgba(255,255,255,0.28)',
+    borderColor: '#12121F',
     alignItems: 'center',
     justifyContent: 'center',
   },
