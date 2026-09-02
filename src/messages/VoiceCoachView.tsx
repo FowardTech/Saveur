@@ -135,7 +135,13 @@ import ThemeContext from '../../ThemeContext';
 // result with real ElevenLabs audio in place of on-device TTS. iOS only
 // for now; Android has no equivalent native module yet, so it keeps the
 // proven sequential tap-to-interrupt model above unchanged.
-const SILENCE_DEBOUNCE_MS = 1300;
+// BUG FIX (product request: "reduce the wait time. It needs to pick up my
+// voice as quick as 1sec") -- this is the pause length the silence-based
+// turn-detection effect below waits for after the transcript last changed
+// before treating the user's turn as over and sending it. Was 1300ms;
+// lowered to 1000ms as asked. Applies to both the duplex (iOS) and legacy
+// (Android) paths equally, since both share this same debounce effect.
+const SILENCE_DEBOUNCE_MS = 1000;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
 

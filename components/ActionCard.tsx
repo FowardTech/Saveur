@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Image, ImageStyle, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
+import {Image, ImageStyle, StyleSheet, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -126,20 +126,41 @@ const ActionCard: React.FC<ActionCardProps> = memo(
     );
     if (isGradient) {
       const {start, end} = cssAngleToGradientPoints(15);
+      // BUG FIX (product report, with screenshot: "you always create
+      // another card inside the card and then give the inner one the
+      // linear gradient... the gradient should be the whole card... the
+      // content of the card is not cut off" -- sic, "is cut off"). The
+      // previous version made LinearGradient itself the flex-row layout
+      // container (icon + text + chevron as its direct children,
+      // styles.card's padding/flexDirection/alignItems applied straight to
+      // it). react-native-linear-gradient doesn't reliably size itself to
+      // wrap arbitrary flex children the way a plain View does -- the
+      // visible gradient patch rendered smaller than the real content box,
+      // reading as a separate "inner card" floating inside the actual
+      // (unstyled, so background-page-body-colored) outer TouchableOpacity,
+      // with the icon clipped at that mismatched edge. This is the exact
+      // same class of bug this codebase already hit and fixed once before
+      // (see git history on the admin Home banner's homeBannerFallback
+      // style, same fix). Same fix here: the TouchableOpacity itself is
+      // now the real, correctly-sized flex-row card (padding, rounded
+      // corners, icon/text/chevron laid out normally); LinearGradient is
+      // just a decorative StyleSheet.absoluteFill layer painted behind
+      // that content, guaranteed to exactly match the card's real
+      // rendered bounds since "fill your parent" is all it has to do.
       return (
         <TouchableOpacity
           activeOpacity={0.85}
           onPress={onPress}
           disabled={disabled}
-          style={[style, disabled ? styles.disabled : undefined]}>
+          style={[styles.card, styles.cardNoBorder, styles.cardTransparentBg, style, disabled ? styles.disabled : undefined]}>
           <LinearGradient
             colors={gradientColors as [string, string, ...string[]]}
             locations={gradientLocations}
             start={start}
             end={end}
-            style={[styles.card, styles.cardNoBorder]}>
-            {content}
-          </LinearGradient>
+            style={StyleSheet.absoluteFillObject}
+          />
+          {content}
         </TouchableOpacity>
       );
     }
@@ -183,6 +204,18 @@ const themedStyles = StyleService.create({
   // above would clash with/barely show against it.
   cardNoBorder: {
     borderWidth: 0,
+  },
+  // Gradient variant: the card's own backgroundColor (background-basic-
+  // color-2, from `card` above) must not paint over/behind the
+  // LinearGradient fill layer -- transparent here lets the gradient (a
+  // sibling, not a background on this same view) be the only fill.
+  // overflow: 'hidden' is what actually clips that absolutely-filled
+  // gradient sibling to this card's own rounded corners, since it's a
+  // separate layer, not this View's own native background (which clips to
+  // borderRadius automatically).
+  cardTransparentBg: {
+    backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
   disabled: {
     opacity: 0.6,
