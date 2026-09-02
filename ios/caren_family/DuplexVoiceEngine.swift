@@ -211,28 +211,26 @@ class DuplexVoiceEngine: RCTEventEmitter {
       self.emitError("setVoiceProcessingEnabled(output)", error)
     }
 
-    // BUG FIX (real-device report: TTS played back "chipmunk"-fast/sped-up
-    // -- the classic symptom of a sample-rate mismatch: audio generated at
-    // one rate, played back as though it were a different, higher rate).
-    // This used to query outputNode.inputFormat(forBus: 0) -- the
-    // HARDWARE I/O node's format -- which is tied to live negotiation with
-    // the actual audio route and, per this real-device result, apparently
-    // doesn't reliably reflect the true operating format at the moment
-    // it's queried here (before the engine has even started). Every TTS
-    // buffer was then being "correctly" converted to that WRONG target
-    // rate, so the conversion itself wasn't the bug -- the target it was
-    // converting to was. mainMixerNode's own outputFormat is the standard
-    // reference format for a node feeding INTO the mix (this is the
-    // pattern Apple's own AVAudioEngine sample code uses for exactly this
-    // "generate buffers, schedule on a player node, mix into main output"
-    // setup) -- it's a stable, well-defined value that doesn't depend on
-    // live hardware I/O negotiation the way the physical node's format
-    // does, so it isn't subject to the same before-start() staleness risk.
-    let connectFormat = audioEngine.mainMixerNode.outputFormat(forBus: 0)
-    playerConnectFormat = connectFormat
-
+    // BUG FIX, ROUND 2 (real-device reports, in order: (1) TTS played
+    // "chipmunk"-fast -- classic sample-rate mismatch, from converting
+    // every TTS buffer to a target format guessed from
+    // outputNode.inputFormat(forBus: 0), queried before the engine had
+    // even started; (2) after switching that guess to
+    // audioEngine.mainMixerNode.outputFormat(forBus: 0) instead, TTS went
+    // completely silent -- a DIFFERENT wrong guess, not a fix). Two wrong
+    // guesses in a row means guessing the target format from some OTHER
+    // node before connecting is the wrong approach entirely. This instead
+    // connects playerNode with format: nil -- letting AVAudioEngine itself
+    // pick the connection format (from playerNode's own default) -- and
+    // then reads back playerNode.outputFormat(forBus: 0) AFTER that
+    // connection is established, so playerConnectFormat is guaranteed to
+    // be the format the graph is ACTUALLY using for this exact connection,
+    // not a value inferred from a different node that may or may not
+    // match.
     audioEngine.attach(playerNode)
-    audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: connectFormat)
+    audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: nil)
+    let connectFormat = playerNode.outputFormat(forBus: 0)
+    playerConnectFormat = connectFormat
     // mainMixerNode -> outputNode is AVAudioEngine's own default
     // connection, already in place; nothing to do for that link.
 
