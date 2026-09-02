@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {AppState, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Icon, useTheme} from '@ui-kitten/components';
+import {Icon} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
@@ -124,16 +124,21 @@ interface DrawerNavItem {
   badge?: number;
 }
 
-// BUG FIX (product request: "i want the drawer background to be the app
-// background") -- was a fixed '#0B0B10' hex literal, deliberately
-// independent of the app's own theme (see prior comment, now removed) to
-// match the Symphony reference's always-dark sidebar. Product now wants the
-// drawer to visually read as the SAME surface as the rest of the app
-// instead of its own distinct panel color, so the background below is
-// looked up from the theme (background-basic-color-1, the same token every
-// other screen's base background uses) inside CustomDrawerContent, not a
-// hardcoded constant. Text/icon colors stay fixed white/muted-white since
-// this app is dark-themed in practice everywhere these are used.
+// BUG FIX (product report, with screenshot: "you just gave this the app
+// background what about the icons and text they are not showing" -- the
+// PREVIOUS fix for "i want the drawer background to be the app background"
+// read the live theme token (background-basic-color-1), which resolves
+// light on a device/session in light mode -- white text/icons on that near-
+// white background is what the screenshot shows, everything but the
+// active-row pill invisible. Reading the *live* theme was the mistake: this
+// drawer's text/icon colors below are fixed white, not theme-driven, so its
+// background can't be theme-driven either without breaking in light mode.
+// Fixed here as a fixed hex constant instead -- the exact value
+// background-basic-color-1 resolves to in this app's dark theme
+// (constants/theme/dark.json), so it's still literally "the app
+// background" (same color content uses in dark mode) but no longer flips
+// with the live theme setting.
+const DRAWER_BG = '#12121F';
 const DRAWER_TEXT = '#FFFFFF';
 const DRAWER_TEXT_MUTED = 'rgba(255,255,255,0.6)';
 const DRAWER_DIVIDER = 'rgba(255,255,255,0.08)';
@@ -148,7 +153,6 @@ interface CustomDrawerContentProps {
 const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContentProps) => {
   const {t} = useTranslation(['common']);
   const {top, bottom} = useLayout();
-  const theme = useTheme();
   const {profile, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
 
   const items: DrawerNavItem[] = [
@@ -172,7 +176,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
   ];
 
   return (
-    <View style={[styles.drawer, {backgroundColor: theme['background-basic-color-1'], paddingTop: top + 16, paddingBottom: bottom + 16}]}>
+    <View style={[styles.drawer, {backgroundColor: DRAWER_BG, paddingTop: top + 16, paddingBottom: bottom + 16}]}>
       {/* BUG FIX (product request: "the saveur logo should have the
           default blue background") -- was passing markColor={DRAWER_TEXT},
           which swaps in the transparent-background mark art
