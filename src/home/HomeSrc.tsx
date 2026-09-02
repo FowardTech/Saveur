@@ -894,45 +894,38 @@ const HomeSrc = memo(() => {
             ) : (
               // No admin image (or it failed to load) — a code-drawn
               // fallback card, still using the ad's real title/body text.
-              // REDESIGN (product follow-up, with the same reference
-              // screenshot, more precise this time: "the image is on the
-              // left and the caption is on the right, exactly like the one
-              // in this screenshot") — was icon+Ad-pill stacked in their
-              // own row ABOVE the title/subtitle (full-width, top to
-              // bottom). Now a true left/right row: the icon sits on the
-              // left spanning the card, with the "Ad" pill pinned to the
-              // card's own top-right corner (absolute, not part of a
-              // shared row with the icon — there's no separate brand-name
-              // text to share that row with here), and the title/subtitle
-              // stacked in a column filling the remaining width to the
-              // icon's right — matching the reference's icon-left,
-              // text-right composition.
+              // REVERTED (explicit product follow-up: "lets just leave the
+              // homebanner the way it is before lets not make it image one
+              // side and caption the otherside anymore") — back to the
+              // icon+Ad-pill sharing a top row, with title/subtitle
+              // stacked full-width below, same as before the icon-left/
+              // caption-right redesign.
               <View style={styles.homeBannerFallback}>
-                <View style={styles.homeBannerAdPill}>
-                  <Text category="h10-s" bold style={styles.homeBannerAdPillText}>
-                    {t('home:banner_ad_label', { defaultValue: 'Ad' })}
+                <View style={styles.homeBannerTopRow}>
+                  <View style={styles.homeBannerIconWrap}>
+                    <Image
+                      source={Images.logoMark}
+                      style={styles.homeBannerIcon as ImageStyle}
+                      resizeMode="contain"
+                      tintColor="#FFFFFF"
+                    />
+                  </View>
+                  <View style={styles.homeBannerAdPill}>
+                    <Text category="h10-s" bold style={styles.homeBannerAdPillText}>
+                      {t('home:banner_ad_label', { defaultValue: 'Ad' })}
+                    </Text>
+                  </View>
+                </View>
+                {homeBanner.title ? (
+                  <Text category="h8" bold numberOfLines={1} mt={12} style={styles.homeBannerTitle}>
+                    {homeBanner.title}
                   </Text>
-                </View>
-                <View style={styles.homeBannerIconWrap}>
-                  <Image
-                    source={Images.logoMark}
-                    style={styles.homeBannerIcon as ImageStyle}
-                    resizeMode="contain"
-                    tintColor="#FFFFFF"
-                  />
-                </View>
-                <View style={[globalStyle.flexOne, styles.homeBannerTextCol]}>
-                  {homeBanner.title ? (
-                    <Text category="h8" bold numberOfLines={1} style={styles.homeBannerTitle}>
-                      {homeBanner.title}
-                    </Text>
-                  ) : null}
-                  {homeBanner.body ? (
-                    <Text category="h10" numberOfLines={2} mt={4} style={styles.homeBannerBody}>
-                      {homeBanner.body}
-                    </Text>
-                  ) : null}
-                </View>
+                ) : null}
+                {homeBanner.body ? (
+                  <Text category="h10" numberOfLines={2} mt={4} style={styles.homeBannerBody}>
+                    {homeBanner.body}
+                  </Text>
+                ) : null}
               </View>
             )}
           </TouchableOpacity>
@@ -1157,47 +1150,36 @@ const themedStyles = StyleService.create({
   // (deliberately NOT theme-conditional — meant to stand out as its own
   // distinct placement in both light and dark app themes, same reasoning
   // as the Home Practice card's own fixed gradient).
-  // REDESIGN (product follow-up, same reference screenshot, more precise:
-  // "the image is on the left and the caption is on the right") — was the
-  // icon+Ad-pill sharing a row ABOVE a full-width title/subtitle block.
-  // Now a true icon-left/text-right row (position: relative here is what
-  // homeBannerAdPill's absolute positioning below anchors to).
+  // REVERTED (explicit product follow-up: "lets just leave the homebanner
+  // the way it is before lets not make it image one side and caption the
+  // otherside anymore") — back to icon+Ad-pill sharing a row ABOVE a
+  // full-width title/subtitle block, undoing the icon-left/text-right
+  // redesign.
   homeBannerFallback: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
     borderRadius: 18,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
     backgroundColor: '#14141C',
   },
+  homeBannerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   homeBannerIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
     backgroundColor: 'rgba(255,255,255,0.14)',
   },
   homeBannerIcon: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
   },
-  // Room for the title text (numberOfLines={1}, so it needs to actually
-  // wrap/truncate before running under the Ad pill) to not sit flush
-  // under homeBannerAdPill's absolute top-right position below.
-  homeBannerTextCol: {
-    paddingRight: 34,
-  },
-  // Anchored to the card's own top-right corner (see homeBannerFallback's
-  // position: relative) instead of sharing a row with the icon — there's
-  // no separate brand-name text here to share that row with the way the
-  // reference screenshot's "Jitterbit, Inc." does.
   homeBannerAdPill: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
+    marginLeft: 'auto',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
