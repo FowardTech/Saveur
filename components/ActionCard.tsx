@@ -1,6 +1,7 @@
 import React, {memo} from 'react';
 import {Image, ImageStyle, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
+import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import {globalStyle} from 'styles/globalStyle';
@@ -46,35 +47,68 @@ export interface ActionCardProps {
   // component simple while still covering MoreSrc.tsx's existing
   // toggle/badge/pro-badge rows.
   trailing?: React.ReactNode;
+  // Product request (Practice card, with an exact CSS spec: "linear-
+  // gradient(15deg, #45009d 20%, #8c00e5)") — opt-in only; every other
+  // ActionCard call site keeps its plain themed background untouched.
+  // `gradientLocations` mirrors CSS's per-stop percentages (e.g. the
+  // "20%" above) — react-native-linear-gradient's own `locations` prop,
+  // same length as `gradientColors`, each a 0-1 fraction. When set, this
+  // card's title/subtitle/chevron automatically switch to light/white-ish
+  // tones instead of the theme's normal dark text — a custom saturated
+  // gradient like this is being used specifically to stand out, so it's
+  // always dark enough that default dark-on-transparent text would be
+  // low-contrast.
+  gradientColors?: string[];
+  gradientLocations?: number[];
+}
+
+// Converts a CSS `linear-gradient(<angle>deg, ...)` angle into the
+// start/end fractional points react-native-linear-gradient actually takes
+// (it has no angle prop of its own). CSS angles are clockwise from
+// "straight up" (0deg = to top, 90deg = to right); this rotates that
+// direction vector, scales it to fit a 0-1 box, then re-centers it —
+// standard CSS-angle-to-vector conversion, not RN-specific guesswork.
+function cssAngleToGradientPoints(angleDeg: number): {start: {x: number; y: number}; end: {x: number; y: number}} {
+  const rad = (angleDeg * Math.PI) / 180;
+  const x2 = Math.sin(rad);
+  const y2 = -Math.cos(rad);
+  const scale = 1 / Math.max(Math.abs(x2), Math.abs(y2), 0.0001);
+  const ex = x2 * scale;
+  const ey = y2 * scale;
+  return {
+    start: {x: (-ex + 1) / 2, y: (-ey + 1) / 2},
+    end: {x: (ex + 1) / 2, y: (ey + 1) / 2},
+  };
 }
 
 const ActionCard: React.FC<ActionCardProps> = memo(
-  ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing}) => {
+  ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing, gradientColors, gradientLocations}) => {
     const styles = useStyleSheet(themedStyles);
     const theme = useTheme();
-    return (
-      <TouchableOpacity
-        activeOpacity={0.85}
-        onPress={onPress}
-        disabled={disabled}
-        style={[styles.card, style, disabled ? styles.disabled : undefined]}>
-        <View style={styles.iconWrap}>
+    const isGradient = !!gradientColors?.length;
+    const content = (
+      <>
+        <View style={[styles.iconWrap, isGradient ? styles.iconWrapOnGradient : undefined]}>
           {iconImage ? (
             <Image source={iconImage} resizeMode="contain" style={styles.iconImage as ImageStyle} />
           ) : (
             <Icon
               pack={iconPack}
               name={icon}
-              style={[globalStyle.icon16, {tintColor: theme['color-primary-100']}]}
+              style={[globalStyle.icon16, {tintColor: isGradient ? '#FFFFFF' : theme['color-primary-100']}]}
             />
           )}
         </View>
         <View style={globalStyle.flexOne}>
-          <Text category="h8" bold numberOfLines={1}>
+          <Text category="h8" bold numberOfLines={1} style={isGradient ? styles.titleOnGradient : undefined}>
             {title}
           </Text>
           {subtitle ? (
-            <Text category="h10" numberOfLines={1} mt={2} style={styles.subtitle}>
+            <Text
+              category="h10"
+              numberOfLines={1}
+              mt={2}
+              style={isGradient ? styles.subtitleOnGradient : styles.subtitle}>
               {subtitle}
             </Text>
           ) : null}
@@ -85,9 +119,37 @@ const ActionCard: React.FC<ActionCardProps> = memo(
           <Icon
             pack="eva"
             name="chevron-right-outline"
-            style={[styles.chevron, {tintColor: theme['color-basic-400']}]}
+            style={[styles.chevron, {tintColor: isGradient ? 'rgba(255,255,255,0.85)' : theme['color-basic-400']}]}
           />
         )}
+      </>
+    );
+    if (isGradient) {
+      const {start, end} = cssAngleToGradientPoints(15);
+      return (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={onPress}
+          disabled={disabled}
+          style={[style, disabled ? styles.disabled : undefined]}>
+          <LinearGradient
+            colors={gradientColors as [string, string, ...string[]]}
+            locations={gradientLocations}
+            start={start}
+            end={end}
+            style={[styles.card, styles.cardNoBorder]}>
+            {content}
+          </LinearGradient>
+        </TouchableOpacity>
+      );
+    }
+    return (
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={onPress}
+        disabled={disabled}
+        style={[styles.card, style, disabled ? styles.disabled : undefined]}>
+        {content}
       </TouchableOpacity>
     );
   },
@@ -116,6 +178,12 @@ const themedStyles = StyleService.create({
     // resting look.
     borderColor: 'color-primary-500',
   },
+  // Gradient variant (see gradientColors' own comment) supplies its own
+  // saturated fill via LinearGradient instead — the default blue border
+  // above would clash with/barely show against it.
+  cardNoBorder: {
+    borderWidth: 0,
+  },
   disabled: {
     opacity: 0.6,
   },
@@ -127,6 +195,19 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
     marginRight: 14,
     backgroundColor: 'color-primary-transparent-100',
+  },
+  // Gradient variant: a soft translucent-white tint reads as a raised
+  // "glass" icon chip against the saturated purple fill, the same way
+  // color-primary-transparent-100 does against the normal light card
+  // background above.
+  iconWrapOnGradient: {
+    backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  titleOnGradient: {
+    color: '#FFFFFF',
+  },
+  subtitleOnGradient: {
+    color: 'rgba(255,255,255,0.78)',
   },
   // SYMPHONY REDESIGN follow-up -- see `iconImage` prop's own comment.
   // Sized a touch smaller than iconWrap's 40x40 box so these full-color

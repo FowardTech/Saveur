@@ -3,7 +3,6 @@ import { Alert, AppState, Image, ImageStyle, InteractionManager, StyleSheet, Tou
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StyleService, useStyleSheet, useTheme, Icon, Button, Spinner } from '@ui-kitten/components';
 import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation/native';
-import LinearGradient from 'react-native-linear-gradient';
 
 import Content, { CONTENT_PADDER } from 'components/Content';
 import Container from 'components/Container';
@@ -856,6 +855,76 @@ const HomeSrc = memo(() => {
             the time-sensitive verify-email banner are UNCHANGED — neither
             is "content clutter" in the sense being simplified here, they're
             a conditional admin feature and an account-status prompt. */}
+        {/* Admin-configured Home banner (see the effect above for the full
+            "why" + how this differs from AnnouncementBanner, which sits
+            above HeaderHome and is a separate plain-text feature). Was
+            commented out and sitting lower, right above the 4 launcher
+            cards; product follow-up (with a reference screenshot of a
+            dark, icon-badge-style card) asked for it to actually "appear
+            at the top" and be redesigned to look like that reference — so
+            it's now the very first thing inside the scrollable Content
+            (ahead of even the verify-email banner), and the code-drawn
+            fallback below is a fixed dark card (icon chip + "Ad" pill on
+            one row, bold title + subtitle below) instead of the old
+            theme-following primary-color gradient strip, so it reads as a
+            deliberately distinct, eye-catching placement the way the
+            reference card does, in both light and dark app themes. Only
+            shows once a real, active placement="home_banner" ad exists —
+            no banner at all until the admin creates one, and a tap always
+            has real content to navigate AdDetails to. */}
+        {homeBanner ? (
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={[styles.homeBannerCard, { width: homeBannerWidth }]}
+            onPress={onOpenHomeBanner}>
+            {homeBanner.imageUrl && !homeBannerImageFailed ? (
+              // The real admin-uploaded (and, per-locale, admin-translated)
+              // image, shown as-is with no caption overlay drawn over it —
+              // tapping the card (already wired on the outer
+              // TouchableOpacity above) is the only affordance, matching a
+              // real native ad banner.
+              <View style={styles.homeBannerImageWrap}>
+                <Image
+                  source={{ uri: homeBanner.imageUrl }}
+                  style={styles.homeBannerImage as ImageStyle}
+                  resizeMode="cover"
+                  onError={() => setHomeBannerImageFailed(true)}
+                />
+              </View>
+            ) : (
+              // No admin image (or it failed to load) — a code-drawn
+              // fallback card, still using the ad's real title/body text.
+              <View style={styles.homeBannerFallback}>
+                <View style={styles.homeBannerTopRow}>
+                  <View style={styles.homeBannerIconWrap}>
+                    <Image
+                      source={Images.logoMark}
+                      style={styles.homeBannerIcon as ImageStyle}
+                      resizeMode="contain"
+                      tintColor="#FFFFFF"
+                    />
+                  </View>
+                  <View style={styles.homeBannerAdPill}>
+                    <Text category="h10-s" bold style={styles.homeBannerAdPillText}>
+                      {t('home:banner_ad_label', { defaultValue: 'Ad' })}
+                    </Text>
+                  </View>
+                </View>
+                {homeBanner.title ? (
+                  <Text category="h8" bold numberOfLines={1} mt={12} style={styles.homeBannerTitle}>
+                    {homeBanner.title}
+                  </Text>
+                ) : null}
+                {homeBanner.body ? (
+                  <Text category="h10" numberOfLines={2} mt={4} style={styles.homeBannerBody}>
+                    {homeBanner.body}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+          </TouchableOpacity>
+        ) : null}
+
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -885,79 +954,6 @@ const HomeSrc = memo(() => {
             </Button>
           </Flex>
         ) : null}
-
-        {/* Admin-configured Home banner (see the effect above for the full
-            "why" + how this differs from AnnouncementBanner). Kept above
-            the 4 launcher cards, same prominent placement it's always had.
-            Only shows once a real, active placement="home_banner" ad
-            exists — no banner at all until the admin creates one, and a
-            tap always has real content to navigate AdDetails to. */}
-        {/* {homeBanner ? (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={[styles.homeBannerCard, { width: homeBannerWidth }]}
-            onPress={onOpenHomeBanner}>
-            {homeBanner.imageUrl && !homeBannerImageFailed ? (
-              // The real admin-uploaded (and, per-locale, admin-translated)
-              // image, shown as-is with no caption overlay drawn over it —
-              // tapping the card (already wired on the outer
-              // TouchableOpacity above) is the only affordance, matching a
-              // real native ad banner.
-              <View style={styles.homeBannerImageWrap}>
-                <Image
-                  source={{ uri: homeBanner.imageUrl }}
-                  style={styles.homeBannerImage as ImageStyle}
-                  resizeMode="cover"
-                  onError={() => setHomeBannerImageFailed(true)}
-                />
-              </View>
-            ) : (
-              // No admin image (or it failed to load) — a code-drawn
-              // fallback card, still using the ad's real title/body text.
-              <View style={styles.homeBannerFallback}>
-                <LinearGradient
-                  colors={isDarkMode ? [theme['background-basic-color-2'], theme['background-basic-color-2']] : [theme['color-primary-500'], theme['color-primary-500']]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={StyleSheet.absoluteFillObject}
-                />
-                <View style={styles.homeBannerIconWrap}>
-                  <Image
-                    source={Images.logoMark}
-                    style={styles.homeBannerIcon as ImageStyle}
-                    resizeMode="contain"
-                    tintColor={isDarkMode ? theme['color-badge-info-text'] : '#fff'}
-                  />
-                </View>
-                <View style={globalStyle.flexOne}>
-                  {homeBanner.title ? (
-                    <Text
-                      category="h9"
-                      bold
-                      numberOfLines={1}
-                      style={{ color: isDarkMode ? theme['color-badge-info-text'] : '#fff' }}>
-                      {homeBanner.title}
-                    </Text>
-                  ) : null}
-                  {homeBanner.body ? (
-                    <Text
-                      category="h10"
-                      numberOfLines={2}
-                      mt={homeBanner.title ? 2 : 0}
-                      style={{ color: isDarkMode ? theme['color-badge-info-text'] : 'rgba(255,255,255,0.9)' }}>
-                      {homeBanner.body}
-                    </Text>
-                  ) : null}
-                </View>
-                <Icon
-                  pack="assets"
-                  name="arrowRight"
-                  style={[globalStyle.icon16, { tintColor: isDarkMode ? theme['color-badge-info-text'] : '#fff' }]}
-                />
-              </View>
-            )}
-          </TouchableOpacity>
-        ) : null} */}
 
         {/* The 4 cards (see this section's own module-level comment above
             for the full "why"). Card 1 is the only dynamic one — the same
@@ -992,6 +988,12 @@ const HomeSrc = memo(() => {
           onPress={onPressCoachSend}
         />
 
+        {/* Product request, exact CSS spec: "give the practice card... a
+            linear gradient of these colors: linear-gradient(15deg, #45009d
+            20%, #8c00e5)" — see ActionCard's own gradientColors comment for
+            how the 15deg angle and the "20%" stop are honored, not just
+            approximated. Only this card gets it; the other 3 keep their
+            normal plain card background. */}
         <ActionCard
           icon="mic-outline"
           iconImage={Images.iconAiStars}
@@ -1002,6 +1004,8 @@ const HomeSrc = memo(() => {
               : t('home:practice_card_subtitle_default', { defaultValue: 'Sharpen your skills with a mock interview' }).toString()
           }
           onPress={onPressPractice}
+          gradientColors={['#45009D', '#8C00E5']}
+          gradientLocations={[0.2, 1]}
         />
 
         {/* BUG FIX (product report: "the explore is the one thats supposed
@@ -1124,20 +1128,56 @@ const themedStyles = StyleService.create({
   // a plain View, NOT a LinearGradient: the gradient is a decorative
   // absoluteFillObject layer behind this box's normal-flow content
   // instead, so this sizes correctly to wrap its real content height.
+  // REDESIGN (product request, with a reference screenshot of a dark,
+  // icon-badge-style ad card): was a horizontal row on a theme-following
+  // primary-color/gradient strip (icon + title/subtitle inline + a
+  // trailing chevron). Now a fixed near-black card (deliberately NOT
+  // theme-conditional — this is meant to stand out as its own distinct
+  // placement in both light and dark app themes, same reasoning as the
+  // Home Practice card's own fixed gradient) with the icon chip and an
+  // "Ad" pill sharing a top row, and the title/subtitle stacked below —
+  // the same basic composition as the reference card.
   homeBannerFallback: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 16,
+    borderRadius: 18,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
+    backgroundColor: '#14141C',
+  },
+  homeBannerTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   homeBannerIconWrap: {
-    marginRight: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.14)',
   },
   homeBannerIcon: {
-    width: 40,
-    height: 40,
+    width: 20,
+    height: 20,
+  },
+  // Pushed to the far right of homeBannerTopRow via marginLeft: 'auto'
+  // (only two children on that row, no third slot needed for a plain
+  // space-between).
+  homeBannerAdPill: {
+    marginLeft: 'auto',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  homeBannerAdPillText: {
+    color: 'rgba(255,255,255,0.8)',
+  },
+  homeBannerTitle: {
+    color: '#FFFFFF',
+  },
+  homeBannerBody: {
+    color: 'rgba(255,255,255,0.72)',
   },
   // SYMPHONY REDESIGN — placeholder shown only for the brief window before
   // missionHeroLoading resolves, sized/shaped to match the real ActionCard
