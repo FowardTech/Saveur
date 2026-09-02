@@ -58,6 +58,7 @@ import DailyChallengeScreen from 'src/home/DailyChallengeScreen';
 import InterviewReplay from 'src/practice/InterviewReplay';
 import StudentVerification from 'src/more/StudentVerification';
 import ChooseUsername from 'src/auth/Signup/ChooseUsername';
+import DuplexVoiceTestScreen from 'src/dev/DuplexVoiceTestScreen';
 import SharedWithMe from 'src/more/SharedWithMe';
 import SharedContentDetail from 'src/more/SharedContentDetail';
 import GoalTipDetail from 'src/home/GoalTipDetail';
@@ -203,6 +204,13 @@ const AppContainer = () => {
         <Stack.Screen name="AboutScreen" component={AboutScreen} />
         <Stack.Screen name="FaqScreen" component={FaqScreen} />
         <Stack.Screen name="PolicyScreen" component={PolicyScreen} />
+        {/* DEV-ONLY -- see navigation/types.tsx's own comment on this
+            route. Gated on __DEV__ here too (belt and suspenders on top of
+            the Settings row that's the only thing that links to it being
+            __DEV__-gated in src/more/MoreSrc.tsx) so this screen and its
+            native module test harness genuinely can't be reached at all
+            in a release build, not just "nothing happens to link to it". */}
+        {__DEV__ ? <Stack.Screen name="DuplexVoiceTest" component={DuplexVoiceTestScreen} /> : null}
 
         {/* AI Interview Coach — practice & career-tools screens */}
         <Stack.Screen name="MockInterviewSetup" component={MockInterviewSetup} />

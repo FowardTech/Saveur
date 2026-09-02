@@ -706,6 +706,23 @@ const MoreSrc = memo(() => {
               navigateSrc={undefined}
             />
           </View>
+          {/* DEV-ONLY entry point for the isolated native-audio test
+              harness (src/dev/DuplexVoiceTestScreen.tsx) built while
+              investigating real speak-to-interrupt for the AI Career
+              Coach's voice screen -- see VoiceCoachView.tsx's own header
+              comment for that history. __DEV__ is false in every release
+              build (App Store / TestFlight / Play Store), so this row
+              (and the route itself -- see AppContainer.tsx's matching
+              __DEV__ gate) never reaches a real user. */}
+          {__DEV__ ? (
+            <View style={styles.rowCard}>
+              <TouchableOpacity activeOpacity={0.7} onPress={() => navigate('DuplexVoiceTest')}>
+                <Text category="h9" bold>
+                  Duplex Voice Test (dev only)
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
           {/* "Refer Friend & Family" used to be a separate row here, pointing
               at the old ReferFriend.tsx stub (hardcoded fake link, never
               wired to the real backend). It duplicated the actual referral

@@ -45,6 +45,12 @@ export type RootStackParamList = {
   // types import for one string union.
   PolicyScreen: {initialTab?: 'privacy_policy' | 'terms_of_service'} | undefined;
   AboutScreen: undefined;
+  // DEV-ONLY: isolated test harness for the native DuplexVoiceEngine
+  // module (services/duplexVoiceService.ts / ios/caren_family/
+  // DuplexVoiceEngine.swift) -- see src/dev/DuplexVoiceTestScreen.tsx's
+  // own header comment. Reachable only from a __DEV__-gated row in
+  // src/more/MoreSrc.tsx, never in a release build.
+  DuplexVoiceTest: undefined;
   SuccessScr: {
     successScr: SuccessScreenType;
   };
