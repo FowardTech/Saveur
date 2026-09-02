@@ -183,6 +183,24 @@ type Context = {
   // display purposes, but should call `refreshSubscription()` after a
   // successful purchase/portal-return so this shared copy doesn't go stale.
   subscription: SubscriptionStatusProps | null;
+  // True from the moment a signed-in user is detected until the very first
+  // GET /billing/subscription call for this session has settled (success OR
+  // failure). BUG FIX (product report: "when the app reloads it shows the
+  // subscribe to basic plan stuff before it loads the chat app screen even
+  // when the user have already subscribe to it") — `subscription` starts
+  // `null` on every cold start and is only populated by a fire-and-forget
+  // fetch kicked off alongside the profile fetch below (see
+  // onAuthStateChanged), while `isInitialized`/`isSignedIn` flip true as
+  // soon as just the profile/auth state resolves. `isPro` derives from
+  // `subscription`, so for that in-between window `isPro` reads `false` for
+  // EVERY user, including already-Pro ones — navigation/MainDrawer.tsx's
+  // Coach tab used to read `!isPro` directly and had no way to tell "not
+  // subscribed" apart from "haven't heard back yet," so it rendered the
+  // Basic-plan paywall for a beat before flipping to the real chat screen
+  // once this fetch landed. Consumers that gate on `isPro` should also check
+  // `!isSubscriptionLoading` (or wait for it) before treating a false
+  // `isPro` as definitive.
+  isSubscriptionLoading: boolean;
   isPro: boolean;
   // True only for Pro Premium (was "Team") or Pro (Yearly) — the stricter
   // check gating Job Alerts and Learning Courses specifically. See
@@ -220,6 +238,11 @@ export const AuthContext = React.createContext<Context>({
   profile: null,
   emailVerified: false,
   subscription: null,
+  // Defaults to true (not false) so any consumer rendered before the real
+  // Provider value is available treats entitlement as "still loading"
+  // rather than silently assuming "not Pro" — see the Context type's own
+  // comment above.
+  isSubscriptionLoading: true,
   isPro: false,
   isPremium: false,
   refreshSubscription: async () => null,
@@ -248,6 +271,11 @@ export const AuthProvider: React.FC = ({children}) => {
   const [profile, setProfile] = React.useState<UserProfileProps | null>(null);
   const [emailVerified, setEmailVerified] = React.useState(false);
   const [subscription, setSubscription] = React.useState<SubscriptionStatusProps | null>(null);
+  // See the Context type's own comment on this field. Starts true; flips to
+  // false once the very first post-auth GET /billing/subscription for this
+  // session settles (onAuthStateChanged below), or immediately if there's no
+  // signed-in user to fetch a subscription for.
+  const [isSubscriptionLoading, setIsSubscriptionLoading] = React.useState(true);
   // True while a signed-in (Firebase-authenticated) user still has an
   // unverified 2FA code pending — see the onAuthStateChanged handler below
   // and AppContainer.tsx, which renders a TwoFactorVerify gate instead of
@@ -316,13 +344,26 @@ export const AuthProvider: React.FC = ({children}) => {
         // Same fire-and-forget rationale — populates `subscription` for
         // app-wide entitlement checks (see services/entitlementsService.ts).
         // A failed fetch just leaves gating on its safe local fallback
-        // rather than blocking auth state from settling.
-        billingService.getSubscription().then(setSubscription).catch(() => {});
+        // rather than blocking auth state from settling. `isSubscriptionLoading`
+        // stays true until this settles either way (success or failure) —
+        // see this field's own comment on the Context type above for why
+        // that matters (navigation/MainDrawer.tsx's Coach tab gate).
+        setIsSubscriptionLoading(true);
+        billingService
+          .getSubscription()
+          .then(setSubscription)
+          .catch(() => {})
+          .finally(() => setIsSubscriptionLoading(false));
       } else {
         setProfile(null);
         setSignedIn(false);
         setEmailVerified(false);
         setSubscription(null);
+        // No signed-in user means nothing to fetch — don't leave this stuck
+        // on true (which would leave a gate like MainDrawer's Coach tab
+        // showing a spinner forever for a signed-out user, though in
+        // practice that screen isn't reachable while signed out anyway).
+        setIsSubscriptionLoading(false);
         setTwoFactorPending(false);
         setTwoFactorEmailHint(null);
         crashReportingService.clearUser();
@@ -712,6 +753,7 @@ export const AuthProvider: React.FC = ({children}) => {
         profile,
         emailVerified,
         subscription,
+        isSubscriptionLoading,
         isPro,
         isPremium,
         refreshSubscription,

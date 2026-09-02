@@ -22,6 +22,7 @@ import RequestsBottomNavigator from './RequestsBottomNavigator';
 import MoreNavigator from './MoreNavigator';
 import VerifyEmailGate from 'src/auth/VerifyEmailGate';
 import ProLockGate from 'components/ProLockGate';
+import LoadingIndicator from 'components/LoadingIndicator';
 import {AuthContext} from '../AuthContext';
 import {MainBottomTabStackParamList} from './types';
 import {navigationRef} from './navigationRef';
@@ -77,6 +78,23 @@ const CoachProLockGate = () => {
   );
 };
 
+// BUG FIX (product report: "when the app reloads it shows the subscribe to
+// basic plan stuff before it loads the chat app screen even when the user
+// have already subscribe to it") — root cause: AuthContext's `subscription`
+// (and therefore `isPro`, which is derived from it) starts out `false`-ish
+// on every cold start and is only populated by an async
+// GET /billing/subscription call kicked off alongside sign-in, while
+// `isSignedIn` flips true as soon as just the profile fetch resolves. The
+// Coach Tab.Screen below used to switch purely on `!isPro`, which can't
+// distinguish "confirmed not subscribed" from "haven't heard back yet" — so
+// it rendered CoachProLockGate for the beat between those two, even for an
+// already-Pro user, until the subscription fetch landed and flipped `isPro`
+// to true. This neutral spinner fills that gap instead — AuthContext now
+// exposes `isSubscriptionLoading` (true until the first post-sign-in
+// subscription fetch settles) precisely so callers like this one don't have
+// to guess from `subscription === null` alone.
+const CoachLoadingGate = () => <LoadingIndicator flexOne size="large" />;
+
 const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 
 // The 3 visible drawer rows (product request: "home icon, chat icon, a
@@ -127,7 +145,7 @@ interface CustomDrawerContentProps {
 const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContentProps) => {
   const {t} = useTranslation(['common']);
   const {top, bottom} = useLayout();
-  const {profile, isPro} = React.useContext(AuthContext);
+  const {profile, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
 
   const items: DrawerNavItem[] = [
     {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
@@ -194,7 +212,11 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
                   </Text>
                 </View>
               ) : null}
-              {!isPro && item.route === 'Coach' ? (
+              {/* Same isSubscriptionLoading gate as the Coach Tab.Screen
+                  above — without it this lock badge briefly flashed on an
+                  already-Pro user's drawer row too, for the same "isPro
+                  reads false until the subscription fetch lands" reason. */}
+              {!isSubscriptionLoading && !isPro && item.route === 'Coach' ? (
                 <Icon pack="eva" name="lock-outline" style={[styles.navLockIcon, {tintColor: DRAWER_TEXT_MUTED}]} />
               ) : null}
             </TouchableOpacity>
@@ -224,7 +246,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
 });
 
 const MainDrawerContent = memo(() => {
-  const {isSignedIn, emailVerified, isPro} = React.useContext(AuthContext);
+  const {isSignedIn, emailVerified, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
   const {visible, show, hide} = useModal();
   const {t} = useTranslation(['common']);
   const {isOpen, close} = useAppDrawer();
@@ -365,7 +387,15 @@ const MainDrawerContent = memo(() => {
         />
         <Tab.Screen
           name="Coach"
-          component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesNavigator}
+          component={
+            isGated
+              ? VerifyEmailGate
+              : isSubscriptionLoading
+              ? CoachLoadingGate
+              : !isPro
+              ? CoachProLockGate
+              : MessagesNavigator
+          }
           listeners={{focus: () => setActiveTab('Coach')}}
         />
         {/* Hidden from the drawer's own visible list (see
