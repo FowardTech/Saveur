@@ -90,7 +90,15 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // switch on `route` and get real per-screen params-shape checking from
 // navigationRef.navigate's own discriminated-union typing, instead of a
 // generic keyof losing that narrowing.
-type DrawerRoute = 'Home' | 'Coach' | 'Profile';
+// SalaryNegotiation/DreamCompanies added per product request: "Add the
+// Salary Negotiation and Dream Job to the drawer menu" — both are real,
+// existing root-stack screens (src/practice/SalaryNegotiation.tsx,
+// src/more/DreamCompanies.tsx — registered directly on AppContainer.tsx's
+// root Stack.Navigator, params: undefined for both) that previously only
+// had indirect entry points (WhatsNext.tsx's "Practice this live" button,
+// MoreSrc.tsx's "Dream Company Dashboard" row) and no drawer row of their
+// own.
+type DrawerRoute = 'Home' | 'Coach' | 'SalaryNegotiation' | 'DreamCompanies' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -124,6 +132,16 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
   const items: DrawerNavItem[] = [
     {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
     {route: 'Coach', label: t('common:drawer_chat', {defaultValue: 'Chat'}).toString(), icon: 'message-circle-outline'},
+    {
+      route: 'SalaryNegotiation',
+      label: t('common:drawer_salary_negotiation', {defaultValue: 'Salary Negotiation'}).toString(),
+      icon: 'trending-up-outline',
+    },
+    {
+      route: 'DreamCompanies',
+      label: t('common:drawer_dream_job', {defaultValue: 'Dream Job'}).toString(),
+      icon: 'briefcase-outline',
+    },
     {
       route: 'Profile',
       label: t('common:drawer_more', {defaultValue: 'More'}).toString(),
@@ -261,6 +279,10 @@ const MainDrawerContent = memo(() => {
         navigationRef.navigate('MainBottomTab', {screen: 'Home'});
       } else if (route === 'Coach') {
         navigationRef.navigate('MainBottomTab', {screen: 'Coach', params: undefined});
+      } else if (route === 'SalaryNegotiation') {
+        navigationRef.navigate('SalaryNegotiation');
+      } else if (route === 'DreamCompanies') {
+        navigationRef.navigate('DreamCompanies');
       } else {
         navigationRef.navigate('MainBottomTab', {screen: 'Profile', params: {screen: 'MoreSrc'}});
       }
