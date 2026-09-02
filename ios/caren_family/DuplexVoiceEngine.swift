@@ -153,8 +153,22 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // Both permissions are already declared in Info.plist and already
     // granted in practice by the existing @dev-amirzubair/react-native-
     // voice-based flow (services/speechService.ts) that ships today --
-    // this is best-effort re-confirmation, not the first time the user
-    // sees either prompt.
+    // this whole function is normally a no-op (both branches below are
+    // skipped, status already .granted/.authorized) rather than the first
+    // time the user sees either prompt. KNOWN RISK, not yet hit in
+    // practice: this blocks the main thread on a DispatchSemaphore while
+    // waiting for each permission completion handler, and Apple's docs
+    // don't guarantee those handlers run off the main thread -- if this
+    // .undetermined path is ever actually exercised (e.g. a fresh install,
+    // or the user revokes the permission in Settings and reinstalls) and a
+    // handler happens to be dispatched back to main, this would deadlock
+    // start() forever instead of resolving or rejecting. Left as-is for
+    // now since it isn't what's causing the current no-transcript
+    // investigation (start() is resolving fine, meaning this path isn't
+    // even being taken) -- but if start() ever hangs without resolving OR
+    // rejecting on a fresh install, this is the first place to look, and
+    // the real fix is restructuring this as a proper async callback chain
+    // instead of a blocking wait.
     let micStatus = AVAudioSession.sharedInstance().recordPermission
     if micStatus == .undetermined {
       let sema = DispatchSemaphore(value: 0)
@@ -261,6 +275,18 @@ class DuplexVoiceEngine: RCTEventEmitter {
     emit("onListeningState", ["listening": true])
   }
 
+  // DIAGNOSTIC (same class of fix services/speechService.ts already needed
+  // for the OLD react-native-voice pipeline -- see that file's own
+  // recentErrorTimestampsRef comment for the full history: a session that
+  // errors out instantly on every restart, forever, is otherwise
+  // indistinguishable from "just isn't hearing anything" from the outside,
+  // because the auto-restart below used to silently swallow every error).
+  // A normal end-of-session in this API usually shows up as result.isFinal
+  // (not an error) or an occasional "no speech detected" error after a
+  // real silence gap -- a TIGHT burst of errors, seconds apart at most, is
+  // the signature of a genuinely broken session instead.
+  private var recentRecognitionErrorTimestamps: [Date] = []
+
   private func startRecognitionRequest(with recognizer: SFSpeechRecognizer) {
     let request = SFSpeechAudioBufferRecognitionRequest()
     request.shouldReportPartialResults = true
@@ -276,21 +302,44 @@ class DuplexVoiceEngine: RCTEventEmitter {
     recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
       guard let self = self else { return }
       if let result = result {
+        // A real result proves this session is alive -- whatever error
+        // streak was building is now stale.
+        self.recentRecognitionErrorTimestamps.removeAll()
         self.emit("onTranscript", [
           "text": result.bestTranscription.formattedString,
           "isFinal": result.isFinal,
         ])
       }
+      if let error = error {
+        // Emitted for every error, including the routine "no speech
+        // detected" end-of-session case -- deliberately verbose for now
+        // (this module is still phase-1/test-only), since right now the
+        // open question is literally "is anything happening in here at
+        // all", and a quiet failure is exactly what's been impossible to
+        // diagnose so far.
+        self.emitError("recognitionTask", error)
+      }
       if error != nil || (result?.isFinal ?? false) {
         self.recognitionTask = nil
         self.recognitionRequest = nil
+        guard self.isEngineSetUp, let recognizer = self.speechRecognizer else { return }
+        if error != nil {
+          let now = Date()
+          self.recentRecognitionErrorTimestamps = self.recentRecognitionErrorTimestamps.filter {
+            now.timeIntervalSince($0) < 3
+          }
+          self.recentRecognitionErrorTimestamps.append(now)
+          if self.recentRecognitionErrorTimestamps.count >= 4 {
+            self.recentRecognitionErrorTimestamps.removeAll()
+            self.emitError("recognitionTask: giving up after rapid error loop", error)
+            return // stop silently retrying a session that's demonstrably not working
+          }
+        }
         // Restart a fresh request immediately, as long as the engine is
         // still meant to be running -- keeps "always listening" alive
         // across the recognizer's own session boundaries, exactly like
         // the old model's guardedVoiceStart did for react-native-voice.
-        if self.isEngineSetUp, let recognizer = self.speechRecognizer {
-          self.startRecognitionRequest(with: recognizer)
-        }
+        self.startRecognitionRequest(with: recognizer)
       }
     }
   }
