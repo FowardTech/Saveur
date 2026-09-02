@@ -398,6 +398,26 @@ const Chat = memo(() => {
     return (
       <Bubble
         {...props}
+        // BUG FIX (product report: "there should be space between the
+        // users chat bubble and the AI response bubble. They are both
+        // touching each other") -- root cause: `renderTime={() => null}`
+        // on <GiftedChat> below suppresses the library's default per-bubble
+        // Time footer, which normally contributed its own ~15px of
+        // vertical padding underneath every bubble on top of the library's
+        // base inter-message margin (only 2px between two consecutive
+        // same-sender bubbles, 10px between a user/coach exchange -- see
+        // node_modules/react-native-gifted-chat/lib/Message/index.js).
+        // With the Time footer gone and no compensating margin added here,
+        // that base margin alone reads as bubbles touching. `containerStyle`
+        // is Bubble's OWN outermost-wrapper style prop (applies directly to
+        // the View Message's marginBottom sits around, unlike wrapperStyle
+        // below which only affects the bubble's internal padding/fill), so
+        // setting it here is a direct, guaranteed fix regardless of
+        // GiftedChat's own default spacing.
+        containerStyle={{
+          left: styles.bubbleContainerStyle,
+          right: styles.bubbleContainerStyle,
+        }}
         wrapperStyle={{
           left: [
             styles.wrapperLeftStyle,
@@ -1368,6 +1388,13 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     paddingVertical: 12,
     paddingHorizontal: 8,
+  },
+  // See renderBubble's own comment above -- restores the vertical gap
+  // between consecutive bubbles that `renderTime={() => null}` removed
+  // (Bubble's outermost wrapper, same left/right shape GiftedChat itself
+  // uses for containerStyle).
+  bubbleContainerStyle: {
+    marginBottom: 10,
   },
   wrapperRightStyle: {
     borderBottomRightRadius: 4,
