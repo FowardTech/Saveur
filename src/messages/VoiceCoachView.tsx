@@ -280,6 +280,15 @@ const VoiceCoachView = memo(({
   // was on the legacy path.
   const duplexCommittedRef = React.useRef('');
   const [duplexSegment, setDuplexSegment] = React.useState('');
+  // DEV-ONLY, on-screen (not just console.warn) diagnostics for the
+  // real-device report "still not capturing my voice at all" after the
+  // duplex wiring landed. Metro/Xcode console logs aren't practical for
+  // this project's actual debugging loop so far -- every real-device bug
+  // in this whole DuplexVoiceEngine effort got diagnosed from a
+  // screenshot, not a pasted log -- so this surfaces the same information
+  // directly on the screen instead, gated by __DEV__ so it never ships.
+  const [duplexEngineReady, setDuplexEngineReady] = React.useState(false);
+  const [lastDuplexEvent, setLastDuplexEvent] = React.useState('none yet');
 
   const resetDuplexTranscript = React.useCallback(() => {
     duplexCommittedRef.current = '';
@@ -302,7 +311,10 @@ const VoiceCoachView = memo(({
     if (__DEV__) console.warn('[VoiceCoachView] duplex listeners attached');
     const subs = [
       duplexVoiceService.addTranscriptListener(e => {
-        if (__DEV__) console.warn('[VoiceCoachView] onTranscript', JSON.stringify(e));
+        if (__DEV__) {
+          console.warn('[VoiceCoachView] onTranscript', JSON.stringify(e));
+          setLastDuplexEvent(`transcript: "${e.text}" isFinal=${e.isFinal} @ ${new Date().toLocaleTimeString()}`);
+        }
         setDuplexSegment(e.text);
         if (e.isFinal) {
           duplexCommittedRef.current = (duplexCommittedRef.current + ' ' + e.text).trim();
@@ -315,7 +327,10 @@ const VoiceCoachView = memo(({
       // See sendTurn's own comment on why nothing here is driven by
       // awaiting the speak() call's promise instead.
       duplexVoiceService.addSpeakingStateListener(e => {
-        if (__DEV__) console.warn('[VoiceCoachView] onSpeakingState', JSON.stringify(e), 'phase=', phaseRef.current);
+        if (__DEV__) {
+          console.warn('[VoiceCoachView] onSpeakingState', JSON.stringify(e), 'phase=', phaseRef.current);
+          setLastDuplexEvent(`speakingState: ${e.speaking} (phase was ${phaseRef.current}) @ ${new Date().toLocaleTimeString()}`);
+        }
         if (e.speaking) return;
         if (phaseRef.current !== 'speaking') return;
         const postAction = postSpeechActionRef.current;
@@ -327,7 +342,10 @@ const VoiceCoachView = memo(({
         setPhase('listening');
       }),
       duplexVoiceService.addErrorListener(e => {
-        if (__DEV__) console.warn('[VoiceCoachView] onError', JSON.stringify(e));
+        if (__DEV__) {
+          console.warn('[VoiceCoachView] onError', JSON.stringify(e));
+          setLastDuplexEvent(`error [${e.context}]: ${e.message} @ ${new Date().toLocaleTimeString()}`);
+        }
         if (isActiveRef.current) setErrorMsg(e.message);
       }),
     ];
@@ -611,12 +629,19 @@ const VoiceCoachView = memo(({
   useFocusEffect(
     React.useCallback(() => {
       isActiveRef.current = true;
+      if (__DEV__ && duplexSupported) console.warn('[VoiceCoachView] focus effect running (mount or re-focus)');
       (async () => {
         if (duplexSupported && !duplexStartedRef.current) {
           try {
             await duplexVoiceService.start();
             duplexStartedRef.current = true;
-            if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() resolved');
+            if (__DEV__) {
+              console.warn('[VoiceCoachView] duplexVoiceService.start() resolved');
+              if (isActiveRef.current) {
+                setDuplexEngineReady(true);
+                setLastDuplexEvent(`start() resolved @ ${new Date().toLocaleTimeString()}`);
+              }
+            }
           } catch (e: any) {
             if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected', e?.message ?? e);
             if (isActiveRef.current) {
@@ -625,6 +650,7 @@ const VoiceCoachView = memo(({
                   i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
               );
               setPhase('idle');
+              if (__DEV__) setLastDuplexEvent(`start() REJECTED: ${e?.message ?? e} @ ${new Date().toLocaleTimeString()}`);
             }
             return; // nothing else here can work without the engine
           }
@@ -733,6 +759,15 @@ const VoiceCoachView = memo(({
         if (isActiveRef.current) startListening();
       })();
       return () => {
+        // DIAGNOSTIC: if this fires shortly after mount without the user
+        // navigating away, that's a real remount/re-focus of this screen
+        // tearing the engine down mid-conversation -- exactly the kind of
+        // thing that would look like "not capturing my voice at all" with
+        // no error ever shown (stop() doesn't set errorMsg). Distinct from
+        // duplexVoiceService.start()/onTranscript/onSpeakingState/onError
+        // logs above, which only cover the ENGINE's own lifecycle, not
+        // whether something in Chat.tsx is remounting this component.
+        if (__DEV__ && duplexSupported) console.warn('[VoiceCoachView] focus-effect cleanup running (unmount or re-focus)');
         isActiveRef.current = false;
         clearSilenceTimer();
         if (duplexSupported) {
@@ -763,10 +798,43 @@ const VoiceCoachView = memo(({
   // is just as vulnerable to an OS-forced session interruption as the old
   // pipeline was), then a clean duplexVoiceService.start() on return.
   const wasBackgroundedRef = React.useRef(false);
+  // BUG FIX ATTEMPT (real-device report: coach screen "still not capturing
+  // my voice at all" after the duplex wiring landed, with no error ever
+  // shown). iOS fires AppState 'inactive' for plenty of reasons that AREN'T
+  // a real background -- Control Center, a system alert, even a brief
+  // app-switcher gesture -- not just a genuine screen lock. The legacy
+  // react-native-voice pipeline below tolerates reacting to every single
+  // one of those instantly (Voice.stop()/start() is cheap, and this hook
+  // has its own long history of races already hardened against -- see
+  // speechService.ts). DuplexVoiceEngine's teardown/restart is a much
+  // heavier operation -- a full AVAudioEngine + AVAudioSession teardown and
+  // rebuild, not a lightweight module stop/start -- so reacting to a
+  // spurious sub-second 'inactive' blip here is a real, plausible way to
+  // silently wedge the engine: torn down and rebuilt in a rapid cycle with
+  // no guaranteed settle time between the two, and nothing anywhere
+  // surfaces an error either way (stop() never fails; a subsequent start()
+  // against a not-yet-fully-released AVAudioSession can resolve "success"
+  // while genuinely capturing nothing). Debouncing the duplex-path teardown
+  // by 400ms means a REAL lock (which stays backgrounded far longer than
+  // that) still tears down promptly, but a spurious blip that resolves
+  // back to 'active' within the window never touches the engine at all.
+  const duplexBackgroundTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   React.useEffect(() => {
     const sub = AppState.addEventListener('change', nextState => {
       if (!isActiveRef.current) return;
       if (nextState === 'active') {
+        if (duplexSupported && duplexBackgroundTimerRef.current) {
+          // The debounced teardown below never actually fired -- this was
+          // a spurious blip, not a real background. Nothing to restart.
+          if (__DEV__) {
+            console.warn('[VoiceCoachView] AppState blip absorbed — duplex engine was never torn down');
+            setLastDuplexEvent(`AppState blip absorbed (no teardown) @ ${new Date().toLocaleTimeString()}`);
+          }
+          clearTimeout(duplexBackgroundTimerRef.current);
+          duplexBackgroundTimerRef.current = null;
+          wasBackgroundedRef.current = false;
+          return;
+        }
         if (wasBackgroundedRef.current) {
           wasBackgroundedRef.current = false;
           if (duplexSupported) {
@@ -775,7 +843,10 @@ const VoiceCoachView = memo(({
               try {
                 await duplexVoiceService.start();
                 duplexStartedRef.current = true;
-                if (isActiveRef.current) startListening();
+                if (isActiveRef.current) {
+                  startListening();
+                  if (__DEV__) setDuplexEngineReady(true);
+                }
               } catch (e: any) {
                 if (isActiveRef.current) {
                   setErrorMsg(
@@ -797,8 +868,18 @@ const VoiceCoachView = memo(({
       wasBackgroundedRef.current = true;
       clearSilenceTimer();
       if (duplexSupported) {
-        duplexStartedRef.current = false;
-        duplexVoiceService.stop().catch(() => {});
+        if (duplexBackgroundTimerRef.current) clearTimeout(duplexBackgroundTimerRef.current);
+        duplexBackgroundTimerRef.current = setTimeout(() => {
+          duplexBackgroundTimerRef.current = null;
+          if (!isActiveRef.current || !wasBackgroundedRef.current) return;
+          if (__DEV__) {
+            console.warn('[VoiceCoachView] real background confirmed after 400ms — tearing down duplex engine');
+            setLastDuplexEvent(`real backgrounding, tearing down @ ${new Date().toLocaleTimeString()}`);
+            setDuplexEngineReady(false);
+          }
+          duplexStartedRef.current = false;
+          duplexVoiceService.stop().catch(() => {});
+        }, 400);
       } else {
         stt.stop();
         speechService.stopSpeaking();
@@ -978,6 +1059,21 @@ const VoiceCoachView = memo(({
           </Text>
         </TouchableOpacity>
       ) : null}
+
+      {/* DEV-ONLY diagnostics for the real-device report "not capturing my
+          voice at all" -- see duplexEngineReady/lastDuplexEvent's own
+          comment above. __DEV__-gated, never ships; screenshot this block
+          instead of digging through Xcode/Metro console output. */}
+      {__DEV__ && duplexSupported ? (
+        <View style={styles.debugBox}>
+          <Text category="h10" style={styles.debugText}>
+            engine ready: {String(duplexEngineReady)} · phase: {phase}
+          </Text>
+          <Text category="h10" style={styles.debugText}>
+            last event: {lastDuplexEvent}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 });
@@ -985,6 +1081,18 @@ const VoiceCoachView = memo(({
 export default VoiceCoachView;
 
 const styles = StyleSheet.create({
+  // DEV-ONLY -- see the debug block's own comment above.
+  debugBox: {
+    marginTop: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+    maxWidth: 320,
+  },
+  debugText: {
+    color: '#888',
+  },
   body: {
     flex: 1,
     alignItems: 'center',
