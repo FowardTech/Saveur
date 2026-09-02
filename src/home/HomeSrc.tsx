@@ -894,32 +894,45 @@ const HomeSrc = memo(() => {
             ) : (
               // No admin image (or it failed to load) — a code-drawn
               // fallback card, still using the ad's real title/body text.
+              // REDESIGN (product follow-up, with the same reference
+              // screenshot, more precise this time: "the image is on the
+              // left and the caption is on the right, exactly like the one
+              // in this screenshot") — was icon+Ad-pill stacked in their
+              // own row ABOVE the title/subtitle (full-width, top to
+              // bottom). Now a true left/right row: the icon sits on the
+              // left spanning the card, with the "Ad" pill pinned to the
+              // card's own top-right corner (absolute, not part of a
+              // shared row with the icon — there's no separate brand-name
+              // text to share that row with here), and the title/subtitle
+              // stacked in a column filling the remaining width to the
+              // icon's right — matching the reference's icon-left,
+              // text-right composition.
               <View style={styles.homeBannerFallback}>
-                <View style={styles.homeBannerTopRow}>
-                  <View style={styles.homeBannerIconWrap}>
-                    <Image
-                      source={Images.logoMark}
-                      style={styles.homeBannerIcon as ImageStyle}
-                      resizeMode="contain"
-                      tintColor="#FFFFFF"
-                    />
-                  </View>
-                  <View style={styles.homeBannerAdPill}>
-                    <Text category="h10-s" bold style={styles.homeBannerAdPillText}>
-                      {t('home:banner_ad_label', { defaultValue: 'Ad' })}
-                    </Text>
-                  </View>
+                <View style={styles.homeBannerAdPill}>
+                  <Text category="h10-s" bold style={styles.homeBannerAdPillText}>
+                    {t('home:banner_ad_label', { defaultValue: 'Ad' })}
+                  </Text>
                 </View>
-                {homeBanner.title ? (
-                  <Text category="h8" bold numberOfLines={1} mt={12} style={styles.homeBannerTitle}>
-                    {homeBanner.title}
-                  </Text>
-                ) : null}
-                {homeBanner.body ? (
-                  <Text category="h10" numberOfLines={2} mt={4} style={styles.homeBannerBody}>
-                    {homeBanner.body}
-                  </Text>
-                ) : null}
+                <View style={styles.homeBannerIconWrap}>
+                  <Image
+                    source={Images.logoMark}
+                    style={styles.homeBannerIcon as ImageStyle}
+                    resizeMode="contain"
+                    tintColor="#FFFFFF"
+                  />
+                </View>
+                <View style={[globalStyle.flexOne, styles.homeBannerTextCol]}>
+                  {homeBanner.title ? (
+                    <Text category="h8" bold numberOfLines={1} style={styles.homeBannerTitle}>
+                      {homeBanner.title}
+                    </Text>
+                  ) : null}
+                  {homeBanner.body ? (
+                    <Text category="h10" numberOfLines={2} mt={4} style={styles.homeBannerBody}>
+                      {homeBanner.body}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
             )}
           </TouchableOpacity>
@@ -993,10 +1006,23 @@ const HomeSrc = memo(() => {
             20%, #8c00e5)" — see ActionCard's own gradientColors comment for
             how the 15deg angle and the "20%" stop are honored, not just
             approximated. Only this card gets it; the other 3 keep their
-            normal plain card background. */}
+            normal plain card background.
+            FOLLOW-UP (product report: "make the practice linear gradient
+            one color reduce the darker color") — was locations={[0.2, 1]},
+            a flat 20%-long block of the dark #45009D before it ever starts
+            blending toward the lighter #8C00E5. locations={[0, 1]} instead
+            starts that blend from the very first pixel, so the dark color
+            never holds as its own solid patch — the card reads as
+            overwhelmingly the lighter purple with just a soft dark edge,
+            not a hard two-tone split.
+            FOLLOW-UP (same message: "change the icon to a white line
+            icon") — was iconImage={Images.iconAiStars}, a full-color
+            gradient illustration (can't be tinted, see that prop's own
+            comment) — dropped so this falls through to the plain `icon`
+            eva glyph below instead, which ActionCard already renders in
+            solid white on the gradient variant. */}
         <ActionCard
           icon="mic-outline"
-          iconImage={Images.iconAiStars}
           title={t('home:practice_card_title', { defaultValue: 'Practice Interviews' })}
           subtitle={
             streak && streak.streakDays > 0
@@ -1005,7 +1031,7 @@ const HomeSrc = memo(() => {
           }
           onPress={onPressPractice}
           gradientColors={['#45009D', '#8C00E5']}
-          gradientLocations={[0.2, 1]}
+          gradientLocations={[0, 1]}
         />
 
         {/* BUG FIX (product report: "the explore is the one thats supposed
@@ -1125,46 +1151,53 @@ const themedStyles = StyleService.create({
     height: '100%',
   },
   // Code-drawn fallback banner (see the JSX comment where this renders) --
-  // a plain View, NOT a LinearGradient: the gradient is a decorative
-  // absoluteFillObject layer behind this box's normal-flow content
-  // instead, so this sizes correctly to wrap its real content height.
-  // REDESIGN (product request, with a reference screenshot of a dark,
-  // icon-badge-style ad card): was a horizontal row on a theme-following
-  // primary-color/gradient strip (icon + title/subtitle inline + a
-  // trailing chevron). Now a fixed near-black card (deliberately NOT
-  // theme-conditional — this is meant to stand out as its own distinct
-  // placement in both light and dark app themes, same reasoning as the
-  // Home Practice card's own fixed gradient) with the icon chip and an
-  // "Ad" pill sharing a top row, and the title/subtitle stacked below —
-  // the same basic composition as the reference card.
+  // a plain View, NOT a LinearGradient: a solid fixed color (not a real
+  // gradient) here, so no absoluteFill-layer trick is needed the way
+  // ActionCard's gradient variant needs one. Fixed near-black
+  // (deliberately NOT theme-conditional — meant to stand out as its own
+  // distinct placement in both light and dark app themes, same reasoning
+  // as the Home Practice card's own fixed gradient).
+  // REDESIGN (product follow-up, same reference screenshot, more precise:
+  // "the image is on the left and the caption is on the right") — was the
+  // icon+Ad-pill sharing a row ABOVE a full-width title/subtitle block.
+  // Now a true icon-left/text-right row (position: relative here is what
+  // homeBannerAdPill's absolute positioning below anchors to).
   homeBannerFallback: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     borderRadius: 18,
     overflow: 'hidden',
     position: 'relative',
     padding: 16,
     backgroundColor: '#14141C',
   },
-  homeBannerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   homeBannerIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 12,
     backgroundColor: 'rgba(255,255,255,0.14)',
   },
   homeBannerIcon: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
   },
-  // Pushed to the far right of homeBannerTopRow via marginLeft: 'auto'
-  // (only two children on that row, no third slot needed for a plain
-  // space-between).
+  // Room for the title text (numberOfLines={1}, so it needs to actually
+  // wrap/truncate before running under the Ad pill) to not sit flush
+  // under homeBannerAdPill's absolute top-right position below.
+  homeBannerTextCol: {
+    paddingRight: 34,
+  },
+  // Anchored to the card's own top-right corner (see homeBannerFallback's
+  // position: relative) instead of sharing a row with the icon — there's
+  // no separate brand-name text here to share that row with the way the
+  // reference screenshot's "Jitterbit, Inc." does.
   homeBannerAdPill: {
-    marginLeft: 'auto',
+    position: 'absolute',
+    top: 14,
+    right: 14,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 999,
