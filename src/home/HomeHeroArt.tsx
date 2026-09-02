@@ -502,6 +502,48 @@ export const ArtStreakFlame: React.FC<ArtProps> = ({ size }) => (
   </Svg>
 );
 
+// src/auth/Login/Login.tsx's "Welcome back!" screen (product report:
+// "There is no image or illustrations or icon in the welcome screen") — was
+// just the brand wordmark followed straight into a big text heading and the
+// email/password form, no illustration at all. A friendly waving figure
+// with a small chat-bubble accent ties into the app's actual pitch (an AI
+// Career Coach greeting you back) rather than a generic unrelated scene,
+// using the same person-figure construction ArtWorkplaceCompass above
+// already established (circle head + a single body path) plus the same
+// pinned-badge convention every other illustration in this file uses for
+// its accent piece.
+export const ArtWelcomeWave: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 120 120">
+    <Circle cx="60" cy="62" r="48" fill="#0063f80f" />
+    <Ellipse cx="56" cy="104" rx="30" ry="5" fill="rgba(0,0,0,0.06)" />
+
+    {/* figure — head + body, brand blue */}
+    <Circle cx="52" cy="52" r="14" fill="#0063f8" />
+    <Path d="M32 100c0-15.5 9-26 20-26s20 10.5 20 26z" fill="#0063f8" />
+
+    {/* raised waving arm, a rounded stroke so it reads as a limb rather
+        than a flat shape, with a small hand at the tip */}
+    <Path
+      d="M64 78c8-2 14-10 14-20"
+      stroke="#0063f8"
+      strokeWidth={7}
+      strokeLinecap="round"
+      fill="none"
+    />
+    <Circle cx="78" cy="58" r="6.5" fill="#0063f8" />
+
+    {/* chat-bubble accent, top-right — the AI Coach "greeting" beat, same
+        pinned-badge placement ArtMissionPhone/ArtDreamCompany use */}
+    <Path
+      d="M78 20h28a8 8 0 0 1 8 8v14a8 8 0 0 1-8 8h-8l-6 8v-8h-14a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8z"
+      fill="#FFC94A"
+    />
+    <Circle cx="88" cy="34" r="2.6" fill="#FFFFFF" />
+    <Circle cx="97" cy="34" r="2.6" fill="#FFFFFF" />
+    <Circle cx="106" cy="34" r="2.6" fill="#FFFFFF" />
+  </Svg>
+);
+
 export const ArtMagnifyingDoc: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 120 120">
     <Circle cx="60" cy="62" r="48" fill="#0063f80f" />

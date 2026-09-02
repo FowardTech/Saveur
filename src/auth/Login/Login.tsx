@@ -19,6 +19,7 @@ import Text from 'components/Text';
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
 import BrandWordmark from 'components/BrandWordmark';
+import {ArtWelcomeWave} from 'src/home/HomeHeroArt';
 import CtaButton from 'components/CtaButton';
 import SocialAuthButton from 'components/SocialAuthButton';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -170,13 +171,22 @@ const Login = memo(() => {
     <Container style={styles.container}>
       <KeyboardAwareScrollView contentContainerStyle={styles.content}>
         <BrandWordmark size={44} />
+        {/* Product report: "There is no image or illustrations or icon in
+            the welcome screen" — was straight from the wordmark into the
+            heading text with nothing visual in between, unlike every other
+            major screen in the app (Login is the one exception the sweep
+            described in HomeHeroArt.tsx's own comment above hadn't reached
+            yet). */}
+        <ArtWelcomeWave size={96} />
         {/* Redesign (product follow-up — "big text" consistency pass):
             was category="h7" (16px, not bold), the smallest heading size
             used anywhere as an actual screen title in this app. Bumped to
             match the same big-bold treatment src/auth/Signup/
             SignupSecondStep.tsx and SignupThirdStep.tsx already use for
-            their own headings, so the whole auth flow reads consistently. */}
-        <Text mt={24} category="h2" bold mb={72}>
+            their own headings, so the whole auth flow reads consistently.
+            mb trimmed from 72 to 40 now that the illustration above already
+            carries some of that visual separation on its own. */}
+        <Text mt={16} category="h2" bold mb={40}>
           {t('auth:welcome_back')}
         </Text>
         <Controller
