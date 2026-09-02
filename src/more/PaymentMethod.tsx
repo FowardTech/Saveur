@@ -45,6 +45,7 @@ const PaymentMethod = memo(() => {
   const {initPaymentSheet, presentPaymentSheet} = useStripe();
 
   const [methods, setMethods] = React.useState<SavedPaymentMethodProps[] | null>(null);
+  const [billingProvider, setBillingProvider] = React.useState<billingService.BillingProvider>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [isAdding, setIsAdding] = React.useState(false);
@@ -54,14 +55,25 @@ const PaymentMethod = memo(() => {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const list = await billingService.listPaymentMethods();
+      const {methods: list, billingProvider: provider} = await billingService.listPaymentMethods();
       setMethods(list);
+      setBillingProvider(provider);
     } catch (error: any) {
       setLoadError(error?.message ?? t('payment:load_cards_failed', { defaultValue: 'Could not load your saved cards.' }));
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  // Product report: "now that the user is paying for subscription via
+  // apple and playstore, will the credit card used still display in the
+  // payment method screen?" -- for these subscribers there was never a
+  // real Stripe card to show (see billing.py's list_payment_methods route
+  // comment for the actual bug this used to hit), so this screen now says
+  // so plainly instead of just looking like an empty/broken card list, and
+  // hides the "+" add-card action entirely (adding a Stripe card does
+  // nothing for a subscription the App Store/Play Store actually bills).
+  const isIapBilled = billingProvider === 'apple' || billingProvider === 'google';
 
   React.useEffect(() => {
     loadMethods();
@@ -143,7 +155,7 @@ const PaymentMethod = memo(() => {
         title={t('payment:payment-method')}
         accessoryLeft={<NavigationAction />}
         accessoryRight={
-          isAdding ? (
+          isIapBilled ? undefined : isAdding ? (
             <Spinner size="small" />
           ) : (
             <NavigationAction icon="plusImg" size="small" onPress={onAdd} />
@@ -153,6 +165,24 @@ const PaymentMethod = memo(() => {
       <Content style={styles.content}>
         {isLoading ? (
           <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
+        ) : isIapBilled ? (
+          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60, paddingHorizontal: 24}}>
+            <Image source={Images.iconDebitCard} resizeMode="contain" style={[styles.emptyIcon as ImageStyle, {marginBottom: 16}]} />
+            <Text category="h9-s" bold center mb={8}>
+              {billingProvider === 'apple'
+                ? t('payment:managed_by_apple_title', {defaultValue: 'Billed through the App Store'})
+                : t('payment:managed_by_google_title', {defaultValue: 'Billed through Google Play'})}
+            </Text>
+            <Text category="h9" status="placeholder" center>
+              {billingProvider === 'apple'
+                ? t('payment:managed_by_apple_body', {
+                  defaultValue: "Your subscription is billed by Apple, not a saved card here — manage or cancel it from your iPhone's Settings > [your name] > Subscriptions.",
+                })
+                : t('payment:managed_by_google_body', {
+                  defaultValue: 'Your subscription is billed by Google Play, not a saved card here — manage or cancel it from the Play Store app > Payments & subscriptions.',
+                })}
+            </Text>
+          </Flex>
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40, paddingHorizontal: 24}}>
             <Text category="h9-s" status="danger" center mb={16}>

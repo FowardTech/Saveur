@@ -463,15 +463,32 @@ function fromPaymentMethodWire(wire: SavedPaymentMethodWire): SavedPaymentMethod
   };
 }
 
+// Product report: "now that the user is paying for subscription via apple
+// and playstore, will the credit card used still display in the payment
+// method screen?" -- the backend now reports which billing provider the
+// user's real subscription is actually on (see billing.py's
+// list_payment_methods route comment) so PaymentMethod.tsx can show the
+// right message instead of an always-empty Stripe card list for an
+// Apple/Google subscriber.
+export type BillingProvider = 'apple' | 'google' | 'stripe' | null;
+
 /**
  * GET /api/v1/billing/payment-methods — the backend wraps the array in
  * `{data: [...]}` per the contract (unlike this app's other list
  * endpoints, which return a bare array) — unwrapped here so the caller
  * doesn't need to know that.
  */
-export async function listPaymentMethods(): Promise<SavedPaymentMethodProps[]> {
-  const {data} = await apiClient.get<{data: SavedPaymentMethodWire[]}>('/api/v1/billing/payment-methods');
-  return (data.data ?? []).map(fromPaymentMethodWire);
+export async function listPaymentMethods(): Promise<{
+  methods: SavedPaymentMethodProps[];
+  billingProvider: BillingProvider;
+}> {
+  const {data} = await apiClient.get<{data: SavedPaymentMethodWire[]; billing_provider: BillingProvider}>(
+    '/api/v1/billing/payment-methods',
+  );
+  return {
+    methods: (data.data ?? []).map(fromPaymentMethodWire),
+    billingProvider: data.billing_provider ?? null,
+  };
 }
 
 /** POST /api/v1/billing/payment-methods/{id}/default */
