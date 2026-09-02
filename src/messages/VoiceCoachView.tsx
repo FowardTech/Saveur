@@ -288,8 +288,21 @@ const VoiceCoachView = memo(({
 
   React.useEffect(() => {
     if (!duplexSupported) return;
+    // DIAGNOSTIC (product report: coach screen isn't picking up any speech
+    // at all after the duplex engine was wired in, with no visible error —
+    // same class of "silently nothing happens" report this codebase has
+    // hit before, e.g. speechService.ts's own recentErrorTimestampsRef
+    // history). This screen and src/dev/DuplexVoiceTestScreen.tsx run the
+    // exact same duplexVoiceService calls, but the test screen is a
+    // standalone route with nothing else mounted alongside it, while this
+    // one lives embedded inside Chat.tsx's Voice/Text mode toggle — if
+    // something about that embedding (a remount, a competing audio-session
+    // user, etc.) is the actual difference, these logs are what will show
+    // it on the next real-device test, instead of guessing blind again.
+    if (__DEV__) console.warn('[VoiceCoachView] duplex listeners attached');
     const subs = [
       duplexVoiceService.addTranscriptListener(e => {
+        if (__DEV__) console.warn('[VoiceCoachView] onTranscript', JSON.stringify(e));
         setDuplexSegment(e.text);
         if (e.isFinal) {
           duplexCommittedRef.current = (duplexCommittedRef.current + ' ' + e.text).trim();
@@ -302,6 +315,7 @@ const VoiceCoachView = memo(({
       // See sendTurn's own comment on why nothing here is driven by
       // awaiting the speak() call's promise instead.
       duplexVoiceService.addSpeakingStateListener(e => {
+        if (__DEV__) console.warn('[VoiceCoachView] onSpeakingState', JSON.stringify(e), 'phase=', phaseRef.current);
         if (e.speaking) return;
         if (phaseRef.current !== 'speaking') return;
         const postAction = postSpeechActionRef.current;
@@ -313,6 +327,7 @@ const VoiceCoachView = memo(({
         setPhase('listening');
       }),
       duplexVoiceService.addErrorListener(e => {
+        if (__DEV__) console.warn('[VoiceCoachView] onError', JSON.stringify(e));
         if (isActiveRef.current) setErrorMsg(e.message);
       }),
     ];
@@ -601,7 +616,9 @@ const VoiceCoachView = memo(({
           try {
             await duplexVoiceService.start();
             duplexStartedRef.current = true;
+            if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() resolved');
           } catch (e: any) {
+            if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected', e?.message ?? e);
             if (isActiveRef.current) {
               setErrorMsg(
                 e?.message ??
@@ -639,6 +656,23 @@ const VoiceCoachView = memo(({
         // user's very first coach interaction happened in Text mode
         // instead.
         let introSpeakFailed = false;
+        // BUG FIX (real-device report: coach screen not picking up any
+        // speech at all after the duplex engine was wired in). This used
+        // to check `phaseRef.current !== 'speaking'` a few lines below to
+        // decide whether an intro was just spoken -- but phaseRef only
+        // gets updated by a SEPARATE effect (`phaseRef.current = phase`)
+        // that runs on the NEXT render, not synchronously alongside the
+        // `setPhase('speaking')` call right below. Since nothing in this
+        // duplex branch awaits between that setPhase() call and the check
+        // (speakDuplexFireAndForget is deliberately fire-and-forget, see
+        // its own comment), phaseRef.current was still whatever it was
+        // BEFORE this function ran (typically 'idle') at the time of that
+        // check -- so it incorrectly looked like no intro had been spoken,
+        // called startListening() immediately, and flipped phase straight
+        // to 'listening' while the intro was still actually playing. A
+        // plain local flag, set synchronously right here rather than read
+        // from a ref that lags a render behind, is the fix.
+        let firedDuplexIntro = false;
         try {
           const history = await coachService.getChatHistory();
           if (isActiveRef.current && coachService.isFirstEverCoachVisit(history)) {
@@ -649,6 +683,7 @@ const VoiceCoachView = memo(({
             setLastCoachLine(intro);
             setPhase('speaking');
             if (duplexSupported) {
+              firedDuplexIntro = true;
               speakDuplexFireAndForget(intro);
             } else {
               try {
@@ -688,8 +723,11 @@ const VoiceCoachView = memo(({
           // incorrectly flip the UI to "listening" while the intro is
           // still audibly playing (unlike the legacy branch just above,
           // which awaits speak() to genuinely finish first). If no intro
-          // was spoken this visit, go ahead and start listening now.
-          if (isActiveRef.current && phaseRef.current !== 'speaking') startListening();
+          // was spoken this visit, go ahead and start listening now. Uses
+          // the local firedDuplexIntro flag, not phaseRef.current -- see
+          // that flag's own comment for why the ref isn't safe to read
+          // here yet.
+          if (isActiveRef.current && !firedDuplexIntro) startListening();
           return;
         }
         if (isActiveRef.current) startListening();
