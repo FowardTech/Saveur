@@ -19,6 +19,7 @@ import { Images } from 'assets/images';
 import * as coachService from 'services/coachService';
 import { CoachUserContext } from 'services/coachService';
 import * as speechService from 'services/speechService';
+import * as duplexVoiceService from 'services/duplexVoiceService';
 import { actionTitle } from 'services/suggestedActions';
 import { SuggestedActionId } from 'constants/Types';
 import ThemeContext from '../../ThemeContext';
@@ -43,7 +44,8 @@ import ThemeContext from '../../ThemeContext';
 // gaps between them instead of forming one centered cluster. Fixed here by
 // using a plain View + StyleSheet, same as LiveInterviewSession.tsx does.
 //
-// Turn-taking model: services/speechService.ts's useSpeechToText() already
+// Turn-taking model (Android / any platform without the duplex engine —
+// see below): services/speechService.ts's useSpeechToText() already
 // auto-restarts listening on every pause (built for Voice-mode interview
 // answers), which this reuses as-is for "always listening" rather than
 // inventing a second speech pipeline. What's new here is *silence-based
@@ -52,17 +54,34 @@ import ThemeContext from '../../ThemeContext';
 // comes in before it fires, that's treated as the end of the user's turn,
 // and the accumulated transcript is sent to the coach.
 //
-// Interruption / barge-in: while the AI's reply is being spoken (TTS), the
-// mic is deliberately NOT listening — the reply audio itself would
-// otherwise very likely get picked back up as "user speech" (no on-device
-// echo cancellation has been verified for this app's audio session
-// configuration; see speechService.ts's notes on iOS audio-session
-// category switching between TTS and STT). Real, low-risk interruption is
-// instead a visible tap (the orb itself, or the "Interrupt" pill below it)
-// — tapping either immediately stops playback and hands the mic back.
+// Interruption / barge-in: THIS SCREEN NOW HAS TWO SEPARATE
+// IMPLEMENTATIONS, selected once per session via
+// duplexVoiceService.isDuplexVoiceSupported() (iOS only, for now):
 //
-// REVERTED TWICE — full history, because the second failure is the more
-// important one to understand before anyone tries this a third time:
+//   - iOS (duplexSupported === true): real, speech-triggered barge-in.
+//     The mic runs continuously through both listening AND the coach's
+//     own speech via services/duplexVoiceService.ts / the native
+//     DuplexVoiceEngine module (ios/caren_family/DuplexVoiceEngine.swift),
+//     which owns a single AVAudioEngine doing both playback and capture
+//     with real echo cancellation, so the coach's own TTS is not picked
+//     back up as user speech. If the user starts talking while the coach
+//     is mid-reply, that's detected as a genuine new transcript arriving
+//     during the 'speaking' phase and the coach is cut off immediately —
+//     see the barge-in effect below. Tapping the orb / "Tap to interrupt"
+//     still works too, as a manual backup.
+//   - Everywhere else (duplexSupported === false, i.e. Android today):
+//     the mic is deliberately NOT listening while the AI's reply is being
+//     spoken (TTS) — the reply audio itself would otherwise very likely
+//     get picked back up as "user speech" (no on-device echo cancellation
+//     exists for this platform's audio pipeline). Interruption there is
+//     only the visible tap (the orb itself, or the "Interrupt" pill below
+//     it) — tapping either immediately stops playback and hands the mic
+//     back. This is the exact behavior that shipped after the two failed
+//     attempts documented below, and it's left completely untouched.
+//
+// REVERTED TWICE, then a working THIRD attempt — full history, because
+// understanding why the first two failed is what made the third one
+// possible:
 //
 // Attempt 1 (real-device report: "The AI voice is not talking even though
 // its indicating that its speaking but i cant hear anything and its not
@@ -97,21 +116,25 @@ import ThemeContext from '../../ThemeContext';
 //      playback both render through their own separate pipelines, not
 //      through @dev-amirzubair/react-native-voice's capture engine —
 //      setting the session-level mode was necessary but never sufficient
-//      for these specific libraries to cancel each other out. Real fix
-//      would mean a custom native audio module unifying playback and
-//      capture in one AVAudioEngine (feeding synthesized speech into that
-//      SAME engine's player node instead of using AVSpeechSynthesizer's
-//      own output) — a genuine native-audio-engineering project, not a
-//      config change, and not something to build blind in this
-//      environment without a real device to iterate against.
+//      for these specific libraries to cancel each other out.
 //
-// Back to the proven sequential stop-mic -> speak -> restart-mic handoff,
-// ElevenLabs voice restored, native Voice.mm patch reverted too (kept as
-// dead weight it'd otherwise be a native rebuild for no benefit). Given
-// two straight real-device failures on two different underlying causes,
-// this shouldn't be attempted blind a third time — the tap/say-nothing
-// interrupt below is the reliable, shipped behavior until someone can do
-// the real native audio work with a device in hand.
+// Attempt 3 (THIS ONE — confirmed working on a real device): built the
+// real fix attempt 2's own root-cause analysis called for — a from-scratch
+// native module (DuplexVoiceEngine, see its own header comment for the
+// full build/debug story) that owns ONE AVAudioEngine for both playback
+// and capture, with voice processing explicitly enabled on both its
+// input and output nodes, so the OS's echo canceller has an actual
+// reference signal to work with. Built and proven in strict, isolated
+// phases (on-device TTS + concurrent listening first, then ElevenLabs
+// remote audio through the same engine — see src/dev/
+// DuplexVoiceTestScreen.tsx) before ever being wired in here, per the
+// discipline the first two failed attempts made clear was necessary.
+// User-confirmed on a real device, in order: (1) "Yes the transcript
+// picks up your actual words before it finishes" — proof the core
+// duplex+echo-cancellation mechanism genuinely works — then (2) the same
+// result with real ElevenLabs audio in place of on-device TTS. iOS only
+// for now; Android has no equivalent native module yet, so it keeps the
+// proven sequential tap-to-interrupt model above unchanged.
 const SILENCE_DEBOUNCE_MS = 1300;
 
 type Phase = 'listening' | 'thinking' | 'speaking' | 'idle';
@@ -180,6 +203,16 @@ const VoiceCoachView = memo(({
   const theme = useTheme();
   const { theme: appTheme } = React.useContext(ThemeContext);
   const isDarkMode = appTheme === 'dark';
+
+  // Real speak-to-interrupt (see the header comment above) is iOS-only for
+  // now. isDuplexVoiceSupported() is just a Platform.OS check baked in at
+  // module load, stable for the app's whole lifetime — safe to read as a
+  // plain const rather than state.
+  const duplexSupported = duplexVoiceService.isDuplexVoiceSupported();
+
+  // Legacy pipeline — always constructed (rules of hooks require it), but
+  // its start()/stop()/reset() are only ever actually invoked below when
+  // !duplexSupported. On iOS this hook's internal state just sits unused.
   const stt = speechService.useSpeechToText();
 
   const [phase, setPhase] = React.useState<Phase>('idle');
@@ -200,6 +233,27 @@ const VoiceCoachView = memo(({
   // Set right after the coach speaks a "want me to take you there?" offer;
   // checked (and always cleared) at the start of the very next turn.
   const pendingActionRef = React.useRef<SuggestedActionId | null>(null);
+  // Bumped on every duplex speak (a normal reply, the intro, or a
+  // pending-action confirmation) and on any interrupt (manual tap or auto
+  // barge-in). speakDuplexFireAndForget's own failure handler checks this
+  // before surfacing an error, so a genuinely-superseded call (the coach
+  // got cut off on purpose) never reports a spurious "couldn't play that
+  // out loud" for something that was deliberately stopped.
+  const turnTokenRef = React.useRef(0);
+  // Whether duplexVoiceService.start() has already been called for the
+  // CURRENT foreground session. start() only ever needs to run once per
+  // session — the engine + recognition then run continuously through
+  // every turn, including while the coach is speaking (that's the whole
+  // point) — reset to false on background/unmount so returning to the
+  // screen (or the app) does a clean restart instead of assuming a
+  // possibly-torn-down engine is still alive.
+  const duplexStartedRef = React.useRef(false);
+  // One-shot callback to run instead of the default "go back to
+  // listening" once the coach finishes speaking (see the onSpeakingState
+  // listener below) — used for the pending-action confirmation line,
+  // where "finishes speaking" should navigate away rather than resume
+  // listening on a screen that's about to be left.
+  const postSpeechActionRef = React.useRef<(() => void) | null>(null);
 
   const clearSilenceTimer = () => {
     if (silenceTimerRef.current) {
@@ -208,23 +262,89 @@ const VoiceCoachView = memo(({
     }
   };
 
-  // Surfaces speechService's new rapid-error-loop detector (see
-  // useSpeechToText's onSpeechError in services/speechService.ts): that
-  // fires stt.error asynchronously, mid-session, well after startListening()
-  // already read stt.error once and moved on -- without this effect,
-  // nothing in this screen would ever notice a session that started fine
-  // but then failed every restart in a tight loop. This is the diagnostic
-  // for the "mock interview's mic works, the coach's doesn't at all" report:
-  // if this ever shows a real native error/code instead of the generic
-  // no-speech nudge, that's the concrete signal that was missing before.
+  // --- Duplex-only transcript accumulation -----------------------------
+  // DuplexVoiceEngine.swift's own recognition loop restarts a fresh
+  // SFSpeechAudioBufferRecognitionRequest on every isFinal/error to keep
+  // "always listening" alive across the recognizer's internal session
+  // length limit (see that file's startRecognitionRequest comment) — each
+  // new request's transcript starts over from empty. Naively replacing a
+  // local `transcript` string with whatever the latest onTranscript event
+  // carries would make the on-screen transcript, and the silence-based
+  // turn-completion timer below (which keys off transcript CHANGING),
+  // jump backward to nothing mid-sentence whenever that internal restart
+  // happens — not just when the user's turn genuinely ends. duplexSegment
+  // holds the CURRENT request's live text; duplexCommittedRef accumulates
+  // every PRIOR segment of the current turn so it survives that restart.
+  // The two are joined into a single `transcript` value below for
+  // everything else in this screen to read, exactly like `stt.transcript`
+  // was on the legacy path.
+  const duplexCommittedRef = React.useRef('');
+  const [duplexSegment, setDuplexSegment] = React.useState('');
+
+  const resetDuplexTranscript = React.useCallback(() => {
+    duplexCommittedRef.current = '';
+    setDuplexSegment('');
+  }, []);
+
   React.useEffect(() => {
+    if (!duplexSupported) return;
+    const subs = [
+      duplexVoiceService.addTranscriptListener(e => {
+        setDuplexSegment(e.text);
+        if (e.isFinal) {
+          duplexCommittedRef.current = (duplexCommittedRef.current + ' ' + e.text).trim();
+          setDuplexSegment('');
+        }
+      }),
+      // Single source of truth for "the coach is done talking" — fires
+      // reliably whether that's because the reply finished naturally OR
+      // because stopSpeaking() cut it off (manual tap or auto barge-in).
+      // See sendTurn's own comment on why nothing here is driven by
+      // awaiting the speak() call's promise instead.
+      duplexVoiceService.addSpeakingStateListener(e => {
+        if (e.speaking) return;
+        if (phaseRef.current !== 'speaking') return;
+        const postAction = postSpeechActionRef.current;
+        postSpeechActionRef.current = null;
+        if (postAction) {
+          postAction();
+          return;
+        }
+        setPhase('listening');
+      }),
+      duplexVoiceService.addErrorListener(e => {
+        if (isActiveRef.current) setErrorMsg(e.message);
+      }),
+    ];
+    return () => subs.forEach(sub => sub?.remove());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplexSupported]);
+
+  const transcript = duplexSupported
+    ? (duplexCommittedRef.current + ' ' + duplexSegment).trim()
+    : stt.transcript;
+
+  // Surfaces speechService's rapid-error-loop detector (legacy path
+  // only — the duplex path has its own addErrorListener above, wired to
+  // DuplexVoiceEngine's equivalent rapid-error-loop guard).
+  React.useEffect(() => {
+    if (duplexSupported) return;
     if (stt.error && isActiveRef.current) {
       setErrorMsg(stt.error);
     }
-  }, [stt.error]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stt.error, duplexSupported]);
 
   const startListening = React.useCallback(async () => {
     setErrorMsg(null);
+    if (duplexSupported) {
+      // The engine + recognition are already running continuously
+      // (started once at mount / on foreground-return — see the focus and
+      // AppState effects below) — "starting to listen" for a new turn is
+      // just a UI-phase change here, not a new native call.
+      setPhase('listening');
+      return;
+    }
     stt.reset();
     const ok = await stt.start();
     if (ok) {
@@ -237,6 +357,32 @@ const VoiceCoachView = memo(({
       setPhase('idle');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplexSupported]);
+
+  // Fires the real ElevenLabs-with-fallback voice through the duplex
+  // engine WITHOUT awaiting it for control flow. This is deliberate, not
+  // an oversight: DuplexVoiceEngine.stopSpeaking() (called by the
+  // barge-in effect below, or by a manual tap via onInterrupt) bumps its
+  // own internal generation counter, which permanently blocks the
+  // ORIGINAL speak()/speakRemoteAudio() call's completion callback from
+  // ever firing resolve() — so awaiting it here would mean an interrupted
+  // call's caller never continues at all. The onSpeakingState listener
+  // above is the single source of truth for "the coach is done talking"
+  // instead, and drives whatever should happen next on its own; this
+  // helper only needs to kick playback off and report a genuine total
+  // failure (both the real voice AND the on-device fallback failing).
+  const speakDuplexFireAndForget = React.useCallback((text: string) => {
+    turnTokenRef.current += 1;
+    const myToken = turnTokenRef.current;
+    duplexVoiceService.speakWithFallback(text).catch(() => {
+      if (myToken === turnTokenRef.current && isActiveRef.current) {
+        setErrorMsg(
+          i18n.t('message:voice_speak_failed', {
+            defaultValue: "Couldn't play that out loud — the text reply above is still there.",
+          }),
+        );
+      }
+    });
   }, []);
 
   const sendTurn = React.useCallback(
@@ -246,6 +392,12 @@ const VoiceCoachView = memo(({
         setPhase('listening');
         return;
       }
+      // Consume the duplex transcript buffer right when a turn is taken
+      // from it, regardless of call site (live silence-detection, the
+      // initial topic, etc.) — so leftover words never bleed into the
+      // NEXT turn or get mistaken for a barge-in the moment 'speaking'
+      // starts below.
+      if (duplexSupported) resetDuplexTranscript();
 
       // Resolve any pending "want me to take you there?" offer from the
       // previous turn before treating this as a fresh coaching question —
@@ -259,6 +411,13 @@ const VoiceCoachView = memo(({
           });
           setLastCoachLine(confirmLine);
           setPhase('speaking');
+          if (duplexSupported) {
+            postSpeechActionRef.current = () => {
+              if (isActiveRef.current) onSuggestedAction?.(pendingAction);
+            };
+            speakDuplexFireAndForget(confirmLine);
+            return;
+          }
           await stt.stop();
           try {
             await speechService.speak(confirmLine);
@@ -303,6 +462,15 @@ const VoiceCoachView = memo(({
       if (!isActiveRef.current) return;
       setLastCoachLine(replyText);
       setPhase('speaking');
+
+      if (duplexSupported) {
+        // Mic never stopped — no restart needed. The onSpeakingState
+        // listener above takes phase back to 'listening' on its own once
+        // this genuinely finishes (or gets barged into).
+        speakDuplexFireAndForget(replyText);
+        return;
+      }
+
       await stt.stop();
       let spokeFailed = false;
       try {
@@ -343,44 +511,40 @@ const VoiceCoachView = memo(({
       startListening();
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [userContext, onSuggestedAction],
+    [userContext, onSuggestedAction, duplexSupported],
   );
 
   React.useEffect(() => {
     if (phase !== 'listening') return;
     clearSilenceTimer();
-    if (!stt.transcript.trim()) return;
+    if (!transcript.trim()) return;
     silenceTimerRef.current = setTimeout(() => {
       if (phaseRef.current !== 'listening') return;
-      const finalText = stt.transcript;
-      stt.reset();
+      const finalText = transcript;
+      if (!duplexSupported) stt.reset();
       sendTurn(finalText);
     }, SILENCE_DEBOUNCE_MS);
     return clearSilenceTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stt.transcript, phase]);
+  }, [transcript, phase]);
 
   // Diagnostic nudge (product report: "it shows I'm listening, I say
   // something, and nothing happens" -- with no error shown, meaning
   // stt.start() itself succeeded and the mic never reported a failure). The
-  // debounce effect above only ever fires sendTurn() once stt.transcript
-  // (state, not the live ref) has actually changed -- if the native speech
-  // recognizer genuinely never delivers a result back to onSpeechResults
-  // for this session (a real possibility if something upstream leaves the
-  // audio session unable to actually capture input despite Voice.start()
-  // reporting success -- see speechService.ts's useSpeechToText doc
-  // comments for the equivalent, already-documented issue on the OUTPUT
-  // side), stt.transcript just never changes and NOTHING in this screen
-  // ever tells the user that. This doesn't fix that underlying capture
-  // issue (a JS-only fix can't -- there's no signal to react to if the
-  // native side never calls back at all), but it stops the screen from
-  // silently sitting there forever with zero feedback: after a long stretch
-  // of "listening" with nothing ever recognized, nudge the user rather than
-  // leaving them wondering whether the app heard them at all.
+  // debounce effect above only ever fires sendTurn() once transcript (state,
+  // not a live ref) has actually changed -- if the native speech recognizer
+  // genuinely never delivers a result back for this session, transcript
+  // just never changes and NOTHING in this screen ever tells the user
+  // that. This doesn't fix that underlying capture issue (a JS-only fix
+  // can't -- there's no signal to react to if the native side never calls
+  // back at all), but it stops the screen from silently sitting there
+  // forever with zero feedback: after a long stretch of "listening" with
+  // nothing ever recognized, nudge the user rather than leaving them
+  // wondering whether the app heard them at all.
   React.useEffect(() => {
     if (phase !== 'listening') return;
     const timer = setTimeout(() => {
-      if (phaseRef.current === 'listening' && !stt.transcript.trim()) {
+      if (phaseRef.current === 'listening' && !transcript.trim()) {
         setErrorMsg(
           i18n.t('message:voice_no_speech_nudge', {
             defaultValue: "Still there? I'm not picking up anything — try tapping the orb, or check your mic.",
@@ -394,6 +558,12 @@ const VoiceCoachView = memo(({
 
   const onInterrupt = React.useCallback(async () => {
     if (phaseRef.current !== 'speaking') return;
+    if (duplexSupported) {
+      turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
+      setPhase('listening'); // optimistic, immediate UI feedback for a manual tap
+      await duplexVoiceService.stopSpeaking().catch(() => {});
+      return;
+    }
     // BUG FIX (see speechService.stopSpeaking's own comment on this round's
     // fresh "captures fine in Mock Interview, never in Coach" report) —
     // stopSpeaking() is now a genuinely awaitable teardown instead of
@@ -403,12 +573,45 @@ const VoiceCoachView = memo(({
     await speechService.stopSpeaking();
     startListening();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [duplexSupported]);
+
+  // Real speak-to-interrupt: thanks to DuplexVoiceEngine's shared-engine
+  // echo cancellation (confirmed on a real device — see this file's header
+  // comment for the full three-attempt history), a transcript arriving
+  // here WHILE the coach is talking is the user's own voice, not the
+  // coach's own TTS being picked back up. Cut the coach off immediately
+  // and hand the turn back — same effect as tapping the orb via
+  // onInterrupt, just triggered by speech instead of a tap.
+  React.useEffect(() => {
+    if (!duplexSupported) return;
+    if (phase !== 'speaking') return;
+    const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
+    if (!liveText) return;
+    turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
+    setPhase('listening');
+    duplexVoiceService.stopSpeaking().catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplexSupported, phase, duplexSegment]);
 
   useFocusEffect(
     React.useCallback(() => {
       isActiveRef.current = true;
       (async () => {
+        if (duplexSupported && !duplexStartedRef.current) {
+          try {
+            await duplexVoiceService.start();
+            duplexStartedRef.current = true;
+          } catch (e: any) {
+            if (isActiveRef.current) {
+              setErrorMsg(
+                e?.message ??
+                  i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
+              );
+              setPhase('idle');
+            }
+            return; // nothing else here can work without the engine
+          }
+        }
         // Product follow-up: a suggested topic tapped on the greeting
         // screen switches Chat.tsx into Voice mode and hands the topic's
         // title down as initialTopic — start the real live conversation
@@ -445,21 +648,25 @@ const VoiceCoachView = memo(({
             });
             setLastCoachLine(intro);
             setPhase('speaking');
-            try {
-              await speechService.speak(intro);
-            } catch {
-              // Both the remote voice and the on-device fallback failed --
-              // same "genuinely nothing was spoken" case as sendTurn's own
-              // speak() catch below, just for the very first greeting
-              // instead of a reply. See that one's comment for the full
-              // reasoning on why this is now surfaced instead of swallowed.
-              introSpeakFailed = true;
-              if (isActiveRef.current) {
-                setErrorMsg(
-                  i18n.t('message:voice_speak_failed', {
-                    defaultValue: "Couldn't play that out loud — the text reply above is still there.",
-                  }),
-                );
+            if (duplexSupported) {
+              speakDuplexFireAndForget(intro);
+            } else {
+              try {
+                await speechService.speak(intro);
+              } catch {
+                // Both the remote voice and the on-device fallback failed --
+                // same "genuinely nothing was spoken" case as sendTurn's own
+                // speak() catch below, just for the very first greeting
+                // instead of a reply. See that one's comment for the full
+                // reasoning on why this is now surfaced instead of swallowed.
+                introSpeakFailed = true;
+                if (isActiveRef.current) {
+                  setErrorMsg(
+                    i18n.t('message:voice_speak_failed', {
+                      defaultValue: "Couldn't play that out loud — the text reply above is still there.",
+                    }),
+                  );
+                }
               }
             }
           }
@@ -469,16 +676,34 @@ const VoiceCoachView = memo(({
         if (introSpeakFailed) {
           // Same reasoning as sendTurn's own pause -- startListening()
           // clears errorMsg immediately, which would otherwise wipe this
-          // message before it was ever visible.
+          // message before it was ever visible. Duplex path never sets
+          // introSpeakFailed (speakDuplexFireAndForget doesn't throw
+          // synchronously), so this pause is legacy-path-only.
           await new Promise(resolve => setTimeout(resolve, 2500));
+        }
+        if (duplexSupported) {
+          // If the intro was just fired above, the onSpeakingState
+          // listener owns the transition back to 'listening' once it
+          // actually finishes -- calling startListening() here would
+          // incorrectly flip the UI to "listening" while the intro is
+          // still audibly playing (unlike the legacy branch just above,
+          // which awaits speak() to genuinely finish first). If no intro
+          // was spoken this visit, go ahead and start listening now.
+          if (isActiveRef.current && phaseRef.current !== 'speaking') startListening();
+          return;
         }
         if (isActiveRef.current) startListening();
       })();
       return () => {
         isActiveRef.current = false;
         clearSilenceTimer();
-        stt.stop();
-        speechService.stopSpeaking();
+        if (duplexSupported) {
+          duplexStartedRef.current = false;
+          duplexVoiceService.stop().catch(() => {});
+        } else {
+          stt.stop();
+          speechService.stopSpeaking();
+        }
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
@@ -494,8 +719,11 @@ const VoiceCoachView = memo(({
   // next speak() call's real ElevenLabs voice (speakRemote) failed and
   // silently fell back to the on-device "default" voice. The fix: proactively
   // stop everything cleanly the moment the app leaves the foreground, and do
-  // a fresh, clean restart of listening when it returns — rather than
-  // letting the OS interruption corrupt an in-flight session.
+  // a fresh, clean restart when it returns — rather than letting the OS
+  // interruption corrupt an in-flight session. The duplex engine gets the
+  // exact same treatment: full teardown on background (its own AVAudioEngine
+  // is just as vulnerable to an OS-forced session interruption as the old
+  // pipeline was), then a clean duplexVoiceService.start() on return.
   const wasBackgroundedRef = React.useRef(false);
   React.useEffect(() => {
     const sub = AppState.addEventListener('change', nextState => {
@@ -503,7 +731,26 @@ const VoiceCoachView = memo(({
       if (nextState === 'active') {
         if (wasBackgroundedRef.current) {
           wasBackgroundedRef.current = false;
-          startListening();
+          if (duplexSupported) {
+            duplexStartedRef.current = false;
+            (async () => {
+              try {
+                await duplexVoiceService.start();
+                duplexStartedRef.current = true;
+                if (isActiveRef.current) startListening();
+              } catch (e: any) {
+                if (isActiveRef.current) {
+                  setErrorMsg(
+                    e?.message ??
+                      i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
+                  );
+                  setPhase('idle');
+                }
+              }
+            })();
+          } else {
+            startListening();
+          }
         }
         return;
       }
@@ -511,13 +758,18 @@ const VoiceCoachView = memo(({
       // otherwise backgrounded) while a voice turn was in progress.
       wasBackgroundedRef.current = true;
       clearSilenceTimer();
-      stt.stop();
-      speechService.stopSpeaking();
+      if (duplexSupported) {
+        duplexStartedRef.current = false;
+        duplexVoiceService.stop().catch(() => {});
+      } else {
+        stt.stop();
+        speechService.stopSpeaking();
+      }
       setPhase('idle');
     });
     return () => sub.remove();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startListening]);
+  }, [startListening, duplexSupported]);
 
   // Same breathing-pulse approach as LiveInterviewSession's Voice-mode orb
   // — a touch more pronounced while the coach is actually speaking, like
@@ -579,14 +831,14 @@ const VoiceCoachView = memo(({
 
   const statusLabel =
     phase === 'listening'
-      ? stt.transcript
+      ? transcript
         ? t('message:voice_status_listening', { defaultValue: 'Listening…' })
         : t('message:voice_status_listening_prompt', { defaultValue: "I'm listening — go ahead" })
     : phase === 'thinking' ? t('message:voice_status_thinking', { defaultValue: 'Thinking…' })
     : phase === 'speaking' ? t('message:voice_status_speaking', { defaultValue: 'Speaking…' })
     : t('message:voice_status_starting', { defaultValue: 'Starting…' });
 
-  const displayLine = phase === 'listening' && stt.transcript ? stt.transcript : lastCoachLine;
+  const displayLine = phase === 'listening' && transcript ? transcript : lastCoachLine;
 
   return (
     <View style={styles.body}>
