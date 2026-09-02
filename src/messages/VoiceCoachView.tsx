@@ -186,6 +186,7 @@ const VoiceCoachView = memo(({
   onSuggestedAction,
   initialTopic,
   onInitialTopicHandled,
+  active,
 }: {
   userContext?: CoachUserContext;
   // Fired once the user affirms the coach's spoken offer — Chat.tsx passes
@@ -196,14 +197,32 @@ const VoiceCoachView = memo(({
   // that leads to the live conversation screen" / confirmed: tapping one
   // should start a real spoken conversation about it, not just drop a
   // text bubble. Chat.tsx's greeting screen switches into Voice mode and
-  // passes the tapped topic's title down here — see the focus effect
-  // below for what "starting the conversation with it" actually does.
+  // passes the tapped topic's title down here — see the active-driven
+  // effect below for what "starting the conversation with it" actually
+  // does.
   initialTopic?: string;
   // Fired once initialTopic has been consumed (sent as the opening turn)
-  // so Chat.tsx can clear it — otherwise a later remount of this view
-  // (e.g. toggling Text -> Voice again by hand) would replay the same
-  // stale topic as a new turn.
+  // so Chat.tsx can clear it — otherwise re-engaging Voice mode again
+  // later would replay the same stale topic as a new turn.
   onInitialTopicHandled?: () => void;
+  // BUG FIX (product report: "the AI career coach take[s] a long time to
+  // capture the users voice unlike before... once it opens the user can
+  // begin talking") -- Chat.tsx used to unmount this component entirely
+  // whenever Text mode was selected, which tore down and fully rebuilt
+  // the native duplex engine (real AVAudioSession + echo-canceller setup,
+  // measurably heavier than the old simple pipeline) on every single
+  // Voice<->Text toggle, not just on leaving the Coach screen. Chat.tsx
+  // now keeps this component mounted continuously for as long as the
+  // Coach screen itself is open, in either mode, and passes `active` down
+  // instead: true only while Voice mode is the one actually on screen,
+  // false while Text mode is showing but this component is still mounted
+  // (hidden) underneath it. See hasEngagedRef's own comment below for how
+  // this drives the engine's start-once/pause/resume lifecycle -- product-
+  // approved tradeoff: the mic stays live (and the OS's mic-in-use
+  // indicator stays on) for as long as Voice mode has been engaged at
+  // least once during this Coach screen visit, not just while Voice
+  // mode's UI is actually the one on screen.
+  active: boolean;
 }) => {
   const { t } = useTranslation(['message']);
   const theme = useTheme();
@@ -233,6 +252,26 @@ const VoiceCoachView = memo(({
   React.useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  // Mirrors the `active` prop for the same reason phaseRef mirrors phase —
+  // read inside listener closures (the duplex event listeners, the
+  // AppState handler) that are set up once and would otherwise close over
+  // a stale value of `active` from whatever render they were created in.
+  const activeRef = React.useRef(active);
+  React.useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
+
+  // True once Voice mode has been engaged (active became true) at least
+  // once during this component's current mount — NOT reset when toggling
+  // back to Text mode, only on a genuine unmount (leaving the Coach screen
+  // entirely). Drives the active-driven effect below: the FIRST time
+  // active becomes true, it runs the full original mount sequence (start
+  // the engine, speak the intro or initialTopic, start listening); every
+  // time after that, active becoming true again is just a resume (the
+  // engine never stopped) and active becoming false is just a pause, not
+  // a teardown.
+  const hasEngagedRef = React.useRef(false);
 
   const silenceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef = React.useRef(false);
@@ -309,6 +348,16 @@ const VoiceCoachView = memo(({
     const subs = [
       duplexVoiceService.addTranscriptListener(e => {
         if (__DEV__) console.warn('[VoiceCoachView] onTranscript', JSON.stringify(e));
+        // BUG FIX (see the `active` prop's own comment) -- the native
+        // engine now keeps transcribing continuously even while Text mode
+        // is showing (Voice mode merely inactive, not torn down). Ignoring
+        // events here while inactive stops incidental background speech
+        // from silently building up in duplexCommittedRef/duplexSegment
+        // and then getting treated as a real turn the moment the user
+        // switches back to Voice mode — resetDuplexTranscript() in the
+        // active-driven effect below also clears out anything that DID
+        // sneak in before this guard, as a second layer of protection.
+        if (!activeRef.current) return;
         setDuplexSegment(e.text);
         if (e.isFinal) {
           duplexCommittedRef.current = (duplexCommittedRef.current + ' ' + e.text).trim();
@@ -323,6 +372,13 @@ const VoiceCoachView = memo(({
       duplexVoiceService.addSpeakingStateListener(e => {
         if (__DEV__) console.warn('[VoiceCoachView] onSpeakingState', JSON.stringify(e), 'phase=', phaseRef.current);
         if (e.speaking) return;
+        // Inactive (Text mode showing) -- the active-driven effect below
+        // already force-stopped speech and set phase to 'idle' the moment
+        // this became inactive, so there's nothing left for this listener
+        // to do; without this guard a speaking-finished event racing that
+        // transition could clobber phase back to 'listening' while Text
+        // mode is on screen.
+        if (!activeRef.current) return;
         if (phaseRef.current !== 'speaking') return;
         const postAction = postSpeechActionRef.current;
         postSpeechActionRef.current = null;
@@ -536,6 +592,10 @@ const VoiceCoachView = memo(({
   );
 
   React.useEffect(() => {
+    // BUG FIX (see the `active` prop's own comment) -- this component now
+    // stays mounted while Text mode is showing, so this turn-completion
+    // timer must not fire for background speech picked up while inactive.
+    if (!active) return;
     if (phase !== 'listening') return;
     clearSilenceTimer();
     if (!transcript.trim()) return;
@@ -547,7 +607,7 @@ const VoiceCoachView = memo(({
     }, SILENCE_DEBOUNCE_MS);
     return clearSilenceTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transcript, phase]);
+  }, [transcript, phase, active]);
 
   // Diagnostic nudge (product report: "it shows I'm listening, I say
   // something, and nothing happens" -- with no error shown, meaning
@@ -563,6 +623,7 @@ const VoiceCoachView = memo(({
   // nothing ever recognized, nudge the user rather than leaving them
   // wondering whether the app heard them at all.
   React.useEffect(() => {
+    if (!active) return;
     if (phase !== 'listening') return;
     const timer = setTimeout(() => {
       if (phaseRef.current === 'listening' && !transcript.trim()) {
@@ -575,7 +636,7 @@ const VoiceCoachView = memo(({
     }, 20000);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
+  }, [phase, active]);
 
   const onInterrupt = React.useCallback(async () => {
     if (phaseRef.current !== 'speaking') return;
@@ -605,6 +666,7 @@ const VoiceCoachView = memo(({
   // onInterrupt, just triggered by speech instead of a tap.
   React.useEffect(() => {
     if (!duplexSupported) return;
+    if (!active) return;
     if (phase !== 'speaking') return;
     const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
     if (!liveText) return;
@@ -612,133 +674,20 @@ const VoiceCoachView = memo(({
     setPhase('listening');
     duplexVoiceService.stopSpeaking().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [duplexSupported, phase, duplexSegment]);
+  }, [duplexSupported, phase, duplexSegment, active]);
 
+  // Screen-level lifecycle ONLY now — starting the engine and the
+  // intro/topic/listen sequence moved to the active-driven effect below
+  // (see `active`/hasEngagedRef's own comments for why). This still owns
+  // the one thing that genuinely should only happen on leaving the whole
+  // Coach screen (or the initial mount of it): isActiveRef's true/false
+  // state-update-safety guard, and the FULL engine teardown on blur/
+  // unmount — real backgrounding is handled separately by the AppState
+  // effect further below.
   useFocusEffect(
     React.useCallback(() => {
       isActiveRef.current = true;
       if (__DEV__ && duplexSupported) console.warn('[VoiceCoachView] focus effect running (mount or re-focus)');
-      (async () => {
-        if (duplexSupported && !duplexStartedRef.current) {
-          try {
-            await duplexVoiceService.start();
-            duplexStartedRef.current = true;
-            if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() resolved');
-          } catch (e: any) {
-            if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected', e?.message ?? e);
-            if (isActiveRef.current) {
-              setErrorMsg(
-                e?.message ??
-                  i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
-              );
-              setPhase('idle');
-            }
-            return; // nothing else here can work without the engine
-          }
-        }
-        // Product follow-up: a suggested topic tapped on the greeting
-        // screen switches Chat.tsx into Voice mode and hands the topic's
-        // title down as initialTopic — start the real live conversation
-        // with it immediately (thinking -> a real spoken reply -> back to
-        // listening, exactly like any other turn — see sendTurn below),
-        // instead of the usual "wait for the user to speak first" open.
-        // Skips the first-ever-visit intro entirely: sendTurn's own reply
-        // already gives the user something spoken to react to, so a
-        // separate generic greeting first would just be two lines of
-        // speech back to back before the user gets to the thing they
-        // actually tapped.
-        if (initialTopic) {
-          onInitialTopicHandled?.();
-          if (isActiveRef.current) await sendTurn(initialTopic);
-          return;
-        }
-        // BUG FIX (product report: "I want the AI coach to always
-        // introduce itself for the first time the user is coming to the
-        // app... the AI should introduce itself as Saveur") — Text mode
-        // already shows this via coachService's greeting bubble; Voice
-        // mode never spoke anything at all until the user said something
-        // first. isFirstEverCoachVisit checks real persisted history (not
-        // a per-screen-visit flag), so this only ever speaks once total —
-        // it won't repeat on a later visit to Voice mode, including if the
-        // user's very first coach interaction happened in Text mode
-        // instead.
-        let introSpeakFailed = false;
-        // BUG FIX (real-device report: coach screen not picking up any
-        // speech at all after the duplex engine was wired in). This used
-        // to check `phaseRef.current !== 'speaking'` a few lines below to
-        // decide whether an intro was just spoken -- but phaseRef only
-        // gets updated by a SEPARATE effect (`phaseRef.current = phase`)
-        // that runs on the NEXT render, not synchronously alongside the
-        // `setPhase('speaking')` call right below. Since nothing in this
-        // duplex branch awaits between that setPhase() call and the check
-        // (speakDuplexFireAndForget is deliberately fire-and-forget, see
-        // its own comment), phaseRef.current was still whatever it was
-        // BEFORE this function ran (typically 'idle') at the time of that
-        // check -- so it incorrectly looked like no intro had been spoken,
-        // called startListening() immediately, and flipped phase straight
-        // to 'listening' while the intro was still actually playing. A
-        // plain local flag, set synchronously right here rather than read
-        // from a ref that lags a render behind, is the fix.
-        let firedDuplexIntro = false;
-        try {
-          const history = await coachService.getChatHistory();
-          if (isActiveRef.current && coachService.isFirstEverCoachVisit(history)) {
-            const intro = i18n.t('message:coach_voice_intro_line', {
-              defaultValue:
-                "Hi, I'm Saveur — your AI career coach. I'm listening whenever you're ready to talk.",
-            });
-            setLastCoachLine(intro);
-            setPhase('speaking');
-            if (duplexSupported) {
-              firedDuplexIntro = true;
-              speakDuplexFireAndForget(intro);
-            } else {
-              try {
-                await speechService.speak(intro);
-              } catch {
-                // Both the remote voice and the on-device fallback failed --
-                // same "genuinely nothing was spoken" case as sendTurn's own
-                // speak() catch below, just for the very first greeting
-                // instead of a reply. See that one's comment for the full
-                // reasoning on why this is now surfaced instead of swallowed.
-                introSpeakFailed = true;
-                if (isActiveRef.current) {
-                  setErrorMsg(
-                    i18n.t('message:voice_speak_failed', {
-                      defaultValue: "Couldn't play that out loud — the text reply above is still there.",
-                    }),
-                  );
-                }
-              }
-            }
-          }
-        } catch {
-          // best-effort — a failed history fetch shouldn't block listening
-        }
-        if (introSpeakFailed) {
-          // Same reasoning as sendTurn's own pause -- startListening()
-          // clears errorMsg immediately, which would otherwise wipe this
-          // message before it was ever visible. Duplex path never sets
-          // introSpeakFailed (speakDuplexFireAndForget doesn't throw
-          // synchronously), so this pause is legacy-path-only.
-          await new Promise(resolve => setTimeout(resolve, 2500));
-        }
-        if (duplexSupported) {
-          // If the intro was just fired above, the onSpeakingState
-          // listener owns the transition back to 'listening' once it
-          // actually finishes -- calling startListening() here would
-          // incorrectly flip the UI to "listening" while the intro is
-          // still audibly playing (unlike the legacy branch just above,
-          // which awaits speak() to genuinely finish first). If no intro
-          // was spoken this visit, go ahead and start listening now. Uses
-          // the local firedDuplexIntro flag, not phaseRef.current -- see
-          // that flag's own comment for why the ref isn't safe to read
-          // here yet.
-          if (isActiveRef.current && !firedDuplexIntro) startListening();
-          return;
-        }
-        if (isActiveRef.current) startListening();
-      })();
       return () => {
         // DIAGNOSTIC: if this fires shortly after mount without the user
         // navigating away, that's a real remount/re-focus of this screen
@@ -753,6 +702,7 @@ const VoiceCoachView = memo(({
         clearSilenceTimer();
         if (duplexSupported) {
           duplexStartedRef.current = false;
+          hasEngagedRef.current = false;
           duplexVoiceService.stop().catch(() => {});
         } else {
           stt.stop();
@@ -762,6 +712,179 @@ const VoiceCoachView = memo(({
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []),
   );
+
+  // BUG FIX (product report: "the AI career coach take[s] a long time to
+  // capture the users voice unlike before... once it opens the user can
+  // begin talking") — this is the effect that actually engages/pauses/
+  // resumes Voice mode, driven by the `active` prop instead of this whole
+  // component's own mount/focus (see that prop's own comment for the full
+  // "why" — Chat.tsx now keeps this component mounted continuously across
+  // Voice<->Text toggles instead of unmounting it, specifically so this
+  // effect firing on a toggle is cheap: no native engine work at all,
+  // just a phase change).
+  React.useEffect(() => {
+    if (!active) {
+      // Leaving Voice mode for Text mode (or simply never engaged it this
+      // visit — the untouched early-return below covers that). Stop the
+      // coach talking if it was mid-reply and stop reacting to transcripts
+      // (see the duplex listeners' own activeRef guards above) — but
+      // deliberately does NOT touch the engine/mic themselves, which is
+      // the entire point of this fix.
+      if (!hasEngagedRef.current) return;
+      clearSilenceTimer();
+      if (duplexSupported) {
+        if (phaseRef.current === 'speaking') {
+          turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
+          duplexVoiceService.stopSpeaking().catch(() => {});
+        }
+      } else {
+        // Android/legacy has no persistent engine to protect — pausing
+        // here means a genuine stop, same as this screen's pre-existing
+        // behavior on unmount.
+        stt.stop();
+        speechService.stopSpeaking();
+      }
+      setPhase('idle');
+      return;
+    }
+    // active === true.
+    if (hasEngagedRef.current) {
+      // Re-entering Voice mode after a toggle within this same screen
+      // visit. Duplex: the engine never stopped, so this is just a phase
+      // change, not a native call — clear out anything that sneaked into
+      // the transcript buffer while inactive first (see the transcript
+      // listener's own activeRef guard for the first layer of this same
+      // protection). Legacy: startListening() below does a real restart,
+      // same as it always has.
+      if (duplexSupported) resetDuplexTranscript();
+      if (isActiveRef.current) startListening();
+      return;
+    }
+    hasEngagedRef.current = true;
+    if (__DEV__ && duplexSupported) console.warn('[VoiceCoachView] engaging Voice mode for the first time this visit');
+    (async () => {
+      if (duplexSupported && !duplexStartedRef.current) {
+        try {
+          await duplexVoiceService.start();
+          duplexStartedRef.current = true;
+          if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() resolved');
+        } catch (e: any) {
+          if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected', e?.message ?? e);
+          if (isActiveRef.current) {
+            setErrorMsg(
+              e?.message ??
+                i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
+            );
+            setPhase('idle');
+          }
+          return; // nothing else here can work without the engine
+        }
+      }
+      // Product follow-up: a suggested topic tapped on the greeting
+      // screen switches Chat.tsx into Voice mode and hands the topic's
+      // title down as initialTopic — start the real live conversation
+      // with it immediately (thinking -> a real spoken reply -> back to
+      // listening, exactly like any other turn — see sendTurn below),
+      // instead of the usual "wait for the user to speak first" open.
+      // Skips the first-ever-visit intro entirely: sendTurn's own reply
+      // already gives the user something spoken to react to, so a
+      // separate generic greeting first would just be two lines of
+      // speech back to back before the user gets to the thing they
+      // actually tapped.
+      if (initialTopic) {
+        onInitialTopicHandled?.();
+        if (isActiveRef.current) await sendTurn(initialTopic);
+        return;
+      }
+      // BUG FIX (product report: "I want the AI coach to always
+      // introduce itself for the first time the user is coming to the
+      // app... the AI should introduce itself as Saveur") — Text mode
+      // already shows this via coachService's greeting bubble; Voice
+      // mode never spoke anything at all until the user said something
+      // first. isFirstEverCoachVisit checks real persisted history (not
+      // a per-screen-visit flag), so this only ever speaks once total —
+      // it won't repeat on a later visit to Voice mode, including if the
+      // user's very first coach interaction happened in Text mode
+      // instead.
+      let introSpeakFailed = false;
+      // BUG FIX (real-device report: coach screen not picking up any
+      // speech at all after the duplex engine was wired in). This used
+      // to check `phaseRef.current !== 'speaking'` a few lines below to
+      // decide whether an intro was just spoken -- but phaseRef only
+      // gets updated by a SEPARATE effect (`phaseRef.current = phase`)
+      // that runs on the NEXT render, not synchronously alongside the
+      // `setPhase('speaking')` call right below. Since nothing in this
+      // duplex branch awaits between that setPhase() call and the check
+      // (speakDuplexFireAndForget is deliberately fire-and-forget, see
+      // its own comment), phaseRef.current was still whatever it was
+      // BEFORE this function ran (typically 'idle') at the time of that
+      // check -- so it incorrectly looked like no intro had been spoken,
+      // called startListening() immediately, and flipped phase straight
+      // to 'listening' while the intro was still actually playing. A
+      // plain local flag, set synchronously right here rather than read
+      // from a ref that lags a render behind, is the fix.
+      let firedDuplexIntro = false;
+      try {
+        const history = await coachService.getChatHistory();
+        if (isActiveRef.current && coachService.isFirstEverCoachVisit(history)) {
+          const intro = i18n.t('message:coach_voice_intro_line', {
+            defaultValue:
+              "Hi, I'm Saveur — your AI career coach. I'm listening whenever you're ready to talk.",
+          });
+          setLastCoachLine(intro);
+          setPhase('speaking');
+          if (duplexSupported) {
+            firedDuplexIntro = true;
+            speakDuplexFireAndForget(intro);
+          } else {
+            try {
+              await speechService.speak(intro);
+            } catch {
+              // Both the remote voice and the on-device fallback failed --
+              // same "genuinely nothing was spoken" case as sendTurn's own
+              // speak() catch below, just for the very first greeting
+              // instead of a reply. See that one's comment for the full
+              // reasoning on why this is now surfaced instead of swallowed.
+              introSpeakFailed = true;
+              if (isActiveRef.current) {
+                setErrorMsg(
+                  i18n.t('message:voice_speak_failed', {
+                    defaultValue: "Couldn't play that out loud — the text reply above is still there.",
+                  }),
+                );
+              }
+            }
+          }
+        }
+      } catch {
+        // best-effort — a failed history fetch shouldn't block listening
+      }
+      if (introSpeakFailed) {
+        // Same reasoning as sendTurn's own pause -- startListening()
+        // clears errorMsg immediately, which would otherwise wipe this
+        // message before it was ever visible. Duplex path never sets
+        // introSpeakFailed (speakDuplexFireAndForget doesn't throw
+        // synchronously), so this pause is legacy-path-only.
+        await new Promise(resolve => setTimeout(resolve, 2500));
+      }
+      if (duplexSupported) {
+        // If the intro was just fired above, the onSpeakingState
+        // listener owns the transition back to 'listening' once it
+        // actually finishes -- calling startListening() here would
+        // incorrectly flip the UI to "listening" while the intro is
+        // still audibly playing (unlike the legacy branch just above,
+        // which awaits speak() to genuinely finish first). If no intro
+        // was spoken this visit, go ahead and start listening now. Uses
+        // the local firedDuplexIntro flag, not phaseRef.current -- see
+        // that flag's own comment for why the ref isn't safe to read
+        // here yet.
+        if (isActiveRef.current && !firedDuplexIntro) startListening();
+        return;
+      }
+      if (isActiveRef.current) startListening();
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
 
   // Fixes "the phone locks and the AI coach is in session, stops and the
   // voice just changes to the default phone TTS voice": iOS reclaims/
@@ -803,6 +926,18 @@ const VoiceCoachView = memo(({
   React.useEffect(() => {
     const sub = AppState.addEventListener('change', nextState => {
       if (!isActiveRef.current) return;
+      // BUG FIX (see the `active` prop's own comment) -- this component
+      // now stays mounted (and this AppState listener stays subscribed)
+      // for the whole time the Coach screen is open, including while
+      // sitting purely in Text mode having never touched Voice mode at
+      // all this visit. Without this guard, backgrounding the app from
+      // Text mode would start reacting here for the first time ever (this
+      // listener could never fire in that state before, since the whole
+      // component didn't exist in memory while in Text mode) -- calling
+      // duplexVoiceService.stop()/start() against an engine that was
+      // never started at all, touching the shared AVAudioSession for no
+      // reason. Nothing to protect if Voice was never engaged.
+      if (!hasEngagedRef.current) return;
       if (nextState === 'active') {
         if (duplexSupported && duplexBackgroundTimerRef.current) {
           // The debounced teardown below never actually fired -- this was
@@ -821,7 +956,14 @@ const VoiceCoachView = memo(({
               try {
                 await duplexVoiceService.start();
                 duplexStartedRef.current = true;
-                if (isActiveRef.current) startListening();
+                // Only resume the visible "listening" UI/turn-taking if
+                // Voice mode is ALSO the currently active mode -- the
+                // engine itself is restarted either way (it's the whole
+                // point of "stays warm while on the Coach screen"), but a
+                // background/foreground cycle that happened while the user
+                // was in Text mode shouldn't flip phase to 'listening'
+                // underneath a UI that isn't even showing it.
+                if (isActiveRef.current && activeRef.current) startListening();
               } catch (e: any) {
                 if (isActiveRef.current) {
                   setErrorMsg(
@@ -832,7 +974,7 @@ const VoiceCoachView = memo(({
                 }
               }
             })();
-          } else {
+          } else if (activeRef.current) {
             startListening();
           }
         }

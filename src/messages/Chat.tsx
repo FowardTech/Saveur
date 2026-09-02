@@ -1029,19 +1029,37 @@ const Chat = memo(() => {
           </Flex>
         )}
       />
-      {mode === 'voice' ? (
-        <VoiceCoachView
-          userContext={{
-            goals: profile?.goals,
-            industries: profile?.industries,
-            desiredRoles: profile?.desiredRoles,
-            preferredCountries: profile?.preferredCountries,
-          }}
-          onSuggestedAction={onRunSuggestedAction}
-          initialTopic={voiceInitialTopic}
-          onInitialTopicHandled={() => setVoiceInitialTopic(undefined)}
-        />
-      ) : (
+      {/* BUG FIX (product report: "the AI career coach take[s] a long time
+          to capture the users voice unlike before... once it opens the
+          user can begin talking") — was `mode === 'voice' ?
+          <VoiceCoachView/> : (...)`, which fully UNMOUNTED VoiceCoachView
+          the instant Text mode was selected, tearing down and rebuilding
+          the whole native duplex engine (real AVAudioSession + echo-
+          canceller setup) on every single Voice<->Text toggle, not just on
+          leaving the Coach screen entirely. VoiceCoachView now stays
+          mounted continuously for as long as voice coach is enabled at
+          all, just visually hidden (not unmounted) while Text mode is
+          selected — `active` tells it whether Voice mode is the one
+          actually on screen right now; see that prop's own comment for
+          the full engine-lifecycle reasoning. Gated on voiceCoachEnabled
+          so this never mounts at all for anyone the feature is off for. */}
+      {voiceCoachEnabled ? (
+        <View style={mode === 'voice' ? globalStyle.flexOne : styles.hiddenVoiceCoach}>
+          <VoiceCoachView
+            userContext={{
+              goals: profile?.goals,
+              industries: profile?.industries,
+              desiredRoles: profile?.desiredRoles,
+              preferredCountries: profile?.preferredCountries,
+            }}
+            onSuggestedAction={onRunSuggestedAction}
+            initialTopic={voiceInitialTopic}
+            onInitialTopicHandled={() => setVoiceInitialTopic(undefined)}
+            active={mode === 'voice'}
+          />
+        </View>
+      ) : null}
+      {mode === 'voice' ? null : (
         <>
           {/* Product report: "the suggested topics pill should always
               appear at the very top of the screen aligned in the center of
@@ -1289,6 +1307,19 @@ export default Chat;
 const themedStyles = StyleService.create({
   container: {
     flex: 1,
+  },
+  // VoiceCoachView now stays mounted continuously while voice coach is
+  // enabled (see that render call site's own comment) instead of
+  // unmounting on the Voice<->Text toggle — this is what actually keeps
+  // it off-screen and out of the way while Text mode is selected, without
+  // tearing it down. `display: 'none'` (not width/height: 0 or
+  // opacity: 0) removes it from layout entirely and is the one RN style
+  // property that's documented to skip rendering work for hidden
+  // subtrees, closest to a real unmount from a rendering-cost standpoint
+  // while still keeping the component instance (and its native engine)
+  // alive underneath.
+  hiddenVoiceCoach: {
+    display: 'none',
   },
   // SYMPHONY REDESIGN follow-up (explicit product request, with reference
   // screenshot: "the container housing them looks so bad and i want them
