@@ -221,6 +221,26 @@ const LiveInterviewSession = memo(() => {
   const [videoSpeechSource, setVideoSpeechSource] = React.useState<speechService.ElevenLabsAudioSource | null>(null);
   const [videoSpeechPaused, setVideoSpeechPaused] = React.useState(true);
   const videoSpeechResolveRef = React.useRef<(() => void) | null>(null);
+  // BUG FIX (product report: video interview "takes long... for the
+  // interview to start talking"). speakVideoMode's ElevenLabs fetch used to
+  // only ever START once videoRecordingStarted flipped true (see that
+  // effect's own gating below) -- stacking the full network wait ON TOP OF
+  // the mic-permission poll + VisionCamera audio-session settle delay this
+  // file's own history already spent real effort tuning (~3s+ elapses
+  // before recording even starts, see the fixed-delay effect further down).
+  // Fetching the audio URL is a plain HTTP call with no interaction with
+  // the iOS audio session or camera hardware at all, so there's no reason
+  // it can't run concurrently with that camera/mic setup instead of
+  // strictly after it. This ref holds the in-flight prefetch for the
+  // CURRENT question (see the effect right below) -- by the time
+  // videoRecordingStarted flips true and speakVideoMode is actually
+  // allowed to play something, this has very likely already resolved, so
+  // playback can start immediately instead of paying a second, stacked
+  // network wait.
+  const videoPrefetchRef = React.useRef<{
+    text: string;
+    promise: Promise<speechService.ElevenLabsAudioSource | null>;
+  } | null>(null);
   // True once videoAnalysis.startVideoRecording() has actually been CALLED
   // (see the effect below) — gates the very first question's speakSmart()
   // call in Video mode (see the "speak each question" effect) so
@@ -273,7 +293,14 @@ const LiveInterviewSession = memo(() => {
     // much shorter, still-generous 8s before falling back to the on-device
     // voice, same fallback speechService.speak() already reaches on any
     // other kind of ElevenLabs failure.
-    const source = await withTimeout(speechService.fetchElevenLabsAudioUrl(text, i18n.language), 8000, null);
+    // Reuse the prefetch kicked off as soon as this question became known
+    // (see videoPrefetchRef's own comment above) instead of starting a
+    // fresh fetch here, if one's actually in flight for this exact text --
+    // falls back to fetching fresh (same as before) for any text that
+    // wasn't prefetched (an acknowledgment/closing line, or a race where
+    // this fired before the prefetch effect did).
+    const prefetched = videoPrefetchRef.current?.text === text ? videoPrefetchRef.current.promise : null;
+    const source = await (prefetched ?? withTimeout(speechService.fetchElevenLabsAudioUrl(text, i18n.language), 8000, null));
     if (!source) {
       // Fetch failed (offline, backend/ElevenLabs error, timeout) — same
       // safety net Video mode has always had: the on-device voice, not a
@@ -359,6 +386,19 @@ const LiveInterviewSession = memo(() => {
   const question =
     backendQuestionText ?? questions[Math.min(questionIndex, questions.length - 1)];
   const isFollowUp = questionIndex > 0;
+
+  // Kicks off videoPrefetchRef's fetch (see that ref's own comment) the
+  // moment a new question is known, independent of camera/mic/recording
+  // state entirely -- runs in Voice mode too, harmlessly (videoPrefetchRef
+  // is only ever read from Video mode's speakVideoMode), so this doesn't
+  // need its own isVideoMode branch.
+  React.useEffect(() => {
+    if (!question) return;
+    videoPrefetchRef.current = {
+      text: question,
+      promise: withTimeout(speechService.fetchElevenLabsAudioUrl(question, i18n.language), 8000, null),
+    };
+  }, [question]);
 
   // Every ADVANCE_INTERVAL_SEC of "listening" time, ask the real backend for
   // the next question; a lightweight stand-in for a real interviewer
