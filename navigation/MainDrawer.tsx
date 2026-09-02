@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {AppState, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Icon} from '@ui-kitten/components';
+import {Icon, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
@@ -124,13 +124,16 @@ interface DrawerNavItem {
   badge?: number;
 }
 
-// Always-dark drawer regardless of the app's own light/dark theme setting
-// — matches the Symphony reference exactly (its drawer is a fixed dark
-// sidebar even though its own Settings/Home screens are light). Kept as
-// plain hex literals (not theme tokens) since this is a deliberate,
-// theme-independent surface, the same reasoning globalStyle.ts's
-// `backdropStyle` already uses for its own fixed-dark overlay.
-const DRAWER_BG = '#0B0B10';
+// BUG FIX (product request: "i want the drawer background to be the app
+// background") -- was a fixed '#0B0B10' hex literal, deliberately
+// independent of the app's own theme (see prior comment, now removed) to
+// match the Symphony reference's always-dark sidebar. Product now wants the
+// drawer to visually read as the SAME surface as the rest of the app
+// instead of its own distinct panel color, so the background below is
+// looked up from the theme (background-basic-color-1, the same token every
+// other screen's base background uses) inside CustomDrawerContent, not a
+// hardcoded constant. Text/icon colors stay fixed white/muted-white since
+// this app is dark-themed in practice everywhere these are used.
 const DRAWER_TEXT = '#FFFFFF';
 const DRAWER_TEXT_MUTED = 'rgba(255,255,255,0.6)';
 const DRAWER_DIVIDER = 'rgba(255,255,255,0.08)';
@@ -145,6 +148,7 @@ interface CustomDrawerContentProps {
 const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContentProps) => {
   const {t} = useTranslation(['common']);
   const {top, bottom} = useLayout();
+  const theme = useTheme();
   const {profile, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
 
   const items: DrawerNavItem[] = [
@@ -168,18 +172,17 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
   ];
 
   return (
-    <View style={[styles.drawer, {backgroundColor: DRAWER_BG, paddingTop: top + 16, paddingBottom: bottom + 16}]}>
-      {/* BUG FIX (product report: "you just wrote the name of the app what
-          about the logo. You just wrote saveur but you did not place the
-          logo beside it") -- was bare "Saveur" text, no mark at all.
-          BrandWordmark already renders the real logo + wordmark together
-          (used the same way on Login.tsx/VerifyEmailGate.tsx) -- `markColor`
-          swaps in the transparent-background mark art (Images.logoMark)
-          tinted solid white instead of its default baked-in light-gray
-          badge, same "line logo on a colored surface" treatment
-          AppRatingModal.tsx already uses for its own dark background. */}
+    <View style={[styles.drawer, {backgroundColor: theme['background-basic-color-1'], paddingTop: top + 16, paddingBottom: bottom + 16}]}>
+      {/* BUG FIX (product request: "the saveur logo should have the
+          default blue background") -- was passing markColor={DRAWER_TEXT},
+          which swaps in the transparent-background mark art
+          (Images.logoMark) tinted solid white, i.e. no badge/background
+          behind the mark at all. Dropping markColor falls back to
+          BrandWordmark's real default (Images.logoBadge): the same mark
+          art on its own baked-in solid blue square, matching the app icon
+          everywhere else it appears (Login.tsx/VerifyEmailGate.tsx). */}
       <View style={styles.brandRow}>
-        <BrandWordmark size={32} color={DRAWER_TEXT} markColor={DRAWER_TEXT} />
+        <BrandWordmark size={32} color={DRAWER_TEXT} />
       </View>
 
       <View style={styles.navList}>

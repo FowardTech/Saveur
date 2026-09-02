@@ -475,9 +475,14 @@ const Chat = memo(() => {
           right: [
             styles.wrapperRightStyle,
             {
+              // BUG FIX (product request: "i want the user bubble to be
+              // white background not blue anymore") -- was
+              // theme["button-basic-color"] (brand blue, #0063f8).
+              // Hardcoded white (not a theme token) since the ask was for a
+              // literal white bubble regardless of light/dark app theme.
               backgroundColor: props.currentMessage?.image
                 ? "transparent"
-                : theme["button-basic-color"],
+                : "#FFFFFF",
             },
             { maxWidth: 267 * (width / 375) },
           ],
@@ -1068,7 +1073,12 @@ const Chat = memo(() => {
                   isDarkMode && { backgroundColor: 'rgba(94, 152, 255, 0.22)' },
                 ]}>
                 <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
-                <Text category="h9" bold ml={6} style={{ color: theme['color-primary-500'] }}>
+                {/* BUG FIX (product request: "the suggested topics pill
+                    text should be black not blue") -- was
+                    theme['color-primary-500'] (brand blue). Icon/chevron
+                    stay blue (not mentioned by the request); only the
+                    label text changes. */}
+                <Text category="h9" bold ml={6} style={{ color: '#000000' }}>
                   {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
                 </Text>
                 <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
@@ -1447,14 +1457,13 @@ const themedStyles = StyleService.create({
     fontFamily: "PlusJakartaSans-Regular",
   },
   rightTextStyle: {
-    // BUG FIX (product report: "check the whole app" for the same
-    // text-primary-color regression already found elsewhere) -- this is
-    // the outgoing (user's own) chat bubble, filled with
-    // theme["button-basic-color"] below (see containerToStyle). That's
-    // the same #0063f8 blue text-primary-color now resolves to, so every
-    // message the user sent was rendering invisible. text-control-color
-    // is this app's real "always white on a colored surface" token.
-    color: "text-control-color",
+    // BUG FIX (product request: "i want the user bubble to be white
+    // background not blue anymore") -- the bubble fill in renderBubble
+    // above is now a hardcoded white (was theme["button-basic-color"]),
+    // so text-control-color (this app's "always white on a colored
+    // surface" token) would now render invisible white-on-white. Black
+    // is the legible choice against the new white fill.
+    color: "#000000",
     fontSize: 15,
     fontWeight: "400",
     lineHeight: 24,
