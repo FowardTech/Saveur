@@ -945,6 +945,15 @@ export interface CoachChatMessageProps {
   // coachService.ts's SUGGESTED_ACTION parsing). Mutually exclusive with
   // suggestedCourseTopic (the backend only ever sends one or the other).
   suggestedAction?: SuggestedActionId;
+  // Product report: "The AI chat can't process images yet" -- set on a
+  // 'user' message when it was sent with an attached photo (Chat.tsx's
+  // Camera/Photo Library attach-sheet options — see coachService.ts's
+  // sendMessage). A real, already-uploaded URL (not a local file:// URI),
+  // so it survives a reinstall/second device the same as the message text
+  // itself. Chat.tsx maps this straight onto gifted-chat's own IMessage.image
+  // field, which Bubble/MessageImage already knows how to render as a
+  // preview thumbnail with zero new rendering code needed there.
+  imageUrl?: string;
 }
 
 // Product request item: "The AI coach is redirecting but just to few

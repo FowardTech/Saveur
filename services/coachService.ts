@@ -79,6 +79,7 @@ interface CoachMessageWire {
   role?: 'user' | 'coach';
   text?: string;
   suggested_course_topic?: string | null;
+  image_url?: string | null;
   created_at?: string | null;
 }
 
@@ -89,6 +90,7 @@ function fromWire(m: CoachMessageWire): CoachChatMessageProps {
     text: m.text ?? '',
     createdAt: m.created_at ? Date.parse(m.created_at) || Date.now() : Date.now(),
     suggestedCourseTopic: m.suggested_course_topic || undefined,
+    imageUrl: m.image_url || undefined,
   };
 }
 
@@ -146,12 +148,19 @@ export interface CoachUserContext {
 export async function sendMessage(
   text: string,
   context?: CoachUserContext,
+  // Product report: "The AI chat can't process images yet" -- a real
+  // already-uploaded URL from uploadChatImage below (Chat.tsx uploads the
+  // picked photo first, then calls this with the resulting URL), not a
+  // local file:// URI. Optional so every existing plain-text call site is
+  // unaffected.
+  imageUrl?: string,
 ): Promise<{userMessage: CoachChatMessageProps; coachMessage: CoachChatMessageProps}> {
   const userMessage: CoachChatMessageProps = {
     id: `msg_${Date.now()}_u`,
     role: 'user',
     text,
     createdAt: Date.now(),
+    imageUrl,
   };
 
   const recentTurns = cachedThread.slice(-8).map(m => ({role: m.role, text: m.text}));
@@ -176,6 +185,7 @@ export async function sendMessage(
       // app/api/coach.py's advice() docstring for why this flag exists
       // (askOneOff below deliberately omits it).
       persist_to_history: true,
+      image_url: imageUrl,
       profile_context: context
         ? {
             goals: context.goals,
@@ -361,6 +371,38 @@ export async function appendLocalNote(text: string): Promise<CoachChatMessagePro
   const note = fromWire(data);
   cachedThread = [...cachedThread, note];
   return note;
+}
+
+/**
+ * POST /api/v1/coach/messages/image — multipart upload of a photo picked
+ * from the device's camera or photo library (Chat.tsx's attach sheet),
+ * returning a real hosted URL. Same `{uri, type, name}` FormData shape
+ * resumeService.importSource uses for its own multipart upload (React
+ * Native's global FormData streams the file from disk from that shape
+ * directly). Deliberately its own call, separate from sendMessage below —
+ * the image has to actually be hosted somewhere BEFORE the real chat
+ * message (which carries the resulting URL) is sent, same two-step shape
+ * every other image flow in this app uses.
+ */
+export async function uploadChatImage(file: {
+  uri: string;
+  name: string;
+  mimeType?: string | null;
+}): Promise<string> {
+  const formData = new FormData();
+  // React Native's global FormData accepts a {uri, name, type} object for
+  // streaming a file from disk (same shape resumeService.ts's own
+  // importSource uses) -- TS's DOM-lib FormData.append typings don't know
+  // about this RN-specific overload at all (see that file's own identical
+  // call, same pre-existing "No overload matches this call" baseline error
+  // — TS2769), so this cast is the same escape hatch, not a new one.
+  formData.append('file', {
+    uri: file.uri,
+    name: file.name,
+    type: file.mimeType ?? 'image/jpeg',
+  } as unknown as Blob);
+  const {data} = await apiClient.post<{url: string}>('/api/v1/coach/messages/image', formData);
+  return data.url;
 }
 
 // ---- Suggested topics (GET /api/v1/coach/suggested-topics) ----------------

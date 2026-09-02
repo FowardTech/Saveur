@@ -135,6 +135,12 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
   user: msg.role === "user" ? ME_USER : COACH_USER,
   suggestedCourseTopic: msg.suggestedCourseTopic,
   suggestedAction: msg.suggestedAction,
+  // Product report: "The AI chat can't process images yet" -- gifted-chat's
+  // own IMessage.image is already rendered by its built-in MessageImage
+  // (see this screen's own renderMessageImage below, and MessageImage's own
+  // Lightbox wrapper for the "tap to open full-screen" behavior) with zero
+  // new rendering code needed here, so this is a straight passthrough.
+  image: msg.imageUrl,
 });
 
 // Product report: "when user type a question I want a text showing AI
@@ -264,13 +270,21 @@ const Chat = memo(() => {
     }
   }, [keyboardShow]);
 
-  const onSend = React.useCallback(async (outgoing: IMessage[] = []) => {
-    const draft = outgoing[0];
-    if (!draft || !draft.text || isSending) return;
-    // A real message (typed directly, or a tapped topic's opening
-    // question) is what actually starts the conversation — dismiss the
-    // greeting/topics landing screen for the rest of this visit so the
-    // just-sent message and the reply are visible.
+  // Shared by both a typed text send (onSend below) and a picked-photo send
+  // (onImagePicked, further down) — was onSend's own body until the image
+  // feature needed the exact same optimistic-append / "AI is thinking…" /
+  // error-handling flow for a draft that also carries an image, not just
+  // text. `draft.image` (gifted-chat's own IMessage field — see
+  // toGiftedMessage's comment) is what actually renders the preview
+  // thumbnail; `imageUrl` is the same URL handed separately to
+  // coachService.sendMessage so the backend can pass it to a real vision
+  // LLM call (see app/api/coach.py's advice()).
+  const sendDraft = React.useCallback(async (draft: IMessage, imageUrl?: string) => {
+    if (isSending) return;
+    // A real message (typed directly, a tapped topic's opening question, or
+    // a sent photo) is what actually starts the conversation — dismiss the
+    // greeting/topics landing screen for the rest of this visit so the just-
+    // sent message and the reply are visible.
     setShowGreeting(false);
     // Optimistically show the user's message immediately.
     setMessages(previous => GiftedChat.append(previous, [draft]));
@@ -285,12 +299,16 @@ const Chat = memo(() => {
     );
     setIsSending(true);
     try {
-      const { coachMessage } = await coachService.sendMessage(draft.text, {
-        goals: profile?.goals,
-        industries: profile?.industries,
-        desiredRoles: profile?.desiredRoles,
-        preferredCountries: profile?.preferredCountries,
-      });
+      const { coachMessage } = await coachService.sendMessage(
+        draft.text,
+        {
+          goals: profile?.goals,
+          industries: profile?.industries,
+          desiredRoles: profile?.desiredRoles,
+          preferredCountries: profile?.preferredCountries,
+        },
+        imageUrl,
+      );
       // Swap the thinking placeholder out for the real reply in one update
       // (filter it out, then append the real message) rather than a
       // separate "remove" step first — avoids a one-frame flash where
@@ -319,6 +337,12 @@ const Chat = memo(() => {
       setIsSending(false);
     }
   }, [isSending, profile, t]);
+
+  const onSend = React.useCallback(async (outgoing: IMessage[] = []) => {
+    const draft = outgoing[0];
+    if (!draft || !draft.text || isSending) return;
+    await sendDraft(draft);
+  }, [isSending, sendDraft]);
 
   // Auto-sends a pre-composed opening question instead of dropping the
   // user on a blank thread, when this screen is entered with a specific
@@ -583,37 +607,61 @@ const Chat = memo(() => {
     }
   }, [uploadAttachment, t]);
 
+  // Product report: "The AI chat can't process images yet" -- Camera/Photo
+  // Library (below) used to silently route every picked photo into the
+  // resume/portfolio attachment flow (uploadAttachment above) regardless of
+  // what the user actually meant by tapping a photo icon in a CHAT's attach
+  // sheet — this is the real fix: upload the photo, then send it as an
+  // actual chat message (with a default caption so the bubble never looks
+  // empty) so it renders as a real preview thumbnail (toGiftedMessage's
+  // `image` field, see that comment) and reaches the coach's real vision
+  // analysis (app/api/coach.py's advice()). "Attach Resume / Files" (onAttach
+  // above) is unchanged -- that one is specifically for building the user's
+  // resume/portfolio, not for showing the coach something in conversation.
+  const onImagePicked = React.useCallback(async (asset: {uri: string; fileName?: string; type?: string}) => {
+    if (isAttaching || isSending) return;
+    setIsAttaching(true);
+    try {
+      const imageUrl = await coachService.uploadChatImage({
+        uri: asset.uri,
+        name: asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" }),
+        mimeType: asset.type,
+      });
+      const draft: CoachIMessage = {
+        _id: `msg_${Date.now()}_img`,
+        text: t("message:sent_photo_caption", { defaultValue: "📷 Sent a photo" }),
+        image: imageUrl,
+        createdAt: Date.now(),
+        user: ME_USER,
+      } as unknown as CoachIMessage;
+      await sendDraft(draft, imageUrl);
+    } catch (e: any) {
+      Alert.alert(
+        t("more:upload_failed", { defaultValue: "Upload failed" }),
+        e?.message ?? t("common:something_went_wrong", {
+          defaultValue: "Something went wrong. Please try again.",
+        }),
+      );
+    } finally {
+      setIsAttaching(false);
+    }
+  }, [isAttaching, isSending, sendDraft, t]);
+
   const onCamera = React.useCallback(() => {
     ImagePicker.launchCamera({ mediaType: 'photo', saveToPhotos: false }, response => {
       const asset = response.assets?.[0];
       if (response.didCancel || !asset?.uri) return;
-      uploadAttachment(
-        {
-          uri: asset.uri,
-          name: asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" }),
-          sizeBytes: asset.fileSize,
-          mimeType: asset.type,
-        },
-        'portfolio',
-      );
+      onImagePicked({ uri: asset.uri, fileName: asset.fileName, type: asset.type });
     });
-  }, [uploadAttachment, t]);
+  }, [onImagePicked]);
 
   const onPhotoLibrary = React.useCallback(() => {
     ImagePicker.launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, response => {
       const asset = response.assets?.[0];
       if (response.didCancel || !asset?.uri) return;
-      uploadAttachment(
-        {
-          uri: asset.uri,
-          name: asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" }),
-          sizeBytes: asset.fileSize,
-          mimeType: asset.type,
-        },
-        'portfolio',
-      );
+      onImagePicked({ uri: asset.uri, fileName: asset.fileName, type: asset.type });
     });
-  }, [uploadAttachment, t]);
+  }, [onImagePicked]);
 
   // onMakeCall/onViewProgress REMOVED (product report: "Remove the start
   // video practice icon and the view my progress icon we dont need
