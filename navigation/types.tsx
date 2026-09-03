@@ -532,7 +532,12 @@ export type MessagesStackParamList = {
   Chat: {initialPrompt?: string; openTopicsSheet?: boolean} | undefined;
 };
 export type RequestsBottomStackParamList = {
-  RequestsSrc: undefined;
+  // initialTab: which of RequestsSrc's own two pill tabs (0 = Applications,
+  // 1 = Practice History) to land on. Added for the drawer's "Recent
+  // Interviews" row (navigation/MainDrawer.tsx) — that link means "take me
+  // straight to my completed interviews", not the Applications tab
+  // RequestsSrc otherwise defaults to.
+  RequestsSrc: {initialTab?: number} | undefined;
   RequestsInPast: {requestType: Request_Type_Enum};
 };
 export type RequestsStackParamList = {

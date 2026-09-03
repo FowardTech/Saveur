@@ -116,7 +116,15 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // had indirect entry points (WhatsNext.tsx's "Practice this live" button,
 // MoreSrc.tsx's "Dream Company Dashboard" row) and no drawer row of their
 // own.
-type DrawerRoute = 'Home' | 'Coach' | 'SalaryNegotiation' | 'DreamCompanies' | 'Profile';
+// RecentInterviews added per product request: "In the drawer i want a
+// link there that says recent interviews. When users click it it takes
+// them to the recent interviews they just completed. Let it be under the
+// chat item." Not its own screen -- lands on the real, existing "Interviews"
+// tab (src/requests/RequestsSrc.tsx, hidden from the drawer's own visible
+// list per this file's own top comment) with its Practice History pill
+// tab pre-selected instead of the Applications tab it otherwise defaults
+// to (see RequestsSrc.tsx's own initialTab param comment).
+type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'DreamCompanies' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -158,6 +166,11 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
   const items: DrawerNavItem[] = [
     {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
     {route: 'Coach', label: t('common:drawer_chat', {defaultValue: 'Chat'}).toString(), icon: 'message-circle-outline'},
+    {
+      route: 'RecentInterviews',
+      label: t('common:drawer_recent_interviews', {defaultValue: 'Recent Interviews'}).toString(),
+      icon: 'clock-outline',
+    },
     {
       route: 'SalaryNegotiation',
       label: t('common:drawer_salary_negotiation', {defaultValue: 'Salary Negotiation'}).toString(),
@@ -308,6 +321,11 @@ const MainDrawerContent = memo(() => {
         navigationRef.navigate('MainBottomTab', {screen: 'Home'});
       } else if (route === 'Coach') {
         navigationRef.navigate('MainBottomTab', {screen: 'Coach', params: undefined});
+      } else if (route === 'RecentInterviews') {
+        navigationRef.navigate('MainBottomTab', {
+          screen: 'Interviews',
+          params: {screen: 'RequestsSrc', params: {initialTab: 1}},
+        });
       } else if (route === 'SalaryNegotiation') {
         navigationRef.navigate('SalaryNegotiation');
       } else if (route === 'DreamCompanies') {

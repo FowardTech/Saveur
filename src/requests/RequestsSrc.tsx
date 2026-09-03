@@ -7,6 +7,7 @@ import {
   ViewPager,
 } from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
+import {RouteProp, useRoute} from '@react-navigation/native';
 
 import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
@@ -15,12 +16,19 @@ import keyExtractor from 'utils/keyExtractor';
 import BasicTabBar from 'components/BasicTabBar';
 import ApplicationsTab from './Applications/ApplicationsTab';
 import PracticeHistoryTab from './PracticeHistory/PracticeHistoryTab';
+import {RequestsBottomStackParamList} from 'navigation/types';
 
 const RequestsSrc = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['request', 'common']);
+  const route = useRoute<RouteProp<RequestsBottomStackParamList, 'RequestsSrc'>>();
 
-  const [activeIndex, setActiveIndex] = React.useState(0);
+  // Product request: "In the drawer i want a link there that says recent
+  // interviews... it takes them to the recent interviews they just
+  // completed" -- the drawer's new row (navigation/MainDrawer.tsx) passes
+  // initialTab: 1 to land straight on Practice History instead of this
+  // screen's own default (0, Applications).
+  const [activeIndex, setActiveIndex] = React.useState(route.params?.initialTab ?? 0);
   const shouldLoadComponent = React.useCallback(
     (index: number) => index === activeIndex,
     [activeIndex],
