@@ -326,7 +326,32 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // this is the most plausible explanation the code supports, not a
     // verified root cause.
     try? session.setActive(false, options: [.notifyOthersOnDeactivation])
-    try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
+    // DIAGNOSTIC, ROUND 7 (real-device evidence, all of it now pointing the
+    // same direction): every experiment that touched something OTHER than
+    // this session's MODE has already been tried and ruled out this same
+    // investigation -- setVoiceProcessingEnabled on/off made zero
+    // difference, permissions/availability/on-device-support are all
+    // confirmed fine, audio level is confirmed genuinely loud (peaks up to
+    // 1.0/full clipping) with zero correlation to the failure. Direct
+    // comparison against the OTHER speech pipeline in this app (services/
+    // speechService.ts, @dev-amirzubair/react-native-voice --
+    // node_modules/@dev-amirzubair/react-native-voice/ios/Voice/Voice.mm),
+    // confirmed working on this same device, surfaced the one substantive,
+    // still-untested difference: that pipeline never sets a session MODE
+    // at all (stays AVAudioSessionModeDefault) -- only this file opts into
+    // .voiceChat, Apple's VoIP-tuned mode. That's a SESSION-level setting,
+    // distinct from the per-node setVoiceProcessingEnabled flag already
+    // ruled out -- .voiceChat can still change what's actually handed to
+    // the recognizer (route configuration, internal AGC/processing
+    // tuning) independent of what a raw peak-amplitude meter reports.
+    // .voiceChat was deliberately added earlier in this file's history
+    // (see the comment on setVoiceProcessingEnabled just below -- "attempt
+    // 2's mistake") specifically to fix the coach hearing its own TTS
+    // during barge-in, so dropping it is a real, known tradeoff, not free
+    // -- but recognition has never succeeded even once with it in place,
+    // and that has to come first. Temporarily .default here, matching the
+    // proven-working pipeline exactly, to test this directly.
+    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
     try session.setActive(true, options: [])
 
     let inputNode = audioEngine.inputNode
