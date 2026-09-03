@@ -84,6 +84,33 @@ class DuplexVoiceEngine: RCTEventEmitter {
   // needs downstream of the player node.
   private var playerConnectFormat: AVAudioFormat?
 
+  // DIAGNOSTIC (real-device report, mic-warm rollout: engine start()
+  // resolves cleanly, no onError ever fires, yet recognitionTask's
+  // completion closure never delivers a single transcript even after 20+
+  // seconds of the user genuinely speaking into the phone's own mic/
+  // speaker, no Bluetooth involved). Every failure mode this file has hit
+  // before (chipmunk playback, silent playback, self-listening, "Siri and
+  // Dictation disabled") surfaced through EITHER audible playback being
+  // obviously wrong OR an onError event -- this is the first report of
+  // total silence on BOTH the transcript AND error channels at once, which
+  // narrows it to one of: (a) installTap's buffer callback never actually
+  // firing at all (the audio graph isn't really delivering input, despite
+  // audioEngine.start() having succeeded), or (b) it fires with
+  // consistently near-zero-amplitude buffers (voice processing/AGC or a
+  // routing issue zeroing out real input before it ever reaches the tap),
+  // or (c) real, non-silent buffers ARE reaching recognitionRequest.append
+  // and SFSpeechRecognizer itself just never calls back. Those three have
+  // very different fixes, and guessing which one blind (again) after two
+  // JS-level fixes already didn't resolve this isn't productive. This flag
+  // gates a ONE-TIME (per beginRecognition() call, not per-buffer -- no
+  // measurable real-time-audio-thread cost) console log of the very first
+  // tap buffer's frame count and peak sample amplitude, printed via NSLog
+  // (Xcode/device console only -- deliberately NOT surfaced through emit()/
+  // onError, which would show as a confusing user-facing red error for
+  // what's actually just a diagnostic probe). Next repro with Xcode
+  // attached tells us definitively which of (a)/(b)/(c) this actually is.
+  private var hasLoggedFirstAudioBuffer = false
+
   override init() {
     super.init()
     speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: currentLocaleIdentifier()))
@@ -318,8 +345,24 @@ class DuplexVoiceEngine: RCTEventEmitter {
     let inputNode = audioEngine.inputNode
     let tapFormat = inputNode.outputFormat(forBus: 0)
     inputNode.removeTap(onBus: 0) // safety net against a stale tap from a previous session
+    hasLoggedFirstAudioBuffer = false // see this flag's own comment above -- reset per session
     inputNode.installTap(onBus: 0, bufferSize: 1024, format: tapFormat) { [weak self] buffer, _ in
-      self?.recognitionRequest?.append(buffer)
+      guard let self = self else { return }
+      // See hasLoggedFirstAudioBuffer's own comment -- ONE-TIME diagnostic,
+      // not per-buffer (this closure fires ~40x/sec at bufferSize 1024).
+      if !self.hasLoggedFirstAudioBuffer {
+        self.hasLoggedFirstAudioBuffer = true
+        let frameLength = Int(buffer.frameLength)
+        var peak: Float = 0
+        if let channelData = buffer.floatChannelData, frameLength > 0 {
+          let samples = channelData[0]
+          for i in 0..<frameLength {
+            peak = max(peak, abs(samples[i]))
+          }
+        }
+        NSLog("[DuplexVoiceEngine] first input tap buffer: frames=\(frameLength) format=\(tapFormat) peakAmplitude=\(peak)")
+      }
+      self.recognitionRequest?.append(buffer)
     }
 
     startRecognitionRequest(with: recognizer)
@@ -338,7 +381,26 @@ class DuplexVoiceEngine: RCTEventEmitter {
   // the signature of a genuinely broken session instead.
   private var recentRecognitionErrorTimestamps: [Date] = []
 
+  // DIAGNOSTIC (see hasLoggedFirstAudioBuffer's own comment for the full
+  // "why" -- this covers possibility (c) there: real, non-silent buffers
+  // reaching recognitionRequest.append but SFSpeechRecognizer's own
+  // completion closure never calling back at all, neither a result nor an
+  // error, for the whole 20+ second window the JS side already waits
+  // before giving up. Bumped on every startRecognitionRequest() call so a
+  // stale check from a PRIOR request (already superseded by a fresh one --
+  // the normal restart-on-isFinal/error cycle) never fires against the
+  // current one.
+  private var recognitionRequestGeneration = 0
+
   private func startRecognitionRequest(with recognizer: SFSpeechRecognizer) {
+    recognitionRequestGeneration += 1
+    let myGeneration = recognitionRequestGeneration
+    var receivedAnyCallback = false
+    DispatchQueue.main.asyncAfter(deadline: .now() + 8) { [weak self] in
+      guard let self = self, self.recognitionRequestGeneration == myGeneration, !receivedAnyCallback else { return }
+      NSLog("[DuplexVoiceEngine] recognitionTask has received NEITHER a result NOR an error 8s into this request -- SFSpeechRecognizer's completion closure appears to never be calling back at all for this session.")
+    }
+
     let request = SFSpeechAudioBufferRecognitionRequest()
     request.shouldReportPartialResults = true
     // REVERTED (real-device report: every single recognition attempt
@@ -360,6 +422,7 @@ class DuplexVoiceEngine: RCTEventEmitter {
     recognitionRequest = request
 
     recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
+      receivedAnyCallback = true // see the diagnostic timer's own comment above
       guard let self = self else { return }
       if let result = result {
         // A real result proves this session is alive -- whatever error
