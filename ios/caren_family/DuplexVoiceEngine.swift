@@ -525,16 +525,47 @@ class DuplexVoiceEngine: RCTEventEmitter {
         self.recognitionTask = nil
         self.recognitionRequest = nil
         guard self.isEngineSetUp, let recognizer = self.speechRecognizer else { return }
-        if error != nil {
-          let now = Date()
-          self.recentRecognitionErrorTimestamps = self.recentRecognitionErrorTimestamps.filter {
-            now.timeIntervalSince($0) < 3
-          }
-          self.recentRecognitionErrorTimestamps.append(now)
-          if self.recentRecognitionErrorTimestamps.count >= 4 {
-            self.recentRecognitionErrorTimestamps.removeAll()
-            self.emitError("recognitionTask: giving up after rapid error loop", error)
-            return // stop silently retrying a session that's demonstrably not working
+        if let error = error {
+          // BUG FIX (product report, confirmed via real Xcode console
+          // output on a real device): a brand-new "always listening"
+          // session was hitting FOUR "No speech detected" errors within
+          // the first couple of seconds -- before the user had any real
+          // chance to start talking at all -- which tripped this guard's
+          // give-up threshold and permanently abandoned recognition for
+          // the rest of the session. Every later real speech buffer was
+          // still physically reaching the input tap (confirmed: a real,
+          // non-zero peakAmplitude logged well after this point -- see
+          // hasLoggedFirstAudioBuffer) but had nowhere to go, since
+          // recognitionRequest was left nil once this gave up --
+          // self.recognitionRequest?.append(buffer) in the tap callback
+          // just silently no-ops on nil, with zero further errors either.
+          // That's exactly "captures nothing, no error, ever" from the
+          // outside.
+          //
+          // "No speech detected" restarting the request is the CORRECT,
+          // intended, ROUTINE behavior for "always listening" (see this
+          // function's own header comment above) -- Apple's recognizer
+          // sessions have their own short internal duration/silence limit
+          // independent of whether the user has said anything yet, so
+          // this can legitimately fire several times in quick succession
+          // simply because the user hasn't started talking yet, not just
+          // "after a real silence gap" once a conversation is already
+          // under way as this guard originally assumed. It should never
+          // by itself count as evidence of a genuinely broken session --
+          // only OTHER failures (auth, format, "Siri and Dictation are
+          // disabled", etc.) should count toward giving up.
+          let isNoSpeechDetected = (error as NSError).localizedDescription == "No speech detected"
+          if !isNoSpeechDetected {
+            let now = Date()
+            self.recentRecognitionErrorTimestamps = self.recentRecognitionErrorTimestamps.filter {
+              now.timeIntervalSince($0) < 3
+            }
+            self.recentRecognitionErrorTimestamps.append(now)
+            if self.recentRecognitionErrorTimestamps.count >= 4 {
+              self.recentRecognitionErrorTimestamps.removeAll()
+              self.emitError("recognitionTask: giving up after rapid error loop", error)
+              return // stop silently retrying a session that's demonstrably not working
+            }
           }
         }
         // Restart a fresh request immediately, as long as the engine is
