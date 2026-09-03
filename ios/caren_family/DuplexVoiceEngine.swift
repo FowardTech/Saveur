@@ -358,6 +358,11 @@ class DuplexVoiceEngine: RCTEventEmitter {
     let inputNode = audioEngine.inputNode
     let outputNode = audioEngine.outputNode
 
+    // Declared here, before either node's setVoiceProcessingEnabled call,
+    // now that round 10's fix (below) needs to gate BOTH nodes symmetrically
+    // instead of just outputNode/playerNode as round 9 originally had it.
+    let isolateRecognitionForDiagnostic = true
+
     // THE key mechanism this whole module exists to add: enable voice
     // processing (the AEC-capable Voice-Processing I/O audio unit) on
     // BOTH nodes of THIS engine -- not just the AVAudioSession's mode
@@ -366,10 +371,35 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // either way this should degrade to "no AEC" rather than block
     // startup entirely -- same posture as every other AVAudioSession/
     // AVAudioEngine call in this file.
-    do {
-      try inputNode.setVoiceProcessingEnabled(true)
-    } catch {
-      self.emitError("setVoiceProcessingEnabled(input)", error)
+    //
+    // BUG FOUND AND FIXED, ROUND 10 (real-device evidence from the round-9
+    // diagnostic below: continuous Core Audio "throwing -1 / from AU
+    // (0x...): auou/vpio/appl, render err: -1" errors flooding the log --
+    // never seen in any prior round -- plus rolling peak amplitude reading
+    // 0.0 (silence), WORSE than every previous round's loud/clipping
+    // readings). Root cause: round 9 enabled voice processing on inputNode
+    // (this call, unconditionally) but skipped it on outputNode AND never
+    // attached playerNode AT ALL while isolateRecognitionForDiagnostic was
+    // true -- an asymmetric, half-configured Voice-Processing I/O unit.
+    // VPIO is architecturally a SINGLE paired input+output audio unit, not
+    // two independent halves: Apple's docs and widespread real-world
+    // reports agree that enabling it on one side without a valid, actively
+    // rendering path on the other causes the shared render callback to fail
+    // continuously (exactly the "render err: -1" flood seen here) --
+    // starving the input side too, which explains the silent 0.0 peak
+    // amplitude. This was a bug INTRODUCED by round 9's diagnostic itself,
+    // not new evidence about the original "No speech detected" mystery --
+    // that diagnostic's isolation was never actually clean. Fixed by making
+    // isolateRecognitionForDiagnostic symmetric below: voice processing is
+    // now skipped on BOTH nodes together when isolating (a true mic-only
+    // engine, matching the working legacy pipeline's own non-VPIO
+    // architecture), never just one side.
+    if !isolateRecognitionForDiagnostic {
+      do {
+        try inputNode.setVoiceProcessingEnabled(true)
+      } catch {
+        self.emitError("setVoiceProcessingEnabled(input)", error)
+      }
     }
     // DIAGNOSTIC, ROUND 9 (decisive new evidence: the OTHER speech
     // pipeline in this app -- services/speechService.ts, confirmed
@@ -402,8 +432,8 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // while this is true (playerNode was never connected to anything) --
     // expected and fine for this one isolated test; the only question is
     // whether recognition alone, on an otherwise-identical setup, finally
-    // succeeds.
-    let isolateRecognitionForDiagnostic = true
+    // succeeds. (isolateRecognitionForDiagnostic is now declared above,
+    // before inputNode's own gated call -- see round 10's comment there.)
     if !isolateRecognitionForDiagnostic {
       do {
         try outputNode.setVoiceProcessingEnabled(true)
@@ -411,7 +441,7 @@ class DuplexVoiceEngine: RCTEventEmitter {
         self.emitError("setVoiceProcessingEnabled(output)", error)
       }
     } else {
-      NSLog("[DuplexVoiceEngine] DIAGNOSTIC BUILD: recognition isolated from playback graph -- playerNode not attached, TTS will not produce audible sound this run. This is intentional, testing whether the shared engine design itself affects recognition.")
+      NSLog("[DuplexVoiceEngine] DIAGNOSTIC BUILD: recognition isolated from playback graph -- playerNode not attached, voice processing disabled on BOTH nodes (round 10 fix: input-only was an invalid half-configured VPIO state and caused continuous render err: -1). TTS will not produce audible sound this run. This is intentional, testing whether the shared engine design itself affects recognition.")
     }
 
     // BUG FIX, ROUND 2 (real-device reports, in order: (1) TTS played
