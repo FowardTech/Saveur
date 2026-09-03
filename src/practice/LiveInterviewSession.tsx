@@ -1713,13 +1713,17 @@ const LiveInterviewSession = memo(() => {
                   VoiceCoachView.tsx used (see that file's own comment for
                   the full history, including the even-older two-layer
                   purple/pink hand-rolled version this GIF itself
-                  replaced); now the same hand-rolled blue/light-blue/
-                  orange LinearGradient circle as that file, same colors,
-                  same reasoning -- this app's own brand blue/orange
-                  instead of an arbitrary swirl image. */}
+                  replaced); now the same hand-rolled LinearGradient
+                  circle as that file, same colors, same reasoning.
+                  FOLLOW-UP (explicit product request: "Lets remove the
+                  orange color and lets use just default blue and light
+                  blue only") -- was ['#0063F8', '#7EA8E2', '#FB923C'];
+                  orange dropped, leaving the same two-stop blue ->
+                  light-blue blend as VoiceCoachView.tsx's own identical
+                  follow-up. */}
               <Animated.View style={[styles.orb, orbStyle]}>
                 <LinearGradient
-                  colors={['#0063F8', '#7EA8E2', '#FB923C']}
+                  colors={['#0063F8', '#7EA8E2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.orbGradientFill}

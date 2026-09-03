@@ -1369,18 +1369,21 @@ const VoiceCoachView = memo(({
             pre-made swirling GIF asset (see assets/images/index.ts —
             still there, just unused by this file now); now a real,
             hand-rolled LinearGradient circle instead, using this app's
-            own brand colors (color-primary-500 #0063F8, the same blue
-            every other "main color" accent in this app already uses;
-            #FB923C, the Practice card's orange; #7EA8E2, a lighter sky
-            blue) rather than a bespoke one-off palette. No image asset at
-            all -- orbGradientFill below is clipped to a circle via
-            styles.orb's own borderRadius/overflow (same idea the OLDER
-            two-layer purple/pink version mentioned in this comment's own
-            git history used, before that got replaced by the GIF this
-            pass is now undoing). */}
+            own brand colors rather than a bespoke one-off palette. No
+            image asset at all -- orbGradientFill below is clipped to a
+            circle via styles.orb's own borderRadius/overflow (same idea
+            the OLDER two-layer purple/pink version mentioned in this
+            comment's own git history used, before that got replaced by
+            the GIF this pass is now undoing).
+            FOLLOW-UP (explicit product request: "Lets remove the orange
+            color and lets use just default blue and light blue only")
+            -- was ['#0063F8', '#7EA8E2', '#FB923C'] (blue -> light blue
+            -> orange); the orange stop is dropped, leaving a plain
+            two-stop blue -> light-blue blend (#0063F8 -> #7EA8E2, the
+            same two non-orange colors this orb already had). */}
         <Animated.View style={[styles.orb, orbStyle]}>
           <LinearGradient
-            colors={['#0063F8', '#7EA8E2', '#FB923C']}
+            colors={['#0063F8', '#7EA8E2']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.orbGradientFill}
