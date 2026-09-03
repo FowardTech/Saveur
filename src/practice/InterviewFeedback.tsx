@@ -29,6 +29,7 @@ import ShareToUserModal from 'components/ShareToUserModal';
 import CtaButton from 'components/CtaButton';
 import StarRating, { percentToStars } from 'components/StarRating';
 import CopyButton from 'components/CopyButton';
+import DiscussCoachButton from 'components/DiscussCoachButton';
 import { lightenColor } from 'utils/color';
 
 // Redesign v2 (full reskin) — this screen has 5 separate ProgressCard
@@ -774,10 +775,8 @@ const InterviewFeedback = memo(() => {
             in this app already has). Not gated on sessionId the way View
             Replay above is -- a real score is enough to discuss even
             without a session to link back to. */}
-        <Button
-          children={t('find:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' })}
-          status="basic"
-          accessoryLeft={props => <Icon {...props} pack="eva" name="message-circle-outline" />}
+        <DiscussCoachButton
+          label={t('find:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' }).toString()}
           onPress={onDiscussWithCoach}
           style={{ marginTop: sessionId ? 16 : 32 }}
         />

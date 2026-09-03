@@ -22,6 +22,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CodeBlock from 'components/CodeBlock';
+import DiscussCoachButton from 'components/DiscussCoachButton';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as interviewReplayService from 'services/interviewReplayService';
@@ -554,10 +555,8 @@ const InterviewReplay = memo(() => {
               Bottom of the screen, after every other section, same
               "final call to action" placement as InterviewFeedback.tsx's
               identical button. */}
-          <Button
-            children={t('practice:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' })}
-            status="basic"
-            accessoryLeft={props => <Icon {...props} pack="eva" name="message-circle-outline" />}
+          <DiscussCoachButton
+            label={t('practice:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' }).toString()}
             onPress={onDiscussWithCoach}
             style={{ marginTop: 24 }}
           />
