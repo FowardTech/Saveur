@@ -172,6 +172,21 @@ dependencies {
     // API < 31 so it's consistent everywhere, replacing the old plain
     // AppTheme.Main windowBackground trick as the actual first-paint theme.
     implementation("androidx.core:core-splashscreen:1.0.1")
+
+    // DuplexVoiceEngineModule.kt's real-time streaming STT WebSocket client
+    // (ROUND 2 -- see that file's own header comment): react-native itself
+    // already depends on OkHttp internally for its networking stack, but
+    // only as an `implementation` dependency of com.facebook.react:react-
+    // android, which Gradle does NOT expose on this module's own compile
+    // classpath by default (implementation deps aren't transitive to
+    // consumers) -- so `import okhttp3.*` here needs its own explicit
+    // declaration regardless of what's already bundled at runtime. Version
+    // pinned to exactly match this project's react-native (0.82.1) own
+    // internal OkHttp version (node_modules/react-native/gradle/
+    // libs.versions.toml's `okhttp` entry) to avoid a resolution conflict
+    // with whatever version react-android already depends on -- same
+    // reasoning as the Fresco version pin above.
+    implementation("com.squareup.okhttp3:okhttp:4.9.2")
 }
 
 // Must be applied after the android {} block. Reads google-services.json in

@@ -1,6 +1,9 @@
 import {NativeEventEmitter, NativeModules, PermissionsAndroid, Platform} from 'react-native';
+import auth from '@react-native-firebase/auth';
 import i18n from 'i18next';
 
+import {API_BASE_URL} from 'constants/env';
+import {getSttLocale} from 'constants/languages';
 import {fetchElevenLabsAudioUrl} from './speechService';
 
 // ---------------------------------------------------------------------------
@@ -45,6 +48,39 @@ async function ensureAndroidMicPermission(): Promise<boolean> {
   if (Platform.OS !== 'android') return true;
   const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
   return granted === PermissionsAndroid.RESULTS.GRANTED;
+}
+
+// ROUND 2, Android-only: DuplexVoiceEngineModule.kt no longer uses
+// SpeechRecognizer (see that file's own header comment for the full "why"
+// -- in short, SpeechRecognizer never exposed the raw AudioRecord session
+// real echo cancellation needs). It now captures raw audio itself and
+// streams it to this app's own backend, which proxies it to Deepgram's
+// real-time STT (Saveur-Backend/app/api/stt_stream.py) -- so, unlike
+// iOS's fully on-device SpeechAnalyzer/SFSpeechRecognizer, Android's
+// start() needs a WebSocket URL and a fresh auth token. Query params here
+// MUST match stt_stream.py's own defaults (it defaults to the same
+// values if omitted, but declared explicitly here so the two ends of this
+// pipeline never silently drift apart if either side's default ever
+// changes) and DuplexVoiceEngineModule.kt's STREAM_SAMPLE_RATE/
+// STREAM_AUDIO_ENCODING constants.
+function buildStreamingSttUrl(): string {
+  // API_BASE_URL is "https://..." -- wss is the secure-WebSocket scheme
+  // https maps to, same TLS termination/reverse proxy the rest of the
+  // app's API traffic already goes through.
+  const wsBase = API_BASE_URL.replace(/^http/i, 'ws');
+  // getSttLocale (constants/languages.ts) is this codebase's existing,
+  // single source of truth mapping the app's own language codes to full
+  // BCP-47 STT locale tags (e.g. "es" -> "es-ES") -- already proven
+  // against the legacy on-device react-native-voice pipeline
+  // (speechService.ts). UNCERTAINTY FLAG: not every one of those exact
+  // region-qualified tags is necessarily one Deepgram's nova-2 model
+  // supports (its supported-language matrix doesn't necessarily mirror
+  // on-device recognizers 1:1) -- if a given language errors out, that
+  // surfaces as stt_stream.py's own {"type":"error"} message forwarded
+  // through onError, and the fix is a same-file mapping tweak here, not a
+  // reason to doubt the pipeline.
+  const language = getSttLocale(i18n.language);
+  return `${wsBase}/api/v1/stt/stream?language=${encodeURIComponent(language)}&encoding=linear16&sample_rate=16000`;
 }
 
 // BUG FIX ATTEMPT (product report: after a full app close+reopen -- not
@@ -123,6 +159,15 @@ export interface DuplexErrorEvent {
   message: string;
 }
 
+// Android-only (see DuplexVoiceEngineModule.kt's emitSpeechStarted() —
+// ROUND 2): the backend's VAD-detected speech onset, forwarded as a fast,
+// transcript-independent "the user started talking" signal — fires ahead
+// of any transcript text, closing the barge-in-latency gap a
+// transcript-only signal has. No payload — the event firing at all is the
+// signal. Never emitted on iOS; registering a listener there is harmless,
+// it will simply never fire.
+export interface SpeechStartedEvent {}
+
 export function isDuplexVoiceSupported(): boolean {
   return !!getNativeModule();
 }
@@ -146,6 +191,19 @@ export async function start(): Promise<boolean> {
         defaultValue: 'Microphone permission is required for Voice mode.',
       }) as string,
     );
+  }
+  // Android-only extra args -- see DuplexVoiceEngineModule.kt's own
+  // header comment (ROUND 2): that module streams raw audio to this
+  // app's own backend instead of using SpeechRecognizer, so it needs a
+  // WebSocket URL and a fresh Firebase ID token neither iOS's fully
+  // on-device SpeechAnalyzer/SFSpeechRecognizer path needs nor should
+  // independently construct itself. Same precedent as speakRemoteAudio's
+  // Android-only extra `text` arg.
+  if (Platform.OS === 'android') {
+    const wsUrl = buildStreamingSttUrl();
+    const user = auth().currentUser;
+    const token = user ? await user.getIdToken() : '';
+    return mod.start(wsUrl, token);
   }
   return mod.start();
 }
@@ -236,6 +294,10 @@ export async function speakWithFallback(text: string, language: string = i18n.la
 
 export function addTranscriptListener(handler: (event: TranscriptEvent) => void) {
   return getEmitter()?.addListener('onTranscript', handler);
+}
+
+export function addSpeechStartedListener(handler: (event: SpeechStartedEvent) => void) {
+  return getEmitter()?.addListener('onSpeechStarted', handler);
 }
 
 export function addListeningStateListener(handler: (event: ListeningStateEvent) => void) {
