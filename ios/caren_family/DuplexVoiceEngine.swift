@@ -133,6 +133,28 @@ class DuplexVoiceEngine: RCTEventEmitter {
   // needs downstream of the player node.
   private var playerConnectFormat: AVAudioFormat?
 
+  // BUG FIX, ROUND 12 (line-by-line diff against the OTHER speech pipeline
+  // in this app that's confirmed working on this same device -- node_modules/
+  // @dev-amirzubair/react-native-voice/ios/Voice/Voice.mm -- something round
+  // 8's mixer-node copy didn't go far enough on). Voice.mm captures
+  // inputNode.outputFormatForBus(0) ONCE, up front, and reuses that EXACT
+  // format object for both the inputNode->mixer connect call and the tap
+  // installed on the mixer. This file instead used format: nil for the
+  // connect (auto-negotiated) and separately queried
+  // recognitionMixerNode.outputFormat(forBus: 0) later in beginRecognition
+  // -- but an AVAudioMixerNode's OWN output format reflects the ENGINE's
+  // internal mixing format (its usual job is converting arbitrary inputs to
+  // a common format for further routing), not necessarily the raw hardware
+  // format the input side is actually producing. That could mean every
+  // buffer this file's tap ever received had already been resampled/
+  // converted by the mixer before appendAudioPCMBuffer saw it -- audio that
+  // still shows plausible peak amplitude (a format conversion doesn't
+  // necessarily kill level) but may no longer be something the recognizer
+  // parses as speech at all. Captured once in setupEngineIfNeeded, right
+  // after inputNode is obtained (before ANY connection exists, matching
+  // Voice.mm's own ordering exactly) -- see both use sites' own comments.
+  private var recognitionConnectFormat: AVAudioFormat?
+
   // DIAGNOSTIC (real-device report, mic-warm rollout: engine start()
   // resolves cleanly, no onError ever fires, yet recognitionTask's
   // completion closure never delivers a single transcript even after 20+
@@ -492,15 +514,20 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // mainMixerNode -> outputNode is AVAudioEngine's own default
     // connection, already in place; nothing to do for that link.
 
-    // See recognitionMixerNode's own comment -- attach it and connect
-    // inputNode's raw output into it (format: nil, same "let the engine
-    // pick the real connection format" approach already proven correct
-    // for playerNode above, rather than guessing). This mixer has no
-    // further downstream connection of its own -- it exists purely as a
-    // tap point for beginRecognition(), not to route audio anywhere else,
-    // which is a valid, self-contained branch off the input node.
+    // See recognitionConnectFormat's own comment (round 12) -- captured
+    // BEFORE this connect exists, exactly like Voice.mm's recordingFormat,
+    // and passed explicitly into connect() below instead of format: nil.
+    // Letting the engine auto-negotiate here is what previously let
+    // recognitionMixerNode's OWN output format (queried later, post-hoc, in
+    // beginRecognition) end up as whatever the engine's internal mixing
+    // format is, rather than the raw format the hardware/voice-processing
+    // input side is actually producing. This mixer has no further
+    // downstream connection of its own -- it exists purely as a tap point
+    // for beginRecognition(), not to route audio anywhere else, which is a
+    // valid, self-contained branch off the input node.
+    recognitionConnectFormat = inputNode.outputFormat(forBus: 0)
     audioEngine.attach(recognitionMixerNode)
-    audioEngine.connect(inputNode, to: recognitionMixerNode, format: nil)
+    audioEngine.connect(inputNode, to: recognitionMixerNode, format: recognitionConnectFormat)
 
     audioEngine.prepare()
     try audioEngine.start()
@@ -608,8 +635,18 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // DIAGNOSTIC, ROUND 8 (see recognitionMixerNode's own comment): tapping
     // the mixer node connected off inputNode, instead of inputNode
     // directly, to match the other, working speech pipeline's structure.
+    //
+    // BUG FIX, ROUND 12 (see recognitionConnectFormat's own comment): this
+    // used to query tapNode.outputFormat(forBus: 0) here -- the MIXER's own
+    // output format, which reflects the engine's internal mixing format,
+    // not necessarily the raw format actually flowing in from inputNode.
+    // Using the SAME explicit format captured at connect time (matching
+    // Voice.mm's proven approach of reusing one format object for both the
+    // connect and the tap) guarantees the tap reads buffers in the exact
+    // format that was actually negotiated for this session, not a
+    // potentially-different one queried from the mixer after the fact.
     let tapNode = recognitionMixerNode
-    let tapFormat = tapNode.outputFormat(forBus: 0)
+    let tapFormat = recognitionConnectFormat ?? tapNode.outputFormat(forBus: 0)
     tapNode.removeTap(onBus: 0) // safety net against a stale tap from a previous session
     hasLoggedFirstAudioBuffer = false // see this flag's own comment above -- reset per session
     sessionPeakAmplitude = 0
