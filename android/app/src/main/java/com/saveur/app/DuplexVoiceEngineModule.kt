@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -17,6 +19,7 @@ import com.facebook.react.bridge.Promise
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
+import com.facebook.react.bridge.ReadableMap
 import com.facebook.react.modules.core.DeviceEventManagerModule
 import java.util.Locale
 import java.util.UUID
@@ -29,13 +32,15 @@ import java.util.UUID
 // the isSupportedPlatform check itself; VoiceCoachView.tsx is entirely
 // unaware which platform it's talking to.
 //
-// WHY THIS IS PHASE 1, ON-DEVICE-TTS-ONLY, JUST LIKE THE iOS FILE WAS:
-// speakRemoteAudio (the ElevenLabs playback path, JS's speakRemote/
-// speakWithFallback) is NOT implemented here yet -- it rejects
-// immediately, which speakWithFallback() in duplexVoiceService.ts already
-// treats as "fall back to on-device speech", so nothing crashes or hangs;
-// it just always uses on-device TTS on Android for now instead of the
-// real ElevenLabs voice, same as iOS did before its own Phase 2 landed.
+// PHASE 2 (ElevenLabs playback via speakRemoteAudio) IS implemented here,
+// via a plain MediaPlayer -- see that method's own comment for why nothing
+// more elaborate than that is needed on this platform (unlike iOS, there's
+// no shared-engine/AEC benefit to preserve, since this platform's
+// SpeechRecognizer never gets real echo cancellation regardless of
+// playback path). On any failure it still rejects, which
+// speakWithFallback() in duplexVoiceService.ts treats as "fall back to
+// on-device speech" -- same safety net as before, just no longer the only
+// path.
 //
 // THE ONE ARCHITECTURAL DIFFERENCE FROM iOS THAT MATTERS MOST HERE:
 // SFSpeechRecognizer on iOS lets an app own the AVAudioEngine/microphone
@@ -97,6 +102,15 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
   private var speechGeneration = 0
   private var pendingSpeakPromise: Promise? = null
 
+  // PHASE 2 (product decision: build ElevenLabs playback on Android now,
+  // matching iOS). Unlike iOS, there's no shared-engine/AEC reason to route
+  // this through anything special -- Android's SpeechRecognizer already
+  // gets no real echo cancellation regardless of playback path (see this
+  // file's header comment), so a plain MediaPlayer streaming the URL
+  // directly is the simplest correct choice, no different in principle
+  // from on-device TTS as far as the echo heuristic above is concerned.
+  private var mediaPlayer: MediaPlayer? = null
+
   // See the restart-loop comment above this class -- mirrors
   // recognitionRequestGeneration/recentNoSpeechTimestamps/
   // recentRecognitionErrorTimestamps from DuplexVoiceEngine.swift exactly,
@@ -144,6 +158,53 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     if (candidateWords.isEmpty()) return false
     val overlap = candidateWords.intersect(spokenWords).size
     return overlap.toDouble() / candidateWords.size >= 0.6
+  }
+
+  // SECOND SIGNAL (product decision: keep the mic always listening during
+  // TTS for real barge-in, rather than pausing it -- text matching alone
+  // (isLikelyOwnEcho) already proved insufficient on its own). RMS values
+  // from onRmsChanged are on SpeechRecognizer's own internal scale (roughly
+  // -2 for near-silence up to ~10 for loud, clear speech on most devices --
+  // NOT real dBFS), reported every ~100-200ms while a session is active.
+  // Echo picked up from the device's own speaker tends to look different
+  // from deliberate user speech in this signal: either a brief blip that
+  // doesn't sustain, or a level tightly synced to the coach's own playback
+  // envelope rather than an independent voice. Requiring several
+  // consecutive above-threshold readings within a short recent window is a
+  // cheap, real second filter -- not foolproof (there is no substitute for
+  // real AEC, which this platform's public APIs don't expose -- see this
+  // file's own header comment), but a genuine improvement over text
+  // matching alone. Thresholds are a reasonable starting point, not
+  // calibrated against real-device data yet -- tune rmsThreshold/
+  // minSustainedReadings from real reports if echo still gets through, or
+  // real interruptions get missed.
+  private val recentRmsReadings = mutableListOf<Pair<Long, Float>>()
+  private val rmsThreshold = 3.0f
+  private val rmsSustainWindowMs = 500L
+  private val minSustainedReadings = 3
+
+  private fun recordRms(rmsdB: Float) {
+    val now = System.currentTimeMillis()
+    recentRmsReadings.add(now to rmsdB)
+    recentRmsReadings.removeAll { now - it.first > rmsSustainWindowMs }
+  }
+
+  private fun hasSustainedVoiceEnergy(): Boolean {
+    val now = System.currentTimeMillis()
+    val recent = recentRmsReadings.filter { now - it.first <= rmsSustainWindowMs }
+    return recent.count { it.second >= rmsThreshold } >= minSustainedReadings
+  }
+
+  // Combines both signals for the ttsSpeakingActive case: a transcript is
+  // treated as self-echo (dropped, not forwarded) if it closely matches
+  // what the coach is currently/just now saying, OR if the mic never
+  // showed sustained voice-level energy while it came in (a genuine,
+  // deliberate interruption should show both independent content AND a
+  // real, sustained voice level -- a brief/echo-shaped blip satisfies
+  // neither reliably).
+  private fun shouldSuppressAsEcho(candidate: String): Boolean {
+    if (!ttsSpeakingActive) return false
+    return isLikelyOwnEcho(candidate) || !hasSustainedVoiceEnergy()
   }
 
   private fun emitListeningState(listening: Boolean) {
@@ -236,31 +297,14 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
       // hasn't fired yet.
       currentTtsText = text
       ttsSpeakingActive = true
-      // BUG FIX (product report: text-matching alone -- isLikelyOwnEcho --
-      // didn't stop self-echo interruptions in practice). Matching TTS text
-      // against a recognized transcript is inherently fragile here: STT
-      // run on a device's OWN muffled/re-captured speaker output frequently
-      // garbles words differently than a real utterance would, and if the
-      // coach's reply is spoken in more than one utteranceId/chunk,
-      // currentTtsText only tracks the latest one while echo from an
-      // earlier chunk can still be arriving. A much more reliable guarantee
-      // than text similarity: stop the recognizer from actively capturing
-      // AT ALL while TTS is speaking, the same way this app's original,
-      // already-proven "everywhere else" (non-duplex) model on this screen
-      // always worked (see VoiceCoachView.tsx's own header comment) --
-      // cancel() ends the current session outright instead of letting it
-      // keep listening through playback. restartAfterSessionEnd (below)
-      // won't start a new session again until ttsSpeakingActive flips back
-      // to false, and onDone's grace-window callback explicitly kicks a
-      // fresh session off at that point. isLikelyOwnEcho stays in place as
-      // a secondary safety net for the brief window right as listening
-      // resumes, when trailing room echo may still be audible.
-      try {
-        speechRecognizer?.cancel()
-      } catch (e: Exception) {
-        // Best-effort -- a recognizer already idle/mid-teardown shouldn't
-        // block speak() from proceeding.
-      }
+      // BUG FIX HISTORY: text-matching alone (isLikelyOwnEcho) didn't stop
+      // self-echo in practice, so a later round switched to cancel()ing the
+      // recognizer outright during TTS -- reliable against echo, but it
+      // also killed real voice-triggered barge-in entirely (the mic simply
+      // wasn't listening during playback). Reverted back to always-
+      // listening per product decision, now paired with a second signal
+      // (see hasSustainedVoiceEnergy's own comment) instead of relying on
+      // text matching alone.
       val utteranceId = UUID.randomUUID().toString()
       tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) {}
@@ -277,18 +321,10 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
             // Speaker output/room echo doesn't cut off the instant this
             // fires -- keep treating recognized text as possible echo for a
             // short trailing window rather than clearing it immediately.
+            // The recognizer itself was never paused (see speak()'s own
+            // comment), so nothing needs to be explicitly restarted here.
             mainHandler.postDelayed({
-              if (generation != speechGeneration) return@postDelayed
-              ttsSpeakingActive = false
-              // The recognizer was cancel()ed when this utterance started
-              // (see speak()'s own comment) and restartAfterSessionEnd has
-              // been deferring ever since -- explicitly kick a fresh
-              // session off now rather than waiting for that poll to
-              // notice, so listening resumes promptly instead of after an
-              // extra delay.
-              if (isEngineSetUp) {
-                speechRecognizer?.let { startRecognitionSession(it) }
-              }
+              if (generation == speechGeneration) ttsSpeakingActive = false
             }, ttsEchoGraceMs)
           }
         }
@@ -301,14 +337,7 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
             emitError("speak", "TextToSpeech synthesis error")
             pendingSpeakPromise?.reject("duplex_speak_failed", "TextToSpeech synthesis error")
             pendingSpeakPromise = null
-            // See onDone's own comment -- TTS failed instead of finishing
-            // normally, but the recognizer was still cancel()ed when this
-            // utterance started, so it needs the same explicit resume (no
-            // grace window needed here -- nothing was actually spoken).
             ttsSpeakingActive = false
-            if (isEngineSetUp) {
-              speechRecognizer?.let { startRecognitionSession(it) }
-            }
           }
         }
       })
@@ -326,36 +355,129 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     mainHandler.post {
       speechGeneration += 1 // invalidate any in-flight utterance callback
       textToSpeech?.stop()
+      mediaPlayer?.let { existing ->
+        try {
+          existing.stop()
+        } catch (e: Exception) {
+          // Best-effort.
+        }
+        existing.release()
+      }
+      mediaPlayer = null
       emitSpeakingState(false)
       pendingSpeakPromise?.resolve(null)
       pendingSpeakPromise = null
       // Stopped explicitly (e.g. a genuine barge-in already confirmed by the
       // caller) -- no reason to keep suppressing transcripts as possible
-      // echo once playback has actually been cut. The recognizer was
-      // cancel()ed when speak() started (see its own comment) and nothing
-      // else resumes it on this path, so explicitly restart listening here
-      // too -- this is very likely a tap-to-interrupt call, and the user
-      // should be heard again immediately, not after a stale delayed retry.
+      // echo once playback has actually been cut. The recognizer itself was
+      // never paused (see speak()'s own comment), so there's nothing to
+      // restart here.
       ttsSpeakingActive = false
-      if (isEngineSetUp) {
-        speechRecognizer?.let { startRecognitionSession(it) }
-      }
       promise.resolve(null)
     }
   }
 
-  // PHASE 2 (not implemented yet -- see this file's own header comment).
-  // Rejecting here is the correct, intended behavior right now:
-  // duplexVoiceService.ts's speakWithFallback() already catches any
-  // speakRemote() failure and falls back to on-device speak() instead,
-  // exactly the same contract iOS used before its own ElevenLabs path
-  // landed.
+  // PHASE 2: real ElevenLabs voice, played via a plain MediaPlayer against
+  // the given URL + auth headers -- see mediaPlayer's own comment for why
+  // this doesn't need anything more elaborate than that on this platform.
+  // `text` is an Android-only extra argument (see duplexVoiceService.ts's
+  // speakRemote(), which only passes it on this platform) -- purely for
+  // isLikelyOwnEcho's text-matching signal, since this module never
+  // synthesizes the audio itself here and has no other way to know what it
+  // says. On any failure (bad URL, network, decode), rejects so
+  // speakWithFallback() in duplexVoiceService.ts falls back to on-device
+  // speak(), exactly the same contract iOS uses.
   @ReactMethod
-  fun speakRemoteAudio(uri: String, headers: com.facebook.react.bridge.ReadableMap?, promise: Promise) {
-    promise.reject(
-      "duplex_speak_remote_not_implemented",
-      "speakRemoteAudio is not implemented on Android yet (Phase 2) -- falls back to on-device speech.",
-    )
+  fun speakRemoteAudio(uri: String, headers: ReadableMap?, text: String?, promise: Promise) {
+    mainHandler.post {
+      if (!isEngineSetUp) {
+        promise.reject("duplex_not_started", "start() must resolve before speakRemoteAudio()")
+        return@post
+      }
+      // Stop any in-flight on-device utterance or previous remote playback
+      // first -- QUEUE_FLUSH-equivalent behavior, matching speak()'s own
+      // TextToSpeech.QUEUE_FLUSH.
+      textToSpeech?.stop()
+      mediaPlayer?.let { existing ->
+        try {
+          existing.stop()
+        } catch (e: Exception) {
+          // Best-effort -- a player already released/in a bad state
+          // shouldn't block starting the new one.
+        }
+        existing.release()
+      }
+      mediaPlayer = null
+
+      speechGeneration += 1
+      val generation = speechGeneration
+      pendingSpeakPromise = promise
+      emitSpeakingState(true)
+      currentTtsText = text
+      ttsSpeakingActive = true
+
+      try {
+        val player = MediaPlayer()
+        val headerMap = mutableMapOf<String, String>()
+        if (headers != null) {
+          val iterator = headers.keySetIterator()
+          while (iterator.hasNextKey()) {
+            val key = iterator.nextKey()
+            headers.getString(key)?.let { value -> headerMap[key] = value }
+          }
+        }
+        player.setDataSource(reactContext, Uri.parse(uri), headerMap)
+        player.setOnPreparedListener { it.start() }
+        player.setOnCompletionListener { completedPlayer ->
+          mainHandler.post {
+            if (generation == speechGeneration) {
+              emitSpeakingState(false)
+              pendingSpeakPromise?.resolve(null)
+              pendingSpeakPromise = null
+              // See speak()'s onDone -- same trailing echo-grace window.
+              mainHandler.postDelayed({
+                if (generation == speechGeneration) ttsSpeakingActive = false
+              }, ttsEchoGraceMs)
+            }
+            try {
+              completedPlayer.release()
+            } catch (e: Exception) {
+              // Best-effort.
+            }
+            if (mediaPlayer === completedPlayer) mediaPlayer = null
+          }
+        }
+        player.setOnErrorListener { errorPlayer, what, extra ->
+          mainHandler.post {
+            if (generation == speechGeneration) {
+              emitSpeakingState(false)
+              emitError("speakRemoteAudio", "MediaPlayer error (what=$what, extra=$extra)")
+              pendingSpeakPromise?.reject(
+                "duplex_speak_remote_failed",
+                "MediaPlayer error (what=$what, extra=$extra)",
+              )
+              pendingSpeakPromise = null
+              ttsSpeakingActive = false
+            }
+            try {
+              errorPlayer.release()
+            } catch (e: Exception) {
+              // Best-effort.
+            }
+            if (mediaPlayer === errorPlayer) mediaPlayer = null
+          }
+          true // handled -- suppresses the framework's own onCompletion callback for this error
+        }
+        mediaPlayer = player
+        player.prepareAsync()
+      } catch (e: Exception) {
+        emitSpeakingState(false)
+        emitError("speakRemoteAudio", e.message ?: "Failed to start remote playback")
+        pendingSpeakPromise = null
+        ttsSpeakingActive = false
+        promise.reject("duplex_speak_remote_failed", e.message, e)
+      }
+    }
   }
 
   // Required by React Native's built-in NativeEventEmitter contract even
@@ -424,9 +546,19 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     textToSpeech?.shutdown()
     textToSpeech = null
     ttsReady = false
+    mediaPlayer?.let { existing ->
+      try {
+        existing.stop()
+      } catch (e: Exception) {
+        // Best-effort.
+      }
+      existing.release()
+    }
+    mediaPlayer = null
     recognitionGeneration += 1 // invalidate any pending restart Runnable
     recentNoSpeechTimestamps.clear()
     recentOtherErrorTimestamps.clear()
+    recentRmsReadings.clear()
     currentTtsText = null
     ttsSpeakingActive = false
     isEngineSetUp = false
@@ -468,7 +600,9 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     recognizer.setRecognitionListener(object : RecognitionListener {
       override fun onReadyForSpeech(params: Bundle?) {}
       override fun onBeginningOfSpeech() {}
-      override fun onRmsChanged(rmsdB: Float) {}
+      override fun onRmsChanged(rmsdB: Float) {
+        recordRms(rmsdB)
+      }
       override fun onBufferReceived(buffer: ByteArray?) {}
       override fun onEndOfSpeech() {}
       override fun onEvent(eventType: Int, params: Bundle?) {}
@@ -479,11 +613,9 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
         if (!text.isNullOrEmpty()) {
           recentNoSpeechTimestamps.clear()
           recentOtherErrorTimestamps.clear()
-          // See isLikelyOwnEcho's own comment -- a transcript that closely
-          // matches what the coach is currently (or just now) speaking is
-          // dropped as self-echo, never forwarded as a real transcript/
-          // barge-in trigger.
-          if (!(ttsSpeakingActive && isLikelyOwnEcho(text))) {
+          // See shouldSuppressAsEcho's own comment -- combines text-content
+          // matching with a sustained-RMS-energy check.
+          if (!shouldSuppressAsEcho(text)) {
             emitTranscript(text, false)
           }
         }
@@ -495,7 +627,7 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
         if (!text.isNullOrEmpty()) {
           recentNoSpeechTimestamps.clear()
           recentOtherErrorTimestamps.clear()
-          if (!(ttsSpeakingActive && isLikelyOwnEcho(text))) {
+          if (!shouldSuppressAsEcho(text)) {
             emitTranscript(text, true)
           }
         }
@@ -504,12 +636,6 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
 
       override fun onError(error: Int) {
         if (recognitionGeneration != myGeneration) return // stale session, already superseded
-        // See speak()'s own comment -- this session was very likely just
-        // cancel()ed deliberately because TTS started, not a real failure.
-        // Don't emit a spurious error or run it through the give-up-loop
-        // counters; onDone's own grace-window callback is what explicitly
-        // restarts listening once speaking actually finishes.
-        if (ttsSpeakingActive) return
         val message = errorMessage(error)
         emitError("recognitionSession", message)
         // See this file's header comment -- same "no speech" vs. other-
@@ -561,12 +687,6 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     // gives a fresh session real wall-clock time to hear anything.
     mainHandler.postDelayed({
       if (!isEngineSetUp || recognitionGeneration != generation) return@postDelayed
-      // See speak()'s own comment -- if TTS started speaking in the
-      // meantime, don't restart yet; onDone's grace-window callback owns
-      // resuming listening once speaking actually finishes, so this would
-      // otherwise race a fresh session that immediately gets cancel()ed
-      // again a moment later.
-      if (ttsSpeakingActive) return@postDelayed
       startRecognitionSession(recognizer)
     }, delayMs)
   }

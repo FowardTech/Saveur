@@ -201,6 +201,18 @@ export async function speakRemote(text: string, language: string = i18n.language
   if (!source) {
     throw new Error('ElevenLabs TTS backend did not return a usable audio URL.');
   }
+  // Android Phase 2: DuplexVoiceEngineModule.kt's speakRemoteAudio takes an
+  // extra `text` argument iOS's doesn't need -- iOS has real echo
+  // cancellation via the Voice-Processing I/O unit and never has to guess
+  // what it just said, but Android's SpeechRecognizer exposes no raw audio
+  // session to attach real AEC to (see that file's own header comment), so
+  // its self-echo heuristic needs the source text to compare a recognized
+  // transcript against. Passed as a genuine extra arg (not bundled into
+  // headers) so iOS's own already-shipped, unchanged two-arg native
+  // signature never has to know this exists.
+  if (Platform.OS === 'android') {
+    return mod.speakRemoteAudio(source.uri, source.headers, text);
+  }
   return mod.speakRemoteAudio(source.uri, source.headers);
 }
 
