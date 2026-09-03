@@ -371,10 +371,47 @@ class DuplexVoiceEngine: RCTEventEmitter {
     } catch {
       self.emitError("setVoiceProcessingEnabled(input)", error)
     }
-    do {
-      try outputNode.setVoiceProcessingEnabled(true)
-    } catch {
-      self.emitError("setVoiceProcessingEnabled(output)", error)
+    // DIAGNOSTIC, ROUND 9 (decisive new evidence: the OTHER speech
+    // pipeline in this app -- services/speechService.ts, confirmed
+    // TODAY, on THIS same device, working perfectly via Mock Interview --
+    // uses a mic-ONLY engine, with TTS handled by a completely SEPARATE,
+    // independent playback pipeline (react-native-tts) that never shares
+    // any AVAudioEngine with recognition at all. Every previous round this
+    // session tested variables WITHIN this shared-engine design (session
+    // mode, node-level voice processing on/off, tap point, taskHint) and
+    // ruled every one of them out individually -- none explain why real,
+    // loud, confirmed-good audio reaching the recognizer still never
+    // produces a single transcript. What hasn't been tested: the shared-
+    // engine DESIGN ITSELF, i.e. whether simply having playerNode
+    // attached and connected into this same engine -- even completely
+    // idle, never actually playing anything -- changes something about
+    // the graph's format negotiation or the Voice-Processing I/O unit's
+    // own behavior in a way that degrades the input tap's data for
+    // recognition specifically, despite reading fine on a raw peak-
+    // amplitude meter. That's the whole architectural premise this file
+    // exists to prove (a single shared engine is what makes explicit AEC
+    // possible at all -- see this file's own top-of-file header comment)
+    // so ruling it in or out matters even if the eventual fix has to look
+    // different from "just don't share the engine."
+    //
+    // This flag skips attaching/connecting playerNode AND skips enabling
+    // voice processing on outputNode entirely, leaving ONLY inputNode +
+    // recognitionMixerNode in the graph -- as close to the working
+    // pipeline's own mic-only architecture as this engine can get without
+    // a full rewrite. speak()/TTS playback will not produce audible sound
+    // while this is true (playerNode was never connected to anything) --
+    // expected and fine for this one isolated test; the only question is
+    // whether recognition alone, on an otherwise-identical setup, finally
+    // succeeds.
+    let isolateRecognitionForDiagnostic = true
+    if !isolateRecognitionForDiagnostic {
+      do {
+        try outputNode.setVoiceProcessingEnabled(true)
+      } catch {
+        self.emitError("setVoiceProcessingEnabled(output)", error)
+      }
+    } else {
+      NSLog("[DuplexVoiceEngine] DIAGNOSTIC BUILD: recognition isolated from playback graph -- playerNode not attached, TTS will not produce audible sound this run. This is intentional, testing whether the shared engine design itself affects recognition.")
     }
 
     // BUG FIX, ROUND 2 (real-device reports, in order: (1) TTS played
@@ -392,11 +429,14 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // connection is established, so playerConnectFormat is guaranteed to
     // be the format the graph is ACTUALLY using for this exact connection,
     // not a value inferred from a different node that may or may not
-    // match.
-    audioEngine.attach(playerNode)
-    audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: nil)
-    let connectFormat = playerNode.outputFormat(forBus: 0)
-    playerConnectFormat = connectFormat
+    // match. SKIPPED ENTIRELY while isolateRecognitionForDiagnostic is
+    // true -- see that flag's own comment just above.
+    if !isolateRecognitionForDiagnostic {
+      audioEngine.attach(playerNode)
+      audioEngine.connect(playerNode, to: audioEngine.mainMixerNode, format: nil)
+      let connectFormat = playerNode.outputFormat(forBus: 0)
+      playerConnectFormat = connectFormat
+    }
     // mainMixerNode -> outputNode is AVAudioEngine's own default
     // connection, already in place; nothing to do for that link.
 
