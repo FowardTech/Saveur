@@ -839,6 +839,28 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // for every capture before this round) are a SEPARATE server-path/
     // network issue, or were actually downstream of this same
     // Siri/Dictation restriction the whole time, becomes answerable.
+    //
+    // DIAGNOSTIC, ROUND 15 (real-device report: Enable Dictation confirmed
+    // ON, Content & Privacy Restrictions confirmed OFF, a real logout/login
+    // cycle in between -- still identical "No speech detected", same as
+    // every round since. Every audio-pipeline hypothesis (format, tap
+    // point, voice processing, session mode) is now exhausted, and the
+    // rate-limiting hypothesis didn't survive a real logout/login gap
+    // either). Retrying requiresOnDeviceRecognition = true now that the
+    // specific blocker it hit six rounds ago (device-level Dictation
+    // disabled) is confirmed no longer true -- that error was an explicit,
+    // deterministic, real system block, not flakiness, so it's worth
+    // finding out whether it's actually gone now rather than assuming.
+    // Genuinely low-risk either way: this is just a property on the
+    // request, not a throwing call -- if the same block is somehow still
+    // in effect, round 14's domain/code logging (just above, in the error
+    // handler) will show it plainly instead of another bare "No speech
+    // detected" string, and this reverts to false as easily as it was
+    // flipped. If forced on-device genuinely works now, that's a real,
+    // clean fix in its own right (private, faster, and evidently far more
+    // reliable than whatever's wrong with the network path on this
+    // account/device) -- not just a diagnostic.
+    request.requiresOnDeviceRecognition = true
     recognitionRequest = request
 
     recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
