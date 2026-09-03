@@ -96,6 +96,24 @@ class DuplexVoiceEngine: RCTEventEmitter {
   private let speechSynthesizer = AVSpeechSynthesizer()
   private var speechRecognizer: SFSpeechRecognizer?
 
+  // ROUND 17: dual recognition backend. See ModernSpeechTranscriber.swift's
+  // own header comment for the full "why" -- 15+ rounds exhaustively ruled
+  // out this file's audio graph/format/session-mode/voice-processing as the
+  // cause of SFSpeechRecognizer's "No speech detected", pointing instead at
+  // that specific, older, dictation-oriented API itself. On iOS 26+, this
+  // now uses Apple's newer SpeechAnalyzer/SpeechTranscriber, purpose-built
+  // for exactly this file's "one continuous, always-listening session"
+  // shape instead of SFSpeechRecognizer's per-utterance request/task
+  // lifecycle. Below iOS 26, the existing, unchanged SFSpeechRecognizer
+  // path stays exactly as it was -- this is additive, not a replacement,
+  // since most users won't be on iOS 26 yet. Type-erased to `AnyObject?`
+  // rather than `ModernSpeechTranscriber?` directly so this property
+  // declaration itself doesn't require the whole class to be marked
+  // @available(iOS 26.0, *) -- every actual use is individually guarded
+  // with `if #available` at the call site instead (see beginRecognition(),
+  // its tap callback, and teardown()).
+  private var modernTranscriber: AnyObject?
+
   private var recognitionRequest: SFSpeechAudioBufferRecognitionRequest?
   private var recognitionTask: SFSpeechRecognitionTask?
 
@@ -623,6 +641,13 @@ class DuplexVoiceEngine: RCTEventEmitter {
     recognitionTask = nil
     recognitionRequest?.endAudio()
     recognitionRequest = nil
+    // ROUND 17: stop/clear the modern backend too when this session used
+    // it -- see modernTranscriber's own comment for why this is AnyObject?
+    // and needs the downcast.
+    if #available(iOS 26.0, *), let modern = modernTranscriber as? ModernSpeechTranscriber {
+      modern.stop()
+    }
+    modernTranscriber = nil
     speechGeneration += 1
     speechSynthesizer.stopSpeaking(at: .immediate)
     playerNode.stop()
@@ -793,11 +818,64 @@ class DuplexVoiceEngine: RCTEventEmitter {
         self.sessionPeakAmplitude = 0
         self.lastAmplitudeLogTime = now
       }
-      self.recognitionRequest?.append(buffer)
+      // ROUND 17: route this exact buffer to whichever recognition backend
+      // this session picked below -- same tap, same diagnostic recording/
+      // amplitude logging above either way, only the final consumer
+      // differs.
+      if #available(iOS 26.0, *), let modern = self.modernTranscriber as? ModernSpeechTranscriber {
+        modern.append(buffer)
+      } else {
+        self.recognitionRequest?.append(buffer)
+      }
     }
 
-    startRecognitionRequest(with: recognizer)
+    if #available(iOS 26.0, *) {
+      do {
+        try beginModernRecognitionSession()
+      } catch {
+        // Best-effort -- if SpeechAnalyzer/SpeechTranscriber setup itself
+        // throws (e.g. a locale/model issue), surface it clearly rather
+        // than silently producing zero transcripts with no explanation.
+        // NOT falling back to the legacy path automatically here: mixing
+        // "sometimes modern, sometimes legacy depending on a runtime
+        // failure" would make results hard to reason about. If this
+        // becomes a real problem in practice, add an explicit fallback.
+        emitError("beginModernRecognitionSession", error)
+      }
+    } else {
+      startRecognitionRequest(with: recognizer)
+    }
     emit("onListeningState", ["listening": true])
+  }
+
+  // ROUND 17: see modernTranscriber's own comment. Creates a fresh
+  // ModernSpeechTranscriber for this session and starts consuming its
+  // results -- there's no per-utterance request/task object the way
+  // SFSpeechAudioBufferRecognitionRequest needed; this one instance stays
+  // open for the whole "always listening" duplex session (see
+  // ModernSpeechTranscriber.start()'s own comment).
+  @available(iOS 26.0, *)
+  private func beginModernRecognitionSession() throws {
+    let locale = Locale(identifier: currentLocaleIdentifier())
+    let transcriber = try ModernSpeechTranscriber(locale: locale)
+    transcriber.onPartialTranscript = { [weak self] text in
+      DispatchQueue.main.async {
+        self?.emit("onTranscript", ["text": text, "isFinal": false])
+      }
+    }
+    transcriber.onFinalTranscript = { [weak self] text in
+      DispatchQueue.main.async {
+        self?.emit("onTranscript", ["text": text, "isFinal": true])
+      }
+    }
+    transcriber.onError = { [weak self] error in
+      DispatchQueue.main.async {
+        self?.emitError("modernSpeechTranscriber", error)
+      }
+    }
+    modernTranscriber = transcriber
+    transcriber.start()
+    NSLog("[DuplexVoiceEngine] ROUND 17: using SpeechAnalyzer/SpeechTranscriber (iOS 26+) instead of SFSpeechRecognizer for this session.")
   }
 
   // DIAGNOSTIC (same class of fix services/speechService.ts already needed
