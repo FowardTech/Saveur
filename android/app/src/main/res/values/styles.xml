@@ -32,19 +32,37 @@
          derivation was what rendered the logo blown up edge-to-edge/cropped
          in the first place.
 
-         Deliberately no windowSplashScreenAnimatedIcon (and no spinner —
-         that was tried and explicitly asked to be removed): this mechanism
-         was tested twice with generously-padded source assets and still
-         rendered the logo huge/cropped on-device, so rather than fight an
-         unreliable platform-side icon-sizing pipeline a third time, this
-         phase is just plain windowSplashScreenBackground — no icon at all.
+         BUG FIX, ROUND 3 (product report: logo STILL rendering too large
+         after two separate fixes to main_activity_window_background.xml —
+         the drawable AppTheme.Main/postSplashScreenTheme below actually
+         uses). Both those fixes targeted the wrong phase: this comment
+         previously assumed leaving windowSplashScreenAnimatedIcon unset
+         meant "no icon at all" here, but that's not how the SplashScreen
+         API actually behaves — omitting it doesn't suppress an icon, it
+         makes the system fall back to auto-deriving one from the app's
+         own launcher icon (AndroidManifest.xml's android:icon), applying
+         its own padding/masking assumptions — the exact "blown up/
+         cropped" auto-derivation problem this whole custom splash setup
+         was built to avoid in the first place, just never actually
+         avoided for THIS specific phase. That's what was still rendering
+         too large this whole time, regardless of how correct
+         main_activity_window_background.xml's own sizing became — this
+         phase's own auto-derived icon was never touched by either
+         previous fix.
+
+         Explicitly setting windowSplashScreenAnimatedIcon to a fully
+         transparent placeholder (splash_transparent_icon.xml) is what
+         actually suppresses the automatic fallback: the system now has
+         an icon it was explicitly given, so it never substitutes its
+         own auto-derived one — this phase now genuinely shows nothing
+         but the plain background color, which was always the intent.
          It's brief regardless (this phase ends the moment MainActivity's
          window is ready to draw), and postSplashScreenTheme immediately
-         hands off to AppTheme.Main above, which shows the actual logo at a
-         size we fully control via a plain windowBackground drawable
-         instead. -->
+         hands off to AppTheme.Main below, which shows the actual logo at
+         a size fully controlled via a plain windowBackground drawable. -->
     <style name="Theme.App.SplashScreen" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_transparent_icon</item>
         <item name="postSplashScreenTheme">@style/AppTheme.Main</item>
     </style>
 

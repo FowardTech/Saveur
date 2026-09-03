@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fully transparent 1dp placeholder — see Theme.App.SplashScreen in
+     styles.xml for why this exists: leaving windowSplashScreenAnimatedIcon
+     UNSET does not actually mean "no icon" the way an earlier version of
+     that theme's own comment assumed. Android's SplashScreen API falls
+     back to auto-deriving an icon from the app's own launcher icon
+     (AndroidManifest.xml's android:icon) whenever no explicit icon is
+     given — the exact "blown up/cropped" auto-derivation problem this
+     whole custom splash setup was built to avoid in the first place,
+     just never actually avoided for this specific phase. Explicitly
+     providing an icon (even a fully transparent, invisible one) is what
+     actually suppresses that automatic fallback — the system now has an
+     icon it was given, so it never substitutes its own. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="@android:color/transparent" />
+</shape>
