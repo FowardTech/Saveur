@@ -374,7 +374,42 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // testing instead: the working pipeline taps an intermediate mixer
     // node rather than the input node directly, and sets a taskHint this
     // file never has.
-    try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
+    // BUG FIX, ROUND 13 (real-device report: Content & Privacy Restrictions
+    // toggled off, Enable Dictation confirmed on -- still "No speech
+    // detected" every time, same as always. Apple's OWN recognizer is
+    // genuinely receiving and processing this audio, since "No speech
+    // detected" is its literal, real error string -- not a network/
+    // permission/availability problem, a genuine "this doesn't look like
+    // speech to me" conclusion despite peak amplitudes hitting 0.97.
+    //
+    // One combination has never actually been tested cleanly. Two SEPARATE
+    // mechanisms reshape audio for AEC in this file: this session's .mode
+    // (session-level DSP, set below) and setVoiceProcessingEnabled (a
+    // different, per-NODE AVAudioEngine API, set further down). Every
+    // previous round changed at most one at a time -- round 5 turned node-
+    // level processing off but left the session in .voiceChat (which
+    // applies its own telephony-tuned DSP independent of the node flag);
+    // round 7 dropped the session to .default but the node-level flag
+    // stayed on. Voice.mm -- the pipeline proven working on this exact
+    // device -- uses neither: a plain session (no explicit mode override)
+    // and no setVoiceProcessingEnabled calls at all. The one fully-
+    // equivalent state (BOTH mechanisms off, together) has never been
+    // tried. Round 9/10's isolation diagnostic came close but crashed for
+    // an unrelated reason (a stale format assumption, now fixed by round
+    // 12's recognitionConnectFormat, which queries the CURRENT format
+    // dynamically instead of assuming one) AND left playerNode entirely
+    // unattached -- a different, half-wired graph, not a clean AEC-off
+    // test. This keeps the graph FULLY wired (playerNode attached/
+    // connected as normal) and only removes voice processing/DSP from
+    // both mechanisms at once -- the closest a single shared engine can
+    // get to Voice.mm's own proven configuration while still being a
+    // complete, valid graph.
+    let disableAllVoiceProcessingForDiagnostic = true
+    if disableAllVoiceProcessingForDiagnostic {
+      try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+    } else {
+      try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
+    }
     try session.setActive(true, options: [])
 
     let inputNode = audioEngine.inputNode
@@ -438,7 +473,11 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // now skipped on BOTH nodes together when isolating (a true mic-only
     // engine, matching the working legacy pipeline's own non-VPIO
     // architecture), never just one side.
-    if !isolateRecognitionForDiagnostic {
+    //
+    // Also gated on round 13's disableAllVoiceProcessingForDiagnostic (see
+    // its own comment above, by the session mode setup) -- same symmetric
+    // "both nodes or neither" discipline applies to that flag too.
+    if !isolateRecognitionForDiagnostic && !disableAllVoiceProcessingForDiagnostic {
       do {
         try inputNode.setVoiceProcessingEnabled(true)
       } catch {
@@ -478,14 +517,16 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // whether recognition alone, on an otherwise-identical setup, finally
     // succeeds. (isolateRecognitionForDiagnostic is now declared above,
     // before inputNode's own gated call -- see round 10's comment there.)
-    if !isolateRecognitionForDiagnostic {
+    if !isolateRecognitionForDiagnostic && !disableAllVoiceProcessingForDiagnostic {
       do {
         try outputNode.setVoiceProcessingEnabled(true)
       } catch {
         self.emitError("setVoiceProcessingEnabled(output)", error)
       }
-    } else {
+    } else if isolateRecognitionForDiagnostic {
       NSLog("[DuplexVoiceEngine] DIAGNOSTIC BUILD: recognition isolated from playback graph -- playerNode not attached, voice processing disabled on BOTH nodes (round 10 fix: input-only was an invalid half-configured VPIO state and caused continuous render err: -1). TTS will not produce audible sound this run. This is intentional, testing whether the shared engine design itself affects recognition.")
+    } else {
+      NSLog("[DuplexVoiceEngine] DIAGNOSTIC BUILD (round 13): voice processing disabled on BOTH nodes AND session mode dropped to .default -- playerNode stays fully attached/connected as normal, TTS should sound exactly as before. Only AEC/DSP is removed from the graph, to test whether Apple's voice-processing DSP is itself what's making this file's audio unrecognizable as speech, closely matching Voice.mm's own proven-working (no voice processing at all) configuration.")
     }
 
     // BUG FIX, ROUND 2 (real-device reports, in order: (1) TTS played
