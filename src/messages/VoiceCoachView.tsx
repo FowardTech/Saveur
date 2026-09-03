@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { AppState, Image, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppState, Image, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
@@ -293,10 +293,58 @@ const VoiceCoachView = memo(({
   const isDarkMode = appTheme === 'dark';
 
   // Real speak-to-interrupt (see the header comment above) is iOS-only for
-  // now. isDuplexVoiceSupported() is just a Platform.OS check baked in at
-  // module load, stable for the app's whole lifetime — safe to read as a
-  // plain const rather than state.
-  const duplexSupported = duplexVoiceService.isDuplexVoiceSupported();
+  // now. isDuplexVoiceSupported() USED TO be read as a plain const here,
+  // on the assumption that it's stable for the app's whole lifetime once
+  // read once. That assumption broke a real case (see the state + effect
+  // right below): a genuinely stable per-render CONST can't ever prompt a
+  // re-render on its own once its underlying answer changes, so this is
+  // now state instead, seeded with whatever the very first check returns.
+  const [duplexSupported, setDuplexSupported] = React.useState(() => duplexVoiceService.isDuplexVoiceSupported());
+
+  // BUG FIX (product report: "when we go to the chat and i try talking it
+  // does not capture my voice instantly unless i navigate to another page
+  // and then come back"). duplexVoiceService.ts's own native-module lookup
+  // is now lazy and retry-capable (see that file's own fix) instead of
+  // permanently caching an early `null` -- but nothing was actually
+  // RE-TRIGGERING that lookup on its own. `duplexSupported` above used to
+  // be read once as a plain const on whatever the FIRST render happened to
+  // be, and every effect that depends on it (including the one below that
+  // actually engages Voice mode) only re-runs when a value IN ITS
+  // DEPENDENCY ARRAY changes -- a later successful resolution inside
+  // duplexVoiceService.ts is invisible to React entirely unless something
+  // here re-checks it AND stores the new answer as real state. Right after
+  // a cold app launch (this screen mounting for the very first time in a
+  // fresh process, exactly the case most likely to race the native bridge
+  // -- see duplexVoiceService.ts's own fix for why), the very first tap
+  // into Voice mode could still catch `duplexSupported` still false,
+  // silently falling back to the legacy react-native-voice pipeline for
+  // that attempt. Navigating away and back happened to "fix" it only as a
+  // side effect of the focusGeneration fix above forcing a full
+  // re-engagement later, by which point the bridge had caught up -- not
+  // because leaving and returning does anything meaningful on its own.
+  // This closes the actual gap: briefly re-checks isDuplexVoiceSupported()
+  // on a short timer right after mount, ONLY while it's still false, and
+  // commits a real state update (triggering an actual re-render, and thus
+  // every dependent effect) the moment it flips true. 150ms x 20 tries is
+  // 3s of real headroom -- comfortably longer than the bridge-registration
+  // race takes to resolve, comfortably shorter than any realistic human
+  // reaction time to actually tap into Voice mode and start talking, so in
+  // practice this closes the window before the user could ever hit it.
+  React.useEffect(() => {
+    if (Platform.OS !== 'ios' || duplexSupported) return;
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts += 1;
+      if (duplexVoiceService.isDuplexVoiceSupported()) {
+        if (__DEV__) console.warn('[VoiceCoachView] duplex support resolved true after', attempts, 'recheck(s)');
+        setDuplexSupported(true);
+        clearInterval(timer);
+        return;
+      }
+      if (attempts >= 20) clearInterval(timer);
+    }, 150);
+    return () => clearInterval(timer);
+  }, [duplexSupported]);
 
   // Legacy pipeline — always constructed (rules of hooks require it), but
   // its start()/stop()/reset() are only ever actually invoked below when
