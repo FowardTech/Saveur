@@ -32,9 +32,10 @@ import Speech
 //   1. SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith:) -- the
 //      exact static/type method name for querying the analyzer's preferred
 //      input format may differ slightly.
-//   2. The analyzer's "I'm done, flush everything" method (called
-//      finishAnalyzing() below) -- Apple's exact name for finalizing a
-//      SpeechAnalyzer session after ending its input stream.
+//   2. RESOLVED (real build error): the analyzer's "I'm done, flush
+//      everything" method is NOT finishAnalyzing() -- that guess was
+//      wrong, per Xcode's own "no member 'finishAnalyzing'" error. It's
+//      finalizeAndFinishThroughEndOfInput() (see stop() below).
 //   3. SpeechTranscriber.Result.text -- returned as AttributedString (to
 //      carry per-run confidence/timing attributes), converted to a plain
 //      String via String(result.text.characters) below; confirm that's
@@ -135,7 +136,16 @@ final class ModernSpeechTranscriber {
     resultsTask = nil
     Task {
       do {
-        try await analyzer.finishAnalyzing()
+        // BUILD FIX: SpeechAnalyzer has no `finishAnalyzing()` -- that was
+        // this file's own flagged guess (see the header comment) for
+        // Apple's "I'm done, flush everything" method, and Xcode's real
+        // compiler error confirmed it was wrong. The actual method is
+        // finalizeAndFinishThroughEndOfInput() -- finalizes analysis of
+        // whatever input has already been provided (the inputContinuation
+        // was just closed above, so that's everything this session ever
+        // sent) and then finishes the analyzer, which is exactly the
+        // "clean end of session" this call site wants.
+        try await analyzer.finalizeAndFinishThroughEndOfInput()
       } catch {
         // Best-effort -- teardown shouldn't surface a user-facing error
         // for a session that's already being torn down anyway.
