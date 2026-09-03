@@ -1060,6 +1060,44 @@ const HomeSrc = memo(() => {
           </TouchableOpacity>
         ) : null}
 
+        {/* MOVED (product request: "move Scheduled interview card in the
+            homescreen and place it immediately after the homebanner
+            card") -- was the 5th and last card, after Explore More (see
+            git blame for its full original placement/design comment,
+            still accurate for everything except the ordering described
+            there). Conditional rendering/behavior is unchanged -- still
+            renders nothing at all when there's no real scheduled
+            session, just earlier in the page now. */}
+        {nextSession ? (
+          <ActionCard
+            icon="calendar-outline"
+            title={getInterviewTypeLabel(nextSession.interviewType, t)}
+            subtitle={new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
+            onPress={onPressScheduledSession}
+            trailing={
+              <Flex itemsCenter>
+                <Icon
+                  pack="eva"
+                  name={isNextSessionReady ? 'chevron-right-outline' : 'lock-outline'}
+                  style={[styles.chevron, { tintColor: theme['color-basic-400'] }]}
+                />
+                <TouchableOpacity
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={onDeleteScheduledSession}
+                  style={styles.scheduledDeleteButton}>
+                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, { tintColor: theme['color-basic-400'] }]} />
+                </TouchableOpacity>
+              </Flex>
+            }
+          />
+        ) : null}
+
         {isSignedIn && !emailVerified ? (
           <Flex
             style={styles.verifyBanner}
@@ -1188,48 +1226,6 @@ const HomeSrc = memo(() => {
           accentColor="#0063F8"
           iconGradientColors={['#2d76db', '#3B9DFF']}
         />
-
-        {/* 5th card, conditional (see the import comment above this
-            component for the full "why") -- renders nothing at all when
-            there's no real scheduled session, so Home looks exactly like
-            the current 4-card layout for every user who hasn't scheduled
-            one, matching the explicit "invisible otherwise" product
-            answer. trailing carries BOTH the not-ready lock/ready arrow
-            indicator AND the delete "x" affordance side by side (rather
-            than picking one, the way a single absolutely-positioned corner
-            button on UpcomingSessionHomeCard.tsx's own bespoke layout
-            had to) -- ActionCard's trailing slot is a plain inline node,
-            so there's room for both without any of that component's own
-            absolute-position clipping concerns. */}
-        {nextSession ? (
-          <ActionCard
-            icon="calendar-outline"
-            title={getInterviewTypeLabel(nextSession.interviewType, t)}
-            subtitle={new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
-              weekday: 'short',
-              month: 'short',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-            })}
-            onPress={onPressScheduledSession}
-            trailing={
-              <Flex itemsCenter>
-                <Icon
-                  pack="eva"
-                  name={isNextSessionReady ? 'chevron-right-outline' : 'lock-outline'}
-                  style={[styles.chevron, { tintColor: theme['color-basic-400'] }]}
-                />
-                <TouchableOpacity
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  onPress={onDeleteScheduledSession}
-                  style={styles.scheduledDeleteButton}>
-                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, { tintColor: theme['color-basic-400'] }]} />
-                </TouchableOpacity>
-              </Flex>
-            }
-          />
-        ) : null}
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
