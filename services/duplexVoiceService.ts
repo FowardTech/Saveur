@@ -27,8 +27,62 @@ import {fetchElevenLabsAudioUrl} from './speechService';
 // ---------------------------------------------------------------------------
 
 const isSupportedPlatform = Platform.OS === 'ios';
-const nativeModule = isSupportedPlatform ? NativeModules.DuplexVoiceEngine : null;
-const emitter = nativeModule ? new NativeEventEmitter(nativeModule) : null;
+
+// BUG FIX ATTEMPT (product report: after a full app close+reopen -- not
+// just backgrounding -- Voice mode never captures anything at all, no
+// error, nothing in DuplexVoiceEngine.swift's own Xcode-console logging
+// even though those logs are unconditional on any successful engine
+// start; only a full logout/login recovers it). If literally NOTHING from
+// that file's own NSLog calls ever appears, the most likely explanation
+// isn't inside DuplexVoiceEngine.swift at all -- it's that `start()` is
+// never even being invoked, because THIS module decided at import time
+// that the native module doesn't exist.
+//
+// `NativeModules.DuplexVoiceEngine` used to be read exactly ONCE, into a
+// plain top-level `const`, at the moment this file is first imported --
+// which happens very early in app bootstrap (VoiceCoachView.tsx imports
+// this module, and Chat.tsx mounts VoiceCoachView as soon as the Coach
+// screen exists). If the native bridge hadn't finished registering this
+// particular module yet at that exact instant -- a real, documented class
+// of React Native native-module-resolution race, more likely to bite on
+// SOME cold-start timings than others, and not something a plain relaunch
+// reliably avoids -- `nativeModule` would be permanently cached as `null`
+// for the rest of that JS runtime's lifetime, silently downgrading this
+// entire screen to the legacy react-native-voice path for the whole
+// session, with no error anywhere (isDuplexVoiceSupported() just quietly
+// returns false, same as a real Android device). Logging out and back in
+// doesn't re-trigger this: it's the same JS runtime the whole time, this
+// module is only ever evaluated once. That its NSLog lines are always
+// missing after close+reopen but never after other paths described so far
+// fits this exact failure mode.
+//
+// Fix: resolve the native module LAZILY instead, on every call, and only
+// cache a SUCCESSFUL resolution (never cache a `null`/`undefined` result
+// permanently) -- the standard, documented mitigation for this class of
+// bridge-timing race. Once the module is genuinely registered, later
+// lookups reliably find it; until then, every call just keeps retrying
+// instead of being stuck on one unlucky early snapshot.
+let cachedNativeModule: any = null;
+function getNativeModule(): any {
+  if (!isSupportedPlatform) return null;
+  if (!cachedNativeModule) {
+    cachedNativeModule = NativeModules.DuplexVoiceEngine ?? null;
+    if (__DEV__ && cachedNativeModule) {
+      console.warn('[duplexVoiceService] native module resolved (lazily)');
+    }
+  }
+  return cachedNativeModule;
+}
+
+let cachedEmitter: NativeEventEmitter | null = null;
+function getEmitter(): NativeEventEmitter | null {
+  const mod = getNativeModule();
+  if (!mod) return null;
+  if (!cachedEmitter) {
+    cachedEmitter = new NativeEventEmitter(mod);
+  }
+  return cachedEmitter;
+}
 
 const NOT_SUPPORTED_ERROR = new Error('DuplexVoiceEngine is iOS-only (phase 1) — not available on this platform.');
 
@@ -51,7 +105,7 @@ export interface DuplexErrorEvent {
 }
 
 export function isDuplexVoiceSupported(): boolean {
-  return !!nativeModule;
+  return !!getNativeModule();
 }
 
 /**
@@ -64,14 +118,16 @@ export function isDuplexVoiceSupported(): boolean {
  * listening, not instead of it.
  */
 export async function start(): Promise<boolean> {
-  if (!nativeModule) throw NOT_SUPPORTED_ERROR;
-  return nativeModule.start();
+  const mod = getNativeModule();
+  if (!mod) throw NOT_SUPPORTED_ERROR;
+  return mod.start();
 }
 
 /** Fully tears down the engine, tap, and recognition session. */
 export async function stop(): Promise<void> {
-  if (!nativeModule) throw NOT_SUPPORTED_ERROR;
-  return nativeModule.stop();
+  const mod = getNativeModule();
+  if (!mod) throw NOT_SUPPORTED_ERROR;
+  return mod.stop();
 }
 
 /**
@@ -82,14 +138,16 @@ export async function stop(): Promise<void> {
  * only; see this file's own header comment.
  */
 export async function speak(text: string): Promise<void> {
-  if (!nativeModule) throw NOT_SUPPORTED_ERROR;
-  return nativeModule.speak(text);
+  const mod = getNativeModule();
+  if (!mod) throw NOT_SUPPORTED_ERROR;
+  return mod.speak(text);
 }
 
 /** Cuts off whatever speak() call is currently playing, immediately. */
 export async function stopSpeaking(): Promise<void> {
-  if (!nativeModule) throw NOT_SUPPORTED_ERROR;
-  return nativeModule.stopSpeaking();
+  const mod = getNativeModule();
+  if (!mod) throw NOT_SUPPORTED_ERROR;
+  return mod.stopSpeaking();
 }
 
 /**
@@ -110,12 +168,13 @@ export async function stopSpeaking(): Promise<void> {
  * own speakRemote().
  */
 export async function speakRemote(text: string, language: string = i18n.language): Promise<void> {
-  if (!nativeModule) throw NOT_SUPPORTED_ERROR;
+  const mod = getNativeModule();
+  if (!mod) throw NOT_SUPPORTED_ERROR;
   const source = await fetchElevenLabsAudioUrl(text, language);
   if (!source) {
     throw new Error('ElevenLabs TTS backend did not return a usable audio URL.');
   }
-  return nativeModule.speakRemoteAudio(source.uri, source.headers);
+  return mod.speakRemoteAudio(source.uri, source.headers);
 }
 
 /**
@@ -137,17 +196,17 @@ export async function speakWithFallback(text: string, language: string = i18n.la
 }
 
 export function addTranscriptListener(handler: (event: TranscriptEvent) => void) {
-  return emitter?.addListener('onTranscript', handler);
+  return getEmitter()?.addListener('onTranscript', handler);
 }
 
 export function addListeningStateListener(handler: (event: ListeningStateEvent) => void) {
-  return emitter?.addListener('onListeningState', handler);
+  return getEmitter()?.addListener('onListeningState', handler);
 }
 
 export function addSpeakingStateListener(handler: (event: SpeakingStateEvent) => void) {
-  return emitter?.addListener('onSpeakingState', handler);
+  return getEmitter()?.addListener('onSpeakingState', handler);
 }
 
 export function addErrorListener(handler: (event: DuplexErrorEvent) => void) {
-  return emitter?.addListener('onError', handler);
+  return getEmitter()?.addListener('onError', handler);
 }
