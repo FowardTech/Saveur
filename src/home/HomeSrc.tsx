@@ -995,12 +995,19 @@ const HomeSrc = memo(() => {
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: homeBannerWidth }]}
             onPress={onOpenHomeBanner}>
-            <View style={styles.homeBannerTopRow}>
-              <Text category="h10" style={styles.homeBannerAdLabel}>
-                {t('home:banner_ad_label', { defaultValue: 'Ad' }).toString().toUpperCase()}
-              </Text>
-            </View>
-
+            {/* BUG FIX (explicit product correction: "remove the AD text.
+                The homebanner is not an Ads. We will deal with ads
+                later") -- the previous pass wrongly treated this as an
+                advertising placement and added a real "Ad" disclosure
+                label for it; this banner is a general admin-configured
+                announcement/promo slot, not ad inventory, so no
+                disclosure label belongs here at all. Dropped along with
+                its now-empty top row (also shrinks the card -- see the
+                "reduce the height" follow-up on homeBannerCard/
+                homeBannerImageWrap/homeBannerDivider below). Ad-specific
+                treatment (if this ever becomes real ad inventory) is a
+                separate, later piece of work per the product's own
+                framing, not something to guess at now. */}
             <View style={styles.homeBannerMainRow}>
               <View style={styles.homeBannerImageWrap}>
                 {homeBanner.imageUrl && !homeBannerImageFailed ? (
@@ -1315,6 +1322,11 @@ const themedStyles = StyleService.create({
   // the visible surface; this new layout needs a real card surface of its
   // own since it always shows a top label + divider + footer around
   // whatever image/text exists).
+  // BUG FIX (explicit product correction: "reduce the height... this is
+  // not an Ads") -- padding 14 -> 10, on top of dropping the whole
+  // top-row/Ad-label block and shrinking the image tile/divider spacing
+  // below, so the card is noticeably shorter overall, not just missing
+  // one row.
   homeBannerCard: {
     // width is computed per-render from actual screen width (see
     // homeBannerWidth above the component's return statement) and applied
@@ -1325,33 +1337,18 @@ const themedStyles = StyleService.create({
     borderWidth: 1,
     borderColor: 'border-card-default',
     backgroundColor: 'background-basic-color-2',
-    padding: 14,
-  },
-  // Top-right disclosure label -- the one thing in the reference
-  // screenshot's top row that maps to something Saveur's ads genuinely
-  // have (see this section's own AskUserQuestion-scoped comment above);
-  // the screenshot's own category/expiry text on this row has no real
-  // per-ad data behind it and isn't reproduced.
-  homeBannerTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginBottom: 10,
-  },
-  homeBannerAdLabel: {
-    color: 'text-hint-color',
-    letterSpacing: 0.5,
+    padding: 10,
   },
   homeBannerMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  // Image slot -- fixed square footprint (matches the reference's own
-  // rounded-square image tile) rather than the old full-bleed
-  // aspectRatio: 2.4 strip, since the image now shares a row with
-  // headline/subtext text instead of being the entire card.
+  // Image slot -- shrunk 72x72 -> 56x56 (product follow-up: "reduce the
+  // height") -- still a real square tile, just a smaller one, since the
+  // row's overall height now follows this box's size.
   homeBannerImageWrap: {
-    width: 72,
-    height: 72,
+    width: 56,
+    height: 56,
     borderRadius: 12,
     overflow: 'hidden',
   },
@@ -1361,7 +1358,7 @@ const themedStyles = StyleService.create({
   },
   // No-image fallback tile (see the JSX comment on this branch) -- a
   // plain solid-color square with the app mark, so the main row's layout
-  // never collapses for a text-only ad.
+  // never collapses for a text-only banner.
   homeBannerImageFallback: {
     width: '100%',
     height: '100%',
@@ -1370,16 +1367,17 @@ const themedStyles = StyleService.create({
     backgroundColor: 'color-primary-500',
   },
   homeBannerIcon: {
-    width: 28,
-    height: 28,
+    width: 22,
+    height: 22,
   },
   homeBannerTextCol: {
     marginLeft: 12,
   },
+  // marginVertical 12 -> 8 (product follow-up: "reduce the height").
   homeBannerDivider: {
     height: 1,
     backgroundColor: 'border-card-default',
-    marginVertical: 12,
+    marginVertical: 8,
   },
   // Footer row -- CTA pill button only (right-aligned). The reference
   // screenshot's own footer also has a left-side icon+service-name/
@@ -1394,9 +1392,10 @@ const themedStyles = StyleService.create({
   // -- a bordered pill, not a solid fill) since the whole card is already
   // tappable via the outer TouchableOpacity; this reinforces the same
   // action visually rather than being a second, different destination.
+  // paddingVertical 7 -> 5 (product follow-up: "reduce the height").
   homeBannerCtaButton: {
     paddingHorizontal: 16,
-    paddingVertical: 7,
+    paddingVertical: 5,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'text-basic-color',
