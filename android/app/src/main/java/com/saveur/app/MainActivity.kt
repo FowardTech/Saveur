@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
+import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
@@ -53,7 +54,16 @@ class MainActivity : ReactActivity() {
       // reactHost -- doesn't reliably expose) is the current, documented
       // way to reach the live ReactContext from an Activity.
       try {
-        val context = (application as MainApplication).reactHost.currentReactContext
+        // currentReactContext is declared as the base ReactContext type, but
+        // ShareIntentModule's constructor (shared with ShareIntentPackage.kt,
+        // which gets a real ReactApplicationContext from RN's own package
+        // creation) needs the more specific ReactApplicationContext --
+        // that's what this actually is at runtime under New Architecture/
+        // bridgeless mode, just not what the accessor's own return type
+        // declares. `as?` instead of a force cast so an unexpected type here
+        // falls through to the same best-effort catch below instead of
+        // crashing, same posture as the rest of this try block.
+        val context = (application as MainApplication).reactHost.currentReactContext as? ReactApplicationContext
         if (context != null) {
           ShareIntentModule(context).emitShareReceived(intent)
         }
