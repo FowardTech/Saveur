@@ -60,6 +60,46 @@ import React
 @objc(DuplexVoiceEngine)
 class DuplexVoiceEngine: RCTEventEmitter {
 
+  // DIAGNOSTIC, ROUND 5 (real-device console output, four captures now):
+  // the newly-added rolling amplitude log just ruled out the leading
+  // hypothesis from the last round -- audio reaching the recognizer is
+  // NOT stuck near-silence, it climbs to entirely normal, loud speech
+  // levels (0.20 / 0.40 / 0.94 / 0.97 on a 0-1 scale, repeatedly) while
+  // the user is actually talking. And recognition STILL fails every
+  // single attempt with "No speech detected," with zero correlation to
+  // amplitude -- a window that peaked at 0.97 failed exactly the same
+  // way as one that peaked at 0.017. That rules out a simple loudness/
+  // gain threshold problem and points somewhere else entirely: real,
+  // audibly-loud audio is reaching SFSpeechRecognizer and it still can't
+  // recognize speech in it, every time, on a device where the OTHER,
+  // separate speech pipeline elsewhere in this app (services/
+  // speechService.ts, @dev-amirzubair/react-native-voice) is already
+  // proven to work fine.
+  //
+  // The one thing this module does that the working pipeline does NOT do
+  // at all: setVoiceProcessingEnabled(true) on both engine nodes, i.e.
+  // routing everything through Apple's Voice-Processing I/O unit -- this
+  // file's own top-of-file comment already flagged this as the highest-
+  // uncertainty area before any of this was ever run on a device. A peak-
+  // amplitude meter can't detect this class of problem: aggressive VoIP-
+  // tuned noise suppression/AEC can leave a signal reading just as loud
+  // while still mangling it enough (spectral smearing, over-suppression
+  // between words, artifacts) that a speech recognizer can't extract
+  // anything intelligible from it, even though a human -- or a simple
+  // peak meter -- would call it "clearly audible."
+  //
+  // This flag temporarily disables voice processing on BOTH nodes so the
+  // next real-device test isolates that variable directly: if turning it
+  // off makes recognition finally succeed, that's confirmed as the root
+  // cause (and duplex/AEC then needs a different, less aggressive
+  // configuration rather than being abandoned outright); if recognition
+  // STILL fails with it off, this hypothesis is ruled out and the next
+  // place to look is buffer/format handling instead. TEMPORARY -- revert
+  // to true once this is resolved, since disabling this is what lets the
+  // coach hear and repeat its own TTS output (the exact failure mode
+  // this whole module exists to prevent, per the header comment above).
+  private let voiceProcessingEnabledForDiagnostic = false
+
   private let audioEngine = AVAudioEngine()
   private let playerNode = AVAudioPlayerNode()
   private let speechSynthesizer = AVSpeechSynthesizer()
@@ -324,14 +364,17 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // startup entirely -- same posture as every other AVAudioSession/
     // AVAudioEngine call in this file.
     do {
-      try inputNode.setVoiceProcessingEnabled(true)
+      try inputNode.setVoiceProcessingEnabled(voiceProcessingEnabledForDiagnostic)
     } catch {
       self.emitError("setVoiceProcessingEnabled(input)", error)
     }
     do {
-      try outputNode.setVoiceProcessingEnabled(true)
+      try outputNode.setVoiceProcessingEnabled(voiceProcessingEnabledForDiagnostic)
     } catch {
       self.emitError("setVoiceProcessingEnabled(output)", error)
+    }
+    if !voiceProcessingEnabledForDiagnostic {
+      NSLog("[DuplexVoiceEngine] voice processing DISABLED for this diagnostic build -- no AEC, coach may hear its own TTS if this session ever exercises barge-in; this run is purely to isolate whether voice processing is why recognition never succeeds")
     }
 
     // BUG FIX, ROUND 2 (real-device reports, in order: (1) TTS played
