@@ -341,6 +341,31 @@ const InterviewFeedback = memo(() => {
 
   const onPracticeAgain = () => navigate('MockInterviewSetup', {});
   const onDone = () => navigate('MainBottomTab');
+
+  // Product request: "a button... says 'Discuss this interview with your
+  // coach'... take the user to the AI career chat screen with the
+  // prefilled message to the coach to discuss the result." Builds a real
+  // starting message from this screen's own actual data (interview type
+  // + overall score) rather than a generic "let's talk" placeholder, so
+  // the coach's first reply can engage with real numbers immediately
+  // instead of asking the user to repeat what they just saw on screen.
+  const onDiscussWithCoach = React.useCallback(() => {
+    const typeLabel = getInterviewTypeLabel(interviewType, t);
+    const message = typeLabel
+      ? t('find:discuss_interview_prompt_typed', {
+          defaultValue: 'I just finished a {{type}} mock interview and scored {{score}}%. Can you help me understand my results and how I can improve?',
+          type: typeLabel,
+          score: Math.round(overallScore),
+        })
+      : t('find:discuss_interview_prompt', {
+          defaultValue: 'I just finished a mock interview and scored {{score}}%. Can you help me understand my results and how I can improve?',
+          score: Math.round(overallScore),
+        });
+    navigate('MainBottomTab', {
+      screen: 'Coach',
+      params: { screen: 'Chat', params: { initialPrompt: message.toString() } },
+    });
+  }, [interviewType, overallScore, navigate, t]);
   // REVERTED (product report: "I think you need to remove it and let the
   // back button [be] the normal back button function... anytime I finish
   // an interview and then tries to go back from the feedback screen it
@@ -736,7 +761,27 @@ const InterviewFeedback = memo(() => {
             style={{ marginTop: 32 }}
           />
         ) : null}
-        <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: sessionId ? 16 : 32 }]} />
+        {/* Product request: "I want a button in those places that says
+            'Discuss this interview with your coach' and then when its
+            clicked it should just take the user to the AI career chat
+            screen with the prefilled message to the coach to discuss the
+            result." Reuses Chat.tsx's existing initialPrompt mechanism
+            (navigation/types.tsx's MessagesStackParamList.Chat --
+            already built for exactly this "deep-link into Chat with a
+            real starting message" shape, see CoachPromptCard.tsx's own
+            comment; auto-sends on arrival rather than just sitting in the
+            composer, same behavior every other initialPrompt call site
+            in this app already has). Not gated on sessionId the way View
+            Replay above is -- a real score is enough to discuss even
+            without a session to link back to. */}
+        <Button
+          children={t('find:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' })}
+          status="basic"
+          accessoryLeft={props => <Icon {...props} pack="eva" name="message-circle-outline" />}
+          onPress={onDiscussWithCoach}
+          style={{ marginTop: sessionId ? 16 : 32 }}
+        />
+        <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 16 }]} />
         <Button children={t('common:done')} status="outline" onPress={onDone} style={{ marginTop: 16 }} />
       </Content>
     </Container>

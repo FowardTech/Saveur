@@ -11,8 +11,9 @@ import {
   Layout,
   Icon,
   Spinner,
+  Button,
 } from '@ui-kitten/components';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -29,6 +30,7 @@ import { formatMs } from 'services/interviewReplayService';
 import * as interviewService from 'services/interviewService';
 import ShareToUserModal from 'components/ShareToUserModal';
 import { SkeletonList } from 'components/Skeleton';
+import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 
 // Video Interview Replay — product request item ("the real catch of the
 // app... users can replay and see the part where they need to improve
@@ -63,6 +65,7 @@ const InterviewReplay = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['practice', 'common']);
   const route = useRoute<RouteProp<RootStackParamList, 'InterviewReplay'>>();
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const sessionId = route.params?.sessionId;
 
   const [replay, setReplay] = React.useState<SessionReplay | null>(null);
@@ -144,6 +147,30 @@ const InterviewReplay = memo(() => {
       defaultValue: "This session's video couldn't be saved.",
     });
   })();
+
+  // Product request: "I want a button in those places that says 'Discuss
+  // this interview with your coach'... take the user to the AI career
+  // chat screen with the prefilled message to the coach to discuss the
+  // result." Same Chat.tsx initialPrompt mechanism as
+  // InterviewFeedback.tsx's own identical button (see that screen's own
+  // comment) -- this screen doesn't have an overall score to reference
+  // (that lives on the Feedback report, not the replay), so the message
+  // leans on the interview type instead.
+  const onDiscussWithCoach = React.useCallback(() => {
+    const typeLabel = getInterviewTypeLabel(replay?.sessionType ?? undefined, t);
+    const message = typeLabel
+      ? t('practice:discuss_interview_prompt_typed', {
+          defaultValue: 'I just watched the replay of my {{type}} mock interview. Can you help me understand what I could improve based on this session?',
+          type: typeLabel,
+        })
+      : t('practice:discuss_interview_prompt', {
+          defaultValue: 'I just watched the replay of my mock interview. Can you help me understand what I could improve based on this session?',
+        });
+    navigate('MainBottomTab', {
+      screen: 'Coach',
+      params: { screen: 'Chat', params: { initialPrompt: message.toString() } },
+    });
+  }, [replay?.sessionType, navigate, t]);
 
   const jumpToAnnotation = (tMs: number) => {
     if (!replay) return;
@@ -520,6 +547,20 @@ const InterviewReplay = memo(() => {
               </ScrollView>
             </View>
           )}
+
+          {/* Product request: "a button in those places that says
+              'Discuss this interview with your coach'" -- see
+              onDiscussWithCoach's own comment above for the full "why".
+              Bottom of the screen, after every other section, same
+              "final call to action" placement as InterviewFeedback.tsx's
+              identical button. */}
+          <Button
+            children={t('practice:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' })}
+            status="basic"
+            accessoryLeft={props => <Icon {...props} pack="eva" name="message-circle-outline" />}
+            onPress={onDiscussWithCoach}
+            style={{ marginTop: 24 }}
+          />
         </Content>
       )}
     </Container>
