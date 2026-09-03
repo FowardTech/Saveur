@@ -24,6 +24,12 @@ class MainApplication : Application(), ReactApplication {
           // plain in-app-source module (no separate npm package/podspec/
           // build.gradle of its own for RN's autolinking to discover).
           add(ShareIntentPackage())
+          // DuplexVoiceEngineModule/DuplexVoiceEnginePackage — Android
+          // counterpart to ios/caren_family/DuplexVoiceEngine.swift (see
+          // that file and this package's own header comments). Same
+          // "plain in-app-source module" reasoning as ShareIntentPackage
+          // above for why this is manual rather than autolinked.
+          add(DuplexVoiceEnginePackage())
         },
     )
   }

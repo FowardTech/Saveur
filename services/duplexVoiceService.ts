@@ -1,32 +1,51 @@
-import {NativeEventEmitter, NativeModules, Platform} from 'react-native';
+import {NativeEventEmitter, NativeModules, PermissionsAndroid, Platform} from 'react-native';
 import i18n from 'i18next';
 
 import {fetchElevenLabsAudioUrl} from './speechService';
 
 // ---------------------------------------------------------------------------
 // duplexVoiceService — thin JS wrapper over the native DuplexVoiceEngine
-// module (ios/caren_family/DuplexVoiceEngine.swift). See that file's own
-// header comment for the full "why does this module exist" history —
-// short version: it's a from-scratch native audio engine built specifically
-// to make real speak-to-interrupt possible for the AI Career Coach's voice
-// screen, after two prior JS-level/session-config-only attempts both
-// failed on a real device.
+// module: ios/caren_family/DuplexVoiceEngine.swift on iOS,
+// android/app/src/main/java/com/saveur/app/DuplexVoiceEngineModule.kt on
+// Android. See DuplexVoiceEngine.swift's own header comment for the full
+// "why does this module exist" history — short version: a from-scratch
+// native audio engine built specifically to make real speak-to-interrupt
+// possible for the AI Career Coach's voice screen, after two prior JS-
+// level/session-config-only attempts both failed on a real device.
 //
-// iOS ONLY, deliberately, for now. Android would need its own equivalent
-// native module (AAudio/Oboe + an echo canceller, e.g. via WebRTC's audio
-// processing module or Android's built-in AcousticEchoCanceler effect) —
-// a separate, comparable-sized project. Every export here is a safe no-op
-// on Android (resolves/rejects predictably) so this can be imported
-// unconditionally without every call site needing its own Platform check.
+// The two platforms' native implementations are NOT architecturally
+// identical — see DuplexVoiceEngineModule.kt's own header comment for why
+// (Android's public SpeechRecognizer API doesn't expose raw mic buffers
+// the way iOS's SFSpeechRecognizer does, so echo cancellation during
+// barge-in relies on the OS/device's own handling rather than anything
+// explicitly engineered here, unlike iOS's Voice-Processing I/O unit).
+// Both expose the exact same JS-facing contract below, though, so nothing
+// in this file (or VoiceCoachView.tsx) needs to know which platform it's
+// talking to beyond the isSupportedPlatform check itself.
 //
-// PHASE 1 / TEST-ONLY: not wired into VoiceCoachView.tsx yet. See
-// src/dev/DuplexVoiceTestScreen.tsx (reachable from Settings in dev builds
-// only) for how to exercise this in isolation on a real device before any
-// production screen depends on it — see that screen's own comment for why
-// testing it standalone first matters.
+// PHASE 1 on both platforms: on-device TTS only. speakRemote/
+// speakWithFallback below (the real ElevenLabs voice) already gracefully
+// falls back to on-device speech on ANY failure, which is what happens on
+// Android today (speakRemoteAudio rejects immediately there — see
+// DuplexVoiceEngineModule.kt) until a Phase 2 Android implementation
+// lands, same as iOS before its own Phase 2 shipped.
 // ---------------------------------------------------------------------------
 
-const isSupportedPlatform = Platform.OS === 'ios';
+const isSupportedPlatform = Platform.OS === 'ios' || Platform.OS === 'android';
+
+// Android requires RECORD_AUDIO as a runtime permission (not just the
+// manifest declaration) before SpeechRecognizer will work — same
+// requirement services/speechService.ts's ensureMicPermissionAndroid()
+// already handles for the legacy react-native-voice pipeline. Requested
+// here, before the native start() call, rather than inside the native
+// module itself, since PermissionsAndroid's request flow is JS-side API;
+// the native module just checks best-effort and surfaces a clear error if
+// this was somehow skipped.
+async function ensureAndroidMicPermission(): Promise<boolean> {
+  if (Platform.OS !== 'android') return true;
+  const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+  return granted === PermissionsAndroid.RESULTS.GRANTED;
+}
 
 // BUG FIX ATTEMPT (product report: after a full app close+reopen -- not
 // just backgrounding -- Voice mode never captures anything at all, no
@@ -84,7 +103,7 @@ function getEmitter(): NativeEventEmitter | null {
   return cachedEmitter;
 }
 
-const NOT_SUPPORTED_ERROR = new Error('DuplexVoiceEngine is iOS-only (phase 1) — not available on this platform.');
+const NOT_SUPPORTED_ERROR = new Error('DuplexVoiceEngine is not available on this platform.');
 
 export interface TranscriptEvent {
   text: string;
@@ -120,6 +139,14 @@ export function isDuplexVoiceSupported(): boolean {
 export async function start(): Promise<boolean> {
   const mod = getNativeModule();
   if (!mod) throw NOT_SUPPORTED_ERROR;
+  const micGranted = await ensureAndroidMicPermission();
+  if (!micGranted) {
+    throw new Error(
+      i18n.t('message:voice_mic_permission_denied', {
+        defaultValue: 'Microphone permission is required for Voice mode.',
+      }) as string,
+    );
+  }
   return mod.start();
 }
 
