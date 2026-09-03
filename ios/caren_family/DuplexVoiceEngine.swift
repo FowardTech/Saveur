@@ -207,6 +207,32 @@ class DuplexVoiceEngine: RCTEventEmitter {
   private var sessionPeakAmplitude: Float = 0
   private var lastAmplitudeLogTime = Date()
 
+  // DIAGNOSTIC, ROUND 16 (external second-opinion review of this entire
+  // investigation's own evidence, ChatGPT-assisted: peak amplitude proves
+  // "PCM exists, is loud, is correctly formatted" -- it does NOT prove
+  // "the recognizer sees the expected acoustic characteristics." Voice
+  // processing/AEC can reshape a signal in ways a max-abs scan can't
+  // detect at all -- correct RMS-scale loudness with garbled/unintelligible
+  // content would look identical to a peak meter. The only way to
+  // conclusively settle this is to record the EXACT buffers being appended
+  // to recognitionRequest (not a re-derived copy, not a different tap) to a
+  // real WAV file and actually listen to it. If it sounds like clear,
+  // intelligible speech and SFSpeechRecognizer still says "No speech
+  // detected" on that exact audio, the problem is conclusively at the
+  // recognizer/API boundary, not this file's audio graph -- worth knowing
+  // before any further architecture change.
+  //
+  // Records the first ~10s of a session's tap buffers to a WAV file in the
+  // app's Documents directory (retrievable via Xcode -> Window -> Devices
+  // and Simulators -> select the device -> select this app -> gear icon ->
+  // Download Container -> right-click the .xcappdata -> Show Package
+  // Contents -> AppData/Documents). Off by default in a real ship build;
+  // flip recordRecognitionBuffersForDiagnostic to true for one test run.
+  private let recordRecognitionBuffersForDiagnostic = true
+  private var diagnosticRecordingFile: AVAudioFile?
+  private var diagnosticRecordingStartedAt: Date?
+  private let diagnosticRecordingDuration: TimeInterval = 10
+
   override init() {
     super.init()
     speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: currentLocaleIdentifier()))
@@ -701,6 +727,30 @@ class DuplexVoiceEngine: RCTEventEmitter {
     hasLoggedFirstAudioBuffer = false // see this flag's own comment above -- reset per session
     sessionPeakAmplitude = 0
     lastAmplitudeLogTime = Date()
+
+    // See diagnosticRecordingFile's own comment above -- fresh file per
+    // session, created with the SAME format the tap/recognizer actually
+    // use, so what's written to disk is byte-for-byte what
+    // recognitionRequest.append(buffer) below receives.
+    diagnosticRecordingFile = nil
+    diagnosticRecordingStartedAt = nil
+    if recordRecognitionBuffersForDiagnostic {
+      let docsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+      if let docsURL = docsURL {
+        let fileURL = docsURL.appendingPathComponent("duplex_recognition_diagnostic.wav")
+        do {
+          // Overwrite any previous capture -- always the MOST RECENT
+          // session's first ~10s, not an ever-growing pile of old ones.
+          try? FileManager.default.removeItem(at: fileURL)
+          diagnosticRecordingFile = try AVAudioFile(forWriting: fileURL, settings: tapFormat.settings)
+          diagnosticRecordingStartedAt = Date()
+          NSLog("[DuplexVoiceEngine] DIAGNOSTIC: recording first \(Int(diagnosticRecordingDuration))s of recognition tap buffers to \(fileURL.path)")
+        } catch {
+          self.emitError("diagnosticRecordingFile: create", error)
+        }
+      }
+    }
+
     tapNode.installTap(onBus: 0, bufferSize: 1024, format: tapFormat) { [weak self] buffer, _ in
       guard let self = self else { return }
       let frameLength = Int(buffer.frameLength)
@@ -715,6 +765,23 @@ class DuplexVoiceEngine: RCTEventEmitter {
       if !self.hasLoggedFirstAudioBuffer {
         self.hasLoggedFirstAudioBuffer = true
         NSLog("[DuplexVoiceEngine] first recognition tap buffer (mixer node): frames=\(frameLength) format=\(tapFormat) peakAmplitude=\(peak)")
+      }
+      // See diagnosticRecordingFile's own comment above -- writes the
+      // EXACT same buffer object passed to recognitionRequest.append()
+      // below, before any further processing, so the WAV is a byte-exact
+      // record of what the recognizer actually received.
+      if let file = self.diagnosticRecordingFile, let startedAt = self.diagnosticRecordingStartedAt {
+        if Date().timeIntervalSince(startedAt) < self.diagnosticRecordingDuration {
+          do {
+            try file.write(from: buffer)
+          } catch {
+            self.emitError("diagnosticRecordingFile: write", error)
+            self.diagnosticRecordingFile = nil
+          }
+        } else {
+          NSLog("[DuplexVoiceEngine] DIAGNOSTIC: finished recording \(Int(self.diagnosticRecordingDuration))s -- file is ready to pull via Xcode's Download Container.")
+          self.diagnosticRecordingFile = nil
+        }
       }
       // See sessionPeakAmplitude's own comment -- rolling max, logged and
       // reset roughly every 2s so a real capture during actual talking
