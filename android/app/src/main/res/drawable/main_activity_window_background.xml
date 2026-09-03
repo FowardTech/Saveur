@@ -22,36 +22,43 @@
      -hdpi/-xhdpi/-xxhdpi/-xxxhdpi, generated from this same logo mark +
      the app's own MontserratAlternates-Black wordmark font, matching the
      iOS storyboards' lockup) with the mark and "Saveur" already composited
-     side by side. Box below sized to that asset's own real 402x100dp
-     aspect ratio (was a 248x248dp square for the old solo glyph) so the
-     bitmap renders at its native proportions without being stretched or
-     letterboxed by a mismatched box shape. -->
+     side by side.
+
+     BUG FIX, ROUND 4 (real-device report: STILL huge, cut off on the right
+     edge with a visible gap on the left — an ASYMMETRIC overflow pattern,
+     not the symmetric "too big but centered" pattern round 3's gravity fix
+     should have produced if it had actually taken effect. Two real issues,
+     both addressed here:
+       1. The density-bucketed assets were regenerated at 402x100dp
+          (mdpi 402x100px ... xxxhdpi 1607x400px) — on a typical ~360-412dp
+          wide phone, a 402dp-WIDE logo is already at or beyond full screen
+          width by design, before any XML rendering question even applies.
+          Re-exported all five density buckets from the highest-res source
+          at a smaller 240x60dp base (mdpi 240x60px, hdpi 360x90px, xhdpi
+          480x120px, xxhdpi 720x180px, xxxhdpi 960x240px — same aspect
+          ratio, downsampled with high-quality resampling, not just
+          shrunk in XML) so the logo reads as a normal splash mark with
+          breathing room either side, not a screen-filling banner.
+       2. The asymmetric (left-gap/right-cut) overflow pattern in the
+          report doesn't match what round 3's <bitmap android:gravity=
+          "center"> fix should produce even in a worst case — it matches
+          the OLDER, pre-round-3 stretched-drawable behavior instead,
+          which is the signature of a STALE BUILD (an old APK still
+          installed, or an incremental build that didn't actually pick up
+          the changed resource) rather than a fourth wrong theory about
+          the XML itself. If this still looks the same after rebuilding
+          with these new, visibly smaller assets, that on its own confirms
+          it's a build/install caching issue, not this drawable — a clean
+          rebuild (uninstall the app from the device first, then
+          `cd android && ./gradlew clean`, then a fresh install) is the
+          next step either way.
+     <bitmap> (a distinct drawable type from a plain PNG/drawable
+     reference) is kept from round 3: BitmapDrawable implements its own
+     gravity-based draw() that positions content at intrinsic size within
+     its bounds without stretching to fill, unlike a bare drawable
+     reference used directly on an <item>. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <!-- BUG FIX, ROUND 3 (real-device report: STILL huge/overflowing after
-         round 1 (sized item + android:drawable) AND round 2 (unsized item +
-         android:drawable + gravity=center) — meaning the common thread
-         across both failed rounds wasn't sizing at all, it was using
-         android:drawable directly on the <item>. A plain
-         <item android:drawable="@drawable/x"/> used as (part of) a
-         windowBackground has no intrinsic size of its own to gravity
-         against — a window background is stretched to fill the full window
-         bounds, and item-level android:gravity is only meaningful when
-         paired with an explicit android:width/height (round 1's approach,
-         which apparently didn't take effect the way expected either) or
-         when the item's content is a <bitmap> child instead of a direct
-         drawable reference. <bitmap> is a distinct drawable type from a
-         plain PNG/drawable reference: BitmapDrawable implements its OWN
-         gravity-based draw() logic that positions the bitmap at its
-         intrinsic size within whatever bounds it's given, WITHOUT
-         stretching to fill — unlike a bare drawable reference. Nesting the
-         PNG in a <bitmap android:gravity="center"> inside an otherwise
-         unsized <item> is the standard, documented pattern for exactly this
-         "background color + centered logo at native size" case, and is
-         what actually gets the density-bucketed asset (already verified
-         correctly proportioned per bucket — mdpi 402x100px, xhdpi
-         804x200px, xxxhdpi 1607x400px, etc) to render at its real size
-         instead of stretched edge-to-edge. -->
     <item>
         <bitmap
             android:src="@drawable/splash_logo_wordmark"
