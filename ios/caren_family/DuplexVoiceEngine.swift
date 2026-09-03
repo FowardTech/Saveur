@@ -213,6 +213,37 @@ class DuplexVoiceEngine: RCTEventEmitter {
     if isEngineSetUp { return }
 
     let session = AVAudioSession.sharedInstance()
+    // BUG FIX ATTEMPT (product report: mic stops capturing after a full
+    // app close+reopen -- not just backgrounding -- recoverable only by
+    // logging out and back in; a plain relaunch alone doesn't fix it).
+    // isEngineSetUp itself can't be the explanation -- it's a plain
+    // instance property on this class, and iOS creates a brand-new
+    // DuplexVoiceEngine instance (starting isEngineSetUp = false, like
+    // every other property here) on every fresh process launch, so a
+    // relaunch and a logout/login should be IDENTICAL from this file's own
+    // state's point of view. The one thing that ISN'T necessarily reset by
+    // a relaunch is the shared AVAudioSession itself: if the previous app
+    // process was force-quit (swiped away, not just backgrounded) while
+    // this engine's session was active, teardown()'s own cleanup -- which
+    // explicitly resets voice processing and the session's category/mode
+    // back to neutral -- may never have had the chance to run at all (iOS
+    // doesn't reliably grant a killed process time to run its own cleanup
+    // code). The next launch's setCategory/setActive calls below would
+    // then be layering a fresh configuration on top of whatever the
+    // session's actual hardware/route state was left in, rather than
+    // starting from a genuinely clean slate -- and a full logout/login
+    // cycle (more time, more unrelated native activity, effectively a
+    // "wait long enough for iOS to reclaim it" scenario) would coincidentally
+    // give the OS the chance to release that stale state that a same-second
+    // relaunch doesn't. Proactively deactivating first, unconditionally,
+    // before reconfiguring -- best-effort, a missing prior session to
+    // deactivate is not an error worth failing startup over -- means every
+    // setupEngineIfNeeded() call starts from the same known state instead
+    // of trusting whatever was there before. UNCONFIRMED without a real
+    // device + Xcode console (see this file's other diagnostic logging) --
+    // this is the most plausible explanation the code supports, not a
+    // verified root cause.
+    try? session.setActive(false, options: [.notifyOthersOnDeactivation])
     try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
     try session.setActive(true, options: [])
 
@@ -264,6 +295,14 @@ class DuplexVoiceEngine: RCTEventEmitter {
     audioEngine.prepare()
     try audioEngine.start()
     isEngineSetUp = true
+    // DIAGNOSTIC (see the session.setActive(false) fix above) -- confirms
+    // what route/category the session actually settled on after the
+    // proactive reset, so the next real-device repro (close+reopen, no
+    // logout) shows whether this is genuinely a clean .playAndRecord/
+    // .voiceChat session or something unexpected (e.g. still reporting a
+    // stale route from before the relaunch).
+    let activeSession = AVAudioSession.sharedInstance()
+    NSLog("[DuplexVoiceEngine] engine started: category=\(activeSession.category.rawValue) mode=\(activeSession.mode.rawValue) route=\(activeSession.currentRoute)")
   }
 
   private func teardown() {
