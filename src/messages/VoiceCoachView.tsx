@@ -190,12 +190,58 @@ const AFFIRMATIVE_WORDS: Record<string, string[]> = {
   ar: ['نعم', 'اكيد', 'حسنا', 'تمام'],
   hi: ['हाँ', 'ठीक है', 'हां', 'चलो'],
 };
+
+// BUG FIX (product report: "if the AI career coach automatically ask if it
+// should take me to a specific screen and i said no it still takes me
+// there"). isAffirmative used to check `normalized.includes(w)` for EVERY
+// word, including short, single words like "ok"/"okay"/"sure" -- a raw
+// substring check, not a whole-word one. Natural spoken declines routinely
+// contain one of those words as pure filler -- "No, that's okay" contains
+// "okay"; "No, I'm good, sure I'll ask later" contains "sure" -- so a clear
+// decline was being misread as a yes and auto-navigating the user anyway.
+// Fixed for space-delimited languages (en/es/fr/de/it/pt/ru) two ways: (1)
+// single words now only match as a whole token, not as a substring of a
+// longer unrelated word or phrase; (2) an explicit negative-word list is
+// checked FIRST, so a decline always wins even if an affirmative word also
+// happens to appear elsewhere in the same sentence. The CJK/Arabic/Hindi
+// lists (zh/ja/ko/ar/hi) are deliberately left on the original substring
+// approach -- those scripts don't reliably use spaces to separate words, so
+// naive whole-token splitting would make them worse, not better (a whole
+// run of, say, Chinese characters with no spaces becomes one unsplittable
+// "token," so a short legitimate reply embedded in a longer sentence would
+// stop matching at all). Multi-word phrases ("go ahead", "take me there")
+// still match via substring in every language -- distinctive enough that
+// this isn't the same false-positive risk short single words carry.
+const NEGATIVE_WORDS: Record<string, string[]> = {
+  en: ['no', 'nope', 'nah', "don't", 'dont', 'not now', 'never mind', 'nevermind', 'not really', 'no thanks', 'not yet'],
+  es: ['no', 'nunca', 'para nada', 'ahora no'],
+  fr: ['non', 'pas maintenant', 'jamais'],
+  de: ['nein', 'niemals', 'jetzt nicht'],
+  it: ['no', 'mai', 'non ora'],
+  pt: ['não', 'nao', 'nunca', 'agora não'],
+  ru: ['нет', 'не сейчас', 'никогда'],
+};
+const WORD_TOKENIZED_LANGS = new Set(['en', 'es', 'fr', 'de', 'it', 'pt', 'ru']);
+// Splits on anything that ISN'T a basic Latin/Latin-1/Cyrillic letter,
+// digit, or apostrophe (apostrophes are kept IN tokens -- "don't"/
+// "d'accord"/"let's do it" all rely on them) -- deliberately a plain
+// character class rather than a `\p{Letter}` Unicode property escape, to
+// avoid depending on `/u`-flag Unicode property support in Hermes.
+const WORD_SPLIT_RE = /[^a-zà-ÿ0-9а-яё']+/;
+const matchesAnyWord = (normalized: string, words: string[], wholeWord: boolean): boolean => {
+  if (!wholeWord) return words.some(w => normalized.includes(w));
+  const tokens = normalized.split(WORD_SPLIT_RE).filter(Boolean);
+  return words.some(w => (w.includes(' ') ? normalized.includes(w) : tokens.includes(w)));
+};
 const isAffirmative = (text: string, language: string): boolean => {
   const normalized = text.trim().toLowerCase();
   if (!normalized) return false;
   const lang = language?.split('-')[0] ?? 'en';
+  const wholeWord = WORD_TOKENIZED_LANGS.has(lang);
+  const negativeWords = NEGATIVE_WORDS[lang];
+  if (negativeWords && matchesAnyWord(normalized, negativeWords, wholeWord)) return false;
   const words = AFFIRMATIVE_WORDS[lang] ?? AFFIRMATIVE_WORDS.en;
-  return words.some(w => normalized === w || normalized.includes(w));
+  return matchesAnyWord(normalized, words, wholeWord);
 };
 
 const VoiceCoachView = memo(({
@@ -289,6 +335,26 @@ const VoiceCoachView = memo(({
   // engine never stopped) and active becoming false is just a pause, not
   // a teardown.
   const hasEngagedRef = React.useRef(false);
+
+  // BUG FIX (product report: "when I navigate away from the AI career coach
+  // screen and then come back to it just stops capturing my voice"). The
+  // screen-level useFocusEffect below tears the duplex engine all the way
+  // down on BLUR (resetting hasEngagedRef/duplexStartedRef to false) --
+  // that's correct, it's meant to fully release the mic when the user
+  // leaves the Coach screen. The bug is what happens on the way BACK: the
+  // effect that actually restarts the engine only reacts to the `active`
+  // prop CHANGING (deps `[active]`). If the user was already in Voice mode
+  // when they navigated away, `active` is true before they leave and still
+  // true the moment they return -- it never changes at all across that
+  // round trip -- so nothing ever re-fires that effect, and the engine
+  // that blur just tore down is never restarted. Bumped once on every
+  // focus/re-focus (see the useFocusEffect below) and added to that
+  // effect's own dependency array so a refocus ALWAYS re-evaluates it
+  // regardless of whether `active` itself changed -- since hasEngagedRef
+  // was just reset by the preceding blur, that re-evaluation correctly
+  // falls into the same "first engagement" branch as a fresh mount would,
+  // genuinely restarting the engine instead of assuming it's still alive.
+  const [focusGeneration, setFocusGeneration] = React.useState(0);
 
   const silenceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const isActiveRef = React.useRef(false);
@@ -704,6 +770,11 @@ const VoiceCoachView = memo(({
   useFocusEffect(
     React.useCallback(() => {
       isActiveRef.current = true;
+      // See focusGeneration's own comment above -- this is what lets the
+      // active-driven effect below tell "the screen just refocused" apart
+      // from "nothing happened," even when `active` itself didn't change
+      // across the round trip.
+      setFocusGeneration(g => g + 1);
       if (__DEV__ && duplexSupported) console.warn('[VoiceCoachView] focus effect running (mount or re-focus)');
       return () => {
         // DIAGNOSTIC: if this fires shortly after mount without the user
@@ -953,8 +1024,12 @@ const VoiceCoachView = memo(({
       }
       if (isActiveRef.current) startListening();
     })();
+    // focusGeneration is intentionally in this array (see its own comment
+    // above) even though its value is never read in the body below -- its
+    // only job is forcing this effect to re-evaluate on every refocus, not
+    // just when `active` itself changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, focusGeneration]);
 
   // Fixes "the phone locks and the AI coach is in session, stops and the
   // voice just changes to the default phone TTS voice": iOS reclaims/
