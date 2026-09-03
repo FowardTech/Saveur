@@ -579,41 +579,38 @@ class DuplexVoiceEngine: RCTEventEmitter {
 
     let request = SFSpeechAudioBufferRecognitionRequest()
     request.shouldReportPartialResults = true
-    // RETRIED, ROUND 6 (real-device console output, six captures now --
-    // this is a deliberate re-test of something already tried and reverted
-    // once before, not a first attempt; see the git history on this exact
-    // line for that prior attempt). Everything else has now been checked
-    // and ruled out on THIS device by direct evidence: the newest capture's
-    // own beginRecognition() diagnostic line confirms
-    // recognizer.isAvailable=true, supportsOnDeviceRecognition=true,
-    // speechAuth=3 (.authorized), recordPermission='grnt' (.granted) --
-    // and the rolling amplitude log in that same capture shows the input
-    // signal hitting 1.0 (full clipping) during real speech, yet
-    // recognition still failed every single attempt. Voice processing
-    // on vs. off (previous round) made zero difference either. With
-    // permissions, availability, on-device support, and audio level all
-    // independently confirmed fine, the remaining, still-untested variable
-    // is which recognition PATH this request actually takes: left unset,
-    // SFSpeechRecognizer is free to attempt server-based recognition, and
-    // a device with degraded/absent real internet connectivity (this
-    // console's own repeated 127.0.0.1:8081 connection-refused churn,
-    // while itself almost certainly just Metro/dev-bundler noise, at least
-    // raises the question of this device's network state) can make that
-    // path fail silently as a generic "No speech detected" rather than a
-    // distinguishable network error -- a failure mode documented elsewhere
-    // for SFSpeechRecognizer and indistinguishable, from the outside, from
-    // everything reported so far. The prior attempt at this forced a hard,
-    // immediate "Siri and Dictation are disabled" failure -- a genuinely
-    // different, instantly-recognizable symptom from the silent per-
-    // attempt failures seen ever since -- suggesting whatever blocked it
-    // then (a device Settings toggle, most likely) may no longer apply now
-    // that supportsOnDeviceRecognition itself reports true. Gated on that
-    // same check so a device/locale that genuinely lacks on-device support
-    // still falls back to the previous default behavior instead of
-    // regressing.
-    if recognizer.supportsOnDeviceRecognition {
-      request.requiresOnDeviceRecognition = true
-    }
+    // RE-REVERTED, ROUND 6 RESULT (real-device console output, seven
+    // captures now): forcing requiresOnDeviceRecognition = true reproduced
+    // the EXACT same immediate, hard "Siri and Dictation are disabled"
+    // failure as the very first time this was tried, confirmed on every
+    // single attempt this round with zero exceptions -- this is not
+    // flaky, it's a deterministic device-level block. This is genuinely
+    // useful, conclusive signal (not a dead end like the voice-processing
+    // experiment): the on-device Siri/Dictation model is definitively
+    // disabled or otherwise unusable for this app on this device/account
+    // right now, regardless of what recognizer.supportsOnDeviceRecognition
+    // itself reports (that property reflects device/locale CAPABILITY,
+    // not current enablement -- a known gap between the two). Forcing
+    // on-device is strictly worse than leaving this unset: unset at least
+    // lets SFSpeechRecognizer fall back to attempting server-based
+    // recognition instead of hard-blocking every single attempt
+    // instantly, so this is reverted back to unset, matching the
+    // already-proven-working @dev-amirzubair/react-native-voice-based
+    // pipeline elsewhere in this app (services/speechService.ts), which
+    // never sets this either.
+    //
+    // ACTIONABLE NEXT STEP, not a code change: this points at this
+    // specific test device's Settings, most likely one of --
+    //   Settings > General > Keyboard > Enable Dictation (must be ON)
+    //   Settings > Screen Time > Content & Privacy Restrictions >
+    //     Siri & Dictation (if Content & Privacy Restrictions are
+    //     enabled at all, this can silently block dictation even
+    //     when the toggle above looks fine)
+    // With that ruled in or out, whether the still-unexplained "No
+    // speech detected" failures (present with this unset, as they were
+    // for every capture before this round) are a SEPARATE server-path/
+    // network issue, or were actually downstream of this same
+    // Siri/Dictation restriction the whole time, becomes answerable.
     recognitionRequest = request
 
     recognitionTask = recognizer.recognitionTask(with: request) { [weak self] result, error in
