@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Image, ImageStyle, Platform, StyleSheet, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
+import {Image, ImageStyle, StyleSheet, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -211,28 +211,15 @@ const themedStyles = StyleService.create({
     // since the product ask here was for it to be every card's normal,
     // resting look.
     borderColor: 'color-primary-500',
-    // Homescreen polish pass -- ADDITIVE, local to this one component only
-    // (NOT touching styles/globalStyle.ts's shared `cardShadow` token,
-    // which is deliberately `{}` app-wide per the earlier SYMPHONY
-    // REDESIGN's explicit "no drop shadow anywhere, flat cards" direction
-    // -- see that constant's own comment history). This request's own
-    // AskUserQuestion answer named "shadows/elevation" specifically as
-    // part of what "more professional" should mean for THESE cards, so
-    // it's scoped narrowly here rather than reversing that app-wide flat
-    // decision for every card everywhere. Tuned soft/low-opacity -- a
-    // gentle lift, not the heavier glow this exact constant's own history
-    // shows this app has repeatedly walked back before.
-    ...Platform.select({
-      ios: {
-        shadowColor: '#0F172A',
-        shadowOffset: {width: 0, height: 4},
-        shadowOpacity: 0.06,
-        shadowRadius: 10,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
+    // REVERTED (explicit product follow-up: "No remove the shadows from
+    // the cards. We should still maintain the symphony card style") -- a
+    // prior polish pass added a local shadow/elevation here; wrong call,
+    // this app's SYMPHONY REDESIGN direction is deliberately flat/
+    // shadowless everywhere (see styles/globalStyle.ts's `cardShadow`
+    // token, kept at `{}` app-wide for exactly that reason) and these
+    // cards should keep matching it, not carve out their own exception.
+    // Padding/marginBottom/icon-size/typography bumps from that same pass
+    // are unaffected -- only the shadow itself is gone.
   },
   // Gradient variant (see gradientColors' own comment) supplies its own
   // saturated fill via LinearGradient instead — the default blue border
