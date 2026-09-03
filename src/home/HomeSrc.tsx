@@ -1102,33 +1102,32 @@ const HomeSrc = memo(() => {
           onPress={onPressCoachSend}
         />
 
-        {/* Product request, exact CSS spec: "give the practice card... a
-            linear gradient of these colors: linear-gradient(15deg, #45009d
-            20%, #8c00e5)" — see ActionCard's own gradientColors comment for
-            how the 15deg angle and the "20%" stop are honored, not just
-            approximated. Only this card gets it; the other 3 keep their
-            normal plain card background.
-            FOLLOW-UP (product report: "make the practice linear gradient
-            one color reduce the darker color") — was locations={[0.2, 1]},
-            a flat 20%-long block of the dark #45009D before it ever starts
-            blending toward the lighter #8C00E5. locations={[0, 1]} instead
-            starts that blend from the very first pixel, so the dark color
-            never holds as its own solid patch — the card reads as
-            overwhelmingly the lighter purple with just a soft dark edge,
-            not a hard two-tone split.
-            FOLLOW-UP (same message: "change the icon to a white line
-            icon") — was iconImage={Images.iconAiStars}, a full-color
-            gradient illustration (can't be tinted, see that prop's own
-            comment) — dropped so this falls through to the plain `icon`
-            eva glyph below instead, which ActionCard already renders in
-            solid white on the gradient variant.
-            FOLLOW-UP (product request: "change the linear gradient for the
-            practice card... to orange lineargradient instead of purple") —
-            was ['#45009D', '#8C00E5'] (dark purple -> light purple). Same
-            dark-to-light two-stop shape, same locations={[0,1]} blend and
-            15deg angle (both still just props on ActionCard, unaffected by
-            a color swap), just an orange pair instead: #C2410C (a deep
-            burnt orange) -> #FB923C (a lighter warm orange). */}
+        {/* REDESIGN (product request: "change their backgrounds to the
+            subtle version of that color. Give them the border and let
+            the border color be the main colors. Also their icon
+            background should be linear gradient colors like the ones in
+            the settings") -- was a full saturated-orange gradientColors
+            fill (see this card's own git history below for that entire
+            prior back-and-forth: purple -> lighter purple -> orange).
+            Replaced with ActionCard's new accentColor/iconGradientColors
+            treatment: a pale, low-opacity orange card background instead
+            of a solid fill, a real orange border (accentColor doubles as
+            the border color -- see that prop's own comment), and the
+            icon badge now carries its own two-stop gradient rather than
+            a flat white-on-orange glyph circle. iconGradientColors reuses
+            the EXACT same orange pair src/more/MoreSrc.tsx's
+            ICON_GRADIENTS already uses for its Settings-row icon badges
+            (the literal "ones in the settings" this request points at),
+            so this card's icon matches that reference precisely rather
+            than an approximation.
+            PRIOR HISTORY (kept for context -- exact CSS spec: "give the
+            practice card... a linear gradient of these colors: linear-
+            gradient(15deg, #45009d 20%, #8c00e5)", then "reduce the
+            darker color", then "change the icon to a white line icon",
+            then "change the linear gradient for the practice card... to
+            orange lineargradient instead of purple" -- each step is
+            still visible in this file's own git blame if a future request
+            ever asks for the saturated-fill look back). */}
         <ActionCard
           icon="mic-outline"
           title={t('home:practice_card_title', { defaultValue: 'Practice Interviews' })}
@@ -1138,34 +1137,35 @@ const HomeSrc = memo(() => {
               : t('home:practice_card_subtitle_default', { defaultValue: 'Sharpen your skills with a mock interview' }).toString()
           }
           onPress={onPressPractice}
-          gradientColors={['#FB923C', '#FB923C']}
-          gradientLocations={[0, 1]}
+          accentColor="#FB923C"
+          iconGradientColors={['#dc5d2b', '#FB923C']}
         />
 
-        {/* BUG FIX (product report: "the explore is the one thats supposed
-            to have the list icon and the daily challenge supposed to have
-            the lightning icon you need to correct that") -- was
-            iconCoachChatBlue, swapped with the Daily Challenge card's
-            heroIconImage above.
-            FOLLOW-UP (product request: "give the Explore Card... the
-            default blue background and the icons white just the way we
-            did for Practice card") -- same treatment as the Practice card
-            above: gradientColors set to the app's real primary blue
-            (color-primary-500, #0063F8) repeated as both stops, a flat
-            solid fill via ActionCard's gradient path rather than an actual
-            two-tone blend, matching Practice's own flat single-color
-            gradient. iconImage dropped -- it was Images.iconListStack, a
-            full-color illustration that can't be tinted (see ActionCard's
-            iconImage prop comment) -- so this now falls through to the
-            plain `icon="grid-outline"` eva glyph, which ActionCard already
-            renders solid white whenever gradientColors is set. */}
+        {/* REDESIGN (same product request as the Practice card above --
+            "subtle version of that color" background, a real border in
+            "the main colors", and a Settings-style gradient icon badge).
+            accentColor stays the app's real primary blue (color-primary-
+            500, #0063F8 -- same blue this card's border already matched
+            before this pass, just now actually rendered as a border
+            instead of a full card fill) so this card's "main color"
+            identity is unchanged; iconGradientColors reuses
+            MoreSrc.tsx's ICON_GRADIENTS blue pair, same "literal Settings
+            reference" reasoning as the Practice card's own comment.
+            PRIOR HISTORY: was a flat solid-blue gradientColors fill (see
+            git blame -- "give the Explore Card... the default blue
+            background and the icons white just the way we did for
+            Practice card"); iconImage was Images.iconListStack before
+            that, dropped in that same prior pass since a full-color
+            illustration can't be tinted white -- still dropped here for
+            the same reason, so this falls through to the plain
+            `icon="grid-outline"` eva glyph, now on the gradient badge. */}
         <ActionCard
           icon="grid-outline"
           title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
           subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
           onPress={onPressExploreMore}
-          gradientColors={['#0063F8', '#0063F8']}
-          gradientLocations={[0, 1]}
+          accentColor="#0063F8"
+          iconGradientColors={['#2d76db', '#3B9DFF']}
         />
 
         {/* 5th card, conditional (see the import comment above this

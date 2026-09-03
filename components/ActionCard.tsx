@@ -60,6 +60,47 @@ export interface ActionCardProps {
   // low-contrast.
   gradientColors?: string[];
   gradientLocations?: number[];
+  // Product request (Practice/Explore cards specifically): "change their
+  // backgrounds to the subtle version of that color. Give them the border
+  // and let the border color be the main colors." A THIRD card treatment,
+  // distinct from the full-saturated `gradientColors` fill above -- a
+  // light, low-opacity tint of accentColor as the card's own background
+  // (via withAlpha below; reads as a pale version of the color against
+  // this app's light page background, and as a subtly-tinted dark card in
+  // dark mode, same "blend over whatever's actually behind it" behavior
+  // either way) plus accentColor itself as a REAL border (borderWidth
+  // 1.5 -- unlike the default card's own borderColor above, which is set
+  // but never actually rendered at borderWidth: 0). Text/icon/chevron
+  // colors stay the theme's normal dark-on-light tones here, NOT the
+  // white-on-saturated switch `gradientColors` triggers -- this
+  // background is deliberately pale, not saturated, so white text would
+  // be illegible against it.
+  accentColor?: string;
+  // Product request: "their icon background should be linear gradient
+  // colors like the ones in the settings" -- same treatment/45deg diagonal
+  // angle as src/more/components/ButtonOptional.tsx's own
+  // iconWrapGradient (the Settings screen this request points at: each
+  // row's icon on a two-stop colored gradient badge), painted behind the
+  // icon glyph, which renders solid white on top for contrast against an
+  // arbitrary saturated gradient -- same reasoning as gradientColors'
+  // white-icon behavior above. Independent of accentColor/gradientColors
+  // -- the icon badge's own gradient doesn't have to match whatever the
+  // rest of the card is doing.
+  iconGradientColors?: string[];
+}
+
+// Product request: "subtle version of that color" for the accentColor
+// card background -- appending a low alpha hex suffix to a plain 6-digit
+// color is the simplest way to get a translucent tint that blends
+// correctly over whatever's actually behind it (this app's light page in
+// light mode, its dark surface in dark mode) without hand-picking a
+// separate pastel hex per theme. 1F (31/255, ~12%) is deliberately light
+// -- enough to read as "this card has a color" without competing with the
+// icon badge/text for attention the way a heavier tint would. Expects a
+// plain 6-digit "#RRGGBB" input (every accentColor caller passes one) --
+// not a general-purpose color parser.
+function withAlpha(hex: string, alphaHex: string = '1F'): string {
+  return `${hex}${alphaHex}`;
 }
 
 // Converts a CSS `linear-gradient(<angle>deg, ...)` angle into the
@@ -82,20 +123,42 @@ function cssAngleToGradientPoints(angleDeg: number): {start: {x: number; y: numb
 }
 
 const ActionCard: React.FC<ActionCardProps> = memo(
-  ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing, gradientColors, gradientLocations}) => {
+  ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing, gradientColors, gradientLocations, accentColor, iconGradientColors}) => {
     const styles = useStyleSheet(themedStyles);
     const theme = useTheme();
     const isGradient = !!gradientColors?.length;
+    const hasAccent = !!accentColor && !isGradient;
+    const hasIconGradient = !!iconGradientColors?.length;
+    const iconIsOnColor = isGradient || hasIconGradient;
     const content = (
       <>
-        <View style={[styles.iconWrap, isGradient ? styles.iconWrapOnGradient : undefined]}>
+        <View style={[
+          styles.iconWrap,
+          isGradient ? styles.iconWrapOnGradient : undefined,
+          hasIconGradient ? styles.iconWrapGradientClip : undefined,
+        ]}>
+          {hasIconGradient ? (
+            // Product request: "their icon background should be linear
+            // gradient colors like the ones in the settings" -- same
+            // absoluteFill-sibling-behind-content pattern as the
+            // full-card gradient below (and ButtonOptional.tsx's own
+            // iconWrapGradient) rather than making LinearGradient the
+            // layout container itself, for the same "doesn't reliably
+            // size itself to wrap flex content" reason documented there.
+            <LinearGradient
+              colors={iconGradientColors as [string, string, ...string[]]}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={StyleSheet.absoluteFillObject}
+            />
+          ) : null}
           {iconImage ? (
             <Image source={iconImage} resizeMode="contain" style={styles.iconImage as ImageStyle} />
           ) : (
             <Icon
               pack={iconPack}
               name={icon}
-              style={[globalStyle.icon16, {tintColor: isGradient ? '#FFFFFF' : theme['color-primary-100']}]}
+              style={[globalStyle.icon16, {tintColor: iconIsOnColor ? '#FFFFFF' : theme['color-primary-100']}]}
             />
           )}
         </View>
@@ -177,7 +240,12 @@ const ActionCard: React.FC<ActionCardProps> = memo(
         activeOpacity={0.85}
         onPress={onPress}
         disabled={disabled}
-        style={[styles.card, style, disabled ? styles.disabled : undefined]}>
+        style={[
+          styles.card,
+          hasAccent ? {backgroundColor: withAlpha(accentColor!), borderWidth: 1.5, borderColor: accentColor} : undefined,
+          style,
+          disabled ? styles.disabled : undefined,
+        ]}>
         {content}
       </TouchableOpacity>
     );
@@ -262,6 +330,14 @@ const themedStyles = StyleService.create({
   // background above.
   iconWrapOnGradient: {
     backgroundColor: 'rgba(255,255,255,0.18)',
+  },
+  // Product request: icon-badge gradient (see iconGradientColors' own
+  // comment) -- overflow: 'hidden' is what clips the absolutely-filled
+  // LinearGradient sibling to iconWrap's own rounded corners, same
+  // reasoning as cardTransparentBg below for the full-card gradient
+  // variant.
+  iconWrapGradientClip: {
+    overflow: 'hidden',
   },
   titleOnGradient: {
     color: '#FFFFFF',
