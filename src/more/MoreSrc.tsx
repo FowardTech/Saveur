@@ -173,16 +173,16 @@ const MoreSrc = memo(() => {
   // matches the reference's own approach of a handful of recurring colors
   // reused across ~15 rows rather than one unique color per row.
   const ICON_GRADIENTS: [string, string][] = [
-    ['#0047AB', '#3B9DFF'], // blue
-    ['#C2410C', '#FB923C'], // orange
-    ['#15803D', '#4ADE80'], // green
-    ['#6D28D9', '#A78BFA'], // purple
-    ['#BE123C', '#FB7185'], // red/pink
-    ['#0E7490', '#22D3EE'], // teal/cyan
-    ['#B45309', '#FBBF24'], // amber
-    ['#3730A3', '#818CF8'], // indigo
-    ['#374151', '#9CA3AF'], // slate/gray
-    ['#78350F', '#D97706'], // brown
+    ['#2d76dbff', '#3B9DFF'], // blue
+    ['#dc5d2bff', '#FB923C'], // orange
+    ['#28b35bff', '#4ADE80'], // green
+    ['#8449e2ff', '#A78BFA'], // purple
+    ['#d6355dff', '#FB7185'], // red/pink
+    ['#1ca3c8ff', '#22D3EE'], // teal/cyan
+    ['#dd8039ff', '#FBBF24'], // amber
+    ['#5950d9ff', '#818CF8'], // indigo
+    ['#5d636eff', '#9CA3AF'], // slate/gray
+    ['#ba693aff', '#D97706'], // brown
   ];
   const gradientFor = (index: number) => ICON_GRADIENTS[index % ICON_GRADIENTS.length];
   const DATA_DETAILS: (ButtonOptionalProps & {featureKey?: keyof FeatureFlags})[] = [
@@ -739,7 +739,7 @@ const MoreSrc = memo(() => {
               build (App Store / TestFlight / Play Store), so this row
               (and the route itself -- see AppContainer.tsx's matching
               __DEV__ gate) never reaches a real user. */}
-          {__DEV__ ? (
+          {/* {__DEV__ ? (
             <View style={styles.rowCard}>
               <TouchableOpacity activeOpacity={0.7} onPress={() => navigate('DuplexVoiceTest')}>
                 <Text category="h9" bold>
@@ -747,7 +747,7 @@ const MoreSrc = memo(() => {
                 </Text>
               </TouchableOpacity>
             </View>
-          ) : null}
+          ) : null} */}
           {/* "Refer Friend & Family" used to be a separate row here, pointing
               at the old ReferFriend.tsx stub (hardcoded fake link, never
               wired to the real backend). It duplicated the actual referral

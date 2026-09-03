@@ -775,12 +775,12 @@ const InterviewFeedback = memo(() => {
             in this app already has). Not gated on sessionId the way View
             Replay above is -- a real score is enough to discuss even
             without a session to link back to. */}
+        <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 16 }]} />
         <DiscussCoachButton
           label={t('find:discuss_with_coach', { defaultValue: 'Discuss this interview with your coach' }).toString()}
           onPress={onDiscussWithCoach}
           style={{ marginTop: sessionId ? 16 : 32 }}
         />
-        <CtaButton children={t('find:practice_again')} onPress={onPracticeAgain} style={[globalStyle.shadowBtn, { marginTop: 16 }]} />
         <Button children={t('common:done')} status="outline" onPress={onDone} style={{ marginTop: 16 }} />
       </Content>
     </Container>
