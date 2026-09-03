@@ -28,25 +28,33 @@
      letterboxed by a mismatched box shape. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <!-- BUG FIX, ROUND 2 (real-device report: still edge-to-edge/cropped
-         after round 1's fix, which moved android:width="402dp"
-         android:height="100dp" onto this item directly instead of a
-         nested bitmap child, but kept the same explicit dp width/height
-         declaration). Density-bucketed PNG assets are confirmed correctly
-         proportioned per bucket (mdpi 402x100px, xhdpi 804x200px, xxxhdpi
-         1607x400px, etc, exact multiples of the same 402x100dp base) — an
-         asset already scaled correctly for its own density bucket does
-         not need an ADDITIONAL explicit dp width/height layered on top to
-         render at the right size; Android already scales a density-
-         bucketed bitmap's intrinsic size correctly on its own. Since two
-         separate attempts at forcing an explicit width/height on this
-         layer-list item both produced the same "renders huge, overflows
-         the screen" symptom, that explicit sizing itself is the common
-         thread, not how it was declared — removed entirely. This now
-         relies purely on the bitmap's own correctly-scaled intrinsic size
-         (already verified correct per density bucket) plus gravity=center
-         to position it, no dp override at all. -->
-    <item
-        android:gravity="center"
-        android:drawable="@drawable/splash_logo_wordmark" />
+    <!-- BUG FIX, ROUND 3 (real-device report: STILL huge/overflowing after
+         round 1 (sized item + android:drawable) AND round 2 (unsized item +
+         android:drawable + gravity=center) — meaning the common thread
+         across both failed rounds wasn't sizing at all, it was using
+         android:drawable directly on the <item>. A plain
+         <item android:drawable="@drawable/x"/> used as (part of) a
+         windowBackground has no intrinsic size of its own to gravity
+         against — a window background is stretched to fill the full window
+         bounds, and item-level android:gravity is only meaningful when
+         paired with an explicit android:width/height (round 1's approach,
+         which apparently didn't take effect the way expected either) or
+         when the item's content is a <bitmap> child instead of a direct
+         drawable reference. <bitmap> is a distinct drawable type from a
+         plain PNG/drawable reference: BitmapDrawable implements its OWN
+         gravity-based draw() logic that positions the bitmap at its
+         intrinsic size within whatever bounds it's given, WITHOUT
+         stretching to fill — unlike a bare drawable reference. Nesting the
+         PNG in a <bitmap android:gravity="center"> inside an otherwise
+         unsized <item> is the standard, documented pattern for exactly this
+         "background color + centered logo at native size" case, and is
+         what actually gets the density-bucketed asset (already verified
+         correctly proportioned per bucket — mdpi 402x100px, xhdpi
+         804x200px, xxxhdpi 1607x400px, etc) to render at its real size
+         instead of stretched edge-to-edge. -->
+    <item>
+        <bitmap
+            android:src="@drawable/splash_logo_wordmark"
+            android:gravity="center" />
+    </item>
 </layer-list>
