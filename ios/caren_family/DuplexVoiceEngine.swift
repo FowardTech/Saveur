@@ -129,6 +129,31 @@ class DuplexVoiceEngine: RCTEventEmitter {
   // attached tells us definitively which of (a)/(b)/(c) this actually is.
   private var hasLoggedFirstAudioBuffer = false
 
+  // DIAGNOSTIC, ROUND 4 (real-device console output, three captures in a
+  // row now): the "first tap buffer" log above already ruled out (a) --
+  // the tap fires and delivers real, non-silent audio every time -- but
+  // it only ever tells us the peak of ONE buffer, captured milliseconds
+  // after beginRecognition() starts, almost certainly before the user has
+  // said anything at all. All three real logs so far show a low peak at
+  // that moment (0.0035 / 0.0020 / 0.0069 on a 0-1 scale) and recognition
+  // has NEVER succeeded even once, properly paced or not -- which raises
+  // exactly the question hasLoggedFirstAudioBuffer's own comment predicted
+  // but couldn't answer: is (b) actually the real story here, i.e. does
+  // audio reaching the recognizer ever get genuinely loud while the user
+  // is mid-speech, or does it stay this quiet the whole session? Given
+  // this module explicitly enables setVoiceProcessingEnabled(true) on the
+  // input node (Apple's Voice-Processing I/O unit, which applies its own
+  // AGC/noise-suppression on top of whatever the hardware gain is) right
+  // above in setupEngineIfNeeded(), a signal that never rises above
+  // near-silence even during active speech would point squarely at that,
+  // not at the recognizer or the network. sessionPeakAmplitude tracks a
+  // ROLLING max across every buffer (not just the first), logged and
+  // reset every ~2s so a real console capture during actual talking shows
+  // whether it ever climbs -- cheap: just a max-abs scan over 1024 Float32
+  // samples per ~40Hz tap callback, no allocation.
+  private var sessionPeakAmplitude: Float = 0
+  private var lastAmplitudeLogTime = Date()
+
   override init() {
     super.init()
     speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: currentLocaleIdentifier()))
@@ -421,25 +446,48 @@ class DuplexVoiceEngine: RCTEventEmitter {
                      userInfo: [NSLocalizedDescriptionKey: "Speech recognizer unavailable"])
     }
 
+    // DIAGNOSTIC, ROUND 4 -- one-time-per-session, rules out (or confirms)
+    // an availability/permission/network-vs-on-device split that would be
+    // otherwise invisible: start() already only gets this far when
+    // recognizer.isAvailable was true at that instant, but availability
+    // CAN flip (e.g. a device that only supports on-device recognition
+    // losing network mid-session, or vice versa) -- and neither
+    // authorizationStatus nor recordPermission being anything other than
+    // "authorized"/"granted" here would itself explain silent failures
+    // that a UI permission prompt was never shown for.
+    let recordPermission = AVAudioSession.sharedInstance().recordPermission
+    NSLog("[DuplexVoiceEngine] beginRecognition: recognizer.isAvailable=\(recognizer.isAvailable) supportsOnDeviceRecognition=\(recognizer.supportsOnDeviceRecognition) speechAuth=\(SFSpeechRecognizer.authorizationStatus().rawValue) recordPermission=\(recordPermission.rawValue)")
+
     let inputNode = audioEngine.inputNode
     let tapFormat = inputNode.outputFormat(forBus: 0)
     inputNode.removeTap(onBus: 0) // safety net against a stale tap from a previous session
     hasLoggedFirstAudioBuffer = false // see this flag's own comment above -- reset per session
+    sessionPeakAmplitude = 0
+    lastAmplitudeLogTime = Date()
     inputNode.installTap(onBus: 0, bufferSize: 1024, format: tapFormat) { [weak self] buffer, _ in
       guard let self = self else { return }
-      // See hasLoggedFirstAudioBuffer's own comment -- ONE-TIME diagnostic,
-      // not per-buffer (this closure fires ~40x/sec at bufferSize 1024).
+      let frameLength = Int(buffer.frameLength)
+      var peak: Float = 0
+      if let channelData = buffer.floatChannelData, frameLength > 0 {
+        let samples = channelData[0]
+        for i in 0..<frameLength {
+          peak = max(peak, abs(samples[i]))
+        }
+      }
+      // See hasLoggedFirstAudioBuffer's own comment -- ONE-TIME diagnostic.
       if !self.hasLoggedFirstAudioBuffer {
         self.hasLoggedFirstAudioBuffer = true
-        let frameLength = Int(buffer.frameLength)
-        var peak: Float = 0
-        if let channelData = buffer.floatChannelData, frameLength > 0 {
-          let samples = channelData[0]
-          for i in 0..<frameLength {
-            peak = max(peak, abs(samples[i]))
-          }
-        }
         NSLog("[DuplexVoiceEngine] first input tap buffer: frames=\(frameLength) format=\(tapFormat) peakAmplitude=\(peak)")
+      }
+      // See sessionPeakAmplitude's own comment -- rolling max, logged and
+      // reset roughly every 2s so a real capture during actual talking
+      // shows whether the signal reaching the recognizer ever gets loud.
+      self.sessionPeakAmplitude = max(self.sessionPeakAmplitude, peak)
+      let now = Date()
+      if now.timeIntervalSince(self.lastAmplitudeLogTime) >= 2.0 {
+        NSLog("[DuplexVoiceEngine] rolling peak amplitude (last ~2s): \(self.sessionPeakAmplitude)")
+        self.sessionPeakAmplitude = 0
+        self.lastAmplitudeLogTime = now
       }
       self.recognitionRequest?.append(buffer)
     }
