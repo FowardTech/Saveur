@@ -1083,14 +1083,23 @@ const Chat = memo(() => {
                 style={[
                   styles.suggestedTopicsPill,
                   styles.suggestedTopicsPillTop,
-                  // BUG FIX (product report: "The AI chat bubbles are not
-                  // looking good on dark mode") -- the base 8% alpha blue
-                  // was tuned for a white page and was nearly invisible
-                  // against this app's dark background, leaving what
-                  // looked like bare unstyled text instead of a pill.
-                  isDarkMode && { backgroundColor: 'rgba(94, 152, 255, 0.22)' },
+                  // REDESIGN (product request: "change the background to
+                  // gray") -- was a blue tint in both themes (light:
+                  // rgba(0, 99, 248, 0.08) on suggestedTopicsPill itself;
+                  // dark: this rgba(94, 152, 255, 0.22) override, from the
+                  // earlier "not looking good on dark mode" fix). Both are
+                  // now neutral gray instead -- see suggestedTopicsPill's
+                  // own comment for the light-mode value.
+                  isDarkMode && { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
                 ]}>
-                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                {/* REDESIGN (product request: "give the bulb icon the
+                    black color you gave to the text") -- was
+                    theme['color-primary-500'] (brand blue), same blue the
+                    text itself moved off of in the earlier "text should be
+                    black not blue" fix below. Chevron stays blue -- not
+                    mentioned by this request, same "only touch what was
+                    asked" precedent that fix itself set. */}
+                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: '#000000' }]} />
                 {/* BUG FIX (product request: "the suggested topics pill
                     text should be black not blue") -- was
                     theme['color-primary-500'] (brand blue). Icon/chevron
@@ -1608,6 +1617,10 @@ const themedStyles = StyleService.create({
   // (see this style's own git history) with just this trigger. Centered
   // via emptyState's own `alignItems: 'center'`, `marginTop` is the "down
   // a little bit" from the headline above it.
+  // REDESIGN (product request: "change the background to gray") -- was
+  // rgba(0, 99, 248, 0.08), a light blue tint matching this app's brand
+  // blue. Neutral gray now instead (the dark-mode override right below
+  // this pill's own JSX call site got the equivalent gray treatment too).
   suggestedTopicsPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1615,7 +1628,7 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     paddingHorizontal: 18,
     borderRadius: 99,
-    backgroundColor: 'rgba(0, 99, 248, 0.08)',
+    backgroundColor: 'rgba(0, 0, 0, 0.06)',
   },
   suggestedTopicsPillChevron: {
     marginLeft: 2,
