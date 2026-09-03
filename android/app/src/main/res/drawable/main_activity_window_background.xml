@@ -28,7 +28,27 @@
      letterboxed by a mismatched box shape. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <item android:gravity="center" android:width="402dp" android:height="100dp">
-        <bitmap android:src="@drawable/splash_logo_wordmark" android:gravity="center" />
-    </item>
+    <!-- BUG FIX (real-device report: logo rendered edge-to-edge/cropped,
+         not the fixed 402x100dp box below). Density-bucketed PNG assets
+         themselves are all correctly proportioned (verified: mdpi
+         402x100px, xhdpi 804x200px, xxxhdpi 1607x400px, etc, exact
+         multiples of the same 402x100dp base), so this wasn't a bad
+         asset. The bug was in HOW the size was declared: nesting a child
+         bitmap element with its own android:gravity="center" inside an
+         item that ALSO declares its own android:width/height/gravity is
+         a double-gravity pattern that doesn't reliably honor the outer
+         item's size constraint on every Android version/OEM skin — the
+         nested bitmap can render at its own intrinsic (unconstrained)
+         size instead, which is exactly the "renders huge, overflows the
+         screen" symptom reported. Switched to the simpler, more broadly
+         compatible pattern: android:drawable directly on the sized item
+         itself (no nested child element, no second gravity to conflict
+         with the first) — this is the standard, documented way to
+         combine an explicit fixed size and centered gravity for a
+         single drawable in a layer-list. -->
+    <item
+        android:width="402dp"
+        android:height="100dp"
+        android:gravity="center"
+        android:drawable="@drawable/splash_logo_wordmark" />
 </layer-list>
