@@ -963,54 +963,61 @@ const HomeSrc = memo(() => {
             the time-sensitive verify-email banner are UNCHANGED — neither
             is "content clutter" in the sense being simplified here, they're
             a conditional admin feature and an account-status prompt. */}
-        {/* Admin-configured Home banner (see the effect above for the full
-            "why" + how this differs from AnnouncementBanner, which sits
-            above HeaderHome and is a separate plain-text feature). Was
-            commented out and sitting lower, right above the 4 launcher
-            cards; product follow-up (with a reference screenshot of a
-            dark, icon-badge-style card) asked for it to actually "appear
-            at the top" and be redesigned to look like that reference — so
-            it's now the very first thing inside the scrollable Content
-            (ahead of even the verify-email banner), and the code-drawn
-            fallback below is a fixed dark card (icon chip + "Ad" pill on
-            one row, bold title + subtitle below) instead of the old
-            theme-following primary-color gradient strip, so it reads as a
-            deliberately distinct, eye-catching placement the way the
-            reference card does, in both light and dark app themes. Only
-            shows once a real, active placement="home_banner" ad exists —
-            no banner at all until the admin creates one, and a tap always
-            has real content to navigate AdDetails to. */}
+        {/* REDESIGN (product request, with reference screenshot: an App
+            Store-style "Events & Offers" promo card -- a small top-right
+            disclosure label, an image + headline + subtext row, a
+            divider, then a footer row with a pill CTA button). Scoped via
+            AskUserQuestion: match the screenshot's STRUCTURE using only
+            data Saveur's ads genuinely have (title/body/imageUrl/
+            ctaLabel) -- the screenshot's own expiry badge ("EXPIRES DEC
+            2"), "SPECIAL OFFER" ribbon, category label ("Events &
+            Offers"), and footer service name/category ("Streaming
+            Pass+" / "Destination Video") have no equivalent field on
+            AdvertisementProps, so rather than fabricating placeholder
+            text for them, they're dropped entirely -- the top-right label
+            is the one real, always-true thing worth keeping there (the
+            existing ad disclosure, not a per-ad category), and the
+            footer's left side (which had no real data either) is simply
+            empty, leaving just the CTA button.
+            PRIOR HISTORY (kept for context): this used to branch into two
+            completely different layouts -- a bare full-bleed image with
+            no caption at all, or (when no image) a dark code-drawn
+            fallback card with an icon chip + "Ad" pill above a stacked
+            title/subtitle. Both are gone now in favor of ONE consistent
+            structure that works whether or not the admin uploaded an
+            image (see homeBannerImageWrap below for the no-image
+            fallback tile). Only shows once a real, active
+            placement="home_banner" ad exists -- no banner at all until
+            the admin creates one, and a tap always has real content to
+            navigate AdDetails to. */}
         {homeBanner ? (
           <TouchableOpacity
             activeOpacity={0.9}
             style={[styles.homeBannerCard, { width: homeBannerWidth }]}
             onPress={onOpenHomeBanner}>
-            {homeBanner.imageUrl && !homeBannerImageFailed ? (
-              // The real admin-uploaded (and, per-locale, admin-translated)
-              // image, shown as-is with no caption overlay drawn over it —
-              // tapping the card (already wired on the outer
-              // TouchableOpacity above) is the only affordance, matching a
-              // real native ad banner.
+            <View style={styles.homeBannerTopRow}>
+              <Text category="h10" style={styles.homeBannerAdLabel}>
+                {t('home:banner_ad_label', { defaultValue: 'Ad' }).toString().toUpperCase()}
+              </Text>
+            </View>
+
+            <View style={styles.homeBannerMainRow}>
               <View style={styles.homeBannerImageWrap}>
-                <Image
-                  source={{ uri: homeBanner.imageUrl }}
-                  style={styles.homeBannerImage as ImageStyle}
-                  resizeMode="cover"
-                  onError={() => setHomeBannerImageFailed(true)}
-                />
-              </View>
-            ) : (
-              // No admin image (or it failed to load) — a code-drawn
-              // fallback card, still using the ad's real title/body text.
-              // REVERTED (explicit product follow-up: "lets just leave the
-              // homebanner the way it is before lets not make it image one
-              // side and caption the otherside anymore") — back to the
-              // icon+Ad-pill sharing a top row, with title/subtitle
-              // stacked full-width below, same as before the icon-left/
-              // caption-right redesign.
-              <View style={styles.homeBannerFallback}>
-                <View style={styles.homeBannerTopRow}>
-                  <View style={styles.homeBannerIconWrap}>
+                {homeBanner.imageUrl && !homeBannerImageFailed ? (
+                  <Image
+                    source={{ uri: homeBanner.imageUrl }}
+                    style={styles.homeBannerImage as ImageStyle}
+                    resizeMode="cover"
+                    onError={() => setHomeBannerImageFailed(true)}
+                  />
+                ) : (
+                  // No admin image (or it failed to load) -- a plain
+                  // colored tile with the app mark, so this row's layout
+                  // (image slot + headline/subtext) never collapses just
+                  // because a given ad happens to be text-only (see
+                  // AdvertisementProps' own comment: imageUrl is
+                  // optional).
+                  <View style={styles.homeBannerImageFallback}>
                     <Image
                       source={Images.logoMark}
                       style={styles.homeBannerIcon as ImageStyle}
@@ -1018,24 +1025,31 @@ const HomeSrc = memo(() => {
                       tintColor="#FFFFFF"
                     />
                   </View>
-                  <View style={styles.homeBannerAdPill}>
-                    <Text category="h10-s" bold style={styles.homeBannerAdPillText}>
-                      {t('home:banner_ad_label', { defaultValue: 'Ad' })}
-                    </Text>
-                  </View>
-                </View>
+                )}
+              </View>
+              <View style={[globalStyle.flexOne, styles.homeBannerTextCol]}>
                 {homeBanner.title ? (
-                  <Text category="h8" bold numberOfLines={1} mt={12} style={styles.homeBannerTitle}>
+                  <Text category="h9-s" bold numberOfLines={2}>
                     {homeBanner.title}
                   </Text>
                 ) : null}
                 {homeBanner.body ? (
-                  <Text category="h10" numberOfLines={2} mt={4} style={styles.homeBannerBody}>
+                  <Text category="h10" status="placeholder" numberOfLines={2} mt={4}>
                     {homeBanner.body}
                   </Text>
                 ) : null}
               </View>
-            )}
+            </View>
+
+            <View style={styles.homeBannerDivider} />
+
+            <View style={styles.homeBannerFooterRow}>
+              <View style={styles.homeBannerCtaButton}>
+                <Text category="h10-s" bold>
+                  {homeBanner.ctaLabel || t('common:view_details', { defaultValue: 'View Details' })}
+                </Text>
+              </View>
+            </View>
           </TouchableOpacity>
         ) : null}
 
@@ -1294,88 +1308,98 @@ const themedStyles = StyleService.create({
   verifyBannerText: {
     marginHorizontal: 10,
   },
-  // Admin-configured Home banner (see the JSX comment above where this
-  // renders). No `globalStyle.card` spread here -- no shadow, no opaque
-  // backing fill -- since the real fill is either the admin's own image or
-  // the code-drawn gradient inside homeBannerFallback below.
+  // REDESIGN (see the JSX comment above where this renders -- App Store
+  // "Events & Offers"-style promo card). Now one real bordered/filled
+  // card (unlike the old version's "no shadow, no opaque fill" comment --
+  // that relied on the admin's own image or a fixed dark fallback to BE
+  // the visible surface; this new layout needs a real card surface of its
+  // own since it always shows a top label + divider + footer around
+  // whatever image/text exists).
   homeBannerCard: {
     // width is computed per-render from actual screen width (see
     // homeBannerWidth above the component's return statement) and applied
-    // inline, not here. No height here either -- either sub-variant
-    // (homeBannerImageWrap or homeBannerFallback) sizes itself.
-    // marginBottom (product report: "too close to the homebanner" --
-    // the "Today's Career Focus" label right below only had its own
-    // mt={4}, which is fine as top-of-screen spacing after the
-    // verify-email banner but too tight once a real image/card sits
-    // directly above it) gives this card its own breathing room
-    // regardless of what follows, rather than bumping that label's mt
-    // and disturbing the no-banner-shown spacing too.
+    // inline, not here.
     marginTop: 16,
     marginBottom: 16,
     borderRadius: 16,
-    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'border-card-default',
+    backgroundColor: 'background-basic-color-2',
+    padding: 14,
   },
-  // Real admin-uploaded image variant. Fixed aspect ratio rather than an
-  // intrinsic-size Image so this card's height doesn't jump around between
-  // an admin's differently-shaped uploads.
+  // Top-right disclosure label -- the one thing in the reference
+  // screenshot's top row that maps to something Saveur's ads genuinely
+  // have (see this section's own AskUserQuestion-scoped comment above);
+  // the screenshot's own category/expiry text on this row has no real
+  // per-ad data behind it and isn't reproduced.
+  homeBannerTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 10,
+  },
+  homeBannerAdLabel: {
+    color: 'text-hint-color',
+    letterSpacing: 0.5,
+  },
+  homeBannerMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  // Image slot -- fixed square footprint (matches the reference's own
+  // rounded-square image tile) rather than the old full-bleed
+  // aspectRatio: 2.4 strip, since the image now shares a row with
+  // headline/subtext text instead of being the entire card.
   homeBannerImageWrap: {
-    width: '100%',
-    aspectRatio: 2.4,
+    width: 72,
+    height: 72,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   homeBannerImage: {
     width: '100%',
     height: '100%',
   },
-  // Code-drawn fallback banner (see the JSX comment where this renders) --
-  // a plain View, NOT a LinearGradient: a solid fixed color (not a real
-  // gradient) here, so no absoluteFill-layer trick is needed the way
-  // ActionCard's gradient variant needs one. Fixed near-black
-  // (deliberately NOT theme-conditional — meant to stand out as its own
-  // distinct placement in both light and dark app themes, same reasoning
-  // as the Home Practice card's own fixed gradient).
-  // REVERTED (explicit product follow-up: "lets just leave the homebanner
-  // the way it is before lets not make it image one side and caption the
-  // otherside anymore") — back to icon+Ad-pill sharing a row ABOVE a
-  // full-width title/subtitle block, undoing the icon-left/text-right
-  // redesign.
-  homeBannerFallback: {
-    borderRadius: 18,
-    overflow: 'hidden',
-    position: 'relative',
-    padding: 16,
-    backgroundColor: '#14141C',
-  },
-  homeBannerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  homeBannerIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  // No-image fallback tile (see the JSX comment on this branch) -- a
+  // plain solid-color square with the app mark, so the main row's layout
+  // never collapses for a text-only ad.
+  homeBannerImageFallback: {
+    width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    backgroundColor: 'color-primary-500',
   },
   homeBannerIcon: {
-    width: 20,
-    height: 20,
+    width: 28,
+    height: 28,
   },
-  homeBannerAdPill: {
-    marginLeft: 'auto',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  homeBannerTextCol: {
+    marginLeft: 12,
+  },
+  homeBannerDivider: {
+    height: 1,
+    backgroundColor: 'border-card-default',
+    marginVertical: 12,
+  },
+  // Footer row -- CTA pill button only (right-aligned). The reference
+  // screenshot's own footer also has a left-side icon+service-name/
+  // category block, which has no equivalent real ad data (see this
+  // section's own AskUserQuestion-scoped comment above) and is dropped
+  // rather than faked, leaving this row just the button.
+  homeBannerFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  // Outlined pill button (matches the reference's own "Subscribe" style
+  // -- a bordered pill, not a solid fill) since the whole card is already
+  // tappable via the outer TouchableOpacity; this reinforces the same
+  // action visually rather than being a second, different destination.
+  homeBannerCtaButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 7,
     borderRadius: 999,
-    backgroundColor: 'rgba(255,255,255,0.14)',
-  },
-  homeBannerAdPillText: {
-    color: 'rgba(255,255,255,0.8)',
-  },
-  homeBannerTitle: {
-    color: '#FFFFFF',
-  },
-  homeBannerBody: {
-    color: 'rgba(255,255,255,0.72)',
+    borderWidth: 1,
+    borderColor: 'text-basic-color',
   },
   // SYMPHONY REDESIGN — placeholder shown only for the brief window before
   // missionHeroLoading resolves, sized/shaped to match the real ActionCard
