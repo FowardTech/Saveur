@@ -79,6 +79,20 @@ class DuplexVoiceEngine: RCTEventEmitter {
 
   private let audioEngine = AVAudioEngine()
   private let playerNode = AVAudioPlayerNode()
+  // DIAGNOSTIC, ROUND 8: the other, working speech pipeline in this app
+  // (node_modules/@dev-amirzubair/react-native-voice/ios/Voice/Voice.mm)
+  // never taps audioEngine.inputNode directly -- it attaches its own
+  // AVAudioMixerNode, connects inputNode -> that mixer, and installs its
+  // recognition tap on the MIXER's output instead. That's a structurally
+  // different signal path than this file's tap-directly-on-inputNode
+  // approach, independent of the setVoiceProcessingEnabled node flag
+  // already ruled out (round 5) and the session mode already ruled out
+  // (round 7) -- worth testing on its own since a peak-amplitude reading
+  // can look identical on both sides of a tap point while the actual
+  // buffer content/format differs. See setupEngineIfNeeded (where this is
+  // attached/connected) and beginRecognition (where the tap moves here
+  // instead of inputNode) for the rest of this change.
+  private let recognitionMixerNode = AVAudioMixerNode()
   private let speechSynthesizer = AVSpeechSynthesizer()
   private var speechRecognizer: SFSpeechRecognizer?
 
@@ -326,32 +340,19 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // this is the most plausible explanation the code supports, not a
     // verified root cause.
     try? session.setActive(false, options: [.notifyOthersOnDeactivation])
-    // DIAGNOSTIC, ROUND 7 (real-device evidence, all of it now pointing the
-    // same direction): every experiment that touched something OTHER than
-    // this session's MODE has already been tried and ruled out this same
-    // investigation -- setVoiceProcessingEnabled on/off made zero
-    // difference, permissions/availability/on-device-support are all
-    // confirmed fine, audio level is confirmed genuinely loud (peaks up to
-    // 1.0/full clipping) with zero correlation to the failure. Direct
-    // comparison against the OTHER speech pipeline in this app (services/
-    // speechService.ts, @dev-amirzubair/react-native-voice --
-    // node_modules/@dev-amirzubair/react-native-voice/ios/Voice/Voice.mm),
-    // confirmed working on this same device, surfaced the one substantive,
-    // still-untested difference: that pipeline never sets a session MODE
-    // at all (stays AVAudioSessionModeDefault) -- only this file opts into
-    // .voiceChat, Apple's VoIP-tuned mode. That's a SESSION-level setting,
-    // distinct from the per-node setVoiceProcessingEnabled flag already
-    // ruled out -- .voiceChat can still change what's actually handed to
-    // the recognizer (route configuration, internal AGC/processing
-    // tuning) independent of what a raw peak-amplitude meter reports.
-    // .voiceChat was deliberately added earlier in this file's history
-    // (see the comment on setVoiceProcessingEnabled just below -- "attempt
-    // 2's mistake") specifically to fix the coach hearing its own TTS
-    // during barge-in, so dropping it is a real, known tradeoff, not free
-    // -- but recognition has never succeeded even once with it in place,
-    // and that has to come first. Temporarily .default here, matching the
-    // proven-working pipeline exactly, to test this directly.
-    try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
+    // DIAGNOSTIC, ROUND 7, RESULT: tried dropping the session mode from
+    // .voiceChat to .default (matching the other, working speech pipeline
+    // in this app) to see whether the VoIP-tuned mode itself was the
+    // problem. RULED OUT -- the very next real-device capture showed the
+    // exact same "No speech detected" failure, same pacing, same zero
+    // correlation with audio level (peak 0.69 that round, same as always).
+    // Reverted back to .voiceChat, since it was providing real AEC benefit
+    // for no cost once ruled out as the cause. See startRecognitionRequest
+    // for the next thing this same comparison turned up and is now
+    // testing instead: the working pipeline taps an intermediate mixer
+    // node rather than the input node directly, and sets a taskHint this
+    // file never has.
+    try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth])
     try session.setActive(true, options: [])
 
     let inputNode = audioEngine.inputNode
@@ -399,6 +400,16 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // mainMixerNode -> outputNode is AVAudioEngine's own default
     // connection, already in place; nothing to do for that link.
 
+    // See recognitionMixerNode's own comment -- attach it and connect
+    // inputNode's raw output into it (format: nil, same "let the engine
+    // pick the real connection format" approach already proven correct
+    // for playerNode above, rather than guessing). This mixer has no
+    // further downstream connection of its own -- it exists purely as a
+    // tap point for beginRecognition(), not to route audio anywhere else,
+    // which is a valid, self-contained branch off the input node.
+    audioEngine.attach(recognitionMixerNode)
+    audioEngine.connect(inputNode, to: recognitionMixerNode, format: nil)
+
     audioEngine.prepare()
     try audioEngine.start()
     isEngineSetUp = true
@@ -421,7 +432,9 @@ class DuplexVoiceEngine: RCTEventEmitter {
     speechSynthesizer.stopSpeaking(at: .immediate)
     playerNode.stop()
     if audioEngine.isRunning {
-      audioEngine.inputNode.removeTap(onBus: 0)
+      // See recognitionMixerNode's own comment -- the recognition tap now
+      // lives on that mixer node, not directly on inputNode.
+      recognitionMixerNode.removeTap(onBus: 0)
       audioEngine.stop()
     }
     // BUG FIX (real-device report: BOTH this engine's own recognition AND
@@ -500,13 +513,16 @@ class DuplexVoiceEngine: RCTEventEmitter {
     let recordPermission = AVAudioSession.sharedInstance().recordPermission
     NSLog("[DuplexVoiceEngine] beginRecognition: recognizer.isAvailable=\(recognizer.isAvailable) supportsOnDeviceRecognition=\(recognizer.supportsOnDeviceRecognition) speechAuth=\(SFSpeechRecognizer.authorizationStatus().rawValue) recordPermission=\(recordPermission.rawValue)")
 
-    let inputNode = audioEngine.inputNode
-    let tapFormat = inputNode.outputFormat(forBus: 0)
-    inputNode.removeTap(onBus: 0) // safety net against a stale tap from a previous session
+    // DIAGNOSTIC, ROUND 8 (see recognitionMixerNode's own comment): tapping
+    // the mixer node connected off inputNode, instead of inputNode
+    // directly, to match the other, working speech pipeline's structure.
+    let tapNode = recognitionMixerNode
+    let tapFormat = tapNode.outputFormat(forBus: 0)
+    tapNode.removeTap(onBus: 0) // safety net against a stale tap from a previous session
     hasLoggedFirstAudioBuffer = false // see this flag's own comment above -- reset per session
     sessionPeakAmplitude = 0
     lastAmplitudeLogTime = Date()
-    inputNode.installTap(onBus: 0, bufferSize: 1024, format: tapFormat) { [weak self] buffer, _ in
+    tapNode.installTap(onBus: 0, bufferSize: 1024, format: tapFormat) { [weak self] buffer, _ in
       guard let self = self else { return }
       let frameLength = Int(buffer.frameLength)
       var peak: Float = 0
@@ -519,7 +535,7 @@ class DuplexVoiceEngine: RCTEventEmitter {
       // See hasLoggedFirstAudioBuffer's own comment -- ONE-TIME diagnostic.
       if !self.hasLoggedFirstAudioBuffer {
         self.hasLoggedFirstAudioBuffer = true
-        NSLog("[DuplexVoiceEngine] first input tap buffer: frames=\(frameLength) format=\(tapFormat) peakAmplitude=\(peak)")
+        NSLog("[DuplexVoiceEngine] first recognition tap buffer (mixer node): frames=\(frameLength) format=\(tapFormat) peakAmplitude=\(peak)")
       }
       // See sessionPeakAmplitude's own comment -- rolling max, logged and
       // reset roughly every 2s so a real capture during actual talking
@@ -604,6 +620,14 @@ class DuplexVoiceEngine: RCTEventEmitter {
 
     let request = SFSpeechAudioBufferRecognitionRequest()
     request.shouldReportPartialResults = true
+    // DIAGNOSTIC, ROUND 8 (same comparison as recognitionMixerNode's own
+    // comment): the other, working speech pipeline
+    // (@dev-amirzubair/react-native-voice) explicitly sets
+    // taskHint = .dictation on its request; this file has never set
+    // taskHint at all (defaults to .unspecified), which affects Apple's
+    // internal endpointing/voice-activity tuning. Cheap, safe to combine
+    // with the mixer-node change above in the same test.
+    request.taskHint = .dictation
     // RE-REVERTED, ROUND 6 RESULT (real-device console output, seven
     // captures now): forcing requiresOnDeviceRecognition = true reproduced
     // the EXACT same immediate, hard "Siri and Dictation are disabled"
