@@ -236,6 +236,31 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
       // hasn't fired yet.
       currentTtsText = text
       ttsSpeakingActive = true
+      // BUG FIX (product report: text-matching alone -- isLikelyOwnEcho --
+      // didn't stop self-echo interruptions in practice). Matching TTS text
+      // against a recognized transcript is inherently fragile here: STT
+      // run on a device's OWN muffled/re-captured speaker output frequently
+      // garbles words differently than a real utterance would, and if the
+      // coach's reply is spoken in more than one utteranceId/chunk,
+      // currentTtsText only tracks the latest one while echo from an
+      // earlier chunk can still be arriving. A much more reliable guarantee
+      // than text similarity: stop the recognizer from actively capturing
+      // AT ALL while TTS is speaking, the same way this app's original,
+      // already-proven "everywhere else" (non-duplex) model on this screen
+      // always worked (see VoiceCoachView.tsx's own header comment) --
+      // cancel() ends the current session outright instead of letting it
+      // keep listening through playback. restartAfterSessionEnd (below)
+      // won't start a new session again until ttsSpeakingActive flips back
+      // to false, and onDone's grace-window callback explicitly kicks a
+      // fresh session off at that point. isLikelyOwnEcho stays in place as
+      // a secondary safety net for the brief window right as listening
+      // resumes, when trailing room echo may still be audible.
+      try {
+        speechRecognizer?.cancel()
+      } catch (e: Exception) {
+        // Best-effort -- a recognizer already idle/mid-teardown shouldn't
+        // block speak() from proceeding.
+      }
       val utteranceId = UUID.randomUUID().toString()
       tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) {}
@@ -253,7 +278,17 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
             // fires -- keep treating recognized text as possible echo for a
             // short trailing window rather than clearing it immediately.
             mainHandler.postDelayed({
-              if (generation == speechGeneration) ttsSpeakingActive = false
+              if (generation != speechGeneration) return@postDelayed
+              ttsSpeakingActive = false
+              // The recognizer was cancel()ed when this utterance started
+              // (see speak()'s own comment) and restartAfterSessionEnd has
+              // been deferring ever since -- explicitly kick a fresh
+              // session off now rather than waiting for that poll to
+              // notice, so listening resumes promptly instead of after an
+              // extra delay.
+              if (isEngineSetUp) {
+                speechRecognizer?.let { startRecognitionSession(it) }
+              }
             }, ttsEchoGraceMs)
           }
         }
@@ -266,7 +301,14 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
             emitError("speak", "TextToSpeech synthesis error")
             pendingSpeakPromise?.reject("duplex_speak_failed", "TextToSpeech synthesis error")
             pendingSpeakPromise = null
+            // See onDone's own comment -- TTS failed instead of finishing
+            // normally, but the recognizer was still cancel()ed when this
+            // utterance started, so it needs the same explicit resume (no
+            // grace window needed here -- nothing was actually spoken).
             ttsSpeakingActive = false
+            if (isEngineSetUp) {
+              speechRecognizer?.let { startRecognitionSession(it) }
+            }
           }
         }
       })
@@ -289,8 +331,15 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
       pendingSpeakPromise = null
       // Stopped explicitly (e.g. a genuine barge-in already confirmed by the
       // caller) -- no reason to keep suppressing transcripts as possible
-      // echo once playback has actually been cut.
+      // echo once playback has actually been cut. The recognizer was
+      // cancel()ed when speak() started (see its own comment) and nothing
+      // else resumes it on this path, so explicitly restart listening here
+      // too -- this is very likely a tap-to-interrupt call, and the user
+      // should be heard again immediately, not after a stale delayed retry.
       ttsSpeakingActive = false
+      if (isEngineSetUp) {
+        speechRecognizer?.let { startRecognitionSession(it) }
+      }
       promise.resolve(null)
     }
   }
@@ -455,6 +504,12 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
 
       override fun onError(error: Int) {
         if (recognitionGeneration != myGeneration) return // stale session, already superseded
+        // See speak()'s own comment -- this session was very likely just
+        // cancel()ed deliberately because TTS started, not a real failure.
+        // Don't emit a spurious error or run it through the give-up-loop
+        // counters; onDone's own grace-window callback is what explicitly
+        // restarts listening once speaking actually finishes.
+        if (ttsSpeakingActive) return
         val message = errorMessage(error)
         emitError("recognitionSession", message)
         // See this file's header comment -- same "no speech" vs. other-
@@ -506,6 +561,12 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     // gives a fresh session real wall-clock time to hear anything.
     mainHandler.postDelayed({
       if (!isEngineSetUp || recognitionGeneration != generation) return@postDelayed
+      // See speak()'s own comment -- if TTS started speaking in the
+      // meantime, don't restart yet; onDone's grace-window callback owns
+      // resuming listening once speaking actually finishes, so this would
+      // otherwise race a fresh session that immediately gets cancel()ed
+      // again a moment later.
+      if (ttsSpeakingActive) return@postDelayed
       startRecognitionSession(recognizer)
     }, delayMs)
   }
