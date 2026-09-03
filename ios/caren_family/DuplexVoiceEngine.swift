@@ -460,6 +460,38 @@ class DuplexVoiceEngine: RCTEventEmitter {
   // the signature of a genuinely broken session instead.
   private var recentRecognitionErrorTimestamps: [Date] = []
 
+  // BUG FIX, ROUND 2 (real-device console output, product report: a prior
+  // fix here stopped counting "No speech detected" toward the give-up
+  // threshold at all, reasoning it was routine startup silence -- WRONG,
+  // or at least incomplete. The very next real-device test showed the
+  // actual shape of the problem: not a handful of errors at startup, but
+  // HUNDREDS of identical "No speech detected" errors logged back-to-back
+  // in what was clearly a span of well under a second of real time. That
+  // rate is not Apple's recognizer legitimately timing out on silence --
+  // real silence-detection timeouts take real seconds. It's this file's
+  // OWN restart call (`self.startRecognitionRequest(with: recognizer)`
+  // below) recursing SYNCHRONOUSLY, on the same call stack, from inside
+  // the very completion closure that just fired -- if recognitionTask's
+  // completion handler is invoked synchronously/near-instantly for
+  // whatever underlying reason (a bad request state, a rate limit, no
+  // viable recognition path at all), each new request lives for
+  // microseconds before being torn down and replaced by the next one,
+  // never getting a real chance to see any of the audio actually arriving
+  // from the input tap -- so of course every single one reports "no
+  // speech," forever, in a tight loop that also pegs the main thread.
+  // Fixed two ways: (1) the restart below is now always dispatched
+  // asynchronously with a short delay instead of called directly inline,
+  // which structurally breaks any synchronous recursion regardless of
+  // why the completion handler fired so fast, and gives each fresh
+  // request genuine wall-clock time to actually receive audio before the
+  // next teardown; (2) "No speech detected" is back to counting toward a
+  // give-up threshold -- just a much more lenient one than other error
+  // types, tolerant of a few legitimate occurrences around startup, but
+  // still catching a genuinely stuck device (no network AND no usable
+  // on-device model, the underlying case this symptom most likely traces
+  // to) instead of spinning on it forever.
+  private var recentNoSpeechTimestamps: [Date] = []
+
   // DIAGNOSTIC (see hasLoggedFirstAudioBuffer's own comment for the full
   // "why" -- this covers possibility (c) there: real, non-silent buffers
   // reaching recognitionRequest.append but SFSpeechRecognizer's own
@@ -507,6 +539,7 @@ class DuplexVoiceEngine: RCTEventEmitter {
         // A real result proves this session is alive -- whatever error
         // streak was building is now stale.
         self.recentRecognitionErrorTimestamps.removeAll()
+        self.recentNoSpeechTimestamps.removeAll()
         self.emit("onTranscript", [
           "text": result.bestTranscription.formattedString,
           "isFinal": result.isFinal,
@@ -526,37 +559,25 @@ class DuplexVoiceEngine: RCTEventEmitter {
         self.recognitionRequest = nil
         guard self.isEngineSetUp, let recognizer = self.speechRecognizer else { return }
         if let error = error {
-          // BUG FIX (product report, confirmed via real Xcode console
-          // output on a real device): a brand-new "always listening"
-          // session was hitting FOUR "No speech detected" errors within
-          // the first couple of seconds -- before the user had any real
-          // chance to start talking at all -- which tripped this guard's
-          // give-up threshold and permanently abandoned recognition for
-          // the rest of the session. Every later real speech buffer was
-          // still physically reaching the input tap (confirmed: a real,
-          // non-zero peakAmplitude logged well after this point -- see
-          // hasLoggedFirstAudioBuffer) but had nowhere to go, since
-          // recognitionRequest was left nil once this gave up --
-          // self.recognitionRequest?.append(buffer) in the tap callback
-          // just silently no-ops on nil, with zero further errors either.
-          // That's exactly "captures nothing, no error, ever" from the
-          // outside.
-          //
-          // "No speech detected" restarting the request is the CORRECT,
-          // intended, ROUTINE behavior for "always listening" (see this
-          // function's own header comment above) -- Apple's recognizer
-          // sessions have their own short internal duration/silence limit
-          // independent of whether the user has said anything yet, so
-          // this can legitimately fire several times in quick succession
-          // simply because the user hasn't started talking yet, not just
-          // "after a real silence gap" once a conversation is already
-          // under way as this guard originally assumed. It should never
-          // by itself count as evidence of a genuinely broken session --
-          // only OTHER failures (auth, format, "Siri and Dictation are
-          // disabled", etc.) should count toward giving up.
+          let now = Date()
           let isNoSpeechDetected = (error as NSError).localizedDescription == "No speech detected"
-          if !isNoSpeechDetected {
-            let now = Date()
+          if isNoSpeechDetected {
+            // See recentNoSpeechTimestamps' own comment -- lenient on its
+            // own (a real device can legitimately hit this a few times
+            // around startup/mid-conversation silence), but a sustained
+            // flood over a real multi-second window still gives up rather
+            // than spinning forever on a device with no viable
+            // recognition path at all.
+            self.recentNoSpeechTimestamps = self.recentNoSpeechTimestamps.filter {
+              now.timeIntervalSince($0) < 10
+            }
+            self.recentNoSpeechTimestamps.append(now)
+            if self.recentNoSpeechTimestamps.count >= 15 {
+              self.recentNoSpeechTimestamps.removeAll()
+              self.emitError("recognitionTask: giving up after sustained 'no speech detected' loop", error)
+              return // stop silently retrying a session that's demonstrably not working
+            }
+          } else {
             self.recentRecognitionErrorTimestamps = self.recentRecognitionErrorTimestamps.filter {
               now.timeIntervalSince($0) < 3
             }
@@ -568,11 +589,22 @@ class DuplexVoiceEngine: RCTEventEmitter {
             }
           }
         }
-        // Restart a fresh request immediately, as long as the engine is
-        // still meant to be running -- keeps "always listening" alive
-        // across the recognizer's own session boundaries, exactly like
-        // the old model's guardedVoiceStart did for react-native-voice.
-        self.startRecognitionRequest(with: recognizer)
+        // BUG FIX (see recentNoSpeechTimestamps' own comment for the full
+        // story): this used to call startRecognitionRequest directly,
+        // inline, from inside this same completion closure -- if the
+        // closure fires synchronously/near-instantly (confirmed on a real
+        // device: hundreds of identical "No speech detected" errors
+        // logged in well under a second), that recursed into a tight
+        // synchronous loop where every fresh request was torn down before
+        // it ever had a real chance to see any audio. Dispatching the
+        // restart with a short delay instead structurally breaks that
+        // loop regardless of why the closure fired so fast, and gives
+        // each new request genuine wall-clock time to actually receive
+        // real audio from the input tap before the next teardown.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+          guard let self = self, self.isEngineSetUp else { return }
+          self.startRecognitionRequest(with: recognizer)
+        }
       }
     }
   }
