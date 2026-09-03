@@ -542,9 +542,11 @@ const VoiceCoachView = memo(({
         if (__DEV__) console.warn('[VoiceCoachView] onError', JSON.stringify(e));
         if (isActiveRef.current) setErrorMsg(e.message);
       }),
-      // Android-only (see speechStartedPulse's own comment) -- a no-op
-      // subscription on iOS, since DuplexVoiceEngine.swift never emits
-      // this event.
+      // Android-only (see speechStartedPulse's own comment) -- a genuine
+      // no-op on iOS, guarded inside addSpeechStartedListener itself (see
+      // that function's own comment for a real-device crash this guard
+      // fixed: iOS's RCTEventEmitter throws on registration for an
+      // unsupported event name, not just on emission).
       duplexVoiceService.addSpeechStartedListener(() => {
         if (__DEV__) console.warn('[VoiceCoachView] onSpeechStarted');
         if (!activeRef.current) return;

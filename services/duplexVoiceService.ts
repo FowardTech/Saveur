@@ -164,8 +164,13 @@ export interface DuplexErrorEvent {
 // transcript-independent "the user started talking" signal — fires ahead
 // of any transcript text, closing the barge-in-latency gap a
 // transcript-only signal has. No payload — the event firing at all is the
-// signal. Never emitted on iOS; registering a listener there is harmless,
-// it will simply never fire.
+// signal. iOS's DuplexVoiceEngine.swift never emits this — and, unlike a
+// plain unused event, iOS's RCTEventEmitter actually THROWS the moment
+// something registers a listener for a name outside its own
+// supportedEvents() list, so addSpeechStartedListener below is a real
+// Platform.OS-gated no-op on iOS, not just an event nobody happens to
+// fire (see that function's own comment for the real-device crash this
+// fixed).
 export interface SpeechStartedEvent {}
 
 export function isDuplexVoiceSupported(): boolean {
@@ -296,7 +301,25 @@ export function addTranscriptListener(handler: (event: TranscriptEvent) => void)
   return getEmitter()?.addListener('onTranscript', handler);
 }
 
+// BUG FIX (real-device report: iOS red screen the moment this listener
+// was registered — "`onSpeechStarted` is not a supported event type for
+// DuplexVoiceEngine. Supported events are: `onTranscript`,
+// `onListeningState`, `onSpeakingState`, `onError`."). Wrong assumption
+// in this event's own original comment: registering a listener for an
+// event name iOS's native module never emits is NOT harmless. iOS's
+// DuplexVoiceEngine.swift is an RCTEventEmitter subclass, and
+// RCTEventEmitter validates every addListener() call against its
+// supportedEvents() override at REGISTRATION time, not just when
+// something tries to emit — so this threw immediately on iOS, before any
+// speech ever happened, regardless of whether onSpeechStarted would ever
+// actually fire there. Guarded to a real no-op on iOS (never touches the
+// emitter at all) rather than adding "onSpeechStarted" to
+// DuplexVoiceEngine.swift's supportedEvents() list — iOS has no source
+// for this event and doesn't need one (see this event's own comment on
+// why only Android has it), so declaring it there would be a lie about
+// that module's actual behavior, not a real fix.
 export function addSpeechStartedListener(handler: (event: SpeechStartedEvent) => void) {
+  if (Platform.OS !== 'android') return undefined;
   return getEmitter()?.addListener('onSpeechStarted', handler);
 }
 
