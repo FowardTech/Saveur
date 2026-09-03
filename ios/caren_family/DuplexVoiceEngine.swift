@@ -60,45 +60,22 @@ import React
 @objc(DuplexVoiceEngine)
 class DuplexVoiceEngine: RCTEventEmitter {
 
-  // DIAGNOSTIC, ROUND 5 (real-device console output, four captures now):
-  // the newly-added rolling amplitude log just ruled out the leading
-  // hypothesis from the last round -- audio reaching the recognizer is
-  // NOT stuck near-silence, it climbs to entirely normal, loud speech
-  // levels (0.20 / 0.40 / 0.94 / 0.97 on a 0-1 scale, repeatedly) while
-  // the user is actually talking. And recognition STILL fails every
-  // single attempt with "No speech detected," with zero correlation to
-  // amplitude -- a window that peaked at 0.97 failed exactly the same
-  // way as one that peaked at 0.017. That rules out a simple loudness/
-  // gain threshold problem and points somewhere else entirely: real,
-  // audibly-loud audio is reaching SFSpeechRecognizer and it still can't
-  // recognize speech in it, every time, on a device where the OTHER,
-  // separate speech pipeline elsewhere in this app (services/
-  // speechService.ts, @dev-amirzubair/react-native-voice) is already
-  // proven to work fine.
-  //
-  // The one thing this module does that the working pipeline does NOT do
-  // at all: setVoiceProcessingEnabled(true) on both engine nodes, i.e.
-  // routing everything through Apple's Voice-Processing I/O unit -- this
-  // file's own top-of-file comment already flagged this as the highest-
-  // uncertainty area before any of this was ever run on a device. A peak-
-  // amplitude meter can't detect this class of problem: aggressive VoIP-
-  // tuned noise suppression/AEC can leave a signal reading just as loud
-  // while still mangling it enough (spectral smearing, over-suppression
-  // between words, artifacts) that a speech recognizer can't extract
-  // anything intelligible from it, even though a human -- or a simple
-  // peak meter -- would call it "clearly audible."
-  //
-  // This flag temporarily disables voice processing on BOTH nodes so the
-  // next real-device test isolates that variable directly: if turning it
-  // off makes recognition finally succeed, that's confirmed as the root
-  // cause (and duplex/AEC then needs a different, less aggressive
-  // configuration rather than being abandoned outright); if recognition
-  // STILL fails with it off, this hypothesis is ruled out and the next
-  // place to look is buffer/format handling instead. TEMPORARY -- revert
-  // to true once this is resolved, since disabling this is what lets the
-  // coach hear and repeat its own TTS output (the exact failure mode
-  // this whole module exists to prevent, per the header comment above).
-  private let voiceProcessingEnabledForDiagnostic = false
+  // DIAGNOSTIC, ROUND 5, RESULT (real-device console output, five captures
+  // now): tried disabling voice processing on both nodes to test whether
+  // Apple's Voice-Processing I/O unit was mangling otherwise-loud audio
+  // (the rolling amplitude log had just ruled out simple AGC/gain
+  // suppression -- confirmed the signal climbs to 0.20-0.97 during real
+  // speech). RULED OUT: with voice processing off, recognition STILL
+  // failed every single attempt with "No speech detected" -- no change in
+  // outcome at all. Meanwhile this experiment cost a real regression (TTS
+  // playback broke while it was off), with nothing to show for it. Reverted
+  // both setVoiceProcessingEnabled calls below back to a hardcoded true --
+  // this was not the cause, and the tradeoff isn't worth repeating. The
+  // actual next lead: this same real-device test also exposed that the
+  // "give up after sustained no-speech loop" guard (recentNoSpeechTimestamps,
+  // further down this file) leaves the engine in a fully silent,
+  // permanently-dead state once it trips -- no more restarts, no more
+  // errors, nothing -- see that guard's own comment for the fix.
 
   private let audioEngine = AVAudioEngine()
   private let playerNode = AVAudioPlayerNode()
@@ -364,17 +341,14 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // startup entirely -- same posture as every other AVAudioSession/
     // AVAudioEngine call in this file.
     do {
-      try inputNode.setVoiceProcessingEnabled(voiceProcessingEnabledForDiagnostic)
+      try inputNode.setVoiceProcessingEnabled(true)
     } catch {
       self.emitError("setVoiceProcessingEnabled(input)", error)
     }
     do {
-      try outputNode.setVoiceProcessingEnabled(voiceProcessingEnabledForDiagnostic)
+      try outputNode.setVoiceProcessingEnabled(true)
     } catch {
       self.emitError("setVoiceProcessingEnabled(output)", error)
-    }
-    if !voiceProcessingEnabledForDiagnostic {
-      NSLog("[DuplexVoiceEngine] voice processing DISABLED for this diagnostic build -- no AEC, coach may hear its own TTS if this session ever exercises barge-in; this run is purely to isolate whether voice processing is why recognition never succeeds")
     }
 
     // BUG FIX, ROUND 2 (real-device reports, in order: (1) TTS played
@@ -666,7 +640,22 @@ class DuplexVoiceEngine: RCTEventEmitter {
             if self.recentNoSpeechTimestamps.count >= 15 {
               self.recentNoSpeechTimestamps.removeAll()
               self.emitError("recognitionTask: giving up after sustained 'no speech detected' loop", error)
-              return // stop silently retrying a session that's demonstrably not working
+              // BUG FIX (real-device report, "nothing is even working
+              // anymore": this used to `return` here, unconditionally --
+              // stopping startRecognitionRequest from EVER being called
+              // again for the rest of this session. The mic tap stays
+              // installed and audio keeps flowing (confirmed: the rolling
+              // amplitude log kept printing for well over a minute after
+              // this exact message), but nothing is ever submitted to the
+              // recognizer again -- a permanently dead, silent session
+              // with zero further errors to signal it, indistinguishable
+              // from a frozen app. Restarting after a longer cooldown
+              // instead keeps the give-up guard's real purpose (stop
+              // hammering a session that just failed 15 times in 10s)
+              // without leaving the coach unable to ever hear the user
+              // again for the rest of the visit.
+              cooldownRestart(recognizer)
+              return
             }
           } else {
             self.recentRecognitionErrorTimestamps = self.recentRecognitionErrorTimestamps.filter {
@@ -676,7 +665,10 @@ class DuplexVoiceEngine: RCTEventEmitter {
             if self.recentRecognitionErrorTimestamps.count >= 4 {
               self.recentRecognitionErrorTimestamps.removeAll()
               self.emitError("recognitionTask: giving up after rapid error loop", error)
-              return // stop silently retrying a session that's demonstrably not working
+              // See the "No speech detected" give-up branch's own comment
+              // just above -- same fix, same reasoning, applied here too.
+              cooldownRestart(recognizer)
+              return
             }
           }
         }
@@ -697,6 +689,18 @@ class DuplexVoiceEngine: RCTEventEmitter {
           self.startRecognitionRequest(with: recognizer)
         }
       }
+    }
+  }
+
+  // See both give-up branches above -- a longer cooldown (vs. the normal
+  // 0.25s restart pacing) before trying again after a give-up specifically,
+  // so a session that just failed 15 times in ~10s doesn't immediately pile
+  // up another 15 failures in the next 10s, while still eventually giving
+  // the user another real chance instead of going silent forever.
+  private func cooldownRestart(_ recognizer: SFSpeechRecognizer) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+      guard let self = self, self.isEngineSetUp else { return }
+      self.startRecognitionRequest(with: recognizer)
     }
   }
 
