@@ -119,6 +119,23 @@
 		<string>remote-notification</string>
 		<string>audio</string>
 	</array>
+	<!-- DIAGNOSTIC (round 16, see DuplexVoiceEngine.swift's
+	     diagnosticRecordingFile comment): Xcode's own "Download Container"
+	     feature (Devices and Simulators -> gear icon) failed with a
+	     com.apple.dt.remoteservices.error transfer failure trying to pull
+	     the WAV diagnostic it writes to this app's Documents folder;
+	     Xcode's Download Container is known to be flaky for this exact
+	     scenario. These two keys make the Documents folder show up
+	     directly in the iOS Files app (On My iPhone > Saveur), so the file
+	     can be shared off the device via AirDrop/Share Sheet instead,
+	     without going through Xcode at all. Safe to leave on permanently,
+	     since this is a standard, common flag many apps ship with, not a
+	     security-sensitive one, though it can be removed once this
+	     specific diagnostic is no longer needed if preferred. -->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>BootSplash</string>
 	<key>UIRequiredDeviceCapabilities</key>
