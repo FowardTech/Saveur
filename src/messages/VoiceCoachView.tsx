@@ -54,30 +54,36 @@ import ThemeContext from '../../ThemeContext';
 // comes in before it fires, that's treated as the end of the user's turn,
 // and the accumulated transcript is sent to the coach.
 //
-// Interruption / barge-in: THIS SCREEN NOW HAS TWO SEPARATE
-// IMPLEMENTATIONS, selected once per session via
-// duplexVoiceService.isDuplexVoiceSupported() (iOS only, for now):
+// Interruption / barge-in: real, speech-triggered barge-in on BOTH
+// platforms, selected once per session via
+// duplexVoiceService.isDuplexVoiceSupported() -- true whenever the native
+// DuplexVoiceEngine module resolves, which it does on iOS
+// (ios/caren_family/DuplexVoiceEngine.swift) and on Android
+// (android/.../DuplexVoiceEngineModule.kt) alike. The mic runs
+// continuously through both listening AND the coach's own speech; if the
+// user starts talking while the coach is mid-reply, the coach is cut off
+// immediately (see the barge-in effect below). Tapping the orb / "Tap to
+// interrupt" still works too, as a manual backup, on both platforms.
 //
-//   - iOS (duplexSupported === true): real, speech-triggered barge-in.
-//     The mic runs continuously through both listening AND the coach's
-//     own speech via services/duplexVoiceService.ts / the native
-//     DuplexVoiceEngine module (ios/caren_family/DuplexVoiceEngine.swift),
-//     which owns a single AVAudioEngine doing both playback and capture
-//     with real echo cancellation, so the coach's own TTS is not picked
-//     back up as user speech. If the user starts talking while the coach
-//     is mid-reply, that's detected as a genuine new transcript arriving
-//     during the 'speaking' phase and the coach is cut off immediately —
-//     see the barge-in effect below. Tapping the orb / "Tap to interrupt"
-//     still works too, as a manual backup.
-//   - Everywhere else (duplexSupported === false, i.e. Android today):
-//     the mic is deliberately NOT listening while the AI's reply is being
-//     spoken (TTS) — the reply audio itself would otherwise very likely
-//     get picked back up as "user speech" (no on-device echo cancellation
-//     exists for this platform's audio pipeline). Interruption there is
-//     only the visible tap (the orb itself, or the "Interrupt" pill below
-//     it) — tapping either immediately stops playback and hands the mic
-//     back. This is the exact behavior that shipped after the two failed
-//     attempts documented below, and it's left completely untouched.
+// The two platforms' underlying echo-cancellation mechanisms differ (see
+// each native file's own header comment for the full story), and that
+// difference is what the barge-in effect below actually reacts to:
+//   - iOS: a single AVAudioEngine does both playback and capture with
+//     real, explicit voice-processing/echo cancellation, so a barge-in is
+//     detected purely from a genuine new transcript arriving during the
+//     'speaking' phase.
+//   - Android (DuplexVoiceEngineModule.kt's "ROUND 2" rewrite): captures
+//     via AudioRecord with AcousticEchoCanceler/NoiseSuppressor attached
+//     directly to its own session (both optional, device-dependent
+//     effects -- not a guarantee on every device, see that file's own
+//     comment) and streams to this app's backend for real-time STT via
+//     Deepgram. Deepgram's own VAD detects speech onset independently of
+//     any transcript and is forwarded here as the onSpeechStarted event --
+//     a materially FASTER barge-in signal than waiting for a transcript,
+//     since it fires the instant the mic hears voice rather than once
+//     enough of it has been transcribed. The barge-in effect below reacts
+//     to EITHER signal; onSpeechStarted simply never fires on iOS, so
+//     that platform's behavior is unaffected.
 //
 // REVERTED TWICE, then a working THIRD attempt — full history, because
 // understanding why the first two failed is what made the third one
@@ -132,9 +138,11 @@ import ThemeContext from '../../ThemeContext';
 // User-confirmed on a real device, in order: (1) "Yes the transcript
 // picks up your actual words before it finishes" — proof the core
 // duplex+echo-cancellation mechanism genuinely works — then (2) the same
-// result with real ElevenLabs audio in place of on-device TTS. iOS only
-// for now; Android has no equivalent native module yet, so it keeps the
-// proven sequential tap-to-interrupt model above unchanged.
+// result with real ElevenLabs audio in place of on-device TTS. Android
+// later got its own equivalent native module (DuplexVoiceEngineModule.kt)
+// via a different mechanism (see this file's own header comment above),
+// built and proven via src/dev/DuplexVoiceTestScreen.tsx first, same
+// discipline this iOS build went through.
 // BUG FIX (product request: "reduce the wait time. It needs to pick up my
 // voice as quick as 1sec") -- this is the pause length the silence-based
 // turn-detection effect below waits for after the transcript last changed
@@ -457,6 +465,17 @@ const VoiceCoachView = memo(({
   const duplexCommittedRef = React.useRef('');
   const [duplexSegment, setDuplexSegment] = React.useState('');
 
+  // Android-only fast barge-in signal (see this file's own header comment
+  // and duplexVoiceService.ts's SpeechStartedEvent) -- a counter, not a
+  // boolean, purely so the barge-in effect below can tell "a NEW
+  // speech-started event just arrived" apart from "nothing changed," the
+  // same way duplexSegment's own text changing (rather than merely being
+  // non-empty) is what that effect already keys off of. Never increments
+  // on iOS -- onSpeechStarted simply doesn't exist there.
+  const [speechStartedPulse, setSpeechStartedPulse] = React.useState(0);
+  // See the barge-in effect below for exactly what this tracks and why.
+  const prevSpeechStartedPulseRef = React.useRef(0);
+
   const resetDuplexTranscript = React.useCallback(() => {
     duplexCommittedRef.current = '';
     setDuplexSegment('');
@@ -522,6 +541,14 @@ const VoiceCoachView = memo(({
       duplexVoiceService.addErrorListener(e => {
         if (__DEV__) console.warn('[VoiceCoachView] onError', JSON.stringify(e));
         if (isActiveRef.current) setErrorMsg(e.message);
+      }),
+      // Android-only (see speechStartedPulse's own comment) -- a no-op
+      // subscription on iOS, since DuplexVoiceEngine.swift never emits
+      // this event.
+      duplexVoiceService.addSpeechStartedListener(() => {
+        if (__DEV__) console.warn('[VoiceCoachView] onSpeechStarted');
+        if (!activeRef.current) return;
+        setSpeechStartedPulse(p => p + 1);
       }),
     ];
     return () => subs.forEach(sub => sub?.remove());
@@ -795,17 +822,35 @@ const VoiceCoachView = memo(({
   // coach's own TTS being picked back up. Cut the coach off immediately
   // and hand the turn back — same effect as tapping the orb via
   // onInterrupt, just triggered by speech instead of a tap.
+  //
+  // Reacts to EITHER of two independent signals now (see this file's own
+  // header comment on the two platforms' mechanisms):
+  //   - a non-empty live transcript (both platforms)
+  //   - speechStartedPulse changing (Android only) — Deepgram's own VAD
+  //     detecting speech onset, which arrives BEFORE any transcript text
+  //     does, so this cuts the coach off sooner on Android than waiting
+  //     for a transcript alone ever could.
+  // prevSpeechStartedPulseRef tracks "the pulse value as of the last time
+  // this effect ran" (not "the value it last acted on") specifically so a
+  // pulse that arrives while phase !== 'speaking' (e.g. during ordinary
+  // listening, where onSpeechStarted also fires — see
+  // DuplexVoiceEngineModule.kt's emitSpeechStarted) gets marked as "seen"
+  // here even though this effect takes no action on it, rather than
+  // wrongly looking "fresh" again the next time phase becomes 'speaking'
+  // for an unrelated later turn.
   React.useEffect(() => {
+    const freshSpeechStarted = speechStartedPulse !== prevSpeechStartedPulseRef.current;
+    prevSpeechStartedPulseRef.current = speechStartedPulse;
     if (!duplexSupported) return;
     if (!active) return;
     if (phase !== 'speaking') return;
     const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
-    if (!liveText) return;
+    if (!liveText && !freshSpeechStarted) return;
     turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
     setPhase('listening');
     duplexVoiceService.stopSpeaking().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [duplexSupported, phase, duplexSegment, active]);
+  }, [duplexSupported, phase, duplexSegment, active, speechStartedPulse]);
 
   // Screen-level lifecycle ONLY now — starting the engine and the
   // intro/topic/listen sequence moved to the active-driven effect below
