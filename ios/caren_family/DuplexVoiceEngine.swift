@@ -71,6 +71,24 @@ class DuplexVoiceEngine: RCTEventEmitter {
   private var isEngineSetUp = false
   private var isSpeaking = false
   private var hasListeners = false
+  // BUG FIX (product report, confirmed reproducible even after a full
+  // delete+reinstall of the app -- not a caching/timing artifact): the
+  // FIRST-ever engine start() in a fresh process consistently never
+  // captures real speech (no transcript, no error -- see this file's other
+  // diagnostic logging), but the user's own repeated testing showed
+  // stopping and restarting it ONCE always fixes it -- which is exactly
+  // what happens internally when they navigate away from the Coach screen
+  // and back (VoiceCoachView.tsx's focus-effect calls stop() on blur,
+  // start() again on refocus). That this is 100% reproducible (not
+  // sometimes-works-sometimes-doesn't) rules out the native-module-bridge
+  // timing race the JS-side fixes targeted -- this is a different, later
+  // stage of the pipeline: something about a completely fresh
+  // AVAudioEngine's very first tap/session activation in a process doesn't
+  // reliably deliver real audio, but a second activation does. Rather than
+  // requiring every user to discover "leave the screen and come back" as a
+  // workaround, this flag lets start() automate that exact proven fix
+  // transparently -- see start() below.
+  private var hasWarmedUpOnce = false
   // Bumped on every speak() call and on stopSpeaking() -- lets an
   // in-flight AVSpeechSynthesizer buffer callback (which can fire after a
   // newer call superseded it, same class of race documented at length in
@@ -160,6 +178,28 @@ class DuplexVoiceEngine: RCTEventEmitter {
         try self.requestPermissionsIfNeeded()
         try self.setupEngineIfNeeded()
         try self.beginRecognition()
+        // See hasWarmedUpOnce's own comment above -- the FIRST-ever start
+        // in a fresh process reliably fails to capture real speech; a
+        // second stop+restart cycle reliably fixes it (this is exactly
+        // what manually navigating away from the Coach screen and back
+        // already did, proven across repeated real-device tests). Doing
+        // that one extra cycle automatically, right here, means every
+        // caller -- including the very first one -- gets an engine that's
+        // already past whatever this first-activation quirk is, instead
+        // of silently capturing nothing until the user stumbles onto the
+        // workaround themselves. Only ever runs once per process
+        // (hasWarmedUpOnce), so every later start() (after a real
+        // background/foreground or screen-focus cycle) stays exactly as
+        // fast as it already was -- this is strictly a one-time, first-run
+        // cost, not a tax on every start().
+        if !self.hasWarmedUpOnce {
+          self.hasWarmedUpOnce = true
+          NSLog("[DuplexVoiceEngine] first-ever start() this process -- running one internal warm-up stop/restart cycle before resolving")
+          self.teardown()
+          try self.requestPermissionsIfNeeded()
+          try self.setupEngineIfNeeded()
+          try self.beginRecognition()
+        }
         resolve(true)
       } catch {
         self.emitError("start", error)
