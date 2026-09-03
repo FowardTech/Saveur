@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Image, ImageStyle, StyleSheet, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
+import {Image, ImageStyle, Platform, StyleSheet, TouchableOpacity, View, ViewStyle, StyleProp, ImageSourcePropType} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -100,7 +100,15 @@ const ActionCard: React.FC<ActionCardProps> = memo(
           )}
         </View>
         <View style={globalStyle.flexOne}>
-          <Text category="h8" bold numberOfLines={1} style={isGradient ? styles.titleOnGradient : undefined}>
+          {/* Homescreen polish pass (product request: "more beautiful and
+              professional", scoped via AskUserQuestion to "polish the
+              current minimal layout... typography hierarchy" among other
+              things) -- h8 read almost the same size as the h10 subtitle
+              right below it; h7 gives the title real visual weight over
+              the subtitle without needing a size change on every other
+              ActionCard call site (MoreSrc.tsx rows included, since this
+              is the one shared component both screens render through). */}
+          <Text category="h7" bold numberOfLines={1} style={isGradient ? styles.titleOnGradient : undefined}>
             {title}
           </Text>
           {subtitle ? (
@@ -183,8 +191,13 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 12,
+    // Homescreen polish pass -- 16 -> 18 padding, 12 -> 14 marginBottom,
+    // a touch more breathing room per card and between cards without
+    // changing the overall 4/5-card structure itself (the user's own
+    // scoping answer was "polish the current minimal layout", not "add
+    // more content").
+    padding: 18,
+    marginBottom: 14,
     backgroundColor: 'background-basic-color-2',
     // borderWidth: 1,
     // BUG FIX (product report: "the cards in the homescreen should have
@@ -198,6 +211,28 @@ const themedStyles = StyleService.create({
     // since the product ask here was for it to be every card's normal,
     // resting look.
     borderColor: 'color-primary-500',
+    // Homescreen polish pass -- ADDITIVE, local to this one component only
+    // (NOT touching styles/globalStyle.ts's shared `cardShadow` token,
+    // which is deliberately `{}` app-wide per the earlier SYMPHONY
+    // REDESIGN's explicit "no drop shadow anywhere, flat cards" direction
+    // -- see that constant's own comment history). This request's own
+    // AskUserQuestion answer named "shadows/elevation" specifically as
+    // part of what "more professional" should mean for THESE cards, so
+    // it's scoped narrowly here rather than reversing that app-wide flat
+    // decision for every card everywhere. Tuned soft/low-opacity -- a
+    // gentle lift, not the heavier glow this exact constant's own history
+    // shows this app has repeatedly walked back before.
+    ...Platform.select({
+      ios: {
+        shadowColor: '#0F172A',
+        shadowOffset: {width: 0, height: 4},
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
   },
   // Gradient variant (see gradientColors' own comment) supplies its own
   // saturated fill via LinearGradient instead — the default blue border
@@ -220,10 +255,15 @@ const themedStyles = StyleService.create({
   disabled: {
     opacity: 0.6,
   },
+  // Homescreen polish pass -- 40x40/radius 12 -> 44x44/radius 14, a
+  // slightly bolder icon presence to match the roomier padding/typography
+  // above, still well within the "minimal" shape this component's own
+  // header comment describes (no illustrations/meta rows added, just a
+  // size bump on the existing circle).
   iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -247,9 +287,12 @@ const themedStyles = StyleService.create({
   // gradient illustrations sit with a little breathing room, matching how
   // the same iconX images are inset within their own circular wraps
   // elsewhere (e.g. Chat.tsx's coachAvatar).
+  // Homescreen polish pass -- 28x28 -> 30x30, proportional to iconWrap's
+  // own 40x40 -> 44x44 bump above, same "a little breathing room inside
+  // the circle" ratio as before.
   iconImage: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
   },
   subtitle: {
     color: 'text-hint-color',
