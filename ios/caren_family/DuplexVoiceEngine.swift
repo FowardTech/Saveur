@@ -361,7 +361,29 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // Declared here, before either node's setVoiceProcessingEnabled call,
     // now that round 10's fix (below) needs to gate BOTH nodes symmetrically
     // instead of just outputNode/playerNode as round 9 originally had it.
-    let isolateRecognitionForDiagnostic = true
+    //
+    // BUG FIX, ROUND 11 (real-device report: tapping the voice button now
+    // CRASHES the app outright -- not an error, a hard crash/force-quit).
+    // This diagnostic branch has now caused two different real, serious
+    // bugs in two attempts (round 9: continuous Core Audio render err: -1
+    // with an asymmetric VPIO config; round 10's fix for that likely
+    // changed inputNode's negotiated format -- disabling voice processing
+    // changes its sample rate/channel layout -- while recognitionMixerNode
+    // and beginRecognition()'s installTap(format: tapNode.outputFormat(...))
+    // downstream still assume a graph shaped by the ORIGINAL, fully-
+    // configured topology. installTap is not a throwing Swift API -- an
+    // internal AVAudioEngine format/graph-state precondition failure raises
+    // an uncatchable Objective-C exception, which is exactly a hard crash,
+    // not a graceful, loggable error. Two broken states out of two attempts
+    // means this specific isolation experiment is itself too unstable to
+    // keep pursuing -- reverting to false, restoring the full, original,
+    // known-non-crashing topology (voice processing on both nodes,
+    // playerNode attached/connected) that was stable before round 9 ever
+    // started. The Mock Interview test already gave this investigation the
+    // one thing this diagnostic branch was trying to prove either way
+    // (device/account ruled out) -- not worth the crash risk to keep
+    // chasing the shared-engine-design hypothesis this same way.
+    let isolateRecognitionForDiagnostic = false
 
     // THE key mechanism this whole module exists to add: enable voice
     // processing (the AEC-capable Voice-Processing I/O audio unit) on
