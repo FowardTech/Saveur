@@ -24,6 +24,20 @@ import * as adsService from 'services/adsService';
 import * as jobShareService from 'services/jobShareService';
 import * as roadmapService from 'services/roadmapService';
 import { CareerRoadmap as CareerRoadmapPlan } from 'services/roadmapService';
+// Task: "The scheduled interview card is not displaying in the homescreen"
+// -- turned out to be an intentional removal, not a bug (see the SYMPHONY
+// REDESIGN comment at this file's 4-card render block for the full story).
+// Per explicit product follow-up ("Add as a 5th card... Same ActionCard
+// style as the current 4... appearing only when a real session is
+// scheduled -- invisible otherwise"), re-added as a 5th ActionCard here
+// rather than remounting UpcomingSessionHomeCard.tsx's own bespoke solid-
+// blue row component (that component stays on disk unused, same
+// rollback-point convention the redesign comment describes) -- its
+// data-fetch/gating logic (isSessionReady, the not-ready alert, the
+// delete-with-confirm flow) is duplicated here in ActionCard's shape
+// instead, so this card visually matches the other 4 exactly.
+import * as scheduledInterviewService from 'services/scheduledInterviewService';
+import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import AppTour from 'components/AppTour';
@@ -92,7 +106,12 @@ const HomeSrc = memo(() => {
   const { theme: appTheme } = React.useContext(ThemeContext);
   const isDarkMode = appTheme === 'dark';
   const { width } = useWindowDimensions();
-  const { t } = useTranslation(HOME_I18N_NAMESPACES);
+  // `i18n` needed for the scheduled-interview card's locale-aware date/time
+  // formatting below (same i18n.language-not-undefined fix
+  // UpcomingSessionHomeCard.tsx's own comment explains -- passing
+  // `undefined` to toLocaleString falls back to the device's OS locale
+  // rather than the language the user actually picked inside the app).
+  const { t, i18n } = useTranslation(HOME_I18N_NAMESPACES);
   const { isSignedIn, emailVerified, resendVerificationEmail, refreshEmailVerified, profile, isPremium } =
     React.useContext(AuthContext);
 
@@ -196,6 +215,34 @@ const HomeSrc = memo(() => {
       // Non-critical -- the streak stat card below just falls back to 0.
     });
   }, [isSignedIn]);
+
+  // Scheduled-interview 5th card (see the import comment above for the
+  // full "why"). Fetched on every focus, same convention
+  // UpcomingSessionHomeCard.tsx's own load() uses, so returning to Home
+  // after scheduling (or deleting) a session from elsewhere always shows
+  // the current state rather than a stale one from mount time. No loading
+  // flag here (unlike that component's skeleton row) -- this card is net-
+  // new content, not a layout slot that was already reserving space, so
+  // simply popping in once the fetch resolves reads fine; a blank gap
+  // beforehand isn't a regression the way it would be for a card users
+  // already expect to see immediately.
+  const [nextSession, setNextSession] = React.useState<
+    Awaited<ReturnType<typeof scheduledInterviewService.listUpcoming>>[number] | undefined
+  >(undefined);
+  const loadNextSession = React.useCallback(() => {
+    return scheduledInterviewService.listUpcoming().then(list => setNextSession(list[0]));
+  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      scheduledInterviewService.listUpcoming().then(list => {
+        if (!cancelled) setNextSession(list[0]);
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
 
   // Bell badge — GET /api/v1/notifications (see services/notificationService.ts).
   const [unreadCount, setUnreadCount] = React.useState(0);
@@ -799,6 +846,67 @@ const HomeSrc = memo(() => {
     navigate('MainBottomTab', { screen: 'Profile', params: { screen: 'MoreSrc' } });
   }, [navigate]);
 
+  // Scheduled-interview 5th card handlers -- same gating/confirm logic as
+  // UpcomingSessionHomeCard.tsx's own onPress/onDelete (see that file for
+  // the original product reports each behavior traces back to: "should not
+  // navigate anywhere until the date of the session reaches" for the
+  // isSessionReady gate, "User should be able to delete an upcoming
+  // interview session" for onDelete's confirm-then-optimistically-remove
+  // flow), just re-pointed at this screen's own nextSession/setNextSession
+  // state instead of that component's.
+  const isNextSessionReady = !!nextSession && Date.now() >= nextSession.scheduledAt;
+  const onPressScheduledSession = React.useCallback(() => {
+    if (!nextSession) return;
+    if (!isNextSessionReady) {
+      Alert.alert(
+        t('home:upcoming_session_not_ready_title', { defaultValue: 'Not quite time yet' }),
+        t('home:upcoming_session_not_ready_body', {
+          defaultValue: 'This session unlocks at {{time}}.',
+          time: new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
+            weekday: 'short',
+            month: 'short',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          }),
+        }).toString(),
+      );
+      return;
+    }
+    navigate('MockInterviewSetup', {
+      interviewType: nextSession.interviewType,
+      mode: nextSession.mode,
+      difficulty: nextSession.difficulty,
+      role: nextSession.role,
+      company: nextSession.company,
+      durationMin: nextSession.durationMin,
+    });
+  }, [nextSession, isNextSessionReady, navigate, t, i18n.language]);
+  const onDeleteScheduledSession = React.useCallback(() => {
+    if (!nextSession) return;
+    const id = nextSession.id;
+    Alert.alert(
+      t('home:upcoming_session_delete_confirm_title', { defaultValue: 'Cancel this session?' }),
+      t('home:upcoming_session_delete_confirm_body', { defaultValue: 'You can always schedule a new one later.' }).toString(),
+      [
+        { text: t('common:cancel', { defaultValue: 'Cancel' }).toString(), style: 'cancel' },
+        {
+          text: t('common:delete', { defaultValue: 'Delete' }).toString(),
+          style: 'destructive',
+          onPress: async () => {
+            setNextSession(undefined);
+            try {
+              await scheduledInterviewService.removeScheduled(id);
+              loadNextSession();
+            } catch {
+              loadNextSession(); // resync if the delete actually failed server-side
+            }
+          },
+        },
+      ],
+    );
+  }, [nextSession, t, loadNextSession]);
+
   return (
     <Container style={styles.container}>
       {/* Product request: "add a banner in the homescreen at the top top
@@ -1059,6 +1167,48 @@ const HomeSrc = memo(() => {
           gradientColors={['#0063F8', '#0063F8']}
           gradientLocations={[0, 1]}
         />
+
+        {/* 5th card, conditional (see the import comment above this
+            component for the full "why") -- renders nothing at all when
+            there's no real scheduled session, so Home looks exactly like
+            the current 4-card layout for every user who hasn't scheduled
+            one, matching the explicit "invisible otherwise" product
+            answer. trailing carries BOTH the not-ready lock/ready arrow
+            indicator AND the delete "x" affordance side by side (rather
+            than picking one, the way a single absolutely-positioned corner
+            button on UpcomingSessionHomeCard.tsx's own bespoke layout
+            had to) -- ActionCard's trailing slot is a plain inline node,
+            so there's room for both without any of that component's own
+            absolute-position clipping concerns. */}
+        {nextSession ? (
+          <ActionCard
+            icon="calendar-outline"
+            title={getInterviewTypeLabel(nextSession.interviewType, t)}
+            subtitle={new Date(nextSession.scheduledAt).toLocaleString(i18n.language, {
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
+            onPress={onPressScheduledSession}
+            trailing={
+              <Flex itemsCenter>
+                <Icon
+                  pack="eva"
+                  name={isNextSessionReady ? 'chevron-right-outline' : 'lock-outline'}
+                  style={[styles.chevron, { tintColor: theme['color-basic-400'] }]}
+                />
+                <TouchableOpacity
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  onPress={onDeleteScheduledSession}
+                  style={styles.scheduledDeleteButton}>
+                  <Icon pack="eva" name="close-outline" style={[globalStyle.icon16, { tintColor: theme['color-basic-400'] }]} />
+                </TouchableOpacity>
+              </Flex>
+            }
+          />
+        ) : null}
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
@@ -1115,6 +1265,19 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 40,
+  },
+  // Scheduled-interview 5th card's trailing slot (see that card's own
+  // comment) -- matches ActionCard's own `chevron` style exactly (same
+  // 18x18/marginLeft: 6) so the lock/ready icon lines up identically to
+  // the plain chevron the other 4 cards show, just with a delete button
+  // stacked below it instead of nothing.
+  chevron: {
+    width: 18,
+    height: 18,
+    marginLeft: 6,
+  },
+  scheduledDeleteButton: {
+    marginTop: 6,
   },
   // Google-style pass: converted from a white card with a colored border
   // to a real Material 3 "error/warning container" -- a pale flat tonal
