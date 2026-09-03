@@ -45,6 +45,11 @@ type PendingNavigation =
       };
     }
   | {name: 'InterviewFeedback'; params: {sessionId?: string}}
+  // Video interview ready push tap (product report: "once it saves to the
+  // server it should alert the user through push notification and then
+  // the user can click and view it and the flagged areas") — see
+  // navigateToInterviewReplay below.
+  | {name: 'InterviewReplay'; params: {sessionId?: string}}
   | {name: 'PracticalScenarioFeedback'; params: {sessionId: number}}
   | {name: 'CareerRoadmap'}
   | {name: 'Leaderboard'}
@@ -302,6 +307,17 @@ export function navigateToMockInterviewSetup(params: {
  * in-app notification list. */
 export function navigateToInterviewFeedback(sessionId?: string): void {
   queueOrNavigate({name: 'InterviewFeedback', params: {sessionId}});
+}
+
+/** Video interview ready push tap (Saveur-Backend's
+ * app/tasks/feedback_job.py notify_video_ready sends
+ * data.type = "video_ready") — product report: "once it saves to the
+ * server it should alert the user through push notification and then the
+ * user can click and view it and the flagged areas." Takes the user
+ * straight to that session's replay (real recorded video + flagged
+ * moments), same as navigateToInterviewFeedback above for feedback_ready. */
+export function navigateToInterviewReplay(sessionId?: string): void {
+  queueOrNavigate({name: 'InterviewReplay', params: {sessionId}});
 }
 
 /** Practical Scenario feedback ready push tap (Saveur-Backend's

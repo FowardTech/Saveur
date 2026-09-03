@@ -493,11 +493,43 @@ export async function uploadSessionVideo(
  * the full story. Never throws -- purely informational, so a failure here
  * must never surface to the caller (LiveInterviewSession is already deep in
  * best-effort teardown when this gets called). */
-export async function reportVideoError(sessionId: string, reason: string, code?: string): Promise<void> {
+/** `permanent` (product follow-up, video-status tracking): pass true ONLY
+ * when giving up on this session's video for good (flushPendingVideoUploads'
+ * own give-up branch) -- that's the one call that should flip the backend's
+ * video_status from "uploading" to "failed" (see
+ * Saveur-Backend's app/api/interviews.py report_video_error docstring for
+ * the full reasoning). Every other call site here reports an INTERIM
+ * "this attempt failed, will retry" note and must leave `permanent` unset,
+ * so the replay screen keeps showing "Saving your video interview..."
+ * through what's usually a self-healing retry, not "failed" on every
+ * transient network blip. */
+export async function reportVideoError(sessionId: string, reason: string, code?: string, permanent?: boolean): Promise<void> {
   try {
-    await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/video-error`, {reason, code});
+    await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/video-error`, {reason, code, permanent});
   } catch (err) {
     console.warn('[interviewService] reportVideoError itself failed (non-fatal)', err);
+  }
+}
+
+/** Product report: "sometimes the video recording failed to save to the
+ * server... it should save to the server even after the user has finished
+ * the interview... when they click view video replay it should display a
+ * message and show saving your video interview session." Tells the backend
+ * "a video for this session is on its way" BEFORE the first upload byte
+ * ever goes out (called from uploadSessionVideoResilient below, right
+ * alongside that function's own enqueuePendingVideoUpload) -- so GET
+ * .../replay can show a real "Saving your video interview..." state
+ * instead of the generic "no video" placeholder even if the app gets
+ * killed/reopened, or a different device views this session's replay,
+ * before the upload actually lands. Best-effort/fire-and-forget, same as
+ * reportVideoError -- a failure here just means the replay screen falls
+ * back to its old "no video yet" placeholder instead of the new
+ * "saving..." one; it never blocks or fails the actual upload. */
+export async function reportVideoPending(sessionId: string): Promise<void> {
+  try {
+    await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/video-pending`, {});
+  } catch (err) {
+    console.warn('[interviewService] reportVideoPending itself failed (non-fatal)', err);
   }
 }
 
@@ -610,6 +642,11 @@ export async function uploadSessionVideoResilient(
   durationSec?: number,
 ): Promise<void> {
   await enqueuePendingVideoUpload({sessionId, localFileUri, durationSec});
+  // Fire-and-forget, same as the AsyncStorage enqueue above -- written
+  // before any upload attempt so the server-side video_status reads
+  // "uploading" (see reportVideoPending's own comment) from the earliest
+  // possible moment, not just once/if an attempt actually fails.
+  reportVideoPending(sessionId).catch(() => {});
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
       await uploadSessionVideo(sessionId, localFileUri, durationSec);
@@ -647,13 +684,33 @@ export async function flushPendingVideoUploads(): Promise<void> {
     if (tooOld || tooManyAttempts) {
       // Give up for good -- the transcript/score for this session are still
       // intact either way, only the video itself is permanently lost.
+      // BUG FIX: this used to give up silently -- the backend's
+      // video_pending flag (set back in uploadSessionVideoResilient,
+      // before the very first attempt) never got cleared, so
+      // GET .../replay stayed stuck reporting video_status "uploading"
+      // forever, even though nothing was actually still trying. permanent:
+      // true is what tells the backend this really is the end of the
+      // road -- see reportVideoError's own comment for why every OTHER
+      // call site here must never pass that.
+      reportVideoError(
+        entry.sessionId,
+        `upload_failed: gave up after ${entry.attempts} attempts (${tooOld ? 'too old' : 'max attempts reached'})`,
+        undefined,
+        true,
+      ).catch(() => {});
       continue;
     }
     const barePath = entry.localFileUri.replace(/^file:\/\//, '');
     const stillExists = await RNBlobUtil.fs.exists(barePath).catch(() => false);
     if (!stillExists) {
       // The OS reclaimed the cache file before we got a chance to retry --
-      // nothing left to upload.
+      // nothing left to upload. Same permanent-give-up signal as above.
+      reportVideoError(
+        entry.sessionId,
+        'upload_failed: local recording file no longer exists on device',
+        undefined,
+        true,
+      ).catch(() => {});
       continue;
     }
     try {

@@ -79,6 +79,16 @@ export interface SessionReplay {
    * it to a short human sentence rather than ever showing it verbatim (same
    * mistake, same fix, as the "raw provider error in an Alert" bug). */
   videoError: string | null;
+  /** Product report: "sometimes the video recording failed to save to the
+   * server... when they click view video replay it should display a
+   * message and show saving your video interview session." Drives
+   * InterviewReplay.tsx's dedicated "Saving your video interview..." state
+   * -- 'uploading' takes priority over a non-null videoError above (see
+   * Saveur-Backend's app/api/feedback.py _replay_payload comment: an
+   * interim "will retry" error can coexist with a still-in-flight upload).
+   * 'none' means this was never a Video-mode session at all (Voice/Text
+   * mode) or predates this field existing. */
+  videoStatus: 'ready' | 'uploading' | 'failed' | 'none';
   /** Backs InterviewReplay.tsx's branch between the generic
    * transcript/video view (everything else) and a dedicated Problem +
    * Your Code view (sessionType === 'coding'). */
@@ -96,6 +106,7 @@ interface WireReplay {
   video_url?: string | null;
   video_duration_sec?: number | null;
   video_error?: string | null;
+  video_status?: 'ready' | 'uploading' | 'failed' | 'none' | null;
   session_type?: string | null;
   transcript?: Array<{ role?: string; text?: string; t_ms?: number }>;
   coding_result?: {
@@ -125,6 +136,7 @@ export async function getSessionReplay(sessionId: string | number): Promise<Sess
     videoUrl: data.video_url ?? null,
     videoDurationSec: data.video_duration_sec ?? null,
     videoError: data.video_error ?? null,
+    videoStatus: data.video_status ?? 'none',
     sessionType: data.session_type ?? null,
     transcript: (data.transcript ?? []).map(m => ({
       role: m.role ?? '', text: m.text ?? '', tMs: m.t_ms ?? 0,

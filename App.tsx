@@ -111,12 +111,46 @@ function App() {
   // anything for the rare user who hit a real upload failure, and lets that
   // resolve itself automatically the next time they open the app instead of
   // requiring them to redo the interview.
+  // Product report: "sometimes the video recording failed to save to the
+  // server... it should save to the server even after the user has
+  // finished the interview." Scoped explicitly to a JS-level resilient
+  // retry (no new native background-upload dependency) -- this keeps
+  // retrying for as long as the JS runtime is actually alive (foreground,
+  // or the brief grace period either OS gives a just-backgrounded app),
+  // which covers the common real-world case (a network blip, a slow
+  // connection) without the build risk of a native background-upload
+  // library. It will NOT survive the app being force-quit mid-upload --
+  // flushPendingVideoUploads' own persisted AsyncStorage queue picks that
+  // back up the next time the app is opened at all, same as before.
+  //
+  // Two triggers beyond the original "on every foreground" one:
+  //  1. A steady interval while the app is in the foreground -- covers a
+  //     video that's still mid-upload (not yet failed into the queue) when
+  //     connectivity drops and later recovers WITHOUT the app ever leaving
+  //     the foreground, which the old active-only listener could never
+  //     catch (nothing about staying foregrounded the whole time ever
+  //     fires an AppState 'change' event).
+  //  2. One immediate attempt right as the app starts backgrounding --
+  //     both iOS and Android grant a departing app a real, if short,
+  //     window of continued execution (Apple's ~30s expiring background
+  //     task time; Android is looser but still not instant), so a queued
+  //     upload that's small enough often has a genuine chance to finish in
+  //     exactly that window instead of waiting for the user to reopen the
+  //     app at all.
   React.useEffect(() => {
     flushPendingVideoUploads().catch(() => {});
     const sub = AppState.addEventListener('change', nextState => {
-      if (nextState === 'active') flushPendingVideoUploads().catch(() => {});
+      if (nextState === 'active' || nextState === 'background') {
+        flushPendingVideoUploads().catch(() => {});
+      }
     });
-    return () => sub.remove();
+    const interval = setInterval(() => {
+      if (AppState.currentState === 'active') flushPendingVideoUploads().catch(() => {});
+    }, 20000);
+    return () => {
+      sub.remove();
+      clearInterval(interval);
+    };
   }, []);
 
   // Admin-configurable maintenance mode / forced update gate — see

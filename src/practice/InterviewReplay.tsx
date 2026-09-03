@@ -10,6 +10,7 @@ import {
   useTheme,
   Layout,
   Icon,
+  Spinner,
 } from '@ui-kitten/components';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -92,7 +93,29 @@ const InterviewReplay = memo(() => {
       .finally(() => setIsLoading(false));
   }, [sessionId, t]);
 
+  // Product report: "when they click view video replay it should display
+  // a message and show saving your video interview session (This should
+  // be a background job)... Once it saves to the server it should alert
+  // the user through push notification and then the user can click and
+  // view it." The push notification is the PRIMARY way a user finds out
+  // their video is ready (see pushNotificationService.ts's video_ready
+  // handler, which navigates straight back here) -- this poll is just a
+  // nicety for someone who stays on this exact screen waiting rather than
+  // switching away: every 10s while the backend still reports "uploading",
+  // silently re-fetch and pick up the change the moment it lands, with no
+  // spinner/flicker of its own since the existing "Saving..." view below
+  // already covers that. Stops as soon as the status is no longer
+  // 'uploading' (or the screen unmounts) -- never polls forever.
+  React.useEffect(() => {
+    if (!sessionId || replay?.videoStatus !== 'uploading') return;
+    const interval = setInterval(() => {
+      interviewReplayService.getSessionReplay(sessionId).then(setReplay).catch(() => {});
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [sessionId, replay?.videoStatus]);
+
   const hasVideo = !!replay?.videoUrl && !videoError;
+  const isVideoUploading = replay?.videoStatus === 'uploading' && !hasVideo;
 
   // Maps the technical reason (see interviewReplayService.ts's
   // SessionReplay.videoError comment) to one short, human sentence --
@@ -231,7 +254,28 @@ const InterviewReplay = memo(() => {
         </Flex>
       ) : (
         <Content padder contentContainerStyle={styles.content}>
-          {hasVideo ? (
+          {isVideoUploading ? (
+            // Product report: "when they click view video replay it
+            // should display a message and show saving your video
+            // interview session (This should be a background job)... so
+            // that the user knows that the video interview is still
+            // saving." Distinct from the plain "no video was recorded"
+            // placeholder further below -- this is real, in-progress
+            // work, not a dead end, so it says so explicitly and points
+            // at the push notification as what happens next instead of
+            // asking the user to keep checking back.
+            <View style={styles.savingVideoWrap}>
+              <Spinner size="large" status="primary" />
+              <Text category="h9-s" bold center mt={16}>
+                {t('practice:replay_video_saving_title', { defaultValue: 'Saving your video interview…' })}
+              </Text>
+              <Text category="h10" status="placeholder" center mt={6}>
+                {t('practice:replay_video_saving_body', {
+                  defaultValue: "We'll send you a notification the moment it's ready to watch.",
+                })}
+              </Text>
+            </View>
+          ) : hasVideo ? (
             <View style={styles.videoWrap}>
               <Video
                 ref={videoRef}
@@ -496,6 +540,20 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#000',
+    marginBottom: 20,
+  },
+  // "Saving your video interview..." state (see isVideoUploading above) --
+  // same aspect-ratio/rounded-box footprint as videoWrap so the layout
+  // doesn't visibly jump once the real <Video> player replaces this on the
+  // next poll/refresh.
+  savingVideoWrap: {
+    width: '100%',
+    aspectRatio: 3 / 4,
+    borderRadius: 16,
+    backgroundColor: 'background-basic-color-2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
     marginBottom: 20,
   },
   statsRow: {

@@ -11,6 +11,7 @@ import {
   navigateToDailyIndustryNews,
   navigateToMockInterviewSetup,
   navigateToInterviewFeedback,
+  navigateToInterviewReplay,
   navigateToPracticalScenarioFeedback,
   navigateToCareerRoadmap,
   navigateToLeaderboard,
@@ -209,6 +210,15 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // of them falling through to the generic in-app notification list below.
   if (data?.type === 'feedback_ready') {
     navigateToInterviewFeedback(data.session_id);
+    return;
+  }
+  // Product report: "once it saves to the server it should alert the user
+  // through push notification and then the user can click and view it and
+  // the flagged areas" (Saveur-Backend's app/tasks/feedback_job.py
+  // notify_video_ready sends data.type = "video_ready", data.session_id) --
+  // straight to that session's replay, same shape as feedback_ready above.
+  if (data?.type === 'video_ready') {
+    navigateToInterviewReplay(data.session_id);
     return;
   }
   if (data?.type === 'practical_feedback_ready') {
