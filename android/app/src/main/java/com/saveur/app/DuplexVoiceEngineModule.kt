@@ -106,6 +106,46 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
   private val recentNoSpeechTimestamps = mutableListOf<Long>()
   private val recentOtherErrorTimestamps = mutableListOf<Long>()
 
+  // BUG FIX (product report: "the speak to interrupt is working on android
+  // but its interrupting itself by its own voice echo"). Confirms exactly
+  // what this file's own header comment flagged as its single highest-
+  // uncertainty area: SpeechRecognizer gives this module no access to the
+  // AudioRecord session it's actually capturing from, so there's no way to
+  // explicitly attach an AcousticEchoCanceler the way DuplexVoiceEngine.swift
+  // does on iOS -- MODE_IN_COMMUNICATION is a best-effort hint to the OS,
+  // not a guarantee, and evidently isn't fully suppressing the coach's own
+  // TTS output from being picked back up by the mic on this device.
+  //
+  // A real AEC fix isn't available at this API surface, so this is a
+  // software-level heuristic instead: while TTS is actively speaking (plus a
+  // short trailing grace window -- speaker output/room echo doesn't cut off
+  // the instant onDone fires), any recognized transcript that closely
+  // matches the text the coach itself just spoke is almost certainly the mic
+  // hearing its own voice, not the user -- so it's dropped rather than
+  // forwarded as a real transcript/barge-in trigger. A genuine user
+  // interruption will normally say something DIFFERENT from what the coach
+  // is saying, so this only suppresses the specific self-echo case, not
+  // barge-in generally.
+  private var currentTtsText: String? = null
+  private var ttsSpeakingActive = false
+  private val ttsEchoGraceMs = 700L
+
+  private fun normalizeForEchoCompare(text: String): String =
+    text.lowercase(Locale.getDefault()).replace(Regex("[^a-z0-9 ]"), "").replace(Regex("\\s+"), " ").trim()
+
+  private fun isLikelyOwnEcho(candidate: String): Boolean {
+    val spoken = currentTtsText ?: return false
+    val normCandidate = normalizeForEchoCompare(candidate)
+    val normSpoken = normalizeForEchoCompare(spoken)
+    if (normCandidate.length < 3 || normSpoken.isEmpty()) return false
+    if (normSpoken.contains(normCandidate) || normCandidate.contains(normSpoken)) return true
+    val candidateWords = normCandidate.split(" ").filter { it.isNotEmpty() }.toSet()
+    val spokenWords = normSpoken.split(" ").filter { it.isNotEmpty() }.toSet()
+    if (candidateWords.isEmpty()) return false
+    val overlap = candidateWords.intersect(spokenWords).size
+    return overlap.toDouble() / candidateWords.size >= 0.6
+  }
+
   private fun emitListeningState(listening: Boolean) {
     val map = Arguments.createMap()
     map.putBoolean("listening", listening)
@@ -191,6 +231,11 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
       val generation = speechGeneration
       pendingSpeakPromise = promise
       emitSpeakingState(true)
+      // See isLikelyOwnEcho's own comment -- currentTtsText/ttsSpeakingActive
+      // stay set through the grace window below, not just while onDone
+      // hasn't fired yet.
+      currentTtsText = text
+      ttsSpeakingActive = true
       val utteranceId = UUID.randomUUID().toString()
       tts.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) {}
@@ -204,6 +249,12 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
             emitSpeakingState(false)
             pendingSpeakPromise?.resolve(null)
             pendingSpeakPromise = null
+            // Speaker output/room echo doesn't cut off the instant this
+            // fires -- keep treating recognized text as possible echo for a
+            // short trailing window rather than clearing it immediately.
+            mainHandler.postDelayed({
+              if (generation == speechGeneration) ttsSpeakingActive = false
+            }, ttsEchoGraceMs)
           }
         }
 
@@ -215,6 +266,7 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
             emitError("speak", "TextToSpeech synthesis error")
             pendingSpeakPromise?.reject("duplex_speak_failed", "TextToSpeech synthesis error")
             pendingSpeakPromise = null
+            ttsSpeakingActive = false
           }
         }
       })
@@ -235,6 +287,10 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
       emitSpeakingState(false)
       pendingSpeakPromise?.resolve(null)
       pendingSpeakPromise = null
+      // Stopped explicitly (e.g. a genuine barge-in already confirmed by the
+      // caller) -- no reason to keep suppressing transcripts as possible
+      // echo once playback has actually been cut.
+      ttsSpeakingActive = false
       promise.resolve(null)
     }
   }
@@ -322,6 +378,8 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
     recognitionGeneration += 1 // invalidate any pending restart Runnable
     recentNoSpeechTimestamps.clear()
     recentOtherErrorTimestamps.clear()
+    currentTtsText = null
+    ttsSpeakingActive = false
     isEngineSetUp = false
     emitListeningState(false)
     emitSpeakingState(false)
@@ -372,7 +430,13 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
         if (!text.isNullOrEmpty()) {
           recentNoSpeechTimestamps.clear()
           recentOtherErrorTimestamps.clear()
-          emitTranscript(text, false)
+          // See isLikelyOwnEcho's own comment -- a transcript that closely
+          // matches what the coach is currently (or just now) speaking is
+          // dropped as self-echo, never forwarded as a real transcript/
+          // barge-in trigger.
+          if (!(ttsSpeakingActive && isLikelyOwnEcho(text))) {
+            emitTranscript(text, false)
+          }
         }
       }
 
@@ -382,7 +446,9 @@ class DuplexVoiceEngineModule(private val reactContext: ReactApplicationContext)
         if (!text.isNullOrEmpty()) {
           recentNoSpeechTimestamps.clear()
           recentOtherErrorTimestamps.clear()
-          emitTranscript(text, true)
+          if (!(ttsSpeakingActive && isLikelyOwnEcho(text))) {
+            emitTranscript(text, true)
+          }
         }
         restartAfterSessionEnd(myGeneration, recognizer, delayMs = 250)
       }
