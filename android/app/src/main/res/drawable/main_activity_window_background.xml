@@ -28,27 +28,25 @@
      letterboxed by a mismatched box shape. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/splash_background" />
-    <!-- BUG FIX (real-device report: logo rendered edge-to-edge/cropped,
-         not the fixed 402x100dp box below). Density-bucketed PNG assets
-         themselves are all correctly proportioned (verified: mdpi
-         402x100px, xhdpi 804x200px, xxxhdpi 1607x400px, etc, exact
-         multiples of the same 402x100dp base), so this wasn't a bad
-         asset. The bug was in HOW the size was declared: nesting a child
-         bitmap element with its own android:gravity="center" inside an
-         item that ALSO declares its own android:width/height/gravity is
-         a double-gravity pattern that doesn't reliably honor the outer
-         item's size constraint on every Android version/OEM skin — the
-         nested bitmap can render at its own intrinsic (unconstrained)
-         size instead, which is exactly the "renders huge, overflows the
-         screen" symptom reported. Switched to the simpler, more broadly
-         compatible pattern: android:drawable directly on the sized item
-         itself (no nested child element, no second gravity to conflict
-         with the first) — this is the standard, documented way to
-         combine an explicit fixed size and centered gravity for a
-         single drawable in a layer-list. -->
+    <!-- BUG FIX, ROUND 2 (real-device report: still edge-to-edge/cropped
+         after round 1's fix, which moved android:width="402dp"
+         android:height="100dp" onto this item directly instead of a
+         nested bitmap child, but kept the same explicit dp width/height
+         declaration). Density-bucketed PNG assets are confirmed correctly
+         proportioned per bucket (mdpi 402x100px, xhdpi 804x200px, xxxhdpi
+         1607x400px, etc, exact multiples of the same 402x100dp base) — an
+         asset already scaled correctly for its own density bucket does
+         not need an ADDITIONAL explicit dp width/height layered on top to
+         render at the right size; Android already scales a density-
+         bucketed bitmap's intrinsic size correctly on its own. Since two
+         separate attempts at forcing an explicit width/height on this
+         layer-list item both produced the same "renders huge, overflows
+         the screen" symptom, that explicit sizing itself is the common
+         thread, not how it was declared — removed entirely. This now
+         relies purely on the bitmap's own correctly-scaled intrinsic size
+         (already verified correct per density bucket) plus gravity=center
+         to position it, no dp override at all. -->
     <item
-        android:width="402dp"
-        android:height="100dp"
         android:gravity="center"
         android:drawable="@drawable/splash_logo_wordmark" />
 </layer-list>
