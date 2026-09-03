@@ -147,6 +147,21 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('MockInterviewSetup', nav.params);
   } else if (nav.name === 'InterviewFeedback') {
     navigationRef.navigate('InterviewFeedback', nav.params);
+  } else if (nav.name === 'InterviewReplay') {
+    // BUG FIX (product report: "when i click on the notification... it
+    // takes me to the AI chat interface instead of the video playback")
+    // -- same exact gap GoalTipDetail's own comment above describes:
+    // 'InterviewReplay' was declared in the PendingNavigation union
+    // (navigateToInterviewReplay already builds a correct {name:
+    // 'InterviewReplay', params: {sessionId}}) but this runNavigation()
+    // switch never actually had a branch for it, so every video_ready
+    // push tap silently fell through to the final `else` below -- a full
+    // stack reset to MainBottomTab with no screen specified, which lands
+    // returning users on the Coach/Chat tab (see MainBottomTab.tsx's own
+    // initialTab default) -- indistinguishable from "open the app to AI
+    // chat" even though handleDataTap correctly identified the real
+    // destination the whole time.
+    navigationRef.navigate('InterviewReplay', nav.params);
   } else if (nav.name === 'PracticalScenarioFeedback') {
     navigationRef.navigate('PracticalScenarioFeedback', nav.params);
   } else if (nav.name === 'CareerRoadmap') {
