@@ -94,6 +94,22 @@ const DEFAULT_QUESTION = () =>
     defaultValue: 'Tell me a little about yourself and your background.',
   });
 const ADVANCE_INTERVAL_SEC = 50;
+// Real silence-based turn detection for Voice mode (product report: "it
+// takes the interviewer a long time to ask the next question" — with the
+// fixed ADVANCE_INTERVAL_SEC timer above, a candidate who finished
+// answering in 10s still wasn't noticed for up to 50s, regardless of how
+// quickly they actually finished). Same debounce-on-transcript-change
+// approach as VoiceCoachView.tsx's own SILENCE_DEBOUNCE_MS: reset a short
+// timer every time the live transcript actually changes, only advance once
+// it's gone quiet this long with real spoken content already in hand.
+// Slightly longer than the AI Coach's own 1000ms — an interview answer is
+// typically a longer, more considered response than a back-and-forth chat
+// message, so a beat longer avoids cutting someone off mid-sentence during
+// a natural thinking pause. See the silence-detection effect below (Voice
+// mode only — Video mode has no live transcript to react to, see this
+// file's own header comment) for where this is used; ADVANCE_INTERVAL_SEC
+// above still runs as a backstop for both modes.
+const SILENCE_DEBOUNCE_MS = 1500;
 // Falls back to this if a caller ever reaches this screen without a
 // durationMin param (only MockInterviewSetup does today, and it always
 // passes one) — better to enforce a sane default than to run unbounded.
@@ -506,17 +522,19 @@ const LiveInterviewSession = memo(() => {
   // Voice mode, the real spoken-answer transcript accumulated since the
   // question started is submitted (POST .../answer, same real endpoint Text
   // mode uses) before moving on.
-  React.useEffect(() => {
-    if (isTextMode) return;
-    if (!isRecording || isAiSpeaking) return;
-    if (seconds === 0 || seconds % ADVANCE_INTERVAL_SEC !== 0) return;
-    // Don't kick off another follow-up if we're already at/past the
-    // session's selected time limit — the time-up effect below is about to
-    // (or just did) end the session, and starting a fresh question right as
-    // that happens is exactly the kind of race this whole rewrite is trying
-    // to eliminate.
-    if (seconds >= durationSeconds) return;
-    (async () => {
+  // Wraps up the current turn (stop listening, submit the real answer,
+  // speak an acknowledgment if there's no LLM session to do it for us, then
+  // fetch/speak the next question) — pulled out of the fixed-interval
+  // effect below into its own callback so BOTH that effect (now a backstop
+  // — see its own comment) AND the new silence-detection effect further
+  // down can trigger the exact same sequence. isAdvancingTurnRef guards
+  // against the two ever firing this concurrently for the same turn (e.g.
+  // the silence timer firing right as the 50s backstop also ticks over).
+  const isAdvancingTurnRef = React.useRef(false);
+  const advanceTurn = React.useCallback(async () => {
+    if (isAdvancingTurnRef.current) return;
+    isAdvancingTurnRef.current = true;
+    try {
       // See NEUTRAL_TRANSITION_KEYS's comment above — only Voice mode can
       // ever confirm a real answer was given (Video mode has no live
       // speech signal at all), so hasRealAnswer stays false there and the
@@ -580,9 +598,46 @@ const LiveInterviewSession = memo(() => {
         }
       }
       await advanceQuestion();
-    })();
+    } finally {
+      isAdvancingTurnRef.current = false;
+    }
+    // speechToText itself is deliberately NOT in this dependency array (it's
+    // declared further down this component with `const speechToText =
+    // useSpeechToText()` — referencing it here, this early, would be a
+    // real "used before its declaration" error, not just a lint nitpick).
+    // That's safe: this callback's body only runs later, once React actually
+    // invokes it, by which point the component has fully rendered and
+    // speechToText is long since assigned — same reasoning the pre-existing
+    // effect this was refactored out of already relied on. It's also
+    // necessary: useSpeechToText() returns a brand-new object literal every
+    // render (only the individual functions inside it are memoized), so
+    // depending on the whole object -- even if it were declared early enough
+    // to reference here -- would redefine advanceTurn, and therefore reset
+    // the silence-detection effect's debounce timer, on every single render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seconds, isRecording, isAiSpeaking, isTextMode, isVoiceMode, isVideoMode, durationSeconds, advanceQuestion]);
+  }, [isVoiceMode, isVideoMode, sessionId, backendQuestionId, questionIndex, speakSmart, advanceQuestion]);
+
+  // BACKSTOP ONLY as of the silence-detection effect below (product report:
+  // "it takes the interviewer a long time to ask the next question" — see
+  // SILENCE_DEBOUNCE_MS's own comment for the full fix). Still does real
+  // work for: Video mode (no live transcript to react to, so this fixed
+  // interval is its ONLY turn-advance signal, unchanged from before) and
+  // the "candidate said absolutely nothing at all" case in Voice mode
+  // (the silence effect never arms without at least some transcript
+  // content, so total silence would otherwise wait forever without this).
+  React.useEffect(() => {
+    if (isTextMode) return;
+    if (!isRecording || isAiSpeaking) return;
+    if (seconds === 0 || seconds % ADVANCE_INTERVAL_SEC !== 0) return;
+    // Don't kick off another follow-up if we're already at/past the
+    // session's selected time limit — the time-up effect below is about to
+    // (or just did) end the session, and starting a fresh question right as
+    // that happens is exactly the kind of race this whole rewrite is trying
+    // to eliminate.
+    if (seconds >= durationSeconds) return;
+    advanceTurn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seconds, isRecording, isAiSpeaking, isTextMode, durationSeconds, advanceTurn]);
 
   // Text mode: send the typed answer to the real backend
   // (POST .../sessions/{id}/answer — previously implemented in
@@ -628,6 +683,45 @@ const LiveInterviewSession = memo(() => {
   // Voice mode only — see services/speechService.ts. Unused (but harmless)
   // in Video/Text mode.
   const speechToText = useSpeechToText();
+
+  // REAL silence-based turn detection, Voice mode only (product report:
+  // "it takes the interviewer a long time to ask the next question" — with
+  // only the fixed-interval backstop (see advanceTurn's own comment
+  // above), a candidate who finished answering in 10s still wasn't noticed
+  // for up to ADVANCE_INTERVAL_SEC). See SILENCE_DEBOUNCE_MS's own comment
+  // for the exact mechanism (same debounce-on-transcript-change pattern as
+  // VoiceCoachView.tsx). Video mode has no live transcript to key off (see
+  // this file's own header comment on Video mode having no real speech
+  // signal), so it stays on the fixed-interval backstop alone, unchanged.
+  //
+  // Placed here (after speechToText's own declaration), not up alongside
+  // advanceTurn/the backstop effect, specifically because this effect's
+  // dependency array needs to reference speechToText.transcript directly
+  // to actually react to it changing — and unlike a deferred closure body,
+  // a dependency array is evaluated eagerly, at the point in render order
+  // where the useEffect() call itself appears, so referencing it any
+  // earlier than this would be a genuine "used before its declaration"
+  // error, not just a lint nitpick (see advanceTurn's own comment for the
+  // same distinction).
+  const silenceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  React.useEffect(() => {
+    if (isTextMode || !isVoiceMode) return;
+    if (!isRecording || isAiSpeaking) return;
+    if (silenceTimerRef.current) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    if (!speechToText.transcript?.trim()) return;
+    silenceTimerRef.current = setTimeout(() => {
+      advanceTurn();
+    }, SILENCE_DEBOUNCE_MS);
+    return () => {
+      if (silenceTimerRef.current) {
+        clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = null;
+      }
+    };
+  }, [speechToText.transcript, isRecording, isAiSpeaking, isTextMode, isVoiceMode, advanceTurn]);
 
   React.useEffect(() => {
     start(isVideoMode ? 'video' : 'audio');
