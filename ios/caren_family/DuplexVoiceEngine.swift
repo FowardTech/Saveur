@@ -404,7 +404,16 @@ class DuplexVoiceEngine: RCTEventEmitter {
     // both mechanisms at once -- the closest a single shared engine can
     // get to Voice.mm's own proven configuration while still being a
     // complete, valid graph.
-    let disableAllVoiceProcessingForDiagnostic = true
+    //
+    // ROUND 13 RESULT: made NO difference -- identical "No speech
+    // detected" at the identical rapid pace, with real audio confirmed
+    // reaching the tap exactly as before. Conclusively rules out AEC/DSP
+    // (both mechanisms, together) as the cause. Reverted to false so this
+    // module keeps its actual real echo cancellation (its whole reason to
+    // exist) now that removing it is confirmed to buy nothing -- see round
+    // 14's error domain/code logging below for where the investigation
+    // goes next.
+    let disableAllVoiceProcessingForDiagnostic = false
     if disableAllVoiceProcessingForDiagnostic {
       try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
     } else {
@@ -853,6 +862,32 @@ class DuplexVoiceEngine: RCTEventEmitter {
         // all", and a quiet failure is exactly what's been impossible to
         // diagnose so far.
         self.emitError("recognitionTask", error)
+        // DIAGNOSTIC, ROUND 14 (round 13's result: disabling ALL voice
+        // processing -- both the session mode AND the per-node API,
+        // together, for the first time -- made NO difference whatsoever,
+        // same "No speech detected" at the same rapid pace. That
+        // conclusively rules out AEC/DSP as the cause; every audio-
+        // pipeline hypothesis this investigation has had is now
+        // exhausted). error.localizedDescription alone collapses several
+        // genuinely different NSError codes/domains into the same "No
+        // speech detected" string -- logging the raw domain+code here for
+        // the first time to see whether every single failure is really
+        // the exact same one (the standard kAFAssistantErrorDomain "no
+        // speech" code), or whether something else has been hiding behind
+        // an identical-looking message the whole time. Also worth
+        // directly testing as a NON-code hypothesis: this file's restart
+        // loop has been firing recognitionTask requests at Apple's speech
+        // service every ~250ms-1s, continuously, across many hundreds of
+        // attempts over multiple days of this investigation -- if that
+        // volume has triggered any server-side throttling for this
+        // device/account, throttled requests could plausibly come back as
+        // this same generic "no speech" response regardless of real audio
+        // content, which would explain why no audio-pipeline change has
+        // ever mattered. Worth testing with a real gap (15-20 minutes with
+        // the feature untouched) before the next single, deliberate
+        // attempt, independent of anything this file's code does.
+        let nsError = error as NSError
+        NSLog("[DuplexVoiceEngine] recognitionTask error detail: domain=\(nsError.domain) code=\(nsError.code) description=\(nsError.localizedDescription)")
       }
       if error != nil || (result?.isFinal ?? false) {
         self.recognitionTask = nil
@@ -919,7 +954,21 @@ class DuplexVoiceEngine: RCTEventEmitter {
         // loop regardless of why the closure fired so fast, and gives
         // each new request genuine wall-clock time to actually receive
         // real audio from the input tap before the next teardown.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
+        // BUG FIX (round 14 hedge): was 0.25s. Round 13 conclusively ruled
+        // out AEC/DSP as the cause of "No speech detected" -- with every
+        // audio-pipeline hypothesis exhausted, the remaining untested
+        // possibility is that this loop's own request VOLUME (a fresh
+        // recognitionTask fired at Apple's speech service roughly every
+        // quarter-second, continuously, across many hundreds of attempts
+        // over multiple days of this investigation) has triggered some
+        // form of server-side throttling for this device/account, which
+        // could plausibly come back as this same generic "no speech"
+        // response regardless of real audio content. Slower pacing costs
+        // nothing perceptible for an always-listening background loop and
+        // is a legitimate improvement either way (less load on Apple's
+        // service), so this stays even if throttling turns out not to be
+        // the answer.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
           guard let self = self, self.isEngineSetUp else { return }
           self.startRecognitionRequest(with: recognizer)
         }
@@ -928,12 +977,14 @@ class DuplexVoiceEngine: RCTEventEmitter {
   }
 
   // See both give-up branches above -- a longer cooldown (vs. the normal
-  // 0.25s restart pacing) before trying again after a give-up specifically,
-  // so a session that just failed 15 times in ~10s doesn't immediately pile
-  // up another 15 failures in the next 10s, while still eventually giving
-  // the user another real chance instead of going silent forever.
+  // restart pacing) before trying again after a give-up specifically, so a
+  // session that just failed repeatedly doesn't immediately pile up another
+  // streak of failures, while still eventually giving the user another real
+  // chance instead of going silent forever. Bumped from 5.0s -- see the
+  // normal-restart delay's own round 14 comment just above for why a more
+  // conservative pace across the board is worth trying now.
   private func cooldownRestart(_ recognizer: SFSpeechRecognizer) {
-    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) { [weak self] in
+    DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) { [weak self] in
       guard let self = self, self.isEngineSetUp else { return }
       self.startRecognitionRequest(with: recognizer)
     }
