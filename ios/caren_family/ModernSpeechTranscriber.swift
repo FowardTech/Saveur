@@ -76,8 +76,31 @@ final class ModernSpeechTranscriber {
   // exactly the class of bug that costs weeks. Ask SpeechAnalyzer directly
   // for the format it wants, the same discipline applied everywhere else
   // in this module.
+  //
+  // BUILD FIX: bestAvailableAudioFormat(compatibleWith:) is `async` (Xcode:
+  // "'async' call in a function that does not support concurrency") --
+  // this file's own guess didn't account for that, since a plain
+  // (non-async) computed property can't make an async call. `get async`
+  // is what a computed property needs to do that; callers now need
+  // `await preferredAudioFormat`.
+  //
+  // NOT YET WIRED IN: nothing calls this yet -- DuplexVoiceEngine.swift's
+  // beginRecognition() feeds the SAME tap buffers (in whatever format its
+  // own audio graph topology produces, see recognitionConnectFormat) to
+  // both the legacy SFSpeechRecognizer path and this modern one via
+  // append() below, unconverted. SFSpeechRecognizer is documented as
+  // tolerant of that; it's genuinely unconfirmed whether SpeechAnalyzer is
+  // equally tolerant of receiving a format other than its own
+  // bestAvailableAudioFormat, or needs an explicit AVAudioConverter step
+  // first. If the modern path builds and connects but never produces any
+  // transcripts, THIS is the first thing to check -- wire this property
+  // in via an AVAudioConverter ahead of append() below, converting each
+  // buffer from the tap's format to this one before wrapping it in
+  // AnalyzerInput.
   var preferredAudioFormat: AVAudioFormat? {
-    try? SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber])
+    get async {
+      try? await SpeechAnalyzer.bestAvailableAudioFormat(compatibleWith: [transcriber])
+    }
   }
 
   // Starts the analyzer and begins consuming its results stream in the
