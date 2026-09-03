@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { AppState, Image, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { AppState, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
@@ -15,7 +15,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import Text from 'components/Text';
-import { Images } from 'assets/images';
 import * as coachService from 'services/coachService';
 import { CoachUserContext } from 'services/coachService';
 import * as speechService from 'services/speechService';
@@ -33,7 +32,9 @@ import ThemeContext from '../../ThemeContext';
 //
 // Visuals deliberately reuse the exact same pulsing orb used by the
 // mock-interview Voice mode (src/practice/LiveInterviewSession.tsx) — same
-// ORB_SIZE/HALO_SIZE, same Images.voiceOrb image, same reanimated pulse
+// ORB_SIZE/HALO_SIZE, same hand-rolled blue/light-blue/orange
+// LinearGradient circle (see the orb's own render comment below for why
+// this replaced the old Images.voiceOrb GIF), same reanimated pulse
 // approach — so this feels like the same app's voice UI, not a
 // one-off screen. The first version of this screen used the shared Flex
 // component with `vertical center` for layout, which doesn't do what it
@@ -1361,15 +1362,29 @@ const VoiceCoachView = memo(({
             />
           </>
         ) : null}
-        {/* Redesign (explicit product request — "replace the pink circle
-            design... with image 4"): was a two-layer purple/pink
-            LinearGradient sphere (base gradient + a glossy highlight
-            overlay, both simulating a 3D sphere out of flat color); now a
-            real image of one (Images.voiceOrb — see assets/images/index.ts
-            for the transparency/sizing notes), so no more hand-rolled
-            highlight layer needed, the image already has that baked in. */}
+        {/* REDESIGN (explicit product request, with a screenshot of the
+            old GIF: "i dont want this gif again. I want you to create one
+            on our own... use mixture of default blue, orange and light
+            blue to make the linear gradient"). Was Images.voiceOrb, a
+            pre-made swirling GIF asset (see assets/images/index.ts —
+            still there, just unused by this file now); now a real,
+            hand-rolled LinearGradient circle instead, using this app's
+            own brand colors (color-primary-500 #0063F8, the same blue
+            every other "main color" accent in this app already uses;
+            #FB923C, the Practice card's orange; #7EA8E2, a lighter sky
+            blue) rather than a bespoke one-off palette. No image asset at
+            all -- orbGradientFill below is clipped to a circle via
+            styles.orb's own borderRadius/overflow (same idea the OLDER
+            two-layer purple/pink version mentioned in this comment's own
+            git history used, before that got replaced by the GIF this
+            pass is now undoing). */}
         <Animated.View style={[styles.orb, orbStyle]}>
-          <Image source={Images.voiceOrb} style={styles.orbImage} resizeMode="contain" />
+          <LinearGradient
+            colors={['#0063F8', '#7EA8E2', '#FB923C']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.orbGradientFill}
+          />
         </Animated.View>
       </TouchableOpacity>
 
@@ -1455,15 +1470,17 @@ const styles = StyleSheet.create({
     borderRadius: HALO_SIZE / 2,
     borderWidth: 2,
   },
+  // REDESIGN (see the JSX comment at this orb's own render for the full
+  // "why") -- borderRadius/overflow are back (needed again now that the
+  // fill is a plain rectangular LinearGradient, not a pre-cropped
+  // circular image the way Images.voiceOrb was).
   orb: {
     width: ORB_SIZE,
     height: ORB_SIZE,
+    borderRadius: ORB_SIZE / 2,
+    overflow: 'hidden',
   },
-  // No overflow/borderRadius clipping needed anymore — Images.voiceOrb is
-  // already a circular image on a transparent background (was needed for
-  // the old two-layer LinearGradient version, which was a flat rectangle
-  // that had to be clipped into a circle).
-  orbImage: {
+  orbGradientFill: {
     width: '100%',
     height: '100%',
   },

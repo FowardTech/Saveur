@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { ActivityIndicator, Alert, Image, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   TopNavigationAction,
@@ -38,7 +38,6 @@ import * as interviewService from 'services/interviewService';
 import * as feedbackService from 'services/feedbackService';
 import { withTimeout } from 'utils/withTimeout';
 import CtaButton from 'components/CtaButton';
-import { Images } from 'assets/images';
 
 // Fallback used when videoAnalysis.stopAnalysis() (see onEnd below) is
 // abandoned after its own hard timeout — a zeroed-out result is strictly
@@ -1705,13 +1704,26 @@ const LiveInterviewSession = memo(() => {
                   style={styles.haloFill}
                 />
               </Animated.View>
-              {/* Redesign (explicit product request — "replace the pink
-                  circle design... with image 4"): was the same two-layer
-                  purple/pink LinearGradient sphere as VoiceCoachView.tsx
-                  (see that file's own comment) — now Images.voiceOrb,
-                  same image, same reasoning. */}
+              {/* REDESIGN (explicit product request, with a screenshot of
+                  the old GIF: "i dont want this gif again. I want you to
+                  create one on our own... use mixture of default blue,
+                  orange and light blue to make the linear gradient. Same
+                  applies to the one in the mock interview") -- was
+                  Images.voiceOrb, the same pre-made swirling GIF asset
+                  VoiceCoachView.tsx used (see that file's own comment for
+                  the full history, including the even-older two-layer
+                  purple/pink hand-rolled version this GIF itself
+                  replaced); now the same hand-rolled blue/light-blue/
+                  orange LinearGradient circle as that file, same colors,
+                  same reasoning -- this app's own brand blue/orange
+                  instead of an arbitrary swirl image. */}
               <Animated.View style={[styles.orb, orbStyle]}>
-                <Image source={Images.voiceOrb} style={styles.orbImage} resizeMode="contain" />
+                <LinearGradient
+                  colors={['#0063F8', '#7EA8E2', '#FB923C']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.orbGradientFill}
+                />
               </Animated.View>
             </Flex>
 
@@ -1891,11 +1903,16 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+  // REDESIGN (see the orb's own render comment above for the full "why")
+  // -- borderRadius/overflow clip the plain rectangular LinearGradient
+  // fill into a circle, same as VoiceCoachView.tsx's own orb style.
   orb: {
     width: ORB_SIZE,
     height: ORB_SIZE,
+    borderRadius: ORB_SIZE / 2,
+    overflow: 'hidden',
   },
-  orbImage: {
+  orbGradientFill: {
     width: '100%',
     height: '100%',
   },
