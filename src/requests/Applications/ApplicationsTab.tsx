@@ -304,8 +304,12 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
   },
   addFromEmailButton: {
+    // Product follow-up: "The add from email border is supposed to be
+    // black not blue" -- was color-primary-600 (a darker blue, barely
+    // distinguishable against the button's own blue fill); plain black
+    // reads as a real, deliberate edge instead.
     borderWidth: 1.5,
-    borderColor: 'color-primary-600',
+    borderColor: '#000000',
   },
   lockCard: {
     // Added the app's own card treatment (product follow-up, app-wide
