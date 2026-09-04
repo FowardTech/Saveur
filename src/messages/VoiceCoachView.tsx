@@ -163,7 +163,7 @@ const SILENCE_DEBOUNCE_MS = 1000;
 // applies ONLY to the turn that immediately follows an interrupt (see
 // isBargeInTurnRef below) -- a normal turn (the coach finished speaking on
 // its own) keeps the quick 1s response time from the fix above.
-const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 5000;
+const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 10000;
 
 // BUG FIX (product report: "I waited up to like 5 minutes and it still did
 // not capture my voice") — duplexVoiceService.start() (a native-module
