@@ -69,8 +69,9 @@ export interface ActionCardProps {
   // this app's light page background, and as a subtly-tinted dark card in
   // dark mode, same "blend over whatever's actually behind it" behavior
   // either way) plus accentColor itself as a REAL border (borderWidth
-  // 1.5 -- unlike the default card's own borderColor above, which is set
-  // but never actually rendered at borderWidth: 0). Text/icon/chevron
+  // 0.8, reduced from an original 1.5 per product follow-up -- unlike
+  // the default card's own borderColor above, which is set but never
+  // actually rendered at borderWidth: 0). Text/icon/chevron
   // colors stay the theme's normal dark-on-light tones here, NOT the
   // white-on-saturated switch `gradientColors` triggers -- this
   // background is deliberately pale, not saturated, so white text would
@@ -242,7 +243,10 @@ const ActionCard: React.FC<ActionCardProps> = memo(
         disabled={disabled}
         style={[
           styles.card,
-          hasAccent ? {backgroundColor: withAlpha(accentColor!), borderWidth: 1.5, borderColor: accentColor} : undefined,
+          // Product follow-up: "reduce the border width of the practice
+          // and explore more to 0.8 or 0.7" -- was 1.5, a touch heavier
+          // than asked for.
+          hasAccent ? {backgroundColor: withAlpha(accentColor!), borderWidth: 0.8, borderColor: accentColor} : undefined,
           style,
           disabled ? styles.disabled : undefined,
         ]}>
