@@ -387,11 +387,21 @@ const themedStyles = StyleService.create({
   // SYMPHONY REDESIGN follow-up (see renderConnectorCard's own comment) --
   // was a single shared card (`connectCard`) with divided rows
   // (`providerRow`/`providerDivider`); each provider is its own card now.
+  // BUG FIX (product report, with screenshot: "I thought i asked you to
+  // make this cards white cards") -- globalStyle.card (spread into this
+  // same style array) deliberately carries no backgroundColor of its own
+  // (see that token's own comment: each call site supplies its own fill),
+  // and this card never did -- it was relying on whatever showed through
+  // from underneath, not an explicit white/plain fill the way every other
+  // card in the app (ActionCard, InfoBox, DreamCompanies' summary/company
+  // cards) sets one. Explicit background-basic-color-2 now, same token
+  // those use.
   providerCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
     marginBottom: 12,
+    backgroundColor: 'background-basic-color-2',
   },
   providerLogo: {
     marginRight: 12,
