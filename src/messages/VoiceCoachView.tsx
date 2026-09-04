@@ -152,6 +152,19 @@ import ThemeContext from '../../ThemeContext';
 // (Android) paths equally, since both share this same debounce effect.
 const SILENCE_DEBOUNCE_MS = 1000;
 
+// Product follow-up ("The speak to interrupt is working fine just need
+// some tweaking. It should allow the user to be silent for like 5 secs
+// before responding to the interrupted words") -- after the user barges in
+// (either a manual tap via onInterrupt or the real speech-triggered
+// barge-in effect below), they've just cut the coach off mid-sentence and
+// are often still gathering their thought, so the normal, fast
+// SILENCE_DEBOUNCE_MS above was treating an ordinary mid-thought pause as
+// "the user's turn is over" and responding too eagerly. This longer pause
+// applies ONLY to the turn that immediately follows an interrupt (see
+// isBargeInTurnRef below) -- a normal turn (the coach finished speaking on
+// its own) keeps the quick 1s response time from the fix above.
+const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 5000;
+
 // BUG FIX (product report: "I waited up to like 5 minutes and it still did
 // not capture my voice") — duplexVoiceService.start() (a native-module
 // bridge promise, ios/caren_family/DuplexVoiceEngine.swift's own `start`
@@ -414,6 +427,12 @@ const VoiceCoachView = memo(({
   const [focusGeneration, setFocusGeneration] = React.useState(0);
 
   const silenceTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  // See POST_INTERRUPT_SILENCE_DEBOUNCE_MS's own comment -- true for the
+  // single turn immediately following a barge-in (set by onInterrupt and
+  // the auto barge-in effect below), false otherwise. Reset at the start
+  // of sendTurn so it never leaks into the turn after the one it was
+  // meant for.
+  const isBargeInTurnRef = React.useRef(false);
   const isActiveRef = React.useRef(false);
   // Set right after the coach speaks a "want me to take you there?" offer;
   // checked (and always cleared) at the start of the very next turn.
@@ -625,6 +644,11 @@ const VoiceCoachView = memo(({
 
   const sendTurn = React.useCallback(
     async (finalText: string) => {
+      // See isBargeInTurnRef's own comment -- whatever this turn was
+      // (interrupted or not), it's being consumed right now, so the NEXT
+      // turn always starts back at the normal debounce unless a fresh
+      // interrupt sets this again.
+      isBargeInTurnRef.current = false;
       const trimmed = finalText.trim();
       if (!trimmed) {
         setPhase('listening');
@@ -760,12 +784,17 @@ const VoiceCoachView = memo(({
     if (phase !== 'listening') return;
     clearSilenceTimer();
     if (!transcript.trim()) return;
+    // See POST_INTERRUPT_SILENCE_DEBOUNCE_MS's own comment -- the turn
+    // right after a barge-in gets a longer grace period before being
+    // treated as "done", so an ordinary mid-thought pause right after
+    // interrupting doesn't get cut off and sent early.
+    const debounceMs = isBargeInTurnRef.current ? POST_INTERRUPT_SILENCE_DEBOUNCE_MS : SILENCE_DEBOUNCE_MS;
     silenceTimerRef.current = setTimeout(() => {
       if (phaseRef.current !== 'listening') return;
       const finalText = transcript;
       if (!duplexSupported) stt.reset();
       sendTurn(finalText);
-    }, SILENCE_DEBOUNCE_MS);
+    }, debounceMs);
     return clearSilenceTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, phase, active]);
@@ -804,6 +833,7 @@ const VoiceCoachView = memo(({
     if (duplexSupported) {
       turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
       setPhase('listening'); // optimistic, immediate UI feedback for a manual tap
+      isBargeInTurnRef.current = true; // see its own comment -- longer silence grace period for this turn
       await duplexVoiceService.stopSpeaking().catch(() => {});
       return;
     }
@@ -814,6 +844,7 @@ const VoiceCoachView = memo(({
     // settle delay starts counting from a *confirmed* stop instead of
     // racing an in-flight one on top of it.
     await speechService.stopSpeaking();
+    isBargeInTurnRef.current = true; // see its own comment -- longer silence grace period for this turn
     startListening();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duplexSupported]);
@@ -851,6 +882,7 @@ const VoiceCoachView = memo(({
     if (!liveText && !freshSpeechStarted) return;
     turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
     setPhase('listening');
+    isBargeInTurnRef.current = true; // see its own comment -- longer silence grace period for this turn
     duplexVoiceService.stopSpeaking().catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [duplexSupported, phase, duplexSegment, active, speechStartedPulse]);
