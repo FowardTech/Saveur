@@ -1105,15 +1105,16 @@ const Chat = memo(() => {
                     dark background itself, so black-on-that read as
                     near-invisible. Same isDarkMode flag already driving
                     this pill's background now also flips the icon/text to
-                    white in dark mode, black in light mode -- chevron
-                    still intentionally excluded (not part of either
-                    product request, and brand blue reads fine in both
-                    themes). */}
+                    white in dark mode, black in light mode. Product
+                    follow-up ("the chevron icon its supposed to be white
+                    in dark mode too") -- the chevron below gets the same
+                    isDarkMode treatment now instead of staying brand blue
+                    unconditionally. */}
                 <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : '#000000' }]} />
                 <Text category="h9" bold ml={6} style={{ color: isDarkMode ? '#FFFFFF' : '#000000' }}>
                   {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
                 </Text>
-                <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
+                <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
               </TouchableOpacity>
             </View>
           ) : null}
