@@ -180,29 +180,25 @@ const ApplicationsTab = memo(() => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.actionsRow}
         style={{marginBottom: hasAnyApplications ? 16 : 0}}>
-        {/* Product report: "the Add from email button should be the
-            default blue and the text white" -- was appearance="outline"
-            status="basic" (a gray outline pill, matching Analytics/Compare
-            offers). Filled status="primary" is this app's standard brand-
-            blue fill with white label -- same CtaButton.tsx look, just
-            through the plain UI Kitten Button since this needs to keep its
-            own compact `size="small"` + icon accessory.
-
-            BUG FIX (product report: "This Add From email button has no
-            border and it should align to the left") -- a filled Button's
-            border color defaults to the same shade as its own fill, so it
-            never reads as a defined edge against the blue background (that's
-            the "no border" report). Explicit borderWidth + a darker
-            primary-600 borderColor now gives it a real visible edge, same
-            idea as the outline buttons next to it. Alignment: this
+        {/* REVERTED (product follow-up: "give the add from email the same
+            gray background you gave to the analytics and remove its
+            border") -- was a filled status="primary" blue button with an
+            explicit black border, per an earlier, separate request ("the
+            Add from email button should be the default blue and the text
+            white"). Now the exact same appearance="outline" status="basic"
+            treatment as the Analytics/Compare offers buttons right next to
+            it, so all three read as one consistent set instead of Add from
+            email standing out as a different color/style. Alignment: this
             horizontal ScrollView's content already starts at the left edge
-            by default -- there was no centering here -- but contentContainerStyle
-            now explicitly pins alignItems to flex-start so that can never
-            drift regardless of how many action buttons render next to it. */}
+            by default -- there was no centering here -- but
+            contentContainerStyle still pins alignItems to flex-start so
+            that can never drift regardless of how many action buttons
+            render next to it. */}
         <Button
           size="small"
-          status="primary"
-          style={[styles.addFromEmailButton, {marginRight: 10}]}
+          appearance="outline"
+          status="basic"
+          style={{marginRight: 10}}
           accessoryLeft={props => <Icon {...props} pack="eva" name="email-outline" />}
           onPress={() => navigate('AddFromEmail')}>
           {t('request:add_from_email_cta', {defaultValue: 'Add from email'})}
@@ -302,14 +298,6 @@ const themedStyles = StyleService.create({
   actionsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  addFromEmailButton: {
-    // Product follow-up: "The add from email border is supposed to be
-    // black not blue" -- was color-primary-600 (a darker blue, barely
-    // distinguishable against the button's own blue fill); plain black
-    // reads as a real, deliberate edge instead.
-    borderWidth: 1.5,
-    borderColor: '#000000',
   },
   lockCard: {
     // Added the app's own card treatment (product follow-up, app-wide
