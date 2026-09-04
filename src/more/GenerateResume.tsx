@@ -9,6 +9,8 @@ import {
   Button,
   Input,
   Spinner,
+  Text as KittenText,
+  TextProps,
 } from '@ui-kitten/components';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -763,26 +765,34 @@ const GenerateResume = memo(() => {
               </View>
             ) : null}
 
+            {/* Product report: "The Download buttons... the texts are not
+                supposed to break they should be in straight line same for
+                the other download button in the whole app" -- these two are
+                full-width so they were never actually observed wrapping,
+                but forcing numberOfLines={1} here too keeps every download
+                button in the app on the same guaranteed-single-line
+                footing as components/DownloadFormatButtons.tsx. */}
             <CtaButton
-              children={
-                downloadingFormat === 'docx'
-                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
-                  : t('more:resume_download_word', { defaultValue: 'Download as Word (.docx)' })
-              }
               disabled={!!downloadingFormat}
               onPress={() => onDownload('docx')}
-              style={[globalStyle.shadowBtn, { marginTop: 24, marginBottom: 12 }]}
-            />
-            <Button
-              children={
-                downloadingFormat === 'pdf'
-                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
-                  : t('more:resume_download_pdf', { defaultValue: 'Download as PDF' })
-              }
-              appearance="outline"
-              disabled={!!downloadingFormat}
-              onPress={() => onDownload('pdf')}
-            />
+              style={[globalStyle.shadowBtn, { marginTop: 24, marginBottom: 12 }]}>
+              {({ style }: { style?: unknown }) => (
+                <KittenText numberOfLines={1} style={style as any}>
+                  {downloadingFormat === 'docx'
+                    ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
+                    : t('more:resume_download_word', { defaultValue: 'Download as Word (.docx)' })}
+                </KittenText>
+              )}
+            </CtaButton>
+            <Button appearance="outline" disabled={!!downloadingFormat} onPress={() => onDownload('pdf')}>
+              {(evaProps: TextProps) => (
+                <KittenText {...evaProps} numberOfLines={1}>
+                  {downloadingFormat === 'pdf'
+                    ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
+                    : t('more:resume_download_pdf', { defaultValue: 'Download as PDF' })}
+                </KittenText>
+              )}
+            </Button>
           </Content>
         </Container>
       </Modal>

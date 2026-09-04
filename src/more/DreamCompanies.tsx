@@ -86,6 +86,29 @@ const DreamCompanies = memo(() => {
     load();
   }, [load]);
 
+  // Product follow-up ("Why having this prompt that it's taking too long?
+  // It supposed to be fast not slow") — addDreamCompany now returns before
+  // research finishes (researchPending: true on that row — see
+  // dreamCompaniesService.ts's own comment). Same "poll while pending"
+  // shape as InterviewReplay.tsx's video-saving state: a silent refetch
+  // (no isLoading/skeleton flash — this is a background update, not a
+  // fresh load) every few seconds for as long as ANY tracked company is
+  // still being researched, so a card's "researching…" state clears itself
+  // once the backend's background thread finishes, with no manual refresh
+  // needed.
+  const anyResearchPending = companies?.some(c => c.researchPending) ?? false;
+  React.useEffect(() => {
+    if (!anyResearchPending) return;
+    const timer = setInterval(async () => {
+      try {
+        setCompanies(await dreamCompaniesService.listDreamCompanies());
+      } catch {
+        // best-effort — a failed poll tick just tries again on the next one
+      }
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [anyResearchPending]);
+
   // Product request item: "I want forms like this in the app to appear as
   // bottom sheets just like it is in the Resume Evolution" — this "add a
   // company" form used to sit permanently open at the top of the screen;
@@ -213,7 +236,22 @@ const DreamCompanies = memo(() => {
             the same explanatory copy, restyled as the requested banner.
             Shortened to 2 lines (product report: "the text in the info
             banner... too long") — see InfoBox.tsx's own numberOfLines={2}. */}
-        <InfoBox icon="flag-outline" variant="info" style={{ marginBottom: 16 }}>
+        {/* Product follow-up: "I want the info card in this to be white
+            card with blue left borders. But reduce the border radius to at
+            least 5 or 6" -- InfoBox's `info` variant already draws the blue
+            left-border stripe + blue icon/text this needs (see its own
+            comment), so this only overrides the two things that changed:
+            a plain card background instead of the light-blue tint fill,
+            and a much smaller radius than InfoBox's own default 16.
+            Scoped to this one call site via `style` (which InfoBox applies
+            last, after its own variant defaults) rather than changing
+            InfoBox's shared `info` variant itself, so every other screen
+            using that variant (Company Intelligence, Career DNA, ...)
+            keeps its current look. */}
+        <InfoBox
+          icon="flag-outline"
+          variant="info"
+          style={{ marginBottom: 16, backgroundColor: theme['background-basic-color-2'], borderRadius: 6 }}>
           {t('more:dream_companies_description', {
             defaultValue: 'Track target companies — jobs, interview prep, and your readiness for each.',
           })}
@@ -358,8 +396,14 @@ const DreamCompanies = memo(() => {
                       <Icon
                         pack="assets"
                         name={c.isTopChoice ? 'bookmarkActive' : 'bookmark'}
+                        // Product report: "The delete and pin icons are too
+                        // big make them moderate" -- icon20 (despite the
+                        // name) resolves to 28x28, genuinely large for a
+                        // small per-row action glyph; icon16 (18x18) is a
+                        // moderate step down, not the smallest size
+                        // available.
                         style={[
-                          globalStyle.icon20,
+                          globalStyle.icon16,
                           { tintColor: c.isTopChoice ? theme['color-accent-purple'] : theme['text-placeholder-color'] },
                         ]}
                       />
@@ -380,7 +424,7 @@ const DreamCompanies = memo(() => {
                       <Icon
                         pack="eva"
                         name="trash-2-outline"
-                        style={[globalStyle.icon20, { tintColor: theme['text-placeholder-color'] }]}
+                        style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]}
                       />
                     </TouchableOpacity>
                     <Icon
@@ -409,6 +453,20 @@ const DreamCompanies = memo(() => {
                         {t('more:dream_company_readiness', { defaultValue: '{{score}}% ready', score: c.readinessScore })}
                       </Text>
                     </View>
+                    {/* Product follow-up ("It supposed to be fast not
+                        slow") -- visible without expanding the card, same
+                        spot every other status badge on this row lives, so
+                        a freshly-added company doesn't just look empty
+                        while its research runs in the background (see
+                        anyResearchPending's own comment above). */}
+                    {c.researchPending ? (
+                      <View style={[styles.badge, { backgroundColor: theme['color-primary-transparent-200'], flexDirection: 'row', alignItems: 'center' }]}>
+                        <Spinner size="tiny" style={{ marginRight: 6 }} />
+                        <Text category="h10" bold status="link">
+                          {t('more:dream_company_researching', { defaultValue: 'Researching…' })}
+                        </Text>
+                      </View>
+                    ) : null}
                     {/* Product request item: "Job alert match highlight" —
                         distinct from the plain open-jobs count badge below:
                         this specifically means something NEW showed up
@@ -536,6 +594,19 @@ const DreamCompanies = memo(() => {
                           </>
                         ) : null}
                       </>
+                    ) : c.researchPending ? (
+                      // Product follow-up ("It supposed to be fast not
+                      // slow") -- distinct from the plain "try refreshing"
+                      // state below: this company's research is genuinely
+                      // still running in the background right now (see
+                      // anyResearchPending's own comment above), so
+                      // "refresh" would just find nothing new yet either.
+                      <Flex justify="flex-start" itemsCenter mb={12}>
+                        <Spinner size="tiny" style={{ marginRight: 8 }} />
+                        <Text category="h9-s" status="placeholder">
+                          {t('more:dream_company_researching', { defaultValue: 'Researching this company…' })}
+                        </Text>
+                      </Flex>
                     ) : (
                       <Text category="h9-s" status="placeholder" mb={12}>
                         {t('more:dream_company_no_research_yet', { defaultValue: 'Research not available yet — try refreshing.' })}

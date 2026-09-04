@@ -50,6 +50,14 @@ export interface DreamCompany {
   readinessScore: number;
   isTopChoice: boolean;
   hasNewJobAlert: boolean;
+  // Product follow-up ("Why having this prompt that it's taking too long?
+  // It supposed to be fast not slow") -- addDreamCompany() below now
+  // returns immediately, before research finishes; true while the
+  // backend's background research thread is still running for this row
+  // (see app/api/dream_companies.py's add_company). DreamCompanies.tsx
+  // polls while any row has this set, and shows a "researching…" state on
+  // that card instead of the old "research not available yet" text.
+  researchPending: boolean;
 }
 
 interface DreamCompanyIntelWire {
@@ -76,6 +84,7 @@ interface DreamCompanyWire {
   readiness_score?: number;
   is_top_choice?: boolean;
   has_new_job_alert?: boolean;
+  research_pending?: boolean;
 }
 
 function intelFromWire(intel?: DreamCompanyIntelWire | null): DreamCompanyIntel | null {
@@ -110,6 +119,7 @@ function fromWire(w: DreamCompanyWire): DreamCompany {
     readinessScore: w.readiness_score ?? 0,
     isTopChoice: !!w.is_top_choice,
     hasNewJobAlert: !!w.has_new_job_alert,
+    researchPending: !!w.research_pending,
   };
 }
 

@@ -25,6 +25,7 @@ import {
 } from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
+import DownloadFormatButtons from 'components/DownloadFormatButtons';
 
 // Product request item 1 — JD Analyzer's "Generate Cover Letter" card used
 // to just forward the pasted JD text to CoverLetterGenerator.tsx, which
@@ -169,32 +170,7 @@ const JDCoverLetterGenerator = memo(() => {
             >
               {t('more:regenerate', { defaultValue: 'Regenerate' })}
             </Button>
-            <Flex justify="space-between" mt={12}>
-              <Button
-                size="small"
-                style={globalStyle.flexOne}
-                disabled={!!downloadingFormat}
-                accessoryLeft={downloadingFormat === 'pdf' ? () => <Spinner size="small" status="control" /> : undefined}
-                onPress={() => onDownload('pdf')}
-              >
-                {downloadingFormat === 'pdf'
-                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
-                  : t('more:download_pdf', { defaultValue: 'Download PDF' })}
-              </Button>
-              <View style={{ width: 12 }} />
-              <Button
-                size="small"
-                appearance="outline"
-                style={globalStyle.flexOne}
-                disabled={!!downloadingFormat}
-                accessoryLeft={downloadingFormat === 'docx' ? () => <Spinner size="small" status="basic" /> : undefined}
-                onPress={() => onDownload('docx')}
-              >
-                {downloadingFormat === 'docx'
-                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
-                  : t('more:download_docx', { defaultValue: 'Download DOCX' })}
-              </Button>
-            </Flex>
+            <DownloadFormatButtons downloadingFormat={downloadingFormat} onDownload={onDownload} />
           </View>
         ) : null}
       </Content>

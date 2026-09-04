@@ -28,6 +28,7 @@ import { AuthContext } from '../../AuthContext';
 import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
 import CopyButton from 'components/CopyButton';
+import DownloadFormatButtons from 'components/DownloadFormatButtons';
 
 // AI Cover Letter Generator — product request item. Reuses the caller's
 // already-stored resume server-side (see services/coverLetterService.ts /
@@ -235,32 +236,7 @@ const CoverLetterGenerator = memo(() => {
             >
               {t('more:regenerate', { defaultValue: 'Regenerate' })}
             </Button>
-            <Flex justify="space-between" mt={12}>
-              <Button
-                size="small"
-                style={globalStyle.flexOne}
-                disabled={!!downloadingFormat}
-                accessoryLeft={downloadingFormat === 'pdf' ? () => <Spinner size="small" status="control" /> : undefined}
-                onPress={() => onDownload('pdf')}
-              >
-                {downloadingFormat === 'pdf'
-                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
-                  : t('more:download_pdf', { defaultValue: 'Download PDF' })}
-              </Button>
-              <View style={{ width: 12 }} />
-              <Button
-                size="small"
-                appearance="outline"
-                style={globalStyle.flexOne}
-                disabled={!!downloadingFormat}
-                accessoryLeft={downloadingFormat === 'docx' ? () => <Spinner size="small" status="basic" /> : undefined}
-                onPress={() => onDownload('docx')}
-              >
-                {downloadingFormat === 'docx'
-                  ? t('more:resume_preparing', { defaultValue: 'Preparing…' })
-                  : t('more:download_docx', { defaultValue: 'Download DOCX' })}
-              </Button>
-            </Flex>
+            <DownloadFormatButtons downloadingFormat={downloadingFormat} onDownload={onDownload} />
           </View>
         ) : null}
       </Content>
