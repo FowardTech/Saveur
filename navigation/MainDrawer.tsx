@@ -124,7 +124,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'DreamCompanies' | 'Profile';
+type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'DreamCompanies' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -180,6 +180,17 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
       route: 'DreamCompanies',
       label: t('common:drawer_dream_job', {defaultValue: 'Dream Job'}).toString(),
       icon: 'briefcase-outline',
+    },
+    // Product request: "add event in the drawer and name it career events
+    // and let it navigate to the event section in the networking screen"
+    // -- src/more/NetworkingAssistant.tsx's own tab state defaults to
+    // index 0, the Career Events tab (see that screen's own useState),
+    // so navigating there with no params already lands on Career Events;
+    // no route param needed.
+    {
+      route: 'CareerEvents',
+      label: t('common:drawer_career_events', {defaultValue: 'Career Events'}).toString(),
+      icon: 'calendar-outline',
     },
     {
       route: 'Profile',
@@ -330,6 +341,8 @@ const MainDrawerContent = memo(() => {
         navigationRef.navigate('SalaryNegotiation');
       } else if (route === 'DreamCompanies') {
         navigationRef.navigate('DreamCompanies');
+      } else if (route === 'CareerEvents') {
+        navigationRef.navigate('NetworkingAssistant');
       } else {
         navigationRef.navigate('MainBottomTab', {screen: 'Profile', params: {screen: 'MoreSrc'}});
       }
