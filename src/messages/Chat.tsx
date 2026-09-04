@@ -1092,20 +1092,25 @@ const Chat = memo(() => {
                   // own comment for the light-mode value.
                   isDarkMode && { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
                 ]}>
-                {/* REDESIGN (product request: "give the bulb icon the
-                    black color you gave to the text") -- was
-                    theme['color-primary-500'] (brand blue), same blue the
-                    text itself moved off of in the earlier "text should be
-                    black not blue" fix below. Chevron stays blue -- not
-                    mentioned by this request, same "only touch what was
-                    asked" precedent that fix itself set. */}
-                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: '#000000' }]} />
-                {/* BUG FIX (product request: "the suggested topics pill
-                    text should be black not blue") -- was
-                    theme['color-primary-500'] (brand blue). Icon/chevron
-                    stay blue (not mentioned by the request); only the
-                    label text changes. */}
-                <Text category="h9" bold ml={6} style={{ color: '#000000' }}>
+                {/* BUG FIX (product report: "the suggested topic pill in
+                    the AI career coach is not looking good in dark mode")
+                    -- the earlier "black icon/text" fixes below (see their
+                    own comments) hardcoded '#000000' unconditionally. That
+                    was fine against the light-mode pill (a black-tinted
+                    gray, see suggestedTopicsPill's own comment), but in
+                    dark mode the pill's background is a faint white-tinted
+                    overlay on top of this screen's own dark background
+                    (see isDarkMode's override on this pill's own style
+                    array above) -- effectively still very close to the
+                    dark background itself, so black-on-that read as
+                    near-invisible. Same isDarkMode flag already driving
+                    this pill's background now also flips the icon/text to
+                    white in dark mode, black in light mode -- chevron
+                    still intentionally excluded (not part of either
+                    product request, and brand blue reads fine in both
+                    themes). */}
+                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : '#000000' }]} />
+                <Text category="h9" bold ml={6} style={{ color: isDarkMode ? '#FFFFFF' : '#000000' }}>
                   {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
                 </Text>
                 <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
