@@ -236,22 +236,16 @@ const DreamCompanies = memo(() => {
             the same explanatory copy, restyled as the requested banner.
             Shortened to 2 lines (product report: "the text in the info
             banner... too long") — see InfoBox.tsx's own numberOfLines={2}. */}
-        {/* Product follow-up: "I want the info card in this to be white
-            card with blue left borders. But reduce the border radius to at
-            least 5 or 6" -- InfoBox's `info` variant already draws the blue
-            left-border stripe + blue icon/text this needs (see its own
-            comment), so this only overrides the two things that changed:
-            a plain card background instead of the light-blue tint fill,
-            and a much smaller radius than InfoBox's own default 16.
-            Scoped to this one call site via `style` (which InfoBox applies
-            last, after its own variant defaults) rather than changing
-            InfoBox's shared `info` variant itself, so every other screen
-            using that variant (Company Intelligence, Career DNA, ...)
-            keeps its current look. */}
+        {/* Product follow-up: "reduce the border radius to at least 5 or
+            6" -- InfoBox's `info` variant now defaults to a plain card
+            background + black text everywhere (see InfoBox.tsx's own
+            comment on that global follow-up), so the only thing this call
+            site still needs to override is the smaller radius specifically
+            asked for here. */}
         <InfoBox
           icon="flag-outline"
           variant="info"
-          style={{ marginBottom: 16, backgroundColor: theme['background-basic-color-2'], borderRadius: 6 }}>
+          style={{ marginBottom: 16, borderRadius: 6 }}>
           {t('more:dream_companies_description', {
             defaultValue: 'Track target companies — jobs, interview prep, and your readiness for each.',
           })}

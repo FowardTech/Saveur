@@ -22,25 +22,40 @@ interface Props {
 // context, not a one-word tag. `accent` (soft purple fill) matches the
 // reference's "Be Seen First" treatment; `neutral` (soft gray fill) is for
 // a plain informational note that isn't tied to any particular feature.
-// `info` (subtle light-blue fill, product request: "a small banner card
-// explaining what they are... should be a subtle light blue banner" —
-// used to introduce a feature the user may not understand yet, e.g.
-// Company Intelligence/Dream Company Dashboard/Career DNA) reuses the same
-// color-primary-transparent-100 tint this app already uses for other soft
-// blue accents (see LearningCourses.tsx's continueIconWrap), just applied
-// at banner scale instead of a small icon chip.
+// `info` (product request: "a small banner card explaining what they
+// are... should be a subtle light blue banner" — used to introduce a
+// feature the user may not understand yet, e.g. Company Intelligence/
+// Dream Company Dashboard/Career DNA/Job Alerts/AI Career Twin) started as
+// a light-blue color-primary-transparent-100 fill.
+//
+// BUG FIX/REDESIGN (product follow-up: "I thought i asked you to make all
+// the info cards white why are some screens still have the info card
+// background as blue? Also the info card text font color should be black
+// not blue" -- the original request, scoped to the Dream Company Dashboard
+// screenshot at the time, only ever overrode that ONE call site's `style`
+// prop rather than this shared component's own `info` variant default, so
+// every other screen using variant="info" -- JobAlerts, AICareerTwin,
+// CareerDna, JobAlertDetails, CompanyIntelligence -- kept the old blue
+// fill/text. Now applied here instead, globally: background is the same
+// plain background-basic-color-2 every other card in the app uses (not a
+// literal white -- that token itself already IS white in light mode and
+// resolves correctly to a dark surface in dark mode, same as `neutral`
+// below), and the text color is a separate `textColor` (theme's normal
+// text-basic-color, dark in light mode / light in dark mode) instead of
+// being tied to `iconColor`. Icon glyph + the left accent stripe below
+// intentionally STILL use iconColor (blue) -- only the fill and the text
+// were called out as wrong, not the icon or border.
 const InfoBox = memo(({icon, iconPack = 'eva', children, variant = 'neutral', style}: Props) => {
   const theme = useTheme();
   const bg = variant === 'accent'
     ? theme['color-accent-purple-bg']
-    : variant === 'info'
-    ? theme['color-primary-transparent-100']
     : theme['background-basic-color-2'];
   const iconColor = variant === 'accent'
     ? theme['color-accent-purple']
     : variant === 'info'
     ? theme['color-primary-500']
     : theme['text-basic-color'];
+  const textColor = variant === 'info' ? theme['text-basic-color'] : iconColor;
 
   // Product report: "make the info banner look like a real info banner" —
   // a borderless flat-tint rectangle with no other cue reads as just
@@ -74,7 +89,7 @@ const InfoBox = memo(({icon, iconPack = 'eva', children, variant = 'neutral', st
           <Icon pack={iconPack} name={icon} style={[globalStyle.icon16, {tintColor: iconColor}]} />
         </View>
       ) : null}
-      <Text category="h10" numberOfLines={2} style={{flex: 1, color: iconColor}}>
+      <Text category="h10" numberOfLines={2} style={{flex: 1, color: textColor}}>
         {children}
       </Text>
     </Flex>
