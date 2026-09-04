@@ -1,3 +1,4 @@
+import {Linking, Platform} from 'react-native';
 import * as RNIap from 'react-native-iap';
 import type {Product, ProductSubscription, Purchase} from 'react-native-iap';
 
@@ -301,7 +302,38 @@ export async function restorePurchases(): Promise<{restoredCount: number; errors
  * Subscriptions" / Play Store's subscription center) — the IAP-provider
  * counterpart to Subscription.tsx's Stripe Customer Portal, since neither
  * store lets a third party (this app's own backend) cancel or change an
- * Apple/Google-billed subscription directly. */
-export function openNativeSubscriptionManagement(): Promise<void> {
-  return RNIap.deepLinkToSubscriptions();
+ * Apple/Google-billed subscription directly.
+ *
+ * BUG FIX (product report, screenshot: tapping Cancel produced an alert
+ * "Couldn't cancel subscription / Unknown std::runtime_error error") —
+ * RNIap.deepLinkToSubscriptions() goes through react-native-iap's Nitro/
+ * OpenIAP native bridge, which first has to establish a StoreKit/Billing
+ * connection and look up an active native subscription to deep-link to.
+ * On a real device that native lookup can reject for reasons that have
+ * nothing to do with this app being broken (no signed-in App Store/Play
+ * account on the device, a momentary store-connection hiccup, etc.), and
+ * when it does, the rejection is a native C++ exception type the JS bridge
+ * doesn't recognize, so it stringifies to the opaque "Unknown
+ * std::runtime_error error" instead of a real message — that's what the
+ * user saw verbatim, not a bug specific to this app's cancel flow.
+ *
+ * Rather than surface that raw native error, fall back to a plain OS deep
+ * link straight to the subscriptions page (itms-apps:// on iOS, the Play
+ * Store subscription-center URL on Android) via Linking.openURL, which
+ * doesn't depend on the native IAP connection at all. Only if THAT also
+ * fails do we let the caller's existing catch/alert handle it. */
+export async function openNativeSubscriptionManagement(): Promise<void> {
+  try {
+    await RNIap.deepLinkToSubscriptions();
+  } catch (err) {
+    const fallbackUrl =
+      Platform.OS === 'ios'
+        ? 'itms-apps://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions';
+    const canOpen = await Linking.canOpenURL(fallbackUrl).catch(() => false);
+    if (!canOpen) {
+      throw err;
+    }
+    await Linking.openURL(fallbackUrl);
+  }
 }
