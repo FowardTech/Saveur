@@ -178,6 +178,7 @@ const ApplicationsTab = memo(() => {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.actionsRow}
         style={{marginBottom: hasAnyApplications ? 16 : 0}}>
         {/* Product report: "the Add from email button should be the
             default blue and the text white" -- was appearance="outline"
@@ -185,11 +186,23 @@ const ApplicationsTab = memo(() => {
             offers). Filled status="primary" is this app's standard brand-
             blue fill with white label -- same CtaButton.tsx look, just
             through the plain UI Kitten Button since this needs to keep its
-            own compact `size="small"` + icon accessory. */}
+            own compact `size="small"` + icon accessory.
+
+            BUG FIX (product report: "This Add From email button has no
+            border and it should align to the left") -- a filled Button's
+            border color defaults to the same shade as its own fill, so it
+            never reads as a defined edge against the blue background (that's
+            the "no border" report). Explicit borderWidth + a darker
+            primary-600 borderColor now gives it a real visible edge, same
+            idea as the outline buttons next to it. Alignment: this
+            horizontal ScrollView's content already starts at the left edge
+            by default -- there was no centering here -- but contentContainerStyle
+            now explicitly pins alignItems to flex-start so that can never
+            drift regardless of how many action buttons render next to it. */}
         <Button
           size="small"
           status="primary"
-          style={{marginRight: 10}}
+          style={[styles.addFromEmailButton, {marginRight: 10}]}
           accessoryLeft={props => <Icon {...props} pack="eva" name="email-outline" />}
           onPress={() => navigate('AddFromEmail')}>
           {t('request:add_from_email_cta', {defaultValue: 'Add from email'})}
@@ -283,6 +296,16 @@ const themedStyles = StyleService.create({
   container: {
     flex: 1,
     paddingTop: 32,
+  },
+  // See the "Add from email"/"border + alignment" comment above the button
+  // itself in the component body.
+  actionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addFromEmailButton: {
+    borderWidth: 1.5,
+    borderColor: 'color-primary-600',
   },
   lockCard: {
     // Added the app's own card treatment (product follow-up, app-wide
