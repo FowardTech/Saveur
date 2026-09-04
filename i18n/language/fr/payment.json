@@ -27,5 +27,9 @@
   "select-card": "Sélectionner une carte",
   "set_default": "Par défaut",
   "set_default_failed_title": "Impossible de définir la carte par défaut",
-  "sign_in_required_receipt": "Vous devez être connecté pour télécharger un reçu."
+  "sign_in_required_receipt": "Vous devez être connecté pour télécharger un reçu.",
+  "managed_by_apple_title": "Facturé via l'App Store",
+  "managed_by_google_title": "Facturé via Google Play",
+  "managed_by_apple_body": "Votre abonnement est facturé par Apple, et non via une carte enregistrée ici — gérez-le ou annulez-le depuis les Réglages de votre iPhone > [votre nom] > Abonnements.",
+  "managed_by_google_body": "Votre abonnement est facturé par Google Play, et non via une carte enregistrée ici — gérez-le ou annulez-le depuis l'application Play Store > Paiements et abonnements."
 }

@@ -7,6 +7,9 @@
   "delete_video_failed": "Impossibile eliminare il video",
   "delete_video_message": "Questo rimuove definitivamente il video registrato. La trascrizione e i punteggi rimangono intatti.",
   "delete_video_title": "Eliminare questo video?",
+  "discuss_interview_prompt": "Ho appena guardato il replay del mio colloquio simulato. Puoi aiutarmi a capire cosa potrei migliorare in base a questa sessione?",
+  "discuss_interview_prompt_typed": "Ho appena guardato il replay del mio colloquio simulato di tipo {{type}}. Puoi aiutarmi a capire cosa potrei migliorare in base a questa sessione?",
+  "discuss_with_coach": "Discuti questo colloquio con il tuo coach",
   "filler_words": "Parole di riempimento",
   "flagged_moments": "Momenti segnalati",
   "interview_replay": "Replay del colloquio",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "Non è stato possibile completare il salvataggio della registrazione sul server.",
   "replay_scope_note": "Una cronologia della tua trascrizione e delle metriche della sessione — nessun video è stato registrato per questa sessione.",
   "replay_unavailable": "Dati di replay non disponibili per questa sessione.",
+  "replay_video_saving_body": "Ti invieremo una notifica non appena sarà pronto per la visione.",
+  "replay_video_saving_title": "Salvataggio del tuo colloquio video in corso…",
   "transcript": "Trascrizione",
   "wpm": "PPM",
   "you": "Tu"

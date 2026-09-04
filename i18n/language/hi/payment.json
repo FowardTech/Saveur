@@ -27,5 +27,9 @@
   "select-card": "कार्ड चुनें",
   "set_default": "डिफ़ॉल्ट बनाएं",
   "set_default_failed_title": "डिफ़ॉल्ट कार्ड अपडेट नहीं हो सका",
-  "sign_in_required_receipt": "रसीद डाउनलोड करने के लिए आपको साइन इन करना होगा।"
+  "sign_in_required_receipt": "रसीद डाउनलोड करने के लिए आपको साइन इन करना होगा।",
+  "managed_by_apple_title": "App Store के ज़रिए बिल किया गया",
+  "managed_by_google_title": "Google Play के ज़रिए बिल किया गया",
+  "managed_by_apple_body": "आपकी सदस्यता का बिल Apple द्वारा किया जाता है, न कि यहां सहेजे गए कार्ड से — इसे अपने iPhone की सेटिंग्स > [आपका नाम] > सदस्यताएं से प्रबंधित या रद्द करें।",
+  "managed_by_google_body": "आपकी सदस्यता का बिल Google Play द्वारा किया जाता है, न कि यहां सहेजे गए कार्ड से — इसे Play Store ऐप > भुगतान और सदस्यताएं से प्रबंधित या रद्द करें।"
 }

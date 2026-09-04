@@ -27,5 +27,9 @@
   "select-card": "Karte auswählen",
   "set_default": "Als Standard festlegen",
   "set_default_failed_title": "Standardkarte konnte nicht aktualisiert werden",
-  "sign_in_required_receipt": "Du musst angemeldet sein, um eine Quittung herunterzuladen."
+  "sign_in_required_receipt": "Du musst angemeldet sein, um eine Quittung herunterzuladen.",
+  "managed_by_apple_title": "Abrechnung über den App Store",
+  "managed_by_google_title": "Abrechnung über Google Play",
+  "managed_by_apple_body": "Dein Abo wird von Apple abgerechnet, nicht über eine hier gespeicherte Karte — verwalte oder kündige es in den Einstellungen deines iPhones unter [dein Name] > Abonnements.",
+  "managed_by_google_body": "Dein Abo wird über Google Play abgerechnet, nicht über eine hier gespeicherte Karte — verwalte oder kündige es in der Play Store App unter Zahlungen & Abos."
 }

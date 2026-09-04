@@ -7,6 +7,9 @@
   "delete_video_failed": "Video konnte nicht gelöscht werden",
   "delete_video_message": "Dies entfernt das aufgezeichnete Video dauerhaft. Dein Transkript und deine Bewertungen bleiben unberührt.",
   "delete_video_title": "Dieses Video löschen?",
+  "discuss_interview_prompt": "Ich habe gerade die Wiederholung meines Übungsinterviews angesehen. Kannst du mir helfen zu verstehen, was ich basierend auf dieser Sitzung verbessern könnte?",
+  "discuss_interview_prompt_typed": "Ich habe gerade die Wiederholung meines {{type}}-Übungsinterviews angesehen. Kannst du mir helfen zu verstehen, was ich basierend auf dieser Sitzung verbessern könnte?",
+  "discuss_with_coach": "Dieses Interview mit deinem Coach besprechen",
   "filler_words": "Füllwörter",
   "flagged_moments": "Markierte Momente",
   "interview_replay": "Interview-Wiedergabe",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "Die Aufnahme konnte nicht vollständig auf dem Server gespeichert werden.",
   "replay_scope_note": "Eine Zeitleiste deines Transkripts und deiner Sitzungsmetriken — für diese Sitzung wurde kein Video aufgenommen.",
   "replay_unavailable": "Für diese Sitzung sind keine Wiedergabedaten verfügbar.",
+  "replay_video_saving_body": "Wir benachrichtigen dich, sobald es zum Ansehen bereit ist.",
+  "replay_video_saving_title": "Dein Video-Interview wird gespeichert …",
   "transcript": "Transkript",
   "wpm": "WPM",
   "you": "Sie"

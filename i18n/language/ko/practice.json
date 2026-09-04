@@ -7,6 +7,9 @@
   "delete_video_failed": "동영상을 삭제할 수 없습니다",
   "delete_video_message": "녹화된 동영상이 영구적으로 삭제됩니다. 스크립트와 점수는 그대로 유지됩니다.",
   "delete_video_title": "이 동영상을 삭제하시겠어요?",
+  "discuss_interview_prompt": "방금 제 모의 면접 리플레이를 봤어요. 이 세션을 바탕으로 무엇을 개선할 수 있는지 도와줄 수 있나요?",
+  "discuss_interview_prompt_typed": "방금 제 {{type}} 모의 면접 리플레이를 봤어요. 이 세션을 바탕으로 무엇을 개선할 수 있는지 도와줄 수 있나요?",
+  "discuss_with_coach": "이 인터뷰에 대해 코치와 상담하기",
   "filler_words": "군말 횟수",
   "flagged_moments": "주목할 순간",
   "interview_replay": "인터뷰 다시보기",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "녹화 내용을 서버에 완전히 저장하지 못했습니다.",
   "replay_scope_note": "대화 기록과 세션 중 측정된 지표의 타임라인입니다 — 이 세션에는 녹화된 영상이 없습니다.",
   "replay_unavailable": "이 세션에는 다시보기 데이터가 없습니다.",
+  "replay_video_saving_body": "시청 준비가 완료되면 바로 알림을 보내드릴게요.",
+  "replay_video_saving_title": "동영상 인터뷰를 저장하는 중…",
   "transcript": "대화 기록",
   "wpm": "분당 단어 수",
   "you": "나"

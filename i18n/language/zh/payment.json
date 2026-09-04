@@ -27,5 +27,9 @@
   "select-card": "选择卡片",
   "set_default": "设为默认",
   "set_default_failed_title": "无法更新默认卡片",
-  "sign_in_required_receipt": "您需要登录才能下载收据。"
+  "sign_in_required_receipt": "您需要登录才能下载收据。",
+  "managed_by_apple_title": "通过App Store付款",
+  "managed_by_google_title": "通过Google Play付款",
+  "managed_by_apple_body": "您的订阅由Apple扣款，而非此处保存的银行卡——请前往iPhone的\"设置\">[您的姓名]>\"订阅\"进行管理或取消。",
+  "managed_by_google_body": "您的订阅由Google Play扣款，而非此处保存的银行卡——请前往Play商店应用的\"付款和订阅\"进行管理或取消。"
 }

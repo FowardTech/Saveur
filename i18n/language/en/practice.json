@@ -7,6 +7,9 @@
   "delete_video_failed": "Could not delete video",
   "delete_video_message": "This removes the recorded video permanently. Your transcript and scores stay untouched.",
   "delete_video_title": "Delete this video?",
+  "discuss_interview_prompt": "I just watched the replay of my mock interview. Can you help me understand what I could improve based on this session?",
+  "discuss_interview_prompt_typed": "I just watched the replay of my {{type}} mock interview. Can you help me understand what I could improve based on this session?",
+  "discuss_with_coach": "Discuss this interview with your coach",
   "filler_words": "Filler words",
   "flagged_moments": "Flagged Moments",
   "interview_replay": "Interview Replay",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "The recording could not finish saving to the server.",
   "replay_scope_note": "A timeline of your transcript and in-session metrics — no video was recorded for this session.",
   "replay_unavailable": "Replay data is unavailable for this session.",
+  "replay_video_saving_body": "We'll send you a notification the moment it's ready to watch.",
+  "replay_video_saving_title": "Saving your video interview…",
   "transcript": "Transcript",
   "wpm": "WPM",
   "you": "You"

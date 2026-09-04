@@ -27,5 +27,9 @@
   "select-card": "اختيار بطاقة",
   "set_default": "تعيين كافتراضي",
   "set_default_failed_title": "تعذّر تحديث البطاقة الافتراضية",
-  "sign_in_required_receipt": "يجب تسجيل الدخول لتنزيل الإيصال."
+  "sign_in_required_receipt": "يجب تسجيل الدخول لتنزيل الإيصال.",
+  "managed_by_apple_title": "تتم الفوترة عبر App Store",
+  "managed_by_google_title": "تتم الفوترة عبر Google Play",
+  "managed_by_apple_body": "يتم إصدار فاتورة اشتراكك من قِبل Apple، وليس من بطاقة محفوظة هنا — يمكنك إدارته أو إلغاءه من إعدادات iPhone > [اسمك] > الاشتراكات.",
+  "managed_by_google_body": "يتم إصدار فاتورة اشتراكك من قِبل Google Play، وليس من بطاقة محفوظة هنا — يمكنك إدارته أو إلغاءه من تطبيق متجر Play > المدفوعات والاشتراكات."
 }

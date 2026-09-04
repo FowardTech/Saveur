@@ -27,5 +27,9 @@
   "expiration_invalid": "This expiration date looks invalid.",
   "cvv_required": "Security code is required.",
   "cvv_invalid": "This security code looks invalid.",
-  "sign_in_required_receipt": "You need to be signed in to download a receipt."
+  "sign_in_required_receipt": "You need to be signed in to download a receipt.",
+  "managed_by_apple_title": "Billed through the App Store",
+  "managed_by_google_title": "Billed through Google Play",
+  "managed_by_apple_body": "Your subscription is billed by Apple, not a saved card here — manage or cancel it from your iPhone's Settings > [your name] > Subscriptions.",
+  "managed_by_google_body": "Your subscription is billed by Google Play, not a saved card here — manage or cancel it from the Play Store app > Payments & subscriptions."
 }

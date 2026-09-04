@@ -27,5 +27,9 @@
   "select-card": "Seleziona carta",
   "set_default": "Predefinita",
   "set_default_failed_title": "Impossibile aggiornare la carta predefinita",
-  "sign_in_required_receipt": "Devi aver effettuato l'accesso per scaricare una ricevuta."
+  "sign_in_required_receipt": "Devi aver effettuato l'accesso per scaricare una ricevuta.",
+  "managed_by_apple_title": "Fatturato tramite l'App Store",
+  "managed_by_google_title": "Fatturato tramite Google Play",
+  "managed_by_apple_body": "Il tuo abbonamento viene fatturato da Apple, non da una carta salvata qui — gestiscilo o annullalo da Impostazioni del tuo iPhone > [il tuo nome] > Abbonamenti.",
+  "managed_by_google_body": "Il tuo abbonamento viene fatturato da Google Play, non da una carta salvata qui — gestiscilo o annullalo dall'app Play Store > Pagamenti e abbonamenti."
 }

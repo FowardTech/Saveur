@@ -7,6 +7,9 @@
   "delete_video_failed": "No se pudo eliminar el video",
   "delete_video_message": "Esto elimina el video grabado de forma permanente. Tu transcripción y puntuaciones permanecen intactas.",
   "delete_video_title": "¿Eliminar este video?",
+  "discuss_interview_prompt": "Acabo de ver la repetición de mi entrevista simulada. ¿Puedes ayudarme a entender qué podría mejorar según esta sesión?",
+  "discuss_interview_prompt_typed": "Acabo de ver la repetición de mi entrevista simulada de {{type}}. ¿Puedes ayudarme a entender qué podría mejorar según esta sesión?",
+  "discuss_with_coach": "Comentar esta entrevista con tu coach",
   "filler_words": "Muletillas",
   "flagged_moments": "Momentos destacados",
   "interview_replay": "Repetición de entrevista",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "La grabación no pudo terminar de guardarse en el servidor.",
   "replay_scope_note": "Una línea de tiempo de tu transcripción y métricas de la sesión — no se grabó ningún video para esta sesión.",
   "replay_unavailable": "No hay datos de repetición disponibles para esta sesión.",
+  "replay_video_saving_body": "Te enviaremos una notificación en cuanto esté lista para verse.",
+  "replay_video_saving_title": "Guardando tu entrevista en video…",
   "transcript": "Transcripción",
   "wpm": "PPM",
   "you": "Tú"

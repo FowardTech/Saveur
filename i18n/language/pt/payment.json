@@ -27,5 +27,9 @@
   "select-card": "Selecionar cartão",
   "set_default": "Padrão",
   "set_default_failed_title": "Não foi possível atualizar o cartão padrão",
-  "sign_in_required_receipt": "Você precisa estar conectado para baixar um recibo."
+  "sign_in_required_receipt": "Você precisa estar conectado para baixar um recibo.",
+  "managed_by_apple_title": "Cobrado através da App Store",
+  "managed_by_google_title": "Cobrado através do Google Play",
+  "managed_by_apple_body": "Sua assinatura é cobrada pela Apple, não por um cartão salvo aqui — gerencie ou cancele em Ajustes do iPhone > [seu nome] > Assinaturas.",
+  "managed_by_google_body": "Sua assinatura é cobrada pelo Google Play, não por um cartão salvo aqui — gerencie ou cancele no app Play Store > Pagamentos e assinaturas."
 }

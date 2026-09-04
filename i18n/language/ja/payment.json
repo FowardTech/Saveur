@@ -27,5 +27,9 @@
   "select-card": "カードを選択",
   "set_default": "デフォルトに設定",
   "set_default_failed_title": "デフォルトカードを更新できませんでした",
-  "sign_in_required_receipt": "領収書をダウンロードするにはサインインが必要です。"
+  "sign_in_required_receipt": "領収書をダウンロードするにはサインインが必要です。",
+  "managed_by_apple_title": "App Store経由で請求",
+  "managed_by_google_title": "Google Play経由で請求",
+  "managed_by_apple_body": "このサブスクリプションはApple経由で請求され、ここに保存されたカードではありません。iPhoneの「設定」>「[あなたの名前]」>「サブスクリプション」から管理・解約できます。",
+  "managed_by_google_body": "このサブスクリプションはGoogle Play経由で請求され、ここに保存されたカードではありません。Playストアアプリの「お支払いと定期購入」から管理・解約できます。"
 }

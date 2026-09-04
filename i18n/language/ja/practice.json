@@ -7,6 +7,9 @@
   "delete_video_failed": "動画を削除できませんでした",
   "delete_video_message": "録画された動画は完全に削除されます。文字起こしとスコアはそのまま残ります。",
   "delete_video_title": "この動画を削除しますか？",
+  "discuss_interview_prompt": "模擬面接のリプレイを見ました。このセッションを基に何を改善できるか教えてもらえますか？",
+  "discuss_interview_prompt_typed": "{{type}}の模擬面接のリプレイを見ました。このセッションを基に何を改善できるか教えてもらえますか？",
+  "discuss_with_coach": "このインタビューについてコーチと話し合う",
   "filler_words": "フィラーワード",
   "flagged_moments": "注目ポイント",
   "interview_replay": "面接リプレイ",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "録画内容をサーバーに保存しきれませんでした。",
   "replay_scope_note": "文字起こしとセッション中の指標のタイムラインです——このセッションでは動画は録画されていません。",
   "replay_unavailable": "このセッションのリプレイデータは利用できません。",
+  "replay_video_saving_body": "視聴可能になり次第、通知でお知らせします。",
+  "replay_video_saving_title": "動画面接を保存しています…",
   "transcript": "文字起こし",
   "wpm": "WPM",
   "you": "あなた"

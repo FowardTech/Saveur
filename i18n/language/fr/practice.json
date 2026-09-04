@@ -7,6 +7,9 @@
   "delete_video_failed": "Impossible de supprimer la vidéo",
   "delete_video_message": "Cette action supprime définitivement la vidéo enregistrée. Votre transcription et vos scores restent intacts.",
   "delete_video_title": "Supprimer cette vidéo ?",
+  "discuss_interview_prompt": "Je viens de regarder le replay de mon entretien simulé. Peux-tu m'aider à comprendre ce que je pourrais améliorer d'après cette session ?",
+  "discuss_interview_prompt_typed": "Je viens de regarder le replay de mon entretien simulé de type {{type}}. Peux-tu m'aider à comprendre ce que je pourrais améliorer d'après cette session ?",
+  "discuss_with_coach": "Discuter de cet entretien avec votre coach",
   "filler_words": "Mots de remplissage",
   "flagged_moments": "Moments signalés",
   "interview_replay": "Relecture d'entretien",
@@ -20,6 +23,8 @@
   "replay_no_video_upload": "L’enregistrement n’a pas pu terminer d’être sauvegardé sur le serveur.",
   "replay_scope_note": "Une chronologie de votre transcription et des métriques de session — aucune vidéo n'a été enregistrée pour cette session.",
   "replay_unavailable": "Les données de relecture ne sont pas disponibles pour cette session.",
+  "replay_video_saving_body": "Nous vous enverrons une notification dès qu'il sera prêt à être visionné.",
+  "replay_video_saving_title": "Enregistrement de votre entretien vidéo…",
   "transcript": "Transcription",
   "wpm": "MPM",
   "you": "Vous"

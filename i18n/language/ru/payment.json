@@ -27,5 +27,9 @@
   "select-card": "Выбрать карту",
   "set_default": "По умолчанию",
   "set_default_failed_title": "Не удалось изменить карту по умолчанию",
-  "sign_in_required_receipt": "Чтобы скачать чек, необходимо войти в систему."
+  "sign_in_required_receipt": "Чтобы скачать чек, необходимо войти в систему.",
+  "managed_by_apple_title": "Оплата через App Store",
+  "managed_by_google_title": "Оплата через Google Play",
+  "managed_by_apple_body": "Ваша подписка оплачивается через Apple, а не сохранённой здесь картой — управляйте ею или отмените в Настройках iPhone > [ваше имя] > Подписки.",
+  "managed_by_google_body": "Ваша подписка оплачивается через Google Play, а не сохранённой здесь картой — управляйте ею или отмените в приложении Play Store > Платежи и подписки."
 }

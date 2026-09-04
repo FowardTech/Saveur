@@ -27,5 +27,9 @@
   "select-card": "카드 선택",
   "set_default": "기본으로 설정",
   "set_default_failed_title": "기본 카드를 변경할 수 없습니다",
-  "sign_in_required_receipt": "영수증을 다운로드하려면 로그인해야 합니다."
+  "sign_in_required_receipt": "영수증을 다운로드하려면 로그인해야 합니다.",
+  "managed_by_apple_title": "App Store를 통해 결제됨",
+  "managed_by_google_title": "Google Play를 통해 결제됨",
+  "managed_by_apple_body": "구독료는 여기 저장된 카드가 아닌 Apple을 통해 청구됩니다 — iPhone의 설정 > [내 이름] > 구독에서 관리하거나 해지하세요.",
+  "managed_by_google_body": "구독료는 여기 저장된 카드가 아닌 Google Play를 통해 청구됩니다 — Play 스토어 앱의 결제 및 구독에서 관리하거나 해지하세요."
 }

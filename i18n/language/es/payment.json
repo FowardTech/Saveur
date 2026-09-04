@@ -27,5 +27,9 @@
   "select-card": "Seleccionar tarjeta",
   "set_default": "Predeterminada",
   "set_default_failed_title": "No se pudo actualizar la tarjeta predeterminada",
-  "sign_in_required_receipt": "Debes iniciar sesión para descargar un recibo."
+  "sign_in_required_receipt": "Debes iniciar sesión para descargar un recibo.",
+  "managed_by_apple_title": "Facturado a través de la App Store",
+  "managed_by_google_title": "Facturado a través de Google Play",
+  "managed_by_apple_body": "Tu suscripción es facturada por Apple, no por una tarjeta guardada aquí — adminístrala o cancélala desde los Ajustes de tu iPhone > [tu nombre] > Suscripciones.",
+  "managed_by_google_body": "Tu suscripción es facturada por Google Play, no por una tarjeta guardada aquí — adminístrala o cancélala desde la app Play Store > Pagos y suscripciones."
 }
