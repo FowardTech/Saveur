@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -48,8 +49,19 @@ const PersonalizationCard = memo(() => {
           activeOpacity={0.7}
           onPress={() => navigate('CareerDna')}
           style={[styles.card, styles.row, dreamCompaniesOn && styles.cardSpacing]}>
-          <View style={[styles.iconCircle, { backgroundColor: theme['color-danger-transparent-200'] }]}>
-            <Icon pack="eva" name="activity-outline" style={[globalStyle.icon18, { tintColor: theme['color-danger-500'] }]} />
+          {/* Product follow-up ("give icons a linear gradient background
+              in key places the way you did for the settings icons") --
+              same two-stop diagonal LinearGradient badge as
+              ButtonOptional.tsx's iconWrapGradient, replacing the old flat
+              color-danger-transparent-200 tint fill. */}
+          <View style={styles.iconCircle}>
+            <LinearGradient
+              colors={['#d6355dff', '#FB7185']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <Icon pack="eva" name="activity-outline" style={[globalStyle.icon18, { tintColor: '#FFFFFF' }]} />
           </View>
           <View style={globalStyle.flexOne}>
             <Text category="h9-s" bold>{t('more:career_dna', { defaultValue: 'Career DNA' })}</Text>
@@ -63,8 +75,14 @@ const PersonalizationCard = memo(() => {
 
       {dreamCompaniesOn ? (
         <TouchableOpacity activeOpacity={0.7} onPress={() => navigate('DreamCompanies')} style={[styles.card, styles.row]}>
-          <View style={[styles.iconCircle, { backgroundColor: theme['color-primary-transparent-200'] }]}>
-            <Icon pack="eva" name="search-outline" style={[globalStyle.icon18, { tintColor: theme['color-primary-500'] }]} />
+          <View style={styles.iconCircle}>
+            <LinearGradient
+              colors={['#2d76dbff', '#3B9DFF']}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <Icon pack="eva" name="search-outline" style={[globalStyle.icon18, { tintColor: '#FFFFFF' }]} />
           </View>
           <View style={globalStyle.flexOne}>
             <Text category="h9-s" bold>{t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' })}</Text>
@@ -105,5 +123,9 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    // overflow: 'hidden' clips the absolutely-filled LinearGradient
+    // sibling to this circle's own rounded corners -- same pattern as
+    // ButtonOptional.tsx's iconWrapGradient.
+    overflow: 'hidden',
   },
 });

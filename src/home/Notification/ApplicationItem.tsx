@@ -1,5 +1,6 @@
 import React from "react";
-import { View, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity } from "react-native";
+import LinearGradient from "react-native-linear-gradient";
 
 import Text from "components/Text";
 import {
@@ -41,28 +42,26 @@ export interface NotificationItemProps {
 // the admin dashboard's Notifications page composer). Anything else (a
 // plain/system notification with no recognized kind) falls back to a
 // generic bell.
-const KIND_STYLE: Record<string, {icon: string; status: 'primary' | 'warning' | 'success' | 'basic' | 'info'}> = {
-  job_alert: {icon: 'briefcase-outline', status: 'primary'},
-  goal_tip: {icon: 'bulb-outline', status: 'warning'},
-  feedback_ready: {icon: 'checkmark-circle-2-outline', status: 'success'},
-  admin_broadcast: {icon: 'radio-outline', status: 'info'},
+// Product follow-up ("give icons a linear gradient background in key
+// places the way you did for the settings icons") -- same two-stop
+// diagonal LinearGradient badge treatment as src/more/components/
+// ButtonOptional.tsx's iconWrapGradient, one fixed gradient pair per kind
+// (reusing that same MoreSrc.tsx ICON_GRADIENTS palette by hue) instead of
+// the old flat transparent-tint fill. Icon glyph renders solid white on
+// top, same as every other gradient-badge spot in the app.
+const KIND_STYLE: Record<string, {icon: string; gradient: [string, string]}> = {
+  job_alert: {icon: 'briefcase-outline', gradient: ['#2d76dbff', '#3B9DFF']}, // blue
+  goal_tip: {icon: 'bulb-outline', gradient: ['#dd8039ff', '#FBBF24']}, // amber
+  feedback_ready: {icon: 'checkmark-circle-2-outline', gradient: ['#28b35bff', '#4ADE80']}, // green
+  admin_broadcast: {icon: 'radio-outline', gradient: ['#1ca3c8ff', '#22D3EE']}, // teal/cyan
 };
+const FALLBACK_GRADIENT: [string, string] = ['#5d636eff', '#9CA3AF']; // slate/gray
 
 const ApplicationItem = ({ item, onPress }: NotificationItemProps) => {
   const styles = useStyleSheet(themedStyles);
   const theme = useTheme();
 
-  const kindStyle = (item.type && KIND_STYLE[item.type]) || {icon: 'bell-outline', status: 'basic' as const};
-  const colorFor = (status: typeof kindStyle.status) => {
-    switch (status) {
-      case 'primary': return {bg: theme['color-primary-transparent-200'], fg: theme['color-primary-500']};
-      case 'warning': return {bg: theme['color-warning-transparent-200'] ?? theme['color-warning-100'], fg: theme['color-warning-500']};
-      case 'success': return {bg: theme['color-success-transparent-200'] ?? theme['color-success-100'], fg: theme['color-success-500']};
-      case 'info': return {bg: theme['color-info-transparent-200'] ?? theme['color-info-100'], fg: theme['color-info-500']};
-      default: return {bg: theme['background-basic-color-2'], fg: theme['text-placeholder-color']};
-    }
-  };
-  const {bg, fg} = colorFor(kindStyle.status);
+  const kindStyle = (item.type && KIND_STYLE[item.type]) || {icon: 'bell-outline', gradient: FALLBACK_GRADIENT};
 
   return (
     <TouchableOpacity activeOpacity={item.read ? 1 : 0.7} onPress={onPress} disabled={item.read}>
@@ -73,8 +72,14 @@ const ApplicationItem = ({ item, onPress }: NotificationItemProps) => {
           !item.read && {borderColor: theme['color-primary-500'], borderWidth: 1},
         ]}>
         <Flex justify="flex-start" style={globalStyle.flexOne}>
-          <View style={[styles.iconCircle, {backgroundColor: bg}]}>
-            <Icon pack="eva" name={kindStyle.icon} style={[styles.icon, {tintColor: fg}]} />
+          <View style={styles.iconCircle}>
+            <LinearGradient
+              colors={kindStyle.gradient}
+              start={{x: 0, y: 0}}
+              end={{x: 1, y: 1}}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <Icon pack="eva" name={kindStyle.icon} style={[styles.icon, {tintColor: '#FFFFFF'}]} />
           </View>
           <View style={styles.body}>
             <Text category="h8" bold={!item.read} numberOfLines={2}>
@@ -114,6 +119,10 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    // overflow: 'hidden' clips the absolutely-filled LinearGradient
+    // sibling to this circle's own rounded corners -- same pattern as
+    // ButtonOptional.tsx's iconWrapGradient.
+    overflow: 'hidden',
   },
   icon: {
     width: 22,
