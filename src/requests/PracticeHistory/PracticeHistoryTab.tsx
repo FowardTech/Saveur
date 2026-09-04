@@ -65,7 +65,27 @@ const PracticeHistoryTab = memo(() => {
     [q, t],
   );
 
-  const upcomingData = sessions.filter(item => item.status === 'Scheduled' && matchesQuery(item));
+  // Product report: "When a scheduled mock interview date and also the
+  // time has passed the interview should clear off from the practice
+  // history screen." An item's status stays "Scheduled" (see
+  // interviewService.ts's statusFromWire) for as long as the session was
+  // started but never actually completed -- there's no separate
+  // abandonment/expiry process server-side, so a session the user started
+  // and then walked away from just sits under "Scheduled" forever with no
+  // way to tell it apart from one genuinely still in progress. `date` is
+  // the session's real start time and `durationMin` its configured length
+  // (see MockInterviewSessionProps), so `date + durationMin` is the
+  // point by which the session should have naturally ended -- once that's
+  // in the past, it's stale, not upcoming, and gets dropped from view
+  // entirely rather than misleadingly relabeled "Completed" (it never
+  // actually finished).
+  const isPastDue = React.useCallback((item: MockInterviewSessionProps) => {
+    const startMs = typeof item.date === 'number' ? item.date : new Date(item.date).getTime();
+    const endMs = startMs + item.durationMin * 60 * 1000;
+    return Date.now() > endMs;
+  }, []);
+
+  const upcomingData = sessions.filter(item => item.status === 'Scheduled' && !isPastDue(item) && matchesQuery(item));
   const pastData = sessions.filter(item => item.status === 'Completed' && matchesQuery(item));
   const isFiltering = q.length > 0;
 
