@@ -248,10 +248,10 @@ const Chat = memo(() => {
       // the coach"): this partially REVERSES the "always show the
       // greeting regardless of history" decision above (see showGreeting's
       // own comment) -- that fix's actual goal, suggested topics always
-      // being reachable, is now covered instead by suggestedTopicsBar
-      // (rendered further down, pinned to the very top of the screen
-      // regardless of history), so it's safe to let a returning user with
-      // a real prior conversation land on their real thread again instead
+      // being reachable, is now covered instead by the header's own
+      // suggested-topics pill (see TopNavigation's accessoryRight,
+      // rendered regardless of history), so it's safe to let a returning
+      // user with a real prior conversation land on their real thread again instead
       // of the icon+headline landing screen every single time they open
       // this tab.
       if (history.length > 0) {
@@ -901,18 +901,20 @@ const Chat = memo(() => {
           {t("message:coach_greeting_headline", { defaultValue: "How can I support your career today?" })}
         </Text>
 
-        {/* Product follow-up (moved out of this box entirely -- see
-            suggestedTopicsBar further down, rendered as its own persistent
-            row pinned to the very top of the screen): "the suggested
-            topics pill should always appear at the very top of the screen
-            aligned in the center of the screen so that if user want to
+        {/* Product follow-up (moved out of this box entirely -- now lives
+            in the TopNavigation's accessoryRight, see that render prop's
+            own comment): "the suggested topics pill should always appear
+            at the very top of the screen... so that if user want to
             start a conversation from there they can" -- was permanently
             embedded in this greeting box, which per the chat-history check
             in the getChatHistory effect above (setShowGreeting(false) when
             history.length > 0) only renders at all for a user who's never
             actually talked to the coach. A returning user with real
             history skips this whole box, so the pill needed a home that
-            isn't inside it. */}
+            isn't inside it -- first a persistent row under the header,
+            now the header itself (product follow-up: "place the suggested
+            topics pill at the top right so that it will be on the same
+            level with the AI career Coach title"). */}
         {/* "Start a video practice" card REMOVED per product report ("in
             screenshot 3 remove the start a video practice card"). Was
             still reachable via the attach panel's own "Start Video
@@ -997,6 +999,36 @@ const Chat = memo(() => {
         accessoryLeft={<DrawerMenuButton />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
+            {/* Product follow-up: "place the suggested topics pill at the
+                top right so that it will be on the same level with the AI
+                career Coach title" -- was its own always-mounted row
+                directly under the header (styles.suggestedTopicsBar,
+                centered), per an earlier request that it "always appear
+                at the very top of the screen... aligned in the center."
+                Now sits in the header itself, right beside the title, so
+                it no longer pushes the message list down by its own
+                height. Same trigger (opens the topics bottom sheet),
+                same dark-mode color handling, just the compact
+                suggestedTopicsPillHeader sizing instead of the larger
+                greeting-screen pill. Hidden in Voice mode, same as
+                before -- VoiceCoachView replaces the whole chat area
+                there, and this slot is needed for the Text-mode-return
+                pill in that case instead (see below). */}
+            {mode !== 'voice' && topics.length > 0 ? (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setTopicsSheetVisible(true)}
+                style={[
+                  styles.suggestedTopicsPillHeader,
+                  isDarkMode && { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
+                ]}>
+                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : '#000000' }]} />
+                <Text category="h10" bold ml={4} numberOfLines={1} style={{ color: isDarkMode ? '#FFFFFF' : '#000000' }}>
+                  {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
+                </Text>
+                <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
+              </TouchableOpacity>
+            ) : null}
             {/* SYMPHONY REDESIGN follow-up (explicit product request, with
                 reference screenshot: "I want the Text box in the AI career
                 coach screen to be like the one in screenshot 4. So instead
@@ -1061,63 +1093,6 @@ const Chat = memo(() => {
       ) : null}
       {mode === 'voice' ? null : (
         <>
-          {/* Product report: "the suggested topics pill should always
-              appear at the very top of the screen aligned in the center of
-              the screen so that if user want to start a conversation from
-              there they can" -- pulled out of renderChatEmpty's own box
-              (see that callback's own comment) into a real, always-mounted
-              row here instead, so it's reachable both for a first-time
-              user (still seeing the icon+headline greeting underneath it)
-              and a returning user with real history (who no longer sees
-              that greeting at all, per hasPriorHistory above -- this pill
-              is now their only on-screen way back into the topics list
-              without typing something first). Renders as a normal
-              (non-absolute) row directly under the header, so it just
-              pushes the message list down by its own height rather than
-              floating over content. */}
-          {topics.length > 0 ? (
-            <View style={styles.suggestedTopicsBar}>
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => setTopicsSheetVisible(true)}
-                style={[
-                  styles.suggestedTopicsPill,
-                  styles.suggestedTopicsPillTop,
-                  // REDESIGN (product request: "change the background to
-                  // gray") -- was a blue tint in both themes (light:
-                  // rgba(0, 99, 248, 0.08) on suggestedTopicsPill itself;
-                  // dark: this rgba(94, 152, 255, 0.22) override, from the
-                  // earlier "not looking good on dark mode" fix). Both are
-                  // now neutral gray instead -- see suggestedTopicsPill's
-                  // own comment for the light-mode value.
-                  isDarkMode && { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
-                ]}>
-                {/* BUG FIX (product report: "the suggested topic pill in
-                    the AI career coach is not looking good in dark mode")
-                    -- the earlier "black icon/text" fixes below (see their
-                    own comments) hardcoded '#000000' unconditionally. That
-                    was fine against the light-mode pill (a black-tinted
-                    gray, see suggestedTopicsPill's own comment), but in
-                    dark mode the pill's background is a faint white-tinted
-                    overlay on top of this screen's own dark background
-                    (see isDarkMode's override on this pill's own style
-                    array above) -- effectively still very close to the
-                    dark background itself, so black-on-that read as
-                    near-invisible. Same isDarkMode flag already driving
-                    this pill's background now also flips the icon/text to
-                    white in dark mode, black in light mode. Product
-                    follow-up ("the chevron icon its supposed to be white
-                    in dark mode too") -- the chevron below gets the same
-                    isDarkMode treatment now instead of staying brand blue
-                    unconditionally. */}
-                <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : '#000000' }]} />
-                <Text category="h9" bold ml={6} style={{ color: isDarkMode ? '#FFFFFF' : '#000000' }}>
-                  {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
-                </Text>
-                <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
-              </TouchableOpacity>
-            </View>
-          ) : null}
           {/* Was a KeyboardAwareScrollView (scrollEnabled={false}, used only for
           its automatic keyboard-follow behavior, never for actual
           scrolling) — that's still a ScrollView, and GiftedChat renders its
@@ -1617,40 +1592,23 @@ const themedStyles = StyleService.create({
     fontFamily: 'PlusJakartaSans-Medium',
     fontWeight: 'normal',
   },
-  // Product follow-up: "move the suggested topic to be in a bottom sheet
-  // so the suggested topic text will be like a button pill at the center
-  // down a little bit" — replaces the old always-visible emptyTopicsCard
-  // (see this style's own git history) with just this trigger. Centered
-  // via emptyState's own `alignItems: 'center'`, `marginTop` is the "down
-  // a little bit" from the headline above it.
-  // REDESIGN (product request: "change the background to gray") -- was
-  // rgba(0, 99, 248, 0.08), a light blue tint matching this app's brand
-  // blue. Neutral gray now instead (the dark-mode override right below
-  // this pill's own JSX call site got the equivalent gray treatment too).
-  suggestedTopicsPill: {
+  // Product follow-up: "place the suggested topics pill at the top right
+  // so that it will be on the same level with the AI career Coach title"
+  // -- lives in the TopNavigation's accessoryRight now (see that render
+  // prop's own comment), sized to actually fit a header row alongside the
+  // title instead of the larger, more spacious greeting-screen pill this
+  // used to be (that version, and the persistent-row placement before
+  // this one, are gone -- see this style block's own git history).
+  suggestedTopicsPillHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 28,
-    paddingVertical: 10,
-    paddingHorizontal: 18,
-    borderRadius: 99,
+    height: 32,
+    paddingHorizontal: 10,
+    borderRadius: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.06)',
   },
   suggestedTopicsPillChevron: {
     marginLeft: 2,
-  },
-  // Persistent top-of-screen placement (see the JSX comment right above
-  // where this renders) -- the pill's own `marginTop: 28` above was tuned
-  // for sitting further down inside the vertically-centered greeting box;
-  // zeroed out here since suggestedTopicsBar already supplies its own
-  // top spacing for this different placement.
-  suggestedTopicsPillTop: {
-    marginTop: 0,
-  },
-  suggestedTopicsBar: {
-    alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 6,
   },
   // Bottom sheet the pill above opens (see that TouchableOpacity's own
   // comment + the Modal further down this file for the full "why"). Same
