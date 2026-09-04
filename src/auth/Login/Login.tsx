@@ -19,7 +19,6 @@ import Text from 'components/Text';
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
 import BrandWordmark from 'components/BrandWordmark';
-import {ArtWelcomeWave} from 'src/home/HomeHeroArt';
 import CtaButton from 'components/CtaButton';
 import SocialAuthButton from 'components/SocialAuthButton';
 import {KeyboardAwareScrollView} from 'react-native-keyboard-aware-scroll-view';
@@ -169,15 +168,26 @@ const Login = memo(() => {
   );
   return (
     <Container style={styles.container}>
-      <KeyboardAwareScrollView contentContainerStyle={styles.content}>
+      {/* BUG FIX (product report: "In the android the continue with
+          linkedIn button is being covered by the dont have an account?
+          container") -- this ScrollView had no `style` of its own, only
+          `contentContainerStyle`, so its own height was purely content-
+          driven instead of properly filling/being bounded within its
+          parent flex column. That's tolerated fine on iOS but is a known
+          measurement quirk of this library on Android, where an
+          unbounded KeyboardAwareScrollView can end up rendered over the
+          same vertical space as a trailing sibling (the "Don't have an
+          account?" Flex row right below it) instead of pushing it down.
+          `flex: 1` gives it a real, properly bounded box to lay out
+          within, same as this component gets everywhere else it doesn't
+          have a trailing sibling to conflict with. */}
+      <KeyboardAwareScrollView style={{flex: 1}} contentContainerStyle={styles.content}>
         <BrandWordmark size={44} />
-        {/* Product report: "There is no image or illustrations or icon in
-            the welcome screen" — was straight from the wordmark into the
-            heading text with nothing visual in between, unlike every other
-            major screen in the app (Login is the one exception the sweep
-            described in HomeHeroArt.tsx's own comment above hadn't reached
-            yet). */}
-        <ArtWelcomeWave size={96} />
+        {/* REMOVED (product follow-up: "Remove this illustration from the
+            login screen") -- was ArtWelcomeWave (see src/home/HomeHeroArt.tsx),
+            added for an earlier, separate report ("There is no image or
+            illustrations or icon in the welcome screen"). Straight from the
+            wordmark into the heading again now. */}
         {/* Redesign (product follow-up — "big text" consistency pass):
             was category="h7" (16px, not bold), the smallest heading size
             used anywhere as an actual screen title in this app. Bumped to
