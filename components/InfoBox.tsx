@@ -81,6 +81,18 @@ const InfoBox = memo(({icon, iconPack = 'eva', children, variant = 'neutral', st
         variant === 'info' && {
           borderLeftWidth: 3,
           borderLeftColor: iconColor,
+          // BUG FIX (product report: "I told you that the border radius of
+          // the info cards should be 5 or 6 why is the one in the company
+          // intelligence still having a different border radius") -- that
+          // request only ever got applied as a per-call-site `style`
+          // override on DreamCompanies.tsx's own InfoBox, not here on the
+          // shared component's own default -- so every OTHER variant="info"
+          // call site (CompanyIntelligence.tsx, CareerDna.tsx,
+          // AICareerTwin.tsx) kept the un-reduced 16px default the whole
+          // time. Scoped to `info` only, matching the original request's
+          // own scope -- `neutral`/`accent` are a different, unrelated use
+          // (JobAlerts.tsx) that was never part of this ask.
+          borderRadius: 6,
         },
         style,
       ]}>

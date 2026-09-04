@@ -349,14 +349,16 @@ const DreamCompanies = memo(() => {
             banner... too long") — see InfoBox.tsx's own numberOfLines={2}. */}
         {/* Product follow-up: "reduce the border radius to at least 5 or
             6" -- InfoBox's `info` variant now defaults to a plain card
-            background + black text everywhere (see InfoBox.tsx's own
-            comment on that global follow-up), so the only thing this call
-            site still needs to override is the smaller radius specifically
-            asked for here. */}
+            background, black text, AND the 6px radius everywhere (see
+            InfoBox.tsx's own comment -- that request originally only got
+            applied here, on this one call site, which is why every OTHER
+            variant="info" screen still showed the old 16px radius until
+            that global fix). No radius override needed here anymore, kept
+            only for the marginBottom spacing this row still needs. */}
         <InfoBox
           icon="flag-outline"
           variant="info"
-          style={{ marginBottom: 16, borderRadius: 6 }}>
+          style={{ marginBottom: 16 }}>
           {t('more:dream_companies_description', {
             defaultValue: 'Track target companies — jobs, interview prep, and your readiness for each.',
           })}
