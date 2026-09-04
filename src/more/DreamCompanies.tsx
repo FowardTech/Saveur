@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, KeyboardAvoidingView, Modal, Platform, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, Share, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -69,6 +69,23 @@ const DreamCompanies = memo(() => {
   const [expandedId, setExpandedId] = React.useState<number | null>(null);
   const [refreshingId, setRefreshingId] = React.useState<number | null>(null);
   const [togglingPriorityId, setTogglingPriorityId] = React.useState<number | null>(null);
+  // Product follow-up ("list the features you suggested for the dream
+  // company dashboard... implement" -- "a comparison view for 2-3 tracked
+  // companies"). Selection mode toggled from the header; tapping a card
+  // while active adds/removes it from the compare set instead of
+  // expanding it (see the card's onPress below). Capped at 3 -- more than
+  // that stops reading as a scannable side-by-side comparison.
+  const [compareMode, setCompareMode] = React.useState(false);
+  const [compareIds, setCompareIds] = React.useState<number[]>([]);
+  const [showCompareModal, setShowCompareModal] = React.useState(false);
+  const MAX_COMPARE = 3;
+  // "A personal notes field per company" -- local draft per card id so
+  // typing doesn't fire a network call per keystroke; only written back on
+  // Save (see onSaveNotes below). Seeded lazily from each company's own
+  // c.notes the first time its card expands (see the expanded-view notes
+  // Input's defaultValue-style seeding further down).
+  const [notesDraft, setNotesDraft] = React.useState<Record<number, string>>({});
+  const [savingNotesId, setSavingNotesId] = React.useState<number | null>(null);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -188,10 +205,104 @@ const DreamCompanies = memo(() => {
     navigation.navigate('CoverLetterGenerator', { company: company.company, role: company.targetRole ?? undefined });
   };
 
+  // "Direct link from a company's researched salary range into Salary
+  // Negotiation practice" — see navigation/types.tsx's SalaryNegotiation
+  // param list and salaryNegotiationService.getScenario's own comment for
+  // how these seed the practice scenario's company/role.
+  const onPracticeNegotiation = (company: DreamCompany) => {
+    navigation.navigate('SalaryNegotiation', { company: company.company, role: company.targetRole ?? undefined });
+  };
+
+  // "Single-question drilling from a company's likely-interview-questions
+  // list" — reuses the exact same `initialPrompt` mechanism
+  // InterviewFeedback.tsx/InterviewReplay.tsx's "Discuss with your coach"
+  // already uses (see Chat.tsx: auto-sends this as the first message),
+  // just seeded with one specific researched question instead of a
+  // post-session recap.
+  const onDrillQuestion = (company: DreamCompany, question: string) => {
+    const message = t('more:dream_company_drill_question_prompt', {
+      defaultValue:
+        "Let's practice this interview question for {{company}}: \"{{question}}\" Ask me the question, and give me feedback on my answer.",
+      company: company.company,
+      question,
+    });
+    navigation.navigate('MainBottomTab', {
+      screen: 'Coach',
+      params: { screen: 'Chat', params: { initialPrompt: message.toString() } },
+    });
+  };
+
+  // "One-tap export/share of a company's full prep summary" — plain text,
+  // same Share.share pattern CoverLetterGenerator.tsx/GenerateResume.tsx
+  // already use elsewhere in the app.
+  const onShareSummary = async (company: DreamCompany) => {
+    const lines: string[] = [
+      t('more:dream_company_share_title', { defaultValue: '{{company}} — Prep Summary', company: company.company }),
+    ];
+    if (company.targetRole) lines.push(company.targetRole);
+    lines.push('');
+    lines.push(
+      t('more:dream_company_readiness', { defaultValue: '{{score}}% ready', score: company.readinessScore }),
+    );
+    lines.push(
+      t('more:dream_company_sessions_practiced', {
+        defaultValue: '{{count}} sessions practiced',
+        count: company.prepProgress.sessionsPracticed,
+      }),
+    );
+    if (company.intel?.overview) {
+      lines.push('', t('more:dream_company_overview_label', { defaultValue: 'Overview' }), company.intel.overview);
+    }
+    if (company.intel?.salaryRange) {
+      lines.push('', t('more:salary_insights', { defaultValue: 'Salary Insights' }), company.intel.salaryRange);
+    }
+    if (company.intel?.interviewProcess) {
+      lines.push('', t('more:interview_process', { defaultValue: 'Interview Process' }), company.intel.interviewProcess);
+    }
+    if (company.intel?.likelyQuestions?.length) {
+      lines.push('', t('more:likely_questions', { defaultValue: 'Likely Interview Questions' }));
+      company.intel.likelyQuestions.forEach((q, i) => lines.push(`${i + 1}. ${q}`));
+    }
+    const savedNotes = notesDraft[company.id] ?? company.notes;
+    if (savedNotes?.trim()) {
+      lines.push('', t('more:dream_company_notes_label', { defaultValue: 'My notes' }), savedNotes.trim());
+    }
+    try {
+      await Share.share({ message: lines.join('\n') });
+    } catch {
+      // User cancelled the share sheet — nothing to do.
+    }
+  };
+
+  const onSaveNotes = async (companyId: number) => {
+    const notes = notesDraft[companyId] ?? '';
+    if (savingNotesId) return;
+    setSavingNotesId(companyId);
+    try {
+      const updated = await dreamCompaniesService.updateDreamCompanyNotes(companyId, notes);
+      setCompanies(prev => (prev ?? []).map(c => (c.id === companyId ? updated : c)));
+    } catch {
+      Alert.alert(
+        t('common:something_went_wrong', { defaultValue: 'Something went wrong' }).toString(),
+        t('more:dream_company_notes_save_failed', { defaultValue: "Couldn't save your note. Please try again." }).toString(),
+      );
+    } finally {
+      setSavingNotesId(null);
+    }
+  };
+
+  const onToggleCompareSelect = (companyId: number) => {
+    setCompareIds(prev => {
+      if (prev.includes(companyId)) return prev.filter(id => id !== companyId);
+      if (prev.length >= MAX_COMPARE) return prev;
+      return [...prev, companyId];
+    });
+  };
+
   const onRemove = (id: number) => {
     Alert.alert(
-      t('more:dream_company_remove_confirm_title', { defaultValue: 'Stop tracking this company?' }),
-      t('more:dream_company_remove_confirm_body', { defaultValue: 'You can always add it back later.' }),
+      t('more:dream_company_remove_confirm_title', { defaultValue: 'Stop tracking this company?' }).toString(),
+      t('more:dream_company_remove_confirm_body', { defaultValue: 'You can always add it back later.' }).toString(),
       [
         { text: t('common:cancel', { defaultValue: 'Cancel' }), style: 'cancel' },
         {
@@ -214,7 +325,7 @@ const DreamCompanies = memo(() => {
     return (
       <ProLockGate
         variant="premium"
-        title={t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' })}
+        title={t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' }).toString()}
         description={t('more:dream_companies_premium_gate_description', {
           defaultValue: 'Track your target companies with real research, matching job alerts, and prep progress — a Premium feature.',
         })}
@@ -225,7 +336,7 @@ const DreamCompanies = memo(() => {
   return (
     <Container style={styles.container}>
       <TopNavigation
-        title={t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' })}
+        title={t('more:dream_companies', { defaultValue: 'Dream Company Dashboard' }).toString()}
         accessoryLeft={<NavigationAction />}
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
@@ -250,6 +361,29 @@ const DreamCompanies = memo(() => {
             defaultValue: 'Track target companies — jobs, interview prep, and your readiness for each.',
           })}
         </InfoBox>
+
+        {/* "A comparison view for 2-3 tracked companies" — a plain row
+            (not TopNavigation's accessoryRight, whose () => ReactElement
+            typing this app already has one pre-existing tsc conflict with
+            elsewhere -- see src/home/Notification/index.tsx's own
+            accessoryRight -- not worth adding a second occurrence of)
+            toggles selection mode; tapping a card while active adds/
+            removes it from the compare set (see each card's onPress). */}
+        {companies && companies.length >= 2 ? (
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              setCompareMode(v => !v);
+              setCompareIds([]);
+            }}
+            style={{ alignSelf: 'flex-end', marginBottom: 12 }}>
+            <Text category="h10" bold status={compareMode ? 'danger' : 'link'}>
+              {compareMode
+                ? t('common:cancel', { defaultValue: 'Cancel' })
+                : t('more:dream_company_compare_cta', { defaultValue: 'Compare companies' })}
+            </Text>
+          </TouchableOpacity>
+        ) : null}
 
         <TouchableOpacity activeOpacity={0.8} style={styles.addTrigger} onPress={() => setShowAddSheet(true)}>
           {/* REVERTED (product ask: "remove the backgrounds from the
@@ -354,8 +488,28 @@ const DreamCompanies = memo(() => {
                   // alert — here for a top choice instead.
                   c.isTopChoice && { borderColor: theme['color-accent-purple'], borderWidth: 1 },
                 ]}>
-                <TouchableOpacity activeOpacity={0.7} onPress={() => setExpandedId(expanded ? null : c.id)}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() =>
+                    compareMode ? onToggleCompareSelect(c.id) : setExpandedId(expanded ? null : c.id)
+                  }>
                   <Flex justify="space-between" itemsCenter>
+                    {/* "A comparison view for 2-3 tracked companies" —
+                        selection checkbox shown only in compare mode
+                        (toggled from the header), replacing the pin/
+                        delete/chevron row below for the duration of the
+                        selection so there's no ambiguity about what a tap
+                        on the card does right now. */}
+                    {compareMode ? (
+                      <Icon
+                        pack="eva"
+                        name={compareIds.includes(c.id) ? 'checkmark-circle-2' : 'radio-button-off-outline'}
+                        style={[
+                          globalStyle.icon20,
+                          { tintColor: compareIds.includes(c.id) ? theme['color-primary-500'] : theme['text-hint-color'], marginRight: 10 },
+                        ]}
+                      />
+                    ) : null}
                     <View style={{ flex: 1 }}>
                       <Flex justify="flex-start" itemsCenter>
                         {/* Product report: "when users type the company
@@ -378,54 +532,58 @@ const DreamCompanies = memo(() => {
                         <Text category="h10" status="placeholder" mt={2}>{c.targetRole}</Text>
                       ) : null}
                     </View>
-                    {/* Product request item: "Priority / 'Top choice'
-                        marking" — nested TouchableOpacity inside the outer
-                        expand-toggle one, same pattern already proven in
-                        JobAlerts.tsx's bookmark-pin icon on each alert row. */}
-                    <TouchableOpacity
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      disabled={togglingPriorityId === c.id}
-                      onPress={() => onTogglePriority(c)}
-                      style={{ marginRight: 4 }}>
-                      <Icon
-                        pack="assets"
-                        name={c.isTopChoice ? 'bookmarkActive' : 'bookmark'}
-                        // Product report: "The delete and pin icons are too
-                        // big make them moderate" -- icon20 (despite the
-                        // name) resolves to 28x28, genuinely large for a
-                        // small per-row action glyph; icon16 (18x18) is a
-                        // moderate step down, not the smallest size
-                        // available.
-                        style={[
-                          globalStyle.icon16,
-                          { tintColor: c.isTopChoice ? theme['color-accent-purple'] : theme['text-placeholder-color'] },
-                        ]}
-                      />
-                    </TouchableOpacity>
-                    {/* Product request: "add a delete icon beside the pin
-                        icon so that users can delete the company" — the
-                        only way to remove a company used to be the
-                        "Remove" text action buried inside the expanded
-                        research view below (easy to miss, and required
-                        expanding the card first). Reuses the exact same
-                        onRemove confirm-alert flow that action already
-                        calls, just exposed here too for a one-tap delete
-                        without expanding. */}
-                    <TouchableOpacity
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      onPress={() => onRemove(c.id)}
-                      style={{ marginRight: 4 }}>
-                      <Icon
-                        pack="eva"
-                        name="trash-2-outline"
-                        style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]}
-                      />
-                    </TouchableOpacity>
-                    <Icon
-                      pack="eva"
-                      name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
-                      style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]}
-                    />
+                    {compareMode ? null : (
+                      <>
+                        {/* Product request item: "Priority / 'Top choice'
+                            marking" — nested TouchableOpacity inside the outer
+                            expand-toggle one, same pattern already proven in
+                            JobAlerts.tsx's bookmark-pin icon on each alert row. */}
+                        <TouchableOpacity
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          disabled={togglingPriorityId === c.id}
+                          onPress={() => onTogglePriority(c)}
+                          style={{ marginRight: 4 }}>
+                          <Icon
+                            pack="assets"
+                            name={c.isTopChoice ? 'bookmarkActive' : 'bookmark'}
+                            // Product report: "The delete and pin icons are too
+                            // big make them moderate" -- icon20 (despite the
+                            // name) resolves to 28x28, genuinely large for a
+                            // small per-row action glyph; icon16 (18x18) is a
+                            // moderate step down, not the smallest size
+                            // available.
+                            style={[
+                              globalStyle.icon16,
+                              { tintColor: c.isTopChoice ? theme['color-accent-purple'] : theme['text-placeholder-color'] },
+                            ]}
+                          />
+                        </TouchableOpacity>
+                        {/* Product request: "add a delete icon beside the pin
+                            icon so that users can delete the company" — the
+                            only way to remove a company used to be the
+                            "Remove" text action buried inside the expanded
+                            research view below (easy to miss, and required
+                            expanding the card first). Reuses the exact same
+                            onRemove confirm-alert flow that action already
+                            calls, just exposed here too for a one-tap delete
+                            without expanding. */}
+                        <TouchableOpacity
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          onPress={() => onRemove(c.id)}
+                          style={{ marginRight: 4 }}>
+                          <Icon
+                            pack="eva"
+                            name="trash-2-outline"
+                            style={[globalStyle.icon16, { tintColor: theme['text-placeholder-color'] }]}
+                          />
+                        </TouchableOpacity>
+                        <Icon
+                          pack="eva"
+                          name={expanded ? 'chevron-up-outline' : 'chevron-down-outline'}
+                          style={[globalStyle.icon20, { tintColor: theme['text-hint-color'] }]}
+                        />
+                      </>
+                    )}
                   </Flex>
 
                   <Flex justify="flex-start" itemsCenter wrap mt={12}>
@@ -520,7 +678,10 @@ const DreamCompanies = memo(() => {
                     ALWAYS visible (not gated on `expanded`) since the
                     whole point is one tap straight into the next real
                     action without first having to expand the card to
-                    find it. */}
+                    find it. Hidden during compare-mode selection —
+                    quick actions would just be noise while the user is
+                    tapping cards to build a comparison set. */}
+                {compareMode ? null : (
                 <Flex justify="flex-start" wrap mt={12}>
                   <TouchableOpacity
                     activeOpacity={0.7}
@@ -554,10 +715,89 @@ const DreamCompanies = memo(() => {
                       {t('more:dream_company_cover_letter_cta', { defaultValue: 'Generate cover letter' })}
                     </Text>
                   </TouchableOpacity>
+                  {/* "Direct link from a company's researched salary range
+                      into Salary Negotiation practice" — only shown once
+                      there's an actual salary figure to negotiate from. */}
+                  {c.intel?.salaryRange ? (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => onPracticeNegotiation(c)}
+                      style={[styles.quickActionPill, { backgroundColor: theme['background-basic-color-3'], marginBottom: 8, marginRight: 8 }]}>
+                      <Icon pack="eva" name="trending-up-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 6 }]} />
+                      <Text category="h10" bold>
+                        {t('more:dream_company_negotiate_cta', { defaultValue: 'Practice negotiation' })}
+                      </Text>
+                    </TouchableOpacity>
+                  ) : null}
+                  {/* "One-tap export/share of a company's full prep
+                      summary" */}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => onShareSummary(c)}
+                    style={[styles.quickActionPill, { backgroundColor: theme['background-basic-color-3'], marginBottom: 8 }]}>
+                    <Icon pack="eva" name="share-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'], marginRight: 6 }]} />
+                    <Text category="h10" bold>
+                      {t('more:dream_company_share_cta', { defaultValue: 'Share summary' })}
+                    </Text>
+                  </TouchableOpacity>
                 </Flex>
+                )}
 
                 {expanded ? (
                   <View style={{ marginTop: 16 }}>
+                    {/* "Turning the prep-progress numbers into an
+                        actionable checklist" — the exact same 3 real
+                        signals _readiness_score weighs on the backend
+                        (app/api/dream_companies.py), rendered as tappable
+                        line items instead of just a percentage, so getting
+                        from "62% ready" to "100%" has a concrete next step
+                        instead of being a number with no obvious action. */}
+                    <View style={styles.expandedSubcard}>
+                      <Text category="h10" bold mb={8}>
+                        {t('more:dream_company_checklist_title', { defaultValue: 'Prep checklist' })}
+                      </Text>
+                      {[
+                        {
+                          done: !!c.intel,
+                          label: t('more:dream_company_checklist_research', { defaultValue: 'Review company research' }),
+                          onPress: () => setExpandedId(c.id),
+                        },
+                        {
+                          done: c.prepProgress.sessionsPracticed >= 1,
+                          label: t('more:dream_company_checklist_practice_one', { defaultValue: 'Practice a mock interview' }),
+                          onPress: () => onPracticeInterview(c),
+                        },
+                        {
+                          done: c.prepProgress.sessionsPracticed >= 3,
+                          label: t('more:dream_company_checklist_practice_three', { defaultValue: 'Practice 3 mock interviews' }),
+                          onPress: () => onPracticeInterview(c),
+                        },
+                        {
+                          done: c.prepProgress.applicationTracked,
+                          label: t('more:dream_company_checklist_application', { defaultValue: 'Track your application' }),
+                          onPress: () => navigation.navigate('AddFromEmail'),
+                        },
+                      ].map((item, i) => (
+                        <TouchableOpacity
+                          key={i}
+                          activeOpacity={0.7}
+                          disabled={item.done}
+                          onPress={item.onPress}
+                          style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                          <Icon
+                            pack="eva"
+                            name={item.done ? 'checkmark-circle-2' : 'radio-button-off-outline'}
+                            style={[
+                              globalStyle.icon16,
+                              { tintColor: item.done ? theme['color-success-500'] : theme['text-hint-color'], marginRight: 8 },
+                            ]}
+                          />
+                          <Text category="h10" status={item.done ? 'placeholder' : 'basic'} style={item.done ? { textDecorationLine: 'line-through' } : undefined}>
+                            {item.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                     {c.intel ? (
                       <>
                         <Text category="h9-s" mb={12}>{c.intel.overview}</Text>
@@ -582,8 +822,21 @@ const DreamCompanies = memo(() => {
                             <Text category="h9" bold mb={8}>
                               {t('more:likely_questions', { defaultValue: 'Likely Interview Questions' })}
                             </Text>
+                            {/* "Single-question drilling from a company's
+                                likely-interview-questions list" — each
+                                question gets its own tap target straight
+                                into the AI coach chat, seeded to answer
+                                just that one question (see
+                                onDrillQuestion's own comment). */}
                             {c.intel.likelyQuestions.map((q, i) => (
-                              <Text key={i} category="h10" mb={6}>{i + 1}. {q}</Text>
+                              <TouchableOpacity
+                                key={i}
+                                activeOpacity={0.7}
+                                onPress={() => onDrillQuestion(c, q)}
+                                style={styles.questionRow}>
+                                <Text category="h10" style={globalStyle.flexOne}>{i + 1}. {q}</Text>
+                                <Icon pack="eva" name="mic-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'], marginLeft: 8 }]} />
+                              </TouchableOpacity>
                             ))}
                           </>
                         ) : null}
@@ -631,6 +884,41 @@ const DreamCompanies = memo(() => {
                         </Text>
                       </TouchableOpacity>
                     </Flex>
+
+                    {/* "A personal notes field per company" — draft kept
+                        in notesDraft until Save is pressed; falls back to
+                        the company's own saved c.notes the first time this
+                        card is opened (??  rather than ?? '' so a second
+                        expand after typing doesn't stomp an in-progress
+                        draft with the still-unsaved server value). */}
+                    <View style={{ marginTop: 16 }}>
+                      <Text category="h10" bold mb={8}>
+                        {t('more:dream_company_notes_label', { defaultValue: 'My notes' })}
+                      </Text>
+                      <Input
+                        multiline
+                        textStyle={[globalStyle.inputText, { minHeight: 60 }]}
+                        style={styles.notesInput}
+                        placeholder={t('more:dream_company_notes_placeholder', { defaultValue: 'Add a personal note about this company…' }).toString()}
+                        value={notesDraft[c.id] ?? c.notes}
+                        onChangeText={text => setNotesDraft(prev => ({ ...prev, [c.id]: text }))}
+                      />
+                      {(notesDraft[c.id] ?? c.notes) !== c.notes ? (
+                        <TouchableOpacity
+                          activeOpacity={0.7}
+                          disabled={savingNotesId === c.id}
+                          onPress={() => onSaveNotes(c.id)}
+                          style={[styles.actionPill, { marginTop: 8 }]}>
+                          {savingNotesId === c.id ? (
+                            <Spinner size="tiny" />
+                          ) : (
+                            <Text category="h10" bold status="link">
+                              {t('common:save', { defaultValue: 'Save' })}
+                            </Text>
+                          )}
+                        </TouchableOpacity>
+                      ) : null}
+                    </View>
                   </View>
                 ) : null}
               </Layout>
@@ -639,6 +927,103 @@ const DreamCompanies = memo(() => {
           </>
         )}
       </Content>
+
+      {/* Floating "Compare (N)" bar — only actionable once at least 2
+          companies are selected (a comparison of exactly 1 is just that
+          company's own card). */}
+      {compareMode && compareIds.length >= 2 ? (
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setShowCompareModal(true)}
+          style={[styles.compareBar, { backgroundColor: theme['color-primary-500'] }]}>
+          <Text category="h9" bold status="control">
+            {t('more:dream_company_compare_bar_cta', { defaultValue: 'Compare {{count}} companies', count: compareIds.length })}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
+
+      <Modal
+        visible={showCompareModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCompareModal(false)}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={[styles.modalSheet, { maxHeight: '85%' }]}>
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>
+                {t('more:dream_company_compare_title', { defaultValue: 'Compare companies' })}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowCompareModal(false);
+                  setCompareMode(false);
+                  setCompareIds([]);
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </Flex>
+            <Content>
+              {(() => {
+                const selected = (companies ?? []).filter(c => compareIds.includes(c.id));
+                const rows: { label: string; render: (c: DreamCompany) => string }[] = [
+                  {
+                    label: t('more:dream_company_readiness_label', { defaultValue: 'Readiness' }),
+                    render: c => `${c.readinessScore}%`,
+                  },
+                  {
+                    label: t('more:dream_company_sessions_practiced_label', { defaultValue: 'Sessions practiced' }),
+                    render: c => `${c.prepProgress.sessionsPracticed}`,
+                  },
+                  {
+                    label: t('more:dream_company_avg_score_label', { defaultValue: 'Avg. interview score' }),
+                    render: c => (c.prepProgress.avgScore != null ? `${c.prepProgress.avgScore}%` : '—'),
+                  },
+                  {
+                    label: t('more:dream_company_application_tracked_label', { defaultValue: 'Application tracked' }),
+                    render: c =>
+                      c.prepProgress.applicationTracked
+                        ? t('common:yes', { defaultValue: 'Yes' }).toString()
+                        : t('common:no', { defaultValue: 'No' }).toString(),
+                  },
+                  {
+                    label: t('more:dream_company_open_jobs_label', { defaultValue: 'Open jobs' }),
+                    render: c => `${c.openJobsCount}`,
+                  },
+                  {
+                    label: t('more:salary_insights', { defaultValue: 'Salary Insights' }),
+                    render: c => c.intel?.salaryRange || '—',
+                  },
+                ];
+                return (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexDirection: 'row' }}>
+                    <View style={{ width: 130 }}>
+                      <View style={{ height: 56 }} />
+                      {rows.map((r, i) => (
+                        <View key={i} style={styles.compareRow}>
+                          <Text category="h10" status="placeholder">{r.label}</Text>
+                        </View>
+                      ))}
+                    </View>
+                    {selected.map(c => (
+                      <View key={c.id} style={{ width: 140, marginRight: 8 }}>
+                        <View style={{ height: 56, justifyContent: 'flex-end', marginBottom: 4 }}>
+                          <Text category="h9" bold numberOfLines={2}>{c.company}</Text>
+                        </View>
+                        {rows.map((r, i) => (
+                          <View key={i} style={styles.compareRow}>
+                            <Text category="h10" numberOfLines={3}>{r.render(c)}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    ))}
+                  </ScrollView>
+                );
+              })()}
+            </Content>
+          </Layout>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <Modal visible={showAddSheet} transparent animationType="slide" onRequestClose={() => setShowAddSheet(false)}>
         <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -754,5 +1139,38 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
+  },
+  // "A comparison view for 2-3 tracked companies" — floating CTA bar,
+  // same idea as a "N selected" action bar in a photo picker.
+  compareBar: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  compareRow: {
+    height: 44,
+    justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'border-basic-color-3',
+  },
+  questionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  // "A personal notes field per company" — plain bordered multiline field,
+  // matching globalStyle.inputField's own look without pulling in its
+  // single-line height assumptions.
+  notesInput: {
+    borderWidth: 1,
+    borderColor: 'border-basic-color-3',
+    borderRadius: 12,
+    padding: 10,
+    minHeight: 70,
+    textAlignVertical: 'top',
   },
 });

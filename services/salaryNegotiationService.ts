@@ -133,10 +133,28 @@ interface SalaryOfferWireForScenario {
  * anything does this fall back to the static pool, as a last resort so the
  * screen is never left with nothing to show.
  */
-export async function getScenario(): Promise<{offer: SalaryOffer; approaches: NegotiationApproach[]; totalRounds: number}> {
+export async function getScenario(
+  overrides?: {company?: string; role?: string},
+): Promise<{offer: SalaryOffer; approaches: NegotiationApproach[]; totalRounds: number}> {
+  // Product follow-up (Dream Company Dashboard: "direct link from a
+  // company's researched salary range into Salary Negotiation practice")
+  // -- applied uniformly right before every return below so whichever
+  // source actually supplied the scenario (real backend, the user's own
+  // tracked applications, or the static pool), the company/role the caller
+  // asked to practice for is always what's shown, not whatever that
+  // source happened to generate.
+  const withOverrides = (offer: SalaryOffer): SalaryOffer => ({
+    ...offer,
+    company: overrides?.company || offer.company,
+    title: overrides?.role || offer.title,
+  });
   try {
     const {data} = await apiClient.get<ScenarioWire>('/api/v1/coach/negotiation/scenario', {
-      params: {language: currentLanguage()},
+      params: {
+        language: currentLanguage(),
+        ...(overrides?.company ? {company: overrides.company} : null),
+        ...(overrides?.role ? {role: overrides.role} : null),
+      },
     });
     // Was accepting ANY truthy `data.offer`, including an empty/partial
     // object (e.g. `{}` from an endpoint that's stubbed but not fully
@@ -167,7 +185,7 @@ export async function getScenario(): Promise<{offer: SalaryOffer; approaches: Ne
               description: a.description ?? '',
             }))
           : APPROACHES;
-      return {offer, approaches, totalRounds: data.total_rounds ?? data.totalRounds ?? TOTAL_ROUNDS};
+      return {offer: withOverrides(offer), approaches, totalRounds: data.total_rounds ?? data.totalRounds ?? TOTAL_ROUNDS};
     }
   } catch {
     // Not implemented yet / offline — fall through to the personalized
@@ -188,7 +206,7 @@ export async function getScenario(): Promise<{offer: SalaryOffer; approaches: Ne
         company: withOffer.company,
         title: withOffer.role,
       };
-      return {offer, approaches: APPROACHES, totalRounds: TOTAL_ROUNDS};
+      return {offer: withOverrides(offer), approaches: APPROACHES, totalRounds: TOTAL_ROUNDS};
     }
   } catch {
     // listApplications already has its own offline fallback and rarely
@@ -197,7 +215,7 @@ export async function getScenario(): Promise<{offer: SalaryOffer; approaches: Ne
 
   await delay(500);
   const offer = SCENARIO_POOL[Math.floor(Math.random() * SCENARIO_POOL.length)];
-  return {offer: {...offer}, approaches: APPROACHES, totalRounds: TOTAL_ROUNDS};
+  return {offer: withOverrides({...offer}), approaches: APPROACHES, totalRounds: TOTAL_ROUNDS};
 }
 
 // ---- POST /api/v1/coach/negotiation wire shapes ----

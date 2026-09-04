@@ -58,6 +58,12 @@ export interface DreamCompany {
   // polls while any row has this set, and shows a "researching…" state on
   // that card instead of the old "research not available yet" text.
   researchPending: boolean;
+  // Product follow-up ("list the features you suggested for the dream
+  // company dashboard... implement" -- "a personal notes field per
+  // company") -- plain free-text the user owns, never touched by
+  // research/refresh. Empty string, not null, when nothing's been written
+  // yet (matches the backend's own `self.notes or ""` in to_dict).
+  notes: string;
 }
 
 interface DreamCompanyIntelWire {
@@ -85,6 +91,7 @@ interface DreamCompanyWire {
   is_top_choice?: boolean;
   has_new_job_alert?: boolean;
   research_pending?: boolean;
+  notes?: string;
 }
 
 function intelFromWire(intel?: DreamCompanyIntelWire | null): DreamCompanyIntel | null {
@@ -120,6 +127,7 @@ function fromWire(w: DreamCompanyWire): DreamCompany {
     isTopChoice: !!w.is_top_choice,
     hasNewJobAlert: !!w.has_new_job_alert,
     researchPending: !!w.research_pending,
+    notes: w.notes ?? '',
   };
 }
 
@@ -186,5 +194,13 @@ export async function toggleDreamCompanyPriority(id: number, isTopChoice?: boole
   const {data} = await apiClient.post<DreamCompanyWire>(`/api/v1/dream-companies/${id}/priority`,
     isTopChoice === undefined ? undefined : {is_top_choice: isTopChoice},
   );
+  return fromWire(data);
+}
+
+/** Product follow-up ("a personal notes field per company") — plain
+ * overwrite, same shape as toggleDreamCompanyPriority above. See
+ * app/api/dream_companies.py's update_notes. */
+export async function updateDreamCompanyNotes(id: number, notes: string): Promise<DreamCompany> {
+  const {data} = await apiClient.post<DreamCompanyWire>(`/api/v1/dream-companies/${id}/notes`, {notes});
   return fromWire(data);
 }

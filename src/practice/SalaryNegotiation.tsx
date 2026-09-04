@@ -9,7 +9,7 @@ import {
   Button,
   Icon,
 } from '@ui-kitten/components';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
+import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -47,6 +47,15 @@ interface LogEntry {
 // locally-computed summary.
 const SalaryNegotiation = memo(() => {
   const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  // Product follow-up (Dream Company Dashboard: "direct link from a
+  // company's researched salary range into Salary Negotiation practice")
+  // -- optional seed params from that entry point (see navigation/types.tsx's
+  // own comment on SalaryNegotiation's param list); every other call site
+  // still navigates here with no params at all, which route.params?. below
+  // handles the same as before.
+  const route = useRoute<RouteProp<RootStackParamList, 'SalaryNegotiation'>>();
+  const seedCompany = route.params?.company;
+  const seedRole = route.params?.role;
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
@@ -71,7 +80,7 @@ const SalaryNegotiation = memo(() => {
     setRound(1);
     try {
       const { offer, approaches: nextApproaches, totalRounds: nextTotalRounds } =
-        await salaryNegotiationService.getScenario();
+        await salaryNegotiationService.getScenario({ company: seedCompany, role: seedRole });
       setInitialOffer(offer);
       setCurrentOffer(offer);
       setApproaches(nextApproaches);
@@ -79,7 +88,7 @@ const SalaryNegotiation = memo(() => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [seedCompany, seedRole]);
 
   React.useEffect(() => {
     if (isPro) loadScenario();

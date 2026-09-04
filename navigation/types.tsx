@@ -281,7 +281,15 @@ export type RootStackParamList = {
   // same-day, same-language value the old card used), so it's always
   // current regardless of which tip triggered the push.
   GoalTipDetail: undefined;
-  SalaryNegotiation: undefined;
+  // Optional seed params (product follow-up: "list the features you
+  // suggested for the dream company dashboard... implement" -- a direct
+  // link from a tracked company's researched salary range straight into a
+  // negotiation practice round for that same company/role). Both optional
+  // and the screen/service already degrade gracefully with no params at
+  // all (see salaryNegotiationService.ts's getScenario), so every existing
+  // call site (WhatsNext.tsx, MainDrawer.tsx, suggestedActions.ts) that
+  // navigates here with no params keeps working unchanged.
+  SalaryNegotiation: {company?: string; role?: string} | undefined;
   // Product report: "the system design should also be added as part of the
   // tools too" + "should also have a AI code review too and result" +
   // "session length should be followed... once the time is up there should
