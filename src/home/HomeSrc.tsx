@@ -1001,40 +1001,45 @@ const HomeSrc = memo(() => {
                 advertising placement and added a real "Ad" disclosure
                 label for it; this banner is a general admin-configured
                 announcement/promo slot, not ad inventory, so no
-                disclosure label belongs here at all. Dropped along with
-                its now-empty top row (also shrinks the card -- see the
-                "reduce the height" follow-up on homeBannerCard/
-                homeBannerImageWrap/homeBannerDivider below). Ad-specific
-                treatment (if this ever becomes real ad inventory) is a
-                separate, later piece of work per the product's own
-                framing, not something to guess at now. */}
-            <View style={styles.homeBannerMainRow}>
-              <View style={styles.homeBannerImageWrap}>
-                {homeBanner.imageUrl && !homeBannerImageFailed ? (
+                disclosure label belongs here at all. */}
+            {/* REDESIGN (product request, screenshot of the small side-by-
+                side layout): "I want this homebanner to have the image
+                cover the top half full width and then the titles and the
+                view details button can be on the second line." Image is
+                now a full-bleed strip across the top of the card (not a
+                small square icon on the left) -- homeBannerCard itself
+                gets `overflow: hidden` so this still respects the card's
+                own rounded corners -- with title/body/CTA stacked in one
+                row underneath instead of alongside it. The no-image
+                fallback tile (below) is now full-width too, so a text-only
+                banner's layout doesn't collapse -- see its own comment. */}
+            <View style={styles.homeBannerImageWrap}>
+              {homeBanner.imageUrl && !homeBannerImageFailed ? (
+                <Image
+                  source={{ uri: homeBanner.imageUrl }}
+                  style={styles.homeBannerImage as ImageStyle}
+                  resizeMode="cover"
+                  onError={() => setHomeBannerImageFailed(true)}
+                />
+              ) : (
+                // No admin image (or it failed to load) -- a plain
+                // colored strip with the app mark, so the card's overall
+                // shape (image band + text row) never collapses just
+                // because a given ad happens to be text-only (see
+                // AdvertisementProps' own comment: imageUrl is optional).
+                <View style={styles.homeBannerImageFallback}>
                   <Image
-                    source={{ uri: homeBanner.imageUrl }}
-                    style={styles.homeBannerImage as ImageStyle}
-                    resizeMode="cover"
-                    onError={() => setHomeBannerImageFailed(true)}
+                    source={Images.logoMark}
+                    style={styles.homeBannerIcon as ImageStyle}
+                    resizeMode="contain"
+                    tintColor="#FFFFFF"
                   />
-                ) : (
-                  // No admin image (or it failed to load) -- a plain
-                  // colored tile with the app mark, so this row's layout
-                  // (image slot + headline/subtext) never collapses just
-                  // because a given ad happens to be text-only (see
-                  // AdvertisementProps' own comment: imageUrl is
-                  // optional).
-                  <View style={styles.homeBannerImageFallback}>
-                    <Image
-                      source={Images.logoMark}
-                      style={styles.homeBannerIcon as ImageStyle}
-                      resizeMode="contain"
-                      tintColor="#FFFFFF"
-                    />
-                  </View>
-                )}
-              </View>
-              <View style={[globalStyle.flexOne, styles.homeBannerTextCol]}>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.homeBannerContentRow}>
+              <View style={globalStyle.flexOne}>
                 {homeBanner.title ? (
                   <Text category="h9-s" bold numberOfLines={2}>
                     {homeBanner.title}
@@ -1046,11 +1051,6 @@ const HomeSrc = memo(() => {
                   </Text>
                 ) : null}
               </View>
-            </View>
-
-            <View style={styles.homeBannerDivider} />
-
-            <View style={styles.homeBannerFooterRow}>
               <View style={styles.homeBannerCtaButton}>
                 <Text category="h10-s" bold>
                   {homeBanner.ctaLabel || t('common:view_details', { defaultValue: 'View Details' })}
@@ -1333,27 +1333,31 @@ const themedStyles = StyleService.create({
     borderWidth: 1,
     borderColor: 'border-card-default',
     backgroundColor: 'background-basic-color-2',
-    padding: 10,
-  },
-  homeBannerMainRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  // Image slot -- shrunk 72x72 -> 56x56 (product follow-up: "reduce the
-  // height") -- still a real square tile, just a smaller one, since the
-  // row's overall height now follows this box's size.
-  homeBannerImageWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 12,
+    // REDESIGN (product request: "image cover the top half full width")
+    // -- the image is now full-bleed against the card's own edges (see
+    // homeBannerImageWrap below), so this needs `overflow: hidden` to
+    // still respect the card's rounded corners; padding moved off this
+    // outer view onto homeBannerContentRow so the image itself isn't
+    // inset.
     overflow: 'hidden',
+  },
+  // Full-width image strip across the top of the card (product request:
+  // "the image cover the top half full width") -- was a small 56x56
+  // square tile sitting to the left of the title/subtitle; a fixed height
+  // here (rather than a fraction of the card) since the card's own total
+  // height is content-driven (title/body can wrap to 1 or 2 lines), so
+  // "top half" is approximated as a real, consistent band height instead
+  // of a literal 50% that would shift with the text below it.
+  homeBannerImageWrap: {
+    width: '100%',
+    height: 130,
   },
   homeBannerImage: {
     width: '100%',
     height: '100%',
   },
-  // No-image fallback tile (see the JSX comment on this branch) -- a
-  // plain solid-color square with the app mark, so the main row's layout
+  // No-image fallback strip (see the JSX comment on this branch) -- a
+  // plain solid-color band with the app mark, so the card's overall shape
   // never collapses for a text-only banner.
   homeBannerImageFallback: {
     width: '100%',
@@ -1363,38 +1367,29 @@ const themedStyles = StyleService.create({
     backgroundColor: 'color-primary-500',
   },
   homeBannerIcon: {
-    width: 22,
-    height: 22,
+    width: 32,
+    height: 32,
   },
-  homeBannerTextCol: {
-    marginLeft: 12,
-  },
-  // marginVertical 12 -> 8 (product follow-up: "reduce the height").
-  homeBannerDivider: {
-    height: 1,
-    backgroundColor: 'border-card-default',
-    marginVertical: 8,
-  },
-  // Footer row -- CTA pill button only (right-aligned). The reference
-  // screenshot's own footer also has a left-side icon+service-name/
-  // category block, which has no equivalent real ad data (see this
-  // section's own AskUserQuestion-scoped comment above) and is dropped
-  // rather than faked, leaving this row just the button.
-  homeBannerFooterRow: {
+  // "The titles and the view details button can be on the second line" --
+  // title/body (left, flexed) and the CTA pill (right) now share one row
+  // underneath the image, replacing the old separate divider + centered-
+  // button footer row entirely.
+  homeBannerContentRow: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+    padding: 12,
   },
-  // Outlined pill button (matches the reference's own "Subscribe" style
-  // -- a bordered pill, not a solid fill) since the whole card is already
-  // tappable via the outer TouchableOpacity; this reinforces the same
-  // action visually rather than being a second, different destination.
-  // paddingVertical 7 -> 5 (product follow-up: "reduce the height").
+  // Outlined pill button (a bordered pill, not a solid fill) since the
+  // whole card is already tappable via the outer TouchableOpacity; this
+  // reinforces the same action visually rather than being a second,
+  // different destination.
   homeBannerCtaButton: {
     paddingHorizontal: 16,
     paddingVertical: 5,
     borderRadius: 999,
     borderWidth: 1,
     borderColor: 'text-basic-color',
+    marginLeft: 12,
   },
   // SYMPHONY REDESIGN — placeholder shown only for the brief window before
   // missionHeroLoading resolves, sized/shaped to match the real ActionCard
