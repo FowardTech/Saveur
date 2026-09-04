@@ -1022,11 +1022,18 @@ const Chat = memo(() => {
                   styles.suggestedTopicsPillHeader,
                   isDarkMode && { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
                 ]}>
+                {/* Product follow-up: "make the pill text font smaller and
+                    then remove the chevron icon" -- fontSize dropped from
+                    category="h10"'s default 14px to 11px (same compact
+                    size ButtonOptional.tsx's own badgeCount label uses),
+                    and the trailing chevron-down glyph is gone entirely --
+                    this pill opens a bottom sheet on tap, not an inline
+                    dropdown, so the chevron's "expands in place" affordance
+                    was misleading anyway. */}
                 <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : '#000000' }]} />
-                <Text category="h10" bold ml={4} numberOfLines={1} style={{ color: isDarkMode ? '#FFFFFF' : '#000000' }}>
+                <Text category="h10" bold ml={4} numberOfLines={1} fontSize={11} style={{ color: isDarkMode ? '#FFFFFF' : '#000000' }}>
                   {t("message:suggested_topics_title", { defaultValue: "Suggested topics" })}
                 </Text>
-                <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, { tintColor: isDarkMode ? '#FFFFFF' : theme['color-primary-500'] }, styles.suggestedTopicsPillChevron]} />
               </TouchableOpacity>
             ) : null}
             {/* SYMPHONY REDESIGN follow-up (explicit product request, with
@@ -1606,9 +1613,6 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 10,
     borderRadius: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.06)',
-  },
-  suggestedTopicsPillChevron: {
-    marginLeft: 2,
   },
   // Bottom sheet the pill above opens (see that TouchableOpacity's own
   // comment + the Modal further down this file for the full "why"). Same
