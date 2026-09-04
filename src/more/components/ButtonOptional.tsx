@@ -125,33 +125,48 @@ const ButtonOptional = ({
       itemsCenter
       onPress={onPress ? onPress : onNavigate}>
       <Flex justify="flex-start" itemsCenter>
-        <View style={[styles.iconWrap, isGradient && styles.iconWrapGradient]}>
-          {/* REDESIGN, ROUND 2 (see gradientColors' own prop comment) — a
-              colored rounded-square badge behind the icon again, per
-              explicit product request with the iOS Settings app as the
-              reference. Same "gradient as an absoluteFill sibling layer
-              behind the real content, not as the layout container itself"
-              pattern already established and fixed once before in this
-              codebase (ActionCard.tsx's own gradient variant, Home
-              banner's homeBannerFallback) — LinearGradient doesn't
-              reliably size itself to wrap arbitrary content the way a
-              plain View does, so it's never used AS iconWrap here, just
-              painted to exactly fill iconWrap's own fixed 32x32 box
-              (overflow: hidden on iconWrapGradient clips it to that box's
-              rounded corners). */}
-          {isGradient ? (
-            <LinearGradient
-              colors={gradientColors as [string, string, ...string[]]}
-              start={{x: 0, y: 0}}
-              end={{x: 1, y: 1}}
-              style={StyleSheet.absoluteFillObject}
+        {/* BUG FIX (product report: "The count badge on the icons are not
+            showing properly because of the lineargradient background of
+            the icons") — badgeCount/badgeDot used to be siblings of the
+            LinearGradient INSIDE this same box, and that box is what
+            carries `overflow: 'hidden'` (needed to clip the gradient
+            fill to its own rounded corners). overflow: 'hidden' clips
+            EVERY child, not just the gradient — so the badge, positioned
+            just outside the box's own bounds (top: -4, right: -6, see
+            its own style below) to sit "on the corner" of the icon, was
+            getting silently cut off right along with it. The gradient +
+            icon now live in their own inner box that owns the clipping;
+            this outer box is a plain, never-clipped positioning
+            container the badge can safely overflow past. */}
+        <View style={styles.iconWrap}>
+          <View style={[isGradient ? styles.iconWrapGradient : styles.iconWrapPlain]}>
+            {/* REDESIGN, ROUND 2 (see gradientColors' own prop comment) — a
+                colored rounded-square badge behind the icon again, per
+                explicit product request with the iOS Settings app as the
+                reference. Same "gradient as an absoluteFill sibling layer
+                behind the real content, not as the layout container itself"
+                pattern already established and fixed once before in this
+                codebase (ActionCard.tsx's own gradient variant, Home
+                banner's homeBannerFallback) — LinearGradient doesn't
+                reliably size itself to wrap arbitrary content the way a
+                plain View does, so it's never used AS this box here, just
+                painted to exactly fill its own fixed 32x32 bounds
+                (overflow: hidden on iconWrapGradient clips it to that
+                box's rounded corners). */}
+            {isGradient ? (
+              <LinearGradient
+                colors={gradientColors as [string, string, ...string[]]}
+                start={{x: 0, y: 0}}
+                end={{x: 1, y: 1}}
+                style={StyleSheet.absoluteFillObject}
+              />
+            ) : null}
+            <Icon
+              pack="assets"
+              name={icon}
+              style={{width: 20, height: 20, tintColor: isGradient ? '#FFFFFF' : iconColor ?? theme['text-basic-color']}}
             />
-          ) : null}
-          <Icon
-            pack="assets"
-            name={icon}
-            style={{width: 20, height: 20, tintColor: isGradient ? '#FFFFFF' : iconColor ?? theme['text-basic-color']}}
-          />
+          </View>
           {badgeCount ? (
             <View style={styles.badgeCount}>
               <Text category="h9" status="control" fontSize={11} lineHeight={13}>
@@ -243,11 +258,25 @@ const themedStyles = StyleService.create({
     paddingVertical: 10,
     marginTop: 2,
   },
-  // Fixed-size box around the icon glyph -- gives the row a consistent icon
-  // column width/alignment whether or not a gradient badge is behind it,
-  // and gives badgeCount/badgeDot below a stable box to corner-anchor
-  // against.
+  // BUG FIX (product report: "the count badge on the icons are not
+  // showing properly because of the lineargradient background of the
+  // icons") -- this outer box used to BE the gradient-clipped box itself
+  // (overflow: 'hidden' merged straight onto it), which silently cut off
+  // badgeCount/badgeDot too since they're positioned just outside its own
+  // bounds. Now a plain, never-clipped positioning container -- big
+  // enough (32x32) to fit either inner box below without re-centering --
+  // that owns nothing but the badge's corner anchor point. See the JSX's
+  // own comment for the full before/after.
   iconWrap: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Non-gradient inner box -- the icon's own real size when there's no
+  // gradient to clip anything to (no overflow needed since there's no
+  // absoluteFill sibling here at all).
+  iconWrapPlain: {
     width: 28,
     height: 28,
     alignItems: 'center',
@@ -256,12 +285,15 @@ const themedStyles = StyleService.create({
   // Gradient variant (see gradientColors' own comment) -- sized/rounded to
   // read as the iOS Settings app's own rounded-square icon badge.
   // overflow: 'hidden' is what clips the absolutely-filled LinearGradient
-  // sibling to this box's own borderRadius.
+  // sibling to this box's own borderRadius -- scoped to just this inner
+  // box now, not the outer iconWrap the badge also lives in.
   iconWrapGradient: {
     width: 32,
     height: 32,
     borderRadius: 9,
     overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Same corner-badge idea as HeaderHome.tsx's bell badge, re-tuned for the
   // plain 28x28 icon box above (was tuned for a 32x32 colored badge during
