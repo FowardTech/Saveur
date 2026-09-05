@@ -632,7 +632,18 @@ export const AuthProvider: React.FC = ({children}) => {
   }, []);
 
   const signOut = React.useCallback(async () => {
-    await auth().signOut();
+    // auth().signOut() throws "[auth/no-current-user] No user currently
+    // signed in" if Firebase's own session is already gone by the time the
+    // user taps Log out (a background token invalidation, a prior implicit
+    // signOut() call elsewhere -- e.g. VerifyEmailGate/cancelTwoFactorLogin
+    // -- or a double-tap). The user's intent either way is just "I want to
+    // be signed out," and that's already true in that case, so only call
+    // Firebase's signOut when there's actually a session to end, and always
+    // clear local state regardless -- logging out should never fail from
+    // the user's perspective.
+    if (auth().currentUser) {
+      await auth().signOut();
+    }
     await authService.clearCache();
     setProfile(null);
     setSignedIn(false);
