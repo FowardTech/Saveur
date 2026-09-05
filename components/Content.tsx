@@ -24,7 +24,14 @@ interface ContentProps extends ScrollViewProps {
 // stale the next time this value changes (bug fix — see HomeSrc.tsx).
 export const CONTENT_PADDER = 16;
 
-const Content: React.FC<ContentProps> = ({
+// forwardRef (product report: "I need you to implement a guide in the
+// coding practice so that users can know how the coding practice works")
+// — components/CoachMarkTour.tsx needs an imperative ref to the underlying
+// scroll component to bring each guided step's target into view
+// (scrollTo/scrollToPosition) as the tour advances. Purely additive: no
+// existing call site across this app's ~40+ screens passes a ref today, so
+// none of them are affected.
+const Content = React.forwardRef<any, ContentProps>(({
   style,
   contentContainerStyle,
   children,
@@ -32,11 +39,12 @@ const Content: React.FC<ContentProps> = ({
   level,
   avoidKeyboard,
   ...props
-}) => {
+}, ref) => {
   const theme = useTheme();
   const ScrollComponent = avoidKeyboard ? KeyboardAwareScrollView : ScrollView;
   return (
     <ScrollComponent
+      ref={ref}
       {...props}
       style={[
         { backgroundColor: theme[`background-basic-color-${level}`] },
@@ -63,6 +71,6 @@ const Content: React.FC<ContentProps> = ({
       {children}
     </ScrollComponent>
   );
-};
+});
 
 export default Content;

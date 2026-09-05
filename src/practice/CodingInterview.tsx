@@ -13,14 +13,18 @@ import {
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
+import CoachMarkTour, { TourStep } from 'components/CoachMarkTour';
+import useTourTarget from 'hooks/useTourTarget';
 import { globalStyle } from 'styles/globalStyle';
 import { renderCenteredLabel } from 'utils/buttonLabel';
+import { EKeyAsyncStorage } from 'constants/Types';
 import { CodingInterviewScreenNavigationProp, RootStackParamList } from 'navigation/types';
 import * as interviewService from 'services/interviewService';
 import * as codingService from 'services/codingService';
@@ -137,6 +141,42 @@ const CodingInterview = memo(() => {
   // already has default starter code showing) never clobbers real work —
   // only auto-fills starter code while the user hasn't touched it yet.
   const codeEditedRef = React.useRef(false);
+
+  // In-app guide (product report: "I need you to implement a guide in the
+  // coding practice so that users can know how the coding practice works
+  // because its still confusing me. It should guide the user on how every
+  // section works") — a spotlight tour over this screen's real Problem/
+  // Next Problem/Language/Your Code/Run/Test Cases/Run Tests/Finish
+  // sections, plus a closing note (no spotlight target) pointing out that
+  // the AI Summary and Get AI Code Review live on the Feedback screen right
+  // after Finish. See components/CoachMarkTour.tsx for the mechanics.
+  const contentRef = React.useRef<any>(null);
+  const tourProblem = useTourTarget();
+  const tourNextProblem = useTourTarget();
+  const tourLanguage = useTourTarget();
+  const tourCode = useTourTarget();
+  const tourRun = useTourTarget();
+  const tourTestCases = useTourTarget();
+  const tourRunTests = useTourTarget();
+  const tourFinish = useTourTarget();
+  const [showTour, setShowTour] = React.useState(false);
+
+  // Auto-show once, the first time a user reaches EITHER coding-practice
+  // screen (see EKeyAsyncStorage.codingPracticeTourSeen's own comment for
+  // why this flag is shared with CodingProblemSolve.tsx). Waits for the
+  // problem to finish loading so every step's target actually exists in
+  // the tree before the tour tries to measure it.
+  React.useEffect(() => {
+    if (problemLoading) return;
+    AsyncStorage.getItem(EKeyAsyncStorage.codingPracticeTourSeen).then(seen => {
+      if (!seen) setShowTour(true);
+    });
+  }, [problemLoading]);
+
+  const onCloseTour = React.useCallback(() => {
+    setShowTour(false);
+    AsyncStorage.setItem(EKeyAsyncStorage.codingPracticeTourSeen, '1').catch(() => undefined);
+  }, []);
 
   // "Next Problem" (product report: "the AI interviewer is not supposed to
   // give just one problem it's supposed to be random problems until the
@@ -433,6 +473,80 @@ const CodingInterview = memo(() => {
     return `${mm}:${ss}`;
   }, [secondsLeft]);
 
+  const tourSteps: TourStep[] = [
+    {
+      key: 'problem',
+      targetRef: tourProblem.ref,
+      offsetRef: tourProblem.offsetRef,
+      title: t('find:tour_solve_problem_title', {defaultValue: 'The Problem'}).toString(),
+      body: t('find:tour_solve_problem_body', {defaultValue: "Read this first. It's the exact task you need to solve — what your code should take in and what it should return."}).toString(),
+    },
+    // Only meaningful in the timed mock-interview flow — matches this
+    // screen's own durationMin gate on whether "Next Problem" even renders.
+    ...(durationMin ? [{
+      key: 'nextProblem',
+      targetRef: tourNextProblem.ref,
+      offsetRef: tourNextProblem.offsetRef,
+      title: t('find:tour_next_problem_title', {defaultValue: 'Next Problem / More Practice'}).toString(),
+      body: t('find:tour_next_problem_body', {defaultValue: "Stuck or done early? Next Problem swaps in a different problem without touching your countdown. More Practice always takes you to the untimed practice hub to browse the full problem bank."}).toString(),
+    }] : []),
+    {
+      key: 'language',
+      targetRef: tourLanguage.ref,
+      offsetRef: tourLanguage.offsetRef,
+      title: t('find:tour_language_title', {defaultValue: 'Pick a language'}).toString(),
+      body: t('find:tour_language_body', {defaultValue: 'Choose whichever language you want to solve the problem in. Switching languages resets the editor to a starter template for that language.'}).toString(),
+    },
+    {
+      key: 'code',
+      targetRef: tourCode.ref,
+      offsetRef: tourCode.offsetRef,
+      title: t('find:tour_code_title', {defaultValue: 'Write your solution here'}).toString(),
+      body: t('find:tour_code_body', {defaultValue: "This is your editor. Replace the starter code with your own solution — you don't need to write any input-reading boilerplate, just the logic that solves the problem."}).toString(),
+    },
+    {
+      key: 'run',
+      targetRef: tourRun.ref,
+      offsetRef: tourRun.offsetRef,
+      title: t('find:tour_run_title', {defaultValue: '"Run" — a quick sanity check'}).toString(),
+      body: t('find:tour_run_body', {defaultValue: 'Run just executes your code once with whatever you type into the optional input box above it, so you can see the raw output or any error. It does NOT check whether your solution is correct — for that, use Run Tests below.'}).toString(),
+    },
+    {
+      key: 'testCases',
+      targetRef: tourTestCases.ref,
+      offsetRef: tourTestCases.offsetRef,
+      title: t('find:tour_test_cases_title', {defaultValue: 'Test Cases'}).toString(),
+      body: t('find:tour_test_cases_body', {defaultValue: 'Each row is a real example the grader checks your code against: an input and the output it must produce. After you run tests, each row shows PASS or FAIL plus what your code actually returned.'}).toString(),
+    },
+    {
+      key: 'runTests',
+      targetRef: tourRunTests.ref,
+      offsetRef: tourRunTests.offsetRef,
+      title: t('find:tour_run_tests_title', {defaultValue: '"Run Tests" — this is what grades you'}).toString(),
+      body: t('find:tour_run_tests_body', {defaultValue: "This checks your code against every test case above and tells you exactly how many passed. This is the real signal for whether you've actually solved the problem — a problem only counts as solved once every test case passes here."}).toString(),
+    },
+    {
+      key: 'finish',
+      targetRef: tourFinish.ref,
+      offsetRef: tourFinish.offsetRef,
+      title: durationMin
+        ? t('find:tour_finish_interview_title', {defaultValue: '"Finish Interview"'}).toString()
+        : t('find:tour_finish_practice_title', {defaultValue: '"Finish Practice"'}).toString(),
+      body: t('find:tour_finish_body', {defaultValue: "When you're done, tap this to submit your final code and move to the Feedback screen."}).toString(),
+    },
+    // Closing step — deliberately no targetRef/offsetRef (renders as a
+    // plain centered card, no spotlight): AI Summary and Get AI Code Review
+    // both live on InterviewFeedback.tsx, a different screen this tour
+    // can't scroll to or spotlight, but they're exactly the sections a
+    // beginner asks "wait, where did my review go?" about right after
+    // finishing, so this closes that gap in words instead.
+    {
+      key: 'afterFinish',
+      title: t('find:tour_after_finish_title', {defaultValue: 'After you finish'}).toString(),
+      body: t('find:tour_after_finish_body', {defaultValue: 'On the Feedback screen, you\'ll see your real pass/fail score and a written AI Summary of how you did, plus a "Get AI Code Review" button for a detailed, correctness-first review of your code.'}).toString(),
+    },
+  ];
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -441,20 +555,30 @@ const CodingInterview = memo(() => {
         // onPress={goBack} override -- it bypassed NavigationAction's own
         // canGoBack() guard entirely. Let it use its guarded default.
         accessoryLeft={<NavigationAction />}
-        accessoryRight={
-          timerLabel
-            ? () => (
-                <View style={[styles.timerPill, secondsLeft !== null && secondsLeft <= 60 ? styles.timerPillUrgent : null]}>
-                  <Icon pack="eva" name="clock-outline" style={[globalStyle.icon16, { tintColor: secondsLeft !== null && secondsLeft <= 60 ? '#FF6B6B' : theme['text-basic-color'] }]} />
-                  <Text category="h9" bold ml={6} style={secondsLeft !== null && secondsLeft <= 60 ? { color: '#FF6B6B' } : undefined}>
-                    {timerLabel}
-                  </Text>
-                </View>
-              )
-            : undefined
-        }
+        accessoryRight={() => (
+          <Flex justify="flex-start" itemsCenter>
+            {/* In-app guide entry point (product report: "implement a
+                guide... so users can know how the coding practice works") —
+                always available to replay the tour, independent of whether
+                it already auto-showed once. */}
+            <TouchableOpacity
+              onPress={() => setShowTour(true)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ marginRight: timerLabel ? 8 : 0 }}>
+              <Icon pack="eva" name="question-mark-circle-outline" style={[globalStyle.icon24, { tintColor: theme['text-hint-color'] }]} />
+            </TouchableOpacity>
+            {timerLabel ? (
+              <View style={[styles.timerPill, secondsLeft !== null && secondsLeft <= 60 ? styles.timerPillUrgent : null]}>
+                <Icon pack="eva" name="clock-outline" style={[globalStyle.icon16, { tintColor: secondsLeft !== null && secondsLeft <= 60 ? '#FF6B6B' : theme['text-basic-color'] }]} />
+                <Text category="h9" bold ml={6} style={secondsLeft !== null && secondsLeft <= 60 ? { color: '#FF6B6B' } : undefined}>
+                  {timerLabel}
+                </Text>
+              </View>
+            ) : null}
+          </Flex>
+        )}
       />
-      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+      <Content ref={contentRef} padder avoidKeyboard contentContainerStyle={styles.content}>
         {/* Restructure (product report: "the user dont know which one is
             the question and where to write the code... arrange it well").
             Problem statement now lives in its own clearly-labeled, plainly-
@@ -462,24 +586,26 @@ const CodingInterview = memo(() => {
             for code/input/output — same visual language interviewing tools
             like LeetCode/HackerRank use (light "read" panel vs dark "write"
             panel) so the two are never confused at a glance. */}
-        <SectionHeader icon="message-square-outline" label={t('find:coding_problem_label', { defaultValue: 'Problem' })} />
-        {problemLoading ? (
-          <Flex justify="flex-start" itemsCenter mb={24}>
-            <Spinner size="small" />
-            <Text category="h9-s" status="placeholder" ml={8}>
-              {t('find:loading_problem', { defaultValue: 'Loading problem…' })}
-            </Text>
-          </Flex>
-        ) : (
-          <View style={styles.problemCard}>
-            <Text category="h7" bold mb={8}>
-              {problem?.title ?? t('find:coding_prompt_title')}
-            </Text>
-            <Text category="h9-s" status="placeholder">
-              {problem?.description ?? t('find:coding_prompt_description')}
-            </Text>
-          </View>
-        )}
+        <View ref={tourProblem.ref} onLayout={tourProblem.onLayout} collapsable={false}>
+          <SectionHeader icon="message-square-outline" label={t('find:coding_problem_label', { defaultValue: 'Problem' })} />
+          {problemLoading ? (
+            <Flex justify="flex-start" itemsCenter mb={24}>
+              <Spinner size="small" />
+              <Text category="h9-s" status="placeholder" ml={8}>
+                {t('find:loading_problem', { defaultValue: 'Loading problem…' })}
+              </Text>
+            </Flex>
+          ) : (
+            <View style={styles.problemCard}>
+              <Text category="h7" bold mb={8}>
+                {problem?.title ?? t('find:coding_prompt_title')}
+              </Text>
+              <Text category="h9-s" status="placeholder">
+                {problem?.description ?? t('find:coding_prompt_description')}
+              </Text>
+            </View>
+          )}
+        </View>
 
         {/* "Next Problem" / "More Practice" row (product report: "the AI
             interviewer is not supposed to give just one problem it's
@@ -493,77 +619,82 @@ const CodingInterview = memo(() => {
             untimed browse-all-problems hub, so that screen is reachable
             FROM the main coding screen instead of only from the Add-ons
             page. */}
-        <Flex justify="space-between" itemsCenter mt={12}>
-          {durationMin ? (
+        <View ref={tourNextProblem.ref} onLayout={tourNextProblem.onLayout} collapsable={false}>
+          <Flex justify="space-between" itemsCenter mt={12}>
+            {durationMin ? (
+              <TouchableOpacity
+                activeOpacity={0.7}
+                disabled={isLoadingNextProblem || problemLoading}
+                onPress={onNextProblem}
+                style={styles.inlineLinkRow}>
+                {isLoadingNextProblem ? (
+                  <Spinner size="tiny" />
+                ) : (
+                  <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
+                )}
+                <Text category="h10" bold ml={6} style={{ color: theme['color-primary-500'] }}>
+                  {t('find:next_problem_cta', { defaultValue: 'Next Problem' })}
+                </Text>
+              </TouchableOpacity>
+            ) : <View />}
             <TouchableOpacity
               activeOpacity={0.7}
-              disabled={isLoadingNextProblem || problemLoading}
-              onPress={onNextProblem}
+              onPress={() => navigate('CodingPracticeHub')}
               style={styles.inlineLinkRow}>
-              {isLoadingNextProblem ? (
-                <Spinner size="tiny" />
-              ) : (
-                <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }]} />
-              )}
-              <Text category="h10" bold ml={6} style={{ color: theme['color-primary-500'] }}>
-                {t('find:next_problem_cta', { defaultValue: 'Next Problem' })}
+              <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
+                {t('find:more_practice_cta', { defaultValue: 'More Practice' })}
               </Text>
+              <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, { marginLeft: 4 }]} />
             </TouchableOpacity>
-          ) : <View />}
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => navigate('CodingPracticeHub')}
-            style={styles.inlineLinkRow}>
-            <Text category="h10" bold style={{ color: theme['color-primary-500'] }}>
-              {t('find:more_practice_cta', { defaultValue: 'More Practice' })}
-            </Text>
-            <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['color-primary-500'] }, { marginLeft: 4 }]} />
-          </TouchableOpacity>
-        </Flex>
-
-        <Text category="h8" bold status="placeholder" mt={24} mb={12}>
-          {t('find:language')}
-        </Text>
-        {languagesLoading ? (
-          <Flex justify="flex-start" itemsCenter mb={24}>
-            <Spinner size="small" />
-            <Text category="h9-s" status="placeholder" ml={8}>
-              {t('find:loading_languages', { defaultValue: 'Loading languages…' })}
-            </Text>
           </Flex>
-        ) : (
-          <>
-            <Flex justify="flex-start" wrap mb={languagesError ? 8 : 24}>
-              {languages.map(lang => {
-                const active = lang.id === language.id;
-                return (
-                  <TouchableOpacity
-                    key={lang.id}
-                    activeOpacity={0.7}
-                    onPress={() => onSelectLanguage(lang)}
-                    style={[
-                      styles.langChip,
-                      {
-                        backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
-                      },
-                    ]}>
-                    <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                      {lang.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </Flex>
-            {languagesError ? (
-              <Text category="h10" status="danger" mb={16}>
-                {t('find:load_languages_failed', {
-                  defaultValue: 'Using a default language list — could not reach the server.',
-                })}
-              </Text>
-            ) : null}
-          </>
-        )}
+        </View>
 
+        <View ref={tourLanguage.ref} onLayout={tourLanguage.onLayout} collapsable={false}>
+          <Text category="h8" bold status="placeholder" mt={24} mb={12}>
+            {t('find:language')}
+          </Text>
+          {languagesLoading ? (
+            <Flex justify="flex-start" itemsCenter mb={24}>
+              <Spinner size="small" />
+              <Text category="h9-s" status="placeholder" ml={8}>
+                {t('find:loading_languages', { defaultValue: 'Loading languages…' })}
+              </Text>
+            </Flex>
+          ) : (
+            <>
+              <Flex justify="flex-start" wrap mb={languagesError ? 8 : 24}>
+                {languages.map(lang => {
+                  const active = lang.id === language.id;
+                  return (
+                    <TouchableOpacity
+                      key={lang.id}
+                      activeOpacity={0.7}
+                      onPress={() => onSelectLanguage(lang)}
+                      style={[
+                        styles.langChip,
+                        {
+                          backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
+                        },
+                      ]}>
+                      <Text category="h9" bold status={active ? 'control' : 'basic'}>
+                        {lang.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </Flex>
+              {languagesError ? (
+                <Text category="h10" status="danger" mb={16}>
+                  {t('find:load_languages_failed', {
+                    defaultValue: 'Using a default language list — could not reach the server.',
+                  })}
+                </Text>
+              ) : null}
+            </>
+          )}
+        </View>
+
+        <View ref={tourCode.ref} onLayout={tourCode.onLayout} collapsable={false}>
         <SectionHeader icon="code-outline" label={t('find:coding_your_code_label', { defaultValue: 'Your Code' })} />
         <View style={editorChromeStyles.window}>
           <EditorTitleBar label={language.name} />
@@ -577,6 +708,7 @@ const CodingInterview = memo(() => {
             autoCorrect={false}
             placeholderTextColor="#6B6B85"
           />
+        </View>
         </View>
 
         <Text category="h8" bold status="placeholder" mt={24} mb={8}>
@@ -596,14 +728,16 @@ const CodingInterview = memo(() => {
             autoCorrect={false}
           />
         </View>
-        <Button
-          children={running ? t('find:running', { defaultValue: 'Running…' }) : t('find:run', { defaultValue: 'Run' })}
-          disabled={running}
-          status="basic"
-          onPress={onRun}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="edit_full" />}
-          style={{ marginTop: 12 }}
-        />
+        <View ref={tourRun.ref} onLayout={tourRun.onLayout} collapsable={false}>
+          <Button
+            children={running ? t('find:running', { defaultValue: 'Running…' }) : t('find:run', { defaultValue: 'Run' })}
+            disabled={running}
+            status="basic"
+            onPress={onRun}
+            accessoryLeft={props => <Icon {...props} pack="assets" name="edit_full" />}
+            style={{ marginTop: 12 }}
+          />
+        </View>
         {runResult ? (
           <>
             <SectionHeader icon="terminal-outline" label={t('find:coding_output_label', { defaultValue: 'Output' })} />
@@ -638,43 +772,47 @@ const CodingInterview = memo(() => {
           </>
         ) : null}
 
-        <SectionHeader icon="checkmark-square-2-outline" label={t('find:test_cases', { defaultValue: 'Test Cases' })} />
-        {(problem?.testCases ?? codingService.TEST_CASES).map((tc, i) => {
-          const outcome = testResults?.[i];
-          return (
-            <Layout key={i} level="2" style={styles.testCaseRow}>
-              <View style={globalStyle.flexOne}>
-                <Text category="h10" status="placeholder">{t('find:coding_input_label', { defaultValue: 'Input' })}</Text>
-                <Text category="h9-s" mb={6}>{tc.input}</Text>
-                <Text category="h10" status="placeholder">{t('find:expected_output', { defaultValue: 'Expected Output' })}</Text>
-                <Text category="h9-s">{tc.expectedOutput}</Text>
-                {outcome?.actualOutput ? (
-                  <>
-                    <Text category="h10" status="placeholder" mt={6}>{t('find:actual_output', { defaultValue: 'Actual Output' })}</Text>
-                    <Text category="h9-s">{outcome.actualOutput}</Text>
-                  </>
-                ) : null}
-              </View>
-              {outcome ? (
-                <View style={[styles.testBadge, { backgroundColor: outcome.passed ? theme['color-success-500'] : theme['color-danger-500'] }]}>
-                  <Text category="h10" bold status="control">
-                    {outcome.passed ? t('find:pass_badge', { defaultValue: 'PASS' }) : t('find:fail_badge', { defaultValue: 'FAIL' })}
-                  </Text>
+        <View ref={tourTestCases.ref} onLayout={tourTestCases.onLayout} collapsable={false}>
+          <SectionHeader icon="checkmark-square-2-outline" label={t('find:test_cases', { defaultValue: 'Test Cases' })} />
+          {(problem?.testCases ?? codingService.TEST_CASES).map((tc, i) => {
+            const outcome = testResults?.[i];
+            return (
+              <Layout key={i} level="2" style={styles.testCaseRow}>
+                <View style={globalStyle.flexOne}>
+                  <Text category="h10" status="placeholder">{t('find:coding_input_label', { defaultValue: 'Input' })}</Text>
+                  <Text category="h9-s" mb={6}>{tc.input}</Text>
+                  <Text category="h10" status="placeholder">{t('find:expected_output', { defaultValue: 'Expected Output' })}</Text>
+                  <Text category="h9-s">{tc.expectedOutput}</Text>
+                  {outcome?.actualOutput ? (
+                    <>
+                      <Text category="h10" status="placeholder" mt={6}>{t('find:actual_output', { defaultValue: 'Actual Output' })}</Text>
+                      <Text category="h9-s">{outcome.actualOutput}</Text>
+                    </>
+                  ) : null}
                 </View>
-              ) : null}
-            </Layout>
-          );
-        })}
-        <CtaButton
-          children={renderCenteredLabel(
-            runningTests ? t('find:running_tests') : t('find:run_tests'),
-            {stretch: false},
-          )}
-          disabled={runningTests}
-          onPress={onRunTests}
-          accessoryLeft={props => <Icon {...props} pack="assets" name="edit_full" />}
-          style={{ marginTop: 8 }}
-        />
+                {outcome ? (
+                  <View style={[styles.testBadge, { backgroundColor: outcome.passed ? theme['color-success-500'] : theme['color-danger-500'] }]}>
+                    <Text category="h10" bold status="control">
+                      {outcome.passed ? t('find:pass_badge', { defaultValue: 'PASS' }) : t('find:fail_badge', { defaultValue: 'FAIL' })}
+                    </Text>
+                  </View>
+                ) : null}
+              </Layout>
+            );
+          })}
+        </View>
+        <View ref={tourRunTests.ref} onLayout={tourRunTests.onLayout} collapsable={false}>
+          <CtaButton
+            children={renderCenteredLabel(
+              runningTests ? t('find:running_tests') : t('find:run_tests'),
+              {stretch: false},
+            )}
+            disabled={runningTests}
+            onPress={onRunTests}
+            accessoryLeft={props => <Icon {...props} pack="assets" name="edit_full" />}
+            style={{ marginTop: 8 }}
+          />
+        </View>
         {testResults ? (
           <Layout level="2" style={styles.resultBox}>
             {testEngine === 'ai' ? <AiGradedBadge /> : null}
@@ -688,36 +826,48 @@ const CodingInterview = memo(() => {
           </Layout>
         ) : null}
 
-        <Button
-          // Product report: "since its a coding practice and not a coding
-          // interview the finish interview button should be finish
-          // practice but if its an interview then it can be finish
-          // interview" -- `durationMin` is already the exact signal this
-          // screen uses elsewhere (timer pill, "Next Problem" button) to
-          // distinguish the two entry points into this same component:
-          // it's only set when MockInterviewSetup.tsx's real timed-
-          // interview wizard launched this screen, and left unset when
-          // FindScreen's "Coding Practice" tile quick-starts it with no
-          // interview session backing it in spirit (see that tile's own
-          // onStartCodingPractice, which never collects a duration).
-          children={
-            isFinishing
-              ? t('find:finishing', { defaultValue: 'Finishing…' })
-              : durationMin
-              ? t('find:finish_interview', { defaultValue: 'Finish Interview' })
-              : t('find:finish_practice', { defaultValue: 'Finish Practice' })
-          }
-          disabled={isFinishing}
-          status="success"
-          onPress={() => onFinish()}
-          style={[globalStyle.shadowBtn, { marginTop: 24 }]}
-        />
-        <Text category="h10" status="placeholder" center mt={10}>
-          {t('find:coding_review_on_feedback_hint', {
-            defaultValue: 'Get your AI code review and full result on the feedback screen after you finish.',
-          })}
-        </Text>
+        <View ref={tourFinish.ref} onLayout={tourFinish.onLayout} collapsable={false}>
+          <Button
+            // Product report: "since its a coding practice and not a coding
+            // interview the finish interview button should be finish
+            // practice but if its an interview then it can be finish
+            // interview" -- `durationMin` is already the exact signal this
+            // screen uses elsewhere (timer pill, "Next Problem" button) to
+            // distinguish the two entry points into this same component:
+            // it's only set when MockInterviewSetup.tsx's real timed-
+            // interview wizard launched this screen, and left unset when
+            // FindScreen's "Coding Practice" tile quick-starts it with no
+            // interview session backing it in spirit (see that tile's own
+            // onStartCodingPractice, which never collects a duration).
+            children={
+              isFinishing
+                ? t('find:finishing', { defaultValue: 'Finishing…' })
+                : durationMin
+                ? t('find:finish_interview', { defaultValue: 'Finish Interview' })
+                : t('find:finish_practice', { defaultValue: 'Finish Practice' })
+            }
+            disabled={isFinishing}
+            status="success"
+            onPress={() => onFinish()}
+            style={[globalStyle.shadowBtn, { marginTop: 24 }]}
+          />
+          <Text category="h10" status="placeholder" center mt={10}>
+            {t('find:coding_review_on_feedback_hint', {
+              defaultValue: 'Get your AI code review and full result on the feedback screen after you finish.',
+            })}
+          </Text>
+        </View>
       </Content>
+      <CoachMarkTour
+        visible={showTour}
+        steps={tourSteps}
+        onClose={onCloseTour}
+        scrollRef={contentRef}
+        skipLabel={t('find:tour_skip', { defaultValue: 'Skip' }).toString()}
+        backLabel={t('find:tour_back', { defaultValue: 'Back' }).toString()}
+        nextLabel={t('find:tour_next', { defaultValue: 'Next' }).toString()}
+        doneLabel={t('find:tour_done', { defaultValue: 'Got it' }).toString()}
+      />
     </Container>
   );
 });

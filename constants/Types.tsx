@@ -26,6 +26,16 @@ export enum EKeyAsyncStorage {
   // shown once from HomeSrc.tsx) has already been dismissed. Cleared by
   // MoreSrc.tsx's "Show app tour" row so a user can replay it any time.
   appTourSeen = 'appTourSeen',
+  // Product report: "I need you to implement a guide in the coding
+  // practice so that users can know how the coding practice works because
+  // its still confusing me" — whether the one-time spotlight walkthrough
+  // (components/CoachMarkTour.tsx, shown from CodingProblemSolve.tsx and
+  // CodingInterview.tsx) has already been dismissed on either of those
+  // screens. Shared across both (rather than one flag per screen) so a
+  // user who has already seen it on one entry point into Coding Practice
+  // isn't auto-prompted again on the other — the manual help ("?") icon on
+  // both screens stays available to replay it any time regardless.
+  codingPracticeTourSeen = 'codingPracticeTourSeen',
   // Product request ("the AI career coach should be the entering point
   // anytime users open the app... the app should only take the user to
   // the homescreen the first time they are entering the app") — set the
