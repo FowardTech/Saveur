@@ -208,7 +208,7 @@
   "live_transition_1": "다음 질문으로 넘어가겠습니다.",
   "live_transition_2": "네, 다음 질문입니다.",
   "live_transition_3": "계속하겠습니다.",
-  "live_transition_4": "Moving on.",
+  "live_transition_4": "다음으로 넘어가겠습니다.",
   "live_transition_5": "계속 이어가겠습니다.",
   "live_type_answer_placeholder": "여기에 답변을 입력하세요…",
   "load_languages_failed": "서버에 연결할 수 없어 기본 언어 목록을 사용합니다.",

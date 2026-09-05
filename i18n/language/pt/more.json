@@ -55,7 +55,7 @@
   "autofill_done_body": "Revise tudo antes de enviar — o preenchimento automático pode errar.",
   "autofill_done_title": "{{count}} campos preenchidos",
   "autofill_failed_title": "Não foi possível preencher esta página automaticamente",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "Preenchendo…",
   "autofill_no_data_body": "Primeiro adicione seu currículo ou complete seu perfil no app, depois volte aqui para preencher candidaturas automaticamente.",
   "autofill_no_data_title": "Ainda não há nada para preencher",
   "autofill_no_match_body": "Não encontramos campos nesta página que correspondam às suas informações. Talvez seja necessário preenchê-los manualmente.",

@@ -55,7 +55,7 @@
   "autofill_done_body": "送信前にすべて再確認してください——自動入力は間違えることがあります。",
   "autofill_done_title": "{{count}}件のフィールドに入力しました",
   "autofill_failed_title": "このページを自動入力できませんでした",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "入力中…",
   "autofill_no_data_body": "まずアプリで履歴書を追加するかプロフィールを入力し、その後ここに戻って応募フォームを自動入力してください。",
   "autofill_no_data_title": "まだ入力できる情報がありません",
   "autofill_no_match_body": "このページにはお客様の情報と一致するフィールドが見つかりませんでした。手動で入力が必要な場合があります。",

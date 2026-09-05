@@ -55,7 +55,7 @@
   "autofill_done_body": "Überprüfe alles noch einmal, bevor du absendest — die automatische Ausfüllung kann Fehler machen.",
   "autofill_done_title": "{{count}} Felder ausgefüllt",
   "autofill_failed_title": "Diese Seite konnte nicht automatisch ausgefüllt werden",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "Wird ausgefüllt…",
   "autofill_no_data_body": "Füge zuerst deinen Lebenslauf hinzu oder vervollständige dein Profil in der App, dann komm hierher zurück, um Bewerbungen automatisch auszufüllen.",
   "autofill_no_data_title": "Noch nichts zum Ausfüllen",
   "autofill_no_match_body": "Wir konnten auf dieser Seite keine Felder finden, die zu deinen Angaben passen. Du musst sie eventuell manuell ausfüllen.",

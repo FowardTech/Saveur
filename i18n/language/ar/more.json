@@ -55,7 +55,7 @@
   "autofill_done_body": "تحقق من كل شيء قبل الإرسال — قد يخطئ الملء التلقائي.",
   "autofill_done_title": "تم تعبئة {{count}} حقول",
   "autofill_failed_title": "تعذر الملء التلقائي لهذه الصفحة",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "جارٍ التعبئة…",
   "autofill_no_data_body": "أضف سيرتك الذاتية أو أكمل ملفك الشخصي في التطبيق أولًا، ثم عد إلى هنا لملء الطلبات تلقائيًا.",
   "autofill_no_data_title": "لا يوجد شيء لملئه بعد",
   "autofill_no_match_body": "لم نتمكن من العثور على أي حقول في هذه الصفحة تطابق معلوماتك. قد تحتاج إلى ملئها يدويًا.",

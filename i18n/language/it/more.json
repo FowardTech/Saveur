@@ -55,7 +55,7 @@
   "autofill_done_body": "Ricontrolla tutto prima di inviare — la compilazione automatica può sbagliare.",
   "autofill_done_title": "{{count}} campi compilati",
   "autofill_failed_title": "Impossibile compilare automaticamente questa pagina",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "Compilazione…",
   "autofill_no_data_body": "Aggiungi prima il tuo curriculum o completa il tuo profilo nell'app, poi torna qui per compilare automaticamente le candidature.",
   "autofill_no_data_title": "Ancora niente da compilare",
   "autofill_no_match_body": "Non abbiamo trovato campi in questa pagina corrispondenti alle tue informazioni. Potrebbe essere necessario compilarli manualmente.",

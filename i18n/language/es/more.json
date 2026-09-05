@@ -55,7 +55,7 @@
   "autofill_done_body": "Revisa todo antes de enviar — el autocompletado puede cometer errores.",
   "autofill_done_title": "Se completaron {{count}} campos",
   "autofill_failed_title": "No se pudo autocompletar esta página",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "Rellenando…",
   "autofill_no_data_body": "Primero agrega tu currículum o completa tu perfil en la app, luego vuelve aquí para autocompletar solicitudes.",
   "autofill_no_data_title": "Aún no hay nada que completar",
   "autofill_no_match_body": "No encontramos campos en esta página que coincidan con tu información. Es posible que debas completarlos manualmente.",

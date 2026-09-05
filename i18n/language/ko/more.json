@@ -55,7 +55,7 @@
   "autofill_done_body": "제출 전에 모든 내용을 다시 확인하세요 — 자동 입력이 잘못될 수 있습니다.",
   "autofill_done_title": "{{count}}개 필드 입력 완료",
   "autofill_failed_title": "이 페이지를 자동 입력할 수 없습니다",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "입력 중…",
   "autofill_no_data_body": "먼저 앱에서 이력서를 추가하거나 프로필을 작성한 후, 다시 여기로 돌아와 지원서를 자동으로 입력하세요.",
   "autofill_no_data_title": "아직 입력할 내용이 없습니다",
   "autofill_no_match_body": "이 페이지에서 회원님의 정보와 일치하는 필드를 찾지 못했습니다. 직접 입력해야 할 수 있습니다.",

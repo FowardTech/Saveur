@@ -55,7 +55,7 @@
   "autofill_done_body": "提交前请仔细检查——自动填写可能会出错。",
   "autofill_done_title": "已填写 {{count}} 个字段",
   "autofill_failed_title": "无法自动填写此页面",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "填写中…",
   "autofill_no_data_body": "请先在应用中添加简历或完善你的个人资料，然后回到这里自动填写申请表。",
   "autofill_no_data_title": "暂时没有可填写的内容",
   "autofill_no_match_body": "我们在此页面上没有找到与你的信息匹配的字段，你可能需要手动填写。",

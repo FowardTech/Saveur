@@ -208,7 +208,7 @@
   "live_transition_1": "次の質問に移りましょう。",
   "live_transition_2": "はい、次の質問です。",
   "live_transition_3": "続けましょう。",
-  "live_transition_4": "Moving on.",
+  "live_transition_4": "先に進みましょう。",
   "live_transition_5": "このまま続けましょう。",
   "live_type_answer_placeholder": "ここに回答を入力してください…",
   "load_languages_failed": "デフォルトの言語リストを使用しています — サーバーに接続できませんでした。",

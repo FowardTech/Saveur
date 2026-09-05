@@ -55,7 +55,7 @@
   "autofill_done_body": "Vérifiez bien tout avant d'envoyer — le remplissage automatique peut se tromper.",
   "autofill_done_title": "{{count}} champs remplis",
   "autofill_failed_title": "Impossible de remplir automatiquement cette page",
-  "autofill_filling": "Filling…",
+  "autofill_filling": "Remplissage…",
   "autofill_no_data_body": "Ajoutez d'abord votre CV ou complétez votre profil dans l'application, puis revenez ici pour remplir automatiquement vos candidatures.",
   "autofill_no_data_title": "Rien à remplir pour l'instant",
   "autofill_no_match_body": "Nous n'avons trouvé aucun champ sur cette page correspondant à vos informations. Vous devrez peut-être les remplir manuellement.",
