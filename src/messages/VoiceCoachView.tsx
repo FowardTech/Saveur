@@ -163,7 +163,16 @@ const SILENCE_DEBOUNCE_MS = 1000;
 // applies ONLY to the turn that immediately follows an interrupt (see
 // isBargeInTurnRef below) -- a normal turn (the coach finished speaking on
 // its own) keeps the quick 1s response time from the fix above.
-const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 10000;
+// BUG FIX (product report: "The time the AI waits to respond to the
+// barge-in is too long i think we set it to 10s right? Lets change it
+// back to 6s") -- was bumped from 5s to 10s at some point after the
+// original "like 5 secs" ask above and ended up overshooting it. 6000ms
+// as explicitly requested. Note this constant only affects how long the
+// app waits for the user to keep talking before treating their turn as
+// over and sending it -- once a turn is actually sent, the "Thinking…"
+// phase's own length is real network+LLM round-trip time in
+// coachService.sendVoiceMessage() below, not a timer this file controls.
+const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 6000;
 
 // BUG FIX (product report: "I waited up to like 5 minutes and it still did
 // not capture my voice") — duplexVoiceService.start() (a native-module
@@ -380,6 +389,23 @@ const VoiceCoachView = memo(({
     }),
   );
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  // BUG FIX (product report: "The 'Are you still there' text should be in
+  // blue not red") -- errorMsg is shared by genuine failures (mic
+  // wouldn't start, TTS playback failed, etc.) AND the gentle "Still
+  // there? I'm not picking up anything…" nudge below, which used to
+  // render in the same danger/red color as a real error even though it
+  // isn't one -- it's just a check-in, not something gone wrong. Tracks
+  // which kind the current errorMsg is so the render below can color each
+  // one appropriately instead of treating every message as an error.
+  const [isNudgeMsg, setIsNudgeMsg] = React.useState(false);
+  const showError = React.useCallback((msg: string | null) => {
+    setIsNudgeMsg(false);
+    setErrorMsg(msg);
+  }, []);
+  const showNudge = React.useCallback((msg: string) => {
+    setIsNudgeMsg(true);
+    setErrorMsg(msg);
+  }, []);
 
   const phaseRef = React.useRef<Phase>('idle');
   React.useEffect(() => {
@@ -560,7 +586,7 @@ const VoiceCoachView = memo(({
       }),
       duplexVoiceService.addErrorListener(e => {
         if (__DEV__) console.warn('[VoiceCoachView] onError', JSON.stringify(e));
-        if (isActiveRef.current) setErrorMsg(e.message);
+        if (isActiveRef.current) showError(e.message);
       }),
       // Android-only (see speechStartedPulse's own comment) -- a genuine
       // no-op on iOS, guarded inside addSpeechStartedListener itself (see
@@ -587,13 +613,13 @@ const VoiceCoachView = memo(({
   React.useEffect(() => {
     if (duplexSupported) return;
     if (stt.error && isActiveRef.current) {
-      setErrorMsg(stt.error);
+      showError(stt.error);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stt.error, duplexSupported]);
 
   const startListening = React.useCallback(async () => {
-    setErrorMsg(null);
+    showError(null);
     if (duplexSupported) {
       // The engine + recognition are already running continuously
       // (started once at mount / on foreground-return — see the focus and
@@ -607,7 +633,7 @@ const VoiceCoachView = memo(({
     if (ok) {
       setPhase('listening');
     } else {
-      setErrorMsg(
+      showError(
         stt.error ??
           i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
       );
@@ -633,7 +659,7 @@ const VoiceCoachView = memo(({
     const myToken = turnTokenRef.current;
     duplexVoiceService.speakWithFallback(text).catch(() => {
       if (myToken === turnTokenRef.current && isActiveRef.current) {
-        setErrorMsg(
+        showError(
           i18n.t('message:voice_speak_failed', {
             defaultValue: "Couldn't play that out loud — the text reply above is still there.",
           }),
@@ -706,7 +732,7 @@ const VoiceCoachView = memo(({
         replyText = i18n.t('message:voice_retry_line', {
           defaultValue: "Sorry, I didn't catch that — could you say it again?",
         });
-        setErrorMsg(e?.message ?? null);
+        showError(e?.message ?? null);
       }
       if (suggestedAction) {
         // Was a per-action hand-written full sentence (4 of them, hardcoded
@@ -752,7 +778,7 @@ const VoiceCoachView = memo(({
         // if it's reported again) instead of it just looking broken.
         spokeFailed = true;
         if (isActiveRef.current) {
-          setErrorMsg(
+          showError(
             i18n.t('message:voice_speak_failed', {
               defaultValue: "Couldn't play that out loud — the text reply above is still there.",
             }),
@@ -817,7 +843,7 @@ const VoiceCoachView = memo(({
     if (phase !== 'listening') return;
     const timer = setTimeout(() => {
       if (phaseRef.current === 'listening' && !transcript.trim()) {
-        setErrorMsg(
+        showNudge(
           i18n.t('message:voice_no_speech_nudge', {
             defaultValue: "Still there? I'm not picking up anything — try tapping the orb, or check your mic.",
           }),
@@ -1031,7 +1057,7 @@ const VoiceCoachView = memo(({
         } catch (e: any) {
           if (__DEV__) console.warn('[VoiceCoachView] duplexVoiceService.start() rejected/timed out', e?.message ?? e);
           if (isActiveRef.current) {
-            setErrorMsg(
+            showError(
               e?.message ??
                 i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
             );
@@ -1116,7 +1142,7 @@ const VoiceCoachView = memo(({
               // reasoning on why this is now surfaced instead of swallowed.
               introSpeakFailed = true;
               if (isActiveRef.current) {
-                setErrorMsg(
+                showError(
                   i18n.t('message:voice_speak_failed', {
                     defaultValue: "Couldn't play that out loud — the text reply above is still there.",
                   }),
@@ -1239,7 +1265,7 @@ const VoiceCoachView = memo(({
                 if (isActiveRef.current && activeRef.current) startListening();
               } catch (e: any) {
                 if (isActiveRef.current) {
-                  setErrorMsg(
+                  showError(
                     e?.message ??
                       i18n.t('message:voice_mic_error', { defaultValue: 'Could not start the microphone.' }),
                   );
@@ -1435,19 +1461,35 @@ const VoiceCoachView = memo(({
         {statusLabel}
       </Text>
 
+      {/* BUG FIX (product report: "the users transcript in the AI career
+          coach voice part should display completely... the container is
+          cutting off some part of the user's words") -- numberOfLines={4}
+          + ellipsizeMode="tail" silently truncated (with a trailing "…")
+          any transcript or coach reply longer than 4 lines at this width.
+          Removed both so the full text always renders; the surrounding
+          `body` View has no fixed height (flex:1, centered), so a longer
+          transcript just makes this Text taller instead of overflowing or
+          getting clipped. */}
       <Text
         category="h9-s"
         center
         mt={10}
         maxWidth={300}
-        numberOfLines={4}
-        ellipsizeMode="tail"
         style={{ color: theme['text-hint-color'] }}>
         {displayLine}
       </Text>
 
       {errorMsg ? (
-        <Text category="h10" center mt={16} maxWidth={280} style={{ color: theme['color-danger-500'] }}>
+        // BUG FIX (product report: "The 'Are you still there' text should
+        // be in blue not red") -- see isNudgeMsg's own comment above: a
+        // real error still reads as danger-red, but the plain check-in
+        // nudge now uses the app's normal primary blue instead.
+        <Text
+          category="h10"
+          center
+          mt={16}
+          maxWidth={280}
+          style={{ color: isNudgeMsg ? theme['color-primary-500'] : theme['color-danger-500'] }}>
           {errorMsg}
         </Text>
       ) : null}
