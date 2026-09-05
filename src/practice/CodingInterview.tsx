@@ -103,7 +103,7 @@ const CodingInterview = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['find', 'common']);
 
-  const { sessionId, interviewType, durationMin } = route.params ?? {};
+  const { sessionId, interviewType, durationMin, codingDifficulty } = route.params ?? {};
 
   const [languages, setLanguages] = React.useState<CodingLanguage[]>(codingService.DEFAULT_LANGUAGES);
   const [languagesLoading, setLanguagesLoading] = React.useState(true);
@@ -197,12 +197,13 @@ const CodingInterview = memo(() => {
   const loadProblem = React.useCallback(async () => {
     setProblemLoading(true);
     try {
-      const p = await codingService.getProblem(sessionId);
+      const p = await codingService.getProblem(sessionId, undefined, codingDifficulty);
       setProblem(p);
       setSeenSlugs([p.slug]);
     } finally {
       setProblemLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionId]);
 
   React.useEffect(() => {
@@ -220,7 +221,7 @@ const CodingInterview = memo(() => {
     if (isLoadingNextProblem) return;
     setIsLoadingNextProblem(true);
     try {
-      const next = await codingService.getNextProblem(seenSlugs);
+      const next = await codingService.getNextProblem(seenSlugs, codingDifficulty);
       // Bank the problem being left behind — whatever code/test outcome it
       // has right now is its FINAL state as far as this session's overall
       // score is concerned (see priorAttempts' own comment).
@@ -685,7 +686,24 @@ const CodingInterview = memo(() => {
         ) : null}
 
         <Button
-          children={isFinishing ? t('find:finishing', { defaultValue: 'Finishing…' }) : t('find:finish_interview', { defaultValue: 'Finish Interview' })}
+          // Product report: "since its a coding practice and not a coding
+          // interview the finish interview button should be finish
+          // practice but if its an interview then it can be finish
+          // interview" -- `durationMin` is already the exact signal this
+          // screen uses elsewhere (timer pill, "Next Problem" button) to
+          // distinguish the two entry points into this same component:
+          // it's only set when MockInterviewSetup.tsx's real timed-
+          // interview wizard launched this screen, and left unset when
+          // FindScreen's "Coding Practice" tile quick-starts it with no
+          // interview session backing it in spirit (see that tile's own
+          // onStartCodingPractice, which never collects a duration).
+          children={
+            isFinishing
+              ? t('find:finishing', { defaultValue: 'Finishing…' })
+              : durationMin
+              ? t('find:finish_interview', { defaultValue: 'Finish Interview' })
+              : t('find:finish_practice', { defaultValue: 'Finish Practice' })
+          }
           disabled={isFinishing}
           status="success"
           onPress={() => onFinish()}

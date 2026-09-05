@@ -30,20 +30,31 @@ import {CodingProblemSummary, CodingStats} from 'services/codingService';
 // wrapping it). CodingInterview.tsx / the timed mock-interview flow is
 // completely unchanged — this is an additional on-ramp, not a
 // replacement.
+// Product request: "make the coding practice into beginner, intermediate
+// and Advance[d]" -- these were "easy"/"medium"/"hard" (both the wire
+// values from Saveur-Backend's coding_problems.py and the display labels).
+// Renamed end-to-end to match this app's existing Difficulty_Enum casing
+// used everywhere else (constants/Types.tsx, MockInterviewSetup.tsx) --
+// see coding_problems.py's own comment for the backend side of this.
 const DIFFICULTY_COLORS: Record<string, string> = {
-  easy: '#10B981',
-  medium: '#F59E0B',
-  hard: '#EF4444',
+  beginner: '#10B981',
+  intermediate: '#F59E0B',
+  advanced: '#EF4444',
 };
 
 function difficultyLabel(t: (k: string, o?: any) => any, difficulty: string): string {
+  // Reuses the SAME find:difficulty_beginner/intermediate/advanced keys
+  // MockInterviewSetup.tsx's Difficulty_Enum picker already uses (already
+  // translated in all 12 locales) rather than adding a near-duplicate
+  // coding_difficulty_* set -- one difficulty vocabulary, one place each
+  // language's wording lives.
   switch (difficulty) {
-    case 'easy':
-      return t('find:coding_difficulty_easy', {defaultValue: 'Easy'});
-    case 'medium':
-      return t('find:coding_difficulty_medium', {defaultValue: 'Medium'});
-    case 'hard':
-      return t('find:coding_difficulty_hard', {defaultValue: 'Hard'});
+    case 'beginner':
+      return t('find:difficulty_beginner', {defaultValue: 'Beginner'});
+    case 'intermediate':
+      return t('find:difficulty_intermediate', {defaultValue: 'Intermediate'});
+    case 'advanced':
+      return t('find:difficulty_advanced', {defaultValue: 'Advanced'});
     default:
       return difficulty;
   }
@@ -202,7 +213,7 @@ const CodingPracticeHub = memo(() => {
         ) : null}
 
         <Flex justify="flex-start" wrap mb={8}>
-          {[null, 'easy', 'medium', 'hard'].map(d => {
+          {[null, 'beginner', 'intermediate', 'advanced'].map(d => {
             const active = difficultyFilter === d;
             return (
               <TouchableOpacity

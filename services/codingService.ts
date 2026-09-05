@@ -204,6 +204,11 @@ interface ProblemWire {
 export async function getProblem(
   sessionId?: string | null,
   slug?: string | null,
+  // Product request: "make the coding practice into beginner, intermediate
+  // and Advance[d]" -- only meaningful on the session_id path (ignored
+  // server-side when `slug` is given, an already-unambiguous pick). See
+  // Saveur-Backend's coding_problems.py _difficulty_pool.
+  difficulty?: string | null,
 ): Promise<CodingProblem> {
   try {
     // Product decision: coding problem statements SHOULD be translated too
@@ -218,6 +223,7 @@ export async function getProblem(
     const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
       params: {
         ...(slug ? {slug} : sessionId ? {session_id: sessionId} : undefined),
+        ...(difficulty ? {difficulty} : undefined),
         responseLanguage: currentLanguage(),
       },
     });
@@ -253,10 +259,15 @@ export async function getProblem(
  * transient network hiccup degrades to "still get a new problem" rather
  * than leaving the button stuck.
  */
-export async function getNextProblem(excludeSlugs: string[]): Promise<CodingProblem> {
+export async function getNextProblem(excludeSlugs: string[], difficulty?: string | null): Promise<CodingProblem> {
   try {
     const {data} = await apiClient.get<ProblemWire>('/api/v1/coding/problem', {
-      params: {next: 1, exclude: excludeSlugs.join(','), responseLanguage: currentLanguage()},
+      params: {
+        next: 1,
+        exclude: excludeSlugs.join(','),
+        ...(difficulty ? {difficulty} : undefined),
+        responseLanguage: currentLanguage(),
+      },
     });
     const testCases = (data.test_cases ?? []).map(c => ({
       input: c.stdin ?? '',
@@ -273,7 +284,7 @@ export async function getNextProblem(excludeSlugs: string[]): Promise<CodingProb
       starterCode: data.starter_code ?? {},
     };
   } catch {
-    return getProblem(undefined, undefined);
+    return getProblem(undefined, undefined, difficulty);
   }
 }
 

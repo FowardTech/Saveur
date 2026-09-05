@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Image, ImageStyle, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
+import { Image, ImageStyle, StyleSheet, View, TouchableOpacity, Alert, Modal } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -7,6 +7,7 @@ import {
   useTheme,
   Icon,
   Spinner,
+  Layout,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -18,12 +19,12 @@ import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
-import { DATA_INTERVIEW_TYPES } from 'constants/Data';
+import { DATA_INTERVIEW_TYPES, DATA_DIFFICULTY } from 'constants/Data';
 import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
 import * as configService from 'services/configService';
 import * as interviewService from 'services/interviewService';
 import { getSessionEntitlement, hasAddon, ADDON_CODES } from 'services/entitlementsService';
-import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
+import { getInterviewTypeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 import { Images } from 'assets/images';
 
@@ -63,7 +64,17 @@ const FindScreen = memo(() => {
   // instead of a silent no-op or raw backend error, and guards against
   // double-taps with its own loading state.
   const [isStartingCoding, setIsStartingCoding] = React.useState(false);
-  const onStartCodingPractice = async () => {
+  // Product request: "make the coding practice into beginner, intermediate
+  // and Advance[d]" -- this shortcut used to always hardcode
+  // Difficulty_Enum.Intermediate with no way to pick, unlike
+  // MockInterviewSetup.tsx's full wizard (which already asks for every
+  // interview type, Coding included, but was never actually threaded
+  // through to problem selection either -- see that screen's onStart).
+  // Tapping the tile now opens this small picker first instead of starting
+  // immediately; the actual session-start logic below is unchanged other
+  // than accepting the chosen tier instead of assuming one.
+  const [showCodingDifficultyPicker, setShowCodingDifficultyPicker] = React.useState(false);
+  const onStartCodingPractice = async (difficulty: Difficulty_Enum) => {
     if (isStartingCoding) return;
     setIsStartingCoding(true);
     try {
@@ -104,10 +115,14 @@ const FindScreen = memo(() => {
       const { sessionId } = await interviewService.startSession({
         interviewType: Interview_Type_Enum.Coding,
         mode: Practice_Mode_Enum.Text,
-        difficulty: Difficulty_Enum.Intermediate,
+        difficulty,
         timed: true,
       });
-      navigate('CodingInterview', { sessionId, interviewType: Interview_Type_Enum.Coding });
+      navigate('CodingInterview', {
+        sessionId,
+        interviewType: Interview_Type_Enum.Coding,
+        codingDifficulty: difficulty.toLowerCase(),
+      });
     } catch (e: any) {
       // See MockInterviewSetup.tsx's identical branch for why llm_unavailable
       // gets its own copy instead of just showing e.message.
@@ -220,7 +235,7 @@ const FindScreen = memo(() => {
       ? [{
           title: t('more:coding_practice', { defaultValue: 'Coding Practice' }),
           icon: 'code-outline',
-          onPress: onStartCodingPractice,
+          onPress: () => setShowCodingDifficultyPicker(true),
           loading: isStartingCoding,
           tint: { bg: 'rgba(139, 92, 246, 0.08)', fg: '#8B5CF6' },
         }]
@@ -440,6 +455,49 @@ const FindScreen = memo(() => {
           })}
         </View>
       </Content>
+
+      {/* Product request: "make the coding practice into beginner,
+          intermediate and Advance[d]" -- same Modal + Layout bottom-sheet
+          pattern the rest of the app uses for a quick pick (see e.g.
+          NetworkingAssistant.tsx's add-contact sheet), no KeyboardAvoidingView
+          needed since there's no text entry here, just 3 pills. */}
+      <Modal
+        visible={showCodingDifficultyPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowCodingDifficultyPicker(false)}>
+        <TouchableOpacity
+          activeOpacity={1}
+          style={styles.difficultyModalOverlay}
+          onPress={() => setShowCodingDifficultyPicker(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <Layout level="1" style={styles.difficultyModalSheet}>
+              <Text category="h8" bold mb={4}>
+                {t('find:coding_pick_difficulty_title', { defaultValue: 'Choose a difficulty' })}
+              </Text>
+              <Text category="h9-s" status="placeholder" mb={20}>
+                {t('find:coding_pick_difficulty_body', {
+                  defaultValue: 'Pick the level you want to practice at.',
+                })}
+              </Text>
+              {DATA_DIFFICULTY.map((item, i) => (
+                <TouchableOpacity
+                  key={i}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setShowCodingDifficultyPicker(false);
+                    onStartCodingPractice(item);
+                  }}
+                  style={[styles.difficultyModalPill, { borderColor: theme['background-basic-color-3'] }]}>
+                  <Text category="h9" bold>
+                    {getDifficultyLabel(item, t)}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </Layout>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </Container>
   );
 });
@@ -565,5 +623,25 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-2',
     padding: 16,
     marginBottom: 16,
+  },
+  // Coding Practice difficulty picker (see the Modal in the JSX above) --
+  // same bottom-sheet shape/overlay as NetworkingAssistant.tsx's add-contact
+  // sheet, minus the KeyboardAvoidingView (no text entry here).
+  difficultyModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  difficultyModalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+  },
+  difficultyModalPill: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 10,
   },
 });

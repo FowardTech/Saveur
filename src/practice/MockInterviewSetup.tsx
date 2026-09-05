@@ -402,7 +402,20 @@ const MockInterviewSetup = memo(() => {
         persona,
       });
       if (interviewType === Interview_Type_Enum.Coding) {
-        navigate('CodingInterview', { sessionId, interviewType, durationMin });
+        // BUG FIX (product request: "make the coding practice into
+        // beginner, intermediate and Advance[d]") -- the difficulty picker
+        // above (DATA_DIFFICULTY) was already shown and collected for
+        // Coding same as every other interview type, it just never made it
+        // into CodingInterview's own problem selection -- Difficulty_Enum's
+        // own values ('Beginner'/'Intermediate'/'Advanced') lowercase to
+        // exactly the wire values coding_problems.py's difficulty field
+        // uses, so no separate mapping table is needed here.
+        navigate('CodingInterview', {
+          sessionId,
+          interviewType,
+          durationMin,
+          codingDifficulty: difficulty.toLowerCase(),
+        });
       } else {
         // Product report: "the system design practice is different from the
         // system design interview so you need to separate that" / "the AI

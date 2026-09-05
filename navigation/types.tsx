@@ -105,6 +105,16 @@ export type RootStackParamList = {
     // session when it runs out, same idea as LiveInterviewSession's own
     // hard time limit.
     durationMin?: number;
+    // Product request: "make the coding practice into beginner,
+    // intermediate and Advance[d]" — the tier the user picked before
+    // starting (FindScreen's "Coding Practice" quick-start now asks via
+    // its own picker; MockInterviewSetup's Coding branch reuses the
+    // Difficulty_Enum step it already collects for every interview type
+    // instead of silently discarding it for this one). Threaded into every
+    // getProblem/getNextProblem call this screen makes so "Next Problem"
+    // stays within the chosen tier. Optional/undefined only degrades to
+    // "no filter, any difficulty" — never a hard requirement.
+    codingDifficulty?: string;
   };
   // Free-practice Coding Practice hub (product follow-up: "add more
   // features to the coding tool so that its worth the amount its paid
