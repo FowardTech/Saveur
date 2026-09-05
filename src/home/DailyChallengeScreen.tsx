@@ -100,7 +100,7 @@ const DailyChallengeScreen = memo(() => {
         title={t('home:daily_challenge_title', { defaultValue: "Today's Surprise Challenge" })}
         accessoryLeft={<NavigationAction />}
       />
-      <Content padder>
+      <Content padder avoidKeyboard>
         {isLoading ? (
           <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : loadError ? (

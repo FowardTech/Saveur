@@ -164,7 +164,7 @@ const CareerDna = memo(() => {
         title={t('more:career_dna', { defaultValue: 'Career DNA' })}
         accessoryLeft={<NavigationAction />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {/* Product request: "some features in the app users don't know
             what they are for... supposed to have a small banner card
             explaining what they are... a subtle light blue banner" —

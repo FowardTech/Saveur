@@ -346,7 +346,7 @@ const ApplicationDetails = memo(() => {
         mb={8}>
         {getApplicationStageLabel(stage, t)}
       </Text>
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Flex justify="flex-start" itemsCenter mb={32}>
           <CompanyLogoAvatar
             logoUrl={application.companyLogoUrl}

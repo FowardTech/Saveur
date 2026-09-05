@@ -810,7 +810,7 @@ const Subscription = memo(() => {
         title={t('more:subscription', { defaultValue: 'Subscription' })}
         accessoryLeft={fromOnboarding ? undefined : <NavigationAction />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h9-s" status="placeholder" mb={20}>
           {fromOnboarding
             ? t('more:subscription_onboarding_description', {

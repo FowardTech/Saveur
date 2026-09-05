@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { ActivityIndicator, Alert, Linking, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Linking, Platform, StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   TopNavigationAction,
@@ -1632,7 +1632,14 @@ const LiveInterviewSession = memo(() => {
             : undefined
         }
       />
-      <View style={styles.body}>
+      {/* BUG FIX (product report: "the input field is covered by the keypad
+          when typing. Making what the user is typing not visible") -- this
+          screen had no keyboard-avoidance wrapper of any kind, unlike its
+          sibling src/practice/SystemDesignWhiteboard.tsx (same
+          KeyboardAvoidingView pattern, cited there as the reference other
+          screens copy). Only the text-mode branch below has a TextInput;
+          the voice-mode orb branch renders no input and is unaffected. */}
+      <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {isTextMode ? (
           <View style={styles.textModeWrap}>
             {company ? (
@@ -1768,7 +1775,7 @@ const LiveInterviewSession = memo(() => {
             ) : null}
           </>
         )}
-      </View>
+      </KeyboardAvoidingView>
 
       <View style={styles.footer}>
         <Text category="h9" center status="placeholder" mb={isUploadingVideo ? 4 : 20}>

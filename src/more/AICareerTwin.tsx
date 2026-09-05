@@ -113,7 +113,7 @@ const AICareerTwin = memo(() => {
         title={t('more:ai_career_twin', { defaultValue: 'AI Career Twin' }).toString()}
         accessoryLeft={<NavigationAction />}
       />
-      <Content padder contentContainerStyle={styles.content}>
+      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <InfoBox icon="person-outline" variant="info" style={{ marginBottom: 16 }}>
           {t('more:ai_career_twin_description', {
             defaultValue: 'Your aggregated profile from every resume you’ve built or uploaded — ask it anything about your own background.',
