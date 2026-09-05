@@ -239,7 +239,18 @@ const CodingProblemSolve = memo(() => {
   const onGetReview = async () => {
     if (!problem) return;
     try {
-      const review = await codingService.getCodeReview(code, language.id, `${problem.title}\n\n${problem.description}`);
+      // BUG FIX (product report: "the AI review did not tell me that my
+      // code was incomplete... even when truly i did not get it
+      // correctly") -- ground the review in whatever real Run Tests
+      // result is already sitting in state, if any, so it can actually
+      // say "this doesn't pass" instead of only ever commenting on style.
+      const review = await codingService.getCodeReview(
+        code,
+        language.id,
+        `${problem.title}\n\n${problem.description}`,
+        testResults ? testResults.filter(r => r.passed).length : undefined,
+        testResults ? testResults.length : undefined,
+      );
       Alert.alert(
         t('find:coding_review_title', {defaultValue: 'AI Code Review'}),
         [review.complexityNote, ...review.feedback].filter(Boolean).join('\n\n'),

@@ -101,7 +101,19 @@ const InterviewFeedback = memo(() => {
     if (!codingResult || isReviewingCode) return;
     setIsReviewingCode(true);
     try {
-      const result = await codingService.getCodeReview(codingResult.code, codingResult.language, codingResult.problemStatement);
+      // BUG FIX (product report: "the AI review did not tell me that my
+      // code was incomplete... even when truly i did not get it
+      // correctly") -- codingResult already carries the real Run Tests
+      // outcome from CodingInterview.tsx; ground the review in it instead
+      // of leaving the backend to comment on style with zero idea whether
+      // the code actually works.
+      const result = await codingService.getCodeReview(
+        codingResult.code,
+        codingResult.language,
+        codingResult.problemStatement,
+        codingResult.testsPassed,
+        codingResult.testsTotal,
+      );
       setCodeReview(result);
     } catch (e: any) {
       Alert.alert(
@@ -173,6 +185,14 @@ const InterviewFeedback = memo(() => {
   // job as still in progress, instead of treating the first 0-score
   // response as final.
   const [isScoringPending, setIsScoringPending] = React.useState(false);
+  // BUG FIX (product report: "when i click finish interview button in the
+  // coding practice, the AI review did not tell me that my code was
+  // incomplete... even when truly i did not get it correctly") -- the
+  // backend already generates a real, test-grounded written summary for
+  // coding sessions (feedback_job.py's generate_coding(), fed the actual
+  // pass/fail counts), it just never made it into this screen at all. See
+  // the isNonQaType branch below for where this is actually rendered.
+  const [aiSummary, setAiSummary] = React.useState<string | null>(null);
   // "Share to a Saveur user" (product request item) — additive to whatever
   // external sharing this screen may gain later, not a replacement.
   const [isShareUserModalVisible, setIsShareUserModalVisible] = React.useState(false);
@@ -236,6 +256,11 @@ const InterviewFeedback = memo(() => {
     setStarBreakdown(prev =>
       !pending || result.starBreakdown.some(s => s.score > 0) ? result.starBreakdown : prev,
     );
+    // A real summary is never "worse" than what's already shown — unlike
+    // the numeric scores above, there's no zeroed/partial in-flight shape
+    // to guard against, so a truthy value from any poll tick (pending or
+    // not) is always safe to apply.
+    if (result.summary) setAiSummary(result.summary);
   }, []);
 
   const fetchFeedback = React.useCallback(async () => {
@@ -472,19 +497,45 @@ const InterviewFeedback = memo(() => {
           />
         ) : null}
         <Content padder contentContainerStyle={styles.content}>
-          <Flex center itemsCenter justify="center" vertical mb={24}>
-            <View style={[styles.doneBadge, { backgroundColor: theme['color-success-transparent-200'] }]}>
-              <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon28, { tintColor: theme['color-success-500'] }]} />
-            </View>
-            <Text category="h6" bold mt={16} center>
-              {t('find:coding_session_complete_title', { defaultValue: 'Session complete' })}
-            </Text>
-            {interviewType ? (
-              <Text category="h9" status="placeholder" mt={4} center>
-                {getInterviewTypeLabel(interviewType, t)}
-              </Text>
-            ) : null}
-          </Flex>
+          {/* BUG FIX (product report: "when i click finish interview button
+              in the coding practice, the AI review did not tell me that my
+              code was incomplete or tell me that i did not solve the
+              problem even when truly i did not get it correctly") -- this
+              badge/title used to be an unconditional green checkmark +
+              "Session complete" no matter what the code actually did,
+              which itself read as "you succeeded" regardless of outcome.
+              Now reflects the real result whenever one exists (tests were
+              run): a full pass keeps the green success badge, anything
+              less shows a neutral/warning badge instead. Falls back to the
+              old neutral "complete" framing only when no tests were ever
+              run at all — there's genuinely nothing to grade in that case,
+              so it shouldn't claim success OR failure. */}
+          {(() => {
+            const hasTestSignal = !!codingResult && (codingResult.testsTotal ?? 0) > 0;
+            const allPassed = hasTestSignal && codingResult!.testsPassed === codingResult!.testsTotal;
+            const badgeStatus = !hasTestSignal ? 'basic' : allPassed ? 'success' : 'warning';
+            const badgeIcon = !hasTestSignal ? 'checkmark-circle-2-outline' : allPassed ? 'checkmark-circle-2-outline' : 'alert-circle-outline';
+            const titleKey = !hasTestSignal
+              ? { key: 'find:coding_session_complete_title', defaultValue: 'Session complete' }
+              : allPassed
+              ? { key: 'find:coding_session_solved_title', defaultValue: 'Nice work — all tests passed' }
+              : { key: 'find:coding_session_not_solved_title', defaultValue: "Not quite there yet" };
+            return (
+              <Flex center itemsCenter justify="center" vertical mb={24}>
+                <View style={[styles.doneBadge, { backgroundColor: theme[`color-${badgeStatus}-transparent-200`] }]}>
+                  <Icon pack="eva" name={badgeIcon} style={[globalStyle.icon28, { tintColor: theme[`color-${badgeStatus}-500`] }]} />
+                </View>
+                <Text category="h6" bold mt={16} center>
+                  {t(titleKey.key, { defaultValue: titleKey.defaultValue })}
+                </Text>
+                {interviewType ? (
+                  <Text category="h9" status="placeholder" mt={4} center>
+                    {getInterviewTypeLabel(interviewType, t)}
+                  </Text>
+                ) : null}
+              </Flex>
+            );
+          })()}
 
           {codingResult && (codingResult.testsTotal ?? 0) > 0 ? (
             <Layout level="2" style={styles.codingSummaryCard}>
@@ -500,6 +551,33 @@ const InterviewFeedback = memo(() => {
               </Text>
             </Layout>
           ) : null}
+
+          {/* BUG FIX, same product report as above -- this is the actual
+              missing piece: a real, test-grounded written assessment
+              (Saveur-Backend's feedback_job.py generate_coding(), which IS
+              told the real pass/fail counts and explicitly instructed to
+              cover correctness first) existed on the backend the whole
+              time but was never read or shown here. Renders as soon as
+              it's ready; a small "still reviewing" state covers the gap
+              right after Finish while the backend LLM call is in flight
+              (usually a few seconds, not the ~60s scoring-ring poll this
+              screen's Q&A layout deals with for STAR/skill scores). */}
+          <Layout level="2" style={styles.codingSummaryCard}>
+            <Text category="h8" bold mb={8}>
+              {t('find:coding_ai_summary_title', { defaultValue: 'AI Summary' })}
+            </Text>
+            {aiSummary ? (
+              <Text category="h9-s">{aiSummary}</Text>
+            ) : isLoading || isScoringPending ? (
+              <Text category="h9-s" status="placeholder">
+                {t('find:coding_ai_summary_pending', { defaultValue: 'Reviewing your submission…' })}
+              </Text>
+            ) : (
+              <Text category="h9-s" status="placeholder">
+                {t('find:coding_ai_summary_unavailable', { defaultValue: "Couldn't generate a summary for this session." })}
+              </Text>
+            )}
+          </Layout>
 
           {/* Coding-only — System Design's own AI review already lives on
               the whiteboard practice screen itself (product report: "The AI

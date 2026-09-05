@@ -99,6 +99,16 @@ export interface FeedbackReport {
   // lands before the job finishes (e.g. 'pending' | 'ready') — InterviewFeedback
   // doesn't currently branch on this, but it's surfaced for future use.
   status?: string;
+  // BUG FIX (product report: "when i click finish interview button in the
+  // coding practice, the AI review did not tell me that my code was
+  // incomplete... even when truly i did not get it correctly") -- the
+  // backend's Coding-session feedback (Saveur-Backend's feedback_job.py
+  // generate_coding()) already writes a real, test-grounded written
+  // summary here (fb.summary), it was just never read off the wire at all
+  // -- this field existed in every GET /feedback/session/{id} response the
+  // whole time. See InterviewFeedback.tsx's isNonQaType branch for where
+  // it's actually shown now.
+  summary?: string;
 }
 
 interface ScoresWire {
@@ -144,6 +154,7 @@ interface FeedbackWire extends ScoresWire {
   star?: StarWire;
   star_breakdown?: StarBreakdownItemWire[];
   starBreakdown?: StarBreakdownItemWire[];
+  summary?: string;
   // A few plausible wrapper shapes seen from other endpoints in this app
   // (e.g. `{data: {...}}` / `{result: {...}}`) — checked in fromFeedbackWire
   // below before falling back to reading `wire` directly, same defensive
@@ -223,7 +234,7 @@ function fromFeedbackWire(rawWire: FeedbackWire): FeedbackReport {
     wire.overallScore ??
     Math.round(skillScores.reduce((sum, s) => sum + s.score, 0) / skillScores.length);
 
-  return {overallScore, skillScores, starBreakdown, status: wire.status};
+  return {overallScore, skillScores, starBreakdown, status: wire.status, summary: wire.summary};
 }
 
 /**

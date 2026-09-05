@@ -532,13 +532,34 @@ export async function getCodeReview(
   code: string,
   language: string,
   problem: string,
+  // BUG FIX (product report: "the AI review did not tell me that my code
+  // was incomplete or tell me that i did not solve the problem even when
+  // truly i did not get it correctly") -- this endpoint used to receive
+  // ONLY {language, code, problem}, nothing about whether the code was
+  // ever actually run against a real test case. Its prompt could
+  // therefore never say "you didn't solve this" -- it had no correctness
+  // signal to say it FROM. Both call sites (CodingProblemSolve.tsx's
+  // "Get AI Code Review" and InterviewFeedback.tsx's, after a coding
+  // session) now pass along whatever real Run Tests result they already
+  // have in local state, if any. `undefined` (never ran tests) is a
+  // real, meaningful third state here, not just "assume it's fine" --
+  // see the backend prompt for how it's handled.
+  testsPassed?: number,
+  testsTotal?: number,
 ): Promise<CodeReviewResult> {
   const {data} = await apiClient.post<{
     complexity_note?: string;
     complexityNote?: string;
     feedback?: string[];
     suggestions?: string[];
-  }>('/api/v1/coding/review', {language, code, problem, responseLanguage: currentLanguage()});
+  }>('/api/v1/coding/review', {
+    language,
+    code,
+    problem,
+    testsPassed,
+    testsTotal,
+    responseLanguage: currentLanguage(),
+  });
   return {
     complexityNote: data.complexity_note ?? data.complexityNote ?? '',
     feedback: data.feedback ?? data.suggestions ?? [],
