@@ -69,14 +69,25 @@ const NavigationAction = memo(
   }: NavigationActionProps) => {
     const themes = useTheme();
 
-    const {goBack} = useNavigation();
+    const navigation = useNavigation();
+    const {goBack} = navigation;
+    // BUG FIX (product report: "GO_BACK was not handled by any navigator").
+    // goBack() was called unconditionally whenever no explicit onPress was
+    // given. If this screen is ever the first entry on the stack (no history
+    // to pop -- e.g. a fast double-tap racing an in-flight pop animation, or
+    // Android hardware back overlapping a JS-side pop), goBack() has nothing
+    // to do and React Navigation surfaces the GO_BACK dev warning instead of
+    // silently no-op'ing. Guard with canGoBack() and fall back to a safe
+    // known route (the main tab stack) so this always degrades gracefully.
     const _onPress = React.useCallback(() => {
       if (onPress) {
         onPress && onPress();
-      } else {
+      } else if (navigation.canGoBack()) {
         goBack();
+      } else {
+        navigation.navigate('MainBottomTab' as never);
       }
-    }, [onPress, goBack]);
+    }, [onPress, goBack, navigation]);
 
     const getIconColor = (
       status:

@@ -97,7 +97,7 @@ function SectionHeader({ icon, label }: { icon: string; label: string }) {
 // codingService.ts), or fall back to AI validation automatically
 // otherwise — see AiGradedBadge above.
 const CodingInterview = memo(() => {
-  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<CodingInterviewScreenNavigationProp>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
@@ -437,7 +437,10 @@ const CodingInterview = memo(() => {
     <Container style={styles.container}>
       <TopNavigation
         title={t('find:coding_interview')}
-        accessoryLeft={<NavigationAction onPress={goBack} />}
+        // BUG FIX (GO_BACK dev warning): removed the explicit
+        // onPress={goBack} override -- it bypassed NavigationAction's own
+        // canGoBack() guard entirely. Let it use its guarded default.
+        accessoryLeft={<NavigationAction />}
         accessoryRight={
           timerLabel
             ? () => (

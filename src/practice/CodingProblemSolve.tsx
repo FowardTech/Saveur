@@ -11,7 +11,7 @@ import {
   Icon,
   Spinner,
 } from '@ui-kitten/components';
-import {NavigationProp, useNavigation, useRoute} from '@react-navigation/native';
+import {useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
@@ -21,7 +21,6 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import {renderCenteredLabel} from 'utils/buttonLabel';
-import {RootStackParamList} from 'navigation/types';
 import * as codingService from 'services/codingService';
 import {CodingLanguage, RunResult, TestRunResult} from 'services/codingService';
 import CtaButton from 'components/CtaButton';
@@ -82,7 +81,6 @@ function SectionHeader({icon, label}: {icon: string; label: string}) {
 }
 
 const CodingProblemSolve = memo(() => {
-  const {goBack} = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<any>();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
@@ -267,7 +265,10 @@ const CodingProblemSolve = memo(() => {
     <Container style={styles.container}>
       <TopNavigation
         title={problem?.title ?? t('find:coding_interview')}
-        accessoryLeft={<NavigationAction onPress={goBack} />}
+        // BUG FIX (GO_BACK dev warning): removed the explicit
+        // onPress={goBack} override -- it bypassed NavigationAction's own
+        // canGoBack() guard entirely. Let it use its guarded default.
+        accessoryLeft={<NavigationAction />}
         accessoryRight={() => (
           <TouchableOpacity onPress={onToggleBookmark} hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
             <Icon
