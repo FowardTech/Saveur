@@ -189,6 +189,22 @@ const CodingProblemSolve = memo(() => {
 
   const onRunTests = async () => {
     if (runningTests || !problem) return;
+    // Product report: leaving the editor empty and hitting "Run Tests"
+    // came back with every test case marked as passed. Grading currently
+    // routes through the AI-judge fallback (see codingService.runTests /
+    // backend code_validator_service.py), which self-reports a pass/fail
+    // boolean rather than diffing real program output -- it can hallucinate
+    // a pass for code that was never actually traced. Blocking blank/
+    // whitespace-only submissions here closes the most confusing version
+    // of that gap; the backend also rejects this defensively (see
+    // Saveur-Backend app/api/coding.py's run_tests()).
+    if (!code || !code.trim()) {
+      Alert.alert(
+        t('find:no_code_written', {defaultValue: 'Write some code first'}).toString(),
+        t('find:no_code_written_body', {defaultValue: 'Your editor is empty — add your solution before running the tests.'}).toString(),
+      );
+      return;
+    }
     setRunningTests(true);
     setTestResults(null);
     setJustSolved(false);

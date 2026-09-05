@@ -297,6 +297,18 @@ const CodingInterview = memo(() => {
 
   const onRunTests = async () => {
     if (runningTests) return;
+    // See CodingProblemSolve.tsx's onRunTests for the full explanation --
+    // blank/whitespace-only code was coming back marked as a full pass
+    // because grading currently routes through the AI-judge fallback,
+    // which can hallucinate a pass instead of recognizing there's nothing
+    // to trace. Blocking it client-side too (backend also guards this).
+    if (!code || !code.trim()) {
+      Alert.alert(
+        t('find:no_code_written', { defaultValue: 'Write some code first' }).toString(),
+        t('find:no_code_written_body', { defaultValue: 'Your editor is empty — add your solution before running the tests.' }).toString(),
+      );
+      return;
+    }
     setRunningTests(true);
     setTestResults(null);
     try {
