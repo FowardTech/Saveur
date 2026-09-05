@@ -1,0 +1,19 @@
+/* Localized permission-usage descriptions (system camera/mic/photo
+   library/location/speech-recognition/Face ID/local-network access
+   prompts) -- product report: "check for consistency in all the
+   whole app and make sure that everything is auto translated".
+   These 8 keys live directly in the base Info.plist (English,
+   CFBundleDevelopmentRegion) with no per-locale override before this
+   -- invisible to the in-app i18next system entirely, so iOS always
+   showed these specific system dialogs in English regardless of the
+   user's language. Values must stay in sync with Info.plist's own
+   copy any time those change. */
+
+"NSCameraUsageDescription" = "Usamos sua câmera para gravar entrevistas simuladas em vídeo para que possamos dar feedback sobre contato visual, expressões e postura.";
+"NSFaceIDUsageDescription" = "Use o Face ID para entrar no Saveur de forma rápida e segura.";
+"NSLocalNetworkUsageDescription" = "O Saveur pode se conectar a dispositivos na sua rede local para melhorar a conectividade.";
+"NSLocationWhenInUseUsageDescription" = "O Saveur usa sua localização aproximada apenas uma vez, para definir o idioma do app como o falado na sua região. Você sempre pode alterá-lo depois em Ajustes.";
+"NSMicrophoneUsageDescription" = "Usamos seu microfone para gravar entrevistas simuladas de voz e vídeo para que possamos dar feedback sobre sua fala.";
+"NSPhotoLibraryAddUsageDescription" = "Salvamos relatórios e documentos exportados na sua galeria de fotos quando você escolhe fazer isso.";
+"NSPhotoLibraryUsageDescription" = "Precisamos de acesso à sua galeria de fotos para que você possa enviar seu currículo, certificados e outros documentos.";
+"NSSpeechRecognitionUsageDescription" = "Transcrevemos suas respostas faladas da entrevista diretamente no dispositivo para que possamos dar feedback sobre o que você disse.";
