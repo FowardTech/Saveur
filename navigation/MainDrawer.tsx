@@ -13,7 +13,7 @@ import useModal from 'hooks/useModal';
 import {Images} from 'assets/images';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as notificationService from 'services/notificationService';
-import {getMoreMenuBadges} from 'services/moreMenuBadgesService';
+import {getMoreMenuBadges, MoreMenuBadges} from 'services/moreMenuBadgesService';
 import {EKeyAsyncStorage, NotificationProps} from 'constants/Types';
 import HomeStackNavigator from './HomeStackNavigator';
 import FindScreen from 'src/find/FindScreen';
@@ -100,9 +100,11 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // The 3 visible drawer rows (product request: "home icon, chat icon, a
 // more icon"). `route` is the underlying screen name (unchanged from the
 // old bottom tab bar — see this file's own top comment); `label`/`icon`
-// are the drawer-facing rename. Badge is only ever set on "More" (see
-// menuBadgeCount below), same aggregated Job Alerts/Career Events/Daily
-// Industry News/Weekly Career Report count the old Menu tab icon showed.
+// are the drawer-facing rename. Badge is set on Jobs, Career Events, and
+// More (see the `badges` prop threaded into CustomDrawerContent below) —
+// same Job Alerts/Career Events/Daily Industry News/Weekly Career Report
+// counts the old Menu tab icon showed, now split per-row instead of one
+// aggregated number.
 // Deliberately narrowed to the 3 literal routes actually offered here
 // (rather than `keyof MainBottomTabStackParamList`) so onNavigate below can
 // switch on `route` and get real per-screen params-shape checking from
@@ -124,7 +126,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'DreamCompanies' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -156,9 +158,15 @@ const DRAWER_ACCENT = '#3D8BFF';
 interface CustomDrawerContentProps {
   activeRoute: keyof MainBottomTabStackParamList;
   onNavigate: (route: DrawerRoute) => void;
+  // Product request: "I want the Career events and the jobs in the drawer
+  // to have notification count badge too" -- per-item counts sourced from
+  // the same GET /api/v1/more/badges call the old More screen rows used
+  // (see moreMenuBadgesService.ts). Optional/undefined until the first
+  // fetch resolves, same as the old menuBadgeCount this replaces.
+  badges?: MoreMenuBadges;
 }
 
-const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContentProps) => {
+const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawerContentProps) => {
   const {t} = useTranslation(['common']);
   const {top, bottom} = useLayout();
   const {profile, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
@@ -177,9 +185,22 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
       icon: 'trending-up-outline',
     },
     {
+      // Product request: "Change dream job to dream company" -- this row
+      // has always pointed at DreamCompanies.tsx (the Dream Company
+      // Dashboard), the "Dream Job" label was just a naming mismatch.
       route: 'DreamCompanies',
-      label: t('common:drawer_dream_job', {defaultValue: 'Dream Job'}).toString(),
+      label: t('common:drawer_dream_company', {defaultValue: 'Dream Company'}).toString(),
       icon: 'briefcase-outline',
+    },
+    // Product request: "add jobs to the drawer under dream job" -- lands on
+    // the real, existing root-stack JobAlerts screen (src/more/JobAlerts.tsx,
+    // params optional) that previously only had an entry point from
+    // MoreSrc.tsx's menu.
+    {
+      route: 'Jobs',
+      label: t('common:drawer_jobs', {defaultValue: 'Jobs'}).toString(),
+      icon: 'bell-outline',
+      badge: badges?.jobAlertsUnreadCount || undefined,
     },
     // Product request: "add event in the drawer and name it career events
     // and let it navigate to the event section in the networking screen"
@@ -191,11 +212,18 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate}: CustomDrawerContent
       route: 'CareerEvents',
       label: t('common:drawer_career_events', {defaultValue: 'Career Events'}).toString(),
       icon: 'calendar-outline',
+      badge: badges?.careerEventsUnreadCount || undefined,
     },
     {
       route: 'Profile',
       label: t('common:drawer_more', {defaultValue: 'More'}).toString(),
       icon: 'settings-2-outline',
+      // Job Alerts and Career Events now carry their own badges above (see
+      // the two rows immediately above) -- only the two counts with no
+      // drawer row of their own (Daily Industry News / Weekly Career
+      // Report) still fold into this one, so nothing is double-counted.
+      badge:
+        (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0) || undefined,
     },
   ];
 
@@ -341,6 +369,8 @@ const MainDrawerContent = memo(() => {
         navigationRef.navigate('SalaryNegotiation');
       } else if (route === 'DreamCompanies') {
         navigationRef.navigate('DreamCompanies');
+      } else if (route === 'Jobs') {
+        navigationRef.navigate('JobAlerts');
       } else if (route === 'CareerEvents') {
         navigationRef.navigate('NetworkingAssistant');
       } else {
@@ -383,18 +413,18 @@ const MainDrawerContent = memo(() => {
     }
   }, [hide, feedbackNotif]);
 
-  // Menu ("More") badge — same aggregated Job Alerts/Career Events/Daily
-  // Industry News/Weekly Career Report count as before, just displayed on
-  // the drawer row instead of a tab icon.
-  const [menuBadgeCount, setMenuBadgeCount] = React.useState<number | undefined>(undefined);
+  // BUG FIX: this used to collapse Job Alerts/Career Events/Daily Industry
+  // News/Weekly Career Report into one aggregated number (menuBadgeCount)
+  // that was never actually attached to any drawer row -- a leftover from
+  // before the drawer redesign that computed a badge count with nowhere to
+  // render it. Product request ("I want the Career events and the jobs in
+  // the drawer to have notification count badge too") now needs the
+  // individual counts, not just a total, so this keeps the full
+  // MoreMenuBadges object and hands it to CustomDrawerContent, which reads
+  // each field it needs per-row (see the `items` array above).
+  const [badges, setBadges] = React.useState<MoreMenuBadges | undefined>(undefined);
   const refreshMenuBadges = React.useCallback(async () => {
-    const badges = await getMoreMenuBadges();
-    const total =
-      badges.jobAlertsUnreadCount +
-      badges.careerEventsUnreadCount +
-      (badges.dailyIndustryNewsUnread ? 1 : 0) +
-      (badges.weeklyCareerReportUnread ? 1 : 0);
-    setMenuBadgeCount(total > 0 ? total : undefined);
+    setBadges(await getMoreMenuBadges());
   }, []);
   React.useEffect(() => {
     refreshMenuBadges();
@@ -466,7 +496,7 @@ const MainDrawerContent = memo(() => {
         />
       </Tab.Navigator>
       <AppDrawerOverlay visible={isOpen} onRequestClose={close}>
-        <CustomDrawerContent activeRoute={activeTab} onNavigate={onNavigate} />
+        <CustomDrawerContent activeRoute={activeTab} onNavigate={onNavigate} badges={badges} />
       </AppDrawerOverlay>
       <ModalRequest
         visible={visible}
