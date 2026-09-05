@@ -13,6 +13,7 @@
 "NSFaceIDUsageDescription" = "使用面容 ID 快速安全地登录 Saveur。";
 "NSLocalNetworkUsageDescription" = "为了改善连接质量，Saveur 可能会连接到您本地网络中的设备。";
 "NSLocationWhenInUseUsageDescription" = "Saveur 仅会使用一次您的大致位置，以将应用语言设置为您所在地区使用的语言。您随时可以在设置中更改。";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Saveur 不会在后台跟踪您的位置。此权限之所以存在，仅仅是因为集成的某个库中包含后台位置访问代码，而 Saveur 从未使用过该功能。";
 "NSMicrophoneUsageDescription" = "我们会使用您的麦克风录制语音和视频模拟面试，以便就您的表达方式给您反馈。";
 "NSPhotoLibraryAddUsageDescription" = "当您选择保存时，我们会将导出的报告和文档保存到您的照片图库。";
 "NSPhotoLibraryUsageDescription" = "我们需要访问您的照片图库，以便您上传简历、证书和其他文件。";

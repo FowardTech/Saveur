@@ -13,6 +13,7 @@
 "NSFaceIDUsageDescription" = "Face IDを使用して、Saveurにすばやく安全にサインインできます。";
 "NSLocalNetworkUsageDescription" = "接続を改善するため、Saveurはローカルネットワーク上のデバイスに接続する場合があります。";
 "NSLocationWhenInUseUsageDescription" = "Saveurは、あなたの地域で話されている言語にアプリの言語を設定するために、おおよその位置情報を一度だけ使用します。設定はいつでも後から変更できます。";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "Saveurはバックグラウンドで位置情報を追跡することはありません。この権限は、組み込まれているライブラリにバックグラウンド位置情報アクセスのコードが含まれているために表示されるだけで、Saveurがそれを使用することはありません。";
 "NSMicrophoneUsageDescription" = "音声・動画の模擬面接を録音するためにマイクを使用します。話し方についてフィードバックをお伝えします。";
 "NSPhotoLibraryAddUsageDescription" = "エクスポートしたレポートや書類は、あなたが選択した場合にフォトライブラリに保存します。";
 "NSPhotoLibraryUsageDescription" = "履歴書や証明書などの書類をアップロードできるよう、フォトライブラリへのアクセスが必要です。";

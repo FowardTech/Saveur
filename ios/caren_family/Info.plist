@@ -82,6 +82,15 @@
 	<string>Saveur may connect to devices on your local network to improve connectivity.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.</string>
+	<!-- Apple's static scanner (ITMS-90683) flags the always-authorization
+	     API symbol compiled into @react-native-community/geolocation's
+	     native module, even though this app never calls
+	     requestAlwaysAuthorization; only the one-time when-in-use lookup
+	     above is ever used. Apple requires a purpose string to exist
+	     regardless of whether the code path actually runs, so this key is
+	     present purely to satisfy that check. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Saveur does not track your location in the background. This permission exists only because a bundled library includes background-location code that Saveur never uses.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We use your microphone to record voice and video mock interviews so we can give you feedback on your speaking.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>

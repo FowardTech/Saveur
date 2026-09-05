@@ -13,6 +13,7 @@
 "NSFaceIDUsageDescription" = "Use o Face ID para entrar no Saveur de forma rápida e segura.";
 "NSLocalNetworkUsageDescription" = "O Saveur pode se conectar a dispositivos na sua rede local para melhorar a conectividade.";
 "NSLocationWhenInUseUsageDescription" = "O Saveur usa sua localização aproximada apenas uma vez, para definir o idioma do app como o falado na sua região. Você sempre pode alterá-lo depois em Ajustes.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "O Saveur não rastreia sua localização em segundo plano. Esta permissão existe apenas porque uma biblioteca incluída contém código de localização em segundo plano que o Saveur nunca utiliza.";
 "NSMicrophoneUsageDescription" = "Usamos seu microfone para gravar entrevistas simuladas de voz e vídeo para que possamos dar feedback sobre sua fala.";
 "NSPhotoLibraryAddUsageDescription" = "Salvamos relatórios e documentos exportados na sua galeria de fotos quando você escolhe fazer isso.";
 "NSPhotoLibraryUsageDescription" = "Precisamos de acesso à sua galeria de fotos para que você possa enviar seu currículo, certificados e outros documentos.";

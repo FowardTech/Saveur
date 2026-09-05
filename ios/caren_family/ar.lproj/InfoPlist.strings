@@ -13,6 +13,7 @@
 "NSFaceIDUsageDescription" = "استخدم Face ID لتسجيل الدخول إلى Saveur بسرعة وأمان.";
 "NSLocalNetworkUsageDescription" = "قد يتصل Saveur بأجهزة على شبكتك المحلية لتحسين جودة الاتصال.";
 "NSLocationWhenInUseUsageDescription" = "يستخدم Saveur موقعك التقريبي مرة واحدة فقط لضبط لغة التطبيق على اللغة المستخدمة في منطقتك. يمكنك دائماً تغيير ذلك لاحقاً من الإعدادات.";
+"NSLocationAlwaysAndWhenInUseUsageDescription" = "لا يتتبع Saveur موقعك في الخلفية. يظهر هذا الإذن فقط لأن إحدى المكتبات المضمّنة تحتوي على شيفرة للوصول إلى الموقع في الخلفية، وهي شيفرة لا يستخدمها Saveur إطلاقاً.";
 "NSMicrophoneUsageDescription" = "نستخدم الميكروفون لتسجيل مقابلات تجريبية صوتية وبالفيديو حتى نتمكن من تزويدك بملاحظات حول أسلوب حديثك.";
 "NSPhotoLibraryAddUsageDescription" = "نحفظ التقارير والمستندات المُصدَّرة في مكتبة صورك عند اختيارك ذلك.";
 "NSPhotoLibraryUsageDescription" = "نحتاج إلى الوصول إلى مكتبة صورك حتى تتمكن من رفع سيرتك الذاتية وشهاداتك ومستندات أخرى.";
