@@ -163,16 +163,16 @@ const SILENCE_DEBOUNCE_MS = 1000;
 // applies ONLY to the turn that immediately follows an interrupt (see
 // isBargeInTurnRef below) -- a normal turn (the coach finished speaking on
 // its own) keeps the quick 1s response time from the fix above.
-// BUG FIX (product report: "The time the AI waits to respond to the
-// barge-in is too long i think we set it to 10s right? Lets change it
-// back to 6s") -- was bumped from 5s to 10s at some point after the
-// original "like 5 secs" ask above and ended up overshooting it. 6000ms
-// as explicitly requested. Note this constant only affects how long the
-// app waits for the user to keep talking before treating their turn as
-// over and sending it -- once a turn is actually sent, the "Thinking…"
-// phase's own length is real network+LLM round-trip time in
-// coachService.sendVoiceMessage() below, not a timer this file controls.
-const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 6000;
+// Went 10s -> 6s per an earlier report that 10s felt too long, but 6s
+// turned out to be too short in practice -- product follow-up: "still too
+// quick to pick up my voice during the barge-in... increase the response
+// wait time to like 10 secs back." Back to 10000ms. Note this constant
+// only affects how long the app waits for the user to keep talking before
+// treating their turn as over and sending it -- once a turn is actually
+// sent, the "Thinking…" phase's own length is real network+LLM round-trip
+// time in coachService.sendVoiceMessage() below, not a timer this file
+// controls.
+const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 10000;
 
 // BUG FIX (product report: "I waited up to like 5 minutes and it still did
 // not capture my voice") — duplexVoiceService.start() (a native-module
@@ -522,6 +522,24 @@ const VoiceCoachView = memo(({
   // See the barge-in effect below for exactly what this tracks and why.
   const prevSpeechStartedPulseRef = React.useRef(0);
 
+  // BUG FIX (product report: "on loading the first time when it says the
+  // first time greet... it answers itself from the echo... usually does
+  // this once every first time load"). Root cause: DuplexVoiceEngine's
+  // echo cancellation is Apple's adaptive Voice-Processing I/O AEC filter
+  // -- it needs a real output reference signal to converge, and the intro
+  // greeting is the very FIRST audio this engine has ever rendered in the
+  // process, so the filter hasn't adapted to anything yet when it plays.
+  // Genuine echo bleeds into the mic during that one utterance and gets
+  // mistaken for the user barging in. Every later reply benefits from the
+  // now-converged filter (adapted from the intro's own playback), which is
+  // exactly why this is reliably a first-load-only issue. Set true right
+  // before the intro is fired, cleared once it's done playing (see the
+  // onSpeakingState listener below) -- suppresses ONLY the automatic
+  // speech-triggered barge-in effect for that one utterance; the manual
+  // "Tap to interrupt" button (onInterrupt) is untouched, so a user who
+  // genuinely wants to cut the greeting off still can.
+  const isIntroUtteranceRef = React.useRef(false);
+
   const resetDuplexTranscript = React.useCallback(() => {
     duplexCommittedRef.current = '';
     setDuplexSegment('');
@@ -576,6 +594,11 @@ const VoiceCoachView = memo(({
         // mode is on screen.
         if (!activeRef.current) return;
         if (phaseRef.current !== 'speaking') return;
+        // The intro (if any) has now genuinely finished playing -- the AEC
+        // filter has had a full utterance to converge against, so treat
+        // every later reply normally. See isIntroUtteranceRef's own
+        // comment above.
+        isIntroUtteranceRef.current = false;
         const postAction = postSpeechActionRef.current;
         postSpeechActionRef.current = null;
         if (postAction) {
@@ -904,6 +927,12 @@ const VoiceCoachView = memo(({
     if (!duplexSupported) return;
     if (!active) return;
     if (phase !== 'speaking') return;
+    // See isIntroUtteranceRef's own comment -- the AEC filter hasn't
+    // converged yet for this specific utterance, so a "transcript"/
+    // speech-started signal arriving right now is far more likely to be
+    // the coach's own echo than a real barge-in. Manual tap-to-interrupt
+    // still works regardless (onInterrupt doesn't check this ref).
+    if (isIntroUtteranceRef.current) return;
     const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
     if (!liveText && !freshSpeechStarted) return;
     turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
@@ -945,6 +974,10 @@ const VoiceCoachView = memo(({
         if (duplexSupported) {
           duplexStartedRef.current = false;
           hasEngagedRef.current = false;
+          // Defensive reset -- if the screen is left mid-intro (before the
+          // onSpeakingState listener ever clears this), a fresh mount
+          // shouldn't inherit a stuck "suppress barge-in" state.
+          isIntroUtteranceRef.current = false;
           duplexVoiceService.stop().catch(() => {});
         } else {
           stt.stop();
@@ -1130,6 +1163,11 @@ const VoiceCoachView = memo(({
           setPhase('speaking');
           if (duplexSupported) {
             firedDuplexIntro = true;
+            // See isIntroUtteranceRef's own comment -- this is THE
+            // first-ever-playback-in-process utterance the whole guard
+            // exists for. Cleared by the onSpeakingState listener once
+            // this genuinely finishes.
+            isIntroUtteranceRef.current = true;
             speakDuplexFireAndForget(intro);
           } else {
             try {
