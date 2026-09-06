@@ -174,6 +174,37 @@ const SILENCE_DEBOUNCE_MS = 1000;
 // controls.
 const POST_INTERRUPT_SILENCE_DEBOUNCE_MS = 10000;
 
+// IMPROVEMENT (self-directed follow-up after repeatedly retuning the flat
+// constant above between 5s/10s/6s and back to 10s -- see its own comment
+// for the full history): a single fixed wait time can never be right for
+// every user in every moment. Someone who's only gotten out a couple of
+// words since barging in is very likely still mid-thought and deserves
+// the full grace period above; someone who's already said a real
+// sentence-length amount is a much stronger signal they're actually done,
+// and making them wait the full 10s anyway just makes the coach feel
+// sluggish for no reason. This scales the post-barge-in debounce down
+// linearly by word count instead of using one flat number for both cases
+// -- built entirely from the transcript this file already tracks, no new
+// dependency, no added round-trip latency. Only applies to the turn
+// immediately following a barge-in; the normal SILENCE_DEBOUNCE_MS path
+// (every other turn) is untouched.
+const POST_INTERRUPT_SHORT_UTTERANCE_WORD_COUNT = 3; // at/below this many words: full POST_INTERRUPT_SILENCE_DEBOUNCE_MS grace period
+const POST_INTERRUPT_LONG_UTTERANCE_WORD_COUNT = 8; // at/above this many words: back down to the normal, fast SILENCE_DEBOUNCE_MS
+
+function getPostInterruptDebounceMs(liveText: string): number {
+  const wordCount = liveText.trim().split(/\s+/).filter(Boolean).length;
+  if (wordCount <= POST_INTERRUPT_SHORT_UTTERANCE_WORD_COUNT) return POST_INTERRUPT_SILENCE_DEBOUNCE_MS;
+  if (wordCount >= POST_INTERRUPT_LONG_UTTERANCE_WORD_COUNT) return SILENCE_DEBOUNCE_MS;
+  // Linear interpolation between the two thresholds so the transition from
+  // "long wait" to "fast wait" is a gradual slope, not a jarring cliff at
+  // exactly N words.
+  const span = POST_INTERRUPT_LONG_UTTERANCE_WORD_COUNT - POST_INTERRUPT_SHORT_UTTERANCE_WORD_COUNT;
+  const progress = (wordCount - POST_INTERRUPT_SHORT_UTTERANCE_WORD_COUNT) / span;
+  return Math.round(
+    POST_INTERRUPT_SILENCE_DEBOUNCE_MS - progress * (POST_INTERRUPT_SILENCE_DEBOUNCE_MS - SILENCE_DEBOUNCE_MS),
+  );
+}
+
 // BUG FIX (product report: "I waited up to like 5 minutes and it still did
 // not capture my voice") — duplexVoiceService.start() (a native-module
 // bridge promise, ios/caren_family/DuplexVoiceEngine.swift's own `start`
@@ -833,11 +864,15 @@ const VoiceCoachView = memo(({
     if (phase !== 'listening') return;
     clearSilenceTimer();
     if (!transcript.trim()) return;
-    // See POST_INTERRUPT_SILENCE_DEBOUNCE_MS's own comment -- the turn
-    // right after a barge-in gets a longer grace period before being
-    // treated as "done", so an ordinary mid-thought pause right after
-    // interrupting doesn't get cut off and sent early.
-    const debounceMs = isBargeInTurnRef.current ? POST_INTERRUPT_SILENCE_DEBOUNCE_MS : SILENCE_DEBOUNCE_MS;
+    // See getPostInterruptDebounceMs's own comment -- the turn right after
+    // a barge-in gets a longer, word-count-scaled grace period before
+    // being treated as "done" (full grace period for a short/likely-
+    // incomplete utterance, tapering down to the normal fast debounce once
+    // the user has said enough that they're probably finished), so an
+    // ordinary mid-thought pause right after interrupting doesn't get cut
+    // off and sent early, without making an already-finished reply wait
+    // the full 10s for no reason.
+    const debounceMs = isBargeInTurnRef.current ? getPostInterruptDebounceMs(transcript) : SILENCE_DEBOUNCE_MS;
     silenceTimerRef.current = setTimeout(() => {
       if (phaseRef.current !== 'listening') return;
       const finalText = transcript;
