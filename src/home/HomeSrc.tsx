@@ -1223,8 +1223,14 @@ const HomeSrc = memo(() => {
           title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
           subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
           onPress={onPressExploreMore}
-          accentColor="#0063F8"
-          iconGradientColors={['#2d76db', '#3B9DFF']}
+          // Product request: purple subtle card background + purple icon
+          // gradient, matching the app's existing purple accent (#8B5CF6,
+          // see HomeHeroArt.tsx's "special/featured" color) -- same
+          // darker->lighter two-stop gradient pattern already used by the
+          // blue (#2d76db -> #3B9DFF) and orange (#dc5d2b -> #FB923C)
+          // cards above, just in purple instead of blue.
+          accentColor="#8B5CF6"
+          iconGradientColors={['#7C4DEF', '#8B5CF6']}
         />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
