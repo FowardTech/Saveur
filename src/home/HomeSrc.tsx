@@ -800,7 +800,18 @@ const HomeSrc = memo(() => {
         // to have the list icon and the daily challenge supposed to have
         // the lightning icon you need to correct that") -- was
         // iconListStack; swapped with Explore's own icon below.
-        heroIconImage: Images.iconLightning,
+        // Product follow-up: "change the icons for AI career card and
+        // daily challenge to the icon styles used in explore card and
+        // practice card. So they all the icons will have the same
+        // design" -- was a flat, untinted `iconImage` (Images.iconLightning);
+        // now a real eva glyph + iconGradientColors badge, same treatment
+        // as Practice/Explore's icon badges. Deliberately NOT paired with
+        // an accentColor here -- the request was specifically about icon
+        // consistency, not this card's background/border, which stays
+        // exactly as it already was.
+        heroIconImage: undefined,
+        heroIcon: 'flash-outline',
+        heroIconGradientColors: ['#F5B430', '#FFC94A'],
         onPress: () => navigate('DailyChallenge'),
       };
     }
@@ -817,6 +828,8 @@ const HomeSrc = memo(() => {
         ctaLabel: t('home:mission_cta_roadmap', { defaultValue: 'Continue Roadmap' }),
         ctaIcon: 'play-circle-outline',
         heroIconImage: undefined,
+        heroIcon: undefined,
+        heroIconGradientColors: undefined,
         onPress: () => navigate('CareerRoadmap'),
       };
     }
@@ -832,6 +845,8 @@ const HomeSrc = memo(() => {
       ctaLabel: t('home:mission_cta_coach', { defaultValue: 'Ask Now' }),
       ctaIcon: 'message-circle-outline',
       heroIconImage: undefined,
+      heroIcon: undefined,
+      heroIconGradientColors: undefined,
       onPress: () => navigate('MainBottomTab', { screen: 'Coach' }),
     };
   }, [dailyChallenge, roadmap, currentRoadmapStep, roadmapPercent, t, navigate]);
@@ -991,9 +1006,10 @@ const HomeSrc = memo(() => {
             the admin creates one, and a tap always has real content to
             navigate AdDetails to. */}
         {homeBanner ? (
+          <View style={[styles.homeBannerShadowWrap, { width: homeBannerWidth }]}>
           <TouchableOpacity
             activeOpacity={0.9}
-            style={[styles.homeBannerCard, { width: homeBannerWidth }]}
+            style={styles.homeBannerCard}
             onPress={onOpenHomeBanner}>
             {/* BUG FIX (explicit product correction: "remove the AD text.
                 The homebanner is not an Ads. We will deal with ads
@@ -1058,6 +1074,7 @@ const HomeSrc = memo(() => {
               </View>
             </View>
           </TouchableOpacity>
+          </View>
         ) : null}
 
         {/* MOVED (product request: "move Scheduled interview card in the
@@ -1139,8 +1156,14 @@ const HomeSrc = memo(() => {
           </View>
         ) : (
           <ActionCard
-            icon={missionHero.ctaIcon ?? missionHero.badgeIcon}
-            iconImage={missionHero.heroIconImage}
+            // heroIcon (set only for the Daily Challenge branch -- see
+            // missionHero's own comment) takes priority so that branch
+            // shows its lightning glyph instead of the generic CTA icon;
+            // the other two branches leave heroIcon undefined and fall
+            // through to the existing ctaIcon/badgeIcon behavior,
+            // unchanged.
+            icon={missionHero.heroIcon ?? missionHero.ctaIcon ?? missionHero.badgeIcon}
+            iconGradientColors={missionHero.heroIconGradientColors}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
             onPress={missionHero.onPress}
@@ -1155,7 +1178,20 @@ const HomeSrc = memo(() => {
             components/ActionCard.tsx's `iconImage` prop). */}
         <ActionCard
           icon="message-circle-outline"
-          iconImage={Images.iconCoachChatBlue}
+          // Product follow-up: "change the icons for AI career card and
+          // daily challenge to the icon styles used in explore card and
+          // practice card. So they all the icons will have the same
+          // design" -- was a flat, untinted `iconImage`
+          // (Images.iconCoachChatBlue); now a real gradient badge like
+          // Practice/Explore's icons. Reuses the exact blue pair Explore
+          // used before its own purple redesign, since blue is this
+          // card's own established brand color (iconCoachChatBlue was
+          // literally blue) and that gradient was otherwise unused once
+          // Explore moved to purple. No accentColor here on purpose --
+          // this request was specifically about icon consistency, not
+          // this card's background/border, which stays exactly as it
+          // already was.
+          iconGradientColors={['#2d76db', '#3B9DFF']}
           title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
           subtitle={t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' }).toString()}
           onPress={onPressCoachSend}
@@ -1198,6 +1234,14 @@ const HomeSrc = memo(() => {
           onPress={onPressPractice}
           accentColor="#FB923C"
           iconGradientColors={['#dc5d2b', '#FB923C']}
+          // Product follow-up: "remove the borders from practice card and
+          // explore card" + "change the practice card background back to
+          // white" -- keeps the orange icon gradient badge, drops the
+          // orange border, and falls back to the card's normal plain
+          // background instead of the pale orange tint. See both props'
+          // own comments on ActionCardProps.
+          showBorder={false}
+          forceWhiteBg
         />
 
         {/* REDESIGN (same product request as the Practice card above --
@@ -1231,6 +1275,10 @@ const HomeSrc = memo(() => {
           // cards above, just in purple instead of blue.
           accentColor="#8B5CF6"
           iconGradientColors={['#7C4DEF', '#8B5CF6']}
+          // Product follow-up: "remove the borders from practice card and
+          // explore card" -- keeps the purple subtle background tint,
+          // just drops the purple border.
+          showBorder={false}
         />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
@@ -1329,12 +1377,30 @@ const themedStyles = StyleService.create({
   // top-row/Ad-label block and shrinking the image tile/divider spacing
   // below, so the card is noticeably shorter overall, not just missing
   // one row.
+  // Product request: "Give the homebanner box shadow." A shadow can't be
+  // applied directly to homeBannerCard below -- that view has
+  // `overflow: 'hidden'` (needed so the full-bleed image respects the
+  // card's rounded corners), and on iOS a shadow is silently clipped away
+  // by overflow:hidden on the SAME view. This wraps homeBannerCard in a
+  // plain, non-clipping View that carries the shadow instead -- the
+  // standard RN pattern for "rounded + clipped content" and "drop
+  // shadow" together. margin moved here (off homeBannerCard) so the
+  // shadow's own bounding box still lines up with the visible card.
+  homeBannerShadowWrap: {
+    marginTop: 16,
+    marginBottom: 16,
+    borderRadius: 16,
+    backgroundColor: 'background-basic-color-2',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4, // Android's shadow equivalent -- shadowColor/Offset/Opacity/Radius above are iOS-only.
+  },
   homeBannerCard: {
     // width is computed per-render from actual screen width (see
     // homeBannerWidth above the component's return statement) and applied
     // inline, not here.
-    marginTop: 16,
-    marginBottom: 16,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: 'border-card-default',
@@ -1344,7 +1410,9 @@ const themedStyles = StyleService.create({
     // homeBannerImageWrap below), so this needs `overflow: hidden` to
     // still respect the card's rounded corners; padding moved off this
     // outer view onto homeBannerContentRow so the image itself isn't
-    // inset.
+    // inset. margin now lives on the new homeBannerShadowWrap above (see
+    // its own comment) since this view's overflow:hidden would otherwise
+    // clip any shadow applied here directly.
     overflow: 'hidden',
   },
   // Full-width image strip across the top of the card (product request:

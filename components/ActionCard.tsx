@@ -88,6 +88,19 @@ export interface ActionCardProps {
   // -- the icon badge's own gradient doesn't have to match whatever the
   // rest of the card is doing.
   iconGradientColors?: string[];
+  // Product request: "remove the borders from practice card and explore
+  // card" -- lets a caller keep accentColor (for the icon badge and/or
+  // background tint) without the accent-colored border that normally
+  // comes bundled with it. Defaults true so every other existing
+  // accentColor caller is unaffected.
+  showBorder?: boolean;
+  // Product request: "change the practice card background back to white"
+  // -- lets a caller keep accentColor purely for the icon gradient badge
+  // (iconGradientColors is independent of accentColor already -- see
+  // hasIconGradient below) while falling back to the card's normal plain
+  // themed background instead of the pale accentColor tint. Defaults
+  // false so every other existing accentColor caller is unaffected.
+  forceWhiteBg?: boolean;
 }
 
 // Product request: "subtle version of that color" for the accentColor
@@ -124,7 +137,7 @@ function cssAngleToGradientPoints(angleDeg: number): {start: {x: number; y: numb
 }
 
 const ActionCard: React.FC<ActionCardProps> = memo(
-  ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing, gradientColors, gradientLocations, accentColor, iconGradientColors}) => {
+  ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing, gradientColors, gradientLocations, accentColor, iconGradientColors, showBorder = true, forceWhiteBg = false}) => {
     const styles = useStyleSheet(themedStyles);
     const theme = useTheme();
     const isGradient = !!gradientColors?.length;
@@ -246,7 +259,17 @@ const ActionCard: React.FC<ActionCardProps> = memo(
           // Product follow-up: "reduce the border width of the practice
           // and explore more to 0.8 or 0.7" -- was 1.5, a touch heavier
           // than asked for.
-          hasAccent ? {backgroundColor: withAlpha(accentColor!), borderWidth: 0.8, borderColor: accentColor} : undefined,
+          // Product follow-up: "remove the borders from practice card and
+          // explore card" + "change the practice card background back to
+          // white" -- showBorder/forceWhiteBg let each half of this be
+          // opted out independently per card instead of both always being
+          // bundled with accentColor. See both props' own comments above.
+          hasAccent
+            ? {
+                ...(forceWhiteBg ? null : {backgroundColor: withAlpha(accentColor!)}),
+                ...(showBorder ? {borderWidth: 0.8, borderColor: accentColor} : null),
+              }
+            : undefined,
           style,
           disabled ? styles.disabled : undefined,
         ]}>
