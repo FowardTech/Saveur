@@ -31,5 +31,10 @@
   "managed_by_apple_title": "App Store経由で請求",
   "managed_by_google_title": "Google Play経由で請求",
   "managed_by_apple_body": "このサブスクリプションはApple経由で請求され、ここに保存されたカードではありません。iPhoneの「設定」>「[あなたの名前]」>「サブスクリプション」から管理・解約できます。",
-  "managed_by_google_body": "このサブスクリプションはGoogle Play経由で請求され、ここに保存されたカードではありません。Playストアアプリの「お支払いと定期購入」から管理・解約できます。"
+  "managed_by_google_body": "このサブスクリプションはGoogle Play経由で請求され、ここに保存されたカードではありません。Playストアアプリの「お支払いと定期購入」から管理・解約できます。",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "有効",
+  "managed_by_apple_body_short": "iPhoneの設定 > [お名前] > サブスクリプションから管理・解約できます。",
+  "managed_by_google_body_short": "Playストアアプリ > お支払いと定期購入から管理・解約できます。"
 }

@@ -31,5 +31,10 @@
   "managed_by_apple_title": "App Store를 통해 결제됨",
   "managed_by_google_title": "Google Play를 통해 결제됨",
   "managed_by_apple_body": "구독료는 여기 저장된 카드가 아닌 Apple을 통해 청구됩니다 — iPhone의 설정 > [내 이름] > 구독에서 관리하거나 해지하세요.",
-  "managed_by_google_body": "구독료는 여기 저장된 카드가 아닌 Google Play를 통해 청구됩니다 — Play 스토어 앱의 결제 및 구독에서 관리하거나 해지하세요."
+  "managed_by_google_body": "구독료는 여기 저장된 카드가 아닌 Google Play를 통해 청구됩니다 — Play 스토어 앱의 결제 및 구독에서 관리하거나 해지하세요.",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "활성",
+  "managed_by_apple_body_short": "iPhone의 설정 > [이름] > 구독에서 관리하거나 취소할 수 있습니다.",
+  "managed_by_google_body_short": "Play 스토어 앱 > 결제 및 구독에서 관리하거나 취소할 수 있습니다."
 }

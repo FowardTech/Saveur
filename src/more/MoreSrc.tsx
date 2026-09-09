@@ -527,6 +527,16 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('Subscription'),
     },
     {
+      // Product follow-up (reverses the earlier "now that we are not using
+      // stripe for billing in the mobile app... that means nothing will be
+      // seen there" hide): row is back for every platform. PaymentMethod.tsx
+      // itself now shows a real, useful entry on native IAP devices too --
+      // a clean "Apple Pay" / "Google Play" row (billingProvider from
+      // GET /billing/payment-methods) instead of the old dead-end Stripe-
+      // only card list, so there's no longer a "nothing to see here" case
+      // to hide behind. Stripe card management still shows underneath for
+      // anyone who genuinely has a saved card (e.g. a non-IAP/web-billed
+      // account), same as before.
       title: t('more:payment_methods', {defaultValue: 'Payment Methods'}),
       icon: 'payment',
       status: 'facebook',

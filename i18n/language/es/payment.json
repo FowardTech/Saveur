@@ -31,5 +31,10 @@
   "managed_by_apple_title": "Facturado a través de la App Store",
   "managed_by_google_title": "Facturado a través de Google Play",
   "managed_by_apple_body": "Tu suscripción es facturada por Apple, no por una tarjeta guardada aquí — adminístrala o cancélala desde los Ajustes de tu iPhone > [tu nombre] > Suscripciones.",
-  "managed_by_google_body": "Tu suscripción es facturada por Google Play, no por una tarjeta guardada aquí — adminístrala o cancélala desde la app Play Store > Pagos y suscripciones."
+  "managed_by_google_body": "Tu suscripción es facturada por Google Play, no por una tarjeta guardada aquí — adminístrala o cancélala desde la app Play Store > Pagos y suscripciones.",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "ACTIVO",
+  "managed_by_apple_body_short": "Gestiónala o cancélala desde Ajustes de tu iPhone > [tu nombre] > Suscripciones.",
+  "managed_by_google_body_short": "Gestiónala o cancélala desde la app Play Store > Pagos y suscripciones."
 }

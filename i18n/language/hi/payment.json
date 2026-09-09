@@ -31,5 +31,10 @@
   "managed_by_apple_title": "App Store के ज़रिए बिल किया गया",
   "managed_by_google_title": "Google Play के ज़रिए बिल किया गया",
   "managed_by_apple_body": "आपकी सदस्यता का बिल Apple द्वारा किया जाता है, न कि यहां सहेजे गए कार्ड से — इसे अपने iPhone की सेटिंग्स > [आपका नाम] > सदस्यताएं से प्रबंधित या रद्द करें।",
-  "managed_by_google_body": "आपकी सदस्यता का बिल Google Play द्वारा किया जाता है, न कि यहां सहेजे गए कार्ड से — इसे Play Store ऐप > भुगतान और सदस्यताएं से प्रबंधित या रद्द करें।"
+  "managed_by_google_body": "आपकी सदस्यता का बिल Google Play द्वारा किया जाता है, न कि यहां सहेजे गए कार्ड से — इसे Play Store ऐप > भुगतान और सदस्यताएं से प्रबंधित या रद्द करें।",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "सक्रिय",
+  "managed_by_apple_body_short": "अपने iPhone की सेटिंग्स > [आपका नाम] > सब्सक्रिप्शन से मैनेज या कैंसल करें।",
+  "managed_by_google_body_short": "Play स्टोर ऐप > भुगतान और सदस्यताएं से मैनेज या कैंसल करें।"
 }

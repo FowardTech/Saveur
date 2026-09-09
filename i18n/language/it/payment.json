@@ -31,5 +31,10 @@
   "managed_by_apple_title": "Fatturato tramite l'App Store",
   "managed_by_google_title": "Fatturato tramite Google Play",
   "managed_by_apple_body": "Il tuo abbonamento viene fatturato da Apple, non da una carta salvata qui — gestiscilo o annullalo da Impostazioni del tuo iPhone > [il tuo nome] > Abbonamenti.",
-  "managed_by_google_body": "Il tuo abbonamento viene fatturato da Google Play, non da una carta salvata qui — gestiscilo o annullalo dall'app Play Store > Pagamenti e abbonamenti."
+  "managed_by_google_body": "Il tuo abbonamento viene fatturato da Google Play, non da una carta salvata qui — gestiscilo o annullalo dall'app Play Store > Pagamenti e abbonamenti.",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "ATTIVO",
+  "managed_by_apple_body_short": "Gestisci o annulla da Impostazioni del tuo iPhone > [il tuo nome] > Abbonamenti.",
+  "managed_by_google_body_short": "Gestisci o annulla dall'app Play Store > Pagamenti e abbonamenti."
 }

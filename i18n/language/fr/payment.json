@@ -31,5 +31,10 @@
   "managed_by_apple_title": "Facturé via l'App Store",
   "managed_by_google_title": "Facturé via Google Play",
   "managed_by_apple_body": "Votre abonnement est facturé par Apple, et non via une carte enregistrée ici — gérez-le ou annulez-le depuis les Réglages de votre iPhone > [votre nom] > Abonnements.",
-  "managed_by_google_body": "Votre abonnement est facturé par Google Play, et non via une carte enregistrée ici — gérez-le ou annulez-le depuis l'application Play Store > Paiements et abonnements."
+  "managed_by_google_body": "Votre abonnement est facturé par Google Play, et non via une carte enregistrée ici — gérez-le ou annulez-le depuis l'application Play Store > Paiements et abonnements.",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "ACTIF",
+  "managed_by_apple_body_short": "Gérez ou annulez depuis les Réglages de votre iPhone > [votre nom] > Abonnements.",
+  "managed_by_google_body_short": "Gérez ou annulez depuis l'application Play Store > Paiements et abonnements."
 }

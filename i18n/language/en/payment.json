@@ -31,5 +31,10 @@
   "managed_by_apple_title": "Billed through the App Store",
   "managed_by_google_title": "Billed through Google Play",
   "managed_by_apple_body": "Your subscription is billed by Apple, not a saved card here — manage or cancel it from your iPhone's Settings > [your name] > Subscriptions.",
-  "managed_by_google_body": "Your subscription is billed by Google Play, not a saved card here — manage or cancel it from the Play Store app > Payments & subscriptions."
+  "managed_by_google_body": "Your subscription is billed by Google Play, not a saved card here — manage or cancel it from the Play Store app > Payments & subscriptions.",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "ACTIVE",
+  "managed_by_apple_body_short": "Manage or cancel from your iPhone's Settings > [your name] > Subscriptions.",
+  "managed_by_google_body_short": "Manage or cancel from the Play Store app > Payments & subscriptions."
 }

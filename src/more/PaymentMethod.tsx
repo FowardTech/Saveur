@@ -6,6 +6,7 @@ import {
   useStyleSheet,
   useTheme,
   Spinner,
+  Icon,
 } from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 import {initStripe, useStripe} from '@stripe/stripe-react-native';
@@ -166,22 +167,54 @@ const PaymentMethod = memo(() => {
         {isLoading ? (
           <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
         ) : isIapBilled ? (
-          <Flex vertical itemsCenter justify="center" style={{paddingVertical: 60, paddingHorizontal: 24}}>
-            <Image source={Images.iconDebitCard} resizeMode="contain" style={[styles.emptyIcon as ImageStyle, {marginBottom: 16}]} />
-            <Text category="h9-s" bold center mb={8}>
-              {billingProvider === 'apple'
-                ? t('payment:managed_by_apple_title', {defaultValue: 'Billed through the App Store'})
-                : t('payment:managed_by_google_title', {defaultValue: 'Billed through Google Play'})}
-            </Text>
-            <Text category="h9" status="placeholder" center>
-              {billingProvider === 'apple'
-                ? t('payment:managed_by_apple_body', {
-                  defaultValue: "Your subscription is billed by Apple, not a saved card here — manage or cancel it from your iPhone's Settings > [your name] > Subscriptions.",
-                })
-                : t('payment:managed_by_google_body', {
-                  defaultValue: 'Your subscription is billed by Google Play, not a saved card here — manage or cancel it from the Play Store app > Payments & subscriptions.',
-                })}
-            </Text>
+          // REDESIGN (product request: "put back the Payment Method screen
+          // -- whenever the user makes payment with apple then in the
+          // payment method it should just display apple pay, same for
+          // android too it should display playstore... make it
+          // professional and perfect") -- was a big centered "empty state"
+          // block (icon + heading + paragraph), which read like an error/
+          // no-data screen rather than "here is your payment method."
+          // Restyled into the SAME card-row layout the real Stripe cards
+          // below use (Flex/border/pv/ml, matching visual weight) so this
+          // reads as one clean payment-method entry -- "Apple Pay" or
+          // "Google Play" front and center, same way a card's brand name
+          // is front and center -- with the management instructions kept
+          // as a smaller supporting line underneath, not the headline.
+          <Flex level="2" pv={24} ml={24} justify="flex-start" border={12} style={styles.iapCard}>
+            <View
+              style={[
+                styles.iapIconBadge,
+                {backgroundColor: billingProvider === 'apple' ? '#000000' : '#00C853'},
+              ]}>
+              <Icon
+                pack="eva"
+                name={billingProvider === 'apple' ? 'credit-card-outline' : 'play-circle-outline'}
+                style={[globalStyle.icon20, {tintColor: '#FFFFFF'}]}
+              />
+            </View>
+            <View style={globalStyle.flexOne}>
+              <Flex justify="flex-start" itemsCenter>
+                <Text category="h6">
+                  {billingProvider === 'apple'
+                    ? t('payment:apple_pay_label', {defaultValue: 'Apple Pay'})
+                    : t('payment:google_play_label', {defaultValue: 'Google Play'})}
+                </Text>
+                <View style={[styles.defaultBadge, {backgroundColor: theme['color-success-500']}]}>
+                  <Text category="h10" status="control" bold>
+                    {t('payment:active', {defaultValue: 'ACTIVE'})}
+                  </Text>
+                </View>
+              </Flex>
+              <Text category="h9" mt={8} status="placeholder">
+                {billingProvider === 'apple'
+                  ? t('payment:managed_by_apple_body_short', {
+                    defaultValue: "Manage or cancel from your iPhone's Settings > [your name] > Subscriptions.",
+                  })
+                  : t('payment:managed_by_google_body_short', {
+                    defaultValue: 'Manage or cancel from the Play Store app > Payments & subscriptions.',
+                  })}
+              </Text>
+            </View>
           </Flex>
         ) : loadError ? (
           <Flex vertical itemsCenter justify="center" style={{paddingVertical: 40, paddingHorizontal: 24}}>
@@ -292,6 +325,21 @@ const themedStyles = StyleService.create({
   emptyIcon: {
     width: 64,
     height: 64,
+  },
+  iapCard: {
+    ...globalStyle.shadow,
+    marginBottom: 24,
+    marginRight: 24,
+    borderRadius: 12,
+  },
+  iapIconBadge: {
+    width: 48,
+    height: 30,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginHorizontal: 16,
   },
   iconLogoBank: {
     // Sizing now comes from CardBrandLogo's own width/height props (48x30 —

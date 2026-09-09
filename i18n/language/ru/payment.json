@@ -31,5 +31,10 @@
   "managed_by_apple_title": "Оплата через App Store",
   "managed_by_google_title": "Оплата через Google Play",
   "managed_by_apple_body": "Ваша подписка оплачивается через Apple, а не сохранённой здесь картой — управляйте ею или отмените в Настройках iPhone > [ваше имя] > Подписки.",
-  "managed_by_google_body": "Ваша подписка оплачивается через Google Play, а не сохранённой здесь картой — управляйте ею или отмените в приложении Play Store > Платежи и подписки."
+  "managed_by_google_body": "Ваша подписка оплачивается через Google Play, а не сохранённой здесь картой — управляйте ею или отмените в приложении Play Store > Платежи и подписки.",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "АКТИВНО",
+  "managed_by_apple_body_short": "Управляйте или отмените в Настройках iPhone > [ваше имя] > Подписки.",
+  "managed_by_google_body_short": "Управляйте или отмените в приложении Play Store > Платежи и подписки."
 }

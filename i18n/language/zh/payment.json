@@ -31,5 +31,10 @@
   "managed_by_apple_title": "通过App Store付款",
   "managed_by_google_title": "通过Google Play付款",
   "managed_by_apple_body": "您的订阅由Apple扣款，而非此处保存的银行卡——请前往iPhone的\"设置\">[您的姓名]>\"订阅\"进行管理或取消。",
-  "managed_by_google_body": "您的订阅由Google Play扣款，而非此处保存的银行卡——请前往Play商店应用的\"付款和订阅\"进行管理或取消。"
+  "managed_by_google_body": "您的订阅由Google Play扣款，而非此处保存的银行卡——请前往Play商店应用的\"付款和订阅\"进行管理或取消。",
+  "apple_pay_label": "Apple Pay",
+  "google_play_label": "Google Play",
+  "active": "已启用",
+  "managed_by_apple_body_short": "可在iPhone的\"设置\">[您的姓名]>\"订阅\"中管理或取消。",
+  "managed_by_google_body_short": "可在Play商店应用的\"付款和订阅\"中管理或取消。"
 }
