@@ -135,6 +135,7 @@
   "career_dna_technical_strengths": "技術的な強み",
   "career_dna_version_line": "バージョン {{version}} • {{count}} 件のシグナルから更新",
   "career_dna_view_history": "履歴を見る",
+  "career_event_viewed_badge": "閲覧済み",
   "career_events_refresh_cooldown_body": "再度更新する前に約{{minutes}}分お待ちください。",
   "career_events_refresh_cooldown_title": "更新したばかりです",
   "career_events_refresh_paused_body": "キャリアイベントの検索は一時的に停止しています。",

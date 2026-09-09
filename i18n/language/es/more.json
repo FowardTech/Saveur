@@ -135,6 +135,7 @@
   "career_dna_technical_strengths": "Fortalezas técnicas",
   "career_dna_version_line": "Versión {{version}} • actualizado a partir de {{count}} señales",
   "career_dna_view_history": "Ver historial",
+  "career_event_viewed_badge": "Visto",
   "career_events_refresh_cooldown_body": "Espera unos {{minutes}} minuto(s) antes de volver a actualizar.",
   "career_events_refresh_cooldown_title": "Recién actualizado",
   "career_events_refresh_paused_body": "La búsqueda de eventos de carrera está pausada temporalmente.",

@@ -135,6 +135,7 @@
   "career_dna_technical_strengths": "Technical strengths",
   "career_dna_version_line": "Version {{version}} • updated from {{count}} signals",
   "career_dna_view_history": "View history",
+  "career_event_viewed_badge": "Viewed",
   "career_events_refresh_cooldown_body": "Please wait about {{minutes}} minute(s) before refreshing again.",
   "career_events_refresh_cooldown_title": "Just refreshed",
   "career_events_refresh_paused_body": "Career events discovery is temporarily paused.",

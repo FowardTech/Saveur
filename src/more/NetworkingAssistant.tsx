@@ -557,9 +557,33 @@ const CareerEventsTab = memo(
                     style={{ marginRight: 10 }}
                   />
                   <View style={globalStyle.flexOne}>
-                    <Text category="h8" bold numberOfLines={2}>
-                      {event.title}
-                    </Text>
+                    <Flex justify="flex-start" itemsCenter>
+                      {/* Product report: "when users click on any event it
+                          does not indicate whether it has been viewed or
+                          not... the title and text of the event viewed
+                          should change to gray and a viewed badge should
+                          also be indicated." event.read already exists and
+                          is already set the moment onOpenEvent fires (see
+                          that callback's own comment) -- this was the one
+                          remaining piece, purely presentational: title
+                          drops to the same muted hint color the subtitle/
+                          date lines already use once read, instead of
+                          staying full-strength basic text forever. */}
+                      <Text
+                        category="h8"
+                        bold
+                        numberOfLines={2}
+                        style={event.read ? { color: theme['text-hint-color'], flexShrink: 1 } : { flexShrink: 1 }}>
+                        {event.title}
+                      </Text>
+                      {event.read ? (
+                        <View style={[styles.viewedBadge, { borderColor: theme['text-hint-color'] }]}>
+                          <Text category="h10" status="placeholder" style={styles.viewedBadgeText}>
+                            {t('more:career_event_viewed_badge', { defaultValue: 'Viewed' })}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </Flex>
                     {event.organizer || event.location ? (
                       // BUG FIX (product report: "make the sub title of the
                       // event less bold so that we know which one is the
@@ -570,7 +594,10 @@ const CareerEventsTab = memo(
                       // size step (h10, matching the date line right below
                       // it) and given reduced opacity so it clearly recedes
                       // behind the bold title instead of competing with it.
-                      <Text category="h10" status="placeholder" opacity={0.7} mt={2} numberOfLines={1}>
+                      // Read events drop opacity further still (0.45 vs the
+                      // normal 0.7) on top of already being status
+                      // "placeholder" -- see event.read's own comment above.
+                      <Text category="h10" status="placeholder" opacity={event.read ? 0.45 : 0.7} mt={2} numberOfLines={1}>
                         {[event.organizer, event.location].filter(Boolean).join(' · ')}
                       </Text>
                     ) : null}
@@ -810,6 +837,21 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     padding: 16,
     marginBottom: 12,
+  },
+  // "Viewed" pill next to a career event's title once event.read is true
+  // -- see that card's own comment. A plain outlined chip (border color =
+  // the same muted hint color the title/subtitle text switches to),
+  // deliberately small/quiet since this is a secondary status marker, not
+  // something that should compete with the title for attention.
+  viewedBadge: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    marginLeft: 8,
+  },
+  viewedBadgeText: {
+    lineHeight: 14,
   },
   messagePanel: {
     marginTop: 12,

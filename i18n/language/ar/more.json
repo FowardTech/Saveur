@@ -135,6 +135,7 @@
   "career_dna_technical_strengths": "نقاط القوة التقنية",
   "career_dna_version_line": "الإصدار {{version}} • مُحدَّث من {{count}} إشارة",
   "career_dna_view_history": "عرض السجل",
+  "career_event_viewed_badge": "تمت المشاهدة",
   "career_events_refresh_cooldown_body": "يرجى الانتظار حوالي {{minutes}} دقيقة قبل التحديث مرة أخرى.",
   "career_events_refresh_cooldown_title": "تم التحديث للتو",
   "career_events_refresh_paused_body": "تم إيقاف البحث عن الفعاليات المهنية مؤقتًا.",
