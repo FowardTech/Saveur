@@ -579,6 +579,11 @@ export interface UserProfileProps {
   uid?: string; // Firebase UID, set once real auth is wired in — see AuthContext.tsx
   email: string;
   name: string;
+  // Backend-computed first token of `name`, used ONLY by the home-screen
+  // greeting (see HeaderHome.tsx / HomeSrc.tsx) so it can read "Hi, <first
+  // name>" — every other screen (Account, Edit Profile, resumes) keeps
+  // using `name` in full. See authService.ts's fromWire().
+  firstName?: string;
   // Random, non-identifying handle generated server-side at signup — the
   // only identity the leaderboard shows to other users. Shown under the
   // real name in the avatar header (HeaderHome.tsx) / profile screen.

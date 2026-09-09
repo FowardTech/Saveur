@@ -23,6 +23,12 @@ interface UserProfileWire {
   uid?: string;
   email: string;
   name: string;
+  // First whitespace-delimited token of `name`, computed server-side (see
+  // Saveur-Backend's User.to_dict()) purely so the home-screen greeting can
+  // show "Hi, <first name>" without touching `name` itself — every other
+  // screen (Account, Edit Profile, resumes) still reads/writes the full
+  // `name` field untouched.
+  first_name?: string;
   // Random, non-identifying display handle generated server-side at signup
   // (see Saveur-Backend's app/services/username_service.py) — this, never
   // `name`, is what the leaderboard shows other users. Surfaced here too so
@@ -52,6 +58,7 @@ function fromWire(wire: UserProfileWire): UserProfileProps {
     uid: wire.uid,
     email: wire.email,
     name: wire.name,
+    firstName: wire.first_name,
     username: wire.username,
     goals: wire.goals ?? [],
     industries: wire.industries ?? [],

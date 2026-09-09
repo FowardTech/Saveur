@@ -934,7 +934,11 @@ const HomeSrc = memo(() => {
           component's own doc comment. */}
       <AnnouncementBanner />
       <HeaderHome
-        name={profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
+        // Product request: greeting should read "Hi, <first name>", not the
+        // full name — uses the backend-computed `firstName` (see
+        // constants/Types.tsx's own comment), falling back to the full
+        // `name` for any cached profile fetched before this field existed.
+        name={profile?.firstName || profile?.name || t('home:default_user_name', { defaultValue: 'there' })}
         username={profile?.username}
         avatarUrl={profile?.avatarUrl}
         email={profile?.email ?? ''}
