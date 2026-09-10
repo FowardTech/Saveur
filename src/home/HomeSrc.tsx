@@ -6,6 +6,7 @@ import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation
 
 import Content, { CONTENT_PADDER } from 'components/Content';
 import Container from 'components/Container';
+import { SkeletonBlock } from 'components/Skeleton';
 import HeaderHome from './Components/HeaderHome';
 import AnnouncementBanner from './AnnouncementBanner';
 import ActionCard from 'components/ActionCard';
@@ -1155,8 +1156,12 @@ const HomeSrc = memo(() => {
             coach nudge) this screen has always computed, just rendered
             plainly now instead of through MissionHeroCard's richer layout. */}
         {missionHeroLoading ? (
-          <View style={styles.cardLoading}>
-            <Spinner status="primary" />
+          <View style={[styles.cardLoading, styles.cardLoadingRow]}>
+            <SkeletonBlock style={styles.cardLoadingIcon} radius={14} />
+            <View style={globalStyle.flexOne}>
+              <SkeletonBlock style={styles.cardLoadingTitle} radius={4} />
+              <SkeletonBlock style={styles.cardLoadingSubtitle} radius={4} />
+            </View>
           </View>
         ) : (
           <ActionCard
@@ -1483,5 +1488,30 @@ const themedStyles = StyleService.create({
     borderColor: 'border-card-default',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Product request: "I want skeleton loader in app" — this hero card slot
+  // was the one remaining bare Spinner on Home; same icon+title+subtitle
+  // row shape as the real ActionCard it stands in for (see
+  // components/ActionCard.tsx), just built from shimmering SkeletonBlocks
+  // instead of a centered spinner.
+  cardLoadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 18,
+  },
+  cardLoadingIcon: {
+    width: 44,
+    height: 44,
+    marginRight: 14,
+  },
+  cardLoadingTitle: {
+    width: '55%',
+    height: 14,
+    marginBottom: 8,
+  },
+  cardLoadingSubtitle: {
+    width: '75%',
+    height: 10,
   },
 });

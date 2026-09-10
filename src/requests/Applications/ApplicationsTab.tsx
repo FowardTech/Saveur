@@ -6,6 +6,7 @@ import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
+import {SkeletonList} from 'components/Skeleton';
 import ApplicationItem from './ApplicationItem';
 import TitleList from '../Components/TitleList';
 import {globalStyle} from 'styles/globalStyle';
@@ -145,9 +146,7 @@ const ApplicationsTab = memo(() => {
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <Text category="h8-s" status="placeholder" center>
-          {t('request:loading_applications', {defaultValue: 'Loading applications…'})}
-        </Text>
+        <SkeletonList count={4} />
       </View>
     );
   }

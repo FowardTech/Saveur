@@ -1,11 +1,12 @@
 import React, { memo } from 'react';
 import { View } from 'react-native';
-import { StyleService, useStyleSheet, Icon, Spinner } from '@ui-kitten/components';
+import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { useFocusEffect } from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
+import { SkeletonBlock } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import * as dayActivityService from 'services/dayActivityService';
 import { DayActivityItem, DayActivityItemType } from 'services/dayActivityService';
@@ -99,7 +100,21 @@ const RecentActivityList = memo(() => {
         </Text>
       </Flex>
       {items === null ? (
-        <Spinner size="small" />
+        // Product request: "I want skeleton loader in app" — was a bare
+        // centered small Spinner; three placeholder rows shaped like the
+        // real activity rows below read as "your recent activity is
+        // loading" instead of a generic spinner with no size hint.
+        <View style={styles.listCard}>
+          {[0, 1, 2].map(i => (
+            <View key={i} style={[styles.row, i === 2 ? styles.rowLast : null]}>
+              <SkeletonBlock style={styles.skeletonIcon} radius={10} />
+              <View style={globalStyle.flexOne}>
+                <SkeletonBlock style={styles.skeletonTitle} radius={4} />
+                <SkeletonBlock style={styles.skeletonSubtitle} radius={4} />
+              </View>
+            </View>
+          ))}
+        </View>
       ) : items.length === 0 ? (
         <View style={styles.emptyCard}>
           <Text category="h9-s" status="placeholder" center>
@@ -202,5 +217,19 @@ const themedStyles = StyleService.create({
   },
   time: {
     marginLeft: 8,
+  },
+  skeletonIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 12,
+  },
+  skeletonTitle: {
+    width: '55%',
+    height: 12,
+    marginBottom: 6,
+  },
+  skeletonSubtitle: {
+    width: '35%',
+    height: 10,
   },
 });
