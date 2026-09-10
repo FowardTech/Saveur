@@ -180,6 +180,17 @@ export enum EKeyAsyncStorage {
   // pattern) over to HomeSrc.tsx's useFocusEffect, which is what actually
   // navigates to My Documents once the navigator/auth state is ready.
   pendingSharedFiles = 'pendingSharedFiles',
+  // Whether the first-login "Welcome to Saveur" pitch card
+  // (src/home/WelcomeModal.tsx) has already been dismissed — shown once,
+  // automatically, the first time an account ever reaches Home (see
+  // HomeSrc.tsx's OVERLAY_PRIORITY queue, checked ahead of appTourSeen so
+  // this always shows before the AppTour walkthrough on a brand new
+  // account). Same per-account accountScopedKey pattern as appTourSeen
+  // above, for the same reason — a flat device-wide flag would either
+  // leak across two different accounts sharing one device, or (if cleared
+  // on sign-out to avoid that) re-show every time the SAME account signs
+  // back in, neither of which is "once ever per account".
+  welcomeModalSeen = 'welcomeModalSeen',
 }
 
 // BUG FIX (product report: "the tour guide always shows every time the

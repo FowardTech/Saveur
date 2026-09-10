@@ -41,6 +41,7 @@ import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
+import WelcomeModal from './WelcomeModal';
 import AppTour from 'components/AppTour';
 import AppRatingModal from 'components/AppRatingModal';
 import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInSheet';
@@ -290,7 +291,13 @@ const HomeSrc = memo(() => {
   // check-in slot -- same "time-sensitive, but not as urgent as the
   // one-time tour" reasoning, and since it's weekly (not daily) it should
   // still win over the rating ask/ad when both happen to be due at once.
-  const OVERLAY_PRIORITY = ['tour', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
+  //
+  // 'welcome' added ahead of everything else (product reference screenshot:
+  // a one-time "Welcome to Saveur" pitch card, see src/home/WelcomeModal.tsx)
+  // -- on a brand new account this and 'tour' can both be due on the very
+  // first Home focus, and welcome is the introduction the tour itself
+  // assumes has already happened, so it has to win that race and go first.
+  const OVERLAY_PRIORITY = ['welcome', 'tour', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
   type AutoOverlayKey = (typeof OVERLAY_PRIORITY)[number];
   const [activeOverlay, setActiveOverlay] = React.useState<AutoOverlayKey | null>(null);
   const activeOverlayRef = React.useRef<AutoOverlayKey | null>(null);
@@ -313,6 +320,29 @@ const HomeSrc = memo(() => {
     );
     setActiveOverlay(overlayQueueRef.current.shift() ?? null);
   }, []);
+
+  // One-time first-login "Welcome to Saveur" pitch card (src/home/
+  // WelcomeModal.tsx, product reference screenshot) — same "checked on
+  // every Home focus, gated on activeOverlay" pattern as the App Tour
+  // right below (and deliberately placed right before it: 'welcome' sits
+  // ahead of 'tour' in OVERLAY_PRIORITY above, so on a brand new account
+  // this always resolves and shows first).
+  const [showWelcome, setShowWelcome] = React.useState(false);
+  useFocusEffect(
+    React.useCallback(() => {
+      AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.welcomeModalSeen, profile?.uid)).then(seen => {
+        if (!seen) {
+          setShowWelcome(true);
+          requestOverlay('welcome');
+        }
+      });
+    }, [requestOverlay, profile?.uid]),
+  );
+  const onCloseWelcome = React.useCallback(() => {
+    setShowWelcome(false);
+    releaseOverlay('welcome');
+    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.welcomeModalSeen, profile?.uid), '1').catch(() => { });
+  }, [releaseOverlay, profile?.uid]);
 
   // One-time "how this app works" walkthrough (components/AppTour.tsx) —
   // checked on every Home focus (not just mount) rather than once, so
@@ -1309,6 +1339,7 @@ const HomeSrc = memo(() => {
         onCta={onOpenAd}
         onDismiss={onDismissAd}
       />
+      <WelcomeModal visible={showWelcome && activeOverlay === 'welcome'} onDismiss={onCloseWelcome} />
       <AppTour visible={showTour && activeOverlay === 'tour'} onClose={onCloseTour} />
       <AppRatingModal
         visible={showRatingPrompt && activeOverlay === 'rating'}
