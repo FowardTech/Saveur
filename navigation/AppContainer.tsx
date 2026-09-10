@@ -32,6 +32,8 @@ import LiveInterviewSession from 'src/practice/LiveInterviewSession';
 import CodingInterview from 'src/practice/CodingInterview';
 import CodingPracticeHub from 'src/practice/CodingPracticeHub';
 import CodingProblemSolve from 'src/practice/CodingProblemSolve';
+import CodingProjectsHub from 'src/practice/CodingProjectsHub';
+import CodingProjectEditor from 'src/practice/CodingProjectEditor';
 import InterviewFeedback from 'src/practice/InterviewFeedback';
 import ResumeBuilder from 'src/more/ResumeBuilder';
 import MyDocuments from 'src/more/MyDocuments';
@@ -219,6 +221,8 @@ const AppContainer = () => {
         <Stack.Screen name="CodingInterview" component={CodingInterview} />
         <Stack.Screen name="CodingPracticeHub" component={CodingPracticeHub} />
         <Stack.Screen name="CodingProblemSolve" component={CodingProblemSolve} />
+        <Stack.Screen name="CodingProjectsHub" component={CodingProjectsHub} />
+        <Stack.Screen name="CodingProjectEditor" component={CodingProjectEditor} />
         <Stack.Screen name="InterviewFeedback" component={InterviewFeedback} />
         <Stack.Screen name="ResumeBuilder" component={ResumeBuilder} />
         <Stack.Screen name="MyDocuments" component={MyDocuments} />

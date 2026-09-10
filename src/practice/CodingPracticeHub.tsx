@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {Alert, TouchableOpacity, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import {NavigationProp, useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -15,6 +15,7 @@ import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import * as codingService from 'services/codingService';
 import {CodingProblemSummary, CodingStats} from 'services/codingService';
+import {ADDON_CODES, hasAddon} from 'services/entitlementsService';
 
 // Free-practice Coding Practice hub (product follow-up: "add more
 // features to the coding tool so that its worth the amount its paid for"
@@ -124,6 +125,7 @@ const CodingPracticeHub = memo(() => {
   const [difficultyFilter, setDifficultyFilter] = React.useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = React.useState<string | null>(null);
   const [bookmarkedOnly, setBookmarkedOnly] = React.useState(false);
+  const [isCheckingProjectsAddon, setIsCheckingProjectsAddon] = React.useState(false);
 
   const load = React.useCallback(async () => {
     setIsLoading(true);
@@ -163,6 +165,42 @@ const CodingPracticeHub = memo(() => {
     if (bookmarkedOnly && !p.bookmarked) return false;
     return true;
   });
+
+  // Entry point into the new Coding Projects feature (persisted multi-file
+  // workspaces) -- a sibling feature to this hub's single-file problem bank,
+  // gated by the same coding_practice add-on. Reachable from here rather
+  // than only via a top-level tile since a user is already inside "Coding"
+  // by the time they're on this screen. Defensive re-check on tap (not just
+  // trusting that reaching this hub already implied the add-on is owned) --
+  // same hasAddon()-then-Alert pattern MockInterviewSetup.tsx's onStart uses
+  // for the exact same add-on, reused verbatim here rather than inventing a
+  // second gating convention.
+  const onOpenCodingProjects = async () => {
+    if (isCheckingProjectsAddon) return;
+    setIsCheckingProjectsAddon(true);
+    try {
+      const owned = await hasAddon(ADDON_CODES.codingPractice);
+      if (!owned) {
+        Alert.alert(
+          t('find:addon_required_title_generic', {defaultValue: 'This is a paid add-on'}),
+          t('find:addon_required_body', {
+            defaultValue: 'Purchase the add-on once to unlock it for good.',
+          }).toString(),
+          [
+            {text: t('common:cancel', {defaultValue: 'Cancel'}).toString(), style: 'cancel'},
+            {
+              text: t('more:addons_title', {defaultValue: 'Add-ons'}).toString(),
+              onPress: () => navigate('AddOns', {highlightCode: ADDON_CODES.codingPractice}),
+            },
+          ],
+        );
+        return;
+      }
+      navigate('CodingProjectsHub');
+    } finally {
+      setIsCheckingProjectsAddon(false);
+    }
+  };
 
   const onToggleBookmark = async (p: CodingProblemSummary) => {
     // Optimistic — the star flips immediately, then reconciles with the
@@ -211,6 +249,30 @@ const CodingPracticeHub = memo(() => {
             </View>
           </View>
         ) : null}
+
+        {/* Entry point into Coding Projects -- a persisted multi-file/
+            folder workspace, sibling feature to this hub's single-file
+            problem bank (see onOpenCodingProjects above). */}
+        <TouchableOpacity
+          activeOpacity={0.75}
+          disabled={isCheckingProjectsAddon}
+          onPress={onOpenCodingProjects}
+          style={[globalStyle.card, styles.projectsCard]}>
+          <View style={[styles.statsBadge, {backgroundColor: '#8B5CF61F'}]}>
+            <Icon pack="eva" name="folder-outline" style={[globalStyle.icon24, {tintColor: '#8B5CF6'}]} />
+          </View>
+          <View style={[globalStyle.flexOne, {marginLeft: 12}]}>
+            <Text category="h8" bold>
+              {t('find:coding_projects_title', {defaultValue: 'Coding Projects'})}
+            </Text>
+            <Text category="h10" status="placeholder" mt={2}>
+              {t('find:coding_projects_subtitle', {
+                defaultValue: 'Build multi-file scripts and web apps that save automatically.',
+              })}
+            </Text>
+          </View>
+          <Icon pack="eva" name="arrow-ios-forward" style={[globalStyle.icon20, {tintColor: theme['text-hint-color']}]} />
+        </TouchableOpacity>
 
         <Flex justify="flex-start" wrap mb={8}>
           {[null, 'beginner', 'intermediate', 'advanced'].map(d => {
@@ -358,6 +420,13 @@ const themedStyles = StyleService.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  projectsCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 16,
+    backgroundColor: 'background-basic-color-2',
   },
   chip: {
     paddingVertical: 8,

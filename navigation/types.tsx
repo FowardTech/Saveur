@@ -126,6 +126,16 @@ export type RootStackParamList = {
   CodingProblemSolve: {
     slug: string;
   };
+  // Coding Projects — a persisted, multi-file/folder code workspace, also
+  // gated by the coding_practice add-on (see entitlementsService.ts's
+  // ADDON_CODES.codingPractice), but a separate feature from the free-
+  // practice problem bank above: real named projects with their own files/
+  // folders instead of a single LeetCode-style problem statement. See
+  // services/codingProjectsService.ts for the backend contract.
+  CodingProjectsHub: undefined;
+  CodingProjectEditor: {
+    projectId: string;
+  };
   InterviewFeedback: {
     sessionId?: string;
     interviewType?: Interview_Type_Enum;
