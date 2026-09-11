@@ -78,6 +78,15 @@ const DreamCompanies = memo(() => {
   const [compareMode, setCompareMode] = React.useState(false);
   const [compareIds, setCompareIds] = React.useState<number[]>([]);
   const [showCompareModal, setShowCompareModal] = React.useState(false);
+  // BUG FIX (product report: "The salary insight in the mobile app is not
+  // visible. Maybe you should add read more button so it expands") — the
+  // Compare companies sheet's Salary Insights row used a fixed-height cell
+  // (styles.compareRow, height:44) sized for the ~1-line values every other
+  // row here has, but real salary-insight text routinely runs 3+ lines —
+  // the overflow was silently clipped/hidden rather than actually shown.
+  // Tracked per "companyId_rowIndex" cell (not globally) so expanding one
+  // company's salary text in the comparison doesn't also expand another's.
+  const [expandedCompareCells, setExpandedCompareCells] = React.useState<Set<string>>(new Set());
   const MAX_COMPARE = 3;
   // "A personal notes field per company" -- local draft per card id so
   // typing doesn't fire a network call per keystroke; only written back on
@@ -968,7 +977,7 @@ const DreamCompanies = memo(() => {
             <Content>
               {(() => {
                 const selected = (companies ?? []).filter(c => compareIds.includes(c.id));
-                const rows: { label: string; render: (c: DreamCompany) => string }[] = [
+                const rows: { label: string; render: (c: DreamCompany) => string; expandable?: boolean }[] = [
                   {
                     label: t('more:dream_company_readiness_label', { defaultValue: 'Readiness' }),
                     render: c => `${c.readinessScore}%`,
@@ -995,6 +1004,7 @@ const DreamCompanies = memo(() => {
                   {
                     label: t('more:salary_insights', { defaultValue: 'Salary Insights' }),
                     render: c => c.intel?.salaryRange || '—',
+                    expandable: true,
                   },
                 ];
                 return (
@@ -1002,7 +1012,7 @@ const DreamCompanies = memo(() => {
                     <View style={{ width: 130 }}>
                       <View style={{ height: 56 }} />
                       {rows.map((r, i) => (
-                        <View key={i} style={styles.compareRow}>
+                        <View key={i} style={[styles.compareRow, r.expandable && styles.compareRowExpandable]}>
                           <Text category="h10" status="placeholder">{r.label}</Text>
                         </View>
                       ))}
@@ -1012,11 +1022,47 @@ const DreamCompanies = memo(() => {
                         <View style={{ height: 56, justifyContent: 'flex-end', marginBottom: 4 }}>
                           <Text category="h9" bold numberOfLines={2}>{c.company}</Text>
                         </View>
-                        {rows.map((r, i) => (
-                          <View key={i} style={styles.compareRow}>
-                            <Text category="h10" numberOfLines={3}>{r.render(c)}</Text>
-                          </View>
-                        ))}
+                        {rows.map((r, i) => {
+                          const value = r.render(c);
+                          if (!r.expandable) {
+                            return (
+                              <View key={i} style={styles.compareRow}>
+                                <Text category="h10" numberOfLines={3}>{value}</Text>
+                              </View>
+                            );
+                          }
+                          // BUG FIX (see expandedCompareCells' own comment
+                          // above): this cell grows to fit (minHeight, not a
+                          // fixed height) instead of silently clipping real
+                          // salary-insight text, and offers an explicit
+                          // Read more / Show less toggle so the sheet still
+                          // stays compact by default.
+                          const cellKey = `${c.id}_${i}`;
+                          const isExpanded = expandedCompareCells.has(cellKey);
+                          return (
+                            <View key={i} style={[styles.compareRow, styles.compareRowExpandable]}>
+                              <Text category="h10" numberOfLines={isExpanded ? undefined : 2}>{value}</Text>
+                              {value.length > 50 ? (
+                                <TouchableOpacity
+                                  onPress={() =>
+                                    setExpandedCompareCells(prev => {
+                                      const next = new Set(prev);
+                                      if (next.has(cellKey)) next.delete(cellKey);
+                                      else next.add(cellKey);
+                                      return next;
+                                    })
+                                  }
+                                  hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}>
+                                  <Text category="h10" bold status="primary" mt={2}>
+                                    {isExpanded
+                                      ? t('common:show_less', { defaultValue: 'Show less' })
+                                      : t('common:read_more', { defaultValue: 'Read more' })}
+                                  </Text>
+                                </TouchableOpacity>
+                              ) : null}
+                            </View>
+                          );
+                        })}
                       </View>
                     ))}
                   </ScrollView>
@@ -1156,6 +1202,21 @@ const themedStyles = StyleService.create({
   compareRow: {
     height: 44,
     justifyContent: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'border-basic-color-3',
+  },
+  // BUG FIX (product report: "The salary insight in the mobile app is not
+  // visible") — overrides compareRow's fixed height:44 (sized for the
+  // ~1-line values every other comparison row has) with a growable
+  // minHeight instead, since real salary-insight text can run several
+  // lines and was being silently clipped by that fixed height. Used only
+  // for rows flagged `expandable: true` (currently just Salary Insights).
+  compareRowExpandable: {
+    height: undefined,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: 'border-basic-color-3',
   },
