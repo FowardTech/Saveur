@@ -22,7 +22,16 @@ import * as billingService from './billingService';
 // before that backend field exists.
 // ---------------------------------------------------------------------------
 
-export const FREE_SESSIONS_PER_MONTH = 5;
+// BUG FIX (product report on the web counterpart of this same cap: "I
+// thought we said its 3 free mock sessions every month for free plan. Why
+// am i see 5 free sessions in the web app?"): this fallback constant was
+// stale at 5 on both platforms — the real, authoritative value is
+// Saveur-Backend's entitlements_service.py FREE_SESSIONS_PER_MONTH, which
+// is 3. In practice the backend always returns sessionsLimit on
+// GET /api/v1/billing/subscription (see getSessionEntitlement below), so
+// this constant only ever matters if that field is ever missing — but it
+// should still say the true number for that fallback path.
+export const FREE_SESSIONS_PER_MONTH = 3;
 
 /**
  * A subscription counts as "Pro" only while it's actually active/trialing —
