@@ -18,6 +18,13 @@ export interface GeneratedDocument {
   label: string;
   format: string | null;
   url: string | null;
+  // Cover letters only (product report: "when a CV or Cover letter is
+  // generated and it's saved, the user should be able to come and edit
+  // and update that same generated CV or cover later") — the plain-text
+  // source, null for resume/resume_variant rows (their real editable
+  // source is Resume Builder's structured sections instead). See
+  // app/models/generated_document.py's own comment.
+  content: string | null;
   createdAt: string | null;
 }
 
@@ -27,6 +34,7 @@ interface WireDocument {
   label?: string;
   format?: string | null;
   url?: string | null;
+  content?: string | null;
   created_at?: string | null;
 }
 
@@ -37,6 +45,7 @@ function mapDocument(w: WireDocument): GeneratedDocument {
     label: w.label ?? '',
     format: w.format ?? null,
     url: w.url ?? null,
+    content: w.content ?? null,
     createdAt: w.created_at ?? null,
   };
 }
@@ -64,5 +73,26 @@ export async function deleteGeneratedDocument(id: number): Promise<void> {
 // silently closing on a name that never took.
 export async function renameGeneratedDocument(id: number, label: string): Promise<GeneratedDocument> {
   const { data } = await apiClient.patch<WireDocument>(`/api/v1/resume/documents/${id}`, { label });
+  return mapDocument(data);
+}
+
+/**
+ * Saves revised cover letter text back onto this same saved document —
+ * PATCH /api/v1/resume/documents/{id} re-renders the PDF/DOCX in place and
+ * updates its url, so redownloading it afterward returns the edited
+ * version (product report: "when a CV or Cover letter is generated and
+ * it's saved, the user should be able to come and edit and update that
+ * same generated CV or cover later"). Cover letters only — 400s
+ * server-side for any other kind. Optionally renames at the same time.
+ * Throws on failure.
+ */
+export async function updateGeneratedDocumentContent(
+  id: number,
+  content: string,
+  label?: string,
+): Promise<GeneratedDocument> {
+  const body: Record<string, string> = { content };
+  if (label !== undefined) body.label = label;
+  const { data } = await apiClient.patch<WireDocument>(`/api/v1/resume/documents/${id}`, body);
   return mapDocument(data);
 }

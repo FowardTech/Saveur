@@ -13,7 +13,9 @@ import {
 } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
 
+import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
 import Content from 'components/Content';
 import Container from 'components/Container';
@@ -70,6 +72,7 @@ const GeneratedDocuments = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
 
   const [documents, setDocuments] = React.useState<GeneratedDocument[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -81,6 +84,22 @@ const GeneratedDocuments = memo(() => {
   const [renamingDoc, setRenamingDoc] = React.useState<GeneratedDocument | null>(null);
   const [renameValue, setRenameValue] = React.useState('');
   const [isSavingRename, setIsSavingRename] = React.useState(false);
+
+  // BUG FIX (product report: "when a CV or Cover letter is generated and
+  // it's saved, the user should be able to come and edit and update that
+  // same generated CV or cover later"). A resume/CV's real editable
+  // source already lives in ResumeBuilder (structured sections, always
+  // up to date there) — the pencil icon for that kind now just deep-links
+  // there instead. A cover letter had nowhere at all to go back to — no
+  // source text was ever saved, only the final rendered file — so this is
+  // the real fix for that kind: an inline editor for the saved letter
+  // text, saving via PATCH /api/v1/resume/documents/{id}, which
+  // re-renders the file in place (see
+  // generatedDocumentsService.updateGeneratedDocumentContent).
+  const [editingDoc, setEditingDoc] = React.useState<GeneratedDocument | null>(null);
+  const [editLabel, setEditLabel] = React.useState('');
+  const [editContent, setEditContent] = React.useState('');
+  const [isSavingEdit, setIsSavingEdit] = React.useState(false);
 
   const load = React.useCallback(() => {
     setIsLoading(true);
@@ -163,6 +182,50 @@ const GeneratedDocuments = memo(() => {
     }
   };
 
+  const onOpenEdit = (doc: GeneratedDocument) => {
+    if (doc.kind === 'resume') {
+      navigate('ResumeBuilder');
+      return;
+    }
+    if (doc.kind === 'resume_variant') {
+      navigate('ResumeVariants');
+      return;
+    }
+    // cover_letter — the only kind with real editable text saved on the
+    // document itself.
+    setEditingDoc(doc);
+    setEditLabel(doc.label);
+    setEditContent(doc.content ?? '');
+  };
+
+  const onCloseEdit = () => {
+    if (isSavingEdit) return;
+    setEditingDoc(null);
+    setEditLabel('');
+    setEditContent('');
+  };
+
+  const onSaveEdit = async () => {
+    if (!editingDoc) return;
+    const content = editContent.trim();
+    if (!content) return;
+    setIsSavingEdit(true);
+    try {
+      const updated = await generatedDocumentsService.updateGeneratedDocumentContent(
+        editingDoc.id, content, editLabel.trim() || editingDoc.label,
+      );
+      setDocuments(prev => prev.map(d => (d.id === updated.id ? updated : d)));
+      onCloseEdit();
+    } catch {
+      Alert.alert(
+        t('more:edit_document_failed_title', { defaultValue: "Couldn't save your changes" }).toString(),
+        t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' }).toString(),
+      );
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   const onDelete = (doc: GeneratedDocument) => {
     Alert.alert(
       t('more:delete_document_title', { defaultValue: 'Remove this document?' }),
@@ -224,6 +287,11 @@ const GeneratedDocuments = memo(() => {
                       <Icon
                         pack="eva" name="edit-2-outline"
                         style={[globalStyle.icon20, { tintColor: theme['text-basic-color'], marginRight: 16 }]}
+                        onPress={() => onOpenEdit(doc)}
+                      />
+                      <Icon
+                        pack="eva" name="pricetags-outline"
+                        style={[globalStyle.icon20, { tintColor: theme['text-basic-color'], marginRight: 16 }]}
                         onPress={() => onOpenRename(doc)}
                       />
                       <Icon
@@ -279,6 +347,46 @@ const GeneratedDocuments = memo(() => {
           </Layout>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Cover letter editor — the actual fix for "edit and update that
+          same generated CV or cover later" (resume/resume_variant deep-link
+          out to their own real editors instead, see onOpenEdit above). */}
+      <Modal visible={!!editingDoc} transparent animationType="slide" onRequestClose={onCloseEdit}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <Layout level="1" style={styles.modalSheet}>
+            <Flex justify="space-between" itemsCenter mb={16}>
+              <Text category="h7" bold>
+                {t('more:edit_cover_letter_title', { defaultValue: 'Edit cover letter' })}
+              </Text>
+              <TouchableOpacity onPress={onCloseEdit} disabled={isSavingEdit} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]} />
+              </TouchableOpacity>
+            </Flex>
+            <Input
+              placeholder={t('more:document_label_placeholder', { defaultValue: 'Document name' }).toString()}
+              value={editLabel}
+              onChangeText={setEditLabel}
+              style={[styles.input, { marginBottom: 12 }]}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              placeholder={t('more:cover_letter_text_placeholder', { defaultValue: 'Letter text' }).toString()}
+              value={editContent}
+              onChangeText={setEditContent}
+              multiline
+              numberOfLines={8}
+              textStyle={[globalStyle.inputText, styles.editTextArea]}
+              style={[styles.input, styles.editInputWrap, { marginBottom: 20 }]}
+            />
+            <CtaButton disabled={!editContent.trim() || isSavingEdit} onPress={onSaveEdit}>
+              {isSavingEdit ? () => <Spinner size="small" status="control" /> : t('common:save', { defaultValue: 'Save' })}
+            </CtaButton>
+            <Button appearance="outline" style={{ marginTop: 12 }} onPress={onCloseEdit} disabled={isSavingEdit}>
+              {t('common:cancel', { defaultValue: 'Cancel' })}
+            </Button>
+          </Layout>
+        </KeyboardAvoidingView>
+      </Modal>
     </Container>
   );
 });
@@ -306,6 +414,16 @@ const themedStyles = StyleService.create({
   // Rename modal — same bottom-sheet treatment as ResumeVariants.tsx's own
   // naming sheet (see that file's own styles for the pattern this copies).
   input: { ...globalStyle.inputField },
+  // Cover letter text editor — a tall multiline Input, same field styling
+  // as the plain single-line ones above but with room to actually read/
+  // revise a few paragraphs at once.
+  editInputWrap: {
+    minHeight: 180,
+    alignItems: 'flex-start',
+  },
+  editTextArea: {
+    textAlignVertical: 'top',
+  },
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
