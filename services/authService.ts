@@ -261,6 +261,31 @@ export async function deleteAccount(): Promise<void> {
   await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile]);
 }
 
+/**
+ * POST /api/v1/users/me/change-password — product request: "update password
+ * in the mobile app settings" (see src/more/SecuritySettings.tsx). Note the
+ * /v1/ prefix, unlike updateProfile/deleteAccount above — this route was
+ * only ever added to users.py's main `bp` (url_prefix "/api/v1/users"), not
+ * to `bp_alias` ("/api/users") the way /me, /me/avatar, and the others are,
+ * so calling the alias path here would 404.
+ *
+ * Unlike a password-RESET link (out-of-band proof of ownership via email),
+ * this is an in-app change while already signed in, so the backend verifies
+ * `currentPassword` really is correct (via Identity Toolkit's own
+ * signInWithPassword call — the Admin SDK has no way to check a password
+ * itself) before updating it. Rejects with the backend's own message
+ * (Saveur-Backend/app/api/users.py's change_password) for a wrong current
+ * password or a new password that fails the strength policy — same
+ * 8-16-char/upper/lower/digit/special pattern as utils/rules.ts's
+ * RulePassword, kept in sync deliberately.
+ */
+export async function changePassword(currentPassword: string, newPassword: string): Promise<void> {
+  await apiClient.post('/api/v1/users/me/change-password', {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });
+}
+
 /** Clears the local profile cache on sign-out. No network call needed. */
 export async function clearCache(): Promise<void> {
   await AsyncStorage.multiRemove([EKeyAsyncStorage.userProfile]);

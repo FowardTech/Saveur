@@ -2,6 +2,7 @@ import React, {memo} from 'react';
 import {Alert, Image, ImageStyle, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, Toggle, Button, Input, Spinner} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
+import auth from '@react-native-firebase/auth';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -11,9 +12,15 @@ import NavigationAction from 'components/NavigationAction';
 import {globalStyle} from 'styles/globalStyle';
 import * as biometricAuthService from 'services/biometricAuthService';
 import * as twoFactorService from 'services/twoFactorService';
+import * as authService from 'services/authService';
 import {AuthContext} from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
 import {Images} from 'assets/images';
+
+// Same password-strength policy as utils/rules.ts's RulePassword and
+// Saveur-Backend/app/api/users.py's change_password — kept in sync
+// deliberately rather than only relying on the backend's own 400.
+const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d\s])\S{8,16}$/;
 
 // Reached from More > Security. Houses both device-local biometric app-lock
 // (services/biometricAuthService.ts) and account-level email-code 2FA
@@ -130,6 +137,84 @@ const SecuritySettings = memo(() => {
     setTwoFACode('');
     setTwoFAEmailHint(null);
   }, []);
+
+  // --- Update password ---
+  // Only accounts that actually have a password (i.e. signed up/in with
+  // email+password) can change one — a Google/Apple/LinkedIn-only account
+  // has no password on file, and the backend's verify-current-password step
+  // would just always fail "incorrect" for them, which reads as a bug
+  // rather than the truth ("there's nothing to change"). Checked once from
+  // Firebase's own provider list rather than guessed from anything backend
+  // profile state tracks.
+  const hasPasswordProvider = React.useMemo(
+    () => (auth().currentUser?.providerData ?? []).some((p: any) => p?.providerId === 'password'),
+    [],
+  );
+  const [isChangingPassword, setIsChangingPassword] = React.useState(false);
+  const [currentPassword, setCurrentPassword] = React.useState('');
+  const [newPassword, setNewPassword] = React.useState('');
+  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [pwBusy, setPwBusy] = React.useState(false);
+
+  const onStartChangePassword = React.useCallback(() => {
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setIsChangingPassword(true);
+  }, []);
+
+  const onCancelChangePassword = React.useCallback(() => {
+    setIsChangingPassword(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  }, []);
+
+  const onSubmitChangePassword = React.useCallback(async () => {
+    if (pwBusy) return;
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      Alert.alert(
+        t('more:change_password_missing_title', {defaultValue: 'Missing information'}),
+        t('more:change_password_missing_body', {defaultValue: 'Enter your current password and a new password.'}).toString(),
+      );
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert(
+        t('more:change_password_mismatch_title', {defaultValue: "Passwords don't match"}),
+        t('more:change_password_mismatch_body', {defaultValue: 'Your new password and confirmation must be the same.'}).toString(),
+      );
+      return;
+    }
+    if (!PASSWORD_PATTERN.test(newPassword)) {
+      Alert.alert(
+        t('more:change_password_weak_title', {defaultValue: 'Password too weak'}),
+        t('auth:err_password_pattern', {
+          defaultValue: 'Password must include an uppercase letter, a lowercase letter, a number, and a special character (e.g. ! @ # $ %).',
+        }).toString(),
+      );
+      return;
+    }
+    setPwBusy(true);
+    try {
+      await authService.changePassword(currentPassword, newPassword);
+      setIsChangingPassword(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      Alert.alert(
+        t('more:change_password_success_title', {defaultValue: 'Password updated'}),
+        t('more:change_password_success_body', {defaultValue: "You'll use your new password next time you sign in."}).toString(),
+      );
+    } catch (error: any) {
+      Alert.alert(
+        t('more:change_password_failed_title', {defaultValue: "Couldn't update your password"}),
+        error?.message ?? t('common:try_again_later', {defaultValue: 'Please try again in a moment.'}),
+      );
+    } finally {
+      setPwBusy(false);
+    }
+  }, [pwBusy, currentPassword, newPassword, confirmPassword, t]);
 
   const onDisable2FA = React.useCallback(() => {
     Alert.alert(
@@ -250,6 +335,58 @@ const SecuritySettings = memo(() => {
             {twoFABusy
               ? t('more:two_factor_sending', {defaultValue: 'Sending…'})
               : t('more:two_factor_enable', {defaultValue: 'Turn on'})}
+          </CtaButton>
+        )}
+
+        <Text category="h9-s" bold mb={4} mt={32}>
+          {t('more:change_password_section_title', {defaultValue: 'Password'})}
+        </Text>
+        {!hasPasswordProvider ? (
+          <Text category="h10" status="placeholder" mb={8}>
+            {t('more:change_password_no_provider', {
+              defaultValue: "You signed in with a social account, so there's no password to update here.",
+            })}
+          </Text>
+        ) : isChangingPassword ? (
+          <View>
+            <Input
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              placeholder={t('more:current_password_placeholder', {defaultValue: 'Current password'}).toString()}
+              secureTextEntry
+              style={[globalStyle.inputField, {marginBottom: 12}]}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder={t('more:new_password_placeholder', {defaultValue: 'New password'}).toString()}
+              secureTextEntry
+              style={[globalStyle.inputField, {marginBottom: 12}]}
+              textStyle={globalStyle.inputText}
+            />
+            <Input
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder={t('more:confirm_new_password_placeholder', {defaultValue: 'Confirm new password'}).toString()}
+              secureTextEntry
+              style={[globalStyle.inputField, {marginBottom: 12}]}
+              textStyle={globalStyle.inputText}
+            />
+            <Flex justify="space-between" itemsCenter>
+              <Button appearance="ghost" status="basic" disabled={pwBusy} onPress={onCancelChangePassword}>
+                {t('common:cancel', {defaultValue: 'Cancel'})}
+              </Button>
+              <CtaButton disabled={pwBusy} onPress={onSubmitChangePassword}>
+                {pwBusy
+                  ? t('more:change_password_saving', {defaultValue: 'Updating…'})
+                  : t('more:change_password_confirm', {defaultValue: 'Update password'})}
+              </CtaButton>
+            </Flex>
+          </View>
+        ) : (
+          <CtaButton onPress={onStartChangePassword}>
+            {t('more:change_password_start', {defaultValue: 'Update password'})}
           </CtaButton>
         )}
       </Content>
