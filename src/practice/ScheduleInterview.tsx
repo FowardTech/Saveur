@@ -21,7 +21,7 @@ import NavigationAction from 'components/NavigationAction';
 import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import { DATA_PRACTICE_MODES, DATA_INTERVIEW_TYPES, DATA_DIFFICULTY, DATA_COMPANIES, COMPANY_ANY, companiesForCountries } from 'constants/Data';
-import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum } from 'constants/Types';
+import { Difficulty_Enum, Interview_Type_Enum, Practice_Mode_Enum, ScheduledInterviewProps } from 'constants/Types';
 import * as scheduledInterviewService from 'services/scheduledInterviewService';
 import { getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
@@ -66,6 +66,17 @@ const ScheduleInterview = memo(() => {
   });
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [showTimePicker, setShowTimePicker] = React.useState(false);
+
+  // BUG FIX (product report: "When a mock schedule is created there is no
+  // success screen in both the mobile app and the web app to show that a
+  // schedule has been created successfully"). This used to call goBack()
+  // the instant createScheduled() resolved, with no confirmation of any
+  // kind — the reminder was genuinely created (it did show up on Home's
+  // Upcoming Session card), but nothing on THIS screen ever told the user
+  // that before yanking them back to Find. Mirrors web's own
+  // app/practice/schedule/page.tsx, which already shows a real
+  // confirmation card in this same spot.
+  const [scheduled, setScheduled] = React.useState<ScheduledInterviewProps | null>(null);
 
   // Product report: "the company list in the interview setup is very
   // US-centric" — same region-aware fix as MockInterviewSetup.tsx's own
@@ -153,7 +164,7 @@ const ScheduleInterview = memo(() => {
     }
     setIsSaving(true);
     try {
-      await scheduledInterviewService.createScheduled({
+      const created = await scheduledInterviewService.createScheduled({
         interviewType,
         mode,
         difficulty,
@@ -162,7 +173,7 @@ const ScheduleInterview = memo(() => {
         durationMin,
         scheduledAt: scheduledAt.getTime(),
       });
-      goBack();
+      setScheduled(created);
     } catch (e: any) {
       Alert.alert(
         t('find:schedule_failed', { defaultValue: 'Could not schedule interview' }),
@@ -173,12 +184,61 @@ const ScheduleInterview = memo(() => {
     }
   };
 
+  // Real confirmation screen instead of the form (see `scheduled` state's
+  // own comment above for the bug this fixes) — swaps just the <Content>
+  // body below via this flag rather than the whole screen, so there's only
+  // ever the one <TopNavigation> this screen already had.
+  const showSuccess = !!scheduled;
+
   return (
     <Container style={styles.container}>
       <TopNavigation
         title={t('find:schedule_interview', { defaultValue: 'Schedule an Interview' })}
         accessoryLeft={<NavigationAction />}
       />
+      {showSuccess && scheduled ? (
+        <Content padder contentContainerStyle={styles.content}>
+          <View style={[styles.successCard, { borderColor: theme['background-basic-color-3'] }]}>
+            <Flex justify="flex-start" itemsCenter mb={12}>
+              <View style={[styles.successBadge, { backgroundColor: theme['color-success-100'] }]}>
+                <Icon pack="eva" name="checkmark-circle-2-outline" style={[globalStyle.icon24, { tintColor: theme['color-success-500'] }]} />
+              </View>
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <Text category="h8" bold>
+                  {t('find:schedule_success_title', { defaultValue: 'Interview scheduled' })}
+                </Text>
+                <Text category="h10" status="placeholder" mt={2}>
+                  {getInterviewTypeLabel(scheduled.interviewType, t)}
+                  {scheduled.role ? ` · ${scheduled.role}` : ''}
+                  {scheduled.company ? ` · ${scheduled.company}` : ''}
+                </Text>
+                <Text category="h10" status="placeholder" mt={2}>
+                  {new Date(scheduled.scheduledAt).toLocaleString(i18n.language, {
+                    weekday: 'short',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                  })}
+                </Text>
+              </View>
+            </Flex>
+            <Flex mt={8}>
+              <CtaButton
+                children={t('find:schedule_go_to_home', { defaultValue: 'Go to Home' })}
+                onPress={() => navigate('MainBottomTab')}
+                style={[globalStyle.shadowBtn, { flex: 1, marginRight: 8 }]}
+              />
+              <Button
+                appearance="outline"
+                onPress={goBack}
+                style={{ flex: 1 }}>
+                {t('find:schedule_back_to_practice', { defaultValue: 'Back to Practice' })}
+              </Button>
+            </Flex>
+          </View>
+        </Content>
+      ) : (
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('find:when', { defaultValue: 'When' })}
@@ -383,6 +443,7 @@ const ScheduleInterview = memo(() => {
           style={globalStyle.shadowBtn}
         />
       </Content>
+      )}
     </Container>
   );
 });
@@ -395,6 +456,20 @@ const themedStyles = StyleService.create({
   },
   content: {
     paddingBottom: 80,
+  },
+  successCard: {
+    ...globalStyle.card,
+    backgroundColor: 'background-basic-color-1',
+    borderWidth: 1,
+    borderRadius: 16,
+    padding: 16,
+  },
+  successBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dateTimePill: {
     flexDirection: 'row',
