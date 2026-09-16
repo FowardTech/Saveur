@@ -62,14 +62,47 @@ function buildGreetingMessage(): CoachChatMessageProps {
 
 /**
  * True only when this user has never actually exchanged a real message
- * with the coach yet (the thread getChatHistory() returned was the
- * client-side placeholder greeting, not real persisted history) — the
+ * with the coach yet (the thread getChatHistory() returned is nothing
+ * but its own opening message, not real back-and-forth history) — the
  * signal VoiceCoachView uses to decide whether to speak its one-time
  * self-introduction (see that file) rather than silently starting to
- * listen every single time the screen opens.
+ * listen every single time the screen opens. Checks `role === 'coach'`
+ * rather than the specific id 'msg_greeting' so this still fires exactly
+ * once whether the single message present is the old static fallback
+ * greeting OR a real generated opener from getOpeningMessage() below.
  */
 export function isFirstEverCoachVisit(history: CoachChatMessageProps[]): boolean {
-  return history.length === 1 && history[0].id === 'msg_greeting';
+  return history.length === 1 && history[0].role === 'coach';
+}
+
+// Product request: "I want the AI coach... to feel so real" [the
+// reference: Yoodli's AI coach proactively asked about the user's role,
+// why it's a fit, their dream companies, etc., rather than just waiting
+// for the first message]. GET /api/v1/coach/opening (Saveur-Backend's
+// coach.py _get_or_generate_opening) generates a real, personalized
+// opening line the first time this thread is empty (or just returns the
+// existing one on a repeat visit) — replaces buildGreetingMessage's
+// identical-for-everyone hardcoded string as the thing shown when
+// there's no real history yet. Falls back to buildGreetingMessage() on
+// any failure so the Coach tab never fails to show something.
+async function getOpeningMessage(): Promise<CoachChatMessageProps> {
+  try {
+    const {data} = await apiClient.get<{reply?: string; id?: string | null}>(
+      '/api/v1/coach/opening',
+      {params: {language: currentLanguage()}},
+    );
+    if (data.reply) {
+      return {
+        id: data.id ? String(data.id) : 'msg_opening',
+        role: 'coach',
+        text: data.reply,
+        createdAt: 0,
+      };
+    }
+  } catch {
+    // fails through to the static fallback below
+  }
+  return buildGreetingMessage();
 }
 
 let cachedThread: CoachChatMessageProps[] = [];
@@ -105,7 +138,7 @@ export async function getChatHistory(): Promise<CoachChatMessageProps[]> {
   try {
     const {data} = await apiClient.get<{messages?: CoachMessageWire[]}>('/api/v1/coach/messages');
     const messages = (data.messages ?? []).map(fromWire);
-    cachedThread = messages.length > 0 ? messages : [buildGreetingMessage()];
+    cachedThread = messages.length > 0 ? messages : [await getOpeningMessage()];
     return cachedThread;
   } catch {
     // Offline / request failed — show whatever this session already has
@@ -360,7 +393,11 @@ export async function askOneOff(prompt: string, context?: CoachUserContext): Pro
  */
 export async function clearChatHistory(): Promise<void> {
   await apiClient.delete('/api/v1/coach/messages');
-  cachedThread = [buildGreetingMessage()];
+  // Empty, not the static greeting -- the next getChatHistory() call will
+  // see an empty persisted thread (same as a first-ever visit) and
+  // generate a fresh real opener via getOpeningMessage() rather than
+  // caching the old hardcoded fallback text here.
+  cachedThread = [];
 }
 
 /**
