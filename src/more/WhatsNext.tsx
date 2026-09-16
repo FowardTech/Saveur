@@ -31,7 +31,7 @@ import { ArtWorkplaceCompass } from 'src/home/HomeHeroArt';
 import * as whatsNextService from 'services/whatsNextService';
 import { PostOfferPlan, PlanStep, PostOfferCheckIn } from 'services/whatsNextService';
 import * as applicationsService from 'services/applicationsService';
-import { Application_Stage_Enum } from 'constants/Types';
+import { Application_Stage_Enum, JobApplicationProps } from 'constants/Types';
 
 // "What's Next" — Pro Premium post-offer guided journey (product request:
 // once a user gets an offer, one feature should cover negotiation help, a
@@ -72,6 +72,15 @@ const WhatsNext = memo(() => {
   // so the intro/form copy can tell the user what happened instead of
   // presenting pre-filled fields with no explanation.
   const [autoDetectedFrom, setAutoDetectedFrom] = React.useState(false);
+  // BUG FIX (product report: "the content should be customized to every
+  // role the user got an offer for. But if it has not gotten any offer
+  // then it should just display a general whats next contents") -- see
+  // this file's render logic below (the `!plan` branch) for the three
+  // real states this now distinguishes: zero tracked offers (general
+  // job-search content), exactly one (unchanged auto-fill), or 2+ (a real
+  // picker instead of silently leaving the form blank).
+  const [offers, setOffers] = React.useState<JobApplicationProps[]>([]);
+  const [offersLoaded, setOffersLoaded] = React.useState(false);
   const [startDate, setStartDate] = React.useState<Date | null>(null);
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [isGenerating, setIsGenerating] = React.useState(false);
@@ -107,18 +116,31 @@ const WhatsNext = memo(() => {
     if (!planLoaded || plan) return;
     if (route.params?.company || route.params?.role) return;
     applicationsService.listApplications().then(apps => {
-      const offers = apps.filter(a => a.stage === Application_Stage_Enum.Offer);
-      if (offers.length !== 1) return;
-      const offer = offers[0];
-      setCompany(offer.company ?? '');
-      setRole(offer.role ?? '');
-      if (offer.offerAmount != null) {
-        setCurrentOffer(`${offer.offerCurrency ?? ''} ${offer.offerAmount}`.trim());
+      const offerApps = apps.filter(a => a.stage === Application_Stage_Enum.Offer);
+      setOffers(offerApps);
+      if (offerApps.length === 1) {
+        const offer = offerApps[0];
+        setCompany(offer.company ?? '');
+        setRole(offer.role ?? '');
+        if (offer.offerAmount != null) {
+          setCurrentOffer(`${offer.offerCurrency ?? ''} ${offer.offerAmount}`.trim());
+        }
+        setAutoDetectedFrom(true);
       }
-      setAutoDetectedFrom(true);
-    }).catch(() => {});
+    }).catch(() => setOffers([])).finally(() => setOffersLoaded(true));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [planLoaded, plan]);
+
+  // Picking a specific offer from the 2+-offers picker below — pre-fills
+  // and opens the same form sheet the single-offer/manual flows already
+  // use.
+  const pickOffer = (offer: JobApplicationProps) => {
+    setCompany(offer.company ?? '');
+    setRole(offer.role ?? '');
+    setCurrentOffer(offer.offerAmount != null ? `${offer.offerCurrency ?? ''} ${offer.offerAmount}`.trim() : '');
+    setAutoDetectedFrom(true);
+    setShowFormSheet(true);
+  };
 
   // Weekly "how's it going?" check-in (product request: "always check up
   // on the user regularly to know how they are doing at the new role until
@@ -254,6 +276,127 @@ const WhatsNext = memo(() => {
     );
   }
 
+  // Reached from a specific Offer-stage application's own "What's Next?"
+  // button (ApplicationDetails.tsx passing company/role via route params)
+  // -- we already know exactly which offer this is for, so skip the
+  // general-content/picker branching below entirely and go straight to
+  // the plain "Get started" CTA, same as before this fix.
+  const cameFromApplication = !!(route.params?.company || route.params?.role);
+
+  const introCta = (
+    <Flex vertical itemsCenter justify="center" style={styles.introBody}>
+      {/* Product request: "add illustrations like the gift box
+          wherever needed", then a follow-up: "use a better
+          illustration". Also shown inside the form sheet's own
+          header below. Only rendered before a plan exists — once
+          generated, the timeline/checklist are the visual content.
+          See src/home/HomeHeroArt.tsx's own comment for the full
+          context on why this replaced the earlier signpost. */}
+      <ArtWorkplaceCompass size={104} />
+      <Text category="h9-s" status="placeholder" center mt={20} mb={28} maxWidth={320}>
+        {t('more:whats_next_description', {
+          defaultValue: "Tell the AI about your offer, and it builds your negotiation talking points, a pre-start checklist, and a plan for navigating your first 90 days — fitting in with your new team, working well with colleagues, and making a real impact, not just closing tasks.",
+        })}
+      </Text>
+
+      {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
+
+      <CtaButton
+        style={[globalStyle.shadowBtn, { width: '100%' }]}
+        onPress={() => setShowFormSheet(true)}
+      >
+        {t('more:whats_next_get_started_cta', { defaultValue: 'Get started' })}
+      </CtaButton>
+    </Flex>
+  );
+
+  // BUG FIX (product report: "the content should be customized to every
+  // role the user got an offer for. But if it has not gotten any offer
+  // then it should just display a general whats next contents") -- real,
+  // honest general job-search guidance (links into features this app
+  // already has, not fabricated personalized advice) for the zero-offer
+  // case, instead of the same "type in your offer" CTA regardless of
+  // whether the user has one at all.
+  const generalContent = (
+    <View>
+      <ArtWorkplaceCompass size={88} />
+      <Text category="h7" bold center mt={16} mb={4}>
+        {t('more:whats_next_general_title', { defaultValue: "No offer yet — here's what to focus on" })}
+      </Text>
+      <Text category="h9-s" status="placeholder" center mb={20}>
+        {t('more:whats_next_general_subtitle', {
+          defaultValue: 'Once you mark an application as "Offer" in your Application Tracker, this screen builds a negotiation, pre-start, and 90-day plan tailored to that specific role.',
+        })}
+      </Text>
+      <TouchableOpacity
+        style={styles.generalCard}
+        onPress={() => navigate('MockInterviewSetup', {})}
+      >
+        <Icon pack="eva" name="mic-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+        <Text category="h9" bold mt={8}>{t('more:whats_next_general_practice_title', { defaultValue: 'Keep your interview skills sharp' })}</Text>
+        <Text category="h10" status="placeholder" mt={2}>{t('more:whats_next_general_practice_body', { defaultValue: 'Run a mock interview and get AI feedback on your answers.' })}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.generalCard}
+        onPress={() => navigate('ResumeBuilder')}
+      >
+        <Icon pack="eva" name="file-text-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+        <Text category="h9" bold mt={8}>{t('more:whats_next_general_resume_title', { defaultValue: 'Make sure your resume is working for you' })}</Text>
+        <Text category="h10" status="placeholder" mt={2}>{t('more:whats_next_general_resume_body', { defaultValue: 'Tailor your resume to each role and check your ATS score.' })}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.generalCard}
+        onPress={() => navigate('MainBottomTab', { screen: 'Interviews', params: { screen: 'RequestsSrc' } })}
+      >
+        <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+        <Text category="h9" bold mt={8}>{t('more:whats_next_general_tracker_title', { defaultValue: 'Stay on top of new openings' })}</Text>
+        <Text category="h10" status="placeholder" mt={2}>{t('more:whats_next_general_tracker_body', { defaultValue: 'Track everything you apply to and follow up at the right time.' })}</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.generalCard}
+        onPress={() => navigate('NetworkingAssistant')}
+      >
+        <Icon pack="eva" name="people-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+        <Text category="h9" bold mt={8}>{t('more:whats_next_general_networking_title', { defaultValue: 'Grow your network' })}</Text>
+        <Text category="h10" status="placeholder" mt={2}>{t('more:whats_next_general_networking_body', { defaultValue: "Log who you've reached out to and draft a follow-up." })}</Text>
+      </TouchableOpacity>
+      <Text category="h10" status="link" center mt={12} onPress={() => setShowFormSheet(true)}>
+        {t('more:whats_next_general_have_offer_cta', { defaultValue: 'Already have an offer? Build your plan' })}
+      </Text>
+    </View>
+  );
+
+  // 2+ tracked offers — a real picker instead of silently guessing which
+  // one to auto-fill (the old behavior only ever handled exactly one and
+  // otherwise left the form blank with no explanation).
+  const offerPicker = (
+    <View>
+      <ArtWorkplaceCompass size={88} />
+      <Text category="h7" bold center mt={16} mb={4}>
+        {t('more:whats_next_picker_title', { defaultValue: 'You have {{count}} offers — which one first?', count: offers.length })}
+      </Text>
+      <Text category="h9-s" status="placeholder" center mb={20}>
+        {t('more:whats_next_picker_subtitle', { defaultValue: 'You can build a plan for one offer at a time — pick another later from "Start over".' })}
+      </Text>
+      {offers.map((offer, i) => (
+        <TouchableOpacity
+          key={`${offer.company}-${offer.role}-${i}`}
+          style={[styles.pointCard, styles.pickerRow]}
+          onPress={() => pickOffer(offer)}
+        >
+          <View style={{ flex: 1 }}>
+            <Text category="h9" bold>{offer.role}</Text>
+            <Text category="h10" status="placeholder" mt={2}>{offer.company}</Text>
+          </View>
+          <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+        </TouchableOpacity>
+      ))}
+      <Text category="h10" status="link" center mt={4} onPress={() => setShowFormSheet(true)}>
+        {t('more:whats_next_general_have_offer_cta_2', { defaultValue: 'None of these? Enter it manually' })}
+      </Text>
+    </View>
+  );
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -262,30 +405,17 @@ const WhatsNext = memo(() => {
       />
       <Content padder avoidKeyboard contentContainerStyle={styles.content}>
         {!plan ? (
-          <Flex vertical itemsCenter justify="center" style={styles.introBody}>
-            {/* Product request: "add illustrations like the gift box
-                wherever needed", then a follow-up: "use a better
-                illustration". Also shown inside the form sheet's own
-                header below. Only rendered before a plan exists — once
-                generated, the timeline/checklist are the visual content.
-                See src/home/HomeHeroArt.tsx's own comment for the full
-                context on why this replaced the earlier signpost. */}
-            <ArtWorkplaceCompass size={104} />
-            <Text category="h9-s" status="placeholder" center mt={20} mb={28} maxWidth={320}>
-              {t('more:whats_next_description', {
-                defaultValue: "Tell the AI about your offer, and it builds your negotiation talking points, a pre-start checklist, and a plan for navigating your first 90 days — fitting in with your new team, working well with colleagues, and making a real impact, not just closing tasks.",
-              })}
-            </Text>
-
-            {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
-
-            <CtaButton
-              style={[globalStyle.shadowBtn, { width: '100%' }]}
-              onPress={() => setShowFormSheet(true)}
-            >
-              {t('more:whats_next_get_started_cta', { defaultValue: 'Get started' })}
-            </CtaButton>
-          </Flex>
+          cameFromApplication ? (
+            introCta
+          ) : !offersLoaded ? (
+            <SkeletonList count={2} style={{ paddingHorizontal: 16 }} />
+          ) : offers.length === 0 ? (
+            generalContent
+          ) : offers.length === 1 ? (
+            introCta
+          ) : (
+            offerPicker
+          )
         ) : (
           <View>
             {error ? <Text category="h9-s" status="danger" mb={16} center>{error}</Text> : null}
@@ -628,6 +758,19 @@ const themedStyles = StyleService.create({
   introBody: {
     flex: 1,
     paddingTop: 24,
+  },
+  // General job-search content cards (zero-tracked-offer state) and the
+  // 2+-offers picker rows — see this file's BUG FIX comment above
+  // introCta/generalContent/offerPicker.
+  generalCard: {
+    ...globalStyle.card,
+    padding: 16,
+    marginBottom: 12,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   input: { ...globalStyle.inputField },
   multilineInput: {
