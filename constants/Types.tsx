@@ -191,6 +191,19 @@ export enum EKeyAsyncStorage {
   // on sign-out to avoid that) re-show every time the SAME account signs
   // back in, neither of which is "once ever per account".
   welcomeModalSeen = 'welcomeModalSeen',
+  // Product request: "I want us to add prep test and many other
+  // personality test during onboarding and also when user enters the
+  // dashboard for the first time" — set once the user either completes OR
+  // explicitly skips the Career Assessment/Skills Prep prompt (see
+  // src/more/CareerAssessment.tsx and HomeSrc.tsx's first-dashboard-visit
+  // check), so Home's automatic nudge only ever fires once per account,
+  // same reasoning as welcomeModalSeen above. The backend's own GET
+  // /api/v1/onboarding/status (onboardingAssessmentService.getStatus) is
+  // the real source of truth for "did they actually complete it" — this
+  // local flag only governs whether the unprompted nudge shows again, not
+  // whether the feature itself is reachable (it's always reachable from
+  // Settings to retake).
+  careerAssessmentPromptSeen = 'careerAssessmentPromptSeen',
 }
 
 // BUG FIX (product report: "the tour guide always shows every time the

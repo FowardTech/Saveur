@@ -102,6 +102,18 @@ const SignupThirdStep = memo(() => {
         logo: true,
         description: t('success:description_2'),
         children: [
+          // Product request: "I want us to add prep test and many other
+          // personality test during onboarding and also when user enters
+          // the dashboard for the first time" — new primary option,
+          // above the two pre-existing ones (unchanged, still available
+          // for anyone who'd rather skip straight in; Home's own
+          // first-dashboard-visit nudge covers that case — see
+          // HomeSrc.tsx).
+          {
+            title: t('more:career_assessment_success_cta', {defaultValue: 'Take your career assessment'}),
+            onPress: () => navigate('CareerAssessment', {fromOnboarding: true}),
+            status: 'basic',
+          },
           {
             title: t('success:see_your_dashboard'),
             onPress: () => navigate('MainBottomTab'),
@@ -110,7 +122,7 @@ const SignupThirdStep = memo(() => {
           {
             title: t('success:start_practicing', {defaultValue: 'Start Practicing'}),
             onPress: () => navigate('MockInterviewSetup', {}),
-            status: 'basic',
+            status: 'outline',
           },
         ],
         buttonsViewStyle: {marginHorizontal: 68},

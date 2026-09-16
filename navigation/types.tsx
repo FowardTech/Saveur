@@ -398,6 +398,15 @@ export type RootStackParamList = {
   // as "Career DNA" and "Career Genome") — a living behavioral profile the
   // AI builds from real usage signals. See services/careerDnaService.ts.
   CareerDna: undefined;
+  // Product request: "I want us to add prep test and many other
+  // personality test during onboarding and also when user enters the
+  // dashboard for the first time" — a free, explicit, one-time (retakeable
+  // from Settings) Career Personality Assessment + Skills Prep Quiz.
+  // Deliberately its own RootStack screen (not embedded in the Auth stack)
+  // so BOTH entry points -- SignupThirdStep's post-signup SuccessScr button
+  // AND Home's first-dashboard-visit prompt -- can reach it identically.
+  // See services/onboardingAssessmentService.ts.
+  CareerAssessment: {fromOnboarding?: boolean} | undefined;
   // AI Career Twin — one aggregated profile merged from every resume-family
   // row already on the account, plus free-form Q&A grounded in it. See
   // services/aiTwinService.ts and src/more/AICareerTwin.tsx.

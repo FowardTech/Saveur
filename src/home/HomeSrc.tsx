@@ -11,6 +11,7 @@ import HeaderHome from './Components/HeaderHome';
 import AnnouncementBanner from './AnnouncementBanner';
 import ActionCard from 'components/ActionCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
+import * as onboardingAssessmentService from 'services/onboardingAssessmentService';
 import { DailyChallenge } from 'services/dailyChallengeService';
 import * as gamificationService from 'services/gamificationService';
 import { GamificationStreakProps } from 'constants/Types';
@@ -297,7 +298,7 @@ const HomeSrc = memo(() => {
   // -- on a brand new account this and 'tour' can both be due on the very
   // first Home focus, and welcome is the introduction the tour itself
   // assumes has already happened, so it has to win that race and go first.
-  const OVERLAY_PRIORITY = ['welcome', 'tour', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
+  const OVERLAY_PRIORITY = ['welcome', 'tour', 'assessment', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
   type AutoOverlayKey = (typeof OVERLAY_PRIORITY)[number];
   const [activeOverlay, setActiveOverlay] = React.useState<AutoOverlayKey | null>(null);
   const activeOverlayRef = React.useRef<AutoOverlayKey | null>(null);
@@ -365,6 +366,55 @@ const HomeSrc = memo(() => {
     releaseOverlay('tour');
     AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.appTourSeen, profile?.uid), '1').catch(() => { });
   }, [releaseOverlay, profile?.uid]);
+
+  // Product request: "I want us to add prep test and many other
+  // personality test during onboarding and also when user enters the
+  // dashboard for the first time" — a ONE-TIME automatic nudge into
+  // src/more/CareerAssessment.tsx on the first Home focus for anyone who
+  // skipped it at signup (SignupThirdStep's SuccessScr already offers it
+  // directly, so most users never hit this path at all). Unlike
+  // welcome/tour above, this is a full-screen navigation, not an in-place
+  // modal — it still goes through the same overlay queue so it can't fire
+  // in the same tick as the welcome modal or app tour, but releases the
+  // slot immediately after navigating away rather than waiting for a
+  // "close" callback, since leaving Home already ends this overlay's turn.
+  // GET /api/v1/onboarding/status is checked (not just the local
+  // "prompted before" flag) so an existing user who already completed the
+  // assessment some other way (e.g. a future Settings entry point) never
+  // gets nagged just because this specific local flag was never set.
+  useFocusEffect(
+    React.useCallback(() => {
+      let cancelled = false;
+      AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.careerAssessmentPromptSeen, profile?.uid)).then(async seen => {
+        if (seen || cancelled) return;
+        try {
+          const status = await onboardingAssessmentService.getStatus();
+          if (cancelled || status.personalityCompleted) return;
+        } catch {
+          return; // offline/failed status check — don't nag this visit, try again next time
+        }
+        if (cancelled) return;
+        requestOverlay('assessment');
+      });
+      return () => { cancelled = true; };
+    }, [requestOverlay, profile?.uid]),
+  );
+  // Separate from the request above: only actually navigate once
+  // 'assessment' has genuinely won the queue (i.e. no higher-priority
+  // welcome/tour modal is currently showing over Home) — requestOverlay
+  // above only enqueues it, same as every other overlay here. The local
+  // "don't ask again" flag is set right away, before the user has actually
+  // seen the screen — same posture as welcome/tour's own "seen" flags,
+  // which are set on close rather than completion; skipping still counts
+  // as "prompted", the whole point of this being a one-time nudge, not a
+  // gate.
+  React.useEffect(() => {
+    if (activeOverlay !== 'assessment') return;
+    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.careerAssessmentPromptSeen, profile?.uid), '1').catch(() => { });
+    releaseOverlay('assessment');
+    navigate('CareerAssessment', {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeOverlay]);
 
   // Regular QA rating prompt (product request item: "a regular if not
   // weekly or monthly app rating that will pop up as modal... for quality
