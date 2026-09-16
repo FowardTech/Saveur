@@ -397,6 +397,21 @@ const LiveInterviewSession = memo(() => {
   // last submit is in flight.
   const [answerText, setAnswerText] = React.useState('');
   const [isSubmittingAnswer, setIsSubmittingAnswer] = React.useState(false);
+  // Product request: "I want ... the AI interviewer to always detect
+  // inappropriate words and caution the user during interview session when
+  // they respond inappropriately" -- set from interviewService.submitAnswer's
+  // {flagged, caution} response (see both call sites below), never blocks
+  // the interview itself, just shows a brief on-screen caution banner.
+  const [moderationCaution, setModerationCaution] = React.useState<string | null>(null);
+  const moderationCautionTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showModerationCaution = React.useCallback((text: string) => {
+    if (moderationCautionTimerRef.current) clearTimeout(moderationCautionTimerRef.current);
+    setModerationCaution(text);
+    moderationCautionTimerRef.current = setTimeout(() => setModerationCaution(null), 6000);
+  }, []);
+  React.useEffect(() => () => {
+    if (moderationCautionTimerRef.current) clearTimeout(moderationCautionTimerRef.current);
+  }, []);
 
   const question =
     backendQuestionText ?? questions[Math.min(questionIndex, questions.length - 1)];
@@ -555,10 +570,11 @@ const LiveInterviewSession = memo(() => {
           // cause). Awaiting it here removes the race entirely rather than
           // relying only on the backend-side mitigation.
           try {
-            await interviewService.submitAnswer(sessionId, {
+            const result = await interviewService.submitAnswer(sessionId, {
               questionId: backendQuestionId ?? `local_q${questionIndex}`,
               text: finalTranscript.trim(),
             });
+            if (result.flagged && result.caution) showModerationCaution(result.caution);
           } catch (err) {
             console.warn('[LiveInterviewSession] voice submitAnswer failed', err);
           }
@@ -614,7 +630,7 @@ const LiveInterviewSession = memo(() => {
     // to reference here -- would redefine advanceTurn, and therefore reset
     // the silence-detection effect's debounce timer, on every single render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isVoiceMode, isVideoMode, sessionId, backendQuestionId, questionIndex, speakSmart, advanceQuestion]);
+  }, [isVoiceMode, isVideoMode, sessionId, backendQuestionId, questionIndex, speakSmart, advanceQuestion, showModerationCaution]);
 
   // BACKSTOP ONLY as of the silence-detection effect below (product report:
   // "it takes the interviewer a long time to ask the next question" — see
@@ -651,10 +667,11 @@ const LiveInterviewSession = memo(() => {
     setIsSubmittingAnswer(true);
     try {
       if (sessionId) {
-        await interviewService.submitAnswer(sessionId, {
+        const result = await interviewService.submitAnswer(sessionId, {
           questionId: backendQuestionId ?? `local_q${questionIndex}`,
           text: trimmed,
         });
+        if (result.flagged && result.caution) showModerationCaution(result.caution);
       }
     } catch (err) {
       // Best-effort — don't block the user from moving on to the next
@@ -665,7 +682,7 @@ const LiveInterviewSession = memo(() => {
       setIsSubmittingAnswer(false);
       advanceQuestion();
     }
-  }, [answerText, isSubmittingAnswer, sessionId, backendQuestionId, questionIndex, advanceQuestion]);
+  }, [answerText, isSubmittingAnswer, sessionId, backendQuestionId, questionIndex, advanceQuestion, showModerationCaution]);
 
   // Track every question that's actually been shown (including the first)
   // so it can be threaded into completeSession on end.
@@ -1375,6 +1392,13 @@ const LiveInterviewSession = memo(() => {
       // exactly once.
       <Container style={styles.container} useSafeArea={false}>
         <View style={styles.videoFullScreen}>
+          {!!moderationCaution && (
+            <View style={[styles.moderationCautionBanner, { top: safeTop + 64 }]}>
+              <Text category="h10-s" bold status="control" center>
+                {moderationCaution}
+              </Text>
+            </View>
+          )}
           {cameraPermissionState === 'checking' ? (
             <Flex vertical center justify="center" style={styles.videoStateFill}>
               <ActivityIndicator size="large" color={theme['color-primary-500']} />
@@ -1632,6 +1656,13 @@ const LiveInterviewSession = memo(() => {
             : undefined
         }
       />
+      {!!moderationCaution && (
+        <View style={styles.moderationCautionBannerInline}>
+          <Text category="h10-s" bold status="control" center>
+            {moderationCaution}
+          </Text>
+        </View>
+      )}
       {/* BUG FIX (product report: "the input field is covered by the keypad
           when typing. Making what the user is typing not visible") -- this
           screen had no keyboard-avoidance wrapper of any kind, unlike its
@@ -1875,6 +1906,31 @@ const styles = StyleSheet.create({
     width: 1,
     height: 1,
     opacity: 0,
+  },
+  // Product request: "I want ... the AI interviewer to always detect
+  // inappropriate words and caution the user during interview session" --
+  // shown briefly (see showModerationCaution) over the Video-mode camera
+  // feed, which is why this variant is absolutely positioned with an
+  // explicit `top` (safeTop + offset, passed inline at the usage site)
+  // rather than sitting in normal document flow like its Text-mode sibling
+  // below.
+  moderationCautionBanner: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    zIndex: 20,
+    backgroundColor: 'rgba(180, 83, 9, 0.92)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+  },
+  moderationCautionBannerInline: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    backgroundColor: 'rgba(180, 83, 9, 0.92)',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
   },
   container: {
     // No hardcoded background here anymore — Container (ui-kitten Layout)

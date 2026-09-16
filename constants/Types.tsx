@@ -980,6 +980,13 @@ export interface CoachChatMessageProps {
   // field, which Bubble/MessageImage already knows how to render as a
   // preview thumbnail with zero new rendering code needed there.
   imageUrl?: string;
+  // Product request: "I want the AI career coach ... to always detect
+  // inappropriate words and caution the user ... when they respond
+  // inappropriately" — set on a 'coach' message when the backend's
+  // moderation check (app/services/moderation_service.py) flagged the
+  // user's preceding message. Chat.tsx renders this bubble with a
+  // distinct caution style instead of the normal coach bubble.
+  flagged?: boolean;
 }
 
 // Product request item: "The AI coach is redirecting but just to few

@@ -168,6 +168,7 @@ export async function sendMessage(
   let replyText: string;
   let suggestedCourseTopic: string | undefined;
   let suggestedAction: SuggestedActionId | undefined;
+  let flagged = false;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
@@ -176,6 +177,7 @@ export async function sendMessage(
       response?: string;
       suggested_course?: string | null;
       suggested_action?: SuggestedActionId | null;
+      flagged?: boolean;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
@@ -200,6 +202,7 @@ export async function sendMessage(
       i18n.t('message:coach_unsure_reply', { defaultValue: "I'm not sure how to answer that yet." });
     suggestedCourseTopic = data.suggested_course || undefined;
     suggestedAction = data.suggested_action || undefined;
+    flagged = !!data.flagged;
   } catch (e) {
     // At least keep the user's own message in the in-memory cache before
     // propagating the error — Chat.tsx already shows it optimistically, so
@@ -225,6 +228,7 @@ export async function sendMessage(
     // actually navigating somewhere right now — see app/api/coach.py's
     // SUGGESTED_ACTION marker. Chat.tsx/VoiceCoachView.tsx both act on this.
     suggestedAction,
+    flagged,
   };
 
   cachedThread = [...cachedThread, userMessage, coachMessage];
@@ -266,6 +270,7 @@ export async function sendVoiceMessage(
   let replyText: string;
   let suggestedCourseTopic: string | undefined;
   let suggestedAction: SuggestedActionId | undefined;
+  let flagged = false;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
@@ -274,6 +279,7 @@ export async function sendVoiceMessage(
       response?: string;
       suggested_course?: string | null;
       suggested_action?: SuggestedActionId | null;
+      flagged?: boolean;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
@@ -294,6 +300,7 @@ export async function sendVoiceMessage(
       i18n.t('message:coach_unsure_reply', { defaultValue: "I'm not sure how to answer that yet." });
     suggestedCourseTopic = data.suggested_course || undefined;
     suggestedAction = data.suggested_action || undefined;
+    flagged = !!data.flagged;
   } catch (e) {
     cachedThread = [...cachedThread, userMessage];
     throw e;
@@ -306,6 +313,7 @@ export async function sendVoiceMessage(
     createdAt: Date.now() + 1,
     suggestedCourseTopic,
     suggestedAction,
+    flagged,
   };
 
   cachedThread = [...cachedThread, userMessage, coachMessage];

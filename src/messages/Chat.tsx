@@ -87,6 +87,11 @@ const ME_USER = { _id: 1 };
 interface CoachIMessage extends IMessage {
   suggestedCourseTopic?: string;
   suggestedAction?: SuggestedActionId;
+  // Product request: "I want the AI career coach ... to always detect
+  // inappropriate words and caution the user" -- see
+  // services/coachService.ts's flagged field and renderBubble below, which
+  // gives a flagged coach message a distinct amber caution style.
+  flagged?: boolean;
 }
 
 // Same module/tier length "Learn Anything" custom topics use — see
@@ -135,6 +140,7 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
   user: msg.role === "user" ? ME_USER : COACH_USER,
   suggestedCourseTopic: msg.suggestedCourseTopic,
   suggestedAction: msg.suggestedAction,
+  flagged: msg.flagged,
   // Product report: "The AI chat can't process images yet" -- gifted-chat's
   // own IMessage.image is already rendered by its built-in MessageImage
   // (see this screen's own renderMessageImage below, and MessageImage's own
@@ -439,6 +445,33 @@ const Chat = memo(() => {
   }, []);
 
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
+    // Product request: "I want the AI career coach ... to always detect
+    // inappropriate words and caution the user" -- a flagged coach message
+    // (see toGiftedMessage/CoachIMessage above) gets a distinct amber
+    // caution style instead of the normal coach bubble, so the user
+    // immediately reads it differently from an ordinary reply.
+    const isFlagged = !!(props.currentMessage as CoachIMessage | undefined)?.flagged;
+    if (isFlagged) {
+      return (
+        <Bubble
+          {...props}
+          containerStyle={{
+            left: styles.bubbleContainerStyle,
+            right: styles.bubbleContainerStyle,
+          }}
+          wrapperStyle={{
+            left: [
+              styles.wrapperLeftStyle,
+              { backgroundColor: 'rgba(217, 119, 6, 0.14)', borderWidth: 1, borderColor: 'rgba(217, 119, 6, 0.4)' },
+              { maxWidth: 267 * (width / 375) },
+            ],
+          }}
+          textStyle={{
+            left: [styles.leftTextStyle, { color: '#92400E' }],
+          }}
+        />
+      );
+    }
     return (
       <Bubble
         {...props}

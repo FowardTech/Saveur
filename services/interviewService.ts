@@ -346,16 +346,31 @@ export interface SubmitAnswerPayload {
  * scope here per the "don't force a risky change" guidance). Left available
  * for whichever of those gaps gets addressed first.
  */
+// Product request: "I want ... the AI interviewer to always detect
+// inappropriate words and caution the user during interview session when
+// they respond inappropriately" -- app/api/interviews.py's answer()
+// endpoint now runs a moderation check on the candidate's text and returns
+// {ok, flagged, caution}. Never blocks/censors the submitted answer itself
+// (informational only) -- see that endpoint's own comment.
+export interface SubmitAnswerResult {
+  flagged: boolean;
+  caution?: string;
+}
+
 export async function submitAnswer(
   sessionId: string,
   payload: SubmitAnswerPayload,
-): Promise<void> {
-  await apiClient.post(`/api/v1/interviews/sessions/${sessionId}/answer`, {
-    question_id: payload.questionId,
-    text: payload.text,
-    audio_url: payload.audioUrl,
-    video_url: payload.videoUrl,
-  });
+): Promise<SubmitAnswerResult> {
+  const {data} = await apiClient.post<{ok?: boolean; flagged?: boolean; caution?: string | null}>(
+    `/api/v1/interviews/sessions/${sessionId}/answer`,
+    {
+      question_id: payload.questionId,
+      text: payload.text,
+      audio_url: payload.audioUrl,
+      video_url: payload.videoUrl,
+    },
+  );
+  return { flagged: !!data?.flagged, caution: data?.caution || undefined };
 }
 
 /**
