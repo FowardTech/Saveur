@@ -44,6 +44,7 @@ import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import WelcomeModal from './WelcomeModal';
 import AppTour from 'components/AppTour';
+import CoachingReportCard from 'components/CoachingReportCard';
 import AppRatingModal from 'components/AppRatingModal';
 import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInSheet';
 import PeriodicCheckInSheet from 'components/PeriodicCheckInSheet';
@@ -1369,6 +1370,15 @@ const HomeSrc = memo(() => {
           // just drops the purple border.
           showBorder={false}
         />
+
+        {/* Coaching report -- task #44 mobile parity port of web's task #21
+            (product report: "the web app dashboard look so empty", Yoodli's
+            own dashboard report card). Self-contained, renders nothing
+            while loading and shows an honest empty state (with a CTA)
+            rather than fabricated content for a user with fewer than 2
+            graded mock interviews -- see CoachingReportCard.tsx's own
+            comment. */}
+        <CoachingReportCard />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
