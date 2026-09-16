@@ -655,7 +655,16 @@ export interface UserProfileProps {
   // everything 'pro' has, PLUS Job Alerts and Learning Courses. See
   // saveur-backend/app/services/entitlements_service.py's module docstring
   // for the full tier breakdown this mirrors.
-  subscriptionTier: 'free' | 'pro' | 'premium' | 'premium_plus';
+  // BUG FIX (product report: "Some features are locked even when the
+  // user's plan is premium"): this type used to omit 'team'/'enterprise',
+  // even though Saveur-Backend's Subscription.plan/entitlements_service.py
+  // PREMIUM_TIERS can genuinely report either — 'team' in particular for
+  // any real Premium subscriber's row that hasn't resynced to 'premium'
+  // yet since the "Team"->"Premium" rename (see that file's own comment).
+  // Narrower here silently hid the exact gap that let
+  // services/entitlementsService.ts's isPremiumTier compare against only
+  // 'premium' and wrongly lock a real 'team'-tier Premium subscriber out.
+  subscriptionTier: 'free' | 'pro' | 'premium' | 'premium_plus' | 'team' | 'enterprise';
   // Master push-notification opt-out, editable from More/Settings. Backend
   // defaults this to true for every account (fail open) — see
   // saveur-backend/app/models/user.py's notifications_enabled column and

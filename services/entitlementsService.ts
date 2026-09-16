@@ -43,18 +43,41 @@ export function isProTier(status: SubscriptionStatusProps | null | undefined): b
   return status.tier !== 'free' && (status.status === 'active' || status.status === 'trialing');
 }
 
+// BUG FIX (product report: "Some features are locked even when the user's
+// plan is premium. The emotional coach, video interview and many more are
+// still locked... the user is currently on saveur premium"): this used to
+// compare `status.tier === 'premium'` only — but Saveur-Backend's
+// entitlements_service.py PREMIUM_TIERS (and this file's web counterpart,
+// Saveur-Web/lib/billingService.ts) has ALWAYS been the 3-value set
+// {"premium", "team", "enterprise"}, not just "premium". "team" in
+// particular is explicitly kept there "for backward compatibility with any
+// Subscription row whose `plan` column hasn't yet resynced to `premium`
+// after the rename" (that file's own comment) — a real, still-paying
+// Premium subscriber's Subscription.plan can legitimately read "team"
+// until their next renewal/webhook event resyncs it. Backend's
+// @require_premium and web's isPremiumTier both already accepted "team";
+// only this mobile copy silently required the narrower, wrong match —
+// so a "team"-tier Premium subscriber saw the backend correctly grant
+// access (Emotional Coach's check-in, video mock interviews) while THIS
+// screen's own pre-flight gate showed the Premium lock screen anyway,
+// exactly matching the report. Now matches web's PREMIUM_TIERS set
+// exactly rather than re-deriving its own (previously incomplete) rule.
+const PREMIUM_TIERS = new Set(['premium', 'team', 'enterprise']);
+
 /**
  * A stricter check than isProTier — true only for "Pro Premium" (was
- * "Team") or "Pro (Yearly)", the two plans whose backend plan_tier is
+ * "Team") or "Pro (Yearly)", the plans whose backend plan_tier is
  * "premium" (see saveur-backend/app/services/entitlements_service.py's
- * module docstring). Plain monthly Pro (tier "pro") is active/paid but
- * does NOT pass this check. Use this — not isProTier — to gate Job Alerts
- * and Learning Courses specifically; use isProTier for everything else
- * that only needs SOME paid plan.
+ * module docstring) — plus any legacy row still reading "team"/
+ * "enterprise" that hasn't resynced yet (see PREMIUM_TIERS' own comment
+ * above). Plain monthly Pro (tier "pro") is active/paid but does NOT pass
+ * this check. Use this — not isProTier — to gate Job Alerts and Learning
+ * Courses specifically; use isProTier for everything else that only needs
+ * SOME paid plan.
  */
 export function isPremiumTier(status: SubscriptionStatusProps | null | undefined): boolean {
   if (!status) return false;
-  return status.tier === 'premium' && (status.status === 'active' || status.status === 'trialing');
+  return PREMIUM_TIERS.has(status.tier) && (status.status === 'active' || status.status === 'trialing');
 }
 
 export interface SessionEntitlement {
