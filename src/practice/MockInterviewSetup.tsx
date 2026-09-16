@@ -31,6 +31,7 @@ import CtaButton from 'components/CtaButton';
 import PersonaDetailModal from 'components/PersonaDetailModal';
 import LockBadge from 'components/LockBadge';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import QuickPracticeQuestions from 'components/QuickPracticeQuestions';
 import { guessCompanyLogoUrl } from 'utils/companyLogo';
 import { searchCompany, CompanySearchResult } from 'services/companySearchService';
 import { InterviewPersona } from 'services/configService';
@@ -594,6 +595,19 @@ const MockInterviewSetup = memo(() => {
           style={styles.companySearchInput}
           textStyle={globalStyle.inputText}
         />
+
+        {/* Task #44 mobile parity port of web's task #23 "Interview Prep
+            pre-made question library" (resume.io reference: a row of
+            ready-made "5 min" question cards above the full role-specific
+            session setup). Tracks whatever type/role is currently selected
+            above -- see QuickPracticeQuestions.tsx's own header comment for
+            the shared free backend contract. Skipped for Coding, same as
+            the mode picker above -- Coding routes to its own dedicated
+            screen, not the question-library/STAR-feedback flow this is
+            meant to preview. */}
+        {interviewType !== Interview_Type_Enum.Coding ? (
+          <QuickPracticeQuestions interviewType={interviewType.toLowerCase()} role={role} />
+        ) : null}
 
         <Text category="h8" bold status="placeholder" mt={16} mb={16}>
           {t('find:difficulty')}
