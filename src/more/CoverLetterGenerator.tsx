@@ -4,11 +4,14 @@ import {
   TopNavigation,
   StyleService,
   useStyleSheet,
+  useTheme,
+  Icon,
   Button,
   Input,
+  Layout,
   Spinner,
 } from '@ui-kitten/components';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute, NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -25,7 +28,6 @@ import {
   mimeForFormat,
 } from 'services/documentDownloadService';
 import { AuthContext } from '../../AuthContext';
-import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
 import CopyButton from 'components/CopyButton';
 import DownloadFormatButtons from 'components/DownloadFormatButtons';
@@ -33,14 +35,23 @@ import DownloadFormatButtons from 'components/DownloadFormatButtons';
 // AI Cover Letter Generator — product request item. Reuses the caller's
 // already-stored resume server-side (see services/coverLetterService.ts /
 // POST /api/v1/resume/cover-letter) so the only inputs needed here are the
-// target company/role — same Pro gate as the resume tailoring flow
-// (GenerateResume.tsx), since this is the same "AI writes a job-application
-// document from your resume" feature family.
+// target company/role.
+//
+// BUG FIX (task #53 investigation): this screen used to be a full blanket
+// `if (!isPro) return <ProLockGate/>` (like GenerateResume.tsx's sibling
+// flow), but the backend migrated /resume/cover-letter to the same
+// free-plan combined pool as generate/ats-score/rewrite-bullet back in
+// task #28 (entitlements_service.py's FREE_RESUME_TOOL_ACTIONS_PER_MONTH)
+// — web's app/resume/cover-letter/page.tsx was updated for that, mobile
+// never was. Now mirrors that page: real form for everyone, reactive 402
+// resume_tool_limit_reached handling + a free-actions-remaining banner.
 const CoverLetterGenerator = memo(() => {
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const { t } = useTranslation(['more', 'common']);
   const route = useRoute<RouteProp<RootStackParamList, 'CoverLetterGenerator'>>();
-  const { isPro } = React.useContext(AuthContext);
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { isPro, subscription, refreshSubscription } = React.useContext(AuthContext);
 
   const [company, setCompany] = React.useState(route.params?.company ?? '');
   const [role, setRole] = React.useState(route.params?.role ?? '');
@@ -49,12 +60,15 @@ const CoverLetterGenerator = memo(() => {
   const [letter, setLetter] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [downloadingFormat, setDownloadingFormat] = React.useState<'pdf' | 'docx' | null>(null);
+  const [limitReached, setLimitReached] = React.useState(false);
+  const [limitMessage, setLimitMessage] = React.useState<string | null>(null);
 
   const onGenerate = async () => {
     if (!company.trim() || !role.trim() || isGenerating) return;
     setIsGenerating(true);
     setError(null);
     setLetter(null);
+    setLimitReached(false);
     try {
       const result = await coverLetterService.generateCoverLetter({
         company: company.trim(),
@@ -63,11 +77,24 @@ const CoverLetterGenerator = memo(() => {
         jdText: route.params?.jdText,
       });
       setLetter(result);
+      void refreshSubscription();
     } catch (e: any) {
-      setError(
-        e?.response?.data?.detail || e?.response?.data?.message ||
-        t('more:cover_letter_generation_failed', { defaultValue: "Couldn't generate a cover letter right now. Please try again." }),
-      );
+      // Every services/*.ts call goes through apiClient.ts's response
+      // interceptor, which normalizes ANY failure (network/4xx/5xx) into
+      // {status, error, message, code} -- there is no `e.response` on that
+      // shape (that was the raw pre-interceptor axios error), so the old
+      // `e?.response?.data?.detail` check here was always dead code and
+      // this always fell through to the generic message. Fixed to read the
+      // actual normalized fields, and to special-case the free-plan cap.
+      if (e?.status === 402 && e?.error === 'resume_tool_limit_reached') {
+        setLimitReached(true);
+        setLimitMessage(e?.message ?? null);
+      } else {
+        setError(
+          e?.message ||
+          t('more:cover_letter_generation_failed', { defaultValue: "Couldn't generate a cover letter right now. Please try again." }),
+        );
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -126,17 +153,6 @@ const CoverLetterGenerator = memo(() => {
     }
   };
 
-  if (!isPro) {
-    return (
-      <ProLockGate
-        title={t('more:cover_letter_generator', { defaultValue: 'Cover Letter Generator' })}
-        description={t('more:cover_letter_pro_gate_description', {
-          defaultValue: 'AI writes a tailored cover letter from your resume for any company and role — a Basic feature.',
-        })}
-      />
-    );
-  }
-
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -149,6 +165,48 @@ const CoverLetterGenerator = memo(() => {
             defaultValue: 'The AI tailors a cover letter using your saved resume — just tell it who you’re applying to.',
           })}
         </Text>
+
+        {/* Free-plan usage banner -- same shared pool as ResumeBuilder.tsx
+            (generate/ats-score/rewrite-bullet/cover-letter all count
+            against the same 2/month allowance). */}
+        {!isPro && subscription?.resumeToolActionsLimit != null ? (
+          <Layout level="2" style={styles.usageBanner}>
+            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            {(() => {
+              const remaining = Math.max(0, subscription.resumeToolActionsLimit! - (subscription.resumeToolActionsUsed ?? 0));
+              return (
+                <Text category="h9-s" bold status={remaining > 0 ? 'basic' : 'danger'} ml={10} style={globalStyle.flexOne}>
+                  {remaining > 0
+                    ? t('more:resume_free_actions_remaining', {
+                        defaultValue: `${remaining} free resume tool action${remaining === 1 ? '' : 's'} left this month`,
+                        count: remaining,
+                      })
+                    : t('more:resume_free_actions_used_up', { defaultValue: "You've used all your free resume tool actions this month" })}
+                </Text>
+              );
+            })()}
+            <Text category="h10" status="link" bold onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
+
+        {limitReached ? (
+          <Layout level="2" style={styles.limitCard}>
+            <View style={[styles.limitIconWrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+              <Icon pack="eva" name="lock-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            </View>
+            <Text category="h8" bold mt={10}>
+              {t('more:resume_limit_reached_title', { defaultValue: "You've used your free resume tool actions this month" })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {limitMessage ?? t('more:resume_limit_reached_subtitle', { defaultValue: 'Upgrade to Saveur Basic or above for unlimited access.' })}
+            </Text>
+            <Text category="h9" status="link" bold mt={10} onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
 
         <Text category="h10" status="placeholder" mb={6}>
           {t('more:company_label', { defaultValue: 'Company' })}
@@ -185,7 +243,7 @@ const CoverLetterGenerator = memo(() => {
 
         <CtaButton
           style={[globalStyle.shadowBtn, { marginTop: 24 }]}
-          disabled={!company.trim() || !role.trim() || isGenerating}
+          disabled={!company.trim() || !role.trim() || isGenerating || limitReached}
           onPress={onGenerate}
         >
           {isGenerating
@@ -255,6 +313,28 @@ const themedStyles = StyleService.create({
   },
   input: {
     ...globalStyle.inputField,
+  },
+  // Free-plan resume-tool usage banner / limit-reached card (task #53) --
+  // same treatment as ResumeBuilder.tsx's own usageBanner/limitCard.
+  usageBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+  },
+  limitCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  limitIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   letterBox: {
     ...globalStyle.card,

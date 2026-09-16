@@ -100,6 +100,10 @@ interface SubscriptionWire {
   // count against a hardcoded cap in that case.
   sessions_used?: number;
   sessions_limit?: number | null;
+  // Free-plan resume-tool cap (task #28/#53) -- see
+  // entitlements_service.py's "Resume tools free-plan cap" section.
+  resume_tool_actions_used?: number;
+  resume_tool_actions_limit?: number | null;
   // Enough to render a "CURRENT PLAN" badge from this one call alone,
   // without also needing an authenticated /billing/plans fetch — see
   // is_current above for the (now primary) alternative path via
@@ -154,6 +158,8 @@ function fromSubscriptionWire(wire: SubscriptionWire): SubscriptionStatusProps {
     cancelAtPeriodEnd: wire.cancel_at_period_end ?? false,
     sessionsUsed: typeof wire.sessions_used === 'number' ? wire.sessions_used : undefined,
     sessionsLimit: wire.sessions_limit !== undefined ? wire.sessions_limit : undefined,
+    resumeToolActionsUsed: typeof wire.resume_tool_actions_used === 'number' ? wire.resume_tool_actions_used : undefined,
+    resumeToolActionsLimit: wire.resume_tool_actions_limit !== undefined ? wire.resume_tool_actions_limit : undefined,
     // Previously read off `wire` but dropped here — Subscription.tsx now
     // uses this to tell apart two plans on the same tier (see
     // SubscriptionStatusProps.priceId's comment in constants/Types.tsx).

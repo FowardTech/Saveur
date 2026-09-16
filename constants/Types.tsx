@@ -928,6 +928,13 @@ export interface SubscriptionStatusProps {
   // send these yet. `sessionsLimit: null` means unlimited (any paid tier).
   sessionsUsed?: number;
   sessionsLimit?: number | null;
+  // Free-plan resume-tool cap (task #28: "use any of the resume builder
+  // tools twice per month") -- combined pool across generate/cover_letter/
+  // ats_score/rewrite_bullet, same shape/reasoning as sessionsUsed/
+  // sessionsLimit above (see entitlements_service.py's own doc comment).
+  // `resumeToolActionsLimit: null` means unlimited (any paid tier).
+  resumeToolActionsUsed?: number;
+  resumeToolActionsLimit?: number | null;
   // A second, standalone way (alongside priceId above) to identify the
   // exact plan the user is on straight from this one call — planCode
   // matches BillingPlanProps.code, planName is display-ready (e.g.

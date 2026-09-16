@@ -28,7 +28,6 @@ import * as resumeService from 'services/resumeService';
 import { ImportedFileInfo, ResumeImportSourceKey, RewriteBulletResult } from 'services/resumeService';
 import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
-import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
 import { accentColorForKey } from 'utils/accentPalette';
 
@@ -80,7 +79,7 @@ const ResumeBuilder = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
-  const { profile, isPro } = React.useContext(AuthContext);
+  const { profile, isPro, subscription, refreshSubscription } = React.useContext(AuthContext);
 
   const [imported, setImported] = React.useState<Record<string, ImportedFileInfo>>({});
   const [importingKey, setImportingKey] = React.useState<ResumeImportSourceKey | null>(null);
@@ -92,6 +91,20 @@ const ResumeBuilder = memo(() => {
   const [bulletText, setBulletText] = React.useState('');
   const [isRewriting, setIsRewriting] = React.useState(false);
   const [rewriteResult, setRewriteResult] = React.useState<RewriteBulletResult | null>(null);
+
+  // BUG FIX (product report: "I hope Its written in the resume builder
+  // (Web and mobile) the amount of usage remaining for the month so that
+  // the user can know that the usage of the features are limited"):
+  // investigating this surfaced that this screen was still a full blanket
+  // `if (!isPro) return <ProLockGate/>` (see below, now removed) even
+  // though the backend migrated generate/cover_letter/ats_score/
+  // rewrite_bullet to a shared free-plan pool of 2 actions/month back in
+  // task #28 (entitlements_service.py's FREE_RESUME_TOOL_ACTIONS_PER_MONTH)
+  // — web's own app/resume/builder/page.tsx already got that treatment,
+  // mobile never did. `limitReached`/`limitMessage` mirror that web
+  // page's 402 resume_tool_limit_reached handling exactly.
+  const [limitReached, setLimitReached] = React.useState(false);
+  const [limitMessage, setLimitMessage] = React.useState<string | null>(null);
 
   // Which import slot (Resume/LinkedIn/Portfolio/Certificates/Transcript)
   // the "choose from My Documents" modal is currently open for — null means
@@ -172,16 +185,23 @@ const ResumeBuilder = memo(() => {
   };
   const onAnalyze = async () => {
     setIsAnalyzing(true);
+    setLimitReached(false);
     try {
       const result = await resumeService.analyzeResume();
       setAtsScore(result.atsScore);
       setAtsTips(result.tips);
       setAnalyzed(true);
+      void refreshSubscription();
     } catch (e: any) {
-      Alert.alert(
-        t('more:analysis_failed', { defaultValue: 'Analysis failed' }),
-        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
-      );
+      if (e?.status === 402 && e?.error === 'resume_tool_limit_reached') {
+        setLimitReached(true);
+        setLimitMessage(e?.message ?? null);
+      } else {
+        Alert.alert(
+          t('more:analysis_failed', { defaultValue: 'Analysis failed' }),
+          e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+        );
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -190,6 +210,7 @@ const ResumeBuilder = memo(() => {
   const onRewriteBullet = async () => {
     if (isRewriting || !bulletText.trim()) return;
     setIsRewriting(true);
+    setLimitReached(false);
     try {
       // role/tone aren't collected by this screen today — fall back to the
       // user's first industry/goal from their profile as a best-effort
@@ -197,30 +218,27 @@ const ResumeBuilder = memo(() => {
       const role = profile?.industries?.[0] ?? profile?.goals?.[0];
       const result = await resumeService.rewriteBullet(bulletText, { role, tone: 'professional' });
       setRewriteResult(result);
+      void refreshSubscription();
     } catch (e: any) {
-      Alert.alert(
-        t('more:rewrite_failed', { defaultValue: 'Rewrite failed' }),
-        e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
-      );
+      if (e?.status === 402 && e?.error === 'resume_tool_limit_reached') {
+        setLimitReached(true);
+        setLimitMessage(e?.message ?? null);
+      } else {
+        Alert.alert(
+          t('more:rewrite_failed', { defaultValue: 'Rewrite failed' }),
+          e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+        );
+      }
     } finally {
       setIsRewriting(false);
     }
   };
 
-  if (!isPro) {
-    // BUG FIX (product report: resume builder content stuck in English) —
-    // this gate's title/description were plain string literals, not even
-    // passed through t(), so a non-Pro user landing here always saw English
-    // no matter their selected language.
-    return (
-      <ProLockGate
-        title={t('more:resume_builder', { defaultValue: 'Resume Builder' })}
-        description={t('more:resume_builder_pro_gate_description', {
-          defaultValue: 'Import your resume, get AI bullet rewrites, and build an ATS-ready document — Resume Builder is a Basic feature.',
-        })}
-      />
-    );
-  }
+  // Was a full blanket `if (!isPro) return <ProLockGate/>` here -- removed,
+  // see the free-plan cap comment above `limitReached`'s declaration. Free
+  // users now see the real screen; the usage banner and limitReached card
+  // below (rendered inline, past the Content padder) handle the capped
+  // experience instead of a hard wall.
 
   return (
     <Container style={styles.container}>
@@ -276,6 +294,51 @@ const ResumeBuilder = memo(() => {
             );
           })}
         </View>
+
+        {/* Free-plan usage banner -- same shared pool (generate,
+            cover_letter, ats_score, rewrite_bullet) as web's
+            app/resume/builder/page.tsx. Only shown for non-Pro accounts
+            once the backend has told us the limit (a fresh signup with no
+            subscription payload yet just won't show it until the first
+            successful refresh). */}
+        {!isPro && subscription?.resumeToolActionsLimit != null ? (
+          <Layout level="2" style={styles.usageBanner}>
+            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            {(() => {
+              const remaining = Math.max(0, subscription.resumeToolActionsLimit! - (subscription.resumeToolActionsUsed ?? 0));
+              return (
+                <Text category="h9-s" bold status={remaining > 0 ? 'basic' : 'danger'} ml={10} style={globalStyle.flexOne}>
+                  {remaining > 0
+                    ? t('more:resume_free_actions_remaining', {
+                        defaultValue: `${remaining} free resume tool action${remaining === 1 ? '' : 's'} left this month`,
+                        count: remaining,
+                      })
+                    : t('more:resume_free_actions_used_up', { defaultValue: "You've used all your free resume tool actions this month" })}
+                </Text>
+              );
+            })()}
+            <Text category="h10" status="link" bold onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
+
+        {limitReached ? (
+          <Layout level="2" style={styles.limitCard}>
+            <View style={[styles.limitIconWrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+              <Icon pack="eva" name="lock-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            </View>
+            <Text category="h8" bold mt={10}>
+              {t('more:resume_limit_reached_title', { defaultValue: "You've used your free resume tool actions this month" })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {limitMessage ?? t('more:resume_limit_reached_subtitle', { defaultValue: 'Upgrade to Saveur Basic or above for unlimited access.' })}
+            </Text>
+            <Text category="h9" status="link" bold mt={10} onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
 
         <CtaButton
           children={
@@ -457,6 +520,28 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 12,
+  },
+  // Free-plan resume-tool usage banner / limit-reached card (task #53) --
+  // same rounded card treatment as tipRow/bulletCard above.
+  usageBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: 14,
+    marginTop: 16,
+  },
+  limitCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 16,
+    alignItems: 'flex-start',
+  },
+  limitIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bulletInput: {
     ...globalStyle.inputField,

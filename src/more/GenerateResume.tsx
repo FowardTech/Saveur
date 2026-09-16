@@ -8,11 +8,12 @@ import {
   Icon,
   Button,
   Input,
+  Layout,
   Spinner,
   Text as KittenText,
   TextProps,
 } from '@ui-kitten/components';
-import { RouteProp, useRoute } from '@react-navigation/native';
+import { RouteProp, useRoute, NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
@@ -88,7 +89,8 @@ const GenerateResume = memo(() => {
   const { t } = useTranslation(['more', 'common']);
   const styles = useStyleSheet(themedStyles);
   const route = useRoute<RouteProp<RootStackParamList, 'GenerateResume'>>();
-  const { profile } = React.useContext(AuthContext);
+  const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { profile, isPro, subscription, refreshSubscription } = React.useContext(AuthContext);
   const STYLE_OPTIONS = React.useMemo(() => getStyleOptions(t), [t]);
 
   const docType: ResumeDocType = route.params?.docType ?? 'resume';
@@ -99,6 +101,16 @@ const GenerateResume = memo(() => {
   const [genError, setGenError] = React.useState<string | null>(null);
   const [downloadingFormat, setDownloadingFormat] = React.useState<'pdf' | 'docx' | null>(null);
   const [showPreview, setShowPreview] = React.useState(false);
+  // BUG FIX (task #53 investigation): this screen had NO pro-gating or
+  // usage-cap handling at all -- generate() shares the same free-plan
+  // combined pool as ats-score/rewrite-bullet/cover-letter
+  // (entitlements_service.py's FREE_RESUME_TOOL_ACTIONS_PER_MONTH), so a
+  // free user hitting their cap here just saw a generic "Could not
+  // generate resume content" error with no indication why, and no usage
+  // banner up front the way ResumeBuilder.tsx's own generate form has.
+  // Same reactive 402 resume_tool_limit_reached handling as that screen.
+  const [limitReached, setLimitReached] = React.useState(false);
+  const [limitMessage, setLimitMessage] = React.useState<string | null>(null);
 
   // Tapping a "Consider Adding" chip moves that keyword straight into Core
   // Skills (deduped) and off the suggestions list — this is what the user
@@ -171,6 +183,7 @@ const GenerateResume = memo(() => {
     async (targetRole: string) => {
       setIsGenerating(true);
       setGenError(null);
+      setLimitReached(false);
       try {
         // JDAnalyzer's "tailor an existing resume" choice (product request
         // item 1) — mutually exclusive, see navigation/types.tsx's
@@ -202,6 +215,7 @@ const GenerateResume = memo(() => {
           existingResumeDocumentId: existingResume ? undefined : route.params?.existingResumeDocumentId,
         });
         setContent(generated);
+        void refreshSubscription();
         if (requestedTailorButNothingToTailor) {
           Alert.alert(
             t('more:resume_nothing_to_tailor_title', { defaultValue: "You don't have a saved resume yet" }),
@@ -211,12 +225,17 @@ const GenerateResume = memo(() => {
           );
         }
       } catch (e: any) {
-        setGenError(e?.message ?? t('more:resume_gen_error', { defaultValue: 'Could not generate resume content.' }));
+        if (e?.status === 402 && e?.error === 'resume_tool_limit_reached') {
+          setLimitReached(true);
+          setLimitMessage(e?.message ?? null);
+        } else {
+          setGenError(e?.message ?? t('more:resume_gen_error', { defaultValue: 'Could not generate resume content.' }));
+        }
       } finally {
         setIsGenerating(false);
       }
     },
-    [route.params?.jdText, route.params?.useStoredResume, route.params?.existingResumeDocumentId],
+    [route.params?.jdText, route.params?.useStoredResume, route.params?.existingResumeDocumentId, refreshSubscription],
   );
 
   React.useEffect(() => {
@@ -341,6 +360,48 @@ const GenerateResume = memo(() => {
           </Button>
         </Flex>
 
+        {/* Free-plan usage banner -- same shared pool as ResumeBuilder.tsx
+            (generate/ats-score/rewrite-bullet/cover-letter all count
+            against the same 2/month allowance). */}
+        {!isPro && subscription?.resumeToolActionsLimit != null ? (
+          <Layout level="2" style={styles.usageBanner}>
+            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            {(() => {
+              const remaining = Math.max(0, subscription.resumeToolActionsLimit! - (subscription.resumeToolActionsUsed ?? 0));
+              return (
+                <Text category="h9-s" bold status={remaining > 0 ? 'basic' : 'danger'} ml={10} style={globalStyle.flexOne}>
+                  {remaining > 0
+                    ? t('more:resume_free_actions_remaining', {
+                        defaultValue: `${remaining} free resume tool action${remaining === 1 ? '' : 's'} left this month`,
+                        count: remaining,
+                      })
+                    : t('more:resume_free_actions_used_up', { defaultValue: "You've used all your free resume tool actions this month" })}
+                </Text>
+              );
+            })()}
+            <Text category="h10" status="link" bold onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
+
+        {limitReached ? (
+          <Layout level="2" style={styles.limitCard}>
+            <View style={[styles.limitIconWrap, { backgroundColor: theme['color-primary-transparent-200'] }]}>
+              <Icon pack="eva" name="lock-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
+            </View>
+            <Text category="h8" bold mt={10}>
+              {t('more:resume_limit_reached_title', { defaultValue: "You've used your free resume tool actions this month" })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {limitMessage ?? t('more:resume_limit_reached_subtitle', { defaultValue: 'Upgrade to Saveur Basic or above for unlimited access.' })}
+            </Text>
+            <Text category="h9" status="link" bold mt={10} onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
+
         {isGenerating ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>
             <Spinner size="large" />
@@ -361,7 +422,7 @@ const GenerateResume = memo(() => {
               {t('common:try_again', { defaultValue: 'Try again' })}
             </Text>
           </Flex>
-        ) : content ? (
+        ) : content && !limitReached ? (
           <>
             {/* Product request: "Users should be able to drag, rearrange
                 and edit the content of the resume/CV." Every section below
@@ -1269,6 +1330,28 @@ const themedStyles = StyleService.create({
   },
   regenerateBtn: {
     borderRadius: 12,
+  },
+  // Free-plan resume-tool usage banner / limit-reached card (task #53) --
+  // same treatment as ResumeBuilder.tsx's own usageBanner/limitCard.
+  usageBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+  },
+  limitCard: {
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  limitIconWrap: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   chipsWrap: {
     flexDirection: 'row',
