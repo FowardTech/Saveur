@@ -8,7 +8,6 @@ import Text from 'components/Text';
 import Flex from 'components/Flex';
 import {SkeletonList} from 'components/Skeleton';
 import ApplicationItem from './ApplicationItem';
-import TitleList from '../Components/TitleList';
 import {globalStyle} from 'styles/globalStyle';
 import {renderCenteredLabel} from 'utils/buttonLabel';
 import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
@@ -90,18 +89,47 @@ const ApplicationsTab = memo(() => {
     [q, t],
   );
 
-  const activeApplications = applications.filter(
-    item =>
-      (item.stage === Application_Stage_Enum.Applied ||
-        item.stage === Application_Stage_Enum.Interviewing) &&
-      matchesQuery(item),
-  );
-  const closedApplications = applications.filter(
-    item =>
-      (item.stage === Application_Stage_Enum.Offer ||
-        item.stage === Application_Stage_Enum.Rejected) &&
-      matchesQuery(item),
-  );
+  // Task #44/#49 mobile parity port of Saveur-Web's task #19 unified Job
+  // Tracker board (product report: "the web app dashboard look so empty" --
+  // specifically resume.io's single Kanban board Recommended -> Shortlist ->
+  // Applied -> Interview -> Offer -> Rejected). This used to be a fake
+  // "active"/"closed" 2-bucket split (Applied+Interviewing lumped together,
+  // Offer+Rejected lumped together) -- now 4 real per-stage sections,
+  // matching the web board's own 4 tracked-application columns exactly (its
+  // other 2 columns, Recommended/Shortlisted, are job ALERTS, not tracked
+  // applications -- see the "Find jobs" action added to actionsRow below for
+  // that bridge instead of merging two entirely separate backend resources
+  // into one list). No literal drag-and-drop here -- ApplicationDetails.tsx
+  // already has a real "move to next stage" control once you tap into a
+  // card (services/applicationsService.ts's updateApplicationStage), so the
+  // capability already exists; this section is what was actually missing:
+  // seeing every stage broken out at a glance instead of two coarse buckets.
+  const applicationsByStage = React.useMemo(() => {
+    const map: Record<Application_Stage_Enum, JobApplicationProps[]> = {
+      [Application_Stage_Enum.Applied]: [],
+      [Application_Stage_Enum.Interviewing]: [],
+      [Application_Stage_Enum.Offer]: [],
+      [Application_Stage_Enum.Rejected]: [],
+    };
+    for (const item of applications) {
+      if (!matchesQuery(item)) continue;
+      (map[item.stage] ?? map[Application_Stage_Enum.Applied]).push(item);
+    }
+    return map;
+  }, [applications, matchesQuery]);
+  const STAGE_SECTIONS = [
+    Application_Stage_Enum.Applied,
+    Application_Stage_Enum.Interviewing,
+    Application_Stage_Enum.Offer,
+    Application_Stage_Enum.Rejected,
+  ];
+  const STAGE_EMPTY_COPY: Record<Application_Stage_Enum, {key: string; defaultValue: string}> = {
+    [Application_Stage_Enum.Applied]: {key: 'request:no_applied_applications', defaultValue: 'No applications in this stage yet.'},
+    [Application_Stage_Enum.Interviewing]: {key: 'request:no_interviewing_applications', defaultValue: 'No interviews scheduled yet.'},
+    [Application_Stage_Enum.Offer]: {key: 'request:no_offer_applications', defaultValue: 'No offers yet.'},
+    [Application_Stage_Enum.Rejected]: {key: 'request:no_rejected_applications', defaultValue: 'Nothing here yet.'},
+  };
+  const noApplicationsMatch = STAGE_SECTIONS.every(stage => applicationsByStage[stage].length === 0);
   const isFiltering = q.length > 0;
   const hasAnyApplications = applications.length > 0;
   // "Compare offers" only makes sense with 2+ live offers to actually
@@ -193,6 +221,22 @@ const ApplicationsTab = memo(() => {
             contentContainerStyle still pins alignItems to flex-start so
             that can never drift regardless of how many action buttons
             render next to it. */}
+        {/* Task #44/#49: the bridge web's unified Job Tracker board gets for
+            free by living on one page (its Recommended/Shortlisted columns
+            are job ALERTS, a completely separate backend resource from the
+            tracked applications this tab lists) -- on mobile those stay two
+            separate screens, so this is the on-ramp from "tracking" back to
+            "discovery" instead of merging two different data models into
+            one list. */}
+        <Button
+          size="small"
+          appearance="outline"
+          status="basic"
+          style={{marginRight: 10}}
+          accessoryLeft={props => <Icon {...props} pack="eva" name="compass-outline" />}
+          onPress={() => navigate('JobAlerts')}>
+          {t('request:find_jobs_cta', {defaultValue: 'Find jobs'})}
+        </Button>
         <Button
           size="small"
           appearance="outline"
@@ -236,7 +280,7 @@ const ApplicationsTab = memo(() => {
           )}
         />
       ) : null}
-      {isFiltering && activeApplications.length === 0 && closedApplications.length === 0 ? (
+      {isFiltering && noApplicationsMatch ? (
         <Text category="h8-s" status="placeholder" center mt={24}>
           {t('request:no_applications_match', {defaultValue: 'No applications match your search.'})}
         </Text>
@@ -244,41 +288,45 @@ const ApplicationsTab = memo(() => {
         <>
           {/* Product follow-up ("arrange this interview screen well and
               make it professional"): each section used to render just its
-              TitleList header and then nothing at all when empty -- with no
-              tracked applications yet, "Current"/"Past" sat back-to-back
-              with no content between them, reading as broken/unfinished
-              rather than a real empty state. Each section now falls back to
-              its own short placeholder line (same pattern RequestsInPast.tsx
-              already uses for its own empty states) instead of just
-              trailing off. */}
-          <>
-            <TitleList current dataLength={activeApplications.length} />
-            {activeApplications.length === 0 ? (
-              <Text category="h9-s" status="placeholder" mb={24}>
-                {t('request:no_current_applications', {defaultValue: 'No active applications right now.'})}
-              </Text>
-            ) : (
-              activeApplications.map((item, i) => {
-                return <ApplicationItem item={item} key={i} />;
-              })
-            )}
-          </>
-          <>
-            <TitleList
-              dataLength={closedApplications.length}
-              current={false}
-              onSeeAll={onSeeAllPast}
-            />
-            {closedApplications.length === 0 ? (
-              <Text category="h9-s" status="placeholder" mb={24}>
-                {t('request:no_past_applications', {defaultValue: 'Applications that reach an offer or rejection will show up here.'})}
-              </Text>
-            ) : (
-              closedApplications.map((item, i) => {
-                return <ApplicationItem item={item} key={i} />;
-              })
-            )}
-          </>
+              header and then nothing at all when empty -- with no tracked
+              applications yet, sections sat back-to-back with no content
+              between them, reading as broken/unfinished rather than a real
+              empty state. Each of the 4 real stage sections below falls
+              back to its own short placeholder line (same pattern
+              RequestsInPast.tsx already uses for its own empty states)
+              instead of just trailing off. "See all" (into the full past-
+              applications list) sits on the last section, same spot it
+              held back when this was a single "Past" bucket. */}
+          {STAGE_SECTIONS.map((stage, sectionIndex) => {
+            const items = applicationsByStage[stage];
+            const isLast = sectionIndex === STAGE_SECTIONS.length - 1;
+            return (
+              <View key={stage}>
+                <Flex justify="flex-start" mb={24}>
+                  <Text category="h6" bold>
+                    {getApplicationStageLabel(stage, t)}
+                  </Text>
+                  <Text category="para-m" mt={4} ml={8} status="placeholder">
+                    {items.length > 0 ? items.length : null}
+                  </Text>
+                  {isLast && items.length > 0 ? (
+                    <Flex itemsCenter ml={12} style={globalStyle.flexOne}>
+                      <Text category="h8" status="link" onPress={onSeeAllPast} bold>
+                        {t('common:seeAll')}
+                      </Text>
+                    </Flex>
+                  ) : null}
+                </Flex>
+                {items.length === 0 ? (
+                  <Text category="h9-s" status="placeholder" mb={24}>
+                    {t(STAGE_EMPTY_COPY[stage].key, {defaultValue: STAGE_EMPTY_COPY[stage].defaultValue})}
+                  </Text>
+                ) : (
+                  items.map((item, i) => <ApplicationItem item={item} key={i} />)
+                )}
+              </View>
+            );
+          })}
         </>
       )}
     </View>
