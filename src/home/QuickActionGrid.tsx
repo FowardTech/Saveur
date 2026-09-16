@@ -1,8 +1,22 @@
 import React, { memo } from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { StyleService, useStyleSheet, useTheme } from '@ui-kitten/components';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import Text from 'components/Text';
+
+// Product request: "full choreographed flow animations connecting
+// dashboard to every part of the app and back... on both mobile and web"
+// -- mobile counterpart to Saveur-Web's .animate-card-in stagger (see
+// Saveur-Web/app/globals.css and JobAlertCard.tsx/dashboard/page.tsx):
+// each tile fades + rises in on mount, staggered by its position, using
+// Reanimated's built-in `entering` layout animation rather than a
+// hand-rolled Animated API sequence (react-native-reanimated is already a
+// dependency -- see src/onboarding/index.tsx -- just not previously used
+// for an entrance stagger like this). `Animated.createAnimatedComponent`
+// wraps the existing TouchableOpacity so `entering` can attach directly to
+// it, with zero changes to the tile's own style/layout structure below.
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 // Home redesign (product request: "restructure the homescreen UI... to be
 // like the layout in the screenshots" -- reference screenshots showed a
@@ -121,8 +135,8 @@ const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
   if (tallItems.length === 0) {
     return (
       <View style={styles.grid}>
-        {stackedItems.map(item => (
-          <Tile key={item.key} item={item} style={styles.tileHalf} styles={styles} theme={theme} />
+        {stackedItems.map((item, i) => (
+          <Tile key={item.key} item={item} style={styles.tileHalf} styles={styles} theme={theme} index={i} />
         ))}
       </View>
     );
@@ -138,11 +152,12 @@ const QuickActionGrid = memo(({ items }: { items: QuickAction[] }) => {
             style={i < stackedItems.length - 1 ? styles.stackedTileGap : undefined}
             styles={styles}
             theme={theme}
+            index={i}
           />
         ))}
       </View>
-      {tallItems.map(item => (
-        <TallTile key={item.key} item={item} styles={styles} />
+      {tallItems.map((item, i) => (
+        <TallTile key={item.key} item={item} styles={styles} index={stackedItems.length + i} />
       ))}
     </View>
   );
@@ -171,16 +186,19 @@ const Tile = ({
   style,
   styles,
   theme,
+  index = 0,
 }: {
   item: QuickAction;
   style?: object;
   styles: ReturnType<typeof useStyleSheet>;
   theme: ReturnType<typeof useTheme>;
+  index?: number;
 }) => {
   const Art = item.art;
   const Icon3D = item.icon;
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
+      entering={FadeInDown.delay(index * 70).duration(320)}
       activeOpacity={0.75}
       style={[
         styles.tile,
@@ -205,7 +223,7 @@ const Tile = ({
         style={[styles.titleVertical, item.solid ? styles.titleSolid : null]}>
         {item.title}
       </Text>
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 };
 
@@ -214,11 +232,20 @@ const Tile = ({
 // `alignItems: 'stretch'`, the default) to match the left column's
 // combined stacked height. Same icon-on-top/title-below vertical block
 // Tile above now uses too, just bigger (see `tallIconWrap`/`tallTitle`).
-const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<typeof useStyleSheet> }) => {
+const TallTile = ({
+  item,
+  styles,
+  index = 0,
+}: {
+  item: QuickAction;
+  styles: ReturnType<typeof useStyleSheet>;
+  index?: number;
+}) => {
   const Art = item.art;
   const Icon3D = item.icon;
   return (
-    <TouchableOpacity
+    <AnimatedTouchable
+      entering={FadeInDown.delay(index * 70).duration(320)}
       activeOpacity={0.75}
       style={[styles.tile, styles.tallTile]}
       onPress={item.onPress}>
@@ -233,7 +260,7 @@ const TallTile = ({ item, styles }: { item: QuickAction; styles: ReturnType<type
       <Text category="h7" bold numberOfLines={2} style={styles.tallTitle}>
         {item.title}
       </Text>
-    </TouchableOpacity>
+    </AnimatedTouchable>
   );
 };
 
