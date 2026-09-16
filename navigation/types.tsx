@@ -310,6 +310,13 @@ export type RootStackParamList = {
   // call site (WhatsNext.tsx, MainDrawer.tsx, suggestedActions.ts) that
   // navigates here with no params keeps working unchanged.
   SalaryNegotiation: {company?: string; role?: string} | undefined;
+  // Product request: "See the Salary analyser too" [resume.io's
+  // /app/offer-analyzer-result] — a one-shot numeric market-rate
+  // calculator, deliberately separate from SalaryNegotiation above (a
+  // conversational round-based simulator). See services/
+  // offerAnalyzerService.ts and Saveur-Backend's app/api/offer_analyzer.py
+  // for the full "complementary, not redundant" reasoning.
+  OfferAnalyzer: undefined;
   // Product report: "the system design should also be added as part of the
   // tools too" + "should also have a AI code review too and result" +
   // "session length should be followed... once the time is up there should

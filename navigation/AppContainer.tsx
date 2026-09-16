@@ -56,6 +56,7 @@ import CompareOffers from 'src/requests/Applications/CompareOffers';
 import AddOns from 'src/more/AddOns';
 import CareerDna from 'src/more/CareerDna';
 import CareerAssessment from 'src/more/CareerAssessment';
+import OfferAnalyzer from 'src/more/OfferAnalyzer';
 import AICareerTwin from 'src/more/AICareerTwin';
 import DailyChallengeScreen from 'src/home/DailyChallengeScreen';
 import InterviewReplay from 'src/practice/InterviewReplay';
@@ -246,6 +247,7 @@ const AppContainer = () => {
         <Stack.Screen name="AddOns" component={AddOns} />
         <Stack.Screen name="CareerDna" component={CareerDna} />
         <Stack.Screen name="CareerAssessment" component={CareerAssessment} />
+        <Stack.Screen name="OfferAnalyzer" component={OfferAnalyzer} />
         <Stack.Screen name="AICareerTwin" component={AICareerTwin} />
         <Stack.Screen name="DailyChallenge" component={DailyChallengeScreen} />
         <Stack.Screen name="InterviewReplay" component={InterviewReplay} />

@@ -126,7 +126,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -183,6 +183,16 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
       route: 'SalaryNegotiation',
       label: t('common:drawer_salary_negotiation', {defaultValue: 'Salary Negotiation'}).toString(),
       icon: 'trending-up-outline',
+    },
+    // Product request: "See the Salary analyser too" -- a one-shot numeric
+    // market-rate calculator, deliberately its own drawer row right next
+    // to Salary Negotiation rather than merged into it (see
+    // src/more/OfferAnalyzer.tsx's own header comment for the full
+    // "complementary, not redundant" reasoning).
+    {
+      route: 'OfferAnalyzer',
+      label: t('common:drawer_offer_analyzer', {defaultValue: 'Offer Analyzer'}).toString(),
+      icon: 'pie-chart-outline',
     },
     {
       // Product request: "Change dream job to dream company" -- this row
@@ -367,6 +377,8 @@ const MainDrawerContent = memo(() => {
         });
       } else if (route === 'SalaryNegotiation') {
         navigationRef.navigate('SalaryNegotiation');
+      } else if (route === 'OfferAnalyzer') {
+        navigationRef.navigate('OfferAnalyzer');
       } else if (route === 'DreamCompanies') {
         navigationRef.navigate('DreamCompanies');
       } else if (route === 'Jobs') {
