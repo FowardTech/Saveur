@@ -267,6 +267,48 @@ const CodingProjectEditor = memo(() => {
     }
   }, [files, projectId, saving, t]);
 
+  // Product request: "when a user have created a project. There should be
+  // a button in the created folder or project saying 'Analyze with your
+  // coach' and then the AI coach can analyze the whole project together
+  // with the users." No new backend endpoint -- reuses the exact same
+  // "build a prompt client-side, deep-link into Chat with initialPrompt"
+  // pattern InterviewFeedback.tsx's onDiscussWithCoach already established
+  // (see that file's own comment), just with the project's real file
+  // contents as the prompt body instead of a score. Capped at
+  // MAX_CODE_CHARS of code so a large project can't blow up the coach
+  // prompt -- every other initialPrompt call site in this app keeps its
+  // message short; this is the first one built from arbitrary user
+  // content rather than a fixed template, so it's the one place that
+  // needs an explicit size guard.
+  const onAnalyzeWithCoach = React.useCallback(() => {
+    const MAX_CODE_CHARS = 6000;
+    const realFiles = files.filter(f => !f.path.endsWith('/.gitkeep'));
+    let remaining = MAX_CODE_CHARS;
+    const parts: string[] = [];
+    let truncated = false;
+    for (const f of realFiles) {
+      if (remaining <= 0) {
+        truncated = true;
+        break;
+      }
+      const body = f.content.length > remaining ? f.content.slice(0, remaining) : f.content;
+      if (f.content.length > remaining) truncated = true;
+      parts.push(`--- ${f.path} ---\n${body}`);
+      remaining -= body.length;
+    }
+    const codeBlock = parts.join('\n\n') + (truncated ? '\n\n[...project truncated for length...]' : '');
+    const message = t('find:analyze_project_prompt', {
+      defaultValue:
+        'I\'d like your feedback on my coding project "{{name}}". Here is the code:\n\n{{code}}\n\nCan you review it and suggest improvements?',
+      name: project?.name ?? 'Untitled',
+      code: codeBlock,
+    });
+    navigation.navigate('MainBottomTab', {
+      screen: 'Coach',
+      params: {screen: 'Chat', params: {initialPrompt: message.toString()}},
+    });
+  }, [files, project, navigation, t]);
+
   // Warn on the way out with unsaved changes — same beforeRemove pattern
   // WebViewScreen.tsx already uses for its own "did you apply?" fallback.
   React.useEffect(() => {
@@ -514,6 +556,24 @@ const CodingProjectEditor = memo(() => {
         </Text>
         <Icon pack="eva" name="chevron-down-outline" style={[globalStyle.icon16, {tintColor: '#8B8BA7'}]} />
       </TouchableOpacity>
+
+      {/* Product request: "There should be a button in the created folder
+          or project saying 'Analyze with your coach'." A slim full-width
+          row (not an icon-only button) so the label the user explicitly
+          asked for is actually visible, placed right below the file
+          switcher rather than inside the header's already icon-only
+          accessoryRight row -- matches this screen's own convention of
+          full-width status rows just above the editor (see fileSwitcher
+          above). Hidden once there are no real files yet, since there's
+          nothing to analyze. */}
+      {files.filter(f => !f.path.endsWith('/.gitkeep')).length > 0 ? (
+        <TouchableOpacity activeOpacity={0.85} onPress={onAnalyzeWithCoach} style={styles.analyzeBar}>
+          <Icon pack="eva" name="message-circle-outline" style={[globalStyle.icon16, {tintColor: theme['color-primary-500']}]} />
+          <Text category="h9" bold ml={8} style={{color: theme['color-primary-500']}}>
+            {t('find:analyze_with_coach', {defaultValue: 'Analyze with your coach'})}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       <View style={styles.editorArea}>
         <CodeEditorWebView
@@ -794,6 +854,18 @@ const themedStyles = StyleService.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  analyzeBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 16,
+    marginBottom: 8,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: 'color-primary-500',
+    backgroundColor: 'color-primary-transparent-100',
   },
   editorArea: {
     flex: 1,
