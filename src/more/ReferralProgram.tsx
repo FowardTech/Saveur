@@ -140,7 +140,7 @@ const ReferralProgram = memo(() => {
                   card (no gradient — see this card's own comment further
                   down about that being a deliberate, prior product
                   decision). */}
-              <ArtGiftBox size={96} />
+              <ArtGiftBox size={122} />
               <Text category="h3" bold center mt={16}>
                 {t('more:referral_hero_title', {defaultValue: 'Give {{reward}}, Get {{reward}}', reward: rewardLabel})}
               </Text>

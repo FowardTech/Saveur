@@ -303,7 +303,7 @@ const CareerRoadmap = memo(() => {
             sweep. */}
         {!roadmap ? (
           <Flex center mb={20}>
-            <ArtRoadmapPath size={100} />
+            <ArtRoadmapPath size={128} />
           </Flex>
         ) : null}
         <Text category="h9-s" status="placeholder" mb={20}>

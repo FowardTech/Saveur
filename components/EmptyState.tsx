@@ -1,12 +1,11 @@
 import React from 'react';
 import {StyleProp, View, ViewStyle} from 'react-native';
 import {useTheme} from '@ui-kitten/components';
-import {SvgXml} from 'react-native-svg';
+import Svg, {Circle, Path, Rect} from 'react-native-svg';
 
 import Text from './Text';
 import Flex from './Flex';
 import {Spinner} from '@ui-kitten/components';
-import {ART_EMPTY_TRAY_SVG, ART_ERROR_SVG} from '../src/home/illustrationSvgs';
 
 // Shared "nothing here yet / loading / error" block — a design-consistency
 // pass found every screen reinventing this from scratch: different icon
@@ -17,22 +16,51 @@ import {ART_EMPTY_TRAY_SVG, ART_ERROR_SVG} from '../src/home/illustrationSvgs';
 // this instead of a one-off <Flex vertical itemsCenter center> block so
 // every "nothing to show" moment in the app looks and behaves the same way.
 //
-// Product report ("the illustrations you added ... are ones you created
-// yourself ... use real illustrations, pick ones that fit from online") --
-// the two hand-drawn line-art SVGs (an open tray, an alert triangle) that
-// used to live directly in this file are replaced with real, freely-
-// licensed unDraw illustrations (https://undraw.co -- free for commercial/
-// personal use, no attribution required): "Empty" for the normal empty
-// case, "Warning" for the error case. Since every "nothing here yet" screen
-// in the app already routes through this one shared component (see the
-// call sites), swapping the illustration here upgrades all of them at once.
-// unDraw illustrations carry their own fixed color palette rather than a
-// single tintable stroke color, so the old per-theme (danger/primary) color
-// prop is gone -- these render the same in both the empty and error case,
-// distinguished by which scene is shown, not by color.
-const EmptyTrayIllustration = () => <SvgXml xml={ART_EMPTY_TRAY_SVG} width={72} height={54} />;
+// REVERTED from unDraw back to hand-drawn line art, sized up (product
+// report: "The recent illustrations you added are too small make them
+// moderate. Also i dont want illustrations from undraw. I would prefer
+// humaan[s], icons8 and iconscout") -- see src/home/HomeHeroArt.tsx's
+// ArtGiftBox comment for the full licensing writeup behind this reversal
+// (same reasoning applies here). Kept as simple tintable line art rather
+// than adding a Humaaans-style flat person -- a tray/warning triangle is
+// already a clear enough glyph on its own, and every other empty state in
+// the app already uses this per-theme (danger/primary) tintable-stroke
+// construction, which a fixed-palette illustration would have broken.
+const EmptyTrayIllustration = ({color}: {color: string}) => (
+  <Svg width={76} height={76} viewBox="0 0 64 64" fill="none">
+    <Path
+      d="M12 38 L20 16 H44 L52 38"
+      stroke={color}
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Rect x={10} y={38} width={44} height={14} rx={3} stroke={color} strokeWidth={2.5} />
+    <Path
+      d="M10 42.5 H23 C24 46 26.5 48.5 32 48.5 C37.5 48.5 40 46 41 42.5 H54"
+      stroke={color}
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <Circle cx={22} cy={9} r={2.4} fill={color} opacity={0.5} />
+    <Circle cx={34} cy={6} r={1.8} fill={color} opacity={0.35} />
+  </Svg>
+);
 
-const ErrorIllustration = () => <SvgXml xml={ART_ERROR_SVG} width={68} height={70} />;
+const ErrorIllustration = ({color}: {color: string}) => (
+  <Svg width={76} height={76} viewBox="0 0 64 64" fill="none">
+    <Path
+      d="M32 10 L58 52 H6 Z"
+      stroke={color}
+      strokeWidth={2.5}
+      strokeLinejoin="round"
+      strokeLinecap="round"
+    />
+    <Path d="M32 26 V38" stroke={color} strokeWidth={2.5} strokeLinecap="round" />
+    <Circle cx={32} cy={45} r={1.8} fill={color} />
+  </Svg>
+);
 export interface EmptyStateProps {
   /** 'loading' shows a spinner and ignores icon/actionLabel. */
   variant?: 'empty' | 'error' | 'loading';
@@ -67,21 +95,26 @@ const EmptyState = ({
   }
 
   const isError = variant === 'error';
+  const illustrationColor = isError ? theme['color-danger-100'] : theme['color-primary-500'];
   const badgeBg = isError ? theme['color-danger-100'] + '1F' : theme['color-primary-transparent-200'];
 
   return (
     <Flex vertical itemsCenter justify="center" style={[{paddingVertical: 56}, style]}>
       <View
         style={{
-          width: 104,
-          height: 104,
-          borderRadius: 52,
+          width: 116,
+          height: 116,
+          borderRadius: 58,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: badgeBg,
           marginBottom: 16,
         }}>
-        {isError ? <ErrorIllustration /> : <EmptyTrayIllustration />}
+        {isError ? (
+          <ErrorIllustration color={illustrationColor} />
+        ) : (
+          <EmptyTrayIllustration color={illustrationColor} />
+        )}
       </View>
       {title ? (
         <Text category="h7" bold status={isError ? 'danger' : undefined} center mb={8}>

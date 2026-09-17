@@ -230,7 +230,7 @@ const JDAnalyzer = memo(() => {
             src/home/HomeHeroArt.tsx's own comment for the full sweep. */}
         {!result ? (
           <Flex center mb={20}>
-            <ArtMagnifyingDoc size={100} />
+            <ArtMagnifyingDoc size={128} />
           </Flex>
         ) : null}
         {/* Paste text / Paste URL tabs — two input modes feeding the same

@@ -292,7 +292,7 @@ const WhatsNext = memo(() => {
           generated, the timeline/checklist are the visual content.
           See src/home/HomeHeroArt.tsx's own comment for the full
           context on why this replaced the earlier signpost. */}
-      <ArtWorkplaceCompass size={104} />
+      <ArtWorkplaceCompass size={132} />
       <Text category="h9-s" status="placeholder" center mt={20} mb={28} maxWidth={320}>
         {t('more:whats_next_description', {
           defaultValue: "Tell the AI about your offer, and it builds your negotiation talking points, a pre-start checklist, and a plan for navigating your first 90 days — fitting in with your new team, working well with colleagues, and making a real impact, not just closing tasks.",
@@ -319,7 +319,7 @@ const WhatsNext = memo(() => {
   // whether the user has one at all.
   const generalContent = (
     <View>
-      <ArtWorkplaceCompass size={88} />
+      <ArtWorkplaceCompass size={112} />
       <Text category="h7" bold center mt={16} mb={4}>
         {t('more:whats_next_general_title', { defaultValue: "No offer yet — here's what to focus on" })}
       </Text>
@@ -371,7 +371,7 @@ const WhatsNext = memo(() => {
   // otherwise left the form blank with no explanation).
   const offerPicker = (
     <View>
-      <ArtWorkplaceCompass size={88} />
+      <ArtWorkplaceCompass size={112} />
       <Text category="h7" bold center mt={16} mb={4}>
         {t('more:whats_next_picker_title', { defaultValue: 'You have {{count}} offers — which one first?', count: offers.length })}
       </Text>
@@ -604,7 +604,7 @@ const WhatsNext = memo(() => {
                 </TouchableOpacity>
               </Flex>
               <Flex center mb={12}>
-                <ArtWorkplaceCompass size={72} />
+                <ArtWorkplaceCompass size={92} />
               </Flex>
               <Text category="h7" bold center mb={autoDetectedFrom ? 4 : 20}>
                 {t('more:whats_next_form_sheet_title', { defaultValue: 'Tell us about your offer' })}

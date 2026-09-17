@@ -88,7 +88,7 @@ const NextStepRecommendation = memo(() => {
         ) : plan ? (
           <View>
             <Flex center mb={20}>
-              <ArtWorkplaceCompass size={104} />
+              <ArtWorkplaceCompass size={132} />
             </Flex>
             <Text category="h6" bold center mb={4}>
               {t('more:next_step_congrats_title', { defaultValue: 'Congratulations on graduating!' })}

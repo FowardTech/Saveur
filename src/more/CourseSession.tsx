@@ -402,7 +402,7 @@ const CourseSession = memo(() => {
                 couple of sparkle accents reads as an achievement, not just
                 a generic badge glyph. See src/home/HomeHeroArt.tsx's own
                 comment for the full sweep. */}
-            <ArtTrophy size={104} />
+            <ArtTrophy size={132} />
             <Text category="h3" bold center mt={20}>
               {t('more:course_tier_complete', {
                 defaultValue: '{{level}} Tier Complete!',

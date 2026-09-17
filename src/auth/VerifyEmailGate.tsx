@@ -148,7 +148,7 @@ const VerifyEmailGate = memo(() => {
               rather than a plain static glyph, fitting for a screen whose
               whole point is "check your inbox, one more step." See
               src/home/HomeHeroArt.tsx's own comment for the full sweep. */}
-          <ArtEmailSent size={100} />
+          <ArtEmailSent size={128} />
           <Text category="h3" bold center mt={20}>
             {t('auth:verify_email_gate_title', {defaultValue: 'Verify your email'})}
           </Text>

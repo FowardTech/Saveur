@@ -92,7 +92,7 @@ const ProLockGate = memo(({title, description, variant = 'pro'}: ProLockGateProp
               this app's existing reward-forward tone rather than a purely
               restrictive glyph. See src/home/HomeHeroArt.tsx's own comment
               for the full illustration-sweep context. */}
-          <ArtLockedGift size={104} />
+          <ArtLockedGift size={132} />
           <Text category="h3" bold center mt={20}>
             {isPremiumVariant ? t('common:pro_premium_gate_heading', { defaultValue: 'This is a Premium feature' }) : t('common:pro_gate_heading', { defaultValue: 'This is a Basic feature' })}
           </Text>
