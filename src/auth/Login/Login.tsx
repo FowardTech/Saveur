@@ -152,6 +152,13 @@ const Login = memo(() => {
       await signInWithLinkedIn();
       nextScreen('MainBottomTab');
     } catch (e: any) {
+      // Same diagnostic-value fix as onGoogle above — nothing was logging
+      // the raw error here either.
+      console.warn('[LinkedIn Sign-In failed]', {
+        code: e?.code,
+        message: e?.message,
+        nativeErrorMessage: e?.nativeErrorMessage,
+      });
       Alert.alert(
         t('auth:sign_in_failed', {defaultValue: 'Sign in failed'}),
         mapFirebaseAuthError(e, t('auth:linkedin_signin_failed', {defaultValue: 'LinkedIn sign-in was cancelled or failed.'})),

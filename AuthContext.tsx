@@ -506,6 +506,29 @@ export const AuthProvider: React.FC = ({children}) => {
       // Nothing cached to clear — fine, proceed to signIn() below either way.
     }
     const response: any = await GoogleSignin.signIn();
+    // BUG FIX (product report: Login screen showing "Sign in failed —
+    // Google sign-in was cancelled or failed." with no way to tell which
+    // one actually happened): in the installed SDK version (16.x),
+    // GoogleSignin.signIn() does NOT reject/throw when the user closes the
+    // account picker without choosing one — it resolves successfully with
+    // `{ type: 'cancelled', data: null }` (see this package's own
+    // constants.js/translateNativeRejection.js). The code below only ever
+    // checked for a missing idToken, so a normal, entirely expected
+    // cancellation fell into the exact same generic "did not return an ID
+    // token" error as a REAL failure (bad config, network issue, etc.),
+    // making the two indistinguishable both here and in the Alert the user
+    // ultimately sees. Tagging the cancelled case with its own `code` lets
+    // Login.tsx/SignupThirdStep.tsx's mapFirebaseAuthError show an accurate
+    // "Sign-in was cancelled" instead — and, just as importantly, means a
+    // FUTURE report showing the "cancelled or failed" fallback text again
+    // now reliably indicates a real, different problem worth digging into
+    // (a mismatched SHA-1/OAuth client config, network failure, etc.),
+    // rather than every cancel and every real failure looking identical.
+    if (response?.type === 'cancelled') {
+      const err: any = new Error('Google sign-in was cancelled.');
+      err.code = 'google/cancelled';
+      throw err;
+    }
     // @react-native-google-signin/google-signin v13+ wraps the result in
     // `{ type: 'success', data: {...} }`; older versions returned the user
     // object directly. Handle both so a future downgrade/upgrade doesn't
@@ -592,7 +615,28 @@ export const AuthProvider: React.FC = ({children}) => {
   // completes Firebase sign-in from that token, same end state as
   // signInWithCredential for Google/Apple above.
   const signInWithLinkedIn = React.useCallback(async (opts?: {isSignup?: boolean}) => {
-    const result = await linkedinAuthService.signIn();
+    let result;
+    try {
+      result = await linkedinAuthService.signIn();
+    } catch (e: any) {
+      // BUG FIX (product report: "Why is login in with google and linkedIn
+      // failing?"): linkedinAuthService.signIn() itself throws (not just
+      // resolving with `result.error`) if GET /api/v1/auth/linkedin/start
+      // fails outright -- e.g. the backend returning 503
+      // linkedin_not_configured (LinkedIn app credentials not set in the
+      // admin Integrations page), a network error, or a timeout. That
+      // thrown error has no `.code` field mapFirebaseAuthError recognizes
+      // (apiClient.ts's ApiError uses `.error`/`.message`, not Firebase's
+      // `auth/...` code shape), so it fell through to the exact same
+      // generic "cancelled or failed" fallback as an actual user
+      // cancellation -- indistinguishable from one another, and from a
+      // real backend configuration problem. Tagging it here means a
+      // config issue now shows a distinct, accurate message instead.
+      const err: any = new Error(e?.message || 'LinkedIn sign-in failed.');
+      err.code = e?.error === 'linkedin_not_configured' ? 'linkedin/not-configured' : 'linkedin/failed';
+      err.nativeErrorMessage = e?.message;
+      throw err;
+    }
     if (result.error) {
       const isCancelled = /cancel/i.test(result.error);
       const isNoEmail = result.error === 'no_email_from_linkedin';

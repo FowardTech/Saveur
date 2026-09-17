@@ -57,6 +57,12 @@ function messages(): Record<string, string> {
     'auth/cancelled-popup-request': i18n.t('auth:err_signin_cancelled', {
       defaultValue: 'Sign-in was cancelled.',
     }),
+    // Custom code — see AuthContext.tsx's signInWithGoogle for why this
+    // isn't a real Firebase code (GoogleSignin.signIn() resolves instead of
+    // rejecting when the account picker is dismissed without a selection).
+    'google/cancelled': i18n.t('auth:err_signin_cancelled', {
+      defaultValue: 'Sign-in was cancelled.',
+    }),
     'auth/account-exists-with-different-credential': i18n.t('auth:err_account_exists_different_method', {
       defaultValue: 'An account already exists with this email using a different sign-in method.',
     }),
@@ -78,6 +84,9 @@ function messages(): Record<string, string> {
     }),
     'linkedin/failed': i18n.t('auth:err_linkedin_failed', {
       defaultValue: 'LinkedIn sign-in failed. Please try again.',
+    }),
+    'linkedin/not-configured': i18n.t('auth:err_linkedin_not_configured', {
+      defaultValue: "LinkedIn sign-in isn't available right now. Please try another sign-in method.",
     }),
   };
 }
