@@ -187,6 +187,17 @@ export async function sendMessage(
   // local file:// URI. Optional so every existing plain-text call site is
   // unaffected.
   imageUrl?: string,
+  // BUG FIX (product report: "instead of auto pasting the code in the
+  // project to the AI chat it should just auto upload the project file
+  // or folder ... auto pasting the full code in the chat will be very
+  // long and consume a whole chat interface"): CodingProjectEditor.tsx's
+  // "Analyze with your coach" button used to build the WHOLE project's
+  // code into `text` itself. It now sends just this real saved project's
+  // id instead -- the backend (app/api/coach.py's advice()) looks the
+  // project up server-side and folds a capped code snippet into its own
+  // system prompt, the same "attach it, don't paste it into the visible
+  // message" shape `imageUrl` above already established for photos.
+  codingProjectId?: string,
 ): Promise<{userMessage: CoachChatMessageProps; coachMessage: CoachChatMessageProps}> {
   const userMessage: CoachChatMessageProps = {
     id: `msg_${Date.now()}_u`,
@@ -221,6 +232,7 @@ export async function sendMessage(
       // (askOneOff below deliberately omits it).
       persist_to_history: true,
       image_url: imageUrl,
+      coding_project_id: codingProjectId,
       profile_context: context
         ? {
             goals: context.goals,

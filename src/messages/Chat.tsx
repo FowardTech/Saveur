@@ -204,7 +204,7 @@ const Chat = memo(() => {
   const isDarkMode = appThemeName === 'dark';
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<MessagesStackParamList, 'Chat'>>();
-  const { initialPrompt, openTopicsSheet } = route.params ?? {};
+  const { initialPrompt, openTopicsSheet, codingProjectId } = route.params ?? {};
   const { profile } = React.useContext(AuthContext);
 
   const [showAction, setShowAction] = React.useState(false);
@@ -285,7 +285,7 @@ const Chat = memo(() => {
   // thumbnail; `imageUrl` is the same URL handed separately to
   // coachService.sendMessage so the backend can pass it to a real vision
   // LLM call (see app/api/coach.py's advice()).
-  const sendDraft = React.useCallback(async (draft: IMessage, imageUrl?: string) => {
+  const sendDraft = React.useCallback(async (draft: IMessage, imageUrl?: string, draftCodingProjectId?: string) => {
     if (isSending) return;
     // A real message (typed directly, a tapped topic's opening question, or
     // a sent photo) is what actually starts the conversation — dismiss the
@@ -314,6 +314,7 @@ const Chat = memo(() => {
           preferredCountries: profile?.preferredCountries,
         },
         imageUrl,
+        draftCodingProjectId,
       );
       // Swap the thinking placeholder out for the real reply in one update
       // (filter it out, then append the real message) rather than a
@@ -363,7 +364,16 @@ const Chat = memo(() => {
   React.useEffect(() => {
     if (!initialPrompt || hasSentInitialPromptRef.current) return;
     hasSentInitialPromptRef.current = true;
-    onSend([{ _id: `topic_${Date.now()}`, text: initialPrompt, createdAt: Date.now(), user: ME_USER }]);
+    // Calls sendDraft directly (not onSend) so codingProjectId -- set only
+    // by CodingProjectEditor.tsx's "Analyze with your coach" button, see
+    // navigation/types.tsx's own comment -- has somewhere to go; onSend's
+    // signature is GiftedChat's own prop contract and isn't the place to
+    // add a third, feature-specific argument.
+    sendDraft(
+      { _id: `topic_${Date.now()}`, text: initialPrompt, createdAt: Date.now(), user: ME_USER },
+      undefined,
+      codingProjectId,
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt]);
 

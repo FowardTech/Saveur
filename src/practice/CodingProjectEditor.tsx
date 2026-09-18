@@ -270,44 +270,33 @@ const CodingProjectEditor = memo(() => {
   // Product request: "when a user have created a project. There should be
   // a button in the created folder or project saying 'Analyze with your
   // coach' and then the AI coach can analyze the whole project together
-  // with the users." No new backend endpoint -- reuses the exact same
-  // "build a prompt client-side, deep-link into Chat with initialPrompt"
-  // pattern InterviewFeedback.tsx's onDiscussWithCoach already established
-  // (see that file's own comment), just with the project's real file
-  // contents as the prompt body instead of a score. Capped at
-  // MAX_CODE_CHARS of code so a large project can't blow up the coach
-  // prompt -- every other initialPrompt call site in this app keeps its
-  // message short; this is the first one built from arbitrary user
-  // content rather than a fixed template, so it's the one place that
-  // needs an explicit size guard.
+  // with the users."
+  //
+  // BUG FIX (product report: "For the Analyzing of the coding project by
+  // the AI, instead of auto pasting the code in the project to the AI
+  // chat it should just auto upload the project file or folder or the
+  // project hyperlink. auto pasting the full code in the chat will be
+  // very long and consume a whole chat interface"): this used to build
+  // the whole project's code (capped at 6000 chars, but still a wall of
+  // raw code) into initialPrompt itself. Now sends a short, human message
+  // plus this project's real, already-saved id -- Chat.tsx's auto-send
+  // effect passes codingProjectId through to coachService.sendMessage,
+  // which the backend (app/api/coach.py's advice()) uses to fetch the
+  // project's files server-side and attach them to its own system prompt
+  // instead of ever putting the code in the visible chat message.
   const onAnalyzeWithCoach = React.useCallback(() => {
-    const MAX_CODE_CHARS = 6000;
-    const realFiles = files.filter(f => !f.path.endsWith('/.gitkeep'));
-    let remaining = MAX_CODE_CHARS;
-    const parts: string[] = [];
-    let truncated = false;
-    for (const f of realFiles) {
-      if (remaining <= 0) {
-        truncated = true;
-        break;
-      }
-      const body = f.content.length > remaining ? f.content.slice(0, remaining) : f.content;
-      if (f.content.length > remaining) truncated = true;
-      parts.push(`--- ${f.path} ---\n${body}`);
-      remaining -= body.length;
-    }
-    const codeBlock = parts.join('\n\n') + (truncated ? '\n\n[...project truncated for length...]' : '');
     const message = t('find:analyze_project_prompt', {
-      defaultValue:
-        'I\'d like your feedback on my coding project "{{name}}". Here is the code:\n\n{{code}}\n\nCan you review it and suggest improvements?',
+      defaultValue: 'Can you review my coding project "{{name}}"? I\'ve attached it below.',
       name: project?.name ?? 'Untitled',
-      code: codeBlock,
     });
     navigation.navigate('MainBottomTab', {
       screen: 'Coach',
-      params: {screen: 'Chat', params: {initialPrompt: message.toString()}},
+      params: {
+        screen: 'Chat',
+        params: {initialPrompt: message.toString(), codingProjectId: String(projectId)},
+      },
     });
-  }, [files, project, navigation, t]);
+  }, [project, projectId, navigation, t]);
 
   // Warn on the way out with unsaved changes — same beforeRemove pattern
   // WebViewScreen.tsx already uses for its own "did you apply?" fallback.

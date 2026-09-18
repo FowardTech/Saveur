@@ -573,7 +573,13 @@ export type MessagesStackParamList = {
   // straight onto the greeting screen with the Suggested Topics bottom
   // sheet already popped up, instead of requiring a tap on the pill first.
   // Mutually exclusive with initialPrompt in practice (nothing sets both).
-  Chat: {initialPrompt?: string; openTopicsSheet?: boolean} | undefined;
+  // codingProjectId: paired with initialPrompt by CodingProjectEditor.tsx's
+  // "Analyze with your coach" button -- initialPrompt stays a short,
+  // human-readable message and this carries the real saved project's id
+  // so Chat.tsx's auto-send can pass it through to coachService.sendMessage
+  // (see that function's own comment) instead of ever putting the
+  // project's code into initialPrompt itself.
+  Chat: {initialPrompt?: string; openTopicsSheet?: boolean; codingProjectId?: string} | undefined;
 };
 export type RequestsBottomStackParamList = {
   // initialTab: which of RequestsSrc's own two pill tabs (0 = Applications,
