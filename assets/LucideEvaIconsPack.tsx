@@ -32,11 +32,17 @@ import {
   CornerUpLeft,
   CreditCard,
   Download,
+  Droplet,
   Edit2,
+  EllipsisVertical,
   ExternalLink,
+  Eye,
+  File,
+  FilePlus,
   FileText,
   Flag,
   Folder,
+  FolderPlus,
   Gift,
   Globe,
   Globe2,
@@ -71,6 +77,7 @@ import {
   RefreshCw,
   Rocket,
   RotateCcw,
+  Save,
   Search,
   Send,
   Settings2,
@@ -80,6 +87,7 @@ import {
   Smile,
   Star,
   Sun,
+  Tags,
   Terminal,
   Trash2,
   TrendingUp,
@@ -110,6 +118,24 @@ import {lucideIcon} from './lucideIcon';
 // icon name not listed here, it will render blank; add the missing name +
 // its closest lucide-react-native equivalent here rather than in the
 // call site.
+//
+// BUG FIX (product report: "You need to fix all these errors please its
+// becoming too much" -- after back-to-back real crashes for
+// 'arrow-ios-forward' and 'more-vertical-outline'): rather than patching
+// one more single name and waiting for the next one to crash in
+// production, ran a full sweep this time -- every literal
+// `<Icon pack="eva" name="...">` string anywhere in src/components/
+// navigation/utils/services/constants/assets, diffed against every key
+// actually registered below. Found 8 real, still-live gaps (all in
+// screens added after the exhaustive pass this file's header comment
+// describes): 'droplet-outline'/'file-outline' (CodingProjectEditor.tsx's
+// per-extension file icon), 'eye-outline'/'save-outline'/
+// 'file-add-outline'/'folder-add-outline' (that same screen's preview/
+// save/new-file/new-folder buttons), 'more-vertical-outline'
+// (CodingProjectsHub.tsx's per-project overflow menu -- the crash that
+// prompted this sweep), and 'pricetags-outline' (GeneratedDocuments.tsx).
+// All 8 added below in their alphabetical spot rather than clustered
+// here, so this stays a genuine reference list, not a changelog.
 const LucideEvaIconsPack: IconPack<any> = {
   name: 'eva',
   icons: {
@@ -182,10 +208,22 @@ const LucideEvaIconsPack: IconPack<any> = {
     'question-mark-circle-outline': lucideIcon(HelpCircle),
     'rocket-outline': lucideIcon(Rocket),
     'smiling-face-outline': lucideIcon(Smile),
+    // See this file's own "full sweep" comment above -- CodingProjectEditor.tsx's
+    // per-extension file-type icon (a .css file's tab/tree glyph).
+    'droplet-outline': lucideIcon(Droplet),
     'download-outline': lucideIcon(Download),
     'edit-2-outline': lucideIcon(Edit2),
     'email-outline': lucideIcon(Mail),
     'external-link-outline': lucideIcon(ExternalLink),
+    // See this file's own "full sweep" comment above -- CodingProjectEditor.tsx's
+    // live-preview toggle button.
+    'eye-outline': lucideIcon(Eye),
+    // See this file's own "full sweep" comment above -- CodingProjectEditor.tsx's
+    // "new file" button in its file-tree bottom sheet.
+    'file-add-outline': lucideIcon(FilePlus),
+    // See this file's own "full sweep" comment above -- CodingProjectEditor.tsx's
+    // per-extension file-type icon (the generic/unknown-extension fallback).
+    'file-outline': lucideIcon(File),
     'file-text-outline': lucideIcon(FileText),
     'flag-outline': lucideIcon(Flag),
     'flash-outline': lucideIcon(Zap),
@@ -193,6 +231,9 @@ const LucideEvaIconsPack: IconPack<any> = {
     // above — services/suggestedActions.ts's my_documents action). Also
     // real, already-in-production, found by the same sweep.
     'folder-outline': lucideIcon(Folder),
+    // See this file's own "full sweep" comment above -- CodingProjectEditor.tsx's
+    // "new folder" button in its file-tree bottom sheet.
+    'folder-add-outline': lucideIcon(FolderPlus),
     'gift-outline': lucideIcon(Gift),
     'globe-2-outline': lucideIcon(Globe2),
     'globe-outline': lucideIcon(Globe),
@@ -249,6 +290,23 @@ const LucideEvaIconsPack: IconPack<any> = {
     // warns about. Same Mic/MicOff pairing as video-outline/video-off-
     // outline already use for Video/VideoOff below.
     'mic-off-outline': lucideIcon(MicOff),
+    // BUG FIX (real crash report, screenshot: "Icon: 'more-vertical-outline'
+    // icon is not registered in pack 'eva'" -- the report that prompted
+    // this file's own "full sweep" comment above) --
+    // CodingProjectsHub.tsx's per-project overflow (⋮) menu button.
+    // lucide-react-native renamed this icon to EllipsisVertical upstream;
+    // 'more-vertical' only survives there as a bare re-export file, not a
+    // name the package's own index actually exports, so it has to be
+    // imported under its new name here regardless of the eva-side key
+    // string staying the old 'more-vertical-outline'.
+    'more-vertical-outline': lucideIcon(EllipsisVertical),
+    // See this file's own "full sweep" comment above -- GeneratedDocuments.tsx's
+    // status tag/badge icon. 'pricetags' (plural) maps to Tags (plural),
+    // not Tag, to match the icon's own "multiple tags" glyph.
+    'pricetags-outline': lucideIcon(Tags),
+    // See this file's own "full sweep" comment above -- CodingProjectEditor.tsx's
+    // Save button.
+    'save-outline': lucideIcon(Save),
     // BUG FIX (same class as map-outline/layers-outline/linkedin-outline
     // above — services/suggestedActions.ts's job_preferences action).
     'options-2-outline': lucideIcon(SlidersHorizontal),
