@@ -1,5 +1,5 @@
 import React from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
@@ -74,6 +74,21 @@ const CoachingReportCard = () => {
   // brand-to-purple gradient wash that card's non-empty state already
   // used, rather than reaching for the generic component every other
   // empty list on the app shares.
+  // BUG FIX (product report, with screenshot: "The practice button is not
+  // showing well. Its cut off halve way"): LinearGradient was the flex
+  // container the button/text actually laid out inside -- react-native-
+  // linear-gradient doesn't always report its content-driven height back
+  // to Yoga reliably (a known issue with the library, worse on Android),
+  // so the dashed-border outer View sometimes sized itself a beat short
+  // of the button that was actually painted inside the gradient, leaving
+  // the button's bottom half rendered outside/overlapping the card's own
+  // boundary instead of safely inside it. Restructured so the gradient is
+  // a pure absolute-fill BACKGROUND layer (StyleSheet.absoluteFillObject,
+  // no children, nothing for it to lay out) behind a plain, normal-flow
+  // View that actually holds the icon/title/body/button -- that plain
+  // View's own height reliably drives emptyOuter's height (plain Views
+  // auto-size to content correctly), and the gradient just paints
+  // whatever final size Yoga settles on.
   if (report.empty) {
     return (
       <View style={styles.emptyOuter}>
@@ -81,7 +96,9 @@ const CoachingReportCard = () => {
           colors={['#0063F80D', '#8B5CF60D', '#8B5CF600']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
-          style={styles.emptyGradient}>
+          style={StyleSheet.absoluteFillObject}
+        />
+        <View style={styles.emptyContent}>
           <View style={styles.emptyIcon}>
             <Icon pack="eva" name="bar-chart-2-outline" style={[globalStyle.icon20, {tintColor: '#8B5CF6'}]} />
           </View>
@@ -103,7 +120,7 @@ const CoachingReportCard = () => {
               {t('home:coaching_report_empty_cta', {defaultValue: 'Practice a mock interview'})}
             </Text>
           </TouchableOpacity>
-        </LinearGradient>
+        </View>
       </View>
     );
   }
@@ -169,23 +186,28 @@ const themedStyles = StyleService.create({
     backgroundColor: 'background-basic-color-1',
   },
   // BUG FIX (product report: "This is the design I want for the empty
-  // coaching report card in the mobile app"): outer/inner split, same
-  // reasoning as components/GradientCard.tsx's own comment -- the dashed
-  // border lives on this plain outer View (no overflow:hidden), while the
-  // inner LinearGradient below clips its fill to matching rounded corners
-  // separately. NOTE: React Native's dashed/dotted border + borderRadius
-  // combination is known to render slightly differently between iOS and
-  // Android (Android can square off a corner or two) -- an accepted
-  // platform limitation, not a bug in this styling.
+  // coaching report card in the mobile app", then follow-up "The practice
+  // button is not showing well. Its cut off halve way"): the dashed
+  // border lives on this outer View; `overflow: 'hidden'` clips the
+  // absolute-fill gradient background (emptyOuter's only OTHER child --
+  // see the JSX comment above emptyContent's usage) to the same rounded
+  // corners. Content itself is a normal-flow sibling (emptyContent below)
+  // that drives this View's actual height, so overflow:hidden here only
+  // ever trims the gradient's square corners down to the border's rounded
+  // ones -- it can't clip real content, since content isn't the thing
+  // being measured for size anymore. NOTE: React Native's dashed/dotted
+  // border + borderRadius combination is known to render slightly
+  // differently between iOS and Android (Android can square off a corner
+  // or two) -- an accepted platform limitation, not a bug in this styling.
   emptyOuter: {
     marginTop: 16,
     borderRadius: 16,
     borderWidth: 1.5,
     borderStyle: 'dashed',
     borderColor: '#0063F840',
+    overflow: 'hidden',
   },
-  emptyGradient: {
-    borderRadius: 16,
+  emptyContent: {
     padding: 20,
     alignItems: 'flex-start',
   },
