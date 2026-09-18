@@ -271,7 +271,20 @@ const CodingPracticeHub = memo(() => {
               })}
             </Text>
           </View>
-          <Icon pack="eva" name="arrow-ios-forward" style={[globalStyle.icon20, {tintColor: theme['text-hint-color']}]} />
+          {/* BUG FIX (crash: "Icon: 'arrow-ios-forward' icon is not
+              registered in pack 'eva'") -- this app's "eva" pack is a
+              custom lucide-backed mapping (assets/LucideEvaIconsPack.tsx),
+              not the real @ui-kitten/eva-icons, and 'arrow-ios-forward'
+              was never one of its registered names (nor a real eva-icons
+              one either -- the actual eva-icons name is
+              'arrow-ios-forward-outline', also unregistered here). Every
+              other trailing "go forward" chevron in this app
+              (ActionCard.tsx, HomeSrc.tsx, CareerAssessment.tsx,
+              DiscussCoachButton.tsx) already uses the already-registered
+              'chevron-right-outline' for this exact purpose, so this just
+              matches that established convention instead of registering
+              a second, visually-redundant arrow icon. */}
+          <Icon pack="eva" name="chevron-right-outline" style={[globalStyle.icon20, {tintColor: theme['text-hint-color']}]} />
         </TouchableOpacity>
 
         <Flex justify="flex-start" wrap mb={8}>
