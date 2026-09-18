@@ -1,12 +1,12 @@
 import React from 'react';
-import {View} from 'react-native';
-import {StyleService, useStyleSheet, Icon} from '@ui-kitten/components';
+import {TouchableOpacity, View} from 'react-native';
+import {StyleService, useStyleSheet, useTheme, Icon} from '@ui-kitten/components';
+import LinearGradient from 'react-native-linear-gradient';
 import {useTranslation} from 'react-i18next';
 import {useFocusEffect, useNavigation, NavigationProp} from '@react-navigation/native';
 
 import Text from 'components/Text';
 import Flex from 'components/Flex';
-import EmptyState from 'components/EmptyState';
 import {globalStyle} from 'styles/globalStyle';
 import {accentTintBg} from 'utils/accentPalette';
 import * as coachingReportService from 'services/coachingReportService';
@@ -41,6 +41,7 @@ const CoachingReportCard = () => {
   const {t} = useTranslation(['home', 'common']);
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
+  const theme = useTheme();
   const [report, setReport] = React.useState<CoachingReport | null>(null);
 
   // Checked on every Home focus (not just mount) so finishing a mock
@@ -61,19 +62,48 @@ const CoachingReportCard = () => {
 
   if (!report) return null;
 
+  // BUG FIX (product report: "This is the design I want for the empty
+  // coaching report card in the mobile app. I dont like the one currently
+  // there now"): this used to render the shared, generic EmptyState block
+  // (a big centered illustration + centered title/body + a plain text
+  // link, same as every other "nothing here yet" screen in the app).
+  // Replaced with a mobile port of Saveur-Web's own empty state for this
+  // exact card (components/dashboard/CoachingReportCard.tsx) instead — a
+  // left-aligned dashed-border card with a small purple icon badge, a real
+  // solid CTA pill button (not a text link), and the same subtle
+  // brand-to-purple gradient wash that card's non-empty state already
+  // used, rather than reaching for the generic component every other
+  // empty list on the app shares.
   if (report.empty) {
     return (
-      <View style={styles.wrap}>
-        <EmptyState
-          title={t('home:coaching_report_title', {defaultValue: 'Your Coaching Report'}).toString()}
-          body={t('home:coaching_report_empty_body', {
-            defaultValue: 'Your coaching report is empty — complete {{count}} mock interviews to see what you’re doing well and what to work on next.',
-            count: report.minRequired,
-          }).toString()}
-          actionLabel={t('home:coaching_report_empty_cta', {defaultValue: 'Practice a mock interview'}).toString()}
-          onAction={() => navigate('MainBottomTab', {screen: 'Practice'})}
-          style={styles.emptyState}
-        />
+      <View style={styles.emptyOuter}>
+        <LinearGradient
+          colors={['#0063F80D', '#8B5CF60D', '#8B5CF600']}
+          start={{x: 0, y: 0}}
+          end={{x: 1, y: 1}}
+          style={styles.emptyGradient}>
+          <View style={styles.emptyIcon}>
+            <Icon pack="eva" name="bar-chart-2-outline" style={[globalStyle.icon20, {tintColor: '#8B5CF6'}]} />
+          </View>
+          <Text category="h9-s" bold mt={12}>
+            {t('home:coaching_report_title', {defaultValue: 'Your Coaching Report'})}
+          </Text>
+          <Text category="h10" status="placeholder" mt={4}>
+            {t('home:coaching_report_empty_body', {
+              defaultValue: 'Your coaching report is empty — complete {{count}} mock interviews to see what you’re doing well and what to work on next.',
+              count: report.minRequired,
+            })}
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[styles.emptyCta, {backgroundColor: theme['color-primary-500']}]}
+            onPress={() => navigate('MainBottomTab', {screen: 'Practice'})}>
+            <Icon pack="eva" name="mic-outline" style={[globalStyle.icon16, {tintColor: '#fff'}]} />
+            <Text category="h10-s" bold ml={6} style={{color: '#fff'}}>
+              {t('home:coaching_report_empty_cta', {defaultValue: 'Practice a mock interview'})}
+            </Text>
+          </TouchableOpacity>
+        </LinearGradient>
       </View>
     );
   }
@@ -138,8 +168,43 @@ const themedStyles = StyleService.create({
     marginTop: 16,
     backgroundColor: 'background-basic-color-1',
   },
-  emptyState: {
-    paddingVertical: 24,
+  // BUG FIX (product report: "This is the design I want for the empty
+  // coaching report card in the mobile app"): outer/inner split, same
+  // reasoning as components/GradientCard.tsx's own comment -- the dashed
+  // border lives on this plain outer View (no overflow:hidden), while the
+  // inner LinearGradient below clips its fill to matching rounded corners
+  // separately. NOTE: React Native's dashed/dotted border + borderRadius
+  // combination is known to render slightly differently between iOS and
+  // Android (Android can square off a corner or two) -- an accepted
+  // platform limitation, not a bug in this styling.
+  emptyOuter: {
+    marginTop: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: '#0063F840',
+  },
+  emptyGradient: {
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'flex-start',
+  },
+  emptyIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: accentTintBg('#8B5CF6'),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    borderRadius: 99,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginTop: 16,
   },
   headerIcon: {
     width: 36,
