@@ -57,6 +57,7 @@
   "color-tile-mint-bg": "#F4F4F5",
   "color-tile-mint-text": "#3F3F46",
   "border-card-default": "#E4E4E7",
+  "border-input-color": "#18181B",
 
   "text-font-family": "PlusJakartaSans-Regular",
   "text-font-family-medium": "PlusJakartaSans-Medium",

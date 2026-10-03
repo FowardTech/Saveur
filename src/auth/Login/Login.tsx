@@ -351,13 +351,13 @@ const themedStyles = StyleService.create({
   email: {
     ...globalStyle.inputField,
     borderWidth: 1,
-    borderColor: 'border-card-default',
+    borderColor: 'border-input-color',
     marginBottom: 14,
   },
   password: {
     ...globalStyle.inputField,
     borderWidth: 1,
-    borderColor: 'border-card-default',
+    borderColor: 'border-input-color',
   },
   // Was `position: 'absolute', bottom: 0` — floating this row fixed at the
   // very bottom of the screen regardless of scroll position, which is what

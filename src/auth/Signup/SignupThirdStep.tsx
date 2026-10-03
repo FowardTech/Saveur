@@ -430,7 +430,7 @@ const themedStyles = StyleService.create({
   input: {
     ...globalStyle.inputField,
     borderWidth: 1,
-    borderColor: 'border-card-default',
+    borderColor: 'border-input-color',
     marginBottom: 24,
   },
   termsRow: {

@@ -2701,7 +2701,7 @@
           "variantGroups": {
             "status": {
               "basic": {
-                "borderColor": "border-card-default",
+                "borderColor": "border-input-color",
                 "backgroundColor": "background-basic-color-2",
                 "textColor": "text-basic-color",
                 "labelColor": "text-hint-color",
