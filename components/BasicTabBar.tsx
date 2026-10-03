@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { useTheme } from '@ui-kitten/components';
 
 import Text from 'components/Text';
@@ -30,8 +30,28 @@ const BasicTabBar = ({ style, activeIndex, onChange, tabs, badgeCounts }: Props)
     [activeIndex],
   );
 
+  // Horizontally scrollable: tabs spread across the full width when they
+  // fit, and scroll sideways when they don't (long labels / small screens).
+  // The active tab is scrolled into view whenever it changes.
+  const scrollRef = React.useRef<ScrollView>(null);
+  const tabX = React.useRef<Record<number, {x: number; w: number}>>({});
+  const viewW = React.useRef(0);
+  React.useEffect(() => {
+    const p = tabX.current[activeIndex];
+    if (!p || !viewW.current) return;
+    scrollRef.current?.scrollTo({x: Math.max(0, p.x + p.w / 2 - viewW.current / 2), animated: true});
+  }, [activeIndex]);
+
   return (
-    <Flex style={[styles.container, style]}>
+    <ScrollView
+      ref={scrollRef}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      onLayout={e => {
+        viewW.current = e.nativeEvent.layout.width;
+      }}
+      style={[styles.container, style]}
+      contentContainerStyle={styles.content}>
       {tabs.map((item, i) => {
         const RenderProgress = React.useCallback(() => {
           return (
@@ -48,7 +68,10 @@ const BasicTabBar = ({ style, activeIndex, onChange, tabs, badgeCounts }: Props)
         }, [activeIndex]);
         return (
           <TouchableOpacity
-            onLayout={event => event.nativeEvent.layout.width}
+            onLayout={event => {
+              const {x, width} = event.nativeEvent.layout;
+              tabX.current[i] = {x, w: width};
+            }}
             key={i}
             onPress={() => changeIndex(i)}
             activeOpacity={0.54}
@@ -112,16 +135,20 @@ const BasicTabBar = ({ style, activeIndex, onChange, tabs, badgeCounts }: Props)
           </TouchableOpacity>
         );
       })}
-    </Flex>
+    </ScrollView>
   );
 };
 
 export default BasicTabBar;
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
+    flexGrow: 1,
     justifyContent: 'space-between',
-    overflow: 'hidden',
+    paddingHorizontal: 4,
+  },
+  container: {
+    flexGrow: 0,
     // Was 32 -- the active tab's new pill background (see the render
     // block's own comment) adds a few px of vertical padding around its
     // label that 32 was clipping the bottom of via this container's own
