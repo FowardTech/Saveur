@@ -21,7 +21,7 @@ import { SkeletonList } from 'components/Skeleton';
 import { globalStyle } from 'styles/globalStyle';
 import * as referralService from 'services/referralService';
 import { ReferralSummary } from 'services/referralService';
-import { ArtGiftBox } from 'src/home/HomeHeroArt';
+import { ArtReferral } from 'src/home/HomeHeroArt';
 
 // Referral program — share a link, both sides get a reward off their next
 // subscription once the referred person actually subscribes to a paid plan
@@ -141,7 +141,7 @@ const ReferralProgram = memo(() => {
                   card (no gradient — see this card's own comment further
                   down about that being a deliberate, prior product
                   decision). */}
-              <ArtGiftBox size={122} />
+              <ArtReferral size={132} />
               <Text category="h3" bold center mt={16}>
                 {t('more:referral_hero_title', {defaultValue: 'Give {{reward}}, Get {{reward}}', reward: rewardLabel})}
               </Text>

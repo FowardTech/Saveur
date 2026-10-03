@@ -618,3 +618,26 @@ export const ArtMagnifyingDoc: React.FC<ArtProps> = ({ size }) => (
     <Line x1="104" y1="100" x2="118" y2="114" stroke="#71717a" strokeWidth={8} strokeLinecap="round" />
   </Svg>
 );
+
+// Referral hero: two friends linked by a gift, in a full-colour palette.
+export const ArtReferral: React.FC<ArtProps> = ({ size }) => (
+  <Svg width={size} height={size} viewBox="0 0 140 140">
+    <Circle cx="70" cy="70" r="58" fill="#7C5CFF1A" />
+    <Ellipse cx="70" cy="116" rx="40" ry="5" fill="rgba(0,0,0,0.07)" />
+    {/* left friend */}
+    <Circle cx="34" cy="52" r="11" fill="#FFB27A" />
+    <Path d="M16 90c0-14 8-22 18-22s18 8 18 22z" fill="#19B87A" />
+    {/* right friend */}
+    <Circle cx="106" cy="52" r="11" fill="#FFC94A" />
+    <Path d="M88 90c0-14 8-22 18-22s18 8 18 22z" fill="#FF5FA2" />
+    {/* gift */}
+    <Rect x="48" y="66" width="44" height="36" rx="5" fill="#7C5CFF" />
+    <Rect x="44" y="56" width="52" height="14" rx="4" fill="#A592FF" />
+    <Rect x="64" y="56" width="12" height="46" fill="#FFC94A" />
+    <Path d="M70 56c-10-14-24-8-16 0zM70 56c10-14 24-8 16 0z" fill="#FFC94A" />
+    {/* sparkles */}
+    <Circle cx="70" cy="22" r="4" fill="#FFC94A" />
+    <Circle cx="22" cy="24" r="3" fill="#FF5FA2" />
+    <Circle cx="118" cy="26" r="3" fill="#19B87A" />
+  </Svg>
+);
