@@ -1,5 +1,3 @@
-import Icon3D from 'components/Icon3D';
-import {Icon3DName} from 'utils/icon3d';
 import React, {memo} from 'react';
 import {AppState, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon, useTheme} from '@ui-kitten/components';
@@ -133,7 +131,6 @@ interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
   icon: string;
-  art?: Icon3DName;
   badge?: number;
 }
 
@@ -176,19 +173,19 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
   const DRAWER_ACCENT = theme['text-basic-color'];
 
   const tabItems: DrawerNavItem[] = [
-    {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline', art: 'home'},
-    {route: 'Coach', label: t('common:tab_coach', {defaultValue: 'Coach'}).toString(), icon: 'message-circle-outline', art: 'chat'},
-    {route: 'Practice', label: t('common:tab_practice', {defaultValue: 'Practice'}).toString(), icon: 'search-outline', art: 'target'},
+    {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
+    {route: 'Coach', label: t('common:tab_coach', {defaultValue: 'Coach'}).toString(), icon: 'message-circle-outline'},
+    {route: 'Practice', label: t('common:tab_practice', {defaultValue: 'Practice'}).toString(), icon: 'search-outline'},
     {
       route: 'Jobs',
       label: t('common:tab_jobs', {defaultValue: 'Jobs'}).toString(),
-      icon: 'briefcase-outline', art: 'briefcase',
+      icon: 'briefcase-outline',
       badge: badges?.jobAlertsUnreadCount || undefined,
     },
     {
       route: 'Profile',
       label: t('common:tab_more', {defaultValue: 'More'}).toString(),
-      icon: 'grid-outline', art: 'gear',
+      icon: 'grid-outline',
       badge:
         (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0) || undefined,
     },
@@ -197,22 +194,22 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
     {
       route: 'RecentInterviews',
       label: t('common:drawer_recent_interviews', {defaultValue: 'Recent Interviews'}).toString(),
-      icon: 'clock-outline', art: 'clock',
+      icon: 'clock-outline',
     },
     {
       route: 'SalaryNegotiation',
       label: t('common:drawer_salary_negotiation', {defaultValue: 'Salary Negotiation'}).toString(),
-      icon: 'swap-outline', art: 'money',
+      icon: 'swap-outline',
     },
     {
       route: 'DreamCompanies',
       label: t('common:drawer_dream_company', {defaultValue: 'Dream Company'}).toString(),
-      icon: 'building-outline', art: 'building',
+      icon: 'building-outline',
     },
     {
       route: 'CareerEvents',
       label: t('common:drawer_career_events', {defaultValue: 'Career Events'}).toString(),
-      icon: 'calendar-outline', art: 'calendar',
+      icon: 'calendar-outline',
       badge: badges?.careerEventsUnreadCount || undefined,
     },
   ];
@@ -224,11 +221,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
         activeOpacity={0.7}
         onPress={() => onNavigate(item.route)}
         style={[styles.navRow, focused && {backgroundColor: DRAWER_ACTIVE_BG}]}>
-        {item.art ? (
-          <Icon3D name={item.art} size={34} style={{marginRight: 14}} />
-        ) : (
-          <Icon pack="eva" name={item.icon} style={[styles.navIcon, {tintColor: DRAWER_ACCENT}]} />
-        )}
+        <Icon pack="eva" name={item.icon} style={[styles.navIcon, {tintColor: DRAWER_ACCENT}]} />
         <Text category="h8" bold style={[styles.navLabel, {color: DRAWER_TEXT}]}>
           {item.label}
         </Text>
@@ -293,12 +286,12 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
   );
 });
 
-const BAR_TABS: {route: keyof MainBottomTabStackParamList; key: string; label: string; icon: string; art: Icon3DName}[] = [
-  {route: 'Coach', key: 'tab_coach', label: 'Coach', icon: 'message-circle-outline', art: 'chat'},
-  {route: 'Practice', key: 'tab_practice', label: 'Practice', icon: 'search-outline', art: 'target'},
-  {route: 'Interviews', key: 'tab_jobs', label: 'Jobs', icon: 'briefcase-outline', art: 'briefcase'},
-  {route: 'Home', key: 'tab_growth', label: 'Growth', icon: 'trending-up-outline', art: 'chart'},
-  {route: 'Profile', key: 'tab_more', label: 'More', icon: 'grid-outline', art: 'gear'},
+const BAR_TABS: {route: keyof MainBottomTabStackParamList; key: string; label: string; icon: string}[] = [
+  {route: 'Coach', key: 'tab_coach', label: 'Coach', icon: 'message-circle-outline'},
+  {route: 'Practice', key: 'tab_practice', label: 'Practice', icon: 'search-outline'},
+  {route: 'Interviews', key: 'tab_jobs', label: 'Jobs', icon: 'briefcase-outline'},
+  {route: 'Home', key: 'tab_growth', label: 'Growth', icon: 'trending-up-outline'},
+  {route: 'Profile', key: 'tab_more', label: 'More', icon: 'grid-outline'},
 ];
 
 const BottomBar = memo(({state, navigation, badges}: any) => {
@@ -346,7 +339,11 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
               }}
               onPress={() => navigation.navigate(tab.route)}>
               <View>
-                <Icon3D name={tab.art} size={focused ? 42 : 38} style={{opacity: focused ? 1 : 0.85}} />
+                <Icon
+                  pack="eva"
+                  name={tab.icon}
+                  style={{width: 24, height: 24, tintColor: theme['text-basic-color']}}
+                />
                 {badge ? (
                   <View
                     style={{

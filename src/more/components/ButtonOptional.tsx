@@ -13,8 +13,6 @@ import {
 } from '@ui-kitten/components';
 import Flex from 'components/Flex';
 import ProBadge from 'components/ProBadge';
-import Icon3D from 'components/Icon3D';
-import {Icon3DName} from 'utils/icon3d';
 import {globalStyle} from 'styles/globalStyle';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {MainBottomTabStackParamList} from 'navigation/types';
@@ -22,7 +20,6 @@ import {MainBottomTabStackParamList} from 'navigation/types';
 export interface ButtonOptionalProps {
   title: string;
   icon: string;
-  art?: Icon3DName; // 3D icon (replaces the glyph tile)
   onPress?(): void;
   navigateSrc?:
     | 'ProfileSrc'
@@ -95,7 +92,6 @@ export interface ButtonOptionalProps {
 const ButtonOptional = ({
   title,
   icon = 'back',
-  art,
   onPress,
   withToggle,
   checked,
@@ -143,7 +139,6 @@ const ButtonOptional = ({
             this outer box is a plain, never-clipped positioning
             container the badge can safely overflow past. */}
         <View style={styles.iconWrap}>
-          {art ? <Icon3D name={art} size={36} /> : (
           <View style={[isGradient ? styles.iconWrapGradient : styles.iconWrapPlain]}>
             {/* REDESIGN, ROUND 2 (see gradientColors' own prop comment) — a
                 colored rounded-square badge behind the icon again, per
@@ -172,7 +167,6 @@ const ButtonOptional = ({
               style={{width: 26, height: 26, tintColor: isGradient ? '#FFFFFF' : iconColor ?? theme['text-basic-color']}}
             />
           </View>
-          )}
           {badgeCount ? (
             <View style={styles.badgeCount}>
               <Text category="h9" status="control" fontSize={11} lineHeight={13}>
@@ -274,8 +268,8 @@ const themedStyles = StyleService.create({
   // that owns nothing but the badge's corner anchor point. See the JSX's
   // own comment for the full before/after.
   iconWrap: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
