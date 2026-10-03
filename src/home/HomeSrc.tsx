@@ -1290,7 +1290,7 @@ const HomeSrc = memo(() => {
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </Text>
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1680692138342-665dde0c3311?auto=format&fit=crop&w=1000&q=75"
+          imageUri="https://images.unsplash.com/photo-1758600587811-e9a20851cf7d?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
           subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
@@ -1298,7 +1298,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1770393391946-7d9b658deec3?auto=format&fit=crop&w=1000&q=75"
+          imageUri="https://images.unsplash.com/photo-1758600588428-2cca8c96bfba?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
           subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
@@ -1306,7 +1306,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1680967494203-789f70ddcfdf?auto=format&fit=crop&w=1000&q=75"
+          imageUri="https://images.unsplash.com/photo-1758600433721-60ff3153f81a?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}
