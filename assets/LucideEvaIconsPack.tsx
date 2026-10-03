@@ -142,6 +142,7 @@ const LucideEvaIconsPack: IconPack<any> = {
     'activity-outline': lucideIcon(Activity),
     'alert-circle-outline': lucideIcon(AlertCircle),
     'arrow-forward-outline': lucideIcon(ArrowRight),
+    'arrow-right-outline': lucideIcon(ArrowRight),
     'arrow-upward-outline': lucideIcon(ArrowUp),
     'award-outline': lucideIcon(Award),
     // Filled variant (full reskin — Leaderboard.tsx's podium crown icon,

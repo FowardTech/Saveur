@@ -310,52 +310,68 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
   const {bottom} = useLayout();
   const activeName = state.routes[state.index]?.name;
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        backgroundColor: theme['background-basic-color-2'],
-        borderTopWidth: 1,
-        borderTopColor: theme['border-card-default'],
-        paddingTop: 8,
-        paddingBottom: Math.max(bottom, 8),
-      }}>
-      {BAR_TABS.map(tab => {
-        const focused = activeName === tab.route;
-        const badge =
-          tab.route === 'Interviews'
-            ? badges?.jobAlertsUnreadCount
-            : tab.route === 'Profile'
-            ? (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0)
-            : 0;
-        const color = focused ? theme['text-basic-color'] : theme['text-hint-color'];
-        return (
-          <TouchableOpacity
-            key={tab.route}
-            activeOpacity={0.7}
-            style={{flex: 1, alignItems: 'center'}}
-            onPress={() => navigation.navigate(tab.route)}>
-            <View>
-              <Icon pack="eva" name={tab.icon} style={{width: 26, height: 26, tintColor: color}} />
-              {badge ? (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -2,
-                    right: -4,
-                    width: 9,
-                    height: 9,
-                    borderRadius: 5,
-                    backgroundColor: theme['text-basic-color'],
-                  }}
+    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom, 12), backgroundColor: 'transparent'}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          backgroundColor: theme['background-basic-color-2'],
+          borderRadius: 32,
+          padding: 6,
+          borderWidth: 1,
+          borderColor: theme['border-card-default'],
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
+        }}>
+        {BAR_TABS.map(tab => {
+          const focused = activeName === tab.route;
+          const badge =
+            tab.route === 'Interviews'
+              ? badges?.jobAlertsUnreadCount
+              : tab.route === 'Profile'
+              ? (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0)
+              : 0;
+          return (
+            <TouchableOpacity
+              key={tab.route}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
+              style={{
+                flex: 1,
+                height: 52,
+                borderRadius: 26,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: focused ? theme['background-basic-color-3'] : 'transparent',
+              }}
+              onPress={() => navigation.navigate(tab.route)}>
+              <View>
+                <Icon
+                  pack="eva"
+                  name={tab.icon}
+                  style={{width: 24, height: 24, tintColor: theme['text-basic-color']}}
                 />
-              ) : null}
-            </View>
-            <Text category="h10" bold={focused} style={{color, marginTop: 3, fontSize: 11}}>
-              {t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
-            </Text>
-          </TouchableOpacity>
-        );
-      })}
+                {badge ? (
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: -2,
+                      right: -4,
+                      width: 9,
+                      height: 9,
+                      borderRadius: 5,
+                      backgroundColor: theme['text-basic-color'],
+                    }}
+                  />
+                ) : null}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 });
