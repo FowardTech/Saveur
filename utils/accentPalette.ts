@@ -6,14 +6,14 @@
 // screens (Job Alerts, Dream Companies, Resume Builder import cards, Goals)
 // can reuse the exact same colors instead of each screen inventing its own.
 export const ACCENT_PALETTE = [
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
-  '#18181B', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
+  '#71717A', // neutral (monochrome redesign)
 ] as const;
 
 /** Cycles through ACCENT_PALETTE by position — use for a list where item

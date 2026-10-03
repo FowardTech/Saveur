@@ -66,7 +66,7 @@ const AvatarPickerModal = memo(({visible, currentUrl, onClose, onSelect}: Props)
                     ]}>
                     <Avatar source={{uri: preset.url}} style={styles.thumbImage} shape="rounded" />
                     {isSelected ? (
-                      <View style={[styles.checkBadge, {backgroundColor: theme['color-primary-500']}]}>
+                      <View style={[styles.checkBadge, {backgroundColor: theme['color-primary-solid']}]}>
                         {/* Was fill="#fff" -- not a prop UI Kitten's Icon actually
                             forwards to the icon renderer (Image before, Lucide
                             now), so this never really turned the glyph white; the

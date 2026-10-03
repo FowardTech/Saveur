@@ -48,7 +48,7 @@ const UpcomingFeatures = () => {
                     blue") -- this cycled through a color-primary-
                     transparent-100 tint circle and a GradientIconBadge; no
                     badge/background now, plain glyph tinted platform blue
-                    (#52525b) directly.
+                    (#71717a) directly.
                     REDESIGN (product-supplied icon pack, "use them in the
                     appropriate places in the app") -- when an item has no
                     admin-configured icon (the common case, falling back to
@@ -62,7 +62,7 @@ const UpcomingFeatures = () => {
                   <Icon
                     pack="eva"
                     name={item.icon}
-                    style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#52525b' }]}
+                    style={[globalStyle.icon20, styles.iconWrap, { tintColor: '#71717a' }]}
                   />
                 ) : (
                   <Image

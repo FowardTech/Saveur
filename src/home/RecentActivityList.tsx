@@ -46,7 +46,7 @@ const ICON_BY_TYPE: Record<DayActivityItemType, string> = {
 // just adopted (blue/teal/amber/purple/pink family) rather than introducing
 // yet another color language.
 const COLOR_BY_TYPE: Record<DayActivityItemType, string> = {
-  mock_interview: '#52525b',
+  mock_interview: '#71717a',
   practical_scenario: '#0D9488',
   daily_challenge: '#F59E0B',
   daily_checkin_goal: '#EC4899',
@@ -93,8 +93,8 @@ const RecentActivityList = memo(() => {
             icons... give the icons themselves the platform blue") -- this
             cycled through a color-primary-transparent-100 tint circle and
             a GradientIconBadge; no badge/background now, plain glyph
-            tinted platform blue (#52525b) directly. */}
-        <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#52525b' }]} />
+            tinted platform blue (#71717a) directly. */}
+        <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, { tintColor: '#71717a' }]} />
         <Text category="h7" bold ml={10}>
           {t('home:recent_activity_title', { defaultValue: 'Recent activity' })}
         </Text>
@@ -126,7 +126,7 @@ const RecentActivityList = memo(() => {
       ) : (
         <View style={styles.listCard}>
           {items.map((item, i) => {
-            const color = COLOR_BY_TYPE[item.type] ?? '#52525b';
+            const color = COLOR_BY_TYPE[item.type] ?? '#71717a';
             return (
               <View
                 key={`${item.type}-${i}`}

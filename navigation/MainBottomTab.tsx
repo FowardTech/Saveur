@@ -232,7 +232,7 @@ const MainBottomTab = memo(() => {
             pack="assets"
             name={focused ? "commentActive" : "comment"}
             // Was theme["text-primary-color"] — that token now resolves to
-            // the same blue (#52525b) as fabCircle's own background (see
+            // the same blue (#71717a) as fabCircle's own background (see
             // constants/theme/light.json's text-primary-color fix for the
             // "search the web" bug), so the icon went fully invisible in
             // light mode (dark mode was fine since its text-primary-color

@@ -181,7 +181,7 @@ const GoalsScreen = memo(() => {
                 badge treatment exactly. Same 3 fixed colors as before,
                 just bolder. */}
             <Flex justify="flex-start" itemsCenter mb={12}>
-              <View style={[styles.sectionIconWrap, { backgroundColor: '#52525b' }]}>
+              <View style={[styles.sectionIconWrap, { backgroundColor: '#71717a' }]}>
                 <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
               <Text category="h6" bold ml={10}>
@@ -284,7 +284,7 @@ const GoalsScreen = memo(() => {
                         styles.progressFill,
                         {
                           width: `${Math.min(100, (practiceThisWeek / Math.max(1, targets?.practiceSessions ?? 1)) * 100)}%`,
-                          backgroundColor: theme['color-primary-500'],
+                          backgroundColor: theme['color-primary-solid'],
                         },
                       ]}
                     />
@@ -320,7 +320,7 @@ const GoalsScreen = memo(() => {
                         styles.progressFill,
                         {
                           width: `${Math.min(100, (appliedThisWeek / Math.max(1, targets?.applications ?? 1)) * 100)}%`,
-                          backgroundColor: theme['color-primary-500'],
+                          backgroundColor: theme['color-primary-solid'],
                         },
                       ]}
                     />

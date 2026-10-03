@@ -124,7 +124,7 @@ const styles = {
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#52525b',
+    backgroundColor: '#71717a',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },

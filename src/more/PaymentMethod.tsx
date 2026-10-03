@@ -290,7 +290,7 @@ const PaymentMethod = memo(() => {
                       {item.brand}
                     </Text>
                     {item.isDefault ? (
-                      <View style={[styles.defaultBadge, {backgroundColor: theme['color-primary-500']}]}>
+                      <View style={[styles.defaultBadge, {backgroundColor: theme['color-primary-solid']}]}>
                         <Text category="h10" status="control" bold>
                           {t('payment:default', {defaultValue: 'DEFAULT'})}
                         </Text>

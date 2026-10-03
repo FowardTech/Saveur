@@ -1738,7 +1738,7 @@ const LiveInterviewSession = memo(() => {
               style={[
                 styles.submitAnswerBtn,
                 {
-                  backgroundColor: theme['color-primary-500'],
+                  backgroundColor: theme['color-primary-solid'],
                   opacity: !answerText.trim() || isSubmittingAnswer ? 0.5 : 1,
                 },
               ]}
@@ -1772,13 +1772,13 @@ const LiveInterviewSession = memo(() => {
                   circle as that file, same colors, same reasoning.
                   FOLLOW-UP (explicit product request: "Lets remove the
                   orange color and lets use just default blue and light
-                  blue only") -- was ['#52525b', '#7EA8E2', '#FB923C'];
+                  blue only") -- was ['#71717a', '#7EA8E2', '#FB923C'];
                   orange dropped, leaving the same two-stop blue ->
                   light-blue blend as VoiceCoachView.tsx's own identical
                   follow-up. */}
               <Animated.View style={[styles.orb, orbStyle]}>
                 <LinearGradient
-                  colors={['#52525b', '#7EA8E2']}
+                  colors={['#71717a', '#7EA8E2']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                   style={styles.orbGradientFill}

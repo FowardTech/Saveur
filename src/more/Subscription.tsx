@@ -997,7 +997,7 @@ const Subscription = memo(() => {
                 <Flex justify="space-between" itemsCenter mb={8}>
                   <Text category="h6" bold style={isHero ? styles.heroText : undefined}>{plan.title}</Text>
                   {isCurrent ? (
-                    <View style={[styles.currentBadge, { backgroundColor: theme['color-primary-500'] }]}>
+                    <View style={[styles.currentBadge, { backgroundColor: theme['color-primary-solid'] }]}>
                       <Text category="h10" bold status="control">
                         {t('more:current_plan', { defaultValue: 'CURRENT PLAN' })}
                       </Text>
@@ -1311,7 +1311,7 @@ const themedStyles = StyleService.create({
   planCardHero: {
     ...globalStyle.card,
     marginBottom: 16,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
     shadowOpacity: 0,
     elevation: 0,
   },
@@ -1336,6 +1336,6 @@ const themedStyles = StyleService.create({
     opacity: 0.6,
   },
   heroSubscribeButtonText: {
-    color: '#52525b',
+    color: '#71717a',
   },
 });

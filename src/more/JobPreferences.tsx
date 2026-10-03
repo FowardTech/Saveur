@@ -301,7 +301,7 @@ const JobPreferences = memo(() => {
       <TouchableOpacity
         disabled={isSaving}
         onPress={onSave}
-        style={[styles.saveBtn, {backgroundColor: theme['color-primary-500'], opacity: isSaving ? 0.6 : 1}]}>
+        style={[styles.saveBtn, {backgroundColor: theme['color-primary-solid'], opacity: isSaving ? 0.6 : 1}]}>
         {isSaving ? (
           <Spinner size="small" status="control" />
         ) : (

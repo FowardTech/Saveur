@@ -180,7 +180,7 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
             </View>
           </View>
         ) : (
-          <GradientIconBadge color="#52525b" size={30} radius={10} shade={-8} style={styles.iconWrap}>
+          <GradientIconBadge color="#71717a" size={30} radius={10} shade={-8} style={styles.iconWrap}>
             <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
           </GradientIconBadge>
         )}

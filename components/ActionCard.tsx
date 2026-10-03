@@ -305,7 +305,7 @@ const themedStyles = StyleService.create({
     // gray token (see constants/theme/appTheme.json/dark.json) shared with
     // plain, unhighlighted cards elsewhere in the app. These 4 Home
     // launcher cards now always use the app's real primary blue
-    // (color-primary-500, #52525b) as their border, unconditionally --
+    // (color-primary-500, #71717a) as their border, unconditionally --
     // not just as a conditional "active/selected" state the way other
     // screens use this same token (see e.g. PaymentMethod.tsx/AddOns.tsx),
     // since the product ask here was for it to be every card's normal,

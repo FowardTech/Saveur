@@ -135,7 +135,7 @@ const AnswerQuestionModal = memo(({question, onClose}: {question: LibraryQuestio
               {result.breakdown.map((item, i) => (
                 <Layout key={i} level="2" style={styles.starRow}>
                   <Flex justify="flex-start" itemsCenter mb={8}>
-                    <View style={[styles.starBadge, {backgroundColor: theme['color-primary-500']}]}>
+                    <View style={[styles.starBadge, {backgroundColor: theme['color-primary-solid']}]}>
                       <Text category="h9-s" status="control" bold>
                         {item.letter}
                       </Text>
@@ -197,10 +197,10 @@ const styles = {
     borderRadius: 99,
   },
   timeChipIcon: {
-    tintColor: '#52525b',
+    tintColor: '#71717a',
   },
   timeChipText: {
-    color: '#52525b',
+    color: '#71717a',
     marginLeft: 4,
   },
   backdrop: {

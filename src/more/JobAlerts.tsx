@@ -674,7 +674,7 @@ const JobAlerts = memo(() => {
                 <TouchableOpacity
                   key={role}
                   onPress={() => setDesiredRoles(prev => prev.filter(r => r !== role))}
-                  style={[styles.chip, {backgroundColor: theme['color-primary-500']}]}>
+                  style={[styles.chip, {backgroundColor: theme['color-primary-solid']}]}>
                   <Text category="h10" status="control" bold>
                     {role}
                   </Text>

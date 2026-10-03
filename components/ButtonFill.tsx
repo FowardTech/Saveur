@@ -162,7 +162,7 @@ const ButtonFill = ({
     // color-danger-100, color-success-100, etc.) and was always meant to
     // be a white icon on that circle. text-primary-color now resolves to
     // blue (see light.json), which for 'basic' is the exact same hex as
-    // its own circle (#52525b on #52525b -- fully invisible) and just low-
+    // its own circle (#71717a on #71717a -- fully invisible) and just low-
     // contrast/wrong for the others. text-control-color is this app's
     // real "always white on a colored surface" token.
     // 'white' and 'white-blue' are left as-is -- getColor() gives BOTH of

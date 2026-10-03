@@ -203,7 +203,7 @@ const SalaryNegotiation = memo(() => {
                   {t('find:negotiation_round_label', { defaultValue: 'Round {{round}}', round: entry.round })}
                 </Text>
                 <View style={styles.bubbleRowUser}>
-                  <View style={[styles.bubble, styles.bubbleUser, { backgroundColor: theme['color-primary-500'] }]}>
+                  <View style={[styles.bubble, styles.bubbleUser, { backgroundColor: theme['color-primary-solid'] }]}>
                     <Text category="h9-s" status="control">{entry.approachTitle}</Text>
                   </View>
                 </View>
@@ -318,7 +318,7 @@ const themedStyles = StyleService.create({
   // saturated fill instead of a crisp colored card.
   heroOfferCard: {
     ...globalStyle.card,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
     shadowOpacity: 0,
     elevation: 0,
   },

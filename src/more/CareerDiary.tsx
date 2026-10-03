@@ -172,8 +172,8 @@ const CareerDiary = memo(() => {
               icons... give the icons themselves the platform blue") --
               this cycled through a color-primary-transparent-100 tint
               circle and a GradientIconBadge; no badge/background now,
-              plain plus glyph tinted platform blue (#52525b) directly. */}
-          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#52525b' }]} />
+              plain plus glyph tinted platform blue (#71717a) directly. */}
+          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#71717a' }]} />
           <Text category="h9" bold style={globalStyle.flexOne} ml={12}>
             {t('more:career_diary_add_entry', {defaultValue: 'Add Entry'})}
           </Text>

@@ -33,7 +33,7 @@ export interface GradientCardProps {
   children?: React.ReactNode;
 }
 
-const DEFAULT_COLORS = ['#52525b', '#52525b'];
+const DEFAULT_COLORS = ['#71717a', '#71717a'];
 
 const GradientCard: React.FC<GradientCardProps> = ({
   colors = DEFAULT_COLORS,

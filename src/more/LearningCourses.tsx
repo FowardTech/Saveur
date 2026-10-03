@@ -536,7 +536,7 @@ const LearningCourses = memo(() => {
                             // text-primary-color regression) -- the
                             // active (not locked/complete) branch sits on
                             // a color-primary-100 pill above, the same
-                            // #52525b text-primary-color now resolves to.
+                            // #71717a text-primary-color now resolves to.
                             // text-control-color is white regardless of
                             // theme, correct for a solid colored pill.
                             color: isWeekComplete

@@ -20,7 +20,7 @@ import { globalStyle } from 'styles/globalStyle';
 // buttons back to the default blue"). Blue survives every pass; green
 // keeps getting tried and un-done. Back to theme['color-primary-100'],
 // same as every screen's own icon/badge/link already reads (both -100 and
-// -500 resolve to the same brand blue, #52525b — see appTheme.json).
+// -500 resolve to the same brand blue, #71717a — see appTheme.json).
 // globalStyle.shadowBtn (this button's own shadow tint) reverted to match.
 //
 // A thin wrapper around UI Kitten's own Button rather than a fully custom
@@ -122,7 +122,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
         // cut than the app's Regular body text.
         // BUG FIX (product report: "regenerate text button is not
         // showing... check the whole app") -- was theme['text-primary-color'],
-        // which now resolves to the same blue (#52525b) as this button's
+        // which now resolves to the same blue (#71717a) as this button's
         // own solid-blue fill (theme['color-primary-100']), making every
         // CtaButton label in the app invisible in light mode. This button
         // is meant to always be white-on-blue regardless of theme --

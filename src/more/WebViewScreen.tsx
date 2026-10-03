@@ -516,6 +516,6 @@ const themedStyles = StyleService.create({
     borderRadius: 999,
     paddingVertical: 12,
     paddingHorizontal: 18,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
   },
 });

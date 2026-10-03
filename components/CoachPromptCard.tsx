@@ -105,7 +105,7 @@ const themedStyles = StyleService.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
     alignItems: 'center',
     justifyContent: 'center',
   },

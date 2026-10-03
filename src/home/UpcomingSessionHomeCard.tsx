@@ -252,7 +252,7 @@ const themedStyles = StyleService.create({
     // them from ever overlapping, regardless of either one's vertical
     // position within the row.
     paddingRight: 34,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
     borderWidth: 0,
   },
   // Translucent white circle (rather than the light-blue tint

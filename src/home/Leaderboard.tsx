@@ -321,8 +321,8 @@ const Leaderboard = memo(() => {
                 </Text>
               </View>
               <View style={[styles.yourRankPill, { backgroundColor: theme['color-primary-transparent-100'] }]}>
-                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#52525b' }]} />
-                <Text category="h9" bold ml={4} style={{ color: '#52525b' }}>
+                <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#71717a' }]} />
+                <Text category="h9" bold ml={4} style={{ color: '#71717a' }}>
                   {currentUserRank ? `#${currentUserRank}` : t('home:leaderboard_unranked', { defaultValue: 'Unranked' })}
                 </Text>
               </View>
@@ -401,7 +401,7 @@ const Leaderboard = memo(() => {
                       key={period.key}
                       activeOpacity={0.8}
                       onPress={() => setActivePeriod(period.key)}
-                      style={[styles.tabPill, active && { backgroundColor: theme['color-primary-500'] }]}>
+                      style={[styles.tabPill, active && { backgroundColor: theme['color-primary-solid'] }]}>
                       <Text
                         category="h9-s"
                         bold

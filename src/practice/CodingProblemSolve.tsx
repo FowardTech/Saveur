@@ -62,8 +62,8 @@ function AiGradedBadge() {
   const {t} = useTranslation(['find', 'common']);
   return (
     <View style={editorChromeStyles.aiBadge}>
-      <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, {tintColor: '#52525b'}]} />
-      <Text category="h10" bold style={{color: '#52525b', marginLeft: 6}}>
+      <Icon pack="eva" name="activity-outline" style={[globalStyle.icon16, {tintColor: '#71717a'}]} />
+      <Text category="h10" bold style={{color: '#71717a', marginLeft: 6}}>
         {t('find:ai_graded', {defaultValue: 'AI-graded result'})}
       </Text>
     </View>

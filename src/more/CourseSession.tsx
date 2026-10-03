@@ -617,7 +617,7 @@ const CourseSession = memo(() => {
           <View
             style={[
               styles.progressFill,
-              { width: `${Math.round(((moduleIndex + 1) / totalModules) * 100)}%`, backgroundColor: theme['color-primary-500'] },
+              { width: `${Math.round(((moduleIndex + 1) / totalModules) * 100)}%`, backgroundColor: theme['color-primary-solid'] },
             ]}
           />
         </View>

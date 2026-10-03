@@ -300,7 +300,7 @@ const themedStyles = StyleService.create({
     // 'color-primary-500' isn't a theme-adaptive surface token — it's the
     // same brand blue in light and dark (see MockInterviewSetup/FindScreen's
     // hero cards for the identical pattern).
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
   },
   heroShareButtonText: {
     color: '#FFFFFF',

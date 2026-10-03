@@ -258,8 +258,8 @@ const CodingPracticeHub = memo(() => {
           disabled={isCheckingProjectsAddon}
           onPress={onOpenCodingProjects}
           style={[globalStyle.card, styles.projectsCard]}>
-          <View style={[styles.statsBadge, {backgroundColor: '#52525b1F'}]}>
-            <Icon pack="eva" name="folder-outline" style={[globalStyle.icon24, {tintColor: '#52525b'}]} />
+          <View style={[styles.statsBadge, {backgroundColor: '#71717a1F'}]}>
+            <Icon pack="eva" name="folder-outline" style={[globalStyle.icon24, {tintColor: '#71717a'}]} />
           </View>
           <View style={[globalStyle.flexOne, {marginLeft: 12}]}>
             <Text category="h8" bold>
@@ -388,8 +388,8 @@ const CodingPracticeHub = memo(() => {
                   {p.title}
                 </Text>
                 <Flex justify="flex-start" itemsCenter mt={4}>
-                  <View style={[styles.difficultyPill, {backgroundColor: `${DIFFICULTY_COLORS[p.difficulty] ?? '#52525b'}1F`}]}>
-                    <Text category="h10" bold style={{color: DIFFICULTY_COLORS[p.difficulty] ?? '#52525b'}}>
+                  <View style={[styles.difficultyPill, {backgroundColor: `${DIFFICULTY_COLORS[p.difficulty] ?? '#71717a'}1F`}]}>
+                    <Text category="h10" bold style={{color: DIFFICULTY_COLORS[p.difficulty] ?? '#71717a'}}>
                       {difficultyLabel(t, p.difficulty)}
                     </Text>
                   </View>

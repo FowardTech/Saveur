@@ -559,7 +559,7 @@ const CodingProjectEditor = memo(() => {
               ) : (
                 <View>
                   <Icon pack="eva" name="save-outline" style={[globalStyle.icon24, {tintColor: isDirty ? theme['color-primary-500'] : theme['text-hint-color']}]} />
-                  {isDirty ? <View style={[styles.dirtyDot, {backgroundColor: theme['color-primary-500']}]} /> : null}
+                  {isDirty ? <View style={[styles.dirtyDot, {backgroundColor: theme['color-primary-solid']}]} /> : null}
                 </View>
               )}
             </TouchableOpacity>
@@ -807,7 +807,7 @@ const CodingProjectEditor = memo(() => {
               <>
                 {runResult.engine === 'ai' ? (
                   <View style={styles.aiBadge}>
-                    <Text category="h10" bold style={{color: '#52525b'}}>
+                    <Text category="h10" bold style={{color: '#71717a'}}>
                       {t('find:ai_graded', {defaultValue: 'AI-graded result'})}
                     </Text>
                   </View>

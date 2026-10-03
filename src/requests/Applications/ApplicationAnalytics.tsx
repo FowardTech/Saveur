@@ -55,7 +55,7 @@ const ApplicationAnalytics = memo(() => {
   }, []);
 
   const stageRows: Array<{key: keyof ApplicationAnalyticsProps['byStage']; label: Application_Stage_Enum; color: string}> = [
-    {key: 'applied', label: Application_Stage_Enum.Applied, color: '#52525b'},
+    {key: 'applied', label: Application_Stage_Enum.Applied, color: '#71717a'},
     {key: 'interviewing', label: Application_Stage_Enum.Interviewing, color: '#F59E0B'},
     {key: 'offer', label: Application_Stage_Enum.Offer, color: '#10B981'},
     {key: 'rejected', label: Application_Stage_Enum.Rejected, color: '#EC4899'},

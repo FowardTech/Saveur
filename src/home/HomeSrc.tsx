@@ -1492,7 +1492,7 @@ const themedStyles = StyleService.create({
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
   },
   homeBannerIcon: {
     width: 32,

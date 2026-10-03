@@ -183,6 +183,6 @@ const styles = StyleSheet.create({
     ...globalStyle.shadowBtn,
   },
   ctaPillText: {
-    color: '#52525b',
+    color: '#71717a',
   },
 });

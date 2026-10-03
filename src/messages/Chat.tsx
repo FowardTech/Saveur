@@ -520,19 +520,19 @@ const Chat = memo(() => {
             {
               // BUG FIX (product request: "i want the user bubble to be
               // white background not blue anymore") -- was
-              // theme["button-basic-color"] (brand blue, #52525b).
+              // theme["button-basic-color"] (brand blue, #71717a).
               // Hardcoded white (not a theme token) since the ask was for a
               // literal white bubble regardless of light/dark app theme.
               backgroundColor: props.currentMessage?.image
                 ? "transparent"
-                : "#FFFFFF",
+                : theme["background-basic-color-2"],
             },
             { maxWidth: 267 * (width / 375) },
           ],
         }}
         textStyle={{
           left: styles.leftTextStyle,
-          right: styles.rightTextStyle,
+          right: [styles.rightTextStyle, { color: theme["text-basic-color"] }],
         }}
       />
     );
@@ -1519,7 +1519,7 @@ const themedStyles = StyleService.create({
     height: 28,
     width: 28,
     borderRadius: 14,
-    backgroundColor: "color-primary-500",
+    backgroundColor: 'color-primary-solid',
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1573,7 +1573,7 @@ const themedStyles = StyleService.create({
   // than the old 24px bare icon (20px) since it now has to fit inside a
   // 28px round pill with room around it, not stand alone.
   iconSend: {
-    tintColor: "#FFFFFF",
+    tintColor: "background-basic-color-1",
     width: 18,
     height: 18,
   },

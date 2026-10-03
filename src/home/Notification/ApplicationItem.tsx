@@ -93,7 +93,7 @@ const ApplicationItem = ({ item, onPress }: NotificationItemProps) => {
                 {dayjs(item.createdAt).fromNow()}
               </Text>
               {!item.read ? (
-                <View style={[styles.dot, {backgroundColor: theme['color-primary-500']}]} />
+                <View style={[styles.dot, {backgroundColor: theme['color-primary-solid']}]} />
               ) : null}
             </Flex>
           </View>

@@ -32,7 +32,7 @@ interface Panel {
 
 const PANELS: Panel[] = [
   {key: 'performingWell', icon: 'checkmark-circle-2-outline', color: '#10B981', titleKey: 'home:coaching_report_performing_well', titleDefault: 'Performing Well'},
-  {key: 'keyInsights', icon: 'bulb-outline', color: '#52525b', titleKey: 'home:coaching_report_key_insights', titleDefault: 'Key Insights'},
+  {key: 'keyInsights', icon: 'bulb-outline', color: '#71717a', titleKey: 'home:coaching_report_key_insights', titleDefault: 'Key Insights'},
   {key: 'areasToImprove', icon: 'flag-outline', color: '#F59E0B', titleKey: 'home:coaching_report_areas_to_improve', titleDefault: 'Areas to Improve'},
   {key: 'whatsNext', icon: 'arrow-forward-outline', color: '#EC4899', titleKey: 'home:coaching_report_whats_next', titleDefault: "What's Next"},
 ];
@@ -93,14 +93,14 @@ const CoachingReportCard = () => {
     return (
       <View style={styles.emptyOuter}>
         <LinearGradient
-          colors={['#52525b0D', '#52525b0D', '#52525b00']}
+          colors={['#71717a0D', '#71717a0D', '#71717a00']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.emptyContent}>
           <View style={styles.emptyIcon}>
-            <Icon pack="eva" name="bar-chart-2-outline" style={[globalStyle.icon20, {tintColor: '#52525b'}]} />
+            <Icon pack="eva" name="bar-chart-2-outline" style={[globalStyle.icon20, {tintColor: '#71717a'}]} />
           </View>
           <Text category="h9-s" bold mt={12}>
             {t('home:coaching_report_title', {defaultValue: 'Your Coaching Report'})}
@@ -113,7 +113,7 @@ const CoachingReportCard = () => {
           </Text>
           <TouchableOpacity
             activeOpacity={0.85}
-            style={[styles.emptyCta, {backgroundColor: theme['color-primary-500']}]}
+            style={[styles.emptyCta, {backgroundColor: theme['color-primary-solid']}]}
             onPress={() => navigate('MainBottomTab', {screen: 'Practice'})}>
             <Icon pack="eva" name="mic-outline" style={[globalStyle.icon16, {tintColor: '#fff'}]} />
             <Text category="h10-s" bold ml={6} style={{color: '#fff'}}>
@@ -204,7 +204,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#52525b40',
+    borderColor: '#71717a40',
     overflow: 'hidden',
   },
   emptyContent: {
@@ -215,7 +215,7 @@ const themedStyles = StyleService.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: accentTintBg('#52525b'),
+    backgroundColor: accentTintBg('#71717a'),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -232,7 +232,7 @@ const themedStyles = StyleService.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-solid',
     alignItems: 'center',
     justifyContent: 'center',
   },
