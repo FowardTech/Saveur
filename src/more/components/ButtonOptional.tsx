@@ -164,7 +164,7 @@ const ButtonOptional = ({
             <Icon
               pack="assets"
               name={icon}
-              style={{width: 20, height: 20, tintColor: isGradient ? '#FFFFFF' : iconColor ?? theme['text-basic-color']}}
+              style={{width: 26, height: 26, tintColor: isGradient ? '#FFFFFF' : iconColor ?? theme['text-basic-color']}}
             />
           </View>
           {badgeCount ? (
@@ -189,7 +189,7 @@ const ButtonOptional = ({
             theme/{light,dark}.json) and `bold` is swapped for `medium`
             (PlusJakartaSans-Medium -- see components/Text.tsx), a step
             down from Bold without dropping all the way to plain Regular. */}
-        <Text ml={16} category="para-s" medium>
+        <Text ml={16} category="para-s" bold>
           {title}
         </Text>
         {showProBadge ? <ProBadge style={{marginLeft: 8}} /> : null}
@@ -277,8 +277,8 @@ const themedStyles = StyleService.create({
   // gradient to clip anything to (no overflow needed since there's no
   // absoluteFill sibling here at all).
   iconWrapPlain: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
     alignItems: 'center',
     justifyContent: 'center',
   },

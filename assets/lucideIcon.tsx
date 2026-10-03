@@ -77,7 +77,7 @@ export function lucideIcon(
           size={size}
           color={iconColor}
           fill={filled ? iconColor : 'none'}
-          strokeWidth={2.5}
+          strokeWidth={2.75}
           style={restStyle}
         />
       );

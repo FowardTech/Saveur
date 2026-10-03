@@ -232,7 +232,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
         onPress={() => onNavigate(item.route)}
         style={[styles.navRow, focused && {backgroundColor: DRAWER_ACTIVE_BG}]}>
         <Icon pack="eva" name={item.icon} style={[styles.navIcon, {tintColor: DRAWER_ACCENT}]} />
-        <Text category="h8" bold={focused} style={[styles.navLabel, {color: DRAWER_TEXT}]}>
+        <Text category="h8" bold style={[styles.navLabel, {color: DRAWER_TEXT}]}>
           {item.label}
         </Text>
         {item.badge ? (
@@ -629,8 +629,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   navIcon: {
-    width: 22,
-    height: 22,
+    width: 26,
+    height: 26,
     marginRight: 14,
   },
   navLabel: {
