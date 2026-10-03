@@ -106,5 +106,6 @@
   "voice_status_speaking": "話しています…",
   "voice_status_starting": "開始しています…",
   "voice_status_thinking": "考え中…",
-  "voice_tap_to_interrupt": "タップして中断"
+  "voice_tap_to_interrupt": "タップして中断",
+  "suggested_action_title_offer_analyzer": "オファーアナライザー"
 }

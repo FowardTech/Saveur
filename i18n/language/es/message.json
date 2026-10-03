@@ -106,5 +106,6 @@
   "voice_status_speaking": "Hablando…",
   "voice_status_starting": "Iniciando…",
   "voice_status_thinking": "Pensando…",
-  "voice_tap_to_interrupt": "Toca para interrumpir"
+  "voice_tap_to_interrupt": "Toca para interrumpir",
+  "suggested_action_title_offer_analyzer": "el Analizador de Ofertas"
 }

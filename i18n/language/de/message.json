@@ -106,5 +106,6 @@
   "voice_status_speaking": "Spricht…",
   "voice_status_starting": "Startet…",
   "voice_status_thinking": "Denke nach…",
-  "voice_tap_to_interrupt": "Zum Unterbrechen tippen"
+  "voice_tap_to_interrupt": "Zum Unterbrechen tippen",
+  "suggested_action_title_offer_analyzer": "den Angebots-Analysator"
 }

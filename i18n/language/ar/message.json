@@ -106,5 +106,6 @@
   "voice_status_speaking": "أتحدث…",
   "voice_status_starting": "جارٍ البدء…",
   "voice_status_thinking": "أفكر…",
-  "voice_tap_to_interrupt": "اضغط للمقاطعة"
+  "voice_tap_to_interrupt": "اضغط للمقاطعة",
+  "suggested_action_title_offer_analyzer": "محلل العروض"
 }

@@ -1069,6 +1069,7 @@ export type SuggestedActionId =
   | 'company_intelligence'
   | 'student_verification'
   | 'salary_negotiation'
+  | 'offer_analyzer'
   | 'system_design_whiteboard'
   | 'learning_courses'
   | 'career_diary'
