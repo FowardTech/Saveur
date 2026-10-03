@@ -45,6 +45,8 @@ import AdPopupModal from 'components/AdPopupModal';
 import WelcomeModal from './WelcomeModal';
 import AppTour from 'components/AppTour';
 import CoachingReportCard from 'components/CoachingReportCard';
+import ContinueLearningCard from './ContinueLearningCard';
+import DailyTipsBanner from './DailyTipsBanner';
 import AppRatingModal from 'components/AppRatingModal';
 import DailyCheckInSheet, { DailyCheckInMode } from 'components/DailyCheckInSheet';
 import PeriodicCheckInSheet from 'components/PeriodicCheckInSheet';
@@ -1171,14 +1173,6 @@ const HomeSrc = memo(() => {
             there). Conditional rendering/behavior is unchanged -- still
             renders nothing at all when there's no real scheduled
             session, just earlier in the page now. */}
-        <TouchableOpacity activeOpacity={0.8} onPress={onPressCoachSend} style={styles.askBar}>
-          <Icon pack="eva" name="message-circle-outline" style={[styles.askIcon, { tintColor: theme['text-basic-color'] }]} />
-          <Text category="h8" status="placeholder" style={globalStyle.flexOne}>
-            {t('home:ask_coach_placeholder', { defaultValue: 'Ask your career coach anything…' }).toString()}
-          </Text>
-          <Icon pack="eva" name="arrow-right-outline" style={[styles.askIcon, { tintColor: theme['text-hint-color'] }]} />
-        </TouchableOpacity>
-
         <Text category="h10" bold style={styles.sectionLabel}>
           {t('home:section_today', { defaultValue: 'Today' }).toString()}
         </Text>
@@ -1278,121 +1272,44 @@ const HomeSrc = memo(() => {
             gradient icon now instead of a tinted eva glyph (see
             components/ActionCard.tsx's `iconImage` prop). */}
         <Text category="h10" bold style={styles.sectionLabel}>
-          {t('home:section_grow', { defaultValue: 'Practice & grow' }).toString()}
+          {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </Text>
         <ActionCard
-          icon="message-circle-outline"
-          // Product follow-up: "change the icons for AI career card and
-          // daily challenge to the icon styles used in explore card and
-          // practice card. So they all the icons will have the same
-          // design" -- was a flat, untinted `iconImage`
-          // (Images.iconCoachChatBlue); now a real gradient badge like
-          // Practice/Explore's icons. Reuses the exact blue pair Explore
-          // used before its own purple redesign, since blue is this
-          // card's own established brand color (iconCoachChatBlue was
-          // literally blue) and that gradient was otherwise unused once
-          // Explore moved to purple. No accentColor here on purpose --
-          // this request was specifically about icon consistency, not
-          // this card's background/border, which stays exactly as it
-          // already was.
-          iconGradientColors={['#2d76db', '#3B9DFF']}
-          title={t('home:coach_card_title', { defaultValue: 'AI Career Coach' })}
-          subtitle={t('home:coach_hero_subtitle', { defaultValue: 'Resume feedback, interview prep, salary advice — anytime' }).toString()}
-          onPress={onPressCoachSend}
-        />
-
-        {/* REDESIGN (product request: "change their backgrounds to the
-            subtle version of that color. Give them the border and let
-            the border color be the main colors. Also their icon
-            background should be linear gradient colors like the ones in
-            the settings") -- was a full saturated-orange gradientColors
-            fill (see this card's own git history below for that entire
-            prior back-and-forth: purple -> lighter purple -> orange).
-            Replaced with ActionCard's new accentColor/iconGradientColors
-            treatment: a pale, low-opacity orange card background instead
-            of a solid fill, a real orange border (accentColor doubles as
-            the border color -- see that prop's own comment), and the
-            icon badge now carries its own two-stop gradient rather than
-            a flat white-on-orange glyph circle. iconGradientColors reuses
-            the EXACT same orange pair src/more/MoreSrc.tsx's
-            ICON_GRADIENTS already uses for its Settings-row icon badges
-            (the literal "ones in the settings" this request points at),
-            so this card's icon matches that reference precisely rather
-            than an approximation.
-            PRIOR HISTORY (kept for context -- exact CSS spec: "give the
-            practice card... a linear gradient of these colors: linear-
-            gradient(15deg, #45009d 20%, #8c00e5)", then "reduce the
-            darker color", then "change the icon to a white line icon",
-            then "change the linear gradient for the practice card... to
-            orange lineargradient instead of purple" -- each step is
-            still visible in this file's own git blame if a future request
-            ever asks for the saturated-fill look back). */}
-        <ActionCard
-          icon="mic-outline"
-          title={t('home:practice_card_title', { defaultValue: 'Practice Interviews' })}
+          icon="trending-up-outline"
+          title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
             streak && streak.streakDays > 0
               ? localizeDigits(t('home:practice_card_subtitle_streak', { defaultValue: '{{count}}-day streak — keep it going', count: streak.streakDays }))
-              : t('home:practice_card_subtitle_default', { defaultValue: 'Sharpen your skills with a mock interview' }).toString()
+              : t('home:progress_card_subtitle', { defaultValue: 'Streak, points and recent sessions' }).toString()
           }
-          onPress={onPressPractice}
-          accentColor="#FB923C"
-          iconGradientColors={['#dc5d2b', '#FB923C']}
-          // Product follow-up: "remove the borders from practice card and
-          // explore card" + "change the practice card background back to
-          // white" -- keeps the orange icon gradient badge, drops the
-          // orange border, and falls back to the card's normal plain
-          // background instead of the pale orange tint. See both props'
-          // own comments on ActionCardProps.
-          showBorder={false}
-          forceWhiteBg
+          onPress={() => navigate('MyProgress')}
         />
+        <ContinueLearningCard />
 
-        {/* REDESIGN (same product request as the Practice card above --
-            "subtle version of that color" background, a real border in
-            "the main colors", and a Settings-style gradient icon badge).
-            accentColor stays the app's real primary blue (color-primary-
-            500, #52525b -- same blue this card's border already matched
-            before this pass, just now actually rendered as a border
-            instead of a full card fill) so this card's "main color"
-            identity is unchanged; iconGradientColors reuses
-            MoreSrc.tsx's ICON_GRADIENTS blue pair, same "literal Settings
-            reference" reasoning as the Practice card's own comment.
-            PRIOR HISTORY: was a flat solid-blue gradientColors fill (see
-            git blame -- "give the Explore Card... the default blue
-            background and the icons white just the way we did for
-            Practice card"); iconImage was Images.iconListStack before
-            that, dropped in that same prior pass since a full-color
-            illustration can't be tinted white -- still dropped here for
-            the same reason, so this falls through to the plain
-            `icon="grid-outline"` eva glyph, now on the gradient badge. */}
-        <ActionCard
-          icon="grid-outline"
-          title={t('home:explore_card_title', { defaultValue: 'Explore More' })}
-          subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
-          onPress={onPressExploreMore}
-          // Product request: purple subtle card background + purple icon
-          // gradient, matching the app's existing purple accent (#52525b,
-          // see HomeHeroArt.tsx's "special/featured" color) -- same
-          // darker->lighter two-stop gradient pattern already used by the
-          // blue (#2d76db -> #3B9DFF) and orange (#dc5d2b -> #FB923C)
-          // cards above, just in purple instead of blue.
-          accentColor="#52525b"
-          iconGradientColors={['#7C4DEF', '#52525b']}
-          // Product follow-up: "remove the borders from practice card and
-          // explore card" -- keeps the purple subtle background tint,
-          // just drops the purple border.
-          showBorder={false}
-        />
-
-        {/* Coaching report -- task #44 mobile parity port of web's task #21
-            (product report: "the web app dashboard look so empty", Yoodli's
-            own dashboard report card). Self-contained, renders nothing
-            while loading and shows an honest empty state (with a CTA)
-            rather than fabricated content for a user with fewer than 2
-            graded mock interviews -- see CoachingReportCard.tsx's own
-            comment. */}
         <CoachingReportCard />
+
+        <Text category="h10" bold style={styles.sectionLabel}>
+          {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
+        </Text>
+        <ActionCard
+          icon="briefcase-outline"
+          title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
+          subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
+          onPress={() => navigate('CareerGrowth')}
+        />
+        <ActionCard
+          icon="pie-chart-outline"
+          title={t('home:offer_analyzer_title', { defaultValue: 'Offer Analyzer' }).toString()}
+          subtitle={t('home:offer_analyzer_subtitle', { defaultValue: 'Compare and negotiate your offers' }).toString()}
+          onPress={() => navigate('OfferAnalyzer')}
+        />
+        <ActionCard
+          icon="star-outline"
+          title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
+          subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}
+          onPress={() => navigate('Leaderboard')}
+        />
+        <DailyTipsBanner />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
