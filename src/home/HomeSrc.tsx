@@ -1387,22 +1387,6 @@ const themedStyles = StyleService.create({
   // language now used throughout this screen (see QuickActionGrid.tsx's
   // own comment), rather than the outlined-card treatment other design
   // systems favor for alerts.
-  askBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'border-card-default',
-    backgroundColor: 'background-basic-color-2',
-    marginBottom: 20,
-  },
-  askIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 12,
-  },
   sectionLabel: {
     textTransform: 'uppercase',
     letterSpacing: 0.6,
