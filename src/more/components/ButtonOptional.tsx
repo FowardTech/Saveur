@@ -102,7 +102,7 @@ const ButtonOptional = ({
   badgeDot,
   showProBadge,
 }: ButtonOptionalProps) => {
-  const isGradient = !!gradientColors?.length;
+  const isGradient = false; // monochrome redesign: no colored badges
   const theme = useTheme();
   const {t} = useTranslation(['more', 'common']);
   const {navigate, goBack} =

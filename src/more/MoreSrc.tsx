@@ -658,7 +658,7 @@ const MoreSrc = memo(() => {
           email={profile?.email ?? ''}
         />
         <View style={styles.details}>
-          <Text category="h6" bold style={styles.sectionHeading}>
+          <Text category="h9" status="placeholder" style={styles.sectionHeading}>
             {t('more:myDetails')}
           </Text>
           {/* SYMPHONY REDESIGN (explicit product request, with reference
@@ -675,6 +675,7 @@ const MoreSrc = memo(() => {
               pill shape and MainDrawer.tsx's own history. ButtonOptional
               itself is UNCHANGED — its own transparent background just
               shows this wrapping card's white/dark fill through. */}
+          <View style={styles.groupCard}>
           {DATA_DETAILS.map((item, i) => (
             <View key={i} style={styles.rowCard}>
               <ButtonOptional
@@ -690,11 +691,13 @@ const MoreSrc = memo(() => {
               />
             </View>
           ))}
+          </View>
         </View>
         <View style={styles.application}>
-          <Text category="h6" bold style={styles.sectionHeading}>
+          <Text category="h9" status="placeholder" style={styles.sectionHeading}>
             {t('more:application')}
           </Text>
+          <View style={styles.groupCard}>
           {DATA_APPLICATION.map((item, i) => (
             <View key={i} style={styles.rowCard}>
               <ButtonOptional
@@ -741,7 +744,8 @@ const MoreSrc = memo(() => {
               navigateSrc={undefined}
             />
           </View>
-          {/* DEV-ONLY entry point for the isolated native-audio test
+                    </View>
+{/* DEV-ONLY entry point for the isolated native-audio test
               harness (src/dev/DuplexVoiceTestScreen.tsx) built while
               investigating real speak-to-interrupt for the AI Career
               Coach's voice screen -- see VoiceCoachView.tsx's own header
@@ -795,7 +799,7 @@ const MoreSrc = memo(() => {
                 uses for its Sign Out row. */}
             <View style={styles.logoutIconWrap}>
               <LinearGradient
-                colors={['#BE123C', '#FB7185']}
+                colors={['#18181B', '#3F3F46']}
                 start={{x: 0, y: 0}}
                 end={{x: 1, y: 1}}
                 style={StyleSheet.absoluteFillObject}
@@ -831,6 +835,7 @@ export default MoreSrc;
 const themedStyles = StyleService.create({
   container: {
     flex: 1,
+    backgroundColor: 'background-basic-color-3',
   },
   content: {
     paddingTop: 24,
@@ -844,7 +849,8 @@ const themedStyles = StyleService.create({
     marginBottom: 16,
   },
   sectionHeading: {
-    marginBottom: 12,
+    marginBottom: 8,
+    paddingHorizontal: 4,
   },
   // SYMPHONY REDESIGN follow-up (explicit product correction, with
   // reference screenshot: "I told you i want the settings items to be
@@ -858,12 +864,15 @@ const themedStyles = StyleService.create({
   // deliberately smaller radius than the shared 20px token, not a change
   // to the token itself. `overflow: hidden` keeps ButtonOptional's row
   // content from spilling past this card's own rounded corners.
-  rowCard: {
-    ...globalStyle.card,
-    borderRadius: 14,
-    marginBottom: 12,
+  groupCard: {
+    borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
     overflow: 'hidden',
+  },
+  rowCard: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'border-card-default',
+    paddingVertical: 4,
   },
   // Sign-out gets its own standalone card below the grouped list (see the
   // render call site's own comment) rather than sitting inside the
