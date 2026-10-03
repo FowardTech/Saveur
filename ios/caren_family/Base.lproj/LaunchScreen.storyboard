@@ -51,7 +51,7 @@
                                     <constraint firstItem="GJd-Yh-RWb" firstAttribute="bottom" secondItem="SavRow01" secondAttribute="bottom" id="SavC03"/>
                                     <constraint firstItem="SavLbl01" firstAttribute="leading" secondItem="GJd-Yh-RWb" secondAttribute="trailing" constant="10" id="SavC04"/>
                                     <constraint firstItem="SavLbl01" firstAttribute="centerY" secondItem="SavRow01" secondAttribute="centerY" id="SavC05"/>
-                                    <constraint firstAttribute="trailing" secondItem="SavDotA" secondAttribute="trailing" id="SavC06"/>
+                                    <constraint firstItem="SavRow01" firstAttribute="trailing" secondItem="SavDotA" secondAttribute="trailing" id="SavC06"/>
                                     <constraint firstItem="SavDotA" firstAttribute="leading" secondItem="SavLbl01" secondAttribute="trailing" constant="2" id="SavD3A"/>
                                     <constraint firstItem="SavDotA" firstAttribute="bottom" secondItem="SavLbl01" secondAttribute="bottom" constant="-9" id="SavD4A"/>
                                 </constraints>
