@@ -449,19 +449,27 @@ const LiveInterviewSession = memo(() => {
   // second flip yanked it away mid-sentence to speak the real text instead.
   // Resolving the next question fully before touching any of this state
   // fixes that at the source.
+  // Product report: the AI should wait a bit before the follow-up question,
+  // and the interview should end by itself when the interviewer signs off.
+  const closingRef = React.useRef(false);
+  const onEndRef = React.useRef<(() => void) | null>(null);
   const advanceQuestion = React.useCallback(async () => {
-    if (isFetchingQuestionRef.current) return;
+    if (isFetchingQuestionRef.current || closingRef.current) return;
     isFetchingQuestionRef.current = true;
     try {
       let nextText: string | null = null;
       let nextId: string | null = null;
       let requiresWhiteboard = false;
+      let isClosing = false;
       if (sessionId) {
+        // Natural beat before the interviewer responds (1.5-2.7s).
+        await new Promise<void>(resolve => setTimeout(resolve, 1500 + Math.random() * 1200));
         try {
           const next = await interviewService.getNextQuestion(sessionId);
           nextText = next.text;
           nextId = next.questionId ?? null;
           requiresWhiteboard = !!next.requiresWhiteboard;
+          isClosing = !!next.isClosing;
         } catch {
           // Offline, backend down — fall back to the local bank at whatever
           // index we're about to advance to.
@@ -524,6 +532,13 @@ const LiveInterviewSession = memo(() => {
       setQuestionIndex(prev => prev + 1);
       setBackendQuestionText(nextText);
       setBackendQuestionId(nextId);
+      if (isClosing && nextText) {
+        // Let the sign-off be read/spoken (the TTS effect speaks `question`),
+        // then end the interview automatically.
+        closingRef.current = true;
+        const waitMs = Math.min(14000, Math.max(5000, nextText.length * 70));
+        setTimeout(() => onEndRef.current?.(), waitMs);
+      }
     } finally {
       isFetchingQuestionRef.current = false;
     }
@@ -1064,6 +1079,7 @@ const LiveInterviewSession = memo(() => {
 
   const onEnd = async () => {
     if (isEnding) return;
+    closingRef.current = true;
     setIsEnding(true);
     // BUG FIX (product report: "the end interview just keep saying ending
     // interview and it refuses to let me close... it just freezes the
@@ -1281,6 +1297,7 @@ const LiveInterviewSession = memo(() => {
       }));
     }
   };
+  onEndRef.current = onEnd;
 
   // The top-left "X" used to call goBack() directly -- zero teardown, no
   // upload, nothing. The useEffect cleanup above still fires on unmount and

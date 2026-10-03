@@ -298,6 +298,9 @@ export interface NextQuestionResult {
   // regular Q&A question. LiveInterviewSession.tsx is what watches for this
   // and navigates.
   requiresWhiteboard?: boolean;
+  // Interviewer is signing off (closing statement) -- the screen shows/speaks
+  // it, then ends the session automatically.
+  isClosing?: boolean;
 }
 
 /**
@@ -315,6 +318,7 @@ export async function getNextQuestion(sessionId: string): Promise<NextQuestionRe
     text?: string;
     question?: string;
     requires_whiteboard?: boolean;
+    is_closing?: boolean;
   }>(
     `/api/v1/interviews/sessions/${sessionId}/next-question`,
     {language: currentLanguage()},
@@ -323,7 +327,7 @@ export async function getNextQuestion(sessionId: string): Promise<NextQuestionRe
   if (!text) {
     throw new Error('Backend returned an empty next question.');
   }
-  return {questionId: data.question_id, text, requiresWhiteboard: !!data.requires_whiteboard};
+  return {questionId: data.question_id, text, requiresWhiteboard: !!data.requires_whiteboard, isClosing: !!data.is_closing};
 }
 
 export interface SubmitAnswerPayload {
