@@ -511,7 +511,7 @@ const Chat = memo(() => {
             {
               backgroundColor: props.currentMessage?.image
                 ? "transparent"
-                : theme["background-basic-color-3"],
+                : theme["background-basic-color-4"],
             },
             { maxWidth: 267 * (width / 375) },
           ],
@@ -1455,11 +1455,6 @@ const themedStyles = StyleService.create({
     // tall) before the card's rounded bottom edge. Going meaningfully
     // bigger this time rather than nudging by a few px again.
     paddingBottom: 28,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 6,
   },
   // The real gifted-chat Composer (the actual TextInput), now on its own
   // top row inside chatInputCard instead of a separate gray pill --
@@ -1526,9 +1521,9 @@ const themedStyles = StyleService.create({
   leftTextStyle: {
     color: "text-basic-color",
     fontSize: 15,
-    fontWeight: "400",
+    fontWeight: "normal",
     lineHeight: 24,
-    fontFamily: "PlusJakartaSans-Regular",
+    fontFamily: "PlusJakartaSans-Medium",
   },
   rightTextStyle: {
     // BUG FIX (product request: "i want the user bubble to be white
@@ -1539,9 +1534,9 @@ const themedStyles = StyleService.create({
     // is the legible choice against the new white fill.
     color: "#000000",
     fontSize: 15,
-    fontWeight: "400",
+    fontWeight: "normal",
     lineHeight: 24,
-    fontFamily: "PlusJakartaSans-Regular",
+    fontFamily: "PlusJakartaSans-Medium",
   },
   wrapperLeftStyle: {
     borderBottomLeftRadius: 4,
