@@ -273,11 +273,11 @@ const ResumeBuilder = memo(() => {
                   OnboardingCluster.tsx's badge treatment exactly. Same
                   ACCENT_PALETTE/accentColorForKey so each import source
                   still keeps a stable color, just rendered bolder. */}
-              <View style={[styles.importIconWrap, { backgroundColor: accent }]}>
+              <View style={[styles.importIconWrap, { backgroundColor: 'transparent' }]}>
                 <Icon
                   pack="assets"
                   name={opt.icon}
-                  style={[globalStyle.icon24, { tintColor: '#FFFFFF' }]}
+                  style={[globalStyle.icon24, { tintColor: theme['text-basic-color'] }]}
                 />
               </View>
               <Text category="h9" mt={8} bold center>
