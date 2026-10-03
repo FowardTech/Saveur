@@ -31,13 +31,13 @@
                                  Layout pattern as LaunchScreen.storyboard's own row — see
                                  that file's matching comment for the full reasoning. -->
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavRow01B">
-                                <rect key="frame" x="112" y="405" width="151" height="52"/>
+                                <rect key="frame" x="112" y="405" width="170" height="56"/>
                                 <subviews>
                                     <imageView autoresizesSubviews="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="BootSplashLogo-32fdd7" translatesAutoresizingMaskIntoConstraints="NO" id="3lX-Ut-9ad">
-                                        <rect key="frame" x="0.0" y="0.0" width="56" height="52"/>
+                                        <rect key="frame" x="0.0" y="0.0" width="56" height="56"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="56" id="SavIW01"/>
-                                            <constraint firstAttribute="height" constant="52" id="SavIW02"/>
+                                            <constraint firstAttribute="height" constant="56" id="SavIW02"/>
                                         </constraints>
                                         <accessibility key="accessibilityConfiguration">
                                             <accessibilityTraits key="traits" image="YES" notEnabled="YES"/>
@@ -52,6 +52,19 @@
                                         <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavDotB">
+                                        <rect key="frame" x="154" y="30" width="9" height="9"/>
+                                        <color key="backgroundColor" red="0.0" green="0.388235" blue="0.972549" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="9" id="SavD1B"/>
+                                            <constraint firstAttribute="height" constant="9" id="SavD2B"/>
+                                        </constraints>
+                                        <userDefinedRuntimeAttributes>
+                                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
+                                                <real key="value" value="4.5"/>
+                                            </userDefinedRuntimeAttribute>
+                                        </userDefinedRuntimeAttributes>
+                                    </view>
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="3lX-Ut-9ad" firstAttribute="leading" secondItem="SavRow01B" secondAttribute="leading" id="SavC01B"/>
@@ -59,7 +72,9 @@
                                     <constraint firstItem="3lX-Ut-9ad" firstAttribute="bottom" secondItem="SavRow01B" secondAttribute="bottom" id="SavC03B"/>
                                     <constraint firstItem="SavLbl01B" firstAttribute="leading" secondItem="3lX-Ut-9ad" secondAttribute="trailing" constant="10" id="SavC04B"/>
                                     <constraint firstItem="SavLbl01B" firstAttribute="centerY" secondItem="SavRow01B" secondAttribute="centerY" id="SavC05B"/>
-                                    <constraint firstItem="SavRow01B" firstAttribute="trailing" secondItem="SavLbl01B" secondAttribute="trailing" id="SavC06B"/>
+                                    <constraint firstItem="SavDotB" firstAttribute="leading" secondItem="SavLbl01B" secondAttribute="trailing" constant="2" id="SavD3B"/>
+                                    <constraint firstItem="SavDotB" firstAttribute="bottom" secondItem="SavLbl01B" secondAttribute="bottom" constant="-9" id="SavD4B"/>
+                                    <constraint firstItem="SavRow01B" firstAttribute="trailing" secondItem="SavDotB" secondAttribute="trailing" id="SavC06B"/>
                                 </constraints>
                             </view>
                             <!-- Same footer credit line as LaunchScreen.storyboard, same white
@@ -93,7 +108,7 @@
     <resources>
         <image name="BootSplashLogo-32fdd7" width="100" height="92"/>
         <namedColor name="BootSplashBackground-32fdd7">
-            <color red="0.000000000000000" green="0.388235294117647" blue="0.972549019607843" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+            <color red="0.000000000000000" green="0.000000000000000" blue="0.000000000000000" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </namedColor>
     </resources>
 </document>
