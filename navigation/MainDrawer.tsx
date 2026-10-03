@@ -46,7 +46,7 @@ import AppDrawerOverlay from 'components/AppDrawerOverlay';
 // crash confirmed on-device, then confirmed structurally via grepping
 // node_modules for both). Instead, this is a plain `createBottomTabNavigator`
 // (the exact same, already-proven navigator type the old bottom tab bar
-// used) with its own visual tab bar hidden (`tabBar={() => null}`), wrapped
+// used) with its own visual tab bar hidden (`tabBar={props => <BottomBar {...props} badges={badges} />}`), wrapped
 // in a small custom `<DrawerProvider>` (navigation/DrawerContext.tsx) whose
 // open/close state drives `<AppDrawerOverlay>` (components/AppDrawerOverlay.tsx
 // — the actual sliding panel, animated with Reanimated's current,
@@ -182,7 +182,6 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
       icon: 'briefcase-outline',
       badge: badges?.jobAlertsUnreadCount || undefined,
     },
-    {route: 'Growth', label: t('common:tab_growth', {defaultValue: 'Growth'}).toString(), icon: 'trending-up-outline'},
     {
       route: 'Profile',
       label: t('common:tab_more', {defaultValue: 'More'}).toString(),
@@ -297,6 +296,70 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
   );
 });
 
+const BAR_TABS: {route: keyof MainBottomTabStackParamList; key: string; label: string; icon: string}[] = [
+  {route: 'Coach', key: 'tab_coach', label: 'Coach', icon: 'message-circle-outline'},
+  {route: 'Practice', key: 'tab_practice', label: 'Practice', icon: 'search-outline'},
+  {route: 'Interviews', key: 'tab_jobs', label: 'Jobs', icon: 'briefcase-outline'},
+  {route: 'Home', key: 'tab_growth', label: 'Growth', icon: 'trending-up-outline'},
+  {route: 'Profile', key: 'tab_more', label: 'More', icon: 'grid-outline'},
+];
+
+const BottomBar = memo(({state, navigation, badges}: any) => {
+  const theme = useTheme();
+  const {t} = useTranslation(['common']);
+  const {bottom} = useLayout();
+  const activeName = state.routes[state.index]?.name;
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        backgroundColor: theme['background-basic-color-2'],
+        borderTopWidth: 1,
+        borderTopColor: theme['border-card-default'],
+        paddingTop: 8,
+        paddingBottom: Math.max(bottom, 8),
+      }}>
+      {BAR_TABS.map(tab => {
+        const focused = activeName === tab.route;
+        const badge =
+          tab.route === 'Interviews'
+            ? badges?.jobAlertsUnreadCount
+            : tab.route === 'Profile'
+            ? (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0)
+            : 0;
+        const color = focused ? theme['text-basic-color'] : theme['text-hint-color'];
+        return (
+          <TouchableOpacity
+            key={tab.route}
+            activeOpacity={0.7}
+            style={{flex: 1, alignItems: 'center'}}
+            onPress={() => navigation.navigate(tab.route)}>
+            <View>
+              <Icon pack="eva" name={tab.icon} style={{width: 26, height: 26, tintColor: color}} />
+              {badge ? (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -2,
+                    right: -4,
+                    width: 9,
+                    height: 9,
+                    borderRadius: 5,
+                    backgroundColor: theme['text-basic-color'],
+                  }}
+                />
+              ) : null}
+            </View>
+            <Text category="h10" bold={focused} style={{color, marginTop: 3, fontSize: 11}}>
+              {t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+});
+
 const MainDrawerContent = memo(() => {
   const {isSignedIn, emailVerified, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
   const {visible, show, hide} = useModal();
@@ -349,11 +412,9 @@ const MainDrawerContent = memo(() => {
 
   const onNavigate = React.useCallback(
     (route: DrawerRoute) => {
-      if (route === 'Growth') {
-        navigationRef.navigate('MyProgress');
-      } else if (route === 'Practice') {
+      if (route === 'Practice') {
         navigationRef.navigate('MainBottomTab', {screen: 'Practice'});
-      } else if (route === 'Home') {
+      } else if (route === 'Home' || route === 'Growth') {
         navigationRef.navigate('MainBottomTab', {screen: 'Home'});
       } else if (route === 'Coach') {
         navigationRef.navigate('MainBottomTab', {screen: 'Coach', params: undefined});
@@ -447,7 +508,7 @@ const MainDrawerContent = memo(() => {
         // (HomeSrc, Chat, MoreSrc) renders its own header with its own
         // DrawerMenuButton (see that component's own comment) to open the
         // custom overlay drawer rendered below instead.
-        tabBar={() => null}
+        tabBar={props => <BottomBar {...props} badges={badges} />}
         screenOptions={{headerShown: false}}>
         <Tab.Screen
           name="Home"
