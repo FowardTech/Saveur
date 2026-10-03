@@ -192,7 +192,7 @@ const SharedWithMe = memo(() => {
             <Text category="h10" status="placeholder" numberOfLines={1} mt={2}>
               {previewLine(share, t)}
             </Text>
-            <Text category="c1" status="placeholder" mt={4}>
+            <Text category="h10" status="placeholder" mt={4}>
               {dayjs(share.createdAt).fromNow()}
             </Text>
           </Flex>
@@ -279,7 +279,7 @@ const SharedWithMe = memo(() => {
             <Text category="h9" bold numberOfLines={1}>
               {t('more:connection_request_from', {defaultValue: '@{{username}} wants to connect', username: req.requesterUsername})}
             </Text>
-            <Text category="c1" status="placeholder" mt={4}>
+            <Text category="h10" status="placeholder" mt={4}>
               {dayjs(req.createdAt).fromNow()}
             </Text>
             <Flex mt={8}>

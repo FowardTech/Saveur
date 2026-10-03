@@ -243,7 +243,7 @@ const ChooseUsername = memo(() => {
           <Layout level="2" style={styles.suggestedCard}>
             <Flex justify="space-between" itemsCenter>
               <Flex vertical style={{flex: 1}}>
-                <Text category="c1" status="placeholder">
+                <Text category="h10" status="placeholder">
                   {t('auth:username_your_handle', {defaultValue: 'Your handle'})}
                 </Text>
                 <Text category="h6" bold mt={4}>

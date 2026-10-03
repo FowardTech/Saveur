@@ -645,7 +645,7 @@ export async function registerForPushNotifications(): Promise<void> {
     // backend) so watching the Xcode/Metro console during a real sign-in
     // now shows exactly how far registration actually got, not just
     // whether it eventually failed somewhere.
-    console.log('[push] permission granted:', granted);
+    if (__DEV__) console.log('[push] permission granted:', granted);
     if (!granted) {
       console.warn('[push] permission not granted — device token was not registered');
       return;
@@ -677,10 +677,10 @@ export async function registerForPushNotifications(): Promise<void> {
     // Metro/Xcode's local dev console, not a shipped log — makes it
     // copy-pasteable straight into Firebase Console's "Cloud Messaging >
     // Send test message" for a direct send-to-this-device test.
-    console.log('[push] FCM token generated:', token);
+    if (__DEV__) console.log('[push] FCM token generated:', token);
     try {
       await notificationService.registerDeviceToken(token);
-      console.log('[push] device token registered with backend successfully');
+      if (__DEV__) console.log('[push] device token registered');
     } catch (err) {
       // This is the one most likely to explain "I'm not getting
       // notifications" silently — a failed POST here means the backend

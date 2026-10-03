@@ -1397,13 +1397,6 @@ const themedStyles = StyleService.create({
   // language now used throughout this screen (see QuickActionGrid.tsx's
   // own comment), rather than the outlined-card treatment other design
   // systems favor for alerts.
-  sectionLabel: {
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginBottom: 10,
-    marginTop: 4,
-    color: 'text-hint-color',
-  },
   verifyBanner: {
     borderRadius: 16,
     padding: 16,

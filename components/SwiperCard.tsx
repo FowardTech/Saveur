@@ -113,12 +113,10 @@ const SwiperCard = ({
   const _open = () => {
     refSwipeable.current?.openRight();
     setIsOpen(true);
-    console.log('open');
   };
   const _close = () => {
-    refSwipeable.current?.close;
+    refSwipeable.current?.close();
     setIsOpen(false);
-    console.log('close');
   };
 
   return (

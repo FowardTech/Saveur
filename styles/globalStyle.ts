@@ -429,6 +429,10 @@ export const globalStyle = StyleSheet.create({
     width: 18,
     height: 18,
   },
+  icon18: {
+    width: 22,
+    height: 22,
+  },
   icon20: {
     width: 28,
     height: 28,
