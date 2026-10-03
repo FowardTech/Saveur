@@ -297,7 +297,7 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId, getPub
             onChangeText={setUsername}
             autoCapitalize="none"
             autoCorrect={false}
-            style={styles.input}
+            style={[styles.input, globalStyle.sheetInput]}
             accessoryRight={
               lookupState === 'checking'
                 ? () => <ActivityIndicator size="small" />
@@ -333,7 +333,7 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId, getPub
                 onChangeText={setMessage}
                 multiline
                 textStyle={{minHeight: 60}}
-                style={styles.input}
+                style={[styles.input, globalStyle.sheetInput]}
               />
               <CtaButton disabled={!canSend} onPress={onSend} style={{marginTop: 8}}>
                 {isSending

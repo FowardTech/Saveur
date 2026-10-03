@@ -555,7 +555,7 @@ const CareerRoadmap = memo(() => {
               placeholder={t('more:roadmap_target_role_placeholder', { defaultValue: 'e.g. Senior Backend Engineer' })}
               value={targetRole}
               onChangeText={setTargetRole}
-              style={[styles.input, { marginBottom: 16 }]}
+              style={[[styles.input, { marginBottom: 16 }], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Text category="h10" status="placeholder" mb={6}>
@@ -565,7 +565,7 @@ const CareerRoadmap = memo(() => {
               placeholder={t('more:roadmap_current_role_placeholder', { defaultValue: 'e.g. Backend Engineer' })}
               value={currentRole}
               onChangeText={setCurrentRole}
-              style={styles.input}
+              style={[styles.input, globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <CtaButton

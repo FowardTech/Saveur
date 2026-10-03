@@ -402,7 +402,7 @@ const GoalsScreen = memo(() => {
               keyboardType="number-pad"
               value={editValue}
               onChangeText={setEditValue}
-              style={styles.editInput}
+              style={[styles.editInput, globalStyle.sheetInput]}
               textStyle={{ textAlign: 'center' }}
             />
             <CtaButton style={{ marginTop: 20 }} loading={isSavingTarget} onPress={onSaveTarget}>

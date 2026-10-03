@@ -116,7 +116,7 @@ const AnswerQuestionModal = memo(({question, onClose}: {question: LibraryQuestio
                 placeholder={t('find:answer_placeholder', {defaultValue: 'Type your answer…'}).toString()}
                 value={answer}
                 onChangeText={setAnswer}
-                style={styles.textInput}
+                style={[styles.textInput, globalStyle.sheetInput]}
                 textStyle={styles.textInputInner}
               />
               {error ? (

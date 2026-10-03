@@ -707,7 +707,7 @@ const CodingProjectEditor = memo(() => {
               }
               value={newItem.name}
               onChangeText={v => setNewItem(s => ({...s, name: v}))}
-              style={[globalStyle.inputField, {marginBottom: 20}]}
+              style={[[globalStyle.inputField, {marginBottom: 20}], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!newItem.name.trim()} onPress={onSubmitNewItem}>
@@ -733,7 +733,7 @@ const CodingProjectEditor = memo(() => {
               autoCorrect={false}
               value={renameState?.value ?? ''}
               onChangeText={v => setRenameState(s => (s ? {...s, value: v} : s))}
-              style={[globalStyle.inputField, {marginBottom: 20}]}
+              style={[[globalStyle.inputField, {marginBottom: 20}], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!renameState?.value.trim()} onPress={onSubmitRename}>

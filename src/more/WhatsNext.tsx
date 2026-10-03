@@ -624,7 +624,7 @@ const WhatsNext = memo(() => {
                 placeholder={t('more:whats_next_company_placeholder', { defaultValue: 'e.g. Acme Inc.' })}
                 value={company}
                 onChangeText={setCompany}
-                style={[styles.input, { marginBottom: 16 }]}
+                style={[[styles.input, { marginBottom: 16 }], globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
               />
               <Text category="h10" status="placeholder" mb={6}>
@@ -634,7 +634,7 @@ const WhatsNext = memo(() => {
                 placeholder={t('more:whats_next_role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
                 value={role}
                 onChangeText={setRole}
-                style={[styles.input, { marginBottom: 16 }]}
+                style={[[styles.input, { marginBottom: 16 }], globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
               />
               <Text category="h10" status="placeholder" mb={6}>
@@ -645,7 +645,7 @@ const WhatsNext = memo(() => {
                 placeholder={t('more:whats_next_current_offer_placeholder', { defaultValue: 'e.g. $115k base + $10k signing bonus' })}
                 value={currentOffer}
                 onChangeText={setCurrentOffer}
-                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
+                style={[[styles.input, styles.multilineInput, { marginBottom: 16 }], globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
               />
               <Text category="h10" status="placeholder" mb={6}>
@@ -656,7 +656,7 @@ const WhatsNext = memo(() => {
                 placeholder={t('more:whats_next_target_ask_placeholder', { defaultValue: 'e.g. $130k base, or more PTO' })}
                 value={targetAsk}
                 onChangeText={setTargetAsk}
-                style={[styles.input, styles.multilineInput, { marginBottom: 16 }]}
+                style={[[styles.input, styles.multilineInput, { marginBottom: 16 }], globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
               />
               <Text category="h10" status="placeholder" mb={6}>

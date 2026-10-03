@@ -307,6 +307,11 @@ export const globalStyle = StyleSheet.create({
   // resolves to background-basic-color-2 -- white/dark-card -- against
   // Container's now-gray `background-page-body`), the same
   // fill-vs-page-contrast trick `card` above uses instead of a border.
+  // Inputs inside bottom sheets / modals get the black (border-input-color,
+  // from mapping.json) 1px outline; page-level inputs stay flat.
+  sheetInput: {
+    borderWidth: 1,
+  },
   inputField: {
     borderWidth: 0,
     backgroundColor: 'background-basic-color-2',

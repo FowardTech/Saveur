@@ -666,7 +666,7 @@ const JobAlerts = memo(() => {
                   <Icon {...props} pack="eva" name="plus-outline" />
                 </TouchableOpacity>
               )}
-              style={styles.prefsInput}
+              style={[styles.prefsInput, globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <View style={styles.chipsWrap}>
@@ -691,7 +691,7 @@ const JobAlerts = memo(() => {
               value={countryQuery}
               onChangeText={setCountryQuery}
               accessoryLeft={props => <Icon {...props} pack="eva" name="search-outline" />}
-              style={styles.prefsInput}
+              style={[styles.prefsInput, globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             {preferredCountries.length > 0 ? (

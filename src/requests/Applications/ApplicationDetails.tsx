@@ -517,7 +517,7 @@ const ApplicationDetails = memo(() => {
                 placeholder={t('request:offer_amount_placeholder', {defaultValue: 'e.g. 95000'}).toString()}
                 value={offerAmountText}
                 onChangeText={setOfferAmountText}
-                style={[globalStyle.inputField, {flex: 2, marginRight: 8}]}
+                style={[[globalStyle.inputField, {flex: 2, marginRight: 8}], globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
                 label={t('request:offer_amount_label', {defaultValue: 'Base offer'}).toString()}
               />
@@ -527,7 +527,7 @@ const ApplicationDetails = memo(() => {
                 placeholder="USD"
                 value={offerCurrencyText}
                 onChangeText={setOfferCurrencyText}
-                style={[globalStyle.inputField, {flex: 1}]}
+                style={[[globalStyle.inputField, {flex: 1}], globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
                 label={t('request:offer_currency_label', {defaultValue: 'Currency'}).toString()}
               />

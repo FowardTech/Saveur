@@ -1,3 +1,4 @@
+import { globalStyle } from 'styles/globalStyle';
 import React, {memo} from 'react';
 import {Alert, TouchableOpacity, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Input, Layout} from '@ui-kitten/components';
@@ -207,11 +208,11 @@ const CareerGrowth = memo(() => {
                   <Chip key={k} label={kindLabel(k)} selected={k === kind} onPress={() => setKind(k)} />
                 ))}
               </Flex>
-              <Input placeholder={t('more:growth_date_placeholder', {defaultValue: 'Effective date (YYYY-MM-DD)'}).toString()} value={date} onChangeText={setDate} style={styles.input} />
-              <Input placeholder={t('more:growth_base_placeholder', {defaultValue: 'Base salary (yearly)'}).toString()} keyboardType="numeric" value={base} onChangeText={setBase} style={styles.input} />
-              <Input placeholder={t('more:growth_bonus_placeholder', {defaultValue: 'Bonus (optional)'}).toString()} keyboardType="numeric" value={bonus} onChangeText={setBonus} style={styles.input} />
-              <Input placeholder={t('more:growth_role_placeholder', {defaultValue: 'Role'}).toString()} value={role} onChangeText={setRole} style={styles.input} />
-              <Input placeholder={t('more:growth_company_placeholder', {defaultValue: 'Company'}).toString()} value={company} onChangeText={setCompany} style={styles.input} />
+              <Input placeholder={t('more:growth_date_placeholder', {defaultValue: 'Effective date (YYYY-MM-DD)'}).toString()} value={date} onChangeText={setDate} style={[styles.input, globalStyle.sheetInput]} />
+              <Input placeholder={t('more:growth_base_placeholder', {defaultValue: 'Base salary (yearly)'}).toString()} keyboardType="numeric" value={base} onChangeText={setBase} style={[styles.input, globalStyle.sheetInput]} />
+              <Input placeholder={t('more:growth_bonus_placeholder', {defaultValue: 'Bonus (optional)'}).toString()} keyboardType="numeric" value={bonus} onChangeText={setBonus} style={[styles.input, globalStyle.sheetInput]} />
+              <Input placeholder={t('more:growth_role_placeholder', {defaultValue: 'Role'}).toString()} value={role} onChangeText={setRole} style={[styles.input, globalStyle.sheetInput]} />
+              <Input placeholder={t('more:growth_company_placeholder', {defaultValue: 'Company'}).toString()} value={company} onChangeText={setCompany} style={[styles.input, globalStyle.sheetInput]} />
               <CtaButton disabled={saving || !date.trim() || !base.trim()} onPress={async () => { await onAddPay(); setPayOpen(false); }}>
                 {t('more:growth_add', {defaultValue: 'Add'})}
               </CtaButton>
@@ -271,16 +272,16 @@ const CareerGrowth = memo(() => {
                 <Chip label={t('more:growth_goal_promotion', {defaultValue: 'Promotion'}).toString()} selected={goal === 'promotion'} onPress={() => setGoal('promotion')} />
                 <Chip label={t('more:growth_goal_raise', {defaultValue: 'Raise'}).toString()} selected={goal === 'raise'} onPress={() => setGoal('raise')} />
               </Flex>
-              <Input placeholder={t('more:growth_current_role', {defaultValue: 'Current role'}).toString()} value={curRole} onChangeText={setCurRole} style={styles.input} />
-              <Input placeholder={t('more:growth_target_role', {defaultValue: 'Target role (optional)'}).toString()} value={targetRole} onChangeText={setTargetRole} style={styles.input} />
-              <Input placeholder={t('more:growth_tenure', {defaultValue: 'Months in this role'}).toString()} keyboardType="numeric" value={tenure} onChangeText={setTenure} style={styles.input} />
+              <Input placeholder={t('more:growth_current_role', {defaultValue: 'Current role'}).toString()} value={curRole} onChangeText={setCurRole} style={[styles.input, globalStyle.sheetInput]} />
+              <Input placeholder={t('more:growth_target_role', {defaultValue: 'Target role (optional)'}).toString()} value={targetRole} onChangeText={setTargetRole} style={[styles.input, globalStyle.sheetInput]} />
+              <Input placeholder={t('more:growth_tenure', {defaultValue: 'Months in this role'}).toString()} keyboardType="numeric" value={tenure} onChangeText={setTenure} style={[styles.input, globalStyle.sheetInput]} />
               <Input
                 multiline
                 placeholder={t('more:growth_context_placeholder', {defaultValue: 'Anything else: recent wins, manager feedback, company situation…'}).toString()}
                 value={context}
                 onChangeText={setContext}
                 textStyle={{minHeight: 96}}
-                style={styles.input}
+                style={[styles.input, globalStyle.sheetInput]}
               />
               <CtaButton disabled={planning || !curRole.trim()} onPress={async () => { setPlanOpen(false); await onPlan(); }}>
                 {planning

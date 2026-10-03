@@ -147,14 +147,14 @@ const CompanyIntelligence = memo(() => {
           placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
           value={company}
           onChangeText={setCompany}
-          style={[styles.input, { marginBottom: 12 }]}
+          style={[[styles.input, { marginBottom: 12 }], globalStyle.sheetInput]}
           textStyle={globalStyle.inputText}
         />
         <Input
           placeholder={t('more:role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
           value={role}
           onChangeText={setRole}
-          style={styles.input}
+          style={[styles.input, globalStyle.sheetInput]}
           textStyle={globalStyle.inputText}
         />
         <CtaButton

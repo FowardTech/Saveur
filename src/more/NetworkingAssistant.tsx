@@ -417,21 +417,21 @@ const NetworkingAssistant = memo(() => {
               placeholder={t('more:contact_name', { defaultValue: 'Name' }).toString()}
               value={form.name}
               onChangeText={name => setForm(prev => ({ ...prev, name }))}
-              style={styles.formInput}
+              style={[styles.formInput, globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:contact_company', { defaultValue: 'Company' }).toString()}
               value={form.company}
               onChangeText={company => setForm(prev => ({ ...prev, company }))}
-              style={styles.formInput}
+              style={[styles.formInput, globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:contact_role', { defaultValue: 'Role' }).toString()}
               value={form.role}
               onChangeText={role => setForm(prev => ({ ...prev, role }))}
-              style={styles.formInput}
+              style={[styles.formInput, globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Input
@@ -440,7 +440,7 @@ const NetworkingAssistant = memo(() => {
               onChangeText={note => setForm(prev => ({ ...prev, note }))}
               multiline
               textStyle={[globalStyle.inputText, { minHeight: 56, textAlignVertical: 'top' }]}
-              style={styles.formInput}
+              style={[styles.formInput, globalStyle.sheetInput]}
             />
             <Flex justify="flex-start" mt={4}>
               <CtaButton

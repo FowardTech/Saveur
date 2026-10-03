@@ -909,7 +909,7 @@ const DreamCompanies = memo(() => {
                       <Input
                         multiline
                         textStyle={[globalStyle.inputText, { minHeight: 60 }]}
-                        style={styles.notesInput}
+                        style={[styles.notesInput, globalStyle.sheetInput]}
                         placeholder={t('more:dream_company_notes_placeholder', { defaultValue: 'Add a personal note about this company…' }).toString()}
                         value={notesDraft[c.id] ?? c.notes}
                         onChangeText={text => setNotesDraft(prev => ({ ...prev, [c.id]: text }))}
@@ -1091,14 +1091,14 @@ const DreamCompanies = memo(() => {
               placeholder={t('more:company_placeholder', { defaultValue: 'e.g. Acme Corp' })}
               value={newCompany}
               onChangeText={setNewCompany}
-              style={[styles.input, { marginBottom: 12 }]}
+              style={[[styles.input, { marginBottom: 12 }], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Input
               placeholder={t('more:role_placeholder', { defaultValue: 'e.g. Senior Product Manager' })}
               value={newRole}
               onChangeText={setNewRole}
-              style={[styles.input, { marginBottom: 20 }]}
+              style={[[styles.input, { marginBottom: 20 }], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!newCompany.trim() || isAdding} onPress={onAdd}>
@@ -1230,7 +1230,7 @@ const themedStyles = StyleService.create({
   // single-line height assumptions.
   notesInput: {
     borderWidth: 1,
-    borderColor: 'border-basic-color-3',
+    borderColor: 'border-input-color',
     borderRadius: 12,
     padding: 10,
     minHeight: 70,

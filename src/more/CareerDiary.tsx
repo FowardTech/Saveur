@@ -199,7 +199,7 @@ const CareerDiary = memo(() => {
                 placeholder={t('more:career_diary_composer_placeholder', {defaultValue: 'What did you do, learn, or achieve today?'})}
                 value={text}
                 onChangeText={setText}
-                style={styles.textInput}
+                style={[styles.textInput, globalStyle.sheetInput]}
                 textStyle={[globalStyle.inputText, styles.textInputInner]}
               />
               <Flex justify="flex-start" mt={12} mb={12}>
@@ -225,7 +225,7 @@ const CareerDiary = memo(() => {
                 placeholder={t('more:career_diary_role_placeholder', {defaultValue: 'Role / career / job (optional)'})}
                 value={role}
                 onChangeText={setRole}
-                style={styles.roleInput}
+                style={[styles.roleInput, globalStyle.sheetInput]}
                 textStyle={globalStyle.inputText}
               />
               <CtaButton

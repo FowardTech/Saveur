@@ -124,7 +124,7 @@ const PeriodicCheckInSheet = memo(({ visible, title, subtitle, placeholder, onSu
               placeholder={placeholder}
               value={text}
               onChangeText={setText}
-              style={styles.textInput}
+              style={[styles.textInput, globalStyle.sheetInput]}
               textStyle={styles.textInputInner}
             />
             <TouchableOpacity

@@ -290,7 +290,7 @@ const CodingProjectsHub = memo(() => {
               placeholder={t('find:coding_project_name_placeholder', {defaultValue: 'Project name'}).toString()}
               value={newName}
               onChangeText={setNewName}
-              style={[globalStyle.inputField, {marginBottom: 16}]}
+              style={[[globalStyle.inputField, {marginBottom: 16}], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Flex justify="flex-start" mb={20}>
@@ -340,7 +340,7 @@ const CodingProjectsHub = memo(() => {
               autoFocus
               value={renameValue}
               onChangeText={setRenameValue}
-              style={[globalStyle.inputField, {marginBottom: 20}]}
+              style={[[globalStyle.inputField, {marginBottom: 20}], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <CtaButton loading={isRenaming} disabled={!renameValue.trim()} onPress={onSubmitRename}>

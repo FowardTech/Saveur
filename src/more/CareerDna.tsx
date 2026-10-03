@@ -358,7 +358,7 @@ const CareerDna = memo(() => {
                 onChangeText={setJdText}
                 multiline
                 textStyle={[globalStyle.inputText, { minHeight: 80, textAlignVertical: 'top' }]}
-                style={globalStyle.inputField}
+                style={[globalStyle.inputField, globalStyle.sheetInput]}
               />
               <CtaButton
                 style={{ marginTop: 12 }}

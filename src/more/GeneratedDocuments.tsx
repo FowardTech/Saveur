@@ -335,7 +335,7 @@ const GeneratedDocuments = memo(() => {
               value={renameValue}
               onChangeText={setRenameValue}
               autoFocus
-              style={[styles.input, { marginBottom: 20 }]}
+              style={[[styles.input, { marginBottom: 20 }], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!renameValue.trim() || isSavingRename} onPress={onSaveRename}>
@@ -366,7 +366,7 @@ const GeneratedDocuments = memo(() => {
               placeholder={t('more:document_label_placeholder', { defaultValue: 'Document name' }).toString()}
               value={editLabel}
               onChangeText={setEditLabel}
-              style={[styles.input, { marginBottom: 12 }]}
+              style={[[styles.input, { marginBottom: 12 }], globalStyle.sheetInput]}
               textStyle={globalStyle.inputText}
             />
             <Input
@@ -376,7 +376,7 @@ const GeneratedDocuments = memo(() => {
               multiline
               numberOfLines={8}
               textStyle={[globalStyle.inputText, styles.editTextArea]}
-              style={[styles.input, styles.editInputWrap, { marginBottom: 20 }]}
+              style={[[styles.input, styles.editInputWrap, { marginBottom: 20 }], globalStyle.sheetInput]}
             />
             <CtaButton disabled={!editContent.trim() || isSavingEdit} onPress={onSaveEdit}>
               {isSavingEdit ? () => <Spinner size="small" status="control" /> : t('common:save', { defaultValue: 'Save' })}
