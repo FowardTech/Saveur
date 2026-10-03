@@ -1252,7 +1252,7 @@ const HomeSrc = memo(() => {
           </View>
         ) : (
           <FeatureCard
-            image={require('../../assets/images/home/mission.png')}
+            imageUri="https://images.unsplash.com/photo-1496664444929-8c75efb9546f?auto=format&fit=crop&w=1000&q=75"
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
@@ -1271,7 +1271,7 @@ const HomeSrc = memo(() => {
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </Text>
         <FeatureCard
-          image={require('../../assets/images/home/progress.png')}
+          imageUri="https://images.unsplash.com/photo-1758644083602-15a9645a92a7?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
@@ -1290,7 +1290,7 @@ const HomeSrc = memo(() => {
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </Text>
         <FeatureCard
-          image={require('../../assets/images/home/career.png')}
+          imageUri="https://images.unsplash.com/photo-1448387473223-5c37445527e7?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
           subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
@@ -1298,7 +1298,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <FeatureCard
-          image={require('../../assets/images/home/salary.png')}
+          imageUri="https://images.unsplash.com/photo-1755369355222-8146801ccf90?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
           subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
@@ -1306,7 +1306,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <FeatureCard
-          image={require('../../assets/images/home/leaderboard.png')}
+          imageUri="https://images.unsplash.com/photo-1578269174936-2709b6aeb913?auto=format&fit=crop&w=1000&q=75"
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}
