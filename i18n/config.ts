@@ -29,6 +29,7 @@ import 'dayjs/locale/ru';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {EKeyAsyncStorage} from 'constants/Types';
 import {isSupportedLanguageCode} from 'constants/languages';
+import {installRuntimeTranslation, runtimeTranslationInitOptions} from 'i18n/runtimeTranslation';
 
 import auth from 'i18n/language/en/auth.json';
 import intro from 'i18n/language/en/intro.json';
@@ -463,8 +464,12 @@ i18n.use(initReactI18next).init({
     // ever actually loads async), so turning this off costs nothing --
     // t() just returns synchronously either way.
     useSuspense: false,
+    // Re-render when a runtime translation is injected (i18n/runtimeTranslation.ts).
+    bindI18nStore: 'added',
   },
+  ...runtimeTranslationInitOptions(),
 });
+installRuntimeTranslation(i18n);
 
 i18n.on('languageChanged', lng => {
   dayjs.locale(lng);
