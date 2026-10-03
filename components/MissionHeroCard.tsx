@@ -157,7 +157,7 @@ const MissionHeroCard: React.FC<MissionHeroCardProps> = ({
             not a separate untouched-per-request change. */}
         <TouchableOpacity
           activeOpacity={0.85}
-          style={[styles.cta, !showProgress && styles.ctaNoProgress, { backgroundColor: theme['color-primary-100'] }]}
+          style={[styles.cta, !showProgress && styles.ctaNoProgress, { backgroundColor: theme['color-primary-solid'] }]}
           onPress={onPress}>
           <Icon pack="eva" name={ctaIcon} style={{ width: 18, height: 18, tintColor: '#FFFFFF', marginRight: 8 }} />
           <Text category="h9" bold style={styles.ctaText}>

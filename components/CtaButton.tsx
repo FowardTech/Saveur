@@ -19,7 +19,7 @@ import { globalStyle } from 'styles/globalStyle';
 // correctly to just submit buttons (literal #32ad84 hardcoded here only,
 // not through the shared token) — and reverted again ("change the submit
 // buttons back to the default blue"). Blue survives every pass; green
-// keeps getting tried and un-done. Back to theme['color-primary-100'],
+// keeps getting tried and un-done. Back to theme['color-primary-solid'],
 // same as every screen's own icon/badge/link already reads (both -100 and
 // -500 resolve to the same brand blue, #71717a — see appTheme.json).
 // globalStyle.shadowBtn (this button's own shadow tint) reverted to match.
@@ -56,13 +56,13 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
       accessoryLeft={loading ? renderLoadingSpinner : accessoryLeft}
       style={[
         {
-          // theme['color-primary-100'] and theme['color-primary-500'] are
+          // theme['color-primary-solid'] and theme['color-primary-500'] are
           // the same value (see appTheme.json) -- either resolves to the
           // brand blue. Kept as -100 (not -500) purely for continuity with
           // every other direct color-primary-100 reference already in the
           // app (see that token's own comment history).
-          backgroundColor: theme['color-primary-100'],
-          borderColor: theme['color-primary-100'],
+          backgroundColor: theme['color-primary-solid'],
+          borderColor: theme['color-primary-solid'],
           // SYMPHONY REDESIGN follow-up (explicit product request: "all
           // the buttons I see still has 50% rounded borders" — applies
           // app-wide, not just the Settings screen's small tag buttons).
@@ -124,7 +124,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
         // BUG FIX (product report: "regenerate text button is not
         // showing... check the whole app") -- was theme['text-primary-color'],
         // which now resolves to the same blue (#71717a) as this button's
-        // own solid-blue fill (theme['color-primary-100']), making every
+        // own solid-blue fill (theme['color-primary-solid']), making every
         // CtaButton label in the app invisible in light mode. This button
         // is meant to always be white-on-blue regardless of theme --
         // text-control-color is the token for that, and isn't affected by

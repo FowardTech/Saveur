@@ -523,7 +523,7 @@ const LearningCourses = memo(() => {
                             ? {backgroundColor: theme['color-success-transparent-200']}
                             : locked
                             ? {backgroundColor: theme['background-basic-color-3'], opacity: 0.7}
-                            : {backgroundColor: theme['color-primary-100']},
+                            : {backgroundColor: theme['color-primary-solid']},
                         ]}>
                         {locked ? (
                           <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, {tintColor: theme['text-placeholder-color'], marginRight: 4}]} />
@@ -726,7 +726,7 @@ const LearningCourses = memo(() => {
                           ? {backgroundColor: theme['color-success-transparent-200']}
                           : !unlocked
                           ? {backgroundColor: theme['background-basic-color-3'], opacity: 0.7}
-                          : {backgroundColor: theme['color-primary-100']},
+                          : {backgroundColor: theme['color-primary-solid']},
                       ]}>
                       {!unlocked ? (
                         <Icon pack="eva" name="lock-outline" style={[globalStyle.icon16, {tintColor: theme['text-placeholder-color'], marginRight: 4}]} />

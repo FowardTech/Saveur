@@ -155,7 +155,7 @@ const themedStyles = StyleService.create({
     backgroundColor: 'text-basic-color',
   },
   upgradeButton: {
-    backgroundColor: 'color-primary-100',
+    backgroundColor: 'color-primary-solid',
     borderRadius: 14,
     paddingVertical: 8,
     paddingHorizontal: 16,

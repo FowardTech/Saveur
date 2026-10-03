@@ -19,7 +19,7 @@
   "text-link-color": "$color-primary-100",
   "text-placeholder-color": "#71717A",
   "text-hint-color": "#71717A",
-  "button-basic-color": "$color-primary-100",
+  "button-basic-color": "$color-primary-solid",
   "button-primary-border": "$color-basic-400",
   "button-outline-text": "$color-basic-500",
   "button-outline-border": "$color-basic-400",
