@@ -1,6 +1,6 @@
 import React, {memo} from 'react';
 import {AppState, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Icon} from '@ui-kitten/components';
+import {Icon, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 
@@ -126,7 +126,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Practice' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -148,12 +148,6 @@ interface DrawerNavItem {
 // (constants/theme/dark.json), so it's still literally "the app
 // background" (same color content uses in dark mode) but no longer flips
 // with the live theme setting.
-const DRAWER_BG = '#12121F';
-const DRAWER_TEXT = '#FFFFFF';
-const DRAWER_TEXT_MUTED = 'rgba(255,255,255,0.6)';
-const DRAWER_DIVIDER = 'rgba(255,255,255,0.08)';
-const DRAWER_ACTIVE_BG = 'rgba(0,99,248,0.22)';
-const DRAWER_ACCENT = '#3D8BFF';
 
 interface CustomDrawerContentProps {
   activeRoute: keyof MainBottomTabStackParamList;
@@ -170,10 +164,33 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
   const {t} = useTranslation(['common']);
   const {top, bottom} = useLayout();
   const {profile, isPro, isSubscriptionLoading} = React.useContext(AuthContext);
+  const theme = useTheme();
+  const DRAWER_BG = theme['background-basic-color-1'];
+  const DRAWER_TEXT = theme['text-basic-color'];
+  const DRAWER_TEXT_MUTED = theme['text-hint-color'];
+  const DRAWER_DIVIDER = theme['border-card-default'];
+  const DRAWER_ACTIVE_BG = theme['background-basic-color-3'];
+  const DRAWER_ACCENT = theme['text-basic-color'];
 
-  const items: DrawerNavItem[] = [
-    {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
-    {route: 'Coach', label: t('common:drawer_chat', {defaultValue: 'Chat'}).toString(), icon: 'message-circle-outline'},
+  const tabItems: DrawerNavItem[] = [
+    {route: 'Coach', label: t('common:tab_coach', {defaultValue: 'Coach'}).toString(), icon: 'message-circle-outline'},
+    {route: 'Practice', label: t('common:tab_practice', {defaultValue: 'Practice'}).toString(), icon: 'search-outline'},
+    {
+      route: 'Jobs',
+      label: t('common:tab_jobs', {defaultValue: 'Jobs'}).toString(),
+      icon: 'briefcase-outline',
+      badge: badges?.jobAlertsUnreadCount || undefined,
+    },
+    {route: 'Home', label: t('common:tab_growth', {defaultValue: 'Growth'}).toString(), icon: 'trending-up-outline'},
+    {
+      route: 'Profile',
+      label: t('common:tab_more', {defaultValue: 'More'}).toString(),
+      icon: 'grid-outline',
+      badge:
+        (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0) || undefined,
+    },
+  ];
+  const shortcutItems: DrawerNavItem[] = [
     {
       route: 'RecentInterviews',
       label: t('common:drawer_recent_interviews', {defaultValue: 'Recent Interviews'}).toString(),
@@ -182,66 +199,55 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
     {
       route: 'SalaryNegotiation',
       label: t('common:drawer_salary_negotiation', {defaultValue: 'Salary Negotiation'}).toString(),
-      icon: 'trending-up-outline',
+      icon: 'swap-outline',
     },
-    // Product request: "See the Salary analyser too" -- a one-shot numeric
-    // market-rate calculator, deliberately its own drawer row right next
-    // to Salary Negotiation rather than merged into it (see
-    // src/more/OfferAnalyzer.tsx's own header comment for the full
-    // "complementary, not redundant" reasoning).
     {
       route: 'OfferAnalyzer',
       label: t('common:drawer_offer_analyzer', {defaultValue: 'Offer Analyzer'}).toString(),
       icon: 'pie-chart-outline',
     },
-    // Post-hire retention loop (pay tracking, promotion/raise plan, quarterly check-in).
     {
       route: 'CareerGrowth',
       label: t('common:drawer_career_growth', {defaultValue: 'Career Growth'}).toString(),
       icon: 'trending-up-outline',
     },
     {
-      // Product request: "Change dream job to dream company" -- this row
-      // has always pointed at DreamCompanies.tsx (the Dream Company
-      // Dashboard), the "Dream Job" label was just a naming mismatch.
       route: 'DreamCompanies',
       label: t('common:drawer_dream_company', {defaultValue: 'Dream Company'}).toString(),
-      icon: 'briefcase-outline',
+      icon: 'building-outline',
     },
-    // Product request: "add jobs to the drawer under dream job" -- lands on
-    // the real, existing root-stack JobAlerts screen (src/more/JobAlerts.tsx,
-    // params optional) that previously only had an entry point from
-    // MoreSrc.tsx's menu.
-    {
-      route: 'Jobs',
-      label: t('common:drawer_jobs', {defaultValue: 'Jobs'}).toString(),
-      icon: 'bell-outline',
-      badge: badges?.jobAlertsUnreadCount || undefined,
-    },
-    // Product request: "add event in the drawer and name it career events
-    // and let it navigate to the event section in the networking screen"
-    // -- src/more/NetworkingAssistant.tsx's own tab state defaults to
-    // index 0, the Career Events tab (see that screen's own useState),
-    // so navigating there with no params already lands on Career Events;
-    // no route param needed.
     {
       route: 'CareerEvents',
       label: t('common:drawer_career_events', {defaultValue: 'Career Events'}).toString(),
       icon: 'calendar-outline',
       badge: badges?.careerEventsUnreadCount || undefined,
     },
-    {
-      route: 'Profile',
-      label: t('common:drawer_more', {defaultValue: 'More'}).toString(),
-      icon: 'settings-2-outline',
-      // Job Alerts and Career Events now carry their own badges above (see
-      // the two rows immediately above) -- only the two counts with no
-      // drawer row of their own (Daily Industry News / Weekly Career
-      // Report) still fold into this one, so nothing is double-counted.
-      badge:
-        (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0) || undefined,
-    },
   ];
+  const renderItem = (item: DrawerNavItem, isTab: boolean) => {
+    const focused = isTab && activeRoute === item.route;
+    return (
+      <TouchableOpacity
+        key={item.route + item.label}
+        activeOpacity={0.7}
+        onPress={() => onNavigate(item.route)}
+        style={[styles.navRow, focused && {backgroundColor: DRAWER_ACTIVE_BG}]}>
+        <Icon pack="eva" name={item.icon} style={[styles.navIcon, {tintColor: DRAWER_ACCENT}]} />
+        <Text category="h8" bold={focused} style={[styles.navLabel, {color: DRAWER_TEXT}]}>
+          {item.label}
+        </Text>
+        {item.badge ? (
+          <View style={[styles.navBadge, {backgroundColor: DRAWER_TEXT}]}>
+            <Text category="h10" bold style={{color: DRAWER_BG}}>
+              {item.badge > 9 ? '9+' : item.badge}
+            </Text>
+          </View>
+        ) : null}
+        {!isSubscriptionLoading && !isPro && item.route === 'Coach' ? (
+          <Icon pack="eva" name="lock-outline" style={[styles.navLockIcon, {tintColor: DRAWER_TEXT_MUTED}]} />
+        ) : null}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.drawer, {backgroundColor: DRAWER_BG, paddingTop: top + 16, paddingBottom: bottom + 16}]}>
@@ -257,47 +263,14 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
         <BrandWordmark size={32} color={DRAWER_TEXT} />
       </View>
 
-      <View style={styles.navList}>
-        {items.map(item => {
-          const focused = activeRoute === item.route;
-          return (
-            <TouchableOpacity
-              key={item.route}
-              activeOpacity={0.7}
-              onPress={() => onNavigate(item.route)}
-              style={[styles.navRow, focused && {backgroundColor: DRAWER_ACTIVE_BG}]}>
-              <Icon
-                pack="eva"
-                name={item.icon}
-                style={[
-                  styles.navIcon,
-                  {tintColor: focused ? DRAWER_ACCENT : DRAWER_TEXT_MUTED},
-                ]}
-              />
-              <Text
-                category="h8"
-                bold={focused}
-                style={[styles.navLabel, {color: focused ? DRAWER_TEXT : DRAWER_TEXT_MUTED}]}>
-                {item.label}
-              </Text>
-              {item.badge ? (
-                <View style={styles.navBadge}>
-                  <Text category="h10" bold style={{color: DRAWER_TEXT}}>
-                    {item.badge > 9 ? '9+' : item.badge}
-                  </Text>
-                </View>
-              ) : null}
-              {/* Same isSubscriptionLoading gate as the Coach Tab.Screen
-                  above — without it this lock badge briefly flashed on an
-                  already-Pro user's drawer row too, for the same "isPro
-                  reads false until the subscription fetch lands" reason. */}
-              {!isSubscriptionLoading && !isPro && item.route === 'Coach' ? (
-                <Icon pack="eva" name="lock-outline" style={[styles.navLockIcon, {tintColor: DRAWER_TEXT_MUTED}]} />
-              ) : null}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <Text category="h10" bold style={[styles.sectionLabel, {color: DRAWER_TEXT_MUTED}]}>
+        {t('common:drawer_tabs', {defaultValue: 'Tabs'}).toString()}
+      </Text>
+      <View style={styles.navList}>{tabItems.map(i => renderItem(i, true))}</View>
+      <Text category="h10" bold style={[styles.sectionLabel, {color: DRAWER_TEXT_MUTED}]}>
+        {t('common:drawer_shortcuts', {defaultValue: 'Shortcuts'}).toString()}
+      </Text>
+      <View style={styles.navList}>{shortcutItems.map(i => renderItem(i, false))}</View>
 
       <View style={[styles.footerDivider, {borderTopColor: DRAWER_DIVIDER}]} />
 
@@ -372,7 +345,9 @@ const MainDrawerContent = memo(() => {
 
   const onNavigate = React.useCallback(
     (route: DrawerRoute) => {
-      if (route === 'Home') {
+      if (route === 'Practice') {
+        navigationRef.navigate('MainBottomTab', {screen: 'Practice'});
+      } else if (route === 'Home') {
         navigationRef.navigate('MainBottomTab', {screen: 'Home'});
       } else if (route === 'Coach') {
         navigationRef.navigate('MainBottomTab', {screen: 'Coach', params: undefined});
@@ -549,19 +524,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   brandRow: {
-    marginBottom: 32,
+    marginBottom: 20,
     paddingHorizontal: 4,
   },
   navList: {
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  sectionLabel: {
     marginTop: 8,
+    paddingHorizontal: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 20,
-    marginBottom: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    marginBottom: 2,
   },
   navIcon: {
     width: 22,
@@ -578,7 +560,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#3D8BFF',
   },
   navLockIcon: {
     width: 16,

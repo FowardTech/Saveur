@@ -130,5 +130,7 @@
   "yes": "Yes",
   "tab_jobs": "Jobs",
   "tab_growth": "Growth",
-  "tab_more": "More"
+  "tab_more": "More",
+  "drawer_tabs": "Tabs",
+  "drawer_shortcuts": "Shortcuts"
 }
