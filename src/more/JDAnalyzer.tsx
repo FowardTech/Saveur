@@ -7,6 +7,7 @@ import {
   useTheme,
   Input,
   Button,
+  Layout,
 } from '@ui-kitten/components';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -24,8 +25,6 @@ import { RootStackParamList } from 'navigation/types';
 import * as jdService from 'services/jdService';
 import { JDAnalysisResult } from 'services/jdService';
 import { DocumentRecord } from 'services/documentsService';
-import { AuthContext } from '../../AuthContext';
-import ProLockGate from 'components/ProLockGate';
 import CtaButton from 'components/CtaButton';
 import { ArtMagnifyingDoc } from 'src/home/HomeHeroArt';
 
@@ -48,7 +47,8 @@ const JDAnalyzer = memo(() => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const { t } = useTranslation(['more', 'common']);
-  const { isPro } = React.useContext(AuthContext);
+  const [limitReached, setLimitReached] = React.useState(false);
+  const [limitMessage, setLimitMessage] = React.useState<string | null>(null);
 
   const [inputMode, setInputMode] = React.useState<InputMode>('text');
   const [jd, setJd] = React.useState('');
@@ -72,6 +72,7 @@ const JDAnalyzer = memo(() => {
 
   const onAnalyze = async () => {
     if (isAnalyzing || isFetchingUrl) return;
+    setLimitReached(false);
     let jdText = jd;
     if (inputMode === 'url') {
       if (!jdUrl.trim()) return;
@@ -80,6 +81,11 @@ const JDAnalyzer = memo(() => {
         jdText = await jdService.extractJDFromUrl(jdUrl);
       } catch (e: any) {
         setIsFetchingUrl(false);
+        if (e?.status === 402 && e?.error === 'resume_tool_limit_reached') {
+          setLimitReached(true);
+          setLimitMessage(e?.message ?? null);
+          return;
+        }
         Alert.alert(
           t('more:jd_url_fetch_failed', { defaultValue: "Couldn't read that job posting" }),
           e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
@@ -107,6 +113,11 @@ const JDAnalyzer = memo(() => {
       const analysis = await jdService.analyzeJobDescription(jdText);
       setResult(analysis);
     } catch (e: any) {
+      if (e?.status === 402 && e?.error === 'resume_tool_limit_reached') {
+        setLimitReached(true);
+        setLimitMessage(e?.message ?? null);
+        return;
+      }
       Alert.alert(
         t('more:analysis_failed', { defaultValue: 'Analysis failed' }),
         e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
@@ -202,17 +213,6 @@ const JDAnalyzer = memo(() => {
     );
   };
 
-  if (!isPro) {
-    return (
-      <ProLockGate
-        title={t('more:jd_analyzer', { defaultValue: 'JD Analyzer' })}
-        description={t('more:jd_analyzer_pro_gate_description', {
-          defaultValue: "Paste a job description and see how your resume stacks up, with a matching resume generated for you — JD Analyzer is a Basic feature.",
-        })}
-      />
-    );
-  }
-
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -228,6 +228,19 @@ const JDAnalyzer = memo(() => {
             exists — once there's a score/chips to look at, the illustration
             would just be pushing real content further down. See
             src/home/HomeHeroArt.tsx's own comment for the full sweep. */}
+        {limitReached ? (
+          <Layout level="2" style={{borderRadius: 14, padding: 16, marginBottom: 16}}>
+            <Text category="h8" bold>
+              {t('more:resume_limit_reached_title', { defaultValue: "You've used your free resume tool actions this month" })}
+            </Text>
+            <Text category="h9-s" status="placeholder" mt={4}>
+              {limitMessage ?? t('more:resume_limit_reached_subtitle', { defaultValue: 'Upgrade to Saveur Basic or above for unlimited access.' })}
+            </Text>
+            <Text category="h9" status="link" bold mt={10} onPress={() => navigate('Subscription')}>
+              {t('more:upgrade', { defaultValue: 'Upgrade' })}
+            </Text>
+          </Layout>
+        ) : null}
         {!result ? (
           <Flex center mb={20}>
             <ArtMagnifyingDoc size={128} />
