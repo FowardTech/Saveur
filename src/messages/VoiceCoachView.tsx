@@ -150,7 +150,22 @@ import ThemeContext from '../../ThemeContext';
 // before treating the user's turn as over and sending it. Was 1300ms;
 // lowered to 1000ms as asked. Applies to both the duplex (iOS) and legacy
 // (Android) paths equally, since both share this same debounce effect.
-const SILENCE_DEBOUNCE_MS = 1000;
+const SILENCE_DEBOUNCE_MS = 1800;
+
+// Product report ("the AI sometimes cuts the user off with its response...
+// allow some seconds to make sure the user finished talking"): a flat 1s
+// pause treated every breath as end-of-turn. Normal turns now wait longer
+// when the utterance is short (likely mid-thought) and taper to
+// SILENCE_DEBOUNCE_MS once a full sentence has been said. Barge-in
+// (interrupting the coach) is untouched and stays immediate.
+const SHORT_TURN_SILENCE_DEBOUNCE_MS = 3000;
+function getNormalDebounceMs(liveText: string): number {
+  const words = liveText.trim().split(/\s+/).filter(Boolean).length;
+  if (words <= 3) return SHORT_TURN_SILENCE_DEBOUNCE_MS;
+  if (words >= 8) return SILENCE_DEBOUNCE_MS;
+  const progress = (words - 3) / 5;
+  return Math.round(SHORT_TURN_SILENCE_DEBOUNCE_MS - progress * (SHORT_TURN_SILENCE_DEBOUNCE_MS - SILENCE_DEBOUNCE_MS));
+}
 
 // Product follow-up ("The speak to interrupt is working fine just need
 // some tweaking. It should allow the user to be silent for like 5 secs
@@ -872,7 +887,7 @@ const VoiceCoachView = memo(({
     // ordinary mid-thought pause right after interrupting doesn't get cut
     // off and sent early, without making an already-finished reply wait
     // the full 10s for no reason.
-    const debounceMs = isBargeInTurnRef.current ? getPostInterruptDebounceMs(transcript) : SILENCE_DEBOUNCE_MS;
+    const debounceMs = isBargeInTurnRef.current ? getPostInterruptDebounceMs(transcript) : getNormalDebounceMs(transcript);
     silenceTimerRef.current = setTimeout(() => {
       if (phaseRef.current !== 'listening') return;
       const finalText = transcript;
