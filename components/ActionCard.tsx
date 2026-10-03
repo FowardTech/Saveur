@@ -140,9 +140,10 @@ const ActionCard: React.FC<ActionCardProps> = memo(
   ({icon, iconPack = 'eva', iconImage, title, subtitle, onPress, disabled, style, trailing, gradientColors, gradientLocations, accentColor, iconGradientColors, showBorder = true, forceWhiteBg = false}) => {
     const styles = useStyleSheet(themedStyles);
     const theme = useTheme();
-    const isGradient = !!gradientColors?.length;
-    const hasAccent = !!accentColor && !isGradient;
-    const hasIconGradient = !!iconGradientColors?.length;
+    // Monochrome redesign: gradients/accents are ignored; every card is a flat bordered row.
+    const isGradient = false;
+    const hasAccent = false;
+    const hasIconGradient = false;
     const iconIsOnColor = isGradient || hasIconGradient;
     const content = (
       <>
@@ -172,7 +173,7 @@ const ActionCard: React.FC<ActionCardProps> = memo(
             <Icon
               pack={iconPack}
               name={icon}
-              style={[globalStyle.icon16, {tintColor: iconIsOnColor ? '#FFFFFF' : theme['color-primary-100']}]}
+              style={[{width: 22, height: 22}, {tintColor: theme['text-basic-color']}]}
             />
           )}
         </View>
@@ -291,8 +292,12 @@ const themedStyles = StyleService.create({
     // changing the overall 4/5-card structure itself (the user's own
     // scoping answer was "polish the current minimal layout", not "add
     // more content").
-    padding: 18,
-    marginBottom: 14,
+    padding: 14,
+    marginBottom: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowOpacity: 0,
+    elevation: 0,
     backgroundColor: 'background-basic-color-2',
     // borderWidth: 1,
     // BUG FIX (product report: "the cards in the homescreen should have
@@ -305,7 +310,7 @@ const themedStyles = StyleService.create({
     // screens use this same token (see e.g. PaymentMethod.tsx/AddOns.tsx),
     // since the product ask here was for it to be every card's normal,
     // resting look.
-    borderColor: 'color-primary-500',
+    borderColor: 'border-card-default',
     // REVERTED (explicit product follow-up: "No remove the shadows from
     // the cards. We should still maintain the symphony card style") -- a
     // prior polish pass added a local shadow/elevation here; wrong call,
@@ -349,7 +354,7 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
-    backgroundColor: 'color-primary-transparent-100',
+    backgroundColor: 'background-basic-color-3',
   },
   // Gradient variant: a soft translucent-white tint reads as a raised
   // "glass" icon chip against the saturated purple fill, the same way

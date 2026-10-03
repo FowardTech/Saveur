@@ -1171,6 +1171,17 @@ const HomeSrc = memo(() => {
             there). Conditional rendering/behavior is unchanged -- still
             renders nothing at all when there's no real scheduled
             session, just earlier in the page now. */}
+        <TouchableOpacity activeOpacity={0.8} onPress={onPressCoachSend} style={styles.askBar}>
+          <Icon pack="eva" name="message-circle-outline" style={[styles.askIcon, { tintColor: theme['text-basic-color'] }]} />
+          <Text category="h8" status="placeholder" style={globalStyle.flexOne}>
+            {t('home:ask_coach_placeholder', { defaultValue: 'Ask your career coach anything…' }).toString()}
+          </Text>
+          <Icon pack="eva" name="arrow-right-outline" style={[styles.askIcon, { tintColor: theme['text-hint-color'] }]} />
+        </TouchableOpacity>
+
+        <Text category="h10" bold style={styles.sectionLabel}>
+          {t('home:section_today', { defaultValue: 'Today' }).toString()}
+        </Text>
         {nextSession ? (
           <ActionCard
             icon="calendar-outline"
@@ -1266,6 +1277,9 @@ const HomeSrc = memo(() => {
             each of these 3 always-visible cards gets its own full-color
             gradient icon now instead of a tinted eva glyph (see
             components/ActionCard.tsx's `iconImage` prop). */}
+        <Text category="h10" bold style={styles.sectionLabel}>
+          {t('home:section_grow', { defaultValue: 'Practice & grow' }).toString()}
+        </Text>
         <ActionCard
           icon="message-circle-outline"
           // Product follow-up: "change the icons for AI career card and
