@@ -1004,7 +1004,7 @@ const Subscription = memo(() => {
                     </View>
                   ) : null}
                 </Flex>
-                <Flex justify="flex-start" itemsCenter mb={16}>
+                <Flex wrap justify="flex-start" itemsCenter mb={16}>
                   <Text category="h3" bold style={isHero ? styles.heroText : undefined}>
                     {plan.price}
                     <Text category="h9-s" status={isHero ? 'basic' : 'placeholder'} style={isHero ? styles.heroSubText : undefined}>{plan.period}</Text>
@@ -1016,7 +1016,7 @@ const Subscription = memo(() => {
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.saveBadgeGradient}>
-                        <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
+                        <Text category="h10" bold numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: PRO_GOLD_TEXT }}>
                           {localizeDigits(t('more:save_percent_badge', { defaultValue: 'SAVE {{percent}}%', percent: savingsPercent }))}
                         </Text>
                       </LinearGradient>
@@ -1177,7 +1177,7 @@ const Subscription = memo(() => {
                       end={{ x: 1, y: 1 }}
                       style={styles.popularRibbonGradient}>
                       <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
-                      <Text category="h10" bold numberOfLines={1} style={{ color: PRO_GOLD_TEXT }}>
+                      <Text category="h10" bold numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: PRO_GOLD_TEXT, flexShrink: 1 }}>
                         {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
                       </Text>
                     </LinearGradient>
@@ -1272,8 +1272,8 @@ const themedStyles = StyleService.create({
   popularRibbon: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    right: 0,
+    left: 16,
+    right: 16,
     alignItems: 'center',
     zIndex: 2,
   },
@@ -1281,9 +1281,10 @@ const themedStyles = StyleService.create({
     borderRadius: 999,
     flexDirection: 'row',
     alignItems: 'center',
-    width: 160,
-    // paddingVertical: 5,
-    paddingHorizontal: 5,
+    justifyContent: 'center',
+    // Sizes to its content (translations vary a lot in length) instead of a fixed width.
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     // Shadow moved here from popularRibbon above -- that View is now just
     // a full-width invisible positioning layer, not the visible pill shape.
     ...globalStyle.shadowFade,
@@ -1292,14 +1293,16 @@ const themedStyles = StyleService.create({
   // plan's price (see savingsPercent above) — reference: "Save 77%" badge.
   saveBadge: {
     marginLeft: 8,
+    flexShrink: 1,
     borderRadius: 999,
     ...globalStyle.shadowFade,
   },
   saveBadgeGradient: {
     borderRadius: 999,
-    // paddingVertical: 15,
-    paddingHorizontal: 5,
-    width: 100
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Flat solid-blue hero card (gradient fill removed).
   // Product report: "colored cards like this are not supposed to have box
