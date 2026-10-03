@@ -1,4 +1,5 @@
 import React, {memo} from 'react';
+import ThemeContext from '../ThemeContext';
 import {AppState, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
@@ -298,9 +299,14 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
   const theme = useTheme();
   const {t} = useTranslation(['common']);
   const {bottom} = useLayout();
+  const {theme: appTheme} = React.useContext(ThemeContext);
+  // No panel of its own: the strip around the pill takes exactly the page
+  // background the screens above it use (same rule as components/Container),
+  // so there is no visible gray band behind the nav.
+  const barWrapBg = appTheme === 'dark' ? theme['background-basic-color-1'] : theme['background-page-body'];
   const activeName = state.routes[state.index]?.name;
   return (
-    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom - 12, 12), paddingTop: 0, backgroundColor: theme['background-page-body']}}>
+    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom - 12, 12), paddingTop: 0, backgroundColor: barWrapBg}}>
       <View
         style={{
           flexDirection: 'row',
