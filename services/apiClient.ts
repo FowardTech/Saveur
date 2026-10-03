@@ -43,6 +43,9 @@ const unsubscribeAuthReady = auth().onAuthStateChanged(() => {
 
 apiClient.interceptors.request.use(async config => {
   await authReady;
+  // Tells the backend which language to return stored / external content in.
+  config.headers = config.headers ?? {};
+  (config.headers as Record<string, string>)['X-App-Language'] = i18n.language || 'en';
   const user = auth().currentUser;
   if (user) {
     // Firebase caches the ID token locally and only makes a network call to
