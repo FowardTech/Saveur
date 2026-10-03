@@ -25,7 +25,6 @@ import {
   navigateToLearningCourses,
   navigateToWhatsNext,
   navigateToCareerGrowth,
-  navigateToCareerGrowth,
   navigateToNextStepRecommendation,
   navigateToApplicationDetails,
   navigateToApplicationsList,
