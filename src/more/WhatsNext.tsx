@@ -16,6 +16,7 @@ import { NavigationProp, RouteProp, useFocusEffect, useNavigation, useRoute } fr
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -434,9 +435,9 @@ const WhatsNext = memo(() => {
             </View>
 
             {/* Section 1: negotiation */}
-            <Text category="h6" bold mb={4} mt={12}>
+            <SectionTitle mt={12} mb={12}>
               {t('more:whats_next_negotiate_title', { defaultValue: 'Negotiate your offer' })}
-            </Text>
+            </SectionTitle>
             <Text category="h9-s" status="placeholder" mb={16}>
               {t('more:whats_next_negotiate_description', {
                 defaultValue: 'Concrete talking points for this offer — say them in your own words.',
@@ -459,9 +460,9 @@ const WhatsNext = memo(() => {
             </Button>
 
             {/* Section 2: pre-start checklist */}
-            <Text category="h6" bold mb={4}>
+            <SectionTitle mt={0} mb={12}>
               {t('more:whats_next_checklist_title', { defaultValue: 'Before you start' })}
-            </Text>
+            </SectionTitle>
             <Text category="h9-s" status="placeholder" mb={16}>
               {t('more:whats_next_checklist_progress', {
                 defaultValue: '{{done}} of {{total}} done',
@@ -504,9 +505,9 @@ const WhatsNext = memo(() => {
             })}
 
             {/* Section 3: 90-day plan */}
-            <Text category="h6" bold mb={4} mt={28}>
+            <SectionTitle mt={28} mb={12}>
               {t('more:whats_next_90day_title', { defaultValue: 'Your first 90 days' })}
-            </Text>
+            </SectionTitle>
             <Text category="h9-s" status="placeholder" mb={16}>
               {t('more:whats_next_90day_description', {
                 defaultValue: 'A phase-by-phase plan for settling in, working well with your new team, and succeeding in this role, tracked as you go.',

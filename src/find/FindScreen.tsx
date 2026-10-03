@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
@@ -429,9 +430,9 @@ const FindScreen = memo(() => {
           })}
         </View>
 
-        <Text category="h6" bold mt={40} mb={16}>
+        <SectionTitle mt={40}>
           {t('find:interview_types')}
-        </Text>
+        </SectionTitle>
         <View style={styles.typesGrid}>
           {DATA_INTERVIEW_TYPES.map((item, i) => {
             const bg = theme['background-basic-color-2'];

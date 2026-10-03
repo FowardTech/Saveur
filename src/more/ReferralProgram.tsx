@@ -12,6 +12,7 @@ import {
 } from '@ui-kitten/components';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -212,9 +213,9 @@ const ReferralProgram = memo(() => {
               </View>
             ) : null}
 
-            <Text category="h8" bold mt={28} mb={8}>
+            <SectionTitle mt={28} mb={12}>
               {t('more:referral_have_code', {defaultValue: 'Have a code from a friend?'})}
-            </Text>
+            </SectionTitle>
             <Flex justify="flex-start">
               <Input
                 placeholder={t('more:referral_code_placeholder', {defaultValue: 'Enter referral code'})}

@@ -18,6 +18,7 @@ import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -662,9 +663,9 @@ const GenerateResume = memo(() => {
 
             {content.suggestedKeywords.length ? (
               <>
-                <Text category="h6" bold mt={24} mb={8}>
+                <SectionTitle mt={24} mb={12}>
                   {t('more:resume_consider_adding', { defaultValue: 'Consider Adding' })}
-                </Text>
+                </SectionTitle>
                 <Text category="h9-s" status="placeholder" mb={4}>
                   {t('more:resume_consider_adding_description', {
                     defaultValue:
@@ -695,9 +696,9 @@ const GenerateResume = memo(() => {
               </>
             ) : null}
 
-            <Text category="h6" bold mt={32} mb={12}>
+            <SectionTitle mt={32} mb={12}>
               {t('more:resume_style', { defaultValue: 'Style' })}
-            </Text>
+            </SectionTitle>
             <Flex justify="flex-start" mb={32}>
               {STYLE_OPTIONS.map(opt => {
                 const active = opt.key === style;

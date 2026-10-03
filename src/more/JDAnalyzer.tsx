@@ -13,6 +13,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -365,9 +366,9 @@ const JDAnalyzer = memo(() => {
               />
             </Flex>
 
-            <Text category="h6" bold mb={16}>
+            <SectionTitle mt={0} mb={16}>
               {t('more:missing_skills', { defaultValue: 'Missing Skills' })}
-            </Text>
+            </SectionTitle>
             <View style={styles.chipsWrap}>
               {result.missingSkills.map((skill, i) => (
                 <View key={i} style={styles.chip}>
@@ -378,9 +379,9 @@ const JDAnalyzer = memo(() => {
               ))}
             </View>
 
-            <Text category="h6" bold mt={24} mb={16}>
+            <SectionTitle mt={24} mb={16}>
               {t('more:keyword_suggestions', { defaultValue: 'Keyword Suggestions' })}
-            </Text>
+            </SectionTitle>
             <View style={styles.chipsWrap}>
               {result.keywordSuggestions.map((word, i) => (
                 <View key={i} style={styles.chip}>

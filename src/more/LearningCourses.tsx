@@ -16,6 +16,7 @@ import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import { SkeletonBlock } from 'components/Skeleton';
 import Content from 'components/Content';
 import Container from 'components/Container';
@@ -395,9 +396,9 @@ const LearningCourses = memo(() => {
 
         {certificates.length ? (
           <Layout level="2" style={[styles.customCard, { marginBottom: 20 }]}>
-            <Text category="h7" bold mb={12}>
+            <SectionTitle mt={0} mb={12}>
               {t('more:your_badges', { defaultValue: 'Your Badges' })}
-            </Text>
+            </SectionTitle>
             {certificates.map(c => (
               <Flex key={c.code} justify="flex-start" itemsCenter mb={8}>
                 <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />

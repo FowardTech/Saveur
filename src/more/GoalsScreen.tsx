@@ -13,6 +13,7 @@ import { NavigationProp, useFocusEffect, useNavigation } from '@react-navigation
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -184,9 +185,9 @@ const GoalsScreen = memo(() => {
               <View style={[styles.sectionIconWrap, { backgroundColor: '#71717a' }]}>
                 <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
-              <Text category="h6" bold ml={10}>
+              <SectionTitle mt={0} mb={0} ml={10}>
                 {t('more:goals_section_career', { defaultValue: 'Career' })}
-              </Text>
+              </SectionTitle>
             </Flex>
             <Layout level="2" style={styles.card}>
               <TouchableOpacity
@@ -261,9 +262,9 @@ const GoalsScreen = memo(() => {
               <View style={[styles.sectionIconWrap, { backgroundColor: '#F59E0B' }]}>
                 <Icon pack="eva" name="flag-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
-              <Text category="h6" bold ml={10}>
+              <SectionTitle mt={0} mb={0} ml={10}>
                 {t('more:goals_section_weekly_targets', { defaultValue: 'Weekly targets' })}
-              </Text>
+              </SectionTitle>
             </Flex>
             <Layout level="2" style={styles.card}>
               <View style={styles.targetRow}>
@@ -354,9 +355,9 @@ const GoalsScreen = memo(() => {
               <View style={[styles.sectionIconWrap, { backgroundColor: '#10B981' }]}>
                 <Icon pack="eva" name="trending-up-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
-              <Text category="h6" bold ml={10}>
+              <SectionTitle mt={0} mb={0} ml={10}>
                 {t('more:goals_section_progress', { defaultValue: 'Progress' })}
-              </Text>
+              </SectionTitle>
             </Flex>
             <Layout level="2" style={styles.card}>
               <Flex justify="space-between">

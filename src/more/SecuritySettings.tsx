@@ -5,6 +5,7 @@ import {useTranslation} from 'react-i18next';
 import auth from '@react-native-firebase/auth';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -261,9 +262,9 @@ const SecuritySettings = memo(() => {
         <View style={styles.heroIconWrap}>
           <Image source={Images.iconShield} resizeMode="contain" style={styles.heroIcon as ImageStyle} />
         </View>
-        <Text category="h9-s" bold mb={12}>
+        <SectionTitle mt={0} mb={12}>
           {t('more:biometric_section_title', {defaultValue: 'App Lock'})}
-        </Text>
+        </SectionTitle>
         {bioLoading ? (
           <Spinner size="small" />
         ) : !bioAvailable ? (
@@ -287,9 +288,9 @@ const SecuritySettings = memo(() => {
           </Flex>
         )}
 
-        <Text category="h9-s" bold mb={4}>
+        <SectionTitle mt={0} mb={4}>
           {t('more:two_factor_section_title', {defaultValue: 'Two-Factor Authentication'})}
-        </Text>
+        </SectionTitle>
         <Text category="h10" status="placeholder" mb={16}>
           {t('more:two_factor_section_body', {
             defaultValue: 'Require a code sent to your email whenever you sign in on a new device.',
@@ -338,9 +339,9 @@ const SecuritySettings = memo(() => {
           </CtaButton>
         )}
 
-        <Text category="h9-s" bold mb={4} mt={32}>
+        <SectionTitle mt={32} mb={4}>
           {t('more:change_password_section_title', {defaultValue: 'Password'})}
-        </Text>
+        </SectionTitle>
         {!hasPasswordProvider ? (
           <Text category="h10" status="placeholder" mb={8}>
             {t('more:change_password_no_provider', {

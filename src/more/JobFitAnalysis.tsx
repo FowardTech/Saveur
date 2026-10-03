@@ -5,6 +5,7 @@ import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Flex from 'components/Flex';
 import CtaButton from 'components/CtaButton';
 import StatusBadge from 'components/StatusBadge';
@@ -217,9 +218,9 @@ const JobFitAnalysis = memo(({applyUrl, jobTitle}: JobFitAnalysisProps) => {
 
       {gaps.length ? (
         <>
-          <Text category="h7" bold mt={20} mb={12}>
+          <SectionTitle mt={20} mb={12}>
             {t('more:missing_skills', {defaultValue: 'Missing Skills'})}
-          </Text>
+          </SectionTitle>
           <View style={styles.chipsWrap}>
             {gaps.map((skill, i) => (
               <View key={i} style={styles.chip}>

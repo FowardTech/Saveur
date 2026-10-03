@@ -19,6 +19,7 @@ import { GamificationStreakProps } from 'constants/Types';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Flex from 'components/Flex';
 import { globalStyle } from 'styles/globalStyle';
 import { AdvertisementProps, EKeyAsyncStorage, accountScopedKey } from 'constants/Types';
@@ -1174,9 +1175,9 @@ const HomeSrc = memo(() => {
             there). Conditional rendering/behavior is unchanged -- still
             renders nothing at all when there's no real scheduled
             session, just earlier in the page now. */}
-        <Text category="h10" bold style={styles.sectionLabel}>
+        <SectionTitle>
           {t('home:section_today', { defaultValue: 'Today' }).toString()}
-        </Text>
+        </SectionTitle>
         {nextSession ? (
           <ActionCard
             icon="calendar-outline"
@@ -1252,7 +1253,8 @@ const HomeSrc = memo(() => {
           </View>
         ) : (
           <FeatureCard
-            imageUri="https://images.unsplash.com/photo-1758523672300-500f7148726c?auto=format&fit=crop&w=1000&q=75"
+            image={require('assets/home3d/rocket.png')}
+          backdrop="#2F6BFF"
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
@@ -1267,11 +1269,12 @@ const HomeSrc = memo(() => {
             each of these 3 always-visible cards gets its own full-color
             gradient icon now instead of a tinted eva glyph (see
             components/ActionCard.tsx's `iconImage` prop). */}
-        <Text category="h10" bold style={styles.sectionLabel}>
+        <SectionTitle>
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
-        </Text>
+        </SectionTitle>
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1758874089230-09e68799e3e9?auto=format&fit=crop&w=1000&q=75"
+          image={require('assets/home3d/progress.png')}
+          backdrop="#FF8A3D"
           eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
@@ -1286,11 +1289,12 @@ const HomeSrc = memo(() => {
 
         <CoachingReportCard />
 
-        <Text category="h10" bold style={styles.sectionLabel}>
+        <SectionTitle>
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
-        </Text>
+        </SectionTitle>
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1777384226369-5a2a15f2ef3e?auto=format&fit=crop&w=1000&q=75"
+          image={require('assets/home3d/career.png')}
+          backdrop="#7C5CFF"
           eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
           subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
@@ -1298,7 +1302,8 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1680692138342-665dde0c3311?auto=format&fit=crop&w=1000&q=75"
+          image={require('assets/home3d/salary.png')}
+          backdrop="#19B87A"
           eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
           subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
@@ -1306,7 +1311,8 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1639571786956-eb4b40cc03cf?auto=format&fit=crop&w=1000&q=75"
+          image={require('assets/home3d/trophy.png')}
+          backdrop="#FF5FA2"
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}

@@ -13,6 +13,7 @@ import {NavigationProp, useFocusEffect, useNavigation} from '@react-navigation/n
 import {RootStackParamList} from 'navigation/types';
 import {EKeyAsyncStorage, accountScopedKey} from 'constants/Types';
 import HeaderMoreOption from './components/HeaderMoreOption';
+import SectionTitle from 'components/SectionTitle';
 import DrawerMenuButton from 'components/DrawerMenuButton';
 import ButtonOptional, { ButtonOptionalProps } from './components/ButtonOptional';
 import ThemeContext from '../../ThemeContext';
@@ -622,9 +623,9 @@ const MoreSrc = memo(() => {
           email={profile?.email ?? ''}
         />
         <View style={styles.details}>
-          <Text category="h9" status="placeholder" style={styles.sectionHeading}>
+          <SectionTitle mt={0} mb={10} style={styles.sectionHeading}>
             {t('more:myDetails')}
-          </Text>
+          </SectionTitle>
           {/* SYMPHONY REDESIGN (explicit product request, with reference
               screenshots: "I want the settings screen items to be in form
               of cards just the way you see it in the symphony
@@ -658,9 +659,9 @@ const MoreSrc = memo(() => {
           </View>
         </View>
         <View style={styles.application}>
-          <Text category="h9" status="placeholder" style={styles.sectionHeading}>
+          <SectionTitle mt={0} mb={10} style={styles.sectionHeading}>
             {t('more:application')}
-          </Text>
+          </SectionTitle>
           <View style={styles.groupCard}>
           {DATA_APPLICATION.map((item, i) => (
             <View key={i} style={styles.rowCard}>

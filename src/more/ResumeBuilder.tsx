@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 import { pick, isErrorWithCode, errorCodes, types as documentTypes } from '@react-native-documents/picker';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -396,9 +397,9 @@ const ResumeBuilder = memo(() => {
                 progressGradientTo="#71717a"
               />
             </Flex>
-            <Text category="h6" bold mb={16}>
+            <SectionTitle mt={0} mb={16}>
               {t('more:ats_tips', { defaultValue: 'Suggestions to improve your score' })}
-            </Text>
+            </SectionTitle>
             {atsTips.map((tip, i) => (
               <Layout key={i} level="2" style={styles.tipRow}>
                 <Icon pack="assets" name="quote" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
@@ -410,9 +411,9 @@ const ResumeBuilder = memo(() => {
           </>
         ) : null}
 
-        <Text category="h6" bold mt={40} mb={4}>
+        <SectionTitle mt={40} mb={12}>
           {t('more:ai_bullet_rewrite', { defaultValue: 'Rewrite a Bullet with AI' })}
-        </Text>
+        </SectionTitle>
         <Text category="h9-s" status="placeholder" mb={16}>
           {t('more:ai_bullet_rewrite_description', {
             defaultValue: 'Paste a resume bullet — we’ll tighten the wording and lead with a stronger verb.',

@@ -12,6 +12,7 @@ import {
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 
 import Text from 'components/Text';
+import SectionTitle from 'components/SectionTitle';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
@@ -216,9 +217,9 @@ const JobPreferences = memo(() => {
           </Text>
         )}
 
-        <Text category="h7" bold mb={12}>
+        <SectionTitle mt={0} mb={12}>
           {t('auth:preferred_countries_title', {defaultValue: "Countries you'd work in"})}
-        </Text>
+        </SectionTitle>
         <View style={styles.searchWrap}>
           <Input
             placeholder={t('auth:enter_address_zip_code_').toString()}
