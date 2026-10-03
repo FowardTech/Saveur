@@ -150,7 +150,7 @@ import ThemeContext from '../../ThemeContext';
 // before treating the user's turn as over and sending it. Was 1300ms;
 // lowered to 1000ms as asked. Applies to both the duplex (iOS) and legacy
 // (Android) paths equally, since both share this same debounce effect.
-const SILENCE_DEBOUNCE_MS = 1800;
+const SILENCE_DEBOUNCE_MS = 2600;
 
 // Product report ("the AI sometimes cuts the user off with its response...
 // allow some seconds to make sure the user finished talking"): a flat 1s
@@ -158,13 +158,28 @@ const SILENCE_DEBOUNCE_MS = 1800;
 // when the utterance is short (likely mid-thought) and taper to
 // SILENCE_DEBOUNCE_MS once a full sentence has been said. Barge-in
 // (interrupting the coach) is untouched and stays immediate.
-const SHORT_TURN_SILENCE_DEBOUNCE_MS = 3000;
+const SHORT_TURN_SILENCE_DEBOUNCE_MS = 4000;
+// Words that almost never end a finished sentence -- if the user's last word
+// is one of these (or the text ends with a comma), they are mid-thought, so
+// wait longer before treating the turn as over.
+const TRAILING_FILLERS = new Set([
+  'and', 'but', 'so', 'because', 'or', 'then', 'that', 'which', 'with', 'to', 'of', 'for', 'in', 'on', 'at',
+  'the', 'a', 'an', 'my', 'is', 'are', 'was', 'i', 'if', 'when', 'like', 'um', 'uh', 'umm', 'er', 'well',
+]);
+const INCOMPLETE_EXTRA_MS = 2200;
 function getNormalDebounceMs(liveText: string): number {
-  const words = liveText.trim().split(/\s+/).filter(Boolean).length;
-  if (words <= 3) return SHORT_TURN_SILENCE_DEBOUNCE_MS;
-  if (words >= 8) return SILENCE_DEBOUNCE_MS;
-  const progress = (words - 3) / 5;
-  return Math.round(SHORT_TURN_SILENCE_DEBOUNCE_MS - progress * (SHORT_TURN_SILENCE_DEBOUNCE_MS - SILENCE_DEBOUNCE_MS));
+  const trimmed = liveText.trim();
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  let ms: number;
+  if (words.length <= 3) ms = SHORT_TURN_SILENCE_DEBOUNCE_MS;
+  else if (words.length >= 8) ms = SILENCE_DEBOUNCE_MS;
+  else {
+    const progress = (words.length - 3) / 5;
+    ms = Math.round(SHORT_TURN_SILENCE_DEBOUNCE_MS - progress * (SHORT_TURN_SILENCE_DEBOUNCE_MS - SILENCE_DEBOUNCE_MS));
+  }
+  const last = (words[words.length - 1] || '').toLowerCase().replace(/[.!?]+$/, '');
+  if (/[,;:]$/.test(trimmed) || TRAILING_FILLERS.has(last.replace(/[,;:]+$/, ''))) ms += INCOMPLETE_EXTRA_MS;
+  return ms;
 }
 
 // Echo guard. If the mic picks the coach's own voice back up, that text must
