@@ -16,7 +16,7 @@ interface OnboardingClusterBadge {
 // those carry semantic meaning (success/warning/danger) that has nothing
 // to do with a decorative avatar/icon cluster.
 export const CLUSTER_COLORS = {
-  blue: '#0063F8',
+  blue: '#52525b',
   pink: '#EC4899',
   green: '#10B981',
   orange: '#F5A623',

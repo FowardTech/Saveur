@@ -32,7 +32,7 @@ interface Panel {
 
 const PANELS: Panel[] = [
   {key: 'performingWell', icon: 'checkmark-circle-2-outline', color: '#10B981', titleKey: 'home:coaching_report_performing_well', titleDefault: 'Performing Well'},
-  {key: 'keyInsights', icon: 'bulb-outline', color: '#8B5CF6', titleKey: 'home:coaching_report_key_insights', titleDefault: 'Key Insights'},
+  {key: 'keyInsights', icon: 'bulb-outline', color: '#52525b', titleKey: 'home:coaching_report_key_insights', titleDefault: 'Key Insights'},
   {key: 'areasToImprove', icon: 'flag-outline', color: '#F59E0B', titleKey: 'home:coaching_report_areas_to_improve', titleDefault: 'Areas to Improve'},
   {key: 'whatsNext', icon: 'arrow-forward-outline', color: '#EC4899', titleKey: 'home:coaching_report_whats_next', titleDefault: "What's Next"},
 ];
@@ -93,14 +93,14 @@ const CoachingReportCard = () => {
     return (
       <View style={styles.emptyOuter}>
         <LinearGradient
-          colors={['#0063F80D', '#8B5CF60D', '#8B5CF600']}
+          colors={['#52525b0D', '#52525b0D', '#52525b00']}
           start={{x: 0, y: 0}}
           end={{x: 1, y: 1}}
           style={StyleSheet.absoluteFillObject}
         />
         <View style={styles.emptyContent}>
           <View style={styles.emptyIcon}>
-            <Icon pack="eva" name="bar-chart-2-outline" style={[globalStyle.icon20, {tintColor: '#8B5CF6'}]} />
+            <Icon pack="eva" name="bar-chart-2-outline" style={[globalStyle.icon20, {tintColor: '#52525b'}]} />
           </View>
           <Text category="h9-s" bold mt={12}>
             {t('home:coaching_report_title', {defaultValue: 'Your Coaching Report'})}
@@ -204,7 +204,7 @@ const themedStyles = StyleService.create({
     borderRadius: 16,
     borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#0063F840',
+    borderColor: '#52525b40',
     overflow: 'hidden',
   },
   emptyContent: {
@@ -215,7 +215,7 @@ const themedStyles = StyleService.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: accentTintBg('#8B5CF6'),
+    backgroundColor: accentTintBg('#52525b'),
     alignItems: 'center',
     justifyContent: 'center',
   },

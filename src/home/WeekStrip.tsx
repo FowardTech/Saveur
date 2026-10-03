@@ -80,7 +80,7 @@ const WeekStrip = memo(({ checkedInToday, onDayPress }: WeekStripProps) => {
             ]}>
             {/* BUG FIX (product report: "check the whole app" for the same
                 text-primary-color regression) -- today's circle is filled
-                with theme['color-primary-100'] above, the same #0063f8 as
+                with theme['color-primary-100'] above, the same #52525b as
                 text-primary-color now resolves to, so today's date number
                 was invisible. text-control-color is this app's real
                 "always white on a colored surface" token. */}

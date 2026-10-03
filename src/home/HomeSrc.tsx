@@ -1338,7 +1338,7 @@ const HomeSrc = memo(() => {
             "subtle version of that color" background, a real border in
             "the main colors", and a Settings-style gradient icon badge).
             accentColor stays the app's real primary blue (color-primary-
-            500, #0063F8 -- same blue this card's border already matched
+            500, #52525b -- same blue this card's border already matched
             before this pass, just now actually rendered as a border
             instead of a full card fill) so this card's "main color"
             identity is unchanged; iconGradientColors reuses
@@ -1358,13 +1358,13 @@ const HomeSrc = memo(() => {
           subtitle={t('home:explore_card_subtitle', { defaultValue: 'Resume builder, job alerts, career tools & more' }).toString()}
           onPress={onPressExploreMore}
           // Product request: purple subtle card background + purple icon
-          // gradient, matching the app's existing purple accent (#8B5CF6,
+          // gradient, matching the app's existing purple accent (#52525b,
           // see HomeHeroArt.tsx's "special/featured" color) -- same
           // darker->lighter two-stop gradient pattern already used by the
           // blue (#2d76db -> #3B9DFF) and orange (#dc5d2b -> #FB923C)
           // cards above, just in purple instead of blue.
-          accentColor="#8B5CF6"
-          iconGradientColors={['#7C4DEF', '#8B5CF6']}
+          accentColor="#52525b"
+          iconGradientColors={['#7C4DEF', '#52525b']}
           // Product follow-up: "remove the borders from practice card and
           // explore card" -- keeps the purple subtle background tint,
           // just drops the purple border.

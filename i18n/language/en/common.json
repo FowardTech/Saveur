@@ -127,5 +127,8 @@
   "view_all": "View all",
   "view_details": "View Details",
   "warning": "Warning",
-  "yes": "Yes"
+  "yes": "Yes",
+  "tab_jobs": "Jobs",
+  "tab_growth": "Growth",
+  "tab_more": "More"
 }

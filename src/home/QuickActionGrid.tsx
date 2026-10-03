@@ -103,7 +103,7 @@ export interface QuickAction {
   key: string;
   title: string;
   icon: React.FC<{ size: number }>;
-  // Single accent hex, e.g. '#0063f8' -- used for the illustration's shapes
+  // Single accent hex, e.g. '#52525b' -- used for the illustration's shapes
   // (see HomeHeroArt.tsx) and as the tile's own fill on a `solid` tile. No
   // longer drives the icon badge's color -- see `icon`'s own comment.
   tint: string;

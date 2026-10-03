@@ -57,7 +57,7 @@ import { formatNumber, localizeDigits } from 'utils/formatNumber';
 const rankMedalStyle = (rank: number, theme: Record<string, string>): { bg: string; text: string } => {
   switch (rank) {
     case 1:
-      return { bg: '#0063f8', text: '#FFFFFF' };
+      return { bg: '#52525b', text: '#FFFFFF' };
     case 2:
       return { bg: theme['background-basic-color-3'], text: theme['background-basic-color-6'] };
     case 3:

@@ -45,7 +45,7 @@ const scoreRingColors = (score: number, theme: Record<string, string>) => {
 };
 // Reference-redesign tone alignment: these two non-threshold rings (Overall
 // Score, Smiling) used to share GradientCard.tsx's old default brand-blue
-// pair (#1DA1F2 -> #0063f8) — same stale pair Leaderboard.tsx's "Your
+// pair (#52525b -> #52525b) — same stale pair Leaderboard.tsx's "Your
 // standing" ring and MyProgress.tsx's roadmap ring carried before this
 // session's redesign pass moved them to the new soft-blue tone
 // (#9DBFEF -> #7EA8E2). This was the last leftover instance of the old

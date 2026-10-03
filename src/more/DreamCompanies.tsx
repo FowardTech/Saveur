@@ -401,8 +401,8 @@ const DreamCompanies = memo(() => {
               icons... give the icons themselves the platform blue") --
               this cycled through a color-primary-transparent-100 tint
               circle and a GradientIconBadge; no badge/background now,
-              plain plus glyph tinted platform blue (#0063f8) directly. */}
-          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#0063f8', marginRight: 12 }]} />
+              plain plus glyph tinted platform blue (#52525b) directly. */}
+          <Icon pack="eva" name="plus-outline" style={[globalStyle.icon20, { tintColor: '#52525b', marginRight: 12 }]} />
           <Text category="h9" bold style={globalStyle.flexOne}>
             {t('more:dream_company_add', { defaultValue: 'Add to Dashboard' })}
           </Text>
@@ -702,7 +702,7 @@ const DreamCompanies = memo(() => {
                     // background was color-primary-100 with its icon/text
                     // tinted color-primary-500; constants/theme/
                     // appTheme.json defines BOTH as the exact same hex
-                    // (#0063f8, the flat brand blue), so the text was
+                    // (#52525b, the flat brand blue), so the text was
                     // rendering in the identical color as its own
                     // background — same brand blue, zero contrast, not a
                     // dark/light-mode issue. Swapped to the light,

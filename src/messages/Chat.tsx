@@ -520,7 +520,7 @@ const Chat = memo(() => {
             {
               // BUG FIX (product request: "i want the user bubble to be
               // white background not blue anymore") -- was
-              // theme["button-basic-color"] (brand blue, #0063f8).
+              // theme["button-basic-color"] (brand blue, #52525b).
               // Hardcoded white (not a theme token) since the ask was for a
               // literal white bubble regardless of light/dark app theme.
               backgroundColor: props.currentMessage?.image

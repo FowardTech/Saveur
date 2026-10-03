@@ -197,10 +197,10 @@ const styles = {
     borderRadius: 99,
   },
   timeChipIcon: {
-    tintColor: '#8B5CF6',
+    tintColor: '#52525b',
   },
   timeChipText: {
-    color: '#8B5CF6',
+    color: '#52525b',
     marginLeft: 4,
   },
   backdrop: {

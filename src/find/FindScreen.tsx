@@ -227,7 +227,7 @@ const FindScreen = memo(() => {
     // share one flat gray tint with no distinction between tools; this one
     // now carries a `tint` (see the render loop below), reusing the exact
     // purple HomeSrc.tsx's "More for you" rows used (rgba(139, 92, 246,
-    // 0.08) bg / #8B5CF6 icon) — also the same purple this screen's own
+    // 0.08) bg / #52525b icon) — also the same purple this screen's own
     // "AI-graded result" badge inside Coding Practice itself already uses
     // (CodingInterview.tsx), so the color reads as this tool's own accent
     // rather than an arbitrary pick.
@@ -237,7 +237,7 @@ const FindScreen = memo(() => {
           icon: 'code-outline',
           onPress: () => setShowCodingDifficultyPicker(true),
           loading: isStartingCoding,
-          tint: { bg: 'rgba(139, 92, 246, 0.08)', fg: '#8B5CF6' },
+          tint: { bg: 'rgba(139, 92, 246, 0.08)', fg: '#52525b' },
         }]
       : []),
     // Admin-configurable (product request: "I want to be able to activate
@@ -301,7 +301,7 @@ const FindScreen = memo(() => {
               icons... give the icons themselves the platform blue") -- no
               badge/background now, matching HomeSrc.tsx's own reverted
               Career Toolkit icons -- plain calendar glyph tinted platform
-              blue (#0063f8) directly.
+              blue (#52525b) directly.
               REDESIGN (product-supplied icon pack, "use them in the
               appropriate places in the app") -- swapped for the real
               illustrated calendar icon from that pack, same as HomeSrc.tsx's
@@ -533,7 +533,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.card,
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#0063f8',
+    borderColor: '#52525b',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,

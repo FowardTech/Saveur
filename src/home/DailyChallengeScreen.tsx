@@ -145,8 +145,8 @@ const DailyChallengeScreen = memo(() => {
                 </View>
               </Flex>
               <View style={[styles.rewardBadge, challenge.completed ? styles.rewardBadgeEarned : null]}>
-                <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#0063f8' }]} />
-                <Text category="h10" bold ml={2} style={{ color: '#0063f8' }}>
+                <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, { tintColor: '#52525b' }]} />
+                <Text category="h10" bold ml={2} style={{ color: '#52525b' }}>
                   {challenge.completed ? challenge.xpAwarded : configService.getCachedConfig().daily_challenge.xp_reward}
                 </Text>
               </View>

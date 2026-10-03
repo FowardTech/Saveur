@@ -1336,6 +1336,6 @@ const themedStyles = StyleService.create({
     opacity: 0.6,
   },
   heroSubscribeButtonText: {
-    color: '#0063f8',
+    color: '#52525b',
   },
 });

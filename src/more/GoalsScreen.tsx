@@ -181,7 +181,7 @@ const GoalsScreen = memo(() => {
                 badge treatment exactly. Same 3 fixed colors as before,
                 just bolder. */}
             <Flex justify="flex-start" itemsCenter mb={12}>
-              <View style={[styles.sectionIconWrap, { backgroundColor: '#0063f8' }]}>
+              <View style={[styles.sectionIconWrap, { backgroundColor: '#52525b' }]}>
                 <Icon pack="eva" name="briefcase-outline" style={[globalStyle.icon16, { tintColor: '#FFFFFF' }]} />
               </View>
               <Text category="h6" bold ml={10}>

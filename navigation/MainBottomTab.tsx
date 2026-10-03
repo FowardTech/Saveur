@@ -232,7 +232,7 @@ const MainBottomTab = memo(() => {
             pack="assets"
             name={focused ? "commentActive" : "comment"}
             // Was theme["text-primary-color"] — that token now resolves to
-            // the same blue (#0063f8) as fabCircle's own background (see
+            // the same blue (#52525b) as fabCircle's own background (see
             // constants/theme/light.json's text-primary-color fix for the
             // "search the web" bug), so the icon went fully invisible in
             // light mode (dark mode was fine since its text-primary-color
@@ -366,16 +366,19 @@ const MainBottomTab = memo(() => {
         }}
       >
         <BottomTab.Screen
-          name="Home"
-          component={isGated ? VerifyEmailGate : HomeStackNavigator}
+          name="Coach"
+          component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesNavigator}
           options={{
-            tabBarLabel: t("common:tab_home", { defaultValue: "Home" }),
+            // FULL RESKIN (see CoachFabIcon's own comment above): back to
+            // a raised floating circular button, no label underneath —
+            // matches the reference app's center camera/quick-action FAB
+            // exactly (2 tabs, FAB, 2 tabs). `tabBarLabel: () => null`
+            // suppresses react-navigation's own label slot entirely for
+            // just this one tab rather than passing an empty string
+            // (which would still reserve the same vertical space).
+            tabBarLabel: t("common:tab_coach", { defaultValue: "Coach" }),
             tabBarIcon: ({ focused }) => (
-              <ButtonTab
-                focused={focused}
-                icon="home"
-                numberNotification={undefined}
-              />
+              <ButtonTab focused={focused} icon="comment" numberNotification={undefined} />
             ),
           }}
         />
@@ -394,21 +397,6 @@ const MainBottomTab = memo(() => {
           }}
         />
         <BottomTab.Screen
-          name="Coach"
-          component={isGated ? VerifyEmailGate : !isPro ? CoachProLockGate : MessagesNavigator}
-          options={{
-            // FULL RESKIN (see CoachFabIcon's own comment above): back to
-            // a raised floating circular button, no label underneath —
-            // matches the reference app's center camera/quick-action FAB
-            // exactly (2 tabs, FAB, 2 tabs). `tabBarLabel: () => null`
-            // suppresses react-navigation's own label slot entirely for
-            // just this one tab rather than passing an empty string
-            // (which would still reserve the same vertical space).
-            tabBarLabel: () => null,
-            tabBarIcon: ({ focused }) => <CoachFabIcon focused={focused} />,
-          }}
-        />
-        <BottomTab.Screen
           name="Interviews"
           component={isGated ? VerifyEmailGate : RequestsBottomNavigator}
           options={{
@@ -419,11 +407,25 @@ const MainBottomTab = memo(() => {
             // name ("Interviews") stays as-is to avoid touching every
             // navigate('Interviews'/'RequestStack', ...) call site — only
             // the user-facing label changes.
-            tabBarLabel: t("common:tab_interviews", { defaultValue: "Applications" }),
+            tabBarLabel: t("common:tab_jobs", { defaultValue: "Jobs" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab
                 focused={focused}
                 icon="bookmark"
+                numberNotification={undefined}
+              />
+            ),
+          }}
+        />
+        <BottomTab.Screen
+          name="Home"
+          component={isGated ? VerifyEmailGate : HomeStackNavigator}
+          options={{
+            tabBarLabel: t("common:tab_growth", { defaultValue: "Growth" }),
+            tabBarIcon: ({ focused }) => (
+              <ButtonTab
+                focused={focused}
+                icon="stats"
                 numberNotification={undefined}
               />
             ),
@@ -447,7 +449,7 @@ const MainBottomTab = memo(() => {
             // old label was misleading. Route name/param key ("Profile")
             // stays as-is — only the user-facing label changes — to avoid
             // touching every navigate('Profile', ...) call site elsewhere.
-            tabBarLabel: t("common:tab_profile", { defaultValue: "Menu" }),
+            tabBarLabel: t("common:tab_more", { defaultValue: "More" }),
             tabBarIcon: ({ focused }) => (
               <ButtonTab focused={focused} icon="more" numberNotification={menuBadgeCount} />
             ),
@@ -488,13 +490,10 @@ const themedStyles = StyleService.create({
     // borderTopRightRadius on its own in React Native without needing
     // overflow:hidden to clip to it, so the rounded-corner look below is
     // unaffected by removing this.
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -46,
-    paddingTop: 12,
+    paddingTop: 8,
     backgroundColor: "background-basic-color-2",
-    borderColor: "transparent",
-    borderTopWidth: -1,
+    borderColor: "border-card-default",
+    borderTopWidth: 1,
     // Redesign v2 (full reskin): soft ambient lift above the tab bar
     // (matches globalStyle.shadowFade) instead of the flat borderless bar
     // from the earlier ZipRecruiter direction — a visible seam between the
@@ -506,7 +505,7 @@ const themedStyles = StyleService.create({
     // touching iOS's shadow at all.
     shadowColor: "rgba(31, 41, 84, 0.35)",
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0,
     shadowRadius: 16,
     elevation: 0,
   },
@@ -539,14 +538,14 @@ const themedStyles = StyleService.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "background-basic-color-3",
+    backgroundColor: "transparent",
     justifyContent: "center",
     alignItems: "center",
   },
   styleLabel: {
-    fontFamily: "PlusJakartaSans-Medium",
-    fontSize: 11,
-    lineHeight: 24,
+    fontFamily: "PlusJakartaSans-Bold",
+    fontSize: 10.5,
+    lineHeight: 14,
   },
   notification: {
     // Was 16x16 with a 14px-font label -- larger counts had no room to
@@ -554,7 +553,7 @@ const themedStyles = StyleService.create({
     // moderate size for a two-character count badge.
     position: "absolute",
     borderRadius: 99,
-    backgroundColor: "button-basic-color",
+    backgroundColor: "text-basic-color",
     width: 20,
     height: 20,
     justifyContent: "center",

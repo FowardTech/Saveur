@@ -807,7 +807,7 @@ const CodingProjectEditor = memo(() => {
               <>
                 {runResult.engine === 'ai' ? (
                   <View style={styles.aiBadge}>
-                    <Text category="h10" bold style={{color: '#8B5CF6'}}>
+                    <Text category="h10" bold style={{color: '#52525b'}}>
                       {t('find:ai_graded', {defaultValue: 'AI-graded result'})}
                     </Text>
                   </View>
