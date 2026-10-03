@@ -754,7 +754,7 @@ const Chat = memo(() => {
         <View
           style={[
             styles.chatInputCard,
-            { marginBottom: Platform.OS === "android" ? 8 : 24 },
+            { marginBottom: 6 },
           ]}>
           <GiftedComposer
             {...composerProps}
@@ -1024,6 +1024,9 @@ const Chat = memo(() => {
         // See isVoiceMode's own comment above for the current white-bg/
         // black-ink reasoning (was blue in light mode / navy in dark mode
         // before this follow-up).
+        // Floating pill bottom nav sits right below this screen and already
+        // clears the safe area, so drop Container's own bottom inset here.
+        { paddingBottom: 0 },
         isVoiceMode && { backgroundColor: theme['background-basic-color-2'] },
       ]}>
       <TopNavigation
@@ -1171,7 +1174,7 @@ const Chat = memo(() => {
               renderSend={renderSend}
               renderCustomView={renderCustomView}
               renderChatEmpty={renderChatEmpty}
-              messagesContainerStyle={{ paddingBottom: 32 }}
+              messagesContainerStyle={{ paddingBottom: 12 }}
               renderInputToolbar={renderInputToolbar}
               // textInputStyle/placeholderTextColor REMOVED from here --
               // renderInputToolbar's own JSX now sets both directly on the
