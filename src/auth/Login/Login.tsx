@@ -16,6 +16,7 @@ import {
 import useLayout from 'hooks/useLayout';
 
 import Text from 'components/Text';
+import TermsCheckBox from 'components/TermsCheckBox';
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
 import BrandWordmark from 'components/BrandWordmark';
@@ -274,7 +275,7 @@ const Login = memo(() => {
           activeOpacity={0.85}
           onPress={() => setAgreedToTerms(v => !v)}
           style={styles.termsRow}>
-          <CheckBox checked={agreedToTerms} onChange={setAgreedToTerms} />
+          <TermsCheckBox checked={agreedToTerms} onChange={setAgreedToTerms} />
           <Text category="h9-s" ml={8} style={globalStyle.flexOne}>
             {t('auth:agree_term')}{' '}
             <Text
@@ -295,7 +296,7 @@ const Login = memo(() => {
         <CtaButton onPress={onLogin} disabled={canContinue || isSubmitting} loading={isSubmitting}>
           {t('auth:login').toString()}
         </CtaButton>
-        <Text category="h8-s" status={'placeholder'} mt={40} mb={24} center>
+        <Text category="h8-s" status={'placeholder'} mt={20} mb={16} center>
           {t('auth:or')}
         </Text>
         <SocialAuthButton

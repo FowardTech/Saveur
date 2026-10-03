@@ -11,6 +11,7 @@ import {
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 
 import Text from 'components/Text';
+import TermsCheckBox from 'components/TermsCheckBox';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
@@ -364,7 +365,7 @@ const SignupThirdStep = memo(() => {
             activeOpacity={0.85}
             onPress={() => setAgreedToTerms(v => !v)}
             style={styles.termsRow}>
-            <CheckBox checked={agreedToTerms} onChange={setAgreedToTerms} />
+            <TermsCheckBox checked={agreedToTerms} onChange={setAgreedToTerms} />
             <Text category="h9-s" ml={8} style={{flex: 1}}>
               {t('auth:agree_term')}{' '}
               <Text
@@ -388,7 +389,7 @@ const SignupThirdStep = memo(() => {
             disabled={!canContinue || isSubmitting}
           />
 
-          <Text category="h8-s" status={'placeholder'} mt={32} mb={24} center>
+          <Text category="h8-s" status={'placeholder'} mt={20} mb={16} center>
             {t('auth:or')}
           </Text>
           <SocialAuthButton
