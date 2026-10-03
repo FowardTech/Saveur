@@ -75,7 +75,7 @@ const UserAvatar = memo(({uri, name, size = 'medium', style, shape = 'rounded'}:
           width: px,
           height: px,
           borderRadius: shape === 'round' ? px / 2 : px / 4,
-          backgroundColor: initials ? theme['color-primary-500'] : theme['background-basic-color-3'],
+          backgroundColor: initials ? theme['color-primary-solid'] ?? '#18181b' : theme['background-basic-color-3'],
           alignItems: 'center',
           justifyContent: 'center',
           overflow: 'hidden',
@@ -86,7 +86,7 @@ const UserAvatar = memo(({uri, name, size = 'medium', style, shape = 'rounded'}:
         <Text
           category={FONT_CATEGORY[size]}
           bold
-          style={{color: theme['text-control-color'] ?? '#fff'}}>
+          style={{color: '#FFFFFF'}}>
           {initials}
         </Text>
       ) : (
