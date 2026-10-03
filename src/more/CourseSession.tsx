@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
+import StageProgressBar from 'components/StageProgressBar';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
@@ -585,7 +586,8 @@ const CourseSession = memo(() => {
         title={<Text category="h6" bold numberOfLines={1} ellipsizeMode="tail">{topic}</Text>}
         accessoryLeft={<NavigationAction onPress={goBack} />}
       />
-      <Content padder avoidKeyboard contentContainerStyle={styles.content}>
+      <StageProgressBar current={moduleIndex + 1} total={totalModules} />
+      <Content padder avoidKeyboard extraScrollHeight={120} enableOnAndroid contentContainerStyle={styles.content}>
         <Flex justify="space-between" itemsCenter mb={16}>
           <Text category="h9" bold status="placeholder">
             {t('more:course_module_progress', {

@@ -15,6 +15,9 @@ interface ContentProps extends ScrollViewProps {
   // already used successfully the same way in src/auth/Login/Login.tsx —
   // rather than introducing a second keyboard-handling library.
   avoidKeyboard?: boolean;
+  // Forwarded to KeyboardAwareScrollView when avoidKeyboard is set.
+  extraScrollHeight?: number;
+  enableOnAndroid?: boolean;
 }
 
 // Exported so screens that need to compute a width alongside Content's

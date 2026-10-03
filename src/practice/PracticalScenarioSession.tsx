@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
+import StageProgressBar from 'components/StageProgressBar';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
@@ -124,14 +125,16 @@ const PracticalScenarioSession = memo(() => {
         title={t('find:practical_scenarios', { defaultValue: 'Practical Scenarios' })}
         accessoryLeft={<NavigationAction onPress={() => goBack()} />}
       />
-      <Content padder contentContainerStyle={styles.content}>
-        <Text category="h10" status="placeholder" mb={16}>
-          {t('find:practical_step_progress', {
-            defaultValue: 'Step {{step}} of ~{{total}}',
-            step: step.order,
-            total: TOTAL_STEPS_ESTIMATE,
-          })}
-        </Text>
+      <StageProgressBar
+        current={step.order}
+        total={TOTAL_STEPS_ESTIMATE}
+        label={t('find:practical_step_progress', {
+          defaultValue: 'Step {{step}} of ~{{total}}',
+          step: step.order,
+          total: TOTAL_STEPS_ESTIMATE,
+        }).toString()}
+      />
+      <Content padder avoidKeyboard extraScrollHeight={120} enableOnAndroid contentContainerStyle={styles.content}>
 
         <Layout level="2" style={styles.situationCard}>
           <Text category="h9-s" style={{ lineHeight: 22 }}>{step.situation}</Text>
