@@ -1568,7 +1568,7 @@ const themedStyles = StyleService.create({
   // than the old 24px bare icon (20px) since it now has to fit inside a
   // 28px round pill with room around it, not stand alone.
   iconSend: {
-    tintColor: "background-basic-color-1",
+    tintColor: "#FFFFFF",
     width: 18,
     height: 18,
   },
