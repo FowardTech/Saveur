@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Linking, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, AppState, Linking, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -54,7 +54,7 @@ type PlanId = UserProfileProps['subscriptionTier'];
 // reference across renders — passing a freshly-created arrow function to
 // accessoryLeft on every render would make UI Kitten treat it as a new
 // component type each time.
-const renderCheckoutSpinner = () => <Spinner size="small" status="control" />;
+const renderCheckoutSpinner = () => <ActivityIndicator size="small" color="#FFFFFF" />;
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -1113,7 +1113,7 @@ const Subscription = memo(() => {
                     onPress={() => onSelectPlan(plan, planKey)}
                     style={[styles.heroSubscribeButton, !!checkoutPlanId && styles.heroSubscribeButtonDisabled]}>
                     {isCheckingOut ? (
-                      <Spinner size="small" status="primary" />
+                      <ActivityIndicator size="small" color={theme['color-primary-solid'] ?? '#18181b'} />
                     ) : (
                       <Text category="h9-s" bold style={styles.heroSubscribeButtonText}>
                         {plan.code

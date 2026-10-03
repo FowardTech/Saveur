@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button, ButtonProps, Spinner, Text as KittenText, useTheme } from '@ui-kitten/components';
+import { ActivityIndicator } from 'react-native';
+import { Button, ButtonProps, Text as KittenText, useTheme } from '@ui-kitten/components';
 import { globalStyle } from 'styles/globalStyle';
 
 // Primary call-to-action button (full reskin, product request item —
@@ -44,7 +45,7 @@ export interface CtaButtonProps extends Omit<ButtonProps, 'status' | 'appearance
   loading?: boolean;
 }
 
-const renderLoadingSpinner = () => <Spinner size="small" status="basic" />;
+const renderLoadingSpinner = () => <ActivityIndicator size="small" color="#FFFFFF" />;
 
 const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accessoryLeft, children, ...rest }) => {
   const theme = useTheme();
