@@ -16,6 +16,8 @@ import {RootStackParamList} from 'navigation/types';
 import {ADDON_CODES, hasAddon} from 'services/entitlementsService';
 import * as codingProjectsService from 'services/codingProjectsService';
 import {CodingProjectDetail, ProjectRunResult} from 'services/codingProjectsService';
+import * as projectActions from 'services/projectActionsService';
+import ShareToUserModal from 'components/ShareToUserModal';
 import CodeEditorWebView, {codeMirrorModeForPath} from 'components/CodeEditorWebView';
 
 // Coding Projects editor — the actual multi-file/folder code workspace
@@ -185,6 +187,8 @@ const CodingProjectEditor = memo(() => {
   const [runResultVisible, setRunResultVisible] = React.useState(false);
 
   const [previewVisible, setPreviewVisible] = React.useState(false);
+  const [shareVisible, setShareVisible] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -297,6 +301,39 @@ const CodingProjectEditor = memo(() => {
       },
     });
   }, [project, projectId, navigation, t]);
+
+  // Export the SAVED project as a .zip (server-side).
+  const onExport = React.useCallback(async () => {
+    if (exporting || !projectId) return;
+    setExporting(true);
+    try {
+      const {filename} = await projectActions.exportProjectZip('coding', projectId);
+      if (Platform.OS === 'android') {
+        Alert.alert(
+          t('more:resume_download_complete_title', {defaultValue: 'Download complete'}),
+          t('more:resume_download_complete_message', {defaultValue: '{{filename}} was saved to your Downloads folder.', filename}).toString(),
+        );
+      }
+    } catch (e: any) {
+      Alert.alert(
+        t('more:resume_download_failed_title', {defaultValue: "Couldn't download the file"}),
+        e?.message ?? t('more:resume_download_failed_message', {defaultValue: 'Please try again in a moment.'}),
+      );
+    } finally {
+      setExporting(false);
+    }
+  }, [exporting, projectId, t]);
+
+  const requireSaved = React.useCallback((action: () => void) => {
+    if (isDirtyRef.current) {
+      Alert.alert(
+        t('find:coding_project_unsaved_title', {defaultValue: 'Unsaved changes'}),
+        t('find:coding_project_save_first', {defaultValue: 'Save your changes first.'}).toString(),
+      );
+      return;
+    }
+    action();
+  }, [t]);
 
   // Warn on the way out with unsaved changes — same beforeRemove pattern
   // WebViewScreen.tsx already uses for its own "did you apply?" fallback.
@@ -499,6 +536,19 @@ const CodingProjectEditor = memo(() => {
         accessoryLeft={() => <NavigationAction />}
         accessoryRight={() => (
           <Flex justify="flex-start" itemsCenter>
+            <TouchableOpacity
+              onPress={() => requireSaved(() => setShareVisible(true))}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              style={{marginRight: 14}}>
+              <Icon pack="eva" name="share-outline" style={[globalStyle.icon24, {tintColor: theme['color-primary-500']}]} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              disabled={exporting}
+              onPress={() => requireSaved(onExport)}
+              hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+              style={{marginRight: 14}}>
+              {exporting ? <Spinner size="small" /> : <Icon pack="eva" name="download-outline" style={[globalStyle.icon24, {tintColor: theme['color-primary-500']}]} />}
+            </TouchableOpacity>
             <TouchableOpacity
               disabled={saving}
               onPress={onSave}
@@ -818,6 +868,15 @@ const CodingProjectEditor = memo(() => {
           )}
         </Container>
       </Modal>
+      {projectId ? (
+        <ShareToUserModal
+          visible={shareVisible}
+          onClose={() => setShareVisible(false)}
+          contentType="project"
+          contentId={projectId}
+          getPublicLink={() => projectActions.getProjectPublicUrl('coding', projectId)}
+        />
+      ) : null}
     </Container>
   );
 });
