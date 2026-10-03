@@ -651,7 +651,7 @@ const JobAlerts = memo(() => {
               <Icon pack="eva" name="close-outline" style={[globalStyle.icon24, {tintColor: theme['text-basic-color']}]} />
             </TouchableOpacity>
           </Flex>
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          <ScrollView style={{flexShrink: 1}} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Text category="h8" bold mb={4}>
               {t('more:job_alerts_targeted_roles_label', {defaultValue: "Roles you're targeting"})}
             </Text>
@@ -799,7 +799,10 @@ const JobAlerts = memo(() => {
             </>
             )}
 
-            <CtaButton style={{marginTop: 20}} loading={isSavingPrefs} onPress={onSavePrefs}>
+          </ScrollView>
+          {/* Fixed footer: always visible, no scrolling past the country list. */}
+          <View style={{paddingTop: 12}}>
+            <CtaButton style={{marginTop: 0}} loading={isSavingPrefs} onPress={onSavePrefs}>
               {isSavingPrefs
                 ? t('more:job_alerts_saving', {defaultValue: 'Saving…'})
                 : t('more:job_alerts_save_preferences', {defaultValue: 'Save preferences'})}
@@ -807,7 +810,7 @@ const JobAlerts = memo(() => {
             <Button appearance="outline" style={{marginTop: 12}} onPress={() => setIsPrefsOpen(false)}>
               {t('common:cancel', {defaultValue: 'Cancel'})}
             </Button>
-          </ScrollView>
+          </View>
           </Layout>
         </KeyboardAvoidingView>
         </Modal>

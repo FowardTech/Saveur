@@ -204,7 +204,7 @@ const Login = memo(() => {
             their own headings, so the whole auth flow reads consistently.
             mb trimmed from 72 to 40 now that the illustration above already
             carries some of that visual separation on its own. */}
-        <Text mt={8} category="h2" bold mb={20} fontSize={32} lineHeight={38}>
+        <Text mt={8} category="h2" bold mb={20} fontSize={28} lineHeight={34}>
           {t('auth:welcome_back')}
         </Text>
         <Controller

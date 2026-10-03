@@ -156,7 +156,7 @@ const SignupSecondStep = memo(() => {
         {/* BUG FIX (custom fonts not rendering on Android): see Text.tsx's
             comment — an explicit numeric fontWeight fighting a weight-named
             custom fontFamily breaks Android's font file lookup. Removed. */}
-        <Text mt={8} mb={24} category="h2" bold fontSize={32} lineHeight={38}>
+        <Text mt={8} mb={24} category="h2" bold fontSize={28} lineHeight={34}>
           {t('auth:title_signup_2')}
         </Text>
 
