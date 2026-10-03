@@ -192,6 +192,7 @@ const MoreSrc = memo(() => {
       // off this main list so it isn't a single careless tap away.
       title: t('more:my_profile', {defaultValue: 'My Profile'}),
       icon: 'edit_profile',
+      art: 'user',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -206,6 +207,7 @@ const MoreSrc = memo(() => {
       // roadmap/stats content. This is the new front door to all of it.
       title: t('more:my_progress', {defaultValue: 'My Progress'}),
       icon: 'increase',
+      art: 'chart',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -214,6 +216,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:resume_builder', {defaultValue: 'Resume Builder'}),
       icon: 'myPost',
+      art: 'memo',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -222,6 +225,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:jd_analyzer', {defaultValue: 'JD Analyzer'}),
       icon: 'edit_full',
+      art: 'search',
       status: 'twitter-3',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -232,6 +236,7 @@ const MoreSrc = memo(() => {
       // childcare template — no real document manager screen existed yet.
       title: t('more:my-documents', {defaultValue: 'My Documents'}),
       icon: 'stats',
+      art: 'folder',
       status: 'warning',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -245,6 +250,7 @@ const MoreSrc = memo(() => {
       // changing the goal. See src/more/GoalsScreen.tsx.
       title: t('more:goals', {defaultValue: 'Goals'}),
       icon: 'changeJob',
+      art: 'target',
       status: 'neutral',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -256,6 +262,7 @@ const MoreSrc = memo(() => {
       // impossible to update without deleting and recreating the account.
       title: t('more:job_preferences', {defaultValue: 'Target Roles & Countries'}),
       icon: 'search',
+      art: 'compass',
       status: 'twitter-3',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -264,6 +271,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:job_alerts', {defaultValue: 'Job Alerts'}),
       icon: 'notification',
+      art: 'bell',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -274,6 +282,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:learning_courses', {defaultValue: 'Learning Courses'}),
       icon: 'tutoring',
+      art: 'books',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -287,6 +296,7 @@ const MoreSrc = memo(() => {
       // featureKey rather than needing its own admin-togglable flag.
       title: t('more:saved_videos', {defaultValue: 'Saved Videos'}),
       icon: 'bookmark',
+      art: 'bookmark',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -296,6 +306,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:networking_assistant', {defaultValue: 'Networking Assistant'}),
       icon: 'share',
+      art: 'handshake',
       status: 'green',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -312,6 +323,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:career_diary', {defaultValue: 'Career Diary'}),
       icon: 'calendar',
+      art: 'diary',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -321,6 +333,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:career_roadmap', {defaultValue: 'AI Career Roadmap'}),
       icon: 'increase',
+      art: 'map',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -330,6 +343,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:whats_next_title', {defaultValue: "What's Next"}),
       icon: 'dollar',
+      art: 'rocket',
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -339,6 +353,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:refer_and_earn', {defaultValue: 'Refer & Earn'}),
       icon: 'share',
+      art: 'gift',
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -348,6 +363,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:shared_with_me', {defaultValue: 'Shared with Me'}),
       icon: 'share',
+      art: 'link',
       status: 'primary',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -356,6 +372,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:weekly_career_report', {defaultValue: 'Weekly Career Report'}),
       icon: 'stats',
+      art: 'chartbar',
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -366,6 +383,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:daily_industry_news', {defaultValue: 'Daily Industry News'}),
       icon: 'notification',
+      art: 'news',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -376,6 +394,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:resume_evolution', {defaultValue: 'Resume Evolution'}),
       icon: 'increase',
+      art: 'sparkles',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -389,6 +408,7 @@ const MoreSrc = memo(() => {
       // feature with its own admin on/off toggle.
       title: t('more:generated_documents', {defaultValue: 'Generated Documents'}),
       icon: 'myPost',
+      art: 'doc',
       status: 'green',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -397,6 +417,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:linkedin_optimizer', {defaultValue: 'LinkedIn Optimizer'}),
       icon: 'share',
+      art: 'pro',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -406,6 +427,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:emotional_coach', {defaultValue: 'Emotional Coach'}),
       icon: 'like_comment',
+      art: 'heart',
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -429,6 +451,7 @@ const MoreSrc = memo(() => {
       // inside the dashboard now instead of the main menu.
       title: t('more:dream_companies', {defaultValue: 'Dream Company Dashboard'}),
       icon: 'searchHistory',
+      art: 'building',
       status: 'primary',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -438,6 +461,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:career_dna', {defaultValue: 'Career DNA'}),
       icon: 'increase',
+      art: 'dna',
       status: 'danger',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -450,6 +474,7 @@ const MoreSrc = memo(() => {
       // all until this pass; see services/aiTwinService.ts's own comment.
       title: t('more:ai_career_twin', {defaultValue: 'AI Career Twin'}),
       icon: 'aiCareerTwin',
+      art: 'robot',
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -458,6 +483,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:student_verification', {defaultValue: 'Student Package and Verification'}),
       icon: 'bgCheck',
+      art: 'grad',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -472,6 +498,7 @@ const MoreSrc = memo(() => {
       // and services/billingService.ts's Addon section.
       title: t('more:addons_title', {defaultValue: 'Add-ons'}),
       icon: 'premiumAcc',
+      art: 'puzzle',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -480,6 +507,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:subscription', {defaultValue: 'Subscription'}),
       icon: 'premiumAcc',
+      art: 'crown',
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -501,6 +529,7 @@ const MoreSrc = memo(() => {
       // account), same as before.
       title: t('more:payment_methods', {defaultValue: 'Payment Methods'}),
       icon: 'payment',
+      art: 'card',
       status: 'facebook',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -509,6 +538,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:payment_history', {defaultValue: 'Payment History'}),
       icon: 'searchHistory',
+      art: 'receipt',
       status: 'warning',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -518,6 +548,7 @@ const MoreSrc = memo(() => {
       // Biometric app-lock + email-code 2FA — see src/more/SecuritySettings.tsx.
       title: t('more:security', {defaultValue: 'Security'}),
       icon: 'security',
+      art: 'lock',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -529,6 +560,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:language', {defaultValue: 'Language'}),
       icon: 'changeJob',
+      art: 'globe',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -537,6 +569,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:about-caren'),
       icon: 'stats',
+      art: 'bulb',
       status: 'basic',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -545,6 +578,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:help-&-faq'),
       icon: 'helpWhite',
+      art: 'question',
       status: 'placeholder',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -553,6 +587,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:show_app_tour', {defaultValue: 'Show app tour'}),
       icon: 'stats',
+      art: 'megaphone',
       status: 'twitter',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -570,6 +605,7 @@ const MoreSrc = memo(() => {
       // 'star-outline' too, which renders blank for the same reason — a
       // pre-existing bug elsewhere, not one to repeat here).
       icon: 'rateFull',
+      art: 'star',
       status: 'warning',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -578,6 +614,7 @@ const MoreSrc = memo(() => {
     {
       title: t('more:privacy-of-policy'),
       icon: 'term',
+      art: 'shield',
       status: 'green',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
@@ -645,6 +682,7 @@ const MoreSrc = memo(() => {
             <View key={i} style={styles.rowCard}>
               <ButtonOptional
                 icon={item.icon}
+                art={item.art}
                 title={item.title}
                 status={item.status}
                 iconColor={item.iconColor}
@@ -667,6 +705,7 @@ const MoreSrc = memo(() => {
             <View key={i} style={styles.rowCard}>
               <ButtonOptional
                 icon={item.icon}
+                art={item.art}
                 title={item.title}
                 status={item.status}
                 iconColor={item.iconColor}
@@ -680,6 +719,7 @@ const MoreSrc = memo(() => {
             <ButtonOptional
               withToggle
               icon="darkMode"
+              art="moon"
               title={t('more:switch-dark-mode')}
               status={'danger'}
               iconColor={ICON_GLYPH}
@@ -700,6 +740,7 @@ const MoreSrc = memo(() => {
             <ButtonOptional
               withToggle
               icon="notification"
+              art="bell"
               title={t('more:push_notifications', {defaultValue: 'Push Notifications'})}
               status={'facebook'}
               iconColor={ICON_GLYPH}

@@ -15,6 +15,8 @@ import LinearGradient from 'react-native-linear-gradient';
 
 import Text from 'components/Text';
 import SectionTitle from 'components/SectionTitle';
+import Icon3D from 'components/Icon3D';
+import { icon3dFromEva } from 'utils/icon3d';
 import Content from 'components/Content';
 import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
@@ -406,15 +408,19 @@ const FindScreen = memo(() => {
                 onPress={tool.onPress}
                 disabled={tool.loading}
                 style={[styles.toolRow, { backgroundColor: bg }]}>
-                <View style={[styles.toolIconWrap, { backgroundColor: theme['background-basic-color-1'] }]}>
+                <View style={[styles.toolIconWrap, { backgroundColor: icon3dFromEva(tool.icon) && !tool.loading ? 'transparent' : theme['background-basic-color-1'] }]}>
                   {tool.loading ? (
                     <Spinner size="small" />
                   ) : (
-                    <Icon
-                      pack="eva"
-                      name={tool.icon}
-                      style={[globalStyle.icon20, { tintColor: iconFg }]}
-                    />
+                    icon3dFromEva(tool.icon) ? (
+                      <Icon3D name={icon3dFromEva(tool.icon)!} size={34} />
+                    ) : (
+                      <Icon
+                        pack="eva"
+                        name={tool.icon}
+                        style={[globalStyle.icon20, { tintColor: iconFg }]}
+                      />
+                    )
                   )}
                 </View>
                 <Text category="h9" bold numberOfLines={1} style={[styles.toolLabel, { color: fg }]}>
@@ -443,11 +449,15 @@ const FindScreen = memo(() => {
                 activeOpacity={0.7}
                 onPress={() => onStartSetup(item.type)}
                 style={[styles.typeCard, { backgroundColor: bg }]}>
-                <Icon
-                  pack="eva"
-                  name={item.icon}
-                  style={[globalStyle.icon24, { tintColor: fg }]}
-                />
+                {icon3dFromEva(item.icon) ? (
+                  <Icon3D name={icon3dFromEva(item.icon)!} size={44} />
+                ) : (
+                  <Icon
+                    pack="eva"
+                    name={item.icon}
+                    style={[globalStyle.icon24, { tintColor: fg }]}
+                  />
+                )}
                 <Text category="h9" mt={12} bold numberOfLines={2} style={{ color: fg }}>
                   {getInterviewTypeLabel(item.type, t)}
                 </Text>
