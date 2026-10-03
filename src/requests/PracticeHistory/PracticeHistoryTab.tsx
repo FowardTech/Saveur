@@ -11,6 +11,7 @@ import {MainBottomTabStackParamList} from 'navigation/types';
 import {Request_Type_Enum, MockInterviewSessionProps} from 'constants/Types';
 import TitleList from '../Components/TitleList';
 import EmptyData from '../Components/EmptyData';
+import {PracticeHistoryIllustration} from 'components/EmptyState';
 import PracticeSessionItem from './PracticeSessionItem';
 import * as interviewService from 'services/interviewService';
 import {getInterviewTypeLabel, getPracticeModeLabel, getDifficultyLabel} from 'utils/interviewTypeLabels';
@@ -129,7 +130,7 @@ const PracticeHistoryTab = memo(() => {
           </Text>
         ) : (
           <EmptyData
-            image={Images.noInterview}
+            illustration={<PracticeHistoryIllustration size={150} />}
             title={t('request:noPracticeHistory')}
             description={t('request:noPracticeHistoryTitle')}
           />

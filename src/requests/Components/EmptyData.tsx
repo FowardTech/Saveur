@@ -8,16 +8,17 @@ import Text from 'components/Text';
 interface EmptyDataProps {
   title: string;
   description: string;
-  image: ImageRequireSource;
+  image?: ImageRequireSource;
+  illustration?: React.ReactNode;
 }
 
-const EmptyData = memo(({title, description, image}: EmptyDataProps) => {
+const EmptyData = memo(({title, description, image, illustration}: EmptyDataProps) => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['common']);
   return (
     <View style={styles.empty}>
-      <Image source={image} />
-      <Text category="h6" center mt={58} mb={16}>
+      {illustration ?? (image ? <Image source={image} /> : null)}
+      <Text category="h6" center mt={illustration ? 24 : 58} mb={16}>
         {title}
       </Text>
       <Text category="para-m" center mh={36}>

@@ -42,8 +42,8 @@ const EmptyTrayIllustration = (_: {color?: string}) => (
 );
 
 /** Practice / mock-interview history: microphone with speech bubble and progress bars. */
-export const PracticeHistoryIllustration = () => (
-  <Svg width={96} height={96} viewBox="0 0 96 96" fill="none">
+export const PracticeHistoryIllustration = ({size = 96}: {size?: number}) => (
+  <Svg width={size} height={size} viewBox="0 0 96 96" fill="none">
     <Ellipse cx={48} cy={86} rx={30} ry={4} fill="rgba(0,0,0,0.08)" />
     {/* progress bars */}
     <Rect x={10} y={56} width={10} height={26} rx={3} fill="#19B87A" />
