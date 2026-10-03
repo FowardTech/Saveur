@@ -1253,7 +1253,7 @@ const HomeSrc = memo(() => {
           </View>
         ) : (
           <FeatureCard
-            image={require('assets/home3d/rocket.png')}
+            heroIcon="flash-outline"
           backdrop="#2F6BFF"
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
@@ -1273,7 +1273,7 @@ const HomeSrc = memo(() => {
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </SectionTitle>
         <FeatureCard
-          image={require('assets/home3d/progress.png')}
+          heroIcon="trending-up-outline"
           backdrop="#FF8A3D"
           eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
@@ -1293,7 +1293,7 @@ const HomeSrc = memo(() => {
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </SectionTitle>
         <FeatureCard
-          image={require('assets/home3d/career.png')}
+          heroIcon="briefcase-outline"
           backdrop="#7C5CFF"
           eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
@@ -1302,7 +1302,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <FeatureCard
-          image={require('assets/home3d/salary.png')}
+          heroIcon="bar-chart-2-outline"
           backdrop="#19B87A"
           eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
@@ -1311,7 +1311,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <FeatureCard
-          image={require('assets/home3d/trophy.png')}
+          heroIcon="award-outline"
           backdrop="#FF5FA2"
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
