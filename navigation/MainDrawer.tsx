@@ -310,7 +310,7 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
   const {bottom} = useLayout();
   const activeName = state.routes[state.index]?.name;
   return (
-    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom, 12), backgroundColor: 'transparent'}}>
+    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom, 12), backgroundColor: theme['background-page-body']}}>
       <View
         style={{
           flexDirection: 'row',
