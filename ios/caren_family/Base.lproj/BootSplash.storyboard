@@ -52,20 +52,13 @@
                                         <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavDotB">
+                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="SplashDot" translatesAutoresizingMaskIntoConstraints="NO" id="SavDotB">
                                         <rect key="frame" x="154" y="30" width="9" height="9"/>
-                                        <color key="backgroundColor" red="0.0" green="0.388235" blue="0.972549" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="9" id="SavD1B"/>
                                             <constraint firstAttribute="height" constant="9" id="SavD2B"/>
                                         </constraints>
-                                        <userDefinedRuntimeAttributes>
-                                            <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
-                                                <real key="value" value="4.5"/>
-                                            </userDefinedRuntimeAttribute>
-                                            <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
-                                        </userDefinedRuntimeAttributes>
-                                    </view>
+                                    </imageView>
                                 </subviews>
                                 <constraints>
                                     <constraint firstItem="3lX-Ut-9ad" firstAttribute="leading" secondItem="SavRow01B" secondAttribute="leading" id="SavC01B"/>
@@ -107,6 +100,7 @@
         </scene>
     </scenes>
     <resources>
+        <image name="SplashDot" width="9" height="9"/>
         <image name="BootSplashLogo-32fdd7" width="100" height="92"/>
         <namedColor name="BootSplashBackground-32fdd7">
             <color red="0.000000000000000" green="0.000000000000000" blue="0.000000000000000" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
