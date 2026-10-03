@@ -18,7 +18,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
-import EmptyState from 'components/EmptyState';
+import EmptyState, {PracticeHistoryIllustration} from 'components/EmptyState';
 import { SkeletonList } from 'components/Skeleton';
 import CircularProgress from 'components/CircularProgress';
 import WeeklyBarChart from 'components/WeeklyBarChart';
@@ -567,7 +567,7 @@ const MyProgress = memo(() => {
             </Text>
             {recent.length === 0 ? (
               <EmptyState
-                icon="bar-chart-2-outline"
+                illustration={<PracticeHistoryIllustration />}
                 body={t('find:complete_first_interview', {
                   defaultValue: 'Complete your first mock interview to start tracking progress here.',
                 })}

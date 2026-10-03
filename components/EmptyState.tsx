@@ -31,20 +31,34 @@ import {Spinner} from '@ui-kitten/components';
 const EmptyTrayIllustration = (_: {color?: string}) => (
   <Svg width={96} height={96} viewBox="0 0 96 96" fill="none">
     <Ellipse cx={48} cy={84} rx={28} ry={4} fill="rgba(0,0,0,0.08)" />
-    {/* envelope back */}
-    <Rect x={14} y={30} width={68} height={46} rx={8} fill="#7C5CFF" />
-    {/* letter peeking out */}
-    <Rect x={24} y={18} width={48} height={36} rx={5} fill="#FFFFFF" />
-    <Rect x={31} y={26} width={26} height={4} rx={2} fill="#C9BBFF" />
-    <Rect x={31} y={35} width={34} height={4} rx={2} fill="#E4DDFF" />
-    <Rect x={31} y={44} width={20} height={4} rx={2} fill="#E4DDFF" />
-    {/* envelope front flaps */}
-    <Path d="M14 40 L48 62 L82 40 V68 a8 8 0 0 1 -8 8 H22 a8 8 0 0 1 -8 -8 Z" fill="#A592FF" />
-    <Path d="M14 68 L40 52 M82 68 L56 52" stroke="#7C5CFF" strokeWidth={2.5} strokeLinecap="round" />
-    {/* sparkles */}
-    <Circle cx={80} cy={22} r={3.5} fill="#FFC94A" />
-    <Circle cx={14} cy={20} r={2.5} fill="#FF5FA2" />
-    <Path d="M86 40 l1.8 4 4 1.8 -4 1.8 -1.8 4 -1.8 -4 -4 -1.8 4 -1.8z" fill="#19B87A" />
+    {/* open empty box */}
+    <Path d="M16 40 L48 52 L80 40 V66 L48 78 L16 66 Z" fill="#A592FF" />
+    <Path d="M48 52 V78 L16 66 V40 Z" fill="#7C5CFF" />
+    <Path d="M16 40 L28 24 L48 32 L36 46 Z" fill="#C9BBFF" />
+    <Path d="M80 40 L68 24 L48 32 L60 46 Z" fill="#E4DDFF" />
+    <Circle cx={80} cy={20} r={3.5} fill="#FFC94A" />
+    <Circle cx={14} cy={22} r={2.5} fill="#FF5FA2" />
+  </Svg>
+);
+
+/** Practice / mock-interview history: microphone with speech bubble and progress bars. */
+export const PracticeHistoryIllustration = () => (
+  <Svg width={96} height={96} viewBox="0 0 96 96" fill="none">
+    <Ellipse cx={48} cy={86} rx={30} ry={4} fill="rgba(0,0,0,0.08)" />
+    {/* progress bars */}
+    <Rect x={10} y={56} width={10} height={26} rx={3} fill="#19B87A" />
+    <Rect x={24} y={46} width={10} height={36} rx={3} fill="#FFC94A" />
+    {/* speech bubble */}
+    <Rect x={52} y={10} width={34} height={24} rx={8} fill="#FF5FA2" />
+    <Path d="M60 34 L58 42 L68 34 Z" fill="#FF5FA2" />
+    <Circle cx={61} cy={22} r={2.5} fill="#FFFFFF" />
+    <Circle cx={69} cy={22} r={2.5} fill="#FFFFFF" />
+    <Circle cx={77} cy={22} r={2.5} fill="#FFFFFF" />
+    {/* microphone */}
+    <Rect x={40} y={34} width={22} height={34} rx={11} fill="#7C5CFF" />
+    <Rect x={46} y={40} width={4} height={10} rx={2} fill="#C9BBFF" />
+    <Path d="M34 56 a17 17 0 0 0 34 0" stroke="#A592FF" strokeWidth={4} strokeLinecap="round" />
+    <Path d="M51 73 V82 M42 82 H60" stroke="#A592FF" strokeWidth={4} strokeLinecap="round" />
   </Svg>
 );
 
@@ -66,6 +80,8 @@ export interface EmptyStateProps {
    * fixed SVG illustration instead (see EmptyTrayIllustration/
    * ErrorIllustration above) rather than a per-screen custom glyph. */
   icon?: string;
+  /** Optional custom (coloured) illustration shown instead of the default. */
+  illustration?: React.ReactNode;
   title?: string;
   body?: string;
   actionLabel?: string;
@@ -75,6 +91,7 @@ export interface EmptyStateProps {
 
 const EmptyState = ({
   variant = 'empty',
+  illustration,
   title,
   body,
   actionLabel,
@@ -107,7 +124,9 @@ const EmptyState = ({
           backgroundColor: badgeBg,
           marginBottom: 16,
         }}>
-        {isError ? (
+        {illustration ? (
+          illustration
+        ) : isError ? (
           <ErrorIllustration color={illustrationColor} />
         ) : (
           <EmptyTrayIllustration color={illustrationColor} />
