@@ -20,14 +20,6 @@ export interface PaySummary {
   annualized_growth_pct?: number;
   months_since_last_change?: number;
 }
-export interface MarketCheck {
-  market_range?: {low?: number; mid?: number; high?: number; currency?: string};
-  position?: 'below_market' | 'at_market' | 'above_market';
-  gap_pct?: number;
-  rationale?: string;
-  suggested_ask?: number;
-  next_step?: string;
-}
 export interface PromotionPlan {
   goal: string;
   payload: {
@@ -51,14 +43,6 @@ export async function addPay(body: Record<string, unknown>) {
 }
 export async function deletePay(id: number) {
   await apiClient.delete(`/api/v1/growth/pay/${id}`);
-}
-export async function marketCheck(location: string, yearsExperience?: number) {
-  const {data} = await apiClient.post<MarketCheck>('/api/v1/growth/market-check', {
-    location,
-    years_experience: yearsExperience,
-    language: lang(),
-  });
-  return data;
 }
 export async function getPromotionPlan() {
   const {data} = await apiClient.get<{plan: PromotionPlan | null}>('/api/v1/growth/promotion-plan');

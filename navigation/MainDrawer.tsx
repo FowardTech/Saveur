@@ -126,7 +126,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Growth' | 'Practice' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Growth' | 'Practice' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -431,8 +431,6 @@ const MainDrawerContent = memo(() => {
         });
       } else if (route === 'SalaryNegotiation') {
         navigationRef.navigate('SalaryNegotiation');
-      } else if (route === 'OfferAnalyzer') {
-        navigationRef.navigate('OfferAnalyzer');
       } else if (route === 'CareerGrowth') {
         navigationRef.navigate('CareerGrowth');
       } else if (route === 'DreamCompanies') {

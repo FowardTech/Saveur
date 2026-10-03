@@ -1,7 +1,7 @@
 import React, {memo} from 'react';
 import {Alert, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Input, Layout, Spinner} from '@ui-kitten/components';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
@@ -17,15 +17,18 @@ import {SalaryBenchmark as Benchmark} from 'services/salaryBenchmarkService';
 // Numeric salary benchmark: role + location + experience -> P10-P90 range.
 const SalaryBenchmark = memo(() => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
+  const p = useRoute<RouteProp<RootStackParamList, 'SalaryBenchmark'>>().params;
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
   const {t, i18n} = useTranslation(['more', 'common']);
 
-  const [open, setOpen] = React.useState(false);
-  const [title, setTitle] = React.useState('');
-  const [location, setLocation] = React.useState('');
-  const [years, setYears] = React.useState('');
-  const [currency, setCurrency] = React.useState('');
+  const [open, setOpen] = React.useState(!!p?.kind);
+  const [title, setTitle] = React.useState(p?.title ?? '');
+  const [location, setLocation] = React.useState(p?.location ?? '');
+  const [years, setYears] = React.useState(p?.years ?? '');
+  const [currency, setCurrency] = React.useState(p?.currency ?? '');
+  const [salary, setSalary] = React.useState(p?.salary ?? '');
+  const [kind, setKind] = React.useState<'offer' | 'current'>(p?.kind === 'offer' ? 'offer' : 'current');
   const [loading, setLoading] = React.useState(false);
   const [result, setResult] = React.useState<Benchmark | null>(null);
 
@@ -39,10 +42,23 @@ const SalaryBenchmark = memo(() => {
           location: location.trim(),
           years_experience: years ? Number(years) : undefined,
           currency: currency.trim() || undefined,
+          your_salary: salary ? Number(salary) : undefined,
+          kind: salary ? kind : undefined,
         }),
       );
       setOpen(false);
     } catch (e: any) {
+      if (e?.status === 402 || e?.code === 'pro_required') {
+        Alert.alert(
+          String(t('more:salary_bm_paid_title', {defaultValue: 'Paid feature'})),
+          String(t('more:salary_bm_paid_body', {defaultValue: 'Comparing your own number is available on paid plans.'})),
+          [
+            {text: String(t('common:cancel', {defaultValue: 'Cancel'})), style: 'cancel'},
+            {text: String(t('more:upgrade', {defaultValue: 'Upgrade'})), onPress: () => navigate('Subscription')},
+          ],
+        );
+        return;
+      }
       Alert.alert(String(t('common:something_went_wrong', {defaultValue: 'Something went wrong'})), e?.message);
     } finally {
       setLoading(false);
@@ -86,6 +102,24 @@ const SalaryBenchmark = memo(() => {
             <Text category="h9-s" status="placeholder">
               {fmt(pc.p10, result.currency)} – {fmt(pc.p90, result.currency)}
             </Text>
+            {result.position && result.your_salary != null ? (
+              <View style={styles.tip}>
+                <Text category="h9" bold>
+                  {result.kind === 'offer' ? t('more:salary_bm_your_offer', {defaultValue: 'Your offer'}) : t('more:salary_bm_your_pay', {defaultValue: 'Your pay'})}: {fmt(result.your_salary, result.currency)} ·{' '}
+                  {t(`more:salary_bm_position_${result.position}`, {defaultValue: result.position.replace(/_/g, ' ')})}
+                </Text>
+                {result.gap_pct != null ? (
+                  <Text category="h9-s" status="placeholder" mt={2}>
+                    {Math.abs(result.gap_pct)}% {result.gap_pct >= 0 ? t('more:salary_bm_below_median', {defaultValue: 'below the median'}) : t('more:salary_bm_above_median', {defaultValue: 'above the median'})}
+                  </Text>
+                ) : null}
+                {result.suggested_ask != null ? (
+                  <Text category="h9-s" mt={2}>
+                    {t('more:salary_bm_suggested_ask', {defaultValue: 'Suggested ask'})}: <Text category="h9-s" bold>{fmt(result.suggested_ask, result.currency)}</Text>
+                  </Text>
+                ) : null}
+              </View>
+            ) : null}
             <View style={styles.bar}>
               <View style={[styles.barMid, {left: pct(pc.p25) as any, width: `${((pc.p75 - pc.p25) / span) * 100}%` as any}]} />
               <View style={[styles.marker, {left: pct(pc.p50) as any, backgroundColor: theme['text-basic-color']}]} />
@@ -116,9 +150,6 @@ const SalaryBenchmark = memo(() => {
             ) : null}
             {result.caveat ? <Text category="h10" status="placeholder" mt={10}>{result.caveat}</Text> : null}
             <View style={{marginTop: 14, flexDirection: 'row'}}>
-              <Text category="h9" status="link" bold onPress={() => navigate('OfferAnalyzer')} style={{marginRight: 18}}>
-                {t('more:salary_bm_to_offer', {defaultValue: 'Analyze an offer'})}
-              </Text>
               <Text category="h9" status="link" bold onPress={() => navigate('SalaryNegotiation')}>
                 {t('more:salary_bm_to_negotiation', {defaultValue: 'Practice negotiating'})}
               </Text>
@@ -135,6 +166,20 @@ const SalaryBenchmark = memo(() => {
         <Input placeholder={String(t('more:salary_bm_location', {defaultValue: 'Location (e.g. Lagos, Nigeria)'}))} value={location} onChangeText={setLocation} style={styles.input} />
         <Input placeholder={String(t('more:salary_bm_years', {defaultValue: 'Years of experience'}))} keyboardType="numeric" value={years} onChangeText={setYears} style={styles.input} />
         <Input placeholder={String(t('more:salary_bm_currency', {defaultValue: 'Currency (optional, e.g. USD)'}))} autoCapitalize="characters" value={currency} onChangeText={setCurrency} style={styles.input} />
+        <Text category="h9" bold mb={8}>{t('more:salary_bm_compare', {defaultValue: 'Compare your own number (optional)'})}</Text>
+        <View style={{flexDirection: 'row', marginBottom: 12}}>
+          {(['offer', 'current'] as const).map(k => (
+            <Text
+              key={k}
+              category="h9"
+              bold={kind === k}
+              onPress={() => setKind(k)}
+              style={[styles.chip, kind === k ? styles.chipOn : null]}>
+              {k === 'offer' ? t('more:salary_bm_kind_offer', {defaultValue: 'A job offer'}) : t('more:salary_bm_kind_current', {defaultValue: 'My current pay'})}
+            </Text>
+          ))}
+        </View>
+        <Input placeholder={String(t('more:salary_bm_your_salary', {defaultValue: 'Yearly base salary'}))} keyboardType="numeric" value={salary} onChangeText={setSalary} style={styles.input} />
         <CtaButton disabled={loading || !title.trim() || !location.trim()} onPress={run}>
           {loading ? () => <Spinner size="small" status="control" /> : t('more:salary_bm_start', {defaultValue: 'Get salary range'})}
         </CtaButton>
@@ -150,6 +195,8 @@ const themedStyles = StyleService.create({
   content: {paddingBottom: 80},
   card: {borderRadius: 14, padding: 16},
   input: {marginBottom: 12},
+  chip: {borderWidth: 1, borderColor: 'border-card-default', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, marginRight: 8, overflow: 'hidden'},
+  chipOn: {backgroundColor: 'background-basic-color-3'},
   bar: {height: 8, borderRadius: 4, backgroundColor: 'background-basic-color-3', marginVertical: 16, justifyContent: 'center'},
   barMid: {position: 'absolute', top: 0, bottom: 0, borderRadius: 4, backgroundColor: 'background-basic-color-4'},
   marker: {position: 'absolute', top: -4, width: 4, height: 16, borderRadius: 2},

@@ -123,7 +123,7 @@ const SCREEN_MAP: Partial<Record<SuggestedActionId, {screen: string; params?: ob
   company_intelligence: {screen: 'CompanyIntelligence', params: {}},
   student_verification: {screen: 'StudentVerification'},
   salary_negotiation: {screen: 'SalaryNegotiation'},
-  offer_analyzer: {screen: 'OfferAnalyzer'},
+  offer_analyzer: {screen: 'SalaryBenchmark', params: {kind: 'offer'}},
   career_growth: {screen: 'CareerGrowth'},
   learning_courses: {screen: 'LearningCourses'},
   career_diary: {screen: 'CareerDiary'},

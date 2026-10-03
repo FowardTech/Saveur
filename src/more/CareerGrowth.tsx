@@ -13,7 +13,7 @@ import CtaButton from 'components/CtaButton';
 import FormSheet from 'components/FormSheet';
 import {RootStackParamList} from 'navigation/types';
 import * as growth from 'services/growthService';
-import {MarketCheck, PayRecord, PaySummary, PromotionPlan} from 'services/growthService';
+import {PayRecord, PaySummary, PromotionPlan} from 'services/growthService';
 
 // Career Growth — the post-hire loop: pay tracking over time (free), market
 // check + raise/promotion plan (paid), quarterly check-in prompt. Mirrors
@@ -57,7 +57,6 @@ const CareerGrowth = memo(() => {
 
   const [tab, setTab] = React.useState<'pay' | 'plan'>('pay');
   const [payOpen, setPayOpen] = React.useState(false);
-  const [marketOpen, setMarketOpen] = React.useState(false);
   const [planOpen, setPlanOpen] = React.useState(false);
   const [records, setRecords] = React.useState<PayRecord[]>([]);
   const [summary, setSummary] = React.useState<PaySummary>({count: 0});
@@ -72,11 +71,6 @@ const CareerGrowth = memo(() => {
   const [role, setRole] = React.useState('');
   const [company, setCompany] = React.useState('');
   const [saving, setSaving] = React.useState(false);
-
-  const [location, setLocation] = React.useState('');
-  const [years, setYears] = React.useState('');
-  const [market, setMarket] = React.useState<MarketCheck | null>(null);
-  const [checking, setChecking] = React.useState(false);
 
   const [goal, setGoal] = React.useState('promotion');
   const [curRole, setCurRole] = React.useState('');
@@ -138,17 +132,6 @@ const CareerGrowth = memo(() => {
     }
   };
 
-  const onMarket = async () => {
-    if (checking || !location.trim()) return;
-    setChecking(true);
-    try {
-      setMarket(await growth.marketCheck(location.trim(), years ? Number(years) : undefined));
-    } catch (e: any) {
-      onError(e);
-    } finally {
-      setChecking(false);
-    }
-  };
 
   const onPlan = async () => {
     if (planning || !curRole.trim()) return;
@@ -260,35 +243,21 @@ const CareerGrowth = memo(() => {
 
             {records.length > 0 ? (
               <Layout level="2" style={styles.card}>
-                <Text category="h8" bold mb={8}>{t('more:growth_market_title', {defaultValue: 'Am I paid fairly?'})}</Text>
-                <CtaButton onPress={() => setMarketOpen(true)}>
+                <Text category="h8" bold mb={4}>{t('more:growth_market_title', {defaultValue: 'Am I paid fairly?'})}</Text>
+                <Text category="h9-s" status="placeholder" mb={8}>
+                  {t('more:growth_market_body', {defaultValue: 'Compare your current pay with the market range for your role.'})}
+                </Text>
+                <CtaButton
+                  onPress={() =>
+                    navigate('SalaryBenchmark', {
+                      kind: 'current',
+                      title: records[records.length - 1]?.role ?? '',
+                      salary: summary.current_base ? String(summary.current_base) : '',
+                      currency: summary.currency ?? '',
+                    })
+                  }>
                   {t('more:growth_check', {defaultValue: 'Check against the market'})}
                 </CtaButton>
-                <FormSheet visible={marketOpen} title={t('more:growth_market_title', {defaultValue: 'Am I paid fairly?'}).toString()} onClose={() => setMarketOpen(false)}>
-                <Input placeholder={t('more:growth_location', {defaultValue: 'Location'}).toString()} value={location} onChangeText={setLocation} style={styles.input} />
-                <Input placeholder={t('more:growth_years', {defaultValue: 'Years of experience'}).toString()} keyboardType="numeric" value={years} onChangeText={setYears} style={styles.input} />
-                <CtaButton disabled={checking || !location.trim()} onPress={async () => { await onMarket(); setMarketOpen(false); }}>
-                  {checking ? t('more:growth_checking', {defaultValue: 'Checking…'}) : t('more:growth_check', {defaultValue: 'Check against the market'})}
-                </CtaButton>
-                </FormSheet>
-                {market ? (
-                  <View style={{marginTop: 12}}>
-                    <Text category="h9" bold>
-                      {t(`more:growth_position_${market.position ?? 'at_market'}`, {defaultValue: (market.position ?? 'at_market').replace(/_/g, ' ')})}
-                      {market.gap_pct != null ? ` (${market.gap_pct > 0 ? '+' : ''}${market.gap_pct}%)` : ''}
-                    </Text>
-                    <Text category="h9-s" mt={4}>
-                      {fmt(market.market_range?.low, market.market_range?.currency)} – {fmt(market.market_range?.high, market.market_range?.currency)}
-                    </Text>
-                    {market.rationale ? <Text category="h9-s" status="placeholder" mt={4}>{market.rationale}</Text> : null}
-                    {market.suggested_ask != null ? (
-                      <Text category="h9-s" mt={4}>
-                        {t('more:growth_suggested_ask', {defaultValue: 'Suggested ask'})}: {fmt(market.suggested_ask, market.market_range?.currency)}
-                      </Text>
-                    ) : null}
-                    {market.next_step ? <Text category="h9-s" status="placeholder" mt={4}>{market.next_step}</Text> : null}
-                  </View>
-                ) : null}
               </Layout>
             ) : null}
           </>

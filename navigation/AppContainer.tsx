@@ -56,7 +56,6 @@ import CompareOffers from 'src/requests/Applications/CompareOffers';
 import AddOns from 'src/more/AddOns';
 import CareerDna from 'src/more/CareerDna';
 import CareerAssessment from 'src/more/CareerAssessment';
-import OfferAnalyzer from 'src/more/OfferAnalyzer';
 import SalaryBenchmark from 'src/more/SalaryBenchmark';
 import CareerGrowth from 'src/more/CareerGrowth';
 import AICareerTwin from 'src/more/AICareerTwin';
@@ -250,7 +249,6 @@ const AppContainer = () => {
         <Stack.Screen name="AddOns" component={AddOns} />
         <Stack.Screen name="CareerDna" component={CareerDna} />
         <Stack.Screen name="CareerAssessment" component={CareerAssessment} />
-        <Stack.Screen name="OfferAnalyzer" component={OfferAnalyzer} />
         <Stack.Screen name="SalaryBenchmark" component={SalaryBenchmark} />
         <Stack.Screen name="CareerGrowth" component={CareerGrowth} />
         <Stack.Screen name="AICareerTwin" component={AICareerTwin} />

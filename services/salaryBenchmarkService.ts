@@ -11,6 +11,11 @@ export interface SalaryBenchmark {
   factors: {name: string; effect: 'raises' | 'lowers'; detail: string}[];
   negotiation_tip: string;
   caveat: string;
+  your_salary?: number;
+  kind?: 'offer' | 'current';
+  position?: 'below_market' | 'at_market' | 'above_market';
+  gap_pct?: number | null;
+  suggested_ask?: number | null;
 }
 
 export async function getSalaryBenchmark(body: {
@@ -18,6 +23,8 @@ export async function getSalaryBenchmark(body: {
   location: string;
   years_experience?: number;
   currency?: string;
+  your_salary?: number;
+  kind?: 'offer' | 'current';
 }): Promise<SalaryBenchmark> {
   const {data} = await apiClient.post<SalaryBenchmark>('/api/v1/salary/benchmark', {
     ...body,

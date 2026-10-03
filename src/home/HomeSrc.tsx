@@ -1304,12 +1304,6 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <ActionCard
-          icon="pie-chart-outline"
-          title={t('home:offer_analyzer_title', { defaultValue: 'Offer Analyzer' }).toString()}
-          subtitle={t('home:offer_analyzer_subtitle', { defaultValue: 'Compare and negotiate your offers' }).toString()}
-          onPress={() => navigate('OfferAnalyzer')}
-        />
-        <ActionCard
           icon="star-outline"
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}
