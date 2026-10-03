@@ -204,7 +204,7 @@ const Login = memo(() => {
             their own headings, so the whole auth flow reads consistently.
             mb trimmed from 72 to 40 now that the illustration above already
             carries some of that visual separation on its own. */}
-        <Text mt={16} category="h2" bold mb={40}>
+        <Text mt={8} category="h2" bold mb={20}>
           {t('auth:welcome_back')}
         </Text>
         <Controller
@@ -261,7 +261,7 @@ const Login = memo(() => {
           activeOpacity={0.54}
           onPress={onAuth('ForgetPassword')}
           style={styles.forgetPass}>
-          <Text category="h8-s" status={'placeholder'} mv={24} center underline>
+          <Text category="h8-s" status={'placeholder'} mv={12} center underline>
             {t('auth:forgot_password')}?
           </Text>
         </TouchableOpacity>
@@ -332,8 +332,9 @@ const themedStyles = StyleService.create({
     paddingBottom: 0,
   },
   content: {
-    marginTop: 40,
+    marginTop: 8,
     paddingHorizontal: 24,
+    paddingBottom: 24,
     zIndex: 10,
   },
   // Product request ("make text inputs all through the app consistent in
@@ -351,7 +352,7 @@ const themedStyles = StyleService.create({
     ...globalStyle.inputField,
     borderWidth: 1,
     borderColor: 'border-card-default',
-    marginBottom: 24,
+    marginBottom: 14,
   },
   password: {
     ...globalStyle.inputField,
