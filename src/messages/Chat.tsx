@@ -1442,8 +1442,6 @@ const themedStyles = StyleService.create({
   chatInputCard: {
     backgroundColor: "background-basic-color-2",
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "border-card-default",
     marginHorizontal: 16,
     marginTop: 8,
     paddingHorizontal: 14,
