@@ -21,41 +21,13 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavRow01">
-                                <rect key="frame" x="96" y="195.5" width="183.5" height="56"/>
-                                <subviews>
-                                    <imageView opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="SplashLogoV3" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
-                                        <rect key="frame" x="0.0" y="0.0" width="56" height="56"/>
-                                        <constraints>
-                                            <constraint firstAttribute="height" constant="56" id="hRt-fc-9pQ"/>
-                                            <constraint firstAttribute="width" constant="56" id="wLg-ic-6vN"/>
-                                        </constraints>
-                                    </imageView>
-                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Saveur" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SavLbl01">
-                                        <rect key="frame" x="66" y="10.5" width="106.5" height="34.5"/>
-                                        <fontDescription key="fontDescription" name="MontserratAlternates-Black" family="Montserrat Alternates" pointSize="28"/>
-                                        <color key="textColor" name="SplashText"/>
-                                        <nil key="highlightedColor"/>
-                                    </label>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="SplashDot" translatesAutoresizingMaskIntoConstraints="NO" id="SavDotA">
-                                        <rect key="frame" x="154" y="30" width="9" height="9"/>
-                                        <constraints>
-                                            <constraint firstAttribute="width" constant="9" id="SavD1A"/>
-                                            <constraint firstAttribute="height" constant="9" id="SavD2A"/>
-                                        </constraints>
-                                    </imageView>
-                                </subviews>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" image="SplashLockup" translatesAutoresizingMaskIntoConstraints="NO" id="SavRow01">
+                                <rect key="frame" x="96" y="195" width="183" height="56"/>
                                 <constraints>
-                                    <constraint firstItem="GJd-Yh-RWb" firstAttribute="leading" secondItem="SavRow01" secondAttribute="leading" id="SavC01"/>
-                                    <constraint firstItem="GJd-Yh-RWb" firstAttribute="top" secondItem="SavRow01" secondAttribute="top" id="SavC02"/>
-                                    <constraint firstItem="GJd-Yh-RWb" firstAttribute="bottom" secondItem="SavRow01" secondAttribute="bottom" id="SavC03"/>
-                                    <constraint firstItem="SavLbl01" firstAttribute="leading" secondItem="GJd-Yh-RWb" secondAttribute="trailing" constant="10" id="SavC04"/>
-                                    <constraint firstItem="SavLbl01" firstAttribute="centerY" secondItem="SavRow01" secondAttribute="centerY" id="SavC05"/>
-                                    <constraint firstItem="SavRow01" firstAttribute="trailing" secondItem="SavDotA" secondAttribute="trailing" id="SavC06"/>
-                                    <constraint firstItem="SavDotA" firstAttribute="leading" secondItem="SavLbl01" secondAttribute="trailing" constant="2" id="SavD3A"/>
-                                    <constraint firstItem="SavDotA" firstAttribute="bottom" secondItem="SavLbl01" secondAttribute="bottom" constant="-9" id="SavD4A"/>
+                                    <constraint firstAttribute="width" constant="183" id="SavRow01W"/>
+                                    <constraint firstAttribute="height" constant="56" id="SavRow01H"/>
                                 </constraints>
-                            </view>
+                            </imageView>
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="By Foward Technologies Inc." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="MN2-I3-ftu">
                                 <rect key="frame" x="0.0" y="626" width="375" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -82,7 +54,6 @@
     <resources>
         <namedColor name="SplashBackground"><color red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/></namedColor>
         <namedColor name="SplashText"><color red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/></namedColor>
-        <image name="SplashDot" width="9" height="9"/>
-        <image name="SplashLogoV3" width="56" height="56"/>
+        <image name="SplashLockup" width="183" height="56"/>
     </resources>
 </document>
