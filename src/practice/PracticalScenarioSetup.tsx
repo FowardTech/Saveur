@@ -174,6 +174,15 @@ const PracticalScenarioSetup = memo(() => {
             ? () => <Spinner size="small" status="control" />
             : t('find:practical_start_cta', { defaultValue: 'Start scenario' })}
         </CtaButton>
+        <Text
+          category="h9"
+          status="link"
+          bold
+          style={{ textAlign: 'center', marginTop: 20 }}
+          onPress={() => navigate('PracticalProjects')}
+        >
+          {t('find:practical_projects_link', { defaultValue: 'Industry projects' })}
+        </Text>
       </Content>
     </Container>
   );

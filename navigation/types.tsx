@@ -445,6 +445,7 @@ export type RootStackParamList = {
   // consulting/science). See services/practicalService.ts and
   // src/practice/PracticalScenario{Setup,Session,Feedback}.tsx.
   PracticalScenarioSetup: undefined;
+  PracticalProjects: undefined;
   PracticalScenarioSession: {
     sessionId: number;
     type: PracticalType;

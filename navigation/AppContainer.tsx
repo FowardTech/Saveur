@@ -78,6 +78,7 @@ import WhatsNext from 'src/more/WhatsNext';
 import UpcomingFeatures from 'src/more/UpcomingFeatures';
 import NextStepRecommendation from 'src/more/NextStepRecommendation';
 import PracticalScenarioSetup from 'src/practice/PracticalScenarioSetup';
+import PracticalProjects from 'src/practice/PracticalProjects';
 import PracticalScenarioSession from 'src/practice/PracticalScenarioSession';
 import PracticalScenarioFeedback from 'src/practice/PracticalScenarioFeedback';
 import ReferralProgram from 'src/more/ReferralProgram';
@@ -286,6 +287,7 @@ const AppContainer = () => {
         <Stack.Screen name="UpcomingFeatures" component={UpcomingFeatures} />
         <Stack.Screen name="NextStepRecommendation" component={NextStepRecommendation} />
         <Stack.Screen name="PracticalScenarioSetup" component={PracticalScenarioSetup} />
+        <Stack.Screen name="PracticalProjects" component={PracticalProjects} />
         <Stack.Screen name="PracticalScenarioSession" component={PracticalScenarioSession} />
         <Stack.Screen name="PracticalScenarioFeedback" component={PracticalScenarioFeedback} />
         <Stack.Screen name="ReferralProgram" component={ReferralProgram} />
