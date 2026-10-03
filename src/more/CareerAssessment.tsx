@@ -199,7 +199,7 @@ const CareerAssessment = memo(() => {
   if (stage === 'intro') {
     body = (
       <Content padder contentContainerStyle={styles.content}>
-        <Text category="h2" bold mb={12}>
+        <Text category="h2" bold mb={12} fontSize={32} lineHeight={38}>
           {t('more:career_assessment_intro_title', {defaultValue: "Let's get to know how you work"})}
         </Text>
         <Text category="h9-s" status="placeholder" mb={24}>
@@ -262,7 +262,7 @@ const CareerAssessment = memo(() => {
   } else if (stage === 'skills_intro') {
     body = (
       <Content padder contentContainerStyle={styles.content}>
-        <Text category="h2" bold mb={12}>
+        <Text category="h2" bold mb={12} fontSize={32} lineHeight={38}>
           {t('more:career_assessment_skills_intro_title', {defaultValue: 'Want a quick skills check?'})}
         </Text>
         <Text category="h9-s" status="placeholder" mb={24}>

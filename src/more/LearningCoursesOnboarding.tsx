@@ -92,7 +92,7 @@ const LearningCoursesOnboarding = memo(({ onGetStarted }: LearningCoursesOnboard
             accentColor={CLUSTER_COLORS.green}
             size={clusterSize}
           />
-          <Text category="h2" bold center mh={32} mt={28} style={styles.heroTitle}>
+          <Text category="h2" bold center mh={32} mt={28} fontSize={32} lineHeight={38} style={styles.heroTitle}>
             {t('more:learning_onboarding_title', { defaultValue: 'Flavour your career with short courses' })}
           </Text>
           <Text category="h8" status="placeholder" center mh={32} mt={10}>
