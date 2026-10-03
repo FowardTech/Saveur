@@ -1554,7 +1554,7 @@ const VoiceCoachView = memo(({
               style={[
                 styles.rippleRing,
                 rippleStyle1,
-                { borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(90,150,255,0.55)' },
+                { borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(124,92,255,0.55)' },
               ]}
             />
             <Animated.View
@@ -1562,7 +1562,7 @@ const VoiceCoachView = memo(({
               style={[
                 styles.rippleRing,
                 rippleStyle2,
-                { borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(90,150,255,0.55)' },
+                { borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(124,92,255,0.55)' },
               ]}
             />
           </>
@@ -1588,7 +1588,7 @@ const VoiceCoachView = memo(({
             same two non-orange colors this orb already had). */}
         <Animated.View style={[styles.orb, orbStyle]}>
           <LinearGradient
-            colors={['#71717a', '#7EA8E2']}
+            colors={['#7C5CFF', '#A592FF']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.orbGradientFill}
@@ -1645,7 +1645,7 @@ const VoiceCoachView = memo(({
         <TouchableOpacity
           activeOpacity={0.8}
           onPress={onInterrupt}
-          style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(0,99,248,0.10)' }]}>
+          style={[styles.interruptPill, { backgroundColor: isDarkMode ? 'rgba(255,255,255,0.14)' : 'rgba(124,92,255,0.12)' }]}>
           <Text category="h10" bold style={{ color: theme['text-basic-color'] }}>
             {t('message:voice_tap_to_interrupt', { defaultValue: 'Tap to interrupt' })}
           </Text>
