@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {RefreshControl} from 'react-native';
+import {Alert, RefreshControl} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -8,6 +8,7 @@ import {
   Layout,
   Icon,
   Button,
+  Input,
 } from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useFocusEffect, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -31,9 +32,13 @@ const ICON_BY_TYPE: Record<string, string> = {
   feedback: 'checkmark-circle-2-outline',
   video: 'video-outline',
   job: 'briefcase-outline',
+  project: 'code-outline',
 };
 
 function previewLine(share: ReceivedShareProps, t: (key: string, opts?: any) => string): string {
+  if (share.contentType === 'project') {
+    return share.preview.title || '';
+  }
   if (share.contentType === 'job') {
     return [share.preview.title, share.preview.company].filter(Boolean).join(' · ') || '';
   }
@@ -185,6 +190,62 @@ const SharedWithMe = memo(() => {
       ))
     );
 
+  // "Send request" -- Shared With Me needs a way to ask another Saveur user
+  // to connect, not only to answer incoming requests.
+  const [reqUsername, setReqUsername] = React.useState('');
+  const [sendingReq, setSendingReq] = React.useState(false);
+  const onSendRequest = async () => {
+    const name = reqUsername.trim().replace(/^@/, '');
+    if (!name || sendingReq) return;
+    setSendingReq(true);
+    try {
+      const r = await sharesService.sendConnectionRequest(name);
+      Alert.alert(
+        r.autoAccepted
+          ? t('more:share_connected_title', {defaultValue: 'Connected!'})
+          : t('more:share_request_sent_title', {defaultValue: 'Request sent'}),
+        r.autoAccepted
+          ? t('more:share_connected_body', {defaultValue: 'You and @{{username}} can now share with each other.', username: name})
+          : t('more:share_request_sent_body', {defaultValue: '@{{username}} needs to accept before you can share with them.', username: name}),
+      );
+      setReqUsername('');
+    } catch (e: any) {
+      const code = e?.response?.data?.error ?? e?.error;
+      const msg =
+        code === 'recipient_not_found'
+          ? t('more:share_user_not_found', {defaultValue: 'No Saveur user found with that username.'})
+          : code === 'already_connected'
+          ? t('more:share_already_connected', {defaultValue: "You're already connected with this user."})
+          : code === 'request_already_sent'
+          ? t('more:share_request_already_sent', {defaultValue: "You've already sent a request to this user."})
+          : code === 'cannot_share_with_self'
+          ? t('more:share_cannot_share_self', {defaultValue: "You can't share with yourself."})
+          : t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'});
+      Alert.alert(t('more:share_failed_title', {defaultValue: "Couldn't share"}), msg);
+    } finally {
+      setSendingReq(false);
+    }
+  };
+
+  const renderSendRequest = () => (
+    <Layout level="2" style={{borderRadius: 14, padding: 12, marginBottom: 12}}>
+      <Text category="h9" bold mb={8}>
+        {t('more:connect_with_user', {defaultValue: 'Connect with another Saveur user'})}
+      </Text>
+      <Input
+        placeholder={t('more:share_username_placeholder', {defaultValue: 'their username'}).toString()}
+        value={reqUsername}
+        onChangeText={setReqUsername}
+        autoCapitalize="none"
+        autoCorrect={false}
+        style={{marginBottom: 8}}
+      />
+      <CtaButton disabled={!reqUsername.trim() || sendingReq} onPress={onSendRequest}>
+        {t('more:send_request', {defaultValue: 'Send request'})}
+      </CtaButton>
+    </Layout>
+  );
+
   const renderRequests = () =>
     isLoadingRequests ? (
       <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
@@ -255,6 +316,7 @@ const SharedWithMe = memo(() => {
         padder
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}>
+        {renderSendRequest()}
         {activeIndex === 0 ? renderShares() : renderRequests()}
       </Content>
     </Container>

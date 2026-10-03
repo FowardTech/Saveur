@@ -13,7 +13,7 @@ import apiClient from './apiClient';
 // by side, matching the product request's "...and regular sharing."
 // ---------------------------------------------------------------------------
 
-export type SharedContentType = 'feedback' | 'video' | 'job';
+export type SharedContentType = 'feedback' | 'video' | 'job' | 'project';
 
 export interface SharedContentPreview {
   role?: string;
@@ -217,4 +217,15 @@ export async function getShareDetail(shareId: string): Promise<SharedContentDeta
     createdAt: data.created_at ? new Date(data.created_at).getTime() : Date.now(),
     content: data.content,
   };
+}
+
+/** GET /api/v1/shares/connections — usernames of accepted connections, for
+ * the share picker (select one / select all instead of typing usernames). */
+export async function listConnections(): Promise<string[]> {
+  try {
+    const {data} = await apiClient.get<{username: string}[]>('/api/v1/shares/connections');
+    return (data ?? []).map(c => c.username);
+  } catch {
+    return [];
+  }
 }

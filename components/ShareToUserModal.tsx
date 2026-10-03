@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Modal, View, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform} from 'react-native';
+import {Modal, View, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Share} from 'react-native';
 import {Icon, useTheme, Input, Button} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 
@@ -15,6 +15,8 @@ interface Props {
   onClose: () => void;
   contentType: SharedContentType;
   contentId: string | number;
+  /** When set, shows a "Share public link" action for people who aren't on Saveur. */
+  getPublicLink?: () => Promise<string>;
 }
 
 // "Share to a Saveur user" composer (product request item: "The users can
@@ -26,7 +28,7 @@ interface Props {
 // Deliberately separate from (not a replacement for) those screens'
 // existing "regular" OS-share-sheet buttons — per the product request,
 // both need to stay available side by side.
-const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props) => {
+const ShareToUserModal = memo(({visible, onClose, contentType, contentId, getPublicLink}: Props) => {
   const theme = useTheme();
   const {t} = useTranslation(['more', 'common']);
 
@@ -34,6 +36,21 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
   const [message, setMessage] = React.useState('');
   const [isSending, setIsSending] = React.useState(false);
   const [isRequesting, setIsRequesting] = React.useState(false);
+  // Accepted connections to pick from (select one / select all) so users
+  // don't have to type usernames for people they're already connected to.
+  const [connections, setConnections] = React.useState<string[]>([]);
+  const [selected, setSelected] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (!visible) return;
+    let cancelled = false;
+    sharesService.listConnections().then(list => {
+      if (!cancelled) setConnections(list);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [visible]);
 
   // "found_connected" = accepted connection already exists, normal Send
   // flow. "found_not_connected" = user is real but there's no accepted
@@ -51,6 +68,7 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
       setUsername('');
       setMessage('');
       setLookupState('idle');
+      setSelected([]);
     }
   }, [visible]);
 
@@ -155,6 +173,55 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
     }
   }, [username, message, contentType, contentId, isSending, onClose, t]);
 
+  const allSelected = connections.length > 0 && selected.length === connections.length;
+  const toggle = (name: string) =>
+    setSelected(prev => (prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]));
+
+  const onSendSelected = React.useCallback(async () => {
+    if (selected.length === 0 || isSending) return;
+    setIsSending(true);
+    let ok = 0;
+    for (const name of selected) {
+      try {
+        await sharesService.shareContent({
+          recipientUsername: name,
+          contentType,
+          contentId,
+          message: message.trim() || undefined,
+        });
+        ok += 1;
+      } catch {
+        // counted below
+      }
+    }
+    setIsSending(false);
+    if (ok === selected.length) {
+      onClose();
+      Alert.alert(
+        t('more:share_sent_title', {defaultValue: 'Shared!'}),
+        t('more:share_sent_count', {defaultValue: 'Sent to {{count}} user(s).', count: ok}),
+      );
+    } else {
+      Alert.alert(
+        t('more:share_failed_title', {defaultValue: "Couldn't share"}),
+        t('more:share_sent_partial', {defaultValue: 'Sent to {{ok}} of {{total}}. Please try the rest again.', ok, total: selected.length}),
+      );
+    }
+  }, [selected, isSending, contentType, contentId, message, onClose, t]);
+
+  const onSharePublicLink = React.useCallback(async () => {
+    if (!getPublicLink) return;
+    try {
+      const url = await getPublicLink();
+      await Share.share({message: url, url});
+    } catch {
+      Alert.alert(
+        t('more:share_failed_title', {defaultValue: "Couldn't share"}),
+        t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
+      );
+    }
+  }, [getPublicLink, t]);
+
   const canSend = lookupState === 'found_connected' && !isSending;
   const canRequest = lookupState === 'found_not_connected' && !isRequesting;
 
@@ -187,6 +254,43 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
               defaultValue: "Send this to another Saveur user by their username — they'll get a notification.",
             })}
           </Text>
+          {connections.length > 0 ? (
+            <View style={{marginBottom: 12}}>
+              <Flex justify="space-between" itemsCenter mb={6}>
+                <Text category="h10" bold>
+                  {t('more:share_your_connections', {defaultValue: 'Your connections'})}
+                </Text>
+                <Text category="h10" status="link" bold onPress={() => setSelected(allSelected ? [] : connections)}>
+                  {allSelected
+                    ? t('more:share_clear_all', {defaultValue: 'Clear'})
+                    : t('more:share_select_all', {defaultValue: 'Select all'})}
+                </Text>
+              </Flex>
+              <ScrollView style={{maxHeight: 130}} nestedScrollEnabled>
+                {connections.map(name => {
+                  const on = selected.includes(name);
+                  return (
+                    <TouchableOpacity key={name} onPress={() => toggle(name)} style={{flexDirection: 'row', alignItems: 'center', paddingVertical: 6}}>
+                      <Icon
+                        pack="eva"
+                        name={on ? 'checkmark-circle-2-outline' : 'radio-button-off-outline'}
+                        style={[globalStyle.icon20, {tintColor: on ? theme['color-primary-500'] : theme['text-hint-color']}]}
+                      />
+                      <Text category="h9" ml={8}>@{name}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+              {selected.length > 0 ? (
+                <CtaButton disabled={isSending} onPress={onSendSelected} style={{marginTop: 8}}>
+                  {t('more:share_send_to_selected', {defaultValue: 'Send to {{count}} selected', count: selected.length})}
+                </CtaButton>
+              ) : null}
+              <Text category="h10" status="placeholder" mt={10}>
+                {t('more:share_or_add_new', {defaultValue: 'Or connect with someone new by username:'})}
+              </Text>
+            </View>
+          ) : null}
           <Input
             placeholder={t('more:share_username_placeholder', {defaultValue: 'their username'}).toString()}
             value={username}
@@ -250,6 +354,11 @@ const ShareToUserModal = memo(({visible, onClose, contentType, contentId}: Props
                 : t('more:share_send_request', {defaultValue: 'Send connection request'})}
             </Button>
           )}
+          {getPublicLink ? (
+            <Button appearance="outline" onPress={onSharePublicLink} style={{marginTop: 16}}>
+              {t('more:share_public_link', {defaultValue: "Share public link (for people not on Saveur)"})}
+            </Button>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </Modal>

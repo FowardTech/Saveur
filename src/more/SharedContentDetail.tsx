@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {ActivityIndicator, Linking, View} from 'react-native';
+import {ActivityIndicator, Linking, Platform, View} from 'react-native';
 import Video from 'react-native-video';
 import {
   TopNavigation,
@@ -131,7 +131,18 @@ const SharedContentDetail = memo(() => {
             </Layout>
           ) : null}
 
-          {share.contentType === 'job' ? (
+          {share.contentType === 'project' ? (
+            <Layout level="2" style={{borderRadius: 14, padding: 14}}>
+              <Text category="h7" bold mb={8}>{String((content as any).name ?? '')}</Text>
+              {(((content as any).files as {path: string; content: string}[] | undefined) ?? []).map(f => (
+                <View key={f.path} style={{marginBottom: 12}}>
+                  <Text category="h10" bold status="link" mb={4}>{f.path}</Text>
+                  <Text category="h10" style={{fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace'}}>{f.content}</Text>
+                </View>
+              ))}
+              <Text category="h10" status="placeholder">{t('more:share_read_only', {defaultValue: 'Read-only view.'})}</Text>
+            </Layout>
+          ) : share.contentType === 'job' ? (
             <Layout level="2" style={styles.card}>
               <Flex justify="flex-start" mb={12}>
                 <CompanyLogoAvatar logoUrl={content.company_logo_url} companyName={content.company} fallbackIcon="briefcase-outline" />
