@@ -294,6 +294,7 @@ const themedStyles = StyleService.create({
   situationCard: {
     ...globalStyle.card,
     padding: 20,
+    marginBottom: 16,
   },
   choiceCard: {
     ...globalStyle.card,
@@ -314,6 +315,7 @@ const themedStyles = StyleService.create({
   taskPromptCard: {
     ...globalStyle.card,
     padding: 20,
+    marginBottom: 16,
   },
   taskResponseInput: {
     ...globalStyle.inputField,
