@@ -449,7 +449,6 @@ const Leaderboard = memo(() => {
                       styles.podiumCard,
                       {
                         height: PODIUM_CARD_HEIGHT[rank],
-                        borderColor: theme[colors.pill],
                       },
                     ]}>
                     <View style={[styles.rankBadge, { backgroundColor: theme[colors.pill] }]}>
@@ -678,7 +677,7 @@ const themedStyles = StyleService.create({
     flex: 1,
     marginHorizontal: 4,
     borderRadius: 16,
-    borderWidth: 1.5,
+    borderWidth: 0,
     alignItems: 'center',
     paddingTop: 14,
     paddingHorizontal: 8,
