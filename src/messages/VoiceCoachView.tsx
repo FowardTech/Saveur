@@ -167,6 +167,27 @@ function getNormalDebounceMs(liveText: string): number {
   return Math.round(SHORT_TURN_SILENCE_DEBOUNCE_MS - progress * (SHORT_TURN_SILENCE_DEBOUNCE_MS - SILENCE_DEBOUNCE_MS));
 }
 
+// Echo guard. If the mic picks the coach's own voice back up, that text must
+// never count as the user talking: it would cut the coach off (false barge-in)
+// and then get sent as a brand-new turn, so one user utterance produces two
+// replies. A text is treated as echo when it is 4+ words and at least 75% of
+// its words appear in the coach's last line.
+function normWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[.,!?;:"'()\-—…¿¡“”‘’。、！？]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+}
+function isEchoOfCoach(text: string, coachLine: string): boolean {
+  const words = normWords(text);
+  if (words.length < 4) return false;
+  const coach = new Set(normWords(coachLine));
+  if (!coach.size) return false;
+  const hits = words.filter(w => coach.has(w)).length;
+  return hits / words.length >= 0.75;
+}
+
 // Product follow-up ("The speak to interrupt is working fine just need
 // some tweaking. It should allow the user to be silent for like 5 secs
 // before responding to the interrupted words") -- after the user barges in
@@ -457,6 +478,13 @@ const VoiceCoachView = memo(({
   React.useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+  const lastCoachLineRef = React.useRef(lastCoachLine);
+  React.useEffect(() => {
+    lastCoachLineRef.current = lastCoachLine;
+  }, [lastCoachLine]);
+  // Last turn actually sent (normalized text + time) -- a repeat of the same
+  // text within a few seconds is a duplicate/echo, not a new question.
+  const lastSentTurnRef = React.useRef<{text: string; at: number}>({text: '', at: 0});
 
   // Mirrors the `active` prop for the same reason phaseRef mirrors phase —
   // read inside listener closures (the duplex event listeners, the
@@ -749,6 +777,20 @@ const VoiceCoachView = memo(({
         setPhase('listening');
         return;
       }
+      const normalizedTurn = normWords(trimmed).join(' ');
+      const sinceLast = Date.now() - lastSentTurnRef.current.at;
+      if (
+        isEchoOfCoach(trimmed, lastCoachLineRef.current) ||
+        (normalizedTurn && normalizedTurn === lastSentTurnRef.current.text && sinceLast < 6000)
+      ) {
+        // The coach's own voice (or a duplicate of the turn just sent) --
+        // drop it and keep listening instead of replying a second time.
+        if (duplexSupported) resetDuplexTranscript();
+        else stt.reset();
+        setPhase('listening');
+        return;
+      }
+      lastSentTurnRef.current = {text: normalizedTurn, at: Date.now()};
       // Consume the duplex transcript buffer right when a turn is taken
       // from it, regardless of call site (live silence-detection, the
       // initial topic, etc.) — so leftover words never bleed into the
@@ -985,6 +1027,8 @@ const VoiceCoachView = memo(({
     if (isIntroUtteranceRef.current) return;
     const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
     if (!liveText && !freshSpeechStarted) return;
+    // Coach echo, not the user -- don't cut the coach off for it.
+    if (liveText && isEchoOfCoach(liveText, lastCoachLineRef.current)) return;
     turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
     setPhase('listening');
     isBargeInTurnRef.current = true; // see its own comment -- longer silence grace period for this turn
