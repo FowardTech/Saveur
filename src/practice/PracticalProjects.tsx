@@ -11,6 +11,8 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
 import ShareToUserModal from 'components/ShareToUserModal';
+import FormSheet from 'components/FormSheet';
+import SimpleMarkdown from 'components/SimpleMarkdown';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import {ADDON_CODES, hasAddon} from 'services/entitlementsService';
@@ -32,8 +34,12 @@ const PracticalProjects = memo(() => {
   const [role, setRole] = React.useState('');
   const [projects, setProjects] = React.useState<service.PracticalProjectSummary[]>([]);
   const [active, setActive] = React.useState<service.PracticalProjectDetail | null>(null);
-  const [solution, setSolution] = React.useState('');
-  const [dirty, setDirty] = React.useState(false);
+  const [newOpen, setNewOpen] = React.useState(false);
+  const [stageOpen, setStageOpen] = React.useState<number | null>(null);
+  const [draft, setDraft] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+  const [finishing, setFinishing] = React.useState(false);
+  const [expanded, setExpanded] = React.useState<number | null>(null);
   const [creating, setCreating] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
@@ -54,8 +60,6 @@ const PracticalProjects = memo(() => {
     try {
       const p = await service.getPracticalProject(id);
       setActive(p);
-      setSolution(p.files.find(f => f.path === 'SOLUTION.md')?.content ?? '');
-      setDirty(false);
     } catch (e: any) {
       Alert.alert(t('common:something_went_wrong', {defaultValue: 'Something went wrong'}), e?.message);
     }
@@ -78,8 +82,7 @@ const PracticalProjects = memo(() => {
     try {
       const p = await service.createPracticalProject(industry, role.trim() || undefined);
       setActive(p);
-      setSolution(p.files.find(f => f.path === 'SOLUTION.md')?.content ?? '');
-      setDirty(false);
+      setNewOpen(false);
       load();
     } catch (e: any) {
       Alert.alert(t('common:something_went_wrong', {defaultValue: 'Something went wrong'}), e?.message);
@@ -88,26 +91,41 @@ const PracticalProjects = memo(() => {
     }
   };
 
-  const save = async () => {
-    if (!active || saving) return;
-    setSaving(true);
+  const openStage = (n: number) => {
+    if (!active) return;
+    const file = active.files.find(f => f.path === `STAGE_${n}.md`)?.content ?? '';
+    setDraft(file);
+    setStageOpen(n);
+  };
+
+  const submitStage = async () => {
+    if (!active || stageOpen == null || submitting) return;
+    setSubmitting(true);
     try {
-      await service.savePracticalProject(active.id, [{path: 'SOLUTION.md', content: solution}]);
-      setDirty(false);
+      const updated = await service.submitProjectStage(active.id, stageOpen, draft);
+      setActive(updated);
+      setExpanded(stageOpen);
+      setStageOpen(null);
     } catch (e: any) {
       Alert.alert(t('common:something_went_wrong', {defaultValue: 'Something went wrong'}), e?.message);
     } finally {
-      setSaving(false);
+      setSubmitting(false);
     }
   };
 
-  const needSaved = (fn: () => void) => {
-    if (dirty) {
-      Alert.alert(t('find:coding_project_unsaved_title', {defaultValue: 'Unsaved changes'}), t('find:coding_project_save_first', {defaultValue: 'Save your changes first.'}).toString());
-      return;
+  const finish = async () => {
+    if (!active || finishing) return;
+    setFinishing(true);
+    try {
+      setActive(await service.finishPracticalProject(active.id));
+    } catch (e: any) {
+      Alert.alert(t('common:something_went_wrong', {defaultValue: 'Something went wrong'}), e?.message);
+    } finally {
+      setFinishing(false);
     }
-    fn();
   };
+
+  const needSaved = (fn: () => void) => fn();
 
   const onExport = async () => {
     if (!active || exporting) return;
@@ -149,6 +167,14 @@ const PracticalProjects = memo(() => {
             <Text category="h9-s" status="placeholder" mb={16}>
               {t('find:practical_projects_description', {defaultValue: 'Build a realistic project for your field, then get your AI coach to review it.'})}
             </Text>
+            <CtaButton onPress={() => setNewOpen(true)}>
+              {t('find:practical_projects_generate', {defaultValue: 'Start a new project'})}
+            </CtaButton>
+            <FormSheet
+              visible={newOpen}
+              title={t('find:practical_projects_generate', {defaultValue: 'Start a new project'}).toString()}
+              subtitle={t('find:practical_projects_sheet_sub', {defaultValue: 'Pick your field. Your AI manager will brief you and guide you through 4 stages.'}).toString()}
+              onClose={() => setNewOpen(false)}>
             <Flex wrap justify="flex-start" style={{marginHorizontal: -4, marginBottom: 16}}>
               {INDUSTRIES.map(i => {
                 const selected = i === industry;
@@ -171,9 +197,11 @@ const PracticalProjects = memo(() => {
               style={{marginBottom: 16}}
               textStyle={globalStyle.inputText}
             />
-            <CtaButton disabled={creating} onPress={create}>
-              {creating ? () => <Spinner size="small" status="control" /> : t('find:practical_projects_generate', {defaultValue: 'Generate a project'})}
-            </CtaButton>
+
+              <CtaButton disabled={creating} onPress={create}>
+                {creating ? () => <Spinner size="small" status="control" /> : t('find:practical_projects_begin', {defaultValue: 'Begin project'})}
+              </CtaButton>
+            </FormSheet>
 
             {projects.length > 0 ? (
               <View style={{marginTop: 24}}>
@@ -208,22 +236,113 @@ const PracticalProjects = memo(() => {
               </Flex>
             </Flex>
             <Text category="h7" bold mb={8}>{active.name}</Text>
-            <Layout level="2" style={[styles.row, {marginBottom: 12}]}>
-              <Text category="h9-s">{brief}</Text>
+            {active.state ? (
+              <Text category="h10" status="placeholder" mb={8}>
+                {t('find:practical_reporting_to', {defaultValue: 'You report to {{name}}, {{title}}', name: active.state.persona.name, title: active.state.persona.title})}
+              </Text>
+            ) : null}
+            <Layout level="2" style={[styles.row, {marginBottom: 16, alignItems: 'flex-start'}]}>
+              <View style={globalStyle.flexOne}>
+                <SimpleMarkdown text={brief} />
+              </View>
             </Layout>
-            <Input
-              multiline
-              value={solution}
-              onChangeText={v => {
-                setSolution(v);
-                setDirty(true);
-              }}
-              textStyle={{minHeight: 260, textAlignVertical: 'top'}}
-              style={{marginBottom: 12}}
-            />
-            <CtaButton disabled={saving || !dirty} onPress={save}>
-              {saving ? () => <Spinner size="small" status="control" /> : dirty ? t('common:save', {defaultValue: 'Save'}) : t('common:saved', {defaultValue: 'Saved'})}
-            </CtaButton>
+
+            {active.state?.stages.map(st => {
+              const locked = st.status === 'locked';
+              const done = st.status === 'done';
+              const fb = st.feedback;
+              return (
+                <Layout key={st.n} level="2" style={[styles.stageCard, locked ? {opacity: 0.5} : null]}>
+                  <Flex itemsCenter justify="flex-start">
+                    <View style={[styles.stageDot, {backgroundColor: done ? theme['text-basic-color'] : theme['background-basic-color-3']}]}>
+                      <Text category="h10" bold style={{color: done ? theme['background-basic-color-2'] : theme['text-basic-color']}}>
+                        {done ? '✓' : st.n}
+                      </Text>
+                    </View>
+                    <Text category="h8" bold style={globalStyle.flexOne}>{st.title}</Text>
+                    {fb ? <Text category="h9" bold>{fb.score}/100</Text> : null}
+                  </Flex>
+                  {!locked ? (
+                    <>
+                      <Text category="h9-s" mt={8}>{st.task}</Text>
+                      {st.twist ? (
+                        <View style={styles.twist}>
+                          <Text category="h10" bold>{t('find:practical_twist', {defaultValue: 'Update from your manager'})}</Text>
+                          <Text category="h9-s" mt={2}>{st.twist}</Text>
+                        </View>
+                      ) : null}
+                      {fb ? (
+                        <TouchableOpacity onPress={() => setExpanded(expanded === st.n ? null : st.n)} style={{marginTop: 10}}>
+                          <Text category="h9" bold>
+                            {fb.passed ? t('find:practical_feedback_pass', {defaultValue: 'Approved — see feedback'}) : t('find:practical_feedback_revise', {defaultValue: 'Needs revision — see feedback'})}
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {fb && expanded === st.n ? (
+                        <View style={styles.feedback}>
+                          <Text category="h9-s">{fb.summary}</Text>
+                          {fb.strengths.map((x, i) => <Text key={`s${i}`} category="h9-s" mt={4}>+ {x}</Text>)}
+                          {fb.improvements.map((x, i) => <Text key={`i${i}`} category="h9-s" mt={4}>→ {x}</Text>)}
+                          {fb.follow_up ? <Text category="h9-s" bold mt={8}>“{fb.follow_up}”</Text> : null}
+                        </View>
+                      ) : null}
+                      <CtaButton
+                        style={{marginTop: 12}}
+                        onPress={() => openStage(st.n)}>
+                        {done
+                          ? t('find:practical_edit_stage', {defaultValue: 'Revise my work'})
+                          : fb
+                          ? t('find:practical_resubmit', {defaultValue: 'Revise and resubmit'})
+                          : t('find:practical_start_stage', {defaultValue: 'Start this stage'})}
+                      </CtaButton>
+                    </>
+                  ) : (
+                    <Text category="h10" status="placeholder" mt={6}>
+                      {t('find:practical_locked', {defaultValue: 'Complete the previous stage to unlock'})}
+                    </Text>
+                  )}
+                </Layout>
+              );
+            })}
+
+            {active.state && active.state.stages.every(x => x.status === 'done') ? (
+              active.state.final ? (
+                <Layout level="2" style={styles.stageCard}>
+                  <Text category="h8" bold>
+                    {t('find:practical_final_title', {defaultValue: 'Final review'})} · {active.state.final.overall_score}/100
+                  </Text>
+                  <Text category="h9-s" mt={6}>{active.state.final.verdict}</Text>
+                  {active.state.final.top_strengths.map((x, i) => <Text key={`fs${i}`} category="h9-s" mt={4}>+ {x}</Text>)}
+                  {active.state.final.growth_areas.map((x, i) => <Text key={`fg${i}`} category="h9-s" mt={4}>→ {x}</Text>)}
+                  <Text category="h10" status="placeholder" mt={10}>
+                    {t('find:practical_portfolio_ready', {defaultValue: 'Your portfolio write-up is saved. Use download or share above.'})}
+                  </Text>
+                </Layout>
+              ) : (
+                <CtaButton disabled={finishing} onPress={finish}>
+                  {finishing ? () => <Spinner size="small" status="control" /> : t('find:practical_finish', {defaultValue: 'Finish and get final review'})}
+                </CtaButton>
+              )
+            ) : null}
+
+            <FormSheet
+              visible={stageOpen != null}
+              title={active.state?.stages.find(x => x.n === stageOpen)?.title ?? ''}
+              subtitle={active.state?.stages.find(x => x.n === stageOpen)?.task}
+              onClose={() => setStageOpen(null)}>
+              <Input
+                multiline
+                value={draft}
+                onChangeText={setDraft}
+                textStyle={{minHeight: 260, textAlignVertical: 'top'}}
+                style={{marginBottom: 12}}
+              />
+              <CtaButton disabled={submitting || draft.trim().length < 40} onPress={submitStage}>
+                {submitting
+                  ? () => <Spinner size="small" status="control" />
+                  : t('find:practical_submit_manager', {defaultValue: 'Submit to {{name}}', name: active.state?.persona.name ?? 'manager'})}
+              </CtaButton>
+            </FormSheet>
             <ShareToUserModal
               visible={shareVisible}
               onClose={() => setShareVisible(false)}
@@ -244,5 +363,9 @@ const themedStyles = StyleService.create({
   container: {flex: 1},
   content: {paddingBottom: 80},
   chip: {borderWidth: 1.5, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, margin: 4},
+  stageCard: {borderRadius: 14, padding: 14, marginBottom: 12},
+  stageDot: {width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 10},
+  twist: {marginTop: 10, padding: 10, borderRadius: 10, backgroundColor: 'background-basic-color-3'},
+  feedback: {marginTop: 8, padding: 10, borderRadius: 10, backgroundColor: 'background-basic-color-3'},
   row: {borderRadius: 14, padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'center'},
 });
