@@ -300,13 +300,13 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
   const {bottom} = useLayout();
   const activeName = state.routes[state.index]?.name;
   return (
-    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom, 12), backgroundColor: theme['background-page-body']}}>
+    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom - 16, 6), paddingTop: 4, backgroundColor: theme['background-page-body']}}>
       <View
         style={{
           flexDirection: 'row',
           backgroundColor: theme['background-basic-color-2'],
           borderRadius: 32,
-          padding: 6,
+          padding: 4,
           borderWidth: 1,
           borderColor: theme['border-card-default'],
           shadowColor: '#000',
@@ -331,7 +331,7 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
               accessibilityLabel={t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
               style={{
                 flex: 1,
-                height: 52,
+                height: 44,
                 borderRadius: 26,
                 alignItems: 'center',
                 justifyContent: 'center',

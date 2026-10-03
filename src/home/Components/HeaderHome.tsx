@@ -81,11 +81,6 @@ const HeaderHome = memo(
             {t(greetingKey())}
             {name ? `, ${name}` : ''}
           </Text>
-          {username ? (
-            <Text category="h10" status="placeholder" mt={2}>
-              @{username}
-            </Text>
-          ) : null}
         </View>
         {/* Product request: "Remove the trophy icon beside the gift icon" --
             was `_onLeaderboard` navigating to Leaderboard.tsx; that
@@ -142,8 +137,8 @@ const themedStyles = StyleService.create({
   // overshot, leaving the greeting sitting too HIGH above the icon instead.
   // Flipped to a small positive marginTop now, per this direct follow-up.
   greetingWrap: {
-    marginTop: 30,
-    padding:5,
+    marginTop: 0,
+    padding: 0,
   },
   notification: {
     // Was 14x14 with a 14px-font label -- the digit(s) were larger than
