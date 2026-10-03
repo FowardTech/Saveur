@@ -82,6 +82,13 @@ const SharedWithMe = memo(() => {
   const [requestsError, setRequestsError] = React.useState<string | null>(null);
   const [respondingId, setRespondingId] = React.useState<string | null>(null);
 
+  const [connections, setConnections] = React.useState<string[]>([]);
+  const [isLoadingConnections, setIsLoadingConnections] = React.useState(true);
+  const loadConnections = React.useCallback(async () => {
+    setConnections(await sharesService.listConnections());
+    setIsLoadingConnections(false);
+  }, []);
+
   const load = React.useCallback(async () => {
     try {
       const data = await sharesService.listReceivedShares();
@@ -112,14 +119,16 @@ const SharedWithMe = memo(() => {
     React.useCallback(() => {
       load();
       loadRequests();
-    }, [load, loadRequests]),
+      loadConnections();
+    }, [load, loadRequests, loadConnections]),
   );
 
   const onRefresh = React.useCallback(() => {
     setIsRefreshing(true);
     load();
     loadRequests();
-  }, [load, loadRequests]);
+    loadConnections();
+  }, [load, loadRequests, loadConnections]);
 
   const onRespond = React.useCallback(
     async (requestId: string, accept: boolean) => {
@@ -128,6 +137,7 @@ const SharedWithMe = memo(() => {
       try {
         await sharesService.respondToConnectionRequest(requestId, accept);
         setRequests(prev => prev.filter(r => r.id !== requestId));
+        if (accept) loadConnections();
       } catch {
         // Advisory only — a refresh will resync if this failed silently.
         loadRequests();
@@ -135,7 +145,7 @@ const SharedWithMe = memo(() => {
         setRespondingId(null);
       }
     },
-    [respondingId, loadRequests],
+    [respondingId, loadRequests, loadConnections],
   );
 
   const renderShares = () =>
@@ -294,6 +304,30 @@ const SharedWithMe = memo(() => {
       ))
     );
 
+  const renderConnections = () =>
+    isLoadingConnections ? (
+      <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
+    ) : connections.length === 0 ? (
+      <EmptyState
+        icon="people-outline"
+        title={t('more:connections_empty_title', {defaultValue: 'No connections yet'})}
+        body={t('more:connections_empty_body', {
+          defaultValue: 'Send a request above. Once someone accepts, they appear here and you can share with them.',
+        })}
+      />
+    ) : (
+      connections.map(username => (
+        <Flex key={username} justify="flex-start" itemsCenter style={styles.row}>
+          <Layout level="2" style={[styles.iconCircle, {backgroundColor: theme['color-primary-transparent-200']}]}>
+            <Icon pack="eva" name="people-outline" style={[globalStyle.icon20, {tintColor: theme['color-primary-500']}]} />
+          </Layout>
+          <Text category="h9" bold numberOfLines={1} style={{flex: 1, marginLeft: 12}}>
+            @{username}
+          </Text>
+        </Flex>
+      ))
+    );
+
   return (
     <Container style={styles.container}>
       <TopNavigation
@@ -309,6 +343,7 @@ const SharedWithMe = memo(() => {
             requests.length > 0
               ? t('more:pending_requests_tab_count', {defaultValue: 'Pending Requests ({{count}})', count: requests.length})
               : t('more:pending_requests_tab', {defaultValue: 'Pending Requests'}),
+            t('more:connections_tab', {defaultValue: 'Connections'}),
           ]}
         />
       </Layout>
@@ -317,7 +352,7 @@ const SharedWithMe = memo(() => {
         contentContainerStyle={styles.content}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}>
         {renderSendRequest()}
-        {activeIndex === 0 ? renderShares() : renderRequests()}
+        {activeIndex === 0 ? renderShares() : activeIndex === 1 ? renderRequests() : renderConnections()}
       </Content>
     </Container>
   );
