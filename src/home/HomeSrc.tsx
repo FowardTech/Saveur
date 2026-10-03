@@ -10,6 +10,7 @@ import { SkeletonBlock } from 'components/Skeleton';
 import HeaderHome from './Components/HeaderHome';
 import AnnouncementBanner from './AnnouncementBanner';
 import ActionCard from 'components/ActionCard';
+import FeatureCard from 'components/FeatureCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import * as onboardingAssessmentService from 'services/onboardingAssessmentService';
 import { DailyChallenge } from 'services/dailyChallengeService';
@@ -1250,17 +1251,12 @@ const HomeSrc = memo(() => {
             </View>
           </View>
         ) : (
-          <ActionCard
-            // heroIcon (set only for the Daily Challenge branch -- see
-            // missionHero's own comment) takes priority so that branch
-            // shows its lightning glyph instead of the generic CTA icon;
-            // the other two branches leave heroIcon undefined and fall
-            // through to the existing ctaIcon/badgeIcon behavior,
-            // unchanged.
-            icon={missionHero.heroIcon ?? missionHero.ctaIcon ?? missionHero.badgeIcon}
-            iconGradientColors={missionHero.heroIconGradientColors}
+          <FeatureCard
+            imageUri="https://images.unsplash.com/photo-1496664444929-8c75efb9546f?auto=format&fit=crop&w=900&q=70"
+            eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
+            icons={['flash-outline', 'message-circle-outline', 'trending-up-outline']}
             onPress={missionHero.onPress}
           />
         )}
@@ -1274,14 +1270,16 @@ const HomeSrc = memo(() => {
         <Text category="h10" bold style={styles.sectionLabel}>
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </Text>
-        <ActionCard
-          icon="trending-up-outline"
+        <FeatureCard
+          imageUri="https://images.unsplash.com/photo-1604428803896-c1e5151d4128?auto=format&fit=crop&w=900&q=70"
+          eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
             streak && streak.streakDays > 0
               ? localizeDigits(t('home:practice_card_subtitle_streak', { defaultValue: '{{count}}-day streak — keep it going', count: streak.streakDays }))
               : t('home:progress_card_subtitle', { defaultValue: 'Streak, points and recent sessions' }).toString()
           }
+          icons={['trending-up-outline', 'award-outline', 'calendar-outline']}
           onPress={() => navigate('MyProgress')}
         />
         <ContinueLearningCard />
@@ -1291,22 +1289,28 @@ const HomeSrc = memo(() => {
         <Text category="h10" bold style={styles.sectionLabel}>
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </Text>
-        <ActionCard
-          icon="briefcase-outline"
+        <FeatureCard
+          imageUri="https://images.unsplash.com/photo-1758644083602-15a9645a92a7?auto=format&fit=crop&w=900&q=70"
+          eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
           subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
+          icons={['briefcase-outline', 'award-outline', 'bar-chart-2-outline']}
           onPress={() => navigate('CareerGrowth')}
         />
-        <ActionCard
-          icon="bar-chart-2-outline"
+        <FeatureCard
+          imageUri="https://images.unsplash.com/photo-1556559322-b5071efadc88?auto=format&fit=crop&w=900&q=70"
+          eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
           subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
+          icons={['bar-chart-2-outline', 'briefcase-outline', 'search-outline']}
           onPress={() => navigate('SalaryBenchmark')}
         />
-        <ActionCard
-          icon="star-outline"
+        <FeatureCard
+          imageUri="https://images.unsplash.com/photo-1541296239751-35023f37d0f2?auto=format&fit=crop&w=900&q=70"
+          eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}
+          icons={['star-outline', 'award-outline', 'people-outline']}
           onPress={() => navigate('Leaderboard')}
         />
         <DailyTipsBanner />
