@@ -108,5 +108,10 @@
   "voice_status_thinking": "Thinking…",
   "voice_tap_to_interrupt": "Tap to interrupt",
   "suggested_action_title_offer_analyzer": "the Offer Analyzer",
-  "suggested_action_title_career_growth": "Career Growth"
+  "suggested_action_title_career_growth": "Career Growth",
+  "topic_role_prep": "What should I focus on to prepare for a {{role}} interview?",
+  "topic_goal_next_step": "What's my next step toward \"{{goal}}\"?",
+  "topic_resume_review": "Can you review my resume and suggest improvements?",
+  "topic_salary_negotiation": "How should I approach negotiating my salary?",
+  "topic_interview_nerves": "How do I stay calm and confident during interviews?"
 }

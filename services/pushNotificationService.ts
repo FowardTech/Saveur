@@ -432,7 +432,7 @@ async function ensureAndroidChannel(): Promise<void> {
   try {
     await notifee.createChannel({
       id: 'default',
-      name: 'Default',
+      name: i18n.t('common:notification_channel_default', {defaultValue: 'Default'}),
       importance: AndroidImportance.HIGH,
     });
     androidChannelReady = true;

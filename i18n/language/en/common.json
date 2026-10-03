@@ -132,5 +132,22 @@
   "tab_growth": "Growth",
   "tab_more": "More",
   "drawer_tabs": "Tabs",
-  "drawer_shortcuts": "Shortcuts"
+  "drawer_shortcuts": "Shortcuts",
+  "location_access_title": "Location access",
+  "location_access_message": "Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.",
+  "allow": "Allow",
+  "not_now": "Not now",
+  "tour_skip": "Skip",
+  "tour_back": "Back",
+  "tour_get_started": "Get started",
+  "tour_next": "Next",
+  "err_cannot_open_signin": "This device cannot open the sign-in page.",
+  "err_connect_timed_out": "Connecting timed out.",
+  "err_cannot_open_linkedin": "This device cannot open the LinkedIn sign-in page.",
+  "err_linkedin_timed_out": "LinkedIn sign-in timed out.",
+  "show_less": "Show less",
+  "read_more": "Read more",
+  "create": "Create",
+  "discard": "Discard",
+  "notification_channel_default": "Default"
 }

@@ -180,5 +180,6 @@
   "when": "When",
   "where": "Where",
   "withdraw_application_failed": "Could not withdraw application",
-  "withdrawing": "Withdrawing…"
+  "withdrawing": "Withdrawing…",
+  "find_jobs_cta": "Find jobs"
 }

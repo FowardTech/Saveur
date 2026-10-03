@@ -644,7 +644,7 @@ export async function downloadReceiptPdf(payment: PaymentHistoryItemProps): Prom
         useDownloadManager: true,
         notification: true,
         title: filename,
-        description: 'Downloading receipt…',
+        description: String(i18n.t('more:receipt_downloading', {defaultValue: 'Downloading receipt…'})),
         mime: 'application/pdf',
         mediaScannable: true,
         path: `${RNBlobUtil.fs.dirs.DownloadDir}/${filename}`,

@@ -771,7 +771,7 @@ const ContactsTab = memo(
                         category="h10"
                         bold
                         status={messageTone === toneOption.id ? 'control' : 'basic'}>
-                        {toneOption.label}
+                        {t(`more:networking_tone_${toneOption.id}`, {defaultValue: toneOption.label})}
                       </Text>
                     </TouchableOpacity>
                   ))}
