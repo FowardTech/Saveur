@@ -22,7 +22,7 @@ export interface FeatureCardProps {
 }
 
 const FeatureCard: React.FC<FeatureCardProps> = memo(
-  ({heroIcon, backdrop, eyebrow, title, subtitle, icons = [], onPress, height = 360, style}) => (
+  ({heroIcon, backdrop, eyebrow, title, subtitle, icons = [], onPress, height = 270, style}) => (
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.wrap, {minHeight: height, backgroundColor: backdrop}, style]}>
       <View style={styles.artTile}>
         <Icon pack="eva" name={heroIcon} style={styles.artIcon} />
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   artIcon: {width: 40, height: 40, tintColor: '#FFFFFF'},
-  content: {flex: 1, justifyContent: 'flex-end', padding: 20, paddingTop: 200},
+  content: {flex: 1, justifyContent: 'flex-end', padding: 20, paddingTop: 110},
   eyebrow: {color: 'rgba(255,255,255,0.9)', letterSpacing: 0.8, marginBottom: 6},
   title: {color: '#FFFFFF', fontSize: 32, lineHeight: 37, letterSpacing: -0.5},
   subtitle: {color: 'rgba(255,255,255,0.9)', marginTop: 6},
