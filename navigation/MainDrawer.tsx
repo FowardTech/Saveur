@@ -202,16 +202,6 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
       icon: 'swap-outline',
     },
     {
-      route: 'OfferAnalyzer',
-      label: t('common:drawer_offer_analyzer', {defaultValue: 'Offer Analyzer'}).toString(),
-      icon: 'pie-chart-outline',
-    },
-    {
-      route: 'CareerGrowth',
-      label: t('common:drawer_career_growth', {defaultValue: 'Career Growth'}).toString(),
-      icon: 'trending-up-outline',
-    },
-    {
       route: 'DreamCompanies',
       label: t('common:drawer_dream_company', {defaultValue: 'Dream Company'}).toString(),
       icon: 'building-outline',
