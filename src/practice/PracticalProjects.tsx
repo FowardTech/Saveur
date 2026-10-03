@@ -93,7 +93,8 @@ const PracticalProjects = memo(() => {
 
   const openStage = (n: number) => {
     if (!active) return;
-    const file = active.files.find(f => f.path === `STAGE_${n}.md`)?.content ?? '';
+    const f0 = active.files.find(f => f.path === `STAGE_${n}.md`);
+    const file = f0?.content_original ?? f0?.content ?? '';
     setDraft(file);
     setStageOpen(n);
   };

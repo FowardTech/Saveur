@@ -264,7 +264,7 @@ export async function importSource(
  */
 export async function getImportedSources(): Promise<Record<string, ImportedFileInfo>> {
   try {
-    const {data} = await apiClient.get<ResumeWire>('/api/v1/resume');
+    const {data} = await apiClient.get<ResumeWire>('/api/v1/resume', {headers: {'X-No-Translate': '1'}});
     return writeCache(fromWireSources(data));
   } catch {
     return readCache();
@@ -290,7 +290,7 @@ export async function getImportedSources(): Promise<Record<string, ImportedFileI
  * without a second round trip.
  */
 export async function getStoredResumeSections(): Promise<ResumeSections | null> {
-  const {data} = await apiClient.get<ResumeWire>('/api/v1/resume');
+  const {data} = await apiClient.get<ResumeWire>('/api/v1/resume', {headers: {'X-No-Translate': '1'}});
   const wire = (data?.sections ?? {}) as ResumeSectionsWire;
   const hasContent =
     !!wire.contact?.name ||

@@ -195,7 +195,7 @@ const GeneratedDocuments = memo(() => {
     // document itself.
     setEditingDoc(doc);
     setEditLabel(doc.label);
-    setEditContent(doc.content ?? '');
+    setEditContent(doc.originalContent ?? doc.content ?? '');
   };
 
   const onCloseEdit = () => {

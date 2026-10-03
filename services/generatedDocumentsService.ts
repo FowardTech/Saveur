@@ -25,6 +25,8 @@ export interface GeneratedDocument {
   // source is Resume Builder's structured sections instead). See
   // app/models/generated_document.py's own comment.
   content: string | null;
+  /** The user's original text (editors load/save this); `content` may be a display translation. */
+  originalContent: string | null;
   createdAt: string | null;
 }
 
@@ -35,6 +37,7 @@ interface WireDocument {
   format?: string | null;
   url?: string | null;
   content?: string | null;
+  content_original?: string | null;
   created_at?: string | null;
 }
 
@@ -46,6 +49,7 @@ function mapDocument(w: WireDocument): GeneratedDocument {
     format: w.format ?? null,
     url: w.url ?? null,
     content: w.content ?? null,
+    originalContent: w.content_original ?? w.content ?? null,
     createdAt: w.created_at ?? null,
   };
 }
