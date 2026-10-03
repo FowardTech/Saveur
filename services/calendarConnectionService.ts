@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import {Linking} from 'react-native';
 import apiClient from './apiClient';
 import {CalendarConnectionProps} from 'constants/Types';
@@ -64,7 +65,7 @@ export async function connect(provider: CalendarProvider): Promise<CalendarConne
   const url = await getAuthorizeUrl(provider);
   const canOpen = await Linking.canOpenURL(url);
   if (!canOpen) {
-    throw new Error('This device cannot open the sign-in page.');
+    throw new Error(String(i18n.t('common:err_cannot_open_signin', {defaultValue: 'This device cannot open the sign-in page.'})));
   }
 
   const resultPromise = new Promise<CalendarConnectResult>((resolve, reject) => {
@@ -72,7 +73,7 @@ export async function connect(provider: CalendarProvider): Promise<CalendarConne
     setTimeout(() => {
       if (pendingResolve[provider]) {
         pendingResolve[provider] = undefined;
-        reject(new Error('Connecting timed out.'));
+        reject(new Error(String(i18n.t('common:err_connect_timed_out', {defaultValue: 'Connecting timed out.'}))));
       }
     }, REDIRECT_TIMEOUT_MS);
   });

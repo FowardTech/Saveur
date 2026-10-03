@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import {Linking} from 'react-native';
 import apiClient from './apiClient';
 
@@ -93,7 +94,7 @@ export async function signIn(): Promise<LinkedInRedirectResult> {
   const url = await getAuthorizeUrl();
   const canOpen = await Linking.canOpenURL(url);
   if (!canOpen) {
-    throw new Error('This device cannot open the LinkedIn sign-in page.');
+    throw new Error(String(i18n.t('common:err_cannot_open_linkedin', {defaultValue: 'This device cannot open the LinkedIn sign-in page.'})));
   }
 
   const resultPromise = new Promise<LinkedInRedirectResult>((resolve, reject) => {
@@ -101,7 +102,7 @@ export async function signIn(): Promise<LinkedInRedirectResult> {
     setTimeout(() => {
       if (pendingResolve) {
         pendingResolve = null;
-        reject(new Error('LinkedIn sign-in timed out.'));
+        reject(new Error(String(i18n.t('common:err_linkedin_timed_out', {defaultValue: 'LinkedIn sign-in timed out.'}))));
       }
     }, REDIRECT_TIMEOUT_MS);
   });

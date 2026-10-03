@@ -99,11 +99,13 @@ async function requestPermission(): Promise<boolean> {
     const granted = await PermissionsAndroid.request(
       PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
       {
-        title: 'Location access',
-        message:
-          "Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.",
-        buttonPositive: 'Allow',
-        buttonNegative: 'Not now',
+        title: String(i18n.t('common:location_access_title', {defaultValue: 'Location access'})),
+        message: String(i18n.t('common:location_access_message', {
+          defaultValue:
+            "Saveur uses your approximate location just once, to set the app's language to the one spoken in your region. You can always change it later in Settings.",
+        })),
+        buttonPositive: String(i18n.t('common:allow', {defaultValue: 'Allow'})),
+        buttonNegative: String(i18n.t('common:not_now', {defaultValue: 'Not now'})),
       },
     );
     return granted === PermissionsAndroid.RESULTS.GRANTED;
