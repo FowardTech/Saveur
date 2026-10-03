@@ -1252,7 +1252,7 @@ const HomeSrc = memo(() => {
           </View>
         ) : (
           <FeatureCard
-            imageUri="https://images.unsplash.com/vector-1757394158143-e5f18aa61cf8?auto=format&fm=jpg&fit=crop&w=1000&q=70"
+            image={require('../../assets/images/home/mission.png')}
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
@@ -1271,7 +1271,7 @@ const HomeSrc = memo(() => {
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </Text>
         <FeatureCard
-          imageUri="https://images.unsplash.com/vector-1785009505255-64568a1225eb?auto=format&fm=jpg&fit=crop&w=1000&q=70"
+          image={require('../../assets/images/home/progress.png')}
           eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
@@ -1290,7 +1290,7 @@ const HomeSrc = memo(() => {
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </Text>
         <FeatureCard
-          imageUri="https://images.unsplash.com/vector-1788230742143-d89f43170136?auto=format&fm=jpg&fit=crop&w=1000&q=70"
+          image={require('../../assets/images/home/career.png')}
           eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
           subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
@@ -1298,7 +1298,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/vector-1786212330733-7582289b4e14?auto=format&fm=jpg&fit=crop&w=1000&q=70"
+          image={require('../../assets/images/home/salary.png')}
           eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
           subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
@@ -1306,7 +1306,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/vector-1786978589323-cdc0e17a21da?auto=format&fm=jpg&fit=crop&w=1000&q=70"
+          image={require('../../assets/images/home/leaderboard.png')}
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}
@@ -1370,7 +1370,7 @@ const themedStyles = StyleService.create({
     flex: 1,
   },
   content: {
-    paddingBottom: 40,
+    paddingBottom: 12,
   },
   // Scheduled-interview 5th card's trailing slot (see that card's own
   // comment) -- matches ActionCard's own `chevron` style exactly (same
