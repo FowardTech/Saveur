@@ -1254,7 +1254,7 @@ const HomeSrc = memo(() => {
         ) : (
           <FeatureCard
             heroIcon="flash-outline"
-          backdrop="#2F6BFF"
+          backdrop="#7C5CFF"
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
@@ -1262,6 +1262,8 @@ const HomeSrc = memo(() => {
             onPress={missionHero.onPress}
           />
         )}
+
+        <DailyTipsBanner />
 
         {/* SYMPHONY REDESIGN follow-up (product request, with 4 reference
             icon images: "replace the icons used for the daily challenge,
@@ -1319,7 +1321,6 @@ const HomeSrc = memo(() => {
           icons={['star-outline', 'award-outline', 'people-outline']}
           onPress={() => navigate('Leaderboard')}
         />
-        <DailyTipsBanner />
       </Content>
       {/* Admin-configured ad popup — only rendered visible when a real,
           still-eligible ad was found (see the effect above); tapping its
