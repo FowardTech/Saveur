@@ -478,9 +478,9 @@ const VoiceCoachView = memo(({
   React.useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
-  const lastCoachLineRef = React.useRef(lastCoachLine);
+  const lastCoachLineRef = React.useRef<string>(String(lastCoachLine ?? ''));
   React.useEffect(() => {
-    lastCoachLineRef.current = lastCoachLine;
+    lastCoachLineRef.current = String(lastCoachLine ?? '');
   }, [lastCoachLine]);
   // Last turn actually sent (normalized text + time) -- a repeat of the same
   // text within a few seconds is a duplicate/echo, not a new question.
