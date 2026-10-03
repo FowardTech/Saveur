@@ -634,6 +634,7 @@ const themedStyles = StyleService.create({
   // same globalStyle.card every other neutral card in this app uses.
   statsCard: {
     ...globalStyle.card,
+    backgroundColor: 'background-basic-color-2',
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
