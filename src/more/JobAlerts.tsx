@@ -1,6 +1,7 @@
 import React, {memo} from 'react';
 import {
   Alert,
+  AppState,
   KeyboardAvoidingView,
   Modal,
   NativeScrollEvent,
@@ -256,6 +257,40 @@ const JobAlerts = memo(() => {
   React.useEffect(() => {
     loadAlerts();
   }, [loadAlerts]);
+
+  // Product report: "the Job alerts are not auto fetching unless i navigate
+  // to the job alert screen or refresh". The backend already discovers
+  // matches on a schedule (app/scheduler.py's job_alert_refresh tick) and
+  // pushes a notification, but this screen only ever loaded once on mount,
+  // so a list left open (or a tab revisited from the stack) stayed stale.
+  // Silently re-pulls page 1 -- no spinner/reset, so it never yanks the
+  // user's scroll position -- when the app returns to the foreground and on
+  // a 60s tick while this screen is mounted.
+  const silentRefresh = React.useCallback(async () => {
+    try {
+      const page = await jobAlertsService.listJobAlerts();
+      setAlerts(prev => {
+        // Keep any extra pages the user already scrolled through; only
+        // replace the first page's worth plus prepend brand-new alerts.
+        const known = new Set(page.alerts.map(a => a.id));
+        const tail = prev.filter(a => !known.has(a.id));
+        return [...page.alerts, ...tail];
+      });
+    } catch {
+      // Silent on purpose -- the visible list is still valid.
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const sub = AppState.addEventListener('change', state => {
+      if (state === 'active') silentRefresh();
+    });
+    const timer = setInterval(silentRefresh, 60000);
+    return () => {
+      sub.remove();
+      clearInterval(timer);
+    };
+  }, [silentRefresh]);
 
   // Infinite scroll — 15 at a time (JOB_ALERTS_PAGE_SIZE), fetched as the
   // user nears the bottom of the list. No-ops if already loading a page or
