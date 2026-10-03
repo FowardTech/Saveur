@@ -1298,6 +1298,12 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <ActionCard
+          icon="bar-chart-2-outline"
+          title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
+          subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
+          onPress={() => navigate('SalaryBenchmark')}
+        />
+        <ActionCard
           icon="pie-chart-outline"
           title={t('home:offer_analyzer_title', { defaultValue: 'Offer Analyzer' }).toString()}
           subtitle={t('home:offer_analyzer_subtitle', { defaultValue: 'Compare and negotiate your offers' }).toString()}

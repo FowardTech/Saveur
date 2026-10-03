@@ -317,6 +317,7 @@ export type RootStackParamList = {
   // offerAnalyzerService.ts and Saveur-Backend's app/api/offer_analyzer.py
   // for the full "complementary, not redundant" reasoning.
   OfferAnalyzer: undefined;
+  SalaryBenchmark: undefined;
   CareerGrowth: undefined;
   // Product report: "the system design should also be added as part of the
   // tools too" + "should also have a AI code review too and result" +
