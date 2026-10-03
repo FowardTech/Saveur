@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {AppState, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {AppState, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
@@ -126,7 +126,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Practice' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Growth' | 'Practice' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -173,6 +173,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
   const DRAWER_ACCENT = theme['text-basic-color'];
 
   const tabItems: DrawerNavItem[] = [
+    {route: 'Home', label: t('common:tab_home', {defaultValue: 'Home'}).toString(), icon: 'home-outline'},
     {route: 'Coach', label: t('common:tab_coach', {defaultValue: 'Coach'}).toString(), icon: 'message-circle-outline'},
     {route: 'Practice', label: t('common:tab_practice', {defaultValue: 'Practice'}).toString(), icon: 'search-outline'},
     {
@@ -181,7 +182,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
       icon: 'briefcase-outline',
       badge: badges?.jobAlertsUnreadCount || undefined,
     },
-    {route: 'Home', label: t('common:tab_growth', {defaultValue: 'Growth'}).toString(), icon: 'trending-up-outline'},
+    {route: 'Growth', label: t('common:tab_growth', {defaultValue: 'Growth'}).toString(), icon: 'trending-up-outline'},
     {
       route: 'Profile',
       label: t('common:tab_more', {defaultValue: 'More'}).toString(),
@@ -263,6 +264,7 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
         <BrandWordmark size={32} color={DRAWER_TEXT} />
       </View>
 
+      <ScrollView style={styles.flexOne} showsVerticalScrollIndicator={false} contentContainerStyle={{paddingBottom: 12}}>
       <Text category="h10" bold style={[styles.sectionLabel, {color: DRAWER_TEXT_MUTED}]}>
         {t('common:drawer_tabs', {defaultValue: 'Tabs'}).toString()}
       </Text>
@@ -271,6 +273,8 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
         {t('common:drawer_shortcuts', {defaultValue: 'Shortcuts'}).toString()}
       </Text>
       <View style={styles.navList}>{shortcutItems.map(i => renderItem(i, false))}</View>
+
+      </ScrollView>
 
       <View style={[styles.footerDivider, {borderTopColor: DRAWER_DIVIDER}]} />
 
@@ -345,7 +349,9 @@ const MainDrawerContent = memo(() => {
 
   const onNavigate = React.useCallback(
     (route: DrawerRoute) => {
-      if (route === 'Practice') {
+      if (route === 'Growth') {
+        navigationRef.navigate('MyProgress');
+      } else if (route === 'Practice') {
         navigationRef.navigate('MainBottomTab', {screen: 'Practice'});
       } else if (route === 'Home') {
         navigationRef.navigate('MainBottomTab', {screen: 'Home'});
@@ -568,7 +574,7 @@ const styles = StyleSheet.create({
   },
   footerDivider: {
     borderTopWidth: 1,
-    marginTop: 'auto',
+    marginTop: 8,
     marginBottom: 16,
   },
   footerRow: {
