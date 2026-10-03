@@ -1252,7 +1252,7 @@ const HomeSrc = memo(() => {
           </View>
         ) : (
           <FeatureCard
-            imageUri="https://images.unsplash.com/photo-1496664444929-8c75efb9546f?auto=format&fit=crop&w=900&q=70"
+            imageUri="https://images.unsplash.com/vector-1757394158143-e5f18aa61cf8?auto=format&fm=jpg&fit=crop&w=1000&q=70"
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
@@ -1271,7 +1271,7 @@ const HomeSrc = memo(() => {
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </Text>
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1604428803896-c1e5151d4128?auto=format&fit=crop&w=900&q=70"
+          imageUri="https://images.unsplash.com/vector-1785009505255-64568a1225eb?auto=format&fm=jpg&fit=crop&w=1000&q=70"
           eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
@@ -1290,7 +1290,7 @@ const HomeSrc = memo(() => {
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </Text>
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1758644083602-15a9645a92a7?auto=format&fit=crop&w=900&q=70"
+          imageUri="https://images.unsplash.com/vector-1788230742143-d89f43170136?auto=format&fm=jpg&fit=crop&w=1000&q=70"
           eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
           title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
           subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
@@ -1298,7 +1298,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('CareerGrowth')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1556559322-b5071efadc88?auto=format&fit=crop&w=900&q=70"
+          imageUri="https://images.unsplash.com/vector-1786212330733-7582289b4e14?auto=format&fm=jpg&fit=crop&w=1000&q=70"
           eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
           title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
           subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
@@ -1306,7 +1306,7 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('SalaryBenchmark')}
         />
         <FeatureCard
-          imageUri="https://images.unsplash.com/photo-1541296239751-35023f37d0f2?auto=format&fit=crop&w=900&q=70"
+          imageUri="https://images.unsplash.com/vector-1786978589323-cdc0e17a21da?auto=format&fm=jpg&fit=crop&w=1000&q=70"
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}

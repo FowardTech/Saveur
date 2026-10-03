@@ -24,8 +24,8 @@ const FeatureCard: React.FC<FeatureCardProps> = memo(
     <TouchableOpacity activeOpacity={0.9} onPress={onPress} style={[styles.wrap, {minHeight: height}, style]}>
       <Image source={{uri: imageUri}} style={StyleSheet.absoluteFill} resizeMode="cover" />
       <LinearGradient
-        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.85)']}
-        locations={[0, 0.45, 1]}
+        colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.9)']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.content}>
@@ -59,7 +59,7 @@ const FeatureCard: React.FC<FeatureCardProps> = memo(
 export default FeatureCard;
 
 const styles = StyleSheet.create({
-  wrap: {borderRadius: 22, overflow: 'hidden', marginBottom: 16, backgroundColor: '#27272A'},
+  wrap: {borderRadius: 22, overflow: 'hidden', marginBottom: 16, backgroundColor: '#F4F4F5'},
   content: {flex: 1, justifyContent: 'flex-end', padding: 16, paddingTop: 80},
   eyebrow: {color: 'rgba(255,255,255,0.85)', letterSpacing: 0.8, marginBottom: 4},
   title: {color: '#FFFFFF'},
