@@ -318,7 +318,7 @@ const themedStyles = StyleService.create({
   // saturated fill instead of a crisp colored card.
   heroOfferCard: {
     ...globalStyle.card,
-    backgroundColor: 'color-primary-solid',
+    backgroundColor: '#7C5CFF',
     shadowOpacity: 0,
     elevation: 0,
   },
