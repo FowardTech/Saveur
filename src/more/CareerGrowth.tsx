@@ -10,6 +10,7 @@ import Container from 'components/Container';
 import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
+import FormSheet from 'components/FormSheet';
 import {RootStackParamList} from 'navigation/types';
 import * as growth from 'services/growthService';
 import {MarketCheck, PayRecord, PaySummary, PromotionPlan} from 'services/growthService';
@@ -55,6 +56,9 @@ const CareerGrowth = memo(() => {
   const {t} = useTranslation(['more', 'common']);
 
   const [tab, setTab] = React.useState<'pay' | 'plan'>('pay');
+  const [payOpen, setPayOpen] = React.useState(false);
+  const [marketOpen, setMarketOpen] = React.useState(false);
+  const [planOpen, setPlanOpen] = React.useState(false);
   const [records, setRecords] = React.useState<PayRecord[]>([]);
   const [summary, setSummary] = React.useState<PaySummary>({count: 0});
   const [plan, setPlan] = React.useState<PromotionPlan | null>(null);
@@ -183,16 +187,14 @@ const CareerGrowth = memo(() => {
           {t('more:growth_subtitle', {defaultValue: "Track your pay over time, check if you're paid fairly, and prepare for your next raise or promotion."})}
         </Text>
 
-        {checkinId ? (
-          <Layout level="2" style={styles.card}>
-            <Text category="h8" bold>{t('more:growth_checkin_title', {defaultValue: 'Quarterly check-in'})}</Text>
-            <Text category="h9-s" status="placeholder" mt={4} mb={8}>
-              {t('more:growth_checkin_body', {defaultValue: "Any new wins, a raise, or a new role? We'll save it to your Career Diary as promotion evidence."})}
-            </Text>
-            <Input multiline value={checkinText} onChangeText={setCheckinText} textStyle={{minHeight: 70}} style={{marginBottom: 8}} />
-            <CtaButton onPress={onCheckin}>{t('common:save', {defaultValue: 'Save'})}</CtaButton>
-          </Layout>
-        ) : null}
+        <FormSheet
+          visible={!!checkinId}
+          title={t('more:growth_checkin_title', {defaultValue: 'Quarterly check-in'}).toString()}
+          subtitle={t('more:growth_checkin_body', {defaultValue: "Any new wins, a raise, or a new role? We'll save it to your Career Diary as promotion evidence."}).toString()}
+          onClose={() => setCheckinId(null)}>
+          <Input multiline value={checkinText} onChangeText={setCheckinText} textStyle={{minHeight: 90}} style={{marginBottom: 12}} />
+          <CtaButton onPress={onCheckin}>{t('common:save', {defaultValue: 'Save'})}</CtaButton>
+        </FormSheet>
 
         <Flex wrap justify="flex-start" style={{marginHorizontal: -4, marginBottom: 8}}>
           <Chip label={t('more:growth_tab_pay', {defaultValue: 'Pay tracking'}).toString()} selected={tab === 'pay'} onPress={() => setTab('pay')} />
@@ -213,8 +215,10 @@ const CareerGrowth = memo(() => {
               </Layout>
             ) : null}
 
-            <Layout level="2" style={styles.card}>
-              <Text category="h8" bold mb={8}>{t('more:growth_log_pay', {defaultValue: 'Log a pay change'})}</Text>
+            <CtaButton onPress={() => setPayOpen(true)} style={{marginBottom: 12}}>
+              {t('more:growth_log_pay', {defaultValue: 'Log a pay change'})}
+            </CtaButton>
+            <FormSheet visible={payOpen} title={t('more:growth_log_pay', {defaultValue: 'Log a pay change'}).toString()} onClose={() => setPayOpen(false)}>
               <Flex wrap justify="flex-start" style={{marginHorizontal: -4, marginBottom: 8}}>
                 {KINDS.map(k => (
                   <Chip key={k} label={kindLabel(k)} selected={k === kind} onPress={() => setKind(k)} />
@@ -225,10 +229,10 @@ const CareerGrowth = memo(() => {
               <Input placeholder={t('more:growth_bonus_placeholder', {defaultValue: 'Bonus (optional)'}).toString()} keyboardType="numeric" value={bonus} onChangeText={setBonus} style={styles.input} />
               <Input placeholder={t('more:growth_role_placeholder', {defaultValue: 'Role'}).toString()} value={role} onChangeText={setRole} style={styles.input} />
               <Input placeholder={t('more:growth_company_placeholder', {defaultValue: 'Company'}).toString()} value={company} onChangeText={setCompany} style={styles.input} />
-              <CtaButton disabled={saving || !date.trim() || !base.trim()} onPress={onAddPay}>
+              <CtaButton disabled={saving || !date.trim() || !base.trim()} onPress={async () => { await onAddPay(); setPayOpen(false); }}>
                 {t('more:growth_add', {defaultValue: 'Add'})}
               </CtaButton>
-            </Layout>
+            </FormSheet>
 
             {records.length > 0 ? (
               <Layout level="2" style={styles.card}>
@@ -257,11 +261,16 @@ const CareerGrowth = memo(() => {
             {records.length > 0 ? (
               <Layout level="2" style={styles.card}>
                 <Text category="h8" bold mb={8}>{t('more:growth_market_title', {defaultValue: 'Am I paid fairly?'})}</Text>
+                <CtaButton onPress={() => setMarketOpen(true)}>
+                  {t('more:growth_check', {defaultValue: 'Check against the market'})}
+                </CtaButton>
+                <FormSheet visible={marketOpen} title={t('more:growth_market_title', {defaultValue: 'Am I paid fairly?'}).toString()} onClose={() => setMarketOpen(false)}>
                 <Input placeholder={t('more:growth_location', {defaultValue: 'Location'}).toString()} value={location} onChangeText={setLocation} style={styles.input} />
                 <Input placeholder={t('more:growth_years', {defaultValue: 'Years of experience'}).toString()} keyboardType="numeric" value={years} onChangeText={setYears} style={styles.input} />
-                <CtaButton disabled={checking || !location.trim()} onPress={onMarket}>
+                <CtaButton disabled={checking || !location.trim()} onPress={async () => { await onMarket(); setMarketOpen(false); }}>
                   {checking ? t('more:growth_checking', {defaultValue: 'Checking…'}) : t('more:growth_check', {defaultValue: 'Check against the market'})}
                 </CtaButton>
+                </FormSheet>
                 {market ? (
                   <View style={{marginTop: 12}}>
                     <Text category="h9" bold>
@@ -285,7 +294,10 @@ const CareerGrowth = memo(() => {
           </>
         ) : (
           <>
-            <Layout level="2" style={styles.card}>
+            <CtaButton onPress={() => setPlanOpen(true)} style={{marginBottom: 12}}>
+              {plan ? t('more:growth_regenerate', {defaultValue: 'Regenerate plan'}) : t('more:growth_generate', {defaultValue: 'Build my plan'})}
+            </CtaButton>
+            <FormSheet visible={planOpen} title={t('more:growth_tab_plan', {defaultValue: 'Raise & promotion plan'}).toString()} onClose={() => setPlanOpen(false)}>
               <Flex wrap justify="flex-start" style={{marginHorizontal: -4, marginBottom: 8}}>
                 <Chip label={t('more:growth_goal_promotion', {defaultValue: 'Promotion'}).toString()} selected={goal === 'promotion'} onPress={() => setGoal('promotion')} />
                 <Chip label={t('more:growth_goal_raise', {defaultValue: 'Raise'}).toString()} selected={goal === 'raise'} onPress={() => setGoal('raise')} />
@@ -301,14 +313,14 @@ const CareerGrowth = memo(() => {
                 textStyle={{minHeight: 70}}
                 style={styles.input}
               />
-              <CtaButton disabled={planning || !curRole.trim()} onPress={onPlan}>
+              <CtaButton disabled={planning || !curRole.trim()} onPress={async () => { setPlanOpen(false); await onPlan(); }}>
                 {planning
                   ? t('more:growth_planning', {defaultValue: 'Building plan…'})
                   : plan
                   ? t('more:growth_regenerate', {defaultValue: 'Regenerate plan'})
                   : t('more:growth_generate', {defaultValue: 'Build my plan'})}
               </CtaButton>
-            </Layout>
+            </FormSheet>
 
             {plan ? (
               <Layout level="2" style={styles.card}>

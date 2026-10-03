@@ -2686,7 +2686,7 @@
             "paddingHorizontal": 0,
             "textMarginHorizontal": 0,
             "textFontFamily": "text-font-family-medium",
-            "textFontWeight":"normal",
+            "textFontWeight": "normal",
             "iconWidth": 24,
             "iconHeight": 24,
             "iconMarginHorizontal": 16,
@@ -2701,8 +2701,8 @@
           "variantGroups": {
             "status": {
               "basic": {
-                "borderColor": "background-basic-color-3",
-                "backgroundColor": "transparent",
+                "borderColor": "border-card-default",
+                "backgroundColor": "background-basic-color-2",
                 "textColor": "text-basic-color",
                 "labelColor": "text-hint-color",
                 "captionColor": "text-hint-color",
@@ -2710,7 +2710,7 @@
                 "iconTintColor": "text-hint-color",
                 "state": {
                   "focused": {
-                    "borderColor": "button-outline-border",
+                    "borderColor": "text-basic-color",
                     "backgroundColor": "background-basic-color-2",
                     "iconTintColor": "text-placeholder-color"
                   },
@@ -2907,22 +2907,24 @@
             "size": {
               "small": {
                 "minHeight": "size-small",
-                "borderRadius": 0,
-                "borderWidth": 0,
+                "borderRadius": 12,
+                "borderWidth": 1,
                 "paddingVertical": 3,
                 "textFontSize": "text-subtitle-2-font-size",
-                "textFontWeight": "normal"
+                "textFontWeight": "normal",
+                "paddingHorizontal": 14
               },
               "medium": {
-                "minHeight": 40,
-                "borderRadius": 0,
-                "borderWidth": 0,
+                "minHeight": 48,
+                "borderRadius": 12,
+                "borderWidth": 1,
                 "paddingVertical": 7,
                 "textFontSize": "text-heading-7-font-size",
                 "textFontWeight": "400",
                 "iconHeight": 24,
                 "iconWidth": 24,
-                "iconMarginHorizontal": 0
+                "iconMarginHorizontal": 0,
+                "paddingHorizontal": 14
               },
               "composer": {
                 "minHeight": 32,
@@ -2935,11 +2937,12 @@
               },
               "large": {
                 "minHeight": 48,
-                "borderRadius": 8,
-                "borderWidth": 0,
+                "borderRadius": 12,
+                "borderWidth": 1,
                 "paddingVertical": 11,
                 "textFontSize": "text-subtitle-1-font-size",
-                "textFontWeight": "normal"
+                "textFontWeight": "normal",
+                "paddingHorizontal": 14
               }
             }
           }
