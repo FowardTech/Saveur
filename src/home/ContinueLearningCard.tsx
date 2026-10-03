@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { Image, StyleProp, TouchableOpacity, View, ViewStyle } from 'react-native';
 import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -120,7 +120,18 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
 
   // A truly "very small info card" only has room for one resumable item —
   // video wins when both exist (see the module comment above for why).
-  const primary: { title: string; subtitle: string; onPress: () => void } | null = video
+  //
+  // BUG FIX (product report: "for the continue learning in both web and
+  // mobile app, for video the user was watching, the video poster should
+  // appear so that the user can know which video they were watching"):
+  // `thumbnailUrl` (learningService.ts's CourseVideo.thumbnailUrl, already
+  // populated server-side -- get_continue_video() returns it same as every
+  // other video record) was fetched into `video` above but never actually
+  // read anywhere in this component; the row always showed the same
+  // generic play-icon badge for every video, giving no visual cue which
+  // one it was. Only videos carry a real thumbnail -- a course module has
+  // no single frame to show, so it keeps the icon badge.
+  const primary: { title: string; subtitle: string; onPress: () => void; thumbnailUrl?: string | null } | null = video
     ? {
         title: video.title,
         subtitle:
@@ -128,6 +139,7 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
             ? t('home:continue_video_subtitle_pct', { defaultValue: '{{pct}}% watched', pct: videoProgressPct })
             : t('home:continue_video_subtitle', { defaultValue: 'Video lesson' }),
         onPress: () => setPlayingVideo(video),
+        thumbnailUrl: video.thumbnailUrl,
       }
     : course
     ? {
@@ -160,9 +172,18 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
             -- this card is one of the explicitly excluded ones, opting
             out of GradientIconBadge's own new lighter +16 default to
             keep the darker look from the previous pass. */}
-        <GradientIconBadge color="#0063f8" size={30} radius={10} shade={-8} style={styles.iconWrap}>
-          <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
-        </GradientIconBadge>
+        {primary.thumbnailUrl ? (
+          <View style={styles.thumbnailWrap}>
+            <Image source={{ uri: primary.thumbnailUrl }} style={{ width: 30, height: 30 }} resizeMode="cover" />
+            <View style={styles.thumbnailPlayOverlay}>
+              <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+            </View>
+          </View>
+        ) : (
+          <GradientIconBadge color="#0063f8" size={30} radius={10} shade={-8} style={styles.iconWrap}>
+            <Icon pack="eva" name="play-circle-outline" style={[globalStyle.icon16, { tintColor: '#fff' }]} />
+          </GradientIconBadge>
+        )}
         <View style={globalStyle.flexOne}>
           <Text category="h10" bold numberOfLines={1}>
             {primary.title}
@@ -248,5 +269,28 @@ const themedStyles = StyleService.create({
   // its `size`/`radius` props at the call site.
   iconWrap: {
     marginRight: 10,
+  },
+  // Video poster thumbnail -- same 30x30/radius-10 footprint as the icon
+  // badge it replaces so the row's layout doesn't shift depending on
+  // which one renders.
+  thumbnailWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    marginRight: 10,
+    overflow: 'hidden',
+    backgroundColor: 'background-basic-color-3',
+  },
+  // Small play-icon chip centered over the poster so it still reads as
+  // "a video" at a glance, not just an arbitrary photo.
+  thumbnailPlayOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.18)',
   },
 });
