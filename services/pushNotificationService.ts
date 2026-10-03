@@ -24,6 +24,8 @@ import {
   navigateToSharedWithMe,
   navigateToLearningCourses,
   navigateToWhatsNext,
+  navigateToCareerGrowth,
+  navigateToCareerGrowth,
   navigateToNextStepRecommendation,
   navigateToApplicationDetails,
   navigateToApplicationsList,
@@ -311,6 +313,10 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // role until the first 90 days are over"). Nothing to parse out of
   // `data` beyond a week number the screen re-fetches anyway -- What's Next
   // itself re-checks for a pending check-in on focus and pops the sheet.
+  if (data?.type === 'growth_checkin') {
+    navigateToCareerGrowth();
+    return;
+  }
   if (data?.type === 'post_offer_checkin') {
     navigateToWhatsNext();
     return;

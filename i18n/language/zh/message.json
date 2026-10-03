@@ -107,5 +107,6 @@
   "voice_status_starting": "启动中…",
   "voice_status_thinking": "思考中…",
   "voice_tap_to_interrupt": "点按以打断",
-  "suggested_action_title_offer_analyzer": "薪资Offer分析器"
+  "suggested_action_title_offer_analyzer": "薪资Offer分析器",
+  "suggested_action_title_career_growth": "职业成长"
 }

@@ -126,7 +126,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Coach' | 'RecentInterviews' | 'SalaryNegotiation' | 'OfferAnalyzer' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -193,6 +193,12 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
       route: 'OfferAnalyzer',
       label: t('common:drawer_offer_analyzer', {defaultValue: 'Offer Analyzer'}).toString(),
       icon: 'pie-chart-outline',
+    },
+    // Post-hire retention loop (pay tracking, promotion/raise plan, quarterly check-in).
+    {
+      route: 'CareerGrowth',
+      label: t('common:drawer_career_growth', {defaultValue: 'Career Growth'}).toString(),
+      icon: 'trending-up-outline',
     },
     {
       // Product request: "Change dream job to dream company" -- this row
@@ -379,6 +385,8 @@ const MainDrawerContent = memo(() => {
         navigationRef.navigate('SalaryNegotiation');
       } else if (route === 'OfferAnalyzer') {
         navigationRef.navigate('OfferAnalyzer');
+      } else if (route === 'CareerGrowth') {
+        navigationRef.navigate('CareerGrowth');
       } else if (route === 'DreamCompanies') {
         navigationRef.navigate('DreamCompanies');
       } else if (route === 'Jobs') {

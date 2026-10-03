@@ -107,5 +107,6 @@
   "voice_status_starting": "Запуск…",
   "voice_status_thinking": "Думаю…",
   "voice_tap_to_interrupt": "Нажмите, чтобы прервать",
-  "suggested_action_title_offer_analyzer": "Анализатор предложений"
+  "suggested_action_title_offer_analyzer": "Анализатор предложений",
+  "suggested_action_title_career_growth": "Карьерный рост"
 }

@@ -107,5 +107,6 @@
   "voice_status_starting": "Starting…",
   "voice_status_thinking": "Thinking…",
   "voice_tap_to_interrupt": "Tap to interrupt",
-  "suggested_action_title_offer_analyzer": "the Offer Analyzer"
+  "suggested_action_title_offer_analyzer": "the Offer Analyzer",
+  "suggested_action_title_career_growth": "Career Growth"
 }

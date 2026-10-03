@@ -84,6 +84,7 @@ type PendingNavigation =
   // on What's Next, which re-checks for a pending check-in on focus (see
   // src/more/WhatsNext.tsx) and pops the sheet itself.
   | {name: 'WhatsNext'}
+  | {name: 'CareerGrowth'}
   // next_step_plan push tap (product request: "after that [graduation]
   // redirect them to the next step and build up a next step career plan
   // recommendation or suggestion for them") -- see
@@ -182,6 +183,8 @@ function runNavigation(nav: PendingNavigation): void {
     navigationRef.navigate('LearningCourses');
   } else if (nav.name === 'WhatsNext') {
     navigationRef.navigate('WhatsNext');
+  } else if (nav.name === 'CareerGrowth') {
+    navigationRef.navigate('CareerGrowth');
   } else if (nav.name === 'NextStepRecommendation') {
     navigationRef.navigate('NextStepRecommendation');
   } else if (nav.name === 'GoalTipDetail') {
@@ -353,6 +356,11 @@ export function navigateToCareerRoadmap(): void {
  * comment above. */
 export function navigateToWhatsNext(): void {
   queueOrNavigate({name: 'WhatsNext'});
+}
+
+/** growth_checkin push tap (quarterly career check-in). */
+export function navigateToCareerGrowth(): void {
+  queueOrNavigate({name: 'CareerGrowth'});
 }
 
 /** next_step_plan push tap -- see the PendingNavigation union's own

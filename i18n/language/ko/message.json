@@ -107,5 +107,6 @@
   "voice_status_starting": "시작하는 중…",
   "voice_status_thinking": "생각 중…",
   "voice_tap_to_interrupt": "탭하여 중단",
-  "suggested_action_title_offer_analyzer": "오퍼 분석기"
+  "suggested_action_title_offer_analyzer": "오퍼 분석기",
+  "suggested_action_title_career_growth": "커리어 성장"
 }

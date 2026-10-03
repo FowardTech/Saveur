@@ -1070,6 +1070,7 @@ export type SuggestedActionId =
   | 'student_verification'
   | 'salary_negotiation'
   | 'offer_analyzer'
+  | 'career_growth'
   | 'system_design_whiteboard'
   | 'learning_courses'
   | 'career_diary'

@@ -107,5 +107,6 @@
   "voice_status_starting": "Avvio in corso…",
   "voice_status_thinking": "Sto pensando…",
   "voice_tap_to_interrupt": "Tocca per interrompere",
-  "suggested_action_title_offer_analyzer": "l'Analizzatore di offerte"
+  "suggested_action_title_offer_analyzer": "l'Analizzatore di offerte",
+  "suggested_action_title_career_growth": "Crescita professionale"
 }
