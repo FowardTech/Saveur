@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="15702" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="24127" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" launchScreen="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="01J-lp-oVM">
     <device id="retina4_7" orientation="portrait" appearance="light"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="15704"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="24063"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
+    <customFonts key="customFonts">
+        <array key="MontserratAlternates-Black.ttf">
+            <string>MontserratAlternates-Black</string>
+        </array>
+    </customFonts>
     <scenes>
         <!--View Controller-->
         <scene sceneID="EHf-IW-A2E">
@@ -16,55 +21,24 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <!-- Product request ("I want the splash screen to be like
-                                 [reference]... The saveur logo and the app name will be
-                                 on the same horizontal level") — was the logo mark alone,
-                                 centered by itself (see this file's own prior comment
-                                 history for the mark's own backstory). Now a plain wrapping
-                                 row view, no visual style of its own (no background/border),
-                                 whose only job is grouping the mark + a new "Saveur"
-                                 wordmark label so the PAIR centers as one horizontal unit
-                                 instead of the mark alone. This row gets no direct
-                                 width/height constraint of its own — its frame is fully
-                                 (and unambiguously) derived from its two children's edges
-                                 pinned to it below (the image's leading/top/bottom, the
-                                 label's trailing) — Auto Layout's standard "size a wrapper
-                                 from its own content" pattern, not a hack. -->
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavRow01">
-                                <rect key="frame" x="112" y="198" width="170" height="56"/>
+                                <rect key="frame" x="96" y="195.5" width="183.5" height="56"/>
                                 <subviews>
-                                    <!-- Renamed SplashLogo -> SplashLogoV2 (rebrand to the new
-                                         blue "S" mark) — see this file's git history. Explicit
-                                         width/height (rather than the image's intrinsic size)
-                                         keeps the on-screen size predictable regardless of which
-                                         @1x/2x/3x asset slot iOS picks. Shrunk from the
-                                         previous solo-centered 112x103 to 56x52 (~50%, same
-                                         aspect ratio) now that it sits beside a wordmark label
-                                         instead of standing alone — a mark this size read fine
-                                         solo but would dwarf the label if left unchanged. -->
                                     <imageView opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="SplashLogoV2" translatesAutoresizingMaskIntoConstraints="NO" id="GJd-Yh-RWb">
                                         <rect key="frame" x="0.0" y="0.0" width="56" height="56"/>
                                         <constraints>
-                                            <constraint firstAttribute="width" constant="56" id="wLg-ic-6vN"/>
                                             <constraint firstAttribute="height" constant="56" id="hRt-fc-9pQ"/>
+                                            <constraint firstAttribute="width" constant="56" id="wLg-ic-6vN"/>
                                         </constraints>
                                     </imageView>
-                                    <!-- New "Saveur" wordmark label (see this view's own
-                                         comment above) — same custom font/weight as the
-                                         in-app BrandWordmark component (components/
-                                         BrandWordmark.tsx), MontserratAlternates-Black, wired
-                                         into this target via Info.plist's UIAppFonts so it's
-                                         available this early in the launch sequence. White,
-                                         same as the "By Foward Technologies Inc." footer label
-                                         below, to read against the brand-blue background. -->
-                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Saveur" textAlignment="left" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SavLbl01">
-                                        <rect key="frame" x="66" y="6" width="85" height="40"/>
+                                    <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Saveur" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="SavLbl01">
+                                        <rect key="frame" x="66" y="10.5" width="106.5" height="34.5"/>
                                         <fontDescription key="fontDescription" name="MontserratAlternates-Black" family="Montserrat Alternates" pointSize="28"/>
                                         <color key="textColor" red="1" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <nil key="highlightedColor"/>
                                     </label>
-                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavDotA">
-                                        <rect key="frame" x="154" y="30" width="9" height="9"/>
+                                    <view clipsSubviews="YES" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="SavDotA">
+                                        <rect key="frame" x="174.5" y="27" width="9" height="9"/>
                                         <color key="backgroundColor" red="0.0" green="0.388235" blue="0.972549" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="9" id="SavD1A"/>
@@ -74,6 +48,7 @@
                                             <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">
                                                 <real key="value" value="4.5"/>
                                             </userDefinedRuntimeAttribute>
+                                            <userDefinedRuntimeAttribute type="boolean" keyPath="layer.masksToBounds" value="YES"/>
                                         </userDefinedRuntimeAttributes>
                                     </view>
                                 </subviews>
@@ -83,20 +58,11 @@
                                     <constraint firstItem="GJd-Yh-RWb" firstAttribute="bottom" secondItem="SavRow01" secondAttribute="bottom" id="SavC03"/>
                                     <constraint firstItem="SavLbl01" firstAttribute="leading" secondItem="GJd-Yh-RWb" secondAttribute="trailing" constant="10" id="SavC04"/>
                                     <constraint firstItem="SavLbl01" firstAttribute="centerY" secondItem="SavRow01" secondAttribute="centerY" id="SavC05"/>
+                                    <constraint firstAttribute="trailing" secondItem="SavDotA" secondAttribute="trailing" id="SavC06"/>
                                     <constraint firstItem="SavDotA" firstAttribute="leading" secondItem="SavLbl01" secondAttribute="trailing" constant="2" id="SavD3A"/>
                                     <constraint firstItem="SavDotA" firstAttribute="bottom" secondItem="SavLbl01" secondAttribute="bottom" constant="-9" id="SavD4A"/>
-                                    <constraint firstItem="SavRow01" firstAttribute="trailing" secondItem="SavDotA" secondAttribute="trailing" id="SavC06"/>
                                 </constraints>
                             </view>
-                            <!-- Product request ("I want the Saveur app icon to be the default
-                                 app blue background and the S shaped design in the middle to
-                                 be color white... the splashscreen will have to change back to
-                                 blue background") — back to white (red="1" green="1" blue="1"),
-                                 same as this file's own original color before the brief
-                                 light-gray/gray-text phase (see the git history on this
-                                 comment). White reads clearly against the restored blue
-                                 background below; the gray-basic-600 tone only existed to stay
-                                 readable against light gray. -->
                             <label opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="By Foward Technologies Inc." textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="9" translatesAutoresizingMaskIntoConstraints="NO" id="MN2-I3-ftu">
                                 <rect key="frame" x="0.0" y="626" width="375" height="21"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="17"/>
@@ -104,12 +70,7 @@
                                 <nil key="highlightedColor"/>
                             </label>
                         </subviews>
-                        <!-- Product request — back to brand blue (#0063f8), same as this
-                             screen's own history before the brief "logo mark is blue, needs a
-                             light background" phase (see git history on this comment). The
-                             logo mark itself (SplashLogoV2) has been recolored white to read
-                             against this blue fill. See android/.../colors.xml's
-                             splash_background for the equivalent Android change. -->
+                        <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                         <color key="backgroundColor" red="0.0" green="0.0" blue="0.0" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="Bcu-3y-fUS" firstAttribute="bottom" secondItem="MN2-I3-ftu" secondAttribute="bottom" constant="20" id="OZV-Vh-mqD"/>
@@ -118,7 +79,6 @@
                             <constraint firstItem="MN2-I3-ftu" firstAttribute="leading" secondItem="Bcu-3y-fUS" secondAttribute="leading" id="i1E-0Y-4RG"/>
                             <constraint firstItem="SavRow01" firstAttribute="centerY" secondItem="Ze5-6b-2t3" secondAttribute="bottom" multiplier="1/3" constant="1" id="moa-c2-u7t"/>
                         </constraints>
-                        <viewLayoutGuide key="safeArea" id="Bcu-3y-fUS"/>
                     </view>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="iYj-Kq-Ea1" userLabel="First Responder" sceneMemberID="firstResponder"/>
@@ -126,4 +86,7 @@
             <point key="canvasLocation" x="52.173913043478265" y="375"/>
         </scene>
     </scenes>
+    <resources>
+        <image name="SplashLogoV2" width="252" height="252"/>
+    </resources>
 </document>
