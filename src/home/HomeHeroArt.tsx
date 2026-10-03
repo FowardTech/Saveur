@@ -306,27 +306,16 @@ export const ArtGiftBox: React.FC<ArtProps> = ({ size }) => (
 // that used to route through illustrationSvgs.ts).
 export const ArtLockedGift: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
-    <Circle cx="70" cy="70" r="56" fill="#71717a0f" />
-    <Ellipse cx="70" cy="114" rx="34" ry="6" fill="rgba(0,0,0,0.06)" />
-
-    {/* small gift box, same purple/gold pairing as ArtGiftBox but scaled
-        down and pushed back so the padlock reads as the foreground focus */}
-    <Rect x="37" y="66" width="65" height="42" rx="5" fill="#71717a" />
-    <Rect x="32" y="52" width="75" height="18" rx="5" fill="#7C4DEF" />
-    <Rect x="63" y="52" width="14" height="56" fill="#FFC94A" />
-    <Rect x="32" y="58" width="75" height="9" fill="#FFC94A" />
-
-    {/* padlock, pinned front-and-center on top of the box */}
-    <Path
-      d="M54 47a16 16 0 0 1 32 0v9"
-      stroke="#F5B430"
-      strokeWidth={8}
-      strokeLinecap="round"
-      fill="none"
-    />
-    <Rect x="47" y="54" width="46" height="35" rx="7" fill="#FFC94A" />
-    <Circle cx="70" cy="68" r="6" fill="#7C4DEF" />
-    <Rect x="67" y="70.5" width="6" height="10.5" rx="3" fill="#7C4DEF" />
+    <Circle cx="70" cy="70" r="58" fill="#7C5CFF1A" />
+    <Ellipse cx="70" cy="118" rx="38" ry="5" fill="rgba(0,0,0,0.07)" />
+    <Rect x="34" y="60" width="72" height="52" rx="8" fill="#7C5CFF" />
+    <Rect x="30" y="48" width="80" height="18" rx="6" fill="#A592FF" />
+    <Rect x="64" y="48" width="12" height="64" fill="#FFC94A" />
+    <Path d="M70 48c-12-18-28-10-18 0zM70 48c12-18 28-10 18 0z" fill="#FFC94A" />
+    <Circle cx="102" cy="40" r="17" fill="#FF5FA2" />
+    <Rect x="94" y="39" width="16" height="12" rx="3" fill="#FFFFFF" />
+    <Path d="M97 39v-4a5 5 0 0 1 10 0v4" stroke="#FFFFFF" strokeWidth={3} fill="none" strokeLinecap="round" />
+    <Circle cx="24" cy="30" r="3" fill="#19B87A" />
   </Svg>
 );
 
@@ -339,24 +328,17 @@ export const ArtLockedGift: React.FC<ArtProps> = ({ size }) => (
 // ArtGiftBox's own comment above for the licensing writeup.
 export const ArtEmailSent: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
-    <Circle cx="70" cy="70" r="56" fill="#71717a0f" />
-    <Ellipse cx="70" cy="108" rx="38" ry="6" fill="rgba(0,0,0,0.06)" />
-
-    {/* envelope body + folded flap, drawn as two triangles over the body
-        so the flap reads as a real fold, not a printed line */}
-    <Rect x="30" y="48" width="80" height="54" rx="7" fill="#71717a" />
-    <Path d="M30 56 L70 84 L110 56" stroke="#EAF2FF" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-
-    {/* "sent/confirmed" badge, pinned to the envelope's corner */}
-    <Circle cx="105" cy="96" r="19" fill="#0EAD69" />
-    <Path
-      d="M97 96l6 6 12-13"
-      stroke="#FFFFFF"
-      strokeWidth={4.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      fill="none"
-    />
+    <Circle cx="70" cy="70" r="58" fill="#7C5CFF1A" />
+    <Ellipse cx="70" cy="114" rx="38" ry="5" fill="rgba(0,0,0,0.07)" />
+    <Rect x="28" y="46" width="84" height="58" rx="8" fill="#7C5CFF" />
+    <Rect x="38" y="32" width="64" height="44" rx="5" fill="#FFFFFF" />
+    <Rect x="46" y="42" width="30" height="5" rx="2.5" fill="#C9BBFF" />
+    <Rect x="46" y="52" width="46" height="5" rx="2.5" fill="#E4DDFF" />
+    <Path d="M28 56 L70 84 L112 56 V96 a8 8 0 0 1 -8 8 H36 a8 8 0 0 1 -8 -8 Z" fill="#A592FF" />
+    <Circle cx="108" cy="98" r="17" fill="#19B87A" />
+    <Path d="M100 98l6 6 11-12" stroke="#FFFFFF" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <Circle cx="22" cy="30" r="3" fill="#FFC94A" />
+    <Circle cx="122" cy="40" r="3" fill="#FF5FA2" />
   </Svg>
 );
 
@@ -369,28 +351,16 @@ export const ArtEmailSent: React.FC<ArtProps> = ({ size }) => (
 // see ArtGiftBox's own comment above for the licensing writeup.
 export const ArtTrophy: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
-    <Circle cx="70" cy="70" r="56" fill="#FFC94A1a" />
-    <Ellipse cx="70" cy="112" rx="34" ry="6" fill="rgba(0,0,0,0.06)" />
-
-    {/* small celebrating figure, arms raised, off to the side of the cup */}
-    <Circle cx="30" cy="80" r="10" fill="#71717a" />
-    <Path d="M14 118c0-12 7-20 16-20s16 8 16 20z" fill="#71717a" />
-    <Path d="M18 100c-4-8-3-16 1-20" stroke="#71717a" strokeWidth={5.5} strokeLinecap="round" fill="none" />
-    <Path d="M42 100c4-8 3-16-1-20" stroke="#71717a" strokeWidth={5.5} strokeLinecap="round" fill="none" />
-
-    {/* cup */}
-    <Path d="M52 42h50v20a25 25 0 0 1-50 0z" fill="#FFC94A" />
-    {/* handles */}
-    <Path d="M52 47c-11 0-16 7-16 14s5 11 14 12" stroke="#F5B430" strokeWidth={5.5} strokeLinecap="round" fill="none" />
-    <Path d="M102 47c11 0 16 7 16 14s-5 11-14 12" stroke="#F5B430" strokeWidth={5.5} strokeLinecap="round" fill="none" />
-    {/* stem + base */}
-    <Rect x="70" y="82" width="14" height="16" fill="#F5B430" />
-    <Rect x="56" y="98" width="42" height="9" rx="3.5" fill="#F5B430" />
-    <Rect x="49" y="107" width="56" height="8" rx="4" fill="#7C4DEF" />
-
-    {/* sparkles */}
-    <Path d="M100 26l2.7 6.3L109 35l-6.3 2.7L100 44l-2.7-6.3L91 35l6.3-2.7z" fill="#71717a" />
-    <Circle cx="118" cy="60" r="4.5" fill="#71717a" />
+    <Circle cx="70" cy="70" r="58" fill="#FFC94A26" />
+    <Ellipse cx="70" cy="120" rx="36" ry="5" fill="rgba(0,0,0,0.07)" />
+    <Path d="M44 24 H96 V54 a26 26 0 0 1 -52 0 Z" fill="#FFC94A" />
+    <Path d="M44 32 H30 a4 4 0 0 0 -4 4 c0 14 8 22 20 22 M96 32 H110 a4 4 0 0 1 4 4 c0 14 -8 22 -20 22" stroke="#FF8A3D" strokeWidth={6} fill="none" strokeLinecap="round" />
+    <Rect x="64" y="78" width="12" height="16" fill="#FF8A3D" />
+    <Rect x="48" y="94" width="44" height="14" rx="4" fill="#7C5CFF" />
+    <Path d="M70 34 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5z" fill="#FFFFFF" />
+    <Circle cx="24" cy="26" r="3.5" fill="#FF5FA2" />
+    <Circle cx="120" cy="30" r="3" fill="#19B87A" />
+    <Circle cx="116" cy="100" r="3" fill="#7C5CFF" />
   </Svg>
 );
 
@@ -403,34 +373,14 @@ export const ArtTrophy: React.FC<ArtProps> = ({ size }) => (
 // the licensing writeup.
 export const ArtRoadmapPath: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
-    <Circle cx="70" cy="70" r="56" fill="#71717a0f" />
-    <Ellipse cx="70" cy="114" rx="38" ry="6" fill="rgba(0,0,0,0.06)" />
-
-    {/* winding road, drawn as one thick curved stroke with a lighter
-        centerline dash on top */}
-    <Path
-      d="M26 106c9-16 0-26 14-35s7-21 21-28 9-18 25-20"
-      stroke="#71717a"
-      strokeWidth={14}
-      strokeLinecap="round"
-      fill="none"
-    />
-    <Path
-      d="M26 106c9-16 0-26 14-35s7-21 21-28 9-18 25-20"
-      stroke="#EAF2FF"
-      strokeWidth={3}
-      strokeDasharray="7 8"
-      strokeLinecap="round"
-      fill="none"
-    />
-
-    {/* small figure walking up the road, roughly mid-path */}
-    <Circle cx="53" cy="76" r="8" fill="#71717a" />
-    <Path d="M40 100c0-9.5 5.8-16 13-16s13 6.5 13 16z" fill="#71717a" />
-
-    {/* flag, planted at the road's end */}
-    <Rect x="86" y="16" width="5" height="30" rx="2.5" fill="#F5B430" />
-    <Path d="M91 17l18 7-18 7z" fill="#FFC94A" />
+    <Circle cx="70" cy="70" r="58" fill="#19B87A1A" />
+    <Ellipse cx="70" cy="120" rx="40" ry="5" fill="rgba(0,0,0,0.07)" />
+    <Path d="M30 108 C30 84 70 92 70 72 C70 54 40 56 56 36 C62 28 84 30 102 30" stroke="#C9BBFF" strokeWidth={9} strokeLinecap="round" fill="none" />
+    <Path d="M30 108 C30 84 70 92 70 72 C70 54 40 56 56 36 C62 28 84 30 102 30" stroke="#FFFFFF" strokeWidth={2.5} strokeDasharray="2 7" strokeLinecap="round" fill="none" />
+    <Circle cx="30" cy="108" r="9" fill="#FFC94A" />
+    <Circle cx="70" cy="72" r="7" fill="#FF5FA2" />
+    <Rect x="100" y="14" width="3.5" height="30" rx="1.7" fill="#7C5CFF" />
+    <Path d="M103 14 L124 21 L103 29 Z" fill="#19B87A" />
   </Svg>
 );
 
@@ -450,22 +400,17 @@ export const ArtRoadmapPath: React.FC<ArtProps> = ({ size }) => (
 // rather than a single glyph.
 export const ArtWorkplaceCompass: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
-    <Circle cx="70" cy="68" r="56" fill="#71717a0f" />
-    <Ellipse cx="70" cy="120" rx="38" ry="6" fill="rgba(0,0,0,0.06)" />
-
-    {/* compass */}
-    <Circle cx="70" cy="56" r="35" fill="#EAF2FF" />
-    <Circle cx="70" cy="56" r="35" fill="none" stroke="#71717a" strokeWidth={6} />
-    <Path d="M70 29l8 26-8 26-8-26z" fill="#FFC94A" />
-    <Path d="M70 29l8 26h-8z" fill="#F5B430" />
-    <Path d="M70 83l-8-26h8z" fill="#7C4DEF" />
-    <Circle cx="70" cy="56" r="4.5" fill="#71717a" />
-
-    {/* two colleagues, arriving together at the destination */}
-    <Circle cx="46" cy="104" r="8" fill="#71717a" />
-    <Path d="M32 130c0-11 6.3-18.5 14-18.5s14 7.5 14 18.5z" fill="#71717a" />
-    <Circle cx="94" cy="104" r="8" fill="#71717a" />
-    <Path d="M80 130c0-11 6.3-18.5 14-18.5s14 7.5 14 18.5z" fill="#71717a" />
+    <Circle cx="70" cy="70" r="58" fill="#7C5CFF1A" />
+    <Ellipse cx="70" cy="120" rx="38" ry="5" fill="rgba(0,0,0,0.07)" />
+    <Circle cx="70" cy="68" r="42" fill="#7C5CFF" />
+    <Circle cx="70" cy="68" r="33" fill="#FFFFFF" />
+    <Path d="M70 40 L80 68 L70 96 L60 68 Z" fill="#E4DDFF" />
+    <Path d="M70 40 L80 68 L60 68 Z" fill="#FF5FA2" />
+    <Path d="M70 96 L80 68 L60 68 Z" fill="#7C5CFF" />
+    <Circle cx="70" cy="68" r="4.5" fill="#FFC94A" />
+    <Circle cx="20" cy="34" r="3" fill="#FFC94A" />
+    <Circle cx="122" cy="40" r="3.5" fill="#19B87A" />
+    <Circle cx="118" cy="104" r="3" fill="#FF8A3D" />
   </Svg>
 );
 
@@ -600,22 +545,18 @@ export const ArtWelcomeWave: React.FC<ArtProps> = ({ size }) => (
 // comment above for the licensing writeup.
 export const ArtMagnifyingDoc: React.FC<ArtProps> = ({ size }) => (
   <Svg width={size} height={size} viewBox="0 0 140 140">
-    <Circle cx="70" cy="70" r="56" fill="#71717a0f" />
-    <Ellipse cx="63" cy="114" rx="34" ry="6" fill="rgba(0,0,0,0.06)" />
-
-    {/* document */}
-    <Rect x="30" y="24" width="62" height="78" rx="6" fill="#EAF2FF" />
-    <Rect x="42" y="42" width="38" height="6" rx="3" fill="#71717a" />
-    <Rect x="42" y="57" width="38" height="6" rx="3" fill="#C7DBFF" />
-    <Rect x="42" y="72" width="26" height="6" rx="3" fill="#C7DBFF" />
-
-    {/* small figure peeking from behind the document, holding the glass */}
-    <Circle cx="98" cy="52" r="9" fill="#71717a" />
-    <Path d="M84 78c0-10 6.3-17 14-17s14 7 14 17z" fill="#71717a" />
-
-    {/* magnifying glass, overlapping the document's bottom-right corner */}
-    <Circle cx="90" cy="86" r="20" fill="none" stroke="#71717a" strokeWidth={8} />
-    <Line x1="104" y1="100" x2="118" y2="114" stroke="#71717a" strokeWidth={8} strokeLinecap="round" />
+    <Circle cx="70" cy="70" r="58" fill="#7C5CFF1A" />
+    <Ellipse cx="70" cy="118" rx="38" ry="5" fill="rgba(0,0,0,0.07)" />
+    <Rect x="30" y="20" width="64" height="86" rx="8" fill="#FFFFFF" stroke="#E4DDFF" strokeWidth={3} />
+    <Rect x="40" y="34" width="30" height="7" rx="3.5" fill="#7C5CFF" />
+    <Rect x="40" y="48" width="44" height="6" rx="3" fill="#C9BBFF" />
+    <Rect x="40" y="60" width="44" height="6" rx="3" fill="#C9BBFF" />
+    <Rect x="40" y="72" width="28" height="6" rx="3" fill="#C9BBFF" />
+    <Circle cx="92" cy="86" r="20" fill="#FFC94A33" stroke="#FFB020" strokeWidth={7} />
+    <Line x1="106" y1="100" x2="120" y2="114" stroke="#FF8A3D" strokeWidth={8} strokeLinecap="round" />
+    <Path d="M83 87l6 6 11-12" stroke="#19B87A" strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    <Circle cx="24" cy="30" r="3" fill="#FF5FA2" />
+    <Circle cx="120" cy="34" r="3.5" fill="#19B87A" />
   </Svg>
 );
 
