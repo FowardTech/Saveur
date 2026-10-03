@@ -60,5 +60,7 @@
   "color-primary-transparent-400": "rgba(250,250,250,0.26)",
   "color-primary-transparent-500": "rgba(250,250,250,0.32)",
   "color-primary-transparent-600": "rgba(250,250,250,0.4)",
-  "color-primary-solid": "#3F3F46"
+  "color-primary-solid": "#3F3F46",
+  "text-control-color": "#FFFFFF",
+  "text-alternate-color": "#FFFFFF"
 }
