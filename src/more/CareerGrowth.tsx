@@ -192,7 +192,7 @@ const CareerGrowth = memo(() => {
           title={t('more:growth_checkin_title', {defaultValue: 'Quarterly check-in'}).toString()}
           subtitle={t('more:growth_checkin_body', {defaultValue: "Any new wins, a raise, or a new role? We'll save it to your Career Diary as promotion evidence."}).toString()}
           onClose={() => setCheckinId(null)}>
-          <Input multiline value={checkinText} onChangeText={setCheckinText} textStyle={{minHeight: 90}} style={{marginBottom: 12}} />
+          <Input multiline value={checkinText} onChangeText={setCheckinText} textStyle={{minHeight: 110}} style={{marginBottom: 12}} />
           <CtaButton onPress={onCheckin}>{t('common:save', {defaultValue: 'Save'})}</CtaButton>
         </FormSheet>
 
@@ -310,7 +310,7 @@ const CareerGrowth = memo(() => {
                 placeholder={t('more:growth_context_placeholder', {defaultValue: 'Anything else: recent wins, manager feedback, company situation…'}).toString()}
                 value={context}
                 onChangeText={setContext}
-                textStyle={{minHeight: 70}}
+                textStyle={{minHeight: 96}}
                 style={styles.input}
               />
               <CtaButton disabled={planning || !curRole.trim()} onPress={async () => { setPlanOpen(false); await onPlan(); }}>

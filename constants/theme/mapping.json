@@ -2906,20 +2906,20 @@
             },
             "size": {
               "small": {
-                "minHeight": "size-small",
+                "minHeight": 46,
                 "borderRadius": 12,
                 "borderWidth": 1,
-                "paddingVertical": 3,
+                "paddingVertical": 10,
                 "textFontSize": "text-subtitle-2-font-size",
                 "textFontWeight": "normal",
                 "paddingHorizontal": 14
               },
               "medium": {
-                "minHeight": 48,
+                "minHeight": 54,
                 "borderRadius": 12,
                 "borderWidth": 1,
-                "paddingVertical": 7,
-                "textFontSize": "text-heading-7-font-size",
+                "paddingVertical": 12,
+                "textFontSize": 16,
                 "textFontWeight": "400",
                 "iconHeight": 24,
                 "iconWidth": 24,
@@ -2936,10 +2936,10 @@
                 "textMarginHorizontal": 8
               },
               "large": {
-                "minHeight": 48,
+                "minHeight": 58,
                 "borderRadius": 12,
                 "borderWidth": 1,
-                "paddingVertical": 11,
+                "paddingVertical": 14,
                 "textFontSize": "text-subtitle-1-font-size",
                 "textFontWeight": "normal",
                 "paddingHorizontal": 14
