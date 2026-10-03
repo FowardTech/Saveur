@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Alert, AppState, Linking, Platform, TouchableOpacity, View } from 'react-native';
+import { Alert, AppState, Linking, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -1011,15 +1011,19 @@ const Subscription = memo(() => {
                   </Text>
                   {savingsPercent && savingsPercent > 0 ? (
                     <View style={styles.saveBadge}>
-                      <LinearGradient
-                        colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.saveBadgeGradient}>
-                        <Text category="h10" bold numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: PRO_GOLD_TEXT }}>
-                          {localizeDigits(t('more:save_percent_badge', { defaultValue: 'SAVE {{percent}}%', percent: savingsPercent }))}
-                        </Text>
-                      </LinearGradient>
+                      <View style={styles.saveBadgeGradient}>
+                        <LinearGradient
+                          colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={StyleSheet.absoluteFillObject}
+                        />
+                        <View style={styles.badgeContent}>
+                          <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
+                            {localizeDigits(t('more:save_percent_badge', { defaultValue: 'SAVE {{percent}}%', percent: savingsPercent }))}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   ) : null}
                 </Flex>
@@ -1171,16 +1175,20 @@ const Subscription = memo(() => {
                 {card}
                 {isRecommended ? (
                   <View style={styles.popularRibbon}>
-                    <LinearGradient
-                      colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.popularRibbonGradient}>
-                      <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
-                      <Text category="h10" bold numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} style={{ color: PRO_GOLD_TEXT, flexShrink: 1 }}>
-                        {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
-                      </Text>
-                    </LinearGradient>
+                    <View style={styles.popularRibbonGradient}>
+                      <LinearGradient
+                        colors={[PRO_GOLD_FROM, PRO_GOLD_TO]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={StyleSheet.absoluteFillObject}
+                      />
+                      <View style={styles.badgeContent}>
+                        <Icon pack="assets" name="premiumAcc" style={{ width: 12, height: 12, tintColor: PRO_GOLD_TEXT, marginRight: 4 }} />
+                        <Text category="h10" bold style={{ color: PRO_GOLD_TEXT }}>
+                          {t('more:most_popular', { defaultValue: 'MOST POPULAR' })}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
                 ) : null}
               </View>
@@ -1280,14 +1288,8 @@ const themedStyles = StyleService.create({
   popularRibbonGradient: {
     borderRadius: 999,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Sizes to its content (translations vary a lot in length) instead of a fixed width.
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    // Shadow moved here from popularRibbon above -- that View is now just
-    // a full-width invisible positioning layer, not the visible pill shape.
-    ...globalStyle.shadowFade,
+    overflow: 'hidden',
+    alignSelf: 'center',
   },
   // Same gold gradient, compact pill, sits inline next to the yearly
   // plan's price (see savingsPercent above) — reference: "Save 77%" badge.
@@ -1299,10 +1301,15 @@ const themedStyles = StyleService.create({
   },
   saveBadgeGradient: {
     borderRadius: 999,
-    paddingVertical: 4,
-    paddingHorizontal: 12,
+    overflow: 'hidden',
+  },
+  // The text row that gives both gold pills their size (gradient is an absolute
+  // background layer, so the pill always wraps its label, whatever the language).
+  badgeContent: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
   },
   // Flat solid-blue hero card (gradient fill removed).
   // Product report: "colored cards like this are not supposed to have box
