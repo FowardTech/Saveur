@@ -66,9 +66,6 @@ const HeaderMoreOption = memo(({email, avatarUrl, name}: HeaderOptionProps) => {
 
   return (
     <>
-      <Text category="h6" bold style={styles.sectionHeading}>
-        {t('more:profile', {defaultValue: 'Profile'})}
-      </Text>
       <View style={styles.card}>
         <Flex itemsCenter justify="flex-start" style={globalStyle.flexOne} onPress={_onProfile}>
           <UserAvatar uri={avatarUrl} name={name} style={styles.avatar} />
@@ -81,28 +78,29 @@ const HeaderMoreOption = memo(({email, avatarUrl, name}: HeaderOptionProps) => {
             </Text>
           </View>
         </Flex>
-        <NavigationAction
-          icon="edit_profile"
-          status="facebook"
-          onPress={_onEditProfile}
-        />
+        <NavigationAction icon="edit_profile" status="basic" onPress={_onEditProfile} />
       </View>
 
-      <View style={styles.card}>
-        <View style={globalStyle.flexOne}>
-          <Text category="h8" bold numberOfLines={1}>
+      <View style={[styles.card, styles.planCard]}>
+        <View style={styles.planRow}>
+          <Text category="h8" bold numberOfLines={1} style={globalStyle.flexOne}>
             {planLabel}
           </Text>
-          <Text category="h10" status={'placeholder'} numberOfLines={1} mt={2}>
+          <Text category="h10" status={'placeholder'} numberOfLines={1}>
             {planSubtext}
           </Text>
         </View>
         {!isPremium ? (
-          <TouchableOpacity activeOpacity={0.85} onPress={_onUpgrade} style={styles.upgradeButton}>
-            <Text category="h10" bold style={{color: theme['text-control-color']}}>
-              {t('more:upgrade', {defaultValue: 'Upgrade'})}
-            </Text>
-          </TouchableOpacity>
+          <>
+            <View style={styles.planBar}>
+              <View style={styles.planBarFill} />
+            </View>
+            <TouchableOpacity activeOpacity={0.7} onPress={_onUpgrade}>
+              <Text category="h8" style={{color: theme['text-link-color']}}>
+                {t('more:upgrade', {defaultValue: 'Upgrade'})}
+              </Text>
+            </TouchableOpacity>
+          </>
         ) : null}
       </View>
     </>
@@ -121,12 +119,11 @@ const themedStyles = StyleService.create({
   // reduce the border radius.") — same fix as MoreSrc.tsx's own rowCard:
   // dropped the border, radius down from the app-wide 20 to 14.
   card: {
-    ...globalStyle.card,
-    borderRadius: 14,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     backgroundColor: 'background-basic-color-2',
   },
   avatar: {
@@ -136,6 +133,27 @@ const themedStyles = StyleService.create({
   // buttons I see still has 50% rounded borders" — applies app-wide).
   // Moderate radius, same 14px as CtaButton.tsx / mapping.json's Button
   // "filled" size variants, not a full pill.
+  planCard: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+  },
+  planRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  planBar: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'background-basic-color-3',
+    marginBottom: 14,
+    overflow: 'hidden',
+  },
+  planBarFill: {
+    width: '6%',
+    height: 4,
+    backgroundColor: 'text-basic-color',
+  },
   upgradeButton: {
     backgroundColor: 'color-primary-100',
     borderRadius: 14,

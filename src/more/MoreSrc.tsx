@@ -646,12 +646,15 @@ const MoreSrc = memo(() => {
             wasn't already level with a title/greeting in the same row
             (HeaderHome.tsx's greeting, Chat.tsx's TopNavigation title).
             Paired with a real screen title here now, same pattern. */}
-        <Flex justify="flex-start" itemsCenter mb={16}>
-          <DrawerMenuButton />
-          <Text category="h5" bold ml={8}>
+        <View style={styles.titleRow}>
+          <View style={styles.titleSide}>
+            <DrawerMenuButton />
+          </View>
+          <Text category="h7" bold center>
             {t('more:settings_title', {defaultValue: 'Settings'})}
           </Text>
-        </Flex>
+          <View style={styles.titleSide} />
+        </View>
         <HeaderMoreOption
           name={profile?.name || t('more:default_user_name', {defaultValue: 'My Account'})}
           avatarUrl={profile?.avatarUrl}
@@ -864,10 +867,20 @@ const themedStyles = StyleService.create({
   // deliberately smaller radius than the shared 20px token, not a change
   // to the token itself. `overflow: hidden` keeps ButtonOptional's row
   // content from spilling past this card's own rounded corners.
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  titleSide: {
+    width: 48,
+  },
   groupCard: {
     borderRadius: 16,
     backgroundColor: 'background-basic-color-2',
     overflow: 'hidden',
+    marginBottom: 4,
   },
   rowCard: {
     borderBottomWidth: StyleSheet.hairlineWidth,
