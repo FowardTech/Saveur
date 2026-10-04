@@ -25,6 +25,7 @@ import Flex from 'components/Flex';
 import NavigationAction from 'components/NavigationAction';
 import { DraggableList } from 'components/DraggableList';
 import { globalStyle } from 'styles/globalStyle';
+import DatePickerField from 'components/DatePickerField';
 import { RootStackParamList } from 'navigation/types';
 import * as resumeGenerationService from 'services/resumeGenerationService';
 import * as resumeService from 'services/resumeService';
@@ -1046,19 +1047,20 @@ function ExperienceCard({
         textStyle={globalStyle.inputText}
       />
       <FieldRow>
-        <Input
-          value={entry.start ?? ''}
-          onChangeText={v => onChange({ ...entry, start: v })}
-          placeholder={t('more:resume_field_start_date', { defaultValue: 'Start (e.g. Jan 2022)' })}
-          style={[globalStyle.inputField, rowStyles.halfField, { marginRight: 8 }]}
-          textStyle={globalStyle.inputText}
+        <DatePickerField
+          format="monthYear"
+          value={entry.start}
+          onChange={v => onChange({ ...entry, start: v })}
+          placeholder={String(t('more:resume_field_start_date', { defaultValue: 'Start (e.g. Jan 2022)' }))}
+          style={[rowStyles.halfField, { marginRight: 8 }]}
         />
-        <Input
-          value={entry.end ?? ''}
-          onChangeText={v => onChange({ ...entry, end: v })}
-          placeholder={t('more:resume_field_end_date', { defaultValue: 'End (or Present)' })}
-          style={[globalStyle.inputField, rowStyles.halfField]}
-          textStyle={globalStyle.inputText}
+        <DatePickerField
+          format="monthYear"
+          allowPresent
+          value={entry.end}
+          onChange={v => onChange({ ...entry, end: v })}
+          placeholder={String(t('more:resume_field_end_date', { defaultValue: 'End (or Present)' }))}
+          style={[rowStyles.halfField]}
         />
       </FieldRow>
       <Text category="h10" bold status="placeholder" mt={4} mb={6}>
@@ -1139,19 +1141,20 @@ function EducationCard({
         textStyle={globalStyle.inputText}
       />
       <FieldRow>
-        <Input
-          value={entry.start ?? ''}
-          onChangeText={v => onChange({ ...entry, start: v })}
-          placeholder={t('more:resume_field_start_date', { defaultValue: 'Start (e.g. Jan 2022)' })}
-          style={[globalStyle.inputField, rowStyles.halfField, { marginRight: 8 }]}
-          textStyle={globalStyle.inputText}
+        <DatePickerField
+          format="monthYear"
+          value={entry.start}
+          onChange={v => onChange({ ...entry, start: v })}
+          placeholder={String(t('more:resume_field_start_date', { defaultValue: 'Start (e.g. Jan 2022)' }))}
+          style={[rowStyles.halfField, { marginRight: 8 }]}
         />
-        <Input
-          value={entry.end ?? ''}
-          onChangeText={v => onChange({ ...entry, end: v })}
-          placeholder={t('more:resume_field_end_date', { defaultValue: 'End (or Present)' })}
-          style={[globalStyle.inputField, rowStyles.halfField]}
-          textStyle={globalStyle.inputText}
+        <DatePickerField
+          format="monthYear"
+          allowPresent
+          value={entry.end}
+          onChange={v => onChange({ ...entry, end: v })}
+          placeholder={String(t('more:resume_field_end_date', { defaultValue: 'End (or Present)' }))}
+          style={[rowStyles.halfField]}
         />
       </FieldRow>
     </CardShell>

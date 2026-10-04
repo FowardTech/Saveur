@@ -149,5 +149,6 @@
   "read_more": "Read more",
   "create": "Create",
   "discard": "Discard",
-  "notification_channel_default": "Default"
+  "notification_channel_default": "Default",
+  "present": "Present"
 }

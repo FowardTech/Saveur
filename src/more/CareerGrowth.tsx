@@ -1,4 +1,5 @@
 import { globalStyle } from 'styles/globalStyle';
+import DatePickerField from 'components/DatePickerField';
 import React, {memo} from 'react';
 import {Alert, TouchableOpacity, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Input, Layout} from '@ui-kitten/components';
@@ -208,7 +209,7 @@ const CareerGrowth = memo(() => {
                   <Chip key={k} label={kindLabel(k)} selected={k === kind} onPress={() => setKind(k)} />
                 ))}
               </Flex>
-              <Input placeholder={t('more:growth_date_placeholder', {defaultValue: 'Effective date (YYYY-MM-DD)'}).toString()} value={date} onChangeText={setDate} style={[styles.input, globalStyle.sheetInput]} />
+              <DatePickerField placeholder={t('more:growth_date_placeholder', {defaultValue: 'Effective date'}).toString()} value={date} onChange={setDate} style={{marginBottom: 8}} />
               <Input placeholder={t('more:growth_base_placeholder', {defaultValue: 'Base salary (yearly)'}).toString()} keyboardType="numeric" value={base} onChangeText={setBase} style={[styles.input, globalStyle.sheetInput]} />
               <Input placeholder={t('more:growth_bonus_placeholder', {defaultValue: 'Bonus (optional)'}).toString()} keyboardType="numeric" value={bonus} onChangeText={setBonus} style={[styles.input, globalStyle.sheetInput]} />
               <Input placeholder={t('more:growth_role_placeholder', {defaultValue: 'Role'}).toString()} value={role} onChangeText={setRole} style={[styles.input, globalStyle.sheetInput]} />
