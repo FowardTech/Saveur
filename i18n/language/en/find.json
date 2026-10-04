@@ -509,5 +509,11 @@
   "coding_project_single_file_only": " (only this file was forwarded)",
   "coding_project_preview_title": "Preview",
   "coding_project_no_preview_title": "Nothing to preview yet",
-  "coding_project_no_preview_body": "Add a root-level index.html file to preview this project."
+  "coding_project_no_preview_body": "Add a root-level index.html file to preview this project.",
+  "practical_attach_title": "Or attach your own work",
+  "practical_attach_media_hint": "Upload your {{type}} to Google Drive, Dropbox or similar, set it to “anyone with the link”, and paste the link. The AI will transcribe and review it.",
+  "practical_attach_doc_hint": "Upload a PDF, Word, PowerPoint, Excel, CSV or text file instead of editing the draft. The AI will read it.",
+  "practical_attach_url_placeholder": "https://… public link",
+  "practical_attach_add": "Add",
+  "practical_attach_file": "Choose a file"
 }
