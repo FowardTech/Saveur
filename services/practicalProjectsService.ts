@@ -96,10 +96,15 @@ export async function submitProjectStage(
 export async function uploadStageDocument(
   id: number | string,
   file: {uri: string; name: string; mimeType?: string | null},
+  onProgress?: (percent: number) => void,
 ): Promise<StageAttachment> {
   const formData = new FormData();
   formData.append('file', {uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream'} as any);
-  const {data} = await apiClient.post<StageAttachment>(`/api/v1/practical/projects/${id}/attachments/file`, formData);
+  const {data} = await apiClient.post<StageAttachment>(`/api/v1/practical/projects/${id}/attachments/file`, formData, {
+    onUploadProgress: e => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+    },
+  });
   return data;
 }
 

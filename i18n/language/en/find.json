@@ -515,5 +515,8 @@
   "practical_attach_doc_hint": "Upload a PDF, Word, PowerPoint, Excel, CSV or text file instead of editing the draft. The AI will read it.",
   "practical_attach_url_placeholder": "https://… public link",
   "practical_attach_add": "Add",
-  "practical_attach_file": "Choose a file"
+  "practical_attach_file": "Choose a file",
+  "practical_attach_transcribing": "Transcribing…",
+  "practical_attach_reading": "Reading file…",
+  "practical_attach_uploaded": "Uploaded"
 }

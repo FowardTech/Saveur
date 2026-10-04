@@ -42,6 +42,9 @@ const PracticalProjects = memo(() => {
   const [attachments, setAttachments] = React.useState<service.StageAttachment[]>([]);
   const [mediaUrl, setMediaUrl] = React.useState('');
   const [attaching, setAttaching] = React.useState(false);
+  const [uploadPct, setUploadPct] = React.useState<number | null>(null);
+  const [uploadName, setUploadName] = React.useState('');
+  const [attachError, setAttachError] = React.useState<string | null>(null);
   const [finishing, setFinishing] = React.useState(false);
   const [expanded, setExpanded] = React.useState<number | null>(null);
   const [creating, setCreating] = React.useState(false);
@@ -102,6 +105,7 @@ const PracticalProjects = memo(() => {
     setDraft(file);
     setAttachments([]);
     setMediaUrl('');
+    setAttachError(null);
     setStageOpen(n);
   };
 
@@ -125,25 +129,36 @@ const PracticalProjects = memo(() => {
         ],
       });
       setAttaching(true);
-      const att = await service.uploadStageDocument(active.id, {uri: res.uri, name: res.name ?? 'document', mimeType: res.type});
+      setAttachError(null);
+      setUploadName(res.name ?? 'document');
+      setUploadPct(0);
+      const att = await service.uploadStageDocument(
+        active.id,
+        {uri: res.uri, name: res.name ?? 'document', mimeType: res.type},
+        setUploadPct,
+      );
       setAttachments(prev => [...prev, att].slice(0, 5));
     } catch (e: any) {
       if (isErrorWithCode(e) && e.code === errorCodes.OPERATION_CANCELED) return;
-      Alert.alert(t('more:upload_failed', {defaultValue: 'Upload failed'}), attachErrorMessage(e));
+      setAttachError(attachErrorMessage(e));
     } finally {
       setAttaching(false);
+      setUploadPct(null);
     }
   };
 
   const onAttachUrl = async () => {
     if (!active || attaching || !mediaUrl.trim()) return;
     setAttaching(true);
+    setAttachError(null);
+    setUploadName(mediaUrl.trim());
+    setUploadPct(null);
     try {
       const att = await service.attachStageMediaUrl(active.id, mediaUrl.trim());
       setAttachments(prev => [...prev, att].slice(0, 5));
       setMediaUrl('');
     } catch (e: any) {
-      Alert.alert(t('more:upload_failed', {defaultValue: 'Upload failed'}), attachErrorMessage(e));
+      setAttachError(attachErrorMessage(e));
     } finally {
       setAttaching(false);
     }
@@ -430,16 +445,51 @@ const PracticalProjects = memo(() => {
                         {t('find:practical_attach_file', {defaultValue: 'Choose a file'})}
                       </CtaButton>
                     )}
+                    {attaching ? (
+                      <View style={{marginTop: 10}}>
+                        <Flex justify="space-between" itemsCenter>
+                          <Text category="h10" status="placeholder" numberOfLines={1} style={{flex: 1, marginRight: 8}}>
+                            {uploadName}
+                          </Text>
+                          <Text category="h10" status="placeholder">
+                            {uploadPct !== null && uploadPct < 100
+                              ? `${uploadPct}%`
+                              : isMedia
+                              ? t('find:practical_attach_transcribing', {defaultValue: 'Transcribing…'})
+                              : t('find:practical_attach_reading', {defaultValue: 'Reading file…'})}
+                          </Text>
+                        </Flex>
+                        <View style={{height: 6, borderRadius: 3, marginTop: 6, backgroundColor: theme['background-basic-color-4'], overflow: 'hidden'}}>
+                          <View
+                            style={{
+                              height: 6,
+                              borderRadius: 3,
+                              backgroundColor: '#7C5CFF',
+                              width: `${uploadPct === null || uploadPct >= 100 ? 100 : uploadPct}%`,
+                              opacity: uploadPct === null || uploadPct >= 100 ? 0.5 : 1,
+                            }}
+                          />
+                        </View>
+                      </View>
+                    ) : null}
+                    {attachError ? (
+                      <Text category="h10" status="danger" mt={8}>
+                        {attachError}
+                      </Text>
+                    ) : null}
                     {attachments.map((a, i) => (
                       <Flex key={`${a.name}-${i}`} justify="space-between" itemsCenter style={{marginTop: 8}}>
                         <Flex justify="flex-start" itemsCenter style={{flex: 1}}>
                           <Icon
                             pack="eva"
-                            name={a.kind === 'media' ? 'headphones-outline' : 'file-text-outline'}
-                            style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]}
+                            name="checkmark-circle-2-outline"
+                            style={[globalStyle.icon20, {tintColor: '#19B87A'}]}
                           />
                           <Text category="h9" numberOfLines={1} ml={8} style={{flex: 1}}>
                             {a.name}
+                          </Text>
+                          <Text category="h10" status="placeholder" ml={8}>
+                            {t('find:practical_attach_uploaded', {defaultValue: 'Uploaded'})}
                           </Text>
                         </Flex>
                         <TouchableOpacity onPress={() => setAttachments(prev => prev.filter((_, j) => j !== i))} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
