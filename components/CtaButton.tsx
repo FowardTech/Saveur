@@ -43,12 +43,15 @@ import { globalStyle } from 'styles/globalStyle';
 // render itself recursively forever and crash the app.
 export interface CtaButtonProps extends Omit<ButtonProps, 'status' | 'appearance'> {
   loading?: boolean;
+  /** Filled (solid) look - used only by the sign in / sign up buttons. Default is an outlined button with a black border. */
+  solid?: boolean;
 }
 
-const renderLoadingSpinner = () => <ActivityIndicator size="small" color="#FFFFFF" />;
 
-const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accessoryLeft, children, ...rest }) => {
+const CtaButton: React.FC<CtaButtonProps> = ({ loading, solid, disabled, style, accessoryLeft, children, ...rest }) => {
   const theme = useTheme();
+  const labelColor = solid ? theme['text-control-color'] : theme['text-basic-color'];
+  const renderLoadingSpinner = () => <ActivityIndicator size="small" color={labelColor} />;
   return (
     <Button
       {...rest}
@@ -61,8 +64,10 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           // brand blue. Kept as -100 (not -500) purely for continuity with
           // every other direct color-primary-100 reference already in the
           // app (see that token's own comment history).
-          backgroundColor: theme['color-primary-solid'],
-          borderColor: theme['color-primary-solid'],
+          backgroundColor: solid ? theme['color-primary-solid'] : 'transparent',
+          borderColor: solid ? theme['color-primary-solid'] : theme['border-input-color'],
+          borderWidth: 1.5,
+          opacity: disabled ? 0.5 : 1,
           // SYMPHONY REDESIGN follow-up (explicit product request: "all
           // the buttons I see still has 50% rounded borders" — applies
           // app-wide, not just the Settings screen's small tag buttons).
@@ -80,7 +85,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
           // COLOR HISTORY comment above — blue survived this pass too,
           // only the shape changed back to a full pill) rather than the
           // reference's black fill.
-          borderRadius: 14,
+          borderRadius: 16,
         },
         globalStyle.shadowBtn,
         style,
@@ -129,7 +134,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, disabled, style, accesso
         // is meant to always be white-on-blue regardless of theme --
         // text-control-color is the token for that, and isn't affected by
         // text-primary-color's other (correct, intentional) uses elsewhere.
-        const labelStyle = [evaProps?.style, { color: theme['text-control-color'], fontWeight: 'normal' as const }];
+        const labelStyle = [evaProps?.style, { color: labelColor, fontWeight: 'normal' as const }];
         return typeof children === 'function'
           ? (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle })
           : <KittenText {...evaProps} style={labelStyle}>{children as React.ReactNode}</KittenText>;

@@ -230,7 +230,7 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
     borderRadius: 999,
     paddingVertical: 6,
     paddingHorizontal: 12,

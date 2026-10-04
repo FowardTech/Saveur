@@ -106,7 +106,7 @@ const themedStyles = StyleService.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     overflow: 'hidden',
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
   },
   icon: {
     width: 14,

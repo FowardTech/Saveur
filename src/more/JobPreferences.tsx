@@ -252,7 +252,7 @@ const JobPreferences = memo(() => {
                 // neutral background-basic-color-3 fill instead of the
                 // brand color — same fix here, same border tone the role
                 // chips above already use on this screen.
-                style={[styles.chip, {backgroundColor: theme['background-basic-color-3'], borderColor: theme['background-basic-color-4']}]}>
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-4'], borderColor: theme['background-basic-color-4']}]}>
                 <Text category="h9" bold>
                   {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>

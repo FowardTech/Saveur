@@ -597,7 +597,7 @@ const JobAlerts = memo(() => {
               style={[
                 styles.remoteFilterChip,
                 {
-                  backgroundColor: remoteOnly ? theme['color-primary-solid'] : theme['background-basic-color-3'],
+                  backgroundColor: remoteOnly ? theme['color-primary-solid'] : theme['background-basic-color-4'],
                 },
               ]}>
               <Text category="h10" bold status={remoteOnly ? 'control' : 'basic'}>
@@ -700,7 +700,7 @@ const JobAlerts = memo(() => {
                   <TouchableOpacity
                     key={country}
                     onPress={() => toggleCountry(country)}
-                    style={[styles.chip, {backgroundColor: theme['background-basic-color-3']}]}>
+                    style={[styles.chip, {backgroundColor: theme['background-basic-color-4']}]}>
                     <Text category="h10" bold>
                       {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                     </Text>

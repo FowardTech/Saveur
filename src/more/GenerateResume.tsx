@@ -709,7 +709,7 @@ const GenerateResume = memo(() => {
                     onPress={() => setStyle(opt.key)}
                     style={[
                       styles.styleCard,
-                      { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                      { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-4'] },
                     ]}>
                     <Text category="h8" bold status={active ? 'link' : 'basic'}>
                       {opt.label}

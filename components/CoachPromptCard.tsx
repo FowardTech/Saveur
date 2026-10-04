@@ -116,7 +116,7 @@ const themedStyles = StyleService.create({
     width: 150,
     padding: 12,
     borderRadius: 16,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
   },
   promptChipGap: {
     marginRight: 10,

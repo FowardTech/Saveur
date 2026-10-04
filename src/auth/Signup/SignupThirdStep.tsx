@@ -383,7 +383,7 @@ const SignupThirdStep = memo(() => {
               </Text>
             </Text>
           </TouchableOpacity>
-          <CtaButton
+          <CtaButton solid
             children={isSubmitting ? `${t('auth:sign_up')}…` : t('auth:sign_up')}
             onPress={handleSignup}
             disabled={!canContinue || isSubmitting}

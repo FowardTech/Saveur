@@ -293,7 +293,7 @@ const Login = memo(() => {
             </Text>
           </Text>
         </TouchableOpacity>
-        <CtaButton onPress={onLogin} disabled={canContinue || isSubmitting} loading={isSubmitting}>
+        <CtaButton solid onPress={onLogin} disabled={canContinue || isSubmitting} loading={isSubmitting}>
           {t('auth:login').toString()}
         </CtaButton>
         <Text category="h8-s" status={'placeholder'} mt={20} mb={16} center>

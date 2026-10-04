@@ -295,7 +295,7 @@ const ChooseUsername = memo(() => {
           </>
         )}
 
-        <CtaButton
+        <CtaButton solid
           style={[globalStyle.shadowBtn, {marginTop: 24}]}
           disabled={!canContinue || isSubmitting}
           onPress={onContinue}>

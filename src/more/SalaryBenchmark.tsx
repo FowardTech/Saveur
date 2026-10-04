@@ -196,7 +196,7 @@ const themedStyles = StyleService.create({
   card: {borderRadius: 14, padding: 16},
   input: {marginBottom: 12},
   chip: {borderWidth: 1, borderColor: 'border-card-default', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, marginRight: 8, overflow: 'hidden'},
-  chipOn: {backgroundColor: 'background-basic-color-3'},
+  chipOn: {backgroundColor: 'background-basic-color-4'},
   bar: {height: 8, borderRadius: 4, backgroundColor: 'background-basic-color-3', marginVertical: 16, justifyContent: 'center'},
   barMid: {position: 'absolute', top: 0, bottom: 0, borderRadius: 4, backgroundColor: 'background-basic-color-4'},
   marker: {position: 'absolute', top: -4, width: 4, height: 16, borderRadius: 2},

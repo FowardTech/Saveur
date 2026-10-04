@@ -315,7 +315,7 @@ const themedStyles = StyleService.create({
     borderRadius: 99,
     marginRight: 8,
     marginBottom: 8,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
   },
   qualificationChip: {
     paddingVertical: 12,

@@ -183,7 +183,7 @@ const themedStyles = StyleService.create({
     paddingVertical: 2,
     paddingHorizontal: 8,
     borderRadius: 8,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
   },
   // SYMPHONY REDESIGN follow-up ("I told you i dont want color pills
   // again... why are you still putting colored pills in the applications
@@ -197,6 +197,6 @@ const themedStyles = StyleService.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
   },
 });

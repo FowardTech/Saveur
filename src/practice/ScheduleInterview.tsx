@@ -284,7 +284,7 @@ const ScheduleInterview = memo(() => {
                 onPress={() => onSelectMode(item.mode)}
                 style={[
                   styles.modeCard,
-                  { borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'] },
+                  { borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-4'] },
                 ]}>
                 {locked ? <LockBadge /> : null}
                 <Icon
@@ -349,7 +349,7 @@ const ScheduleInterview = memo(() => {
                   styles.difficultyPill,
                   {
                     backgroundColor: active ? theme['color-primary-solid'] : 'transparent',
-                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'],
+                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-4'],
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
@@ -425,7 +425,7 @@ const ScheduleInterview = memo(() => {
                   styles.difficultyPill,
                   {
                     backgroundColor: active ? theme['color-primary-solid'] : 'transparent',
-                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'],
+                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-4'],
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>

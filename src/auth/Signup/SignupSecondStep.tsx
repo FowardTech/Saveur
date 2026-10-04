@@ -244,7 +244,7 @@ const SignupSecondStep = memo(() => {
                 // which washes out against the solid brand blue this used
                 // to be). Neutral background-basic-color-3 instead, same
                 // as JobAlerts.tsx's own preferred-countries chips.
-                style={[styles.chip, {backgroundColor: theme['background-basic-color-3'], borderColor: theme['background-basic-color-4']}]}>
+                style={[styles.chip, {backgroundColor: theme['background-basic-color-4'], borderColor: theme['background-basic-color-4']}]}>
                 <Text category="h9" bold>
                   {countryFlagEmoji(country) ? `${countryFlagEmoji(country)} ` : ''}{countryLabel(country)}
                 </Text>
@@ -294,7 +294,7 @@ const SignupSecondStep = memo(() => {
           })}
         </View>
       </Content>
-      <CtaButton
+      <CtaButton solid
         style={styles.button}
         children={t('auth:choose_this_location')}
         onPress={onContinue}

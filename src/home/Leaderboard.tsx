@@ -740,7 +740,7 @@ const themedStyles = StyleService.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
-    backgroundColor: 'background-basic-color-3',
+    backgroundColor: 'background-basic-color-4',
   },
   avatar: {
     marginRight: 12,
