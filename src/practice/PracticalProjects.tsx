@@ -128,8 +128,12 @@ const PracticalProjects = memo(() => {
           documentTypes.plainText,
         ],
       });
-      setAttaching(true);
       setAttachError(null);
+      if (res.size != null && res.size > 200 * 1024 * 1024) {
+        setAttachError(t('find:practical_attach_too_large', {defaultValue: 'That file is too large. The maximum size is 200 MB.'}).toString());
+        return;
+      }
+      setAttaching(true);
       setUploadName(res.name ?? 'document');
       setUploadPct(0);
       const att = await service.uploadStageDocument(
@@ -422,7 +426,7 @@ const PracticalProjects = memo(() => {
                           })
                         : t('find:practical_attach_doc_hint', {
                             defaultValue: 'Upload a PDF, Word, PowerPoint, Excel, CSV or text file instead of editing the draft. The AI will read it.',
-                          })}
+                          }) + ' ' + t('find:practical_attach_max_size', {defaultValue: 'Maximum file size: 200 MB.'})}
                     </Text>
                     {isMedia ? (
                       <Flex justify="space-between" itemsCenter>
