@@ -597,7 +597,7 @@ const JobAlerts = memo(() => {
               style={[
                 styles.remoteFilterChip,
                 {
-                  backgroundColor: remoteOnly ? theme['color-primary-500'] : theme['background-basic-color-3'],
+                  backgroundColor: remoteOnly ? theme['color-primary-solid'] : theme['background-basic-color-3'],
                 },
               ]}>
               <Text category="h10" bold status={remoteOnly ? 'control' : 'basic'}>

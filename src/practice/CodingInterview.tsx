@@ -673,7 +673,7 @@ const CodingInterview = memo(() => {
                       style={[
                         styles.langChip,
                         {
-                          backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
+                          backgroundColor: active ? theme['color-primary-solid'] : theme['background-basic-color-2'],
                         },
                       ]}>
                       <Text category="h9" bold status={active ? 'control' : 'basic'}>

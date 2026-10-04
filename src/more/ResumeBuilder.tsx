@@ -411,9 +411,9 @@ const ResumeBuilder = memo(() => {
           </>
         ) : null}
 
-        <SectionTitle mt={40} mb={12}>
+        <Text category="h7" bold mt={40} mb={12}>
           {t('more:ai_bullet_rewrite', { defaultValue: 'Rewrite a Bullet with AI' })}
-        </SectionTitle>
+        </Text>
         <Text category="h9-s" status="placeholder" mb={16}>
           {t('more:ai_bullet_rewrite_description', {
             defaultValue: 'Paste a resume bullet — we’ll tighten the wording and lead with a stronger verb.',

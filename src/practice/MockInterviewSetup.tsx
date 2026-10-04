@@ -524,7 +524,7 @@ const MockInterviewSetup = memo(() => {
                 onPress={() => onSelectMode(item.mode)}
                 style={[
                   styles.modeCard,
-                  { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                  { borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'] },
                 ]}>
                 {locked ? <LockBadge /> : null}
                 <Icon
@@ -568,8 +568,8 @@ const MockInterviewSetup = memo(() => {
                 style={[
                   styles.chip,
                   {
-                    backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
-                    borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'],
+                    backgroundColor: active ? theme['color-primary-solid'] : theme['background-basic-color-2'],
+                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'],
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
@@ -623,8 +623,8 @@ const MockInterviewSetup = memo(() => {
                 style={[
                   styles.difficultyPill,
                   {
-                    backgroundColor: active ? theme['color-primary-500'] : 'transparent',
-                    borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'],
+                    backgroundColor: active ? theme['color-primary-solid'] : 'transparent',
+                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'],
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
@@ -666,8 +666,8 @@ const MockInterviewSetup = memo(() => {
                   styles.chip,
                   isRealCompany && styles.chipWithLogo,
                   {
-                    backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-2'],
-                    borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'],
+                    backgroundColor: active ? theme['color-primary-solid'] : theme['background-basic-color-2'],
+                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'],
                   },
                 ]}>
                 {/* Product report: "in the company list in the interview
@@ -785,7 +785,7 @@ const MockInterviewSetup = memo(() => {
                     onPress={() => setPersona(active ? undefined : p.id)}
                     style={[
                       styles.personaCard,
-                      { borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                      { borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'] },
                     ]}>
                     {/* Separate tap target from the card itself (which
                         selects/deselects on tap) — opens PersonaDetailModal
@@ -838,8 +838,8 @@ const MockInterviewSetup = memo(() => {
                 style={[
                   styles.difficultyPill,
                   {
-                    backgroundColor: active ? theme['color-primary-500'] : 'transparent',
-                    borderColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'],
+                    backgroundColor: active ? theme['color-primary-solid'] : 'transparent',
+                    borderColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'],
                   },
                 ]}>
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>

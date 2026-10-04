@@ -600,29 +600,20 @@ const CourseSession = memo(() => {
           <Flex justify="flex-start">
             <TouchableOpacity
               onPress={() => onToggleMode('text')}
-              style={[styles.modePill, { backgroundColor: mode === 'text' ? theme['color-primary-500'] : theme['background-basic-color-2'] }]}>
+              style={[styles.modePill, { backgroundColor: mode === 'text' ? theme['color-primary-solid'] : theme['background-basic-color-2'] }]}>
               <Text category="h10" bold status={mode === 'text' ? 'control' : 'basic'}>
                 {t('more:course_mode_text', { defaultValue: 'Text' })}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={() => onToggleMode('voice')}
-              style={[styles.modePill, { backgroundColor: mode === 'voice' ? theme['color-primary-500'] : theme['background-basic-color-2'], marginLeft: 8 }]}>
+              style={[styles.modePill, { backgroundColor: mode === 'voice' ? theme['color-primary-solid'] : theme['background-basic-color-2'], marginLeft: 8 }]}>
               <Text category="h10" bold status={mode === 'voice' ? 'control' : 'basic'}>
                 {t('more:course_mode_voice', { defaultValue: 'Voice' })}
               </Text>
             </TouchableOpacity>
           </Flex>
         </Flex>
-
-        <View style={styles.progressTrack}>
-          <View
-            style={[
-              styles.progressFill,
-              { width: `${Math.round(((moduleIndex + 1) / totalModules) * 100)}%`, backgroundColor: theme['color-primary-solid'] },
-            ]}
-          />
-        </View>
 
         {isLoadingModule ? (
           <Flex vertical itemsCenter justify="center" style={{ paddingVertical: 60 }}>

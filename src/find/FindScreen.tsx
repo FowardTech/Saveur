@@ -217,7 +217,7 @@ const FindScreen = memo(() => {
     icon: string;
     onPress: () => void;
     loading: boolean;
-    tint?: { bg: string; fg: string };
+    tint?: { bg: string; fg: string; text?: string; wrap?: string };
   }> = [
     { title: t('more:resume_builder', { defaultValue: 'Resume Builder' }), icon: 'file-text-outline', onPress: () => navigate('ResumeBuilder'), loading: false },
     { title: t('more:jd_analyzer', { defaultValue: 'JD Analyzer' }), icon: 'search-outline', onPress: () => navigate('JDAnalyzer'), loading: false },
@@ -238,7 +238,7 @@ const FindScreen = memo(() => {
           icon: 'code-outline',
           onPress: () => setShowCodingDifficultyPicker(true),
           loading: isStartingCoding,
-          tint: { bg: 'rgba(139, 92, 246, 0.08)', fg: '#71717a' },
+          tint: { bg: '#7C5CFF', fg: '#FFFFFF', text: '#FFFFFF', wrap: 'rgba(255,255,255,0.22)' },
         }]
       : []),
     // Admin-configurable (product request: "I want to be able to activate
@@ -398,7 +398,7 @@ const FindScreen = memo(() => {
             // the default color in both places.
             const bg = tool.tint?.bg ?? theme['background-basic-color-2'];
             const iconFg = tool.tint?.fg ?? theme['text-basic-color'];
-            const fg = theme['text-basic-color'];
+            const fg = tool.tint?.text ?? theme['text-basic-color'];
             return (
               <TouchableOpacity
                 key={i}
@@ -406,7 +406,7 @@ const FindScreen = memo(() => {
                 onPress={tool.onPress}
                 disabled={tool.loading}
                 style={[styles.toolRow, { backgroundColor: bg }]}>
-                <View style={[styles.toolIconWrap, { backgroundColor: theme['background-basic-color-1'] }]}>
+                <View style={[styles.toolIconWrap, { backgroundColor: tool.tint?.wrap ?? theme['background-basic-color-1'] }]}>
                   {tool.loading ? (
                     <Spinner size="small" />
                   ) : (

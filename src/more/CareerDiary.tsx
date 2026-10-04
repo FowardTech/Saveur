@@ -214,7 +214,7 @@ const CareerDiary = memo(() => {
                       onPress={() => setCategory(active ? undefined : key)}
                       style={[
                         styles.categoryPill,
-                        { backgroundColor: active ? theme['color-primary-500'] : theme['background-basic-color-3'] },
+                        { backgroundColor: active ? theme['color-primary-solid'] : theme['background-basic-color-3'] },
                       ]}>
                       {categoryLabel(key, t)}
                     </Text>
