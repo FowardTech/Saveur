@@ -282,8 +282,29 @@ const PracticalProjects = memo(() => {
                 {projects.map(p => (
                   <TouchableOpacity key={p.id} onPress={() => openProject(p.id)}>
                     <Layout level="2" style={styles.row}>
-                      <Text category="h9" bold style={globalStyle.flexOne} numberOfLines={2}>{p.name}</Text>
-                      <Text category="h10" status="placeholder">{p.industry}</Text>
+                      <View style={globalStyle.flexOne}>
+                        <Text category="h9" bold numberOfLines={2}>{p.name}</Text>
+                        <Text category="h10" status="placeholder" mt={2}>{p.industry}</Text>
+                      </View>
+                      {p.status ? (
+                        <View
+                          style={{
+                            paddingHorizontal: 10,
+                            paddingVertical: 4,
+                            borderRadius: 12,
+                            backgroundColor: p.status === 'completed' ? 'rgba(25,184,122,0.16)' : 'rgba(255,138,61,0.16)',
+                          }}>
+                          <Text category="h10" bold style={{color: p.status === 'completed' ? '#0E8F5C' : '#C2570F'}}>
+                            {p.status === 'completed'
+                              ? t('find:practical_project_completed', {defaultValue: 'Completed'})
+                              : t('find:practical_project_in_progress', {
+                                  defaultValue: 'In progress · {{done}}/{{total}}',
+                                  done: p.stagesDone ?? 0,
+                                  total: p.stagesTotal ?? 0,
+                                })}
+                          </Text>
+                        </View>
+                      ) : null}
                     </Layout>
                   </TouchableOpacity>
                 ))}

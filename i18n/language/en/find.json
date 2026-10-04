@@ -520,5 +520,7 @@
   "practical_attach_reading": "Reading file…",
   "practical_attach_uploaded": "Uploaded",
   "practical_attach_too_large": "That file is too large. The maximum size is 200 MB.",
-  "practical_attach_max_size": "Maximum file size: 200 MB."
+  "practical_attach_max_size": "Maximum file size: 200 MB.",
+  "practical_project_completed": "Completed",
+  "practical_project_in_progress": "In progress · {{done}}/{{total}}"
 }
