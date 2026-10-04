@@ -18,6 +18,7 @@ export interface ProjectStage {
   task: string;
   template: string;
   twist: string;
+  deliverable_type?: 'text' | 'document' | 'presentation' | 'spreadsheet' | 'audio' | 'video';
   status: 'locked' | 'active' | 'done';
   attempts: number;
   feedback: StageFeedback | null;
@@ -71,9 +72,41 @@ export async function savePracticalProject(
   return detail(data);
 }
 
-export async function submitProjectStage(id: number | string, n: number, content: string): Promise<PracticalProjectDetail> {
-  const {data} = await apiClient.post<Wire>(`/api/v1/practical/projects/${id}/stages/${n}/submit`, {content});
+export interface StageAttachment {
+  name: string;
+  kind: 'document' | 'media';
+  text: string;
+  truncated?: boolean;
+}
+
+export async function submitProjectStage(
+  id: number | string,
+  n: number,
+  content: string,
+  attachments: StageAttachment[] = [],
+): Promise<PracticalProjectDetail> {
+  const {data} = await apiClient.post<Wire>(`/api/v1/practical/projects/${id}/stages/${n}/submit`, {
+    content,
+    attachments,
+  });
   return detail(data);
+}
+
+/** Upload a document (pdf/docx/pptx/xlsx/csv/txt/md); the backend returns its extracted text. */
+export async function uploadStageDocument(
+  id: number | string,
+  file: {uri: string; name: string; mimeType?: string | null},
+): Promise<StageAttachment> {
+  const formData = new FormData();
+  formData.append('file', {uri: file.uri, name: file.name, type: file.mimeType ?? 'application/octet-stream'} as any);
+  const {data} = await apiClient.post<StageAttachment>(`/api/v1/practical/projects/${id}/attachments/file`, formData);
+  return data;
+}
+
+/** Attach a public audio/video link; the backend transcribes it. */
+export async function attachStageMediaUrl(id: number | string, url: string): Promise<StageAttachment> {
+  const {data} = await apiClient.post<StageAttachment>(`/api/v1/practical/projects/${id}/attachments/url`, {url});
+  return data;
 }
 export async function finishPracticalProject(id: number | string): Promise<PracticalProjectDetail> {
   const {data} = await apiClient.post<Wire>(`/api/v1/practical/projects/${id}/finish`, {});

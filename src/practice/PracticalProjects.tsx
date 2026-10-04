@@ -3,6 +3,7 @@ import {Alert, TouchableOpacity, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Icon, Input, Spinner, Layout} from '@ui-kitten/components';
 import {NavigationProp, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
+import {pick, isErrorWithCode, errorCodes, types as documentTypes} from '@react-native-documents/picker';
 
 import Text from 'components/Text';
 import Content from 'components/Content';
@@ -38,6 +39,9 @@ const PracticalProjects = memo(() => {
   const [stageOpen, setStageOpen] = React.useState<number | null>(null);
   const [draft, setDraft] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
+  const [attachments, setAttachments] = React.useState<service.StageAttachment[]>([]);
+  const [mediaUrl, setMediaUrl] = React.useState('');
+  const [attaching, setAttaching] = React.useState(false);
   const [finishing, setFinishing] = React.useState(false);
   const [expanded, setExpanded] = React.useState<number | null>(null);
   const [creating, setCreating] = React.useState(false);
@@ -96,14 +100,63 @@ const PracticalProjects = memo(() => {
     const f0 = active.files.find(f => f.path === `STAGE_${n}.md`);
     const file = f0?.content_original ?? f0?.content ?? '';
     setDraft(file);
+    setAttachments([]);
+    setMediaUrl('');
     setStageOpen(n);
+  };
+
+  const attachErrorMessage = (e: any) =>
+    e?.response?.data?.detail ?? e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong'});
+
+  const onPickDocument = async () => {
+    if (!active || attaching) return;
+    try {
+      const [res] = await pick({
+        type: [
+          documentTypes.pdf,
+          documentTypes.doc,
+          documentTypes.docx,
+          documentTypes.ppt,
+          documentTypes.pptx,
+          documentTypes.xls,
+          documentTypes.xlsx,
+          documentTypes.csv,
+          documentTypes.plainText,
+        ],
+      });
+      setAttaching(true);
+      const att = await service.uploadStageDocument(active.id, {uri: res.uri, name: res.name ?? 'document', mimeType: res.type});
+      setAttachments(prev => [...prev, att].slice(0, 5));
+    } catch (e: any) {
+      if (isErrorWithCode(e) && e.code === errorCodes.OPERATION_CANCELED) return;
+      Alert.alert(t('more:upload_failed', {defaultValue: 'Upload failed'}), attachErrorMessage(e));
+    } finally {
+      setAttaching(false);
+    }
+  };
+
+  const onAttachUrl = async () => {
+    if (!active || attaching || !mediaUrl.trim()) return;
+    setAttaching(true);
+    try {
+      const att = await service.attachStageMediaUrl(active.id, mediaUrl.trim());
+      setAttachments(prev => [...prev, att].slice(0, 5));
+      setMediaUrl('');
+    } catch (e: any) {
+      Alert.alert(t('more:upload_failed', {defaultValue: 'Upload failed'}), attachErrorMessage(e));
+    } finally {
+      setAttaching(false);
+    }
   };
 
   const submitStage = async () => {
     if (!active || stageOpen == null || submitting) return;
     setSubmitting(true);
     try {
-      const updated = await service.submitProjectStage(active.id, stageOpen, draft);
+      const template = active.state?.stages.find(x => x.n === stageOpen)?.template ?? '';
+      // An untouched generated template is not the learner's work - don't send it when they attached their own.
+      const content = attachments.length > 0 && draft.trim() === template.trim() ? '' : draft;
+      const updated = await service.submitProjectStage(active.id, stageOpen, content, attachments);
       setActive(updated);
       setExpanded(stageOpen);
       setStageOpen(null);
@@ -338,7 +391,66 @@ const PracticalProjects = memo(() => {
                 textStyle={{minHeight: 260, textAlignVertical: 'top'}}
                 style={{marginBottom: 12}}
               />
-              <CtaButton disabled={submitting || draft.trim().length < 40} onPress={submitStage}>
+              {(() => {
+                const dtype = active.state?.stages.find(x => x.n === stageOpen)?.deliverable_type ?? 'text';
+                const isMedia = dtype === 'audio' || dtype === 'video';
+                return (
+                  <View style={{marginBottom: 12}}>
+                    <Text category="h10" bold mb={4}>
+                      {t('find:practical_attach_title', {defaultValue: 'Or attach your own work'})}
+                    </Text>
+                    <Text category="h10" status="placeholder" mb={8}>
+                      {isMedia
+                        ? t('find:practical_attach_media_hint', {
+                            defaultValue: 'Upload your {{type}} to Google Drive, Dropbox or similar, set it to “anyone with the link”, and paste the link. The AI will transcribe and review it.',
+                            type: dtype,
+                          })
+                        : t('find:practical_attach_doc_hint', {
+                            defaultValue: 'Upload a PDF, Word, PowerPoint, Excel, CSV or text file instead of editing the draft. The AI will read it.',
+                          })}
+                    </Text>
+                    {isMedia ? (
+                      <Flex justify="space-between" itemsCenter>
+                        <Input
+                          placeholder={t('find:practical_attach_url_placeholder', {defaultValue: 'https://… public link'}).toString()}
+                          value={mediaUrl}
+                          onChangeText={setMediaUrl}
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                          keyboardType="url"
+                          style={[{flex: 1, marginRight: 8}, globalStyle.sheetInput]}
+                          textStyle={globalStyle.inputText}
+                        />
+                        <CtaButton size="small" disabled={attaching || !mediaUrl.trim()} loading={attaching} onPress={onAttachUrl}>
+                          {t('find:practical_attach_add', {defaultValue: 'Add'})}
+                        </CtaButton>
+                      </Flex>
+                    ) : (
+                      <CtaButton loading={attaching} disabled={attaching || attachments.length >= 5} onPress={onPickDocument}>
+                        {t('find:practical_attach_file', {defaultValue: 'Choose a file'})}
+                      </CtaButton>
+                    )}
+                    {attachments.map((a, i) => (
+                      <Flex key={`${a.name}-${i}`} justify="space-between" itemsCenter style={{marginTop: 8}}>
+                        <Flex justify="flex-start" itemsCenter style={{flex: 1}}>
+                          <Icon
+                            pack="eva"
+                            name={a.kind === 'media' ? 'headphones-outline' : 'file-text-outline'}
+                            style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]}
+                          />
+                          <Text category="h9" numberOfLines={1} ml={8} style={{flex: 1}}>
+                            {a.name}
+                          </Text>
+                        </Flex>
+                        <TouchableOpacity onPress={() => setAttachments(prev => prev.filter((_, j) => j !== i))} hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
+                          <Icon pack="eva" name="close-outline" style={[globalStyle.icon20, {tintColor: theme['text-basic-color']}]} />
+                        </TouchableOpacity>
+                      </Flex>
+                    ))}
+                  </View>
+                );
+              })()}
+              <CtaButton disabled={submitting || (draft.trim().length < 40 && attachments.length === 0)} onPress={submitStage}>
                 {submitting
                   ? () => <Spinner size="small" status="control" />
                   : t('find:practical_submit_manager', {defaultValue: 'Submit to {{name}}', name: active.state?.persona.name ?? 'manager'})}
