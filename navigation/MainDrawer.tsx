@@ -337,7 +337,7 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
               accessibilityLabel={t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
               style={{
                 flex: 1,
-                height: 52,
+                height: 58,
                 borderRadius: 26,
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -364,6 +364,13 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
                   />
                 ) : null}
               </View>
+              <Text
+                category="h10"
+                bold={focused}
+                numberOfLines={1}
+                style={{fontSize: 11, lineHeight: 14, marginTop: 3, color: theme['text-basic-color'], opacity: focused ? 1 : 0.7}}>
+                {t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
+              </Text>
             </TouchableOpacity>
           );
         })}
