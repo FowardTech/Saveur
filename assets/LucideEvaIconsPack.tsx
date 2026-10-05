@@ -1,6 +1,8 @@
 import {IconPack} from '@ui-kitten/components';
 import {
   Activity,
+  ArrowLeft,
+  MapPin,
   AudioLines,
   ThumbsDown,
   ThumbsUp,
@@ -148,6 +150,8 @@ const LucideEvaIconsPack: IconPack<any> = {
     'thumbs-down-outline': lucideIcon(ThumbsDown),
     'alert-circle-outline': lucideIcon(AlertCircle),
     'arrow-forward-outline': lucideIcon(ArrowRight),
+    'arrow-back-outline': lucideIcon(ArrowLeft),
+    'map-pin-outline': lucideIcon(MapPin),
     'arrow-right-outline': lucideIcon(ArrowRight),
     'arrow-upward-outline': lucideIcon(ArrowUp),
     'award-outline': lucideIcon(Award),

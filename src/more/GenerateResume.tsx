@@ -26,6 +26,7 @@ import NavigationAction from 'components/NavigationAction';
 import { DraggableList } from 'components/DraggableList';
 import { globalStyle } from 'styles/globalStyle';
 import DatePickerField from 'components/DatePickerField';
+import { LocationPickerField } from 'components/PickerFields';
 import { RootStackParamList } from 'navigation/types';
 import * as resumeGenerationService from 'services/resumeGenerationService';
 import * as resumeService from 'services/resumeService';
@@ -464,12 +465,11 @@ const GenerateResume = memo(() => {
                 style={[globalStyle.inputField, styles.contactField]}
                 textStyle={globalStyle.inputText}
               />
-              <Input
+              <LocationPickerField
                 placeholder={t('more:resume_contact_location', { defaultValue: 'Location' })}
                 value={content.contact.location ?? ''}
-                onChangeText={v => updateSection('contact', { ...content.contact, location: v })}
-                style={[globalStyle.inputField, styles.contactField]}
-                textStyle={globalStyle.inputText}
+                onChange={v => updateSection('contact', { ...content.contact, location: v })}
+                style={styles.contactField}
               />
             </View>
 
@@ -1039,12 +1039,11 @@ function ExperienceCard({
         style={[globalStyle.inputField, rowStyles.field]}
         textStyle={globalStyle.inputText}
       />
-      <Input
+      <LocationPickerField
         value={entry.location ?? ''}
-        onChangeText={v => onChange({ ...entry, location: v })}
+        onChange={v => onChange({ ...entry, location: v })}
         placeholder={t('more:resume_field_location', { defaultValue: 'Location' })}
-        style={[globalStyle.inputField, rowStyles.field]}
-        textStyle={globalStyle.inputText}
+        style={rowStyles.field}
       />
       <FieldRow>
         <DatePickerField

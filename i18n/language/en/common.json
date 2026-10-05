@@ -150,5 +150,14 @@
   "create": "Create",
   "discard": "Discard",
   "notification_channel_default": "Default",
-  "present": "Present"
+  "present": "Present",
+  "select_currency": "Select currency",
+  "currency": "Currency",
+  "any_currency": "Any / local currency",
+  "search_currency": "Search currency",
+  "select_location": "Select country and city",
+  "select_country": "Select country",
+  "search_city": "Search city",
+  "search_country": "Search country",
+  "use_country_only": "Use {{country}} only (no city)"
 }

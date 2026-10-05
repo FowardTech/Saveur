@@ -1,3 +1,4 @@
+import {LocationPickerField, CurrencyPickerField} from 'components/PickerFields';
 import React, {memo} from 'react';
 import {Alert, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Input, Layout, Spinner} from '@ui-kitten/components';
@@ -163,9 +164,9 @@ const SalaryBenchmark = memo(() => {
         title={String(t('more:salary_benchmark', {defaultValue: 'Salary Benchmark'}))}
         onClose={() => setOpen(false)}>
         <Input placeholder={String(t('more:salary_bm_role', {defaultValue: 'Job title (e.g. Product Manager)'}))} value={title} onChangeText={setTitle} style={styles.input} />
-        <Input placeholder={String(t('more:salary_bm_location', {defaultValue: 'Location (e.g. Lagos, Nigeria)'}))} value={location} onChangeText={setLocation} style={styles.input} />
+        <LocationPickerField placeholder={String(t('more:salary_bm_location', {defaultValue: 'Select country and city'}))} value={location} onChange={setLocation} style={styles.input} />
         <Input placeholder={String(t('more:salary_bm_years', {defaultValue: 'Years of experience'}))} keyboardType="numeric" value={years} onChangeText={setYears} style={styles.input} />
-        <Input placeholder={String(t('more:salary_bm_currency', {defaultValue: 'Currency (optional, e.g. USD)'}))} autoCapitalize="characters" value={currency} onChangeText={setCurrency} style={styles.input} />
+        <CurrencyPickerField optional placeholder={String(t('more:salary_bm_currency', {defaultValue: 'Currency (optional)'}))} value={currency} onChange={setCurrency} style={styles.input} />
         <Text category="h9" bold mb={8}>{t('more:salary_bm_compare', {defaultValue: 'Compare your own number (optional)'})}</Text>
         <View style={{flexDirection: 'row', marginBottom: 12}}>
           {(['offer', 'current'] as const).map(k => (

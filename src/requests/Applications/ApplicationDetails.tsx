@@ -20,6 +20,7 @@ import Text from 'components/Text';
 import Container from 'components/Container';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
 
+import {CurrencyPickerField} from 'components/PickerFields';
 import {globalStyle} from 'styles/globalStyle';
 import Flex from 'components/Flex';
 import {ApplicationDetailsScreenNavigationProp, RootStackParamList} from 'navigation/types';
@@ -521,16 +522,12 @@ const ApplicationDetails = memo(() => {
                 textStyle={globalStyle.inputText}
                 label={t('request:offer_amount_label', {defaultValue: 'Base offer'}).toString()}
               />
-              <Input
-                autoCapitalize="characters"
-                maxLength={3}
-                placeholder="USD"
-                value={offerCurrencyText}
-                onChangeText={setOfferCurrencyText}
-                style={[[globalStyle.inputField, {flex: 1}], globalStyle.sheetInput]}
-                textStyle={globalStyle.inputText}
-                label={t('request:offer_currency_label', {defaultValue: 'Currency'}).toString()}
-              />
+              <View style={{flex: 1.4}}>
+                <Text category="h10" status="placeholder" mb={4}>
+                  {t('request:offer_currency_label', {defaultValue: 'Currency'})}
+                </Text>
+                <CurrencyPickerField value={offerCurrencyText} onChange={setOfferCurrencyText} placeholder="USD" />
+              </View>
             </Flex>
             <Text category="h10" status="placeholder" mb={6}>
               {t('request:offer_deadline_label', {defaultValue: 'Decision deadline (optional)'})}
