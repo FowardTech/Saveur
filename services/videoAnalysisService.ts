@@ -271,7 +271,7 @@ export function useVideoInterviewAnalysis() {
   // (the whole camera session failed to start, silently, before this had
   // on-screen error surfacing). iOS never required this. 720p/30fps is
   // plenty for reviewing a talking-head interview recording and keeps this
-  // consistent with videoBitRate="low"'s own goal of an upload-able file
+  // consistent with videoBitRate={1.5}'s own goal of an upload-able file
   // size for a multi-minute session.
   const format = useCameraFormat(device, [
     {videoResolution: {width: 1280, height: 720}},

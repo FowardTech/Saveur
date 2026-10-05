@@ -1197,10 +1197,15 @@ const LiveInterviewSession = memo(() => {
     // long onEnd() (and the "Saving your recording…" wait it drives) lasts
     // before navigating on; the upload itself was already wired up above
     // and does not depend on this resolving in time.
-    await withTimeout(recordedVideoPromise, 15000, null);
-    let videoMetrics = isVideoMode
-      ? await withTimeout(videoAnalysis.stopAnalysis(), 8000, EMPTY_VIDEO_METRICS)
-      : undefined;
+    // Finalizing the file and computing the metrics are independent, so run
+    // them together (they used to run back to back, up to 15s + 8s). The
+    // upload is already attached to recordedVideoPromise above, so a shorter
+    // UI wait here never loses the video.
+    const [, stoppedMetrics] = await Promise.all([
+      withTimeout(recordedVideoPromise, 8000, null),
+      isVideoMode ? withTimeout(videoAnalysis.stopAnalysis(), 8000, EMPTY_VIDEO_METRICS) : Promise.resolve(undefined),
+    ]);
+    let videoMetrics = isVideoMode ? stoppedMetrics : undefined;
     if (isVideoMode) setIsCameraActive(false);
     try {
       if (isVideoMode && sessionId) {
@@ -1460,7 +1465,11 @@ const LiveInterviewSession = memo(() => {
                 isActive={isCameraActive}
                 video
                 audio
-                videoBitRate="low"
+                // 1.5 Mbps (not "low", which is only 20% under the hardware
+                // encoder's ~8-12 Mbps default at 720p). A talking-head
+                // recording stays clear at this rate and a 3-minute session
+                // drops from ~100+ MB to ~35 MB, so the upload finishes fast.
+                videoBitRate={1.5}
                 faceDetectionOptions={videoAnalysis.faceDetectionOptions}
                 faceDetectionCallback={faces => videoAnalysis.onFacesDetected(faces)}
                 onError={(e) => console.warn('[LiveInterviewSession] camera error', e.code, e.message)}
