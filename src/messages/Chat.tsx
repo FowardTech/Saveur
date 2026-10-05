@@ -185,6 +185,25 @@ const buildThinkingMessage = (label: string) =>
 // survives navigating away from this screen and back (the cache itself is
 // not the source of truth — see coachService's comment on why history
 // read/clear stay local for now).
+// Basic plan: monthly AI Coach question cap -> offer the Premium upgrade instead of a generic error.
+function showCoachError(e: any, t: any, goUpgrade: () => void) {
+  if (e?.error === 'coach_limit_reached') {
+    Alert.alert(
+      t("message:coach_limit_title", { defaultValue: "Monthly limit reached" }),
+      e?.message,
+      [
+        { text: t("common:cancel", { defaultValue: "Cancel" }), style: "cancel" },
+        { text: t("message:coach_limit_upgrade", { defaultValue: "Upgrade to Premium" }), onPress: goUpgrade },
+      ],
+    );
+    return;
+  }
+  Alert.alert(
+    t("message:coach_unavailable_title", { defaultValue: "Coach unavailable" }),
+    e?.message ?? t("message:coach_unavailable_body", { defaultValue: "Couldn't reach your AI coach. Please try again." }),
+  );
+}
+
 const Chat = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const { t, i18n: i18nInstance } = useTranslation(["message", "common", "more"]);
@@ -349,16 +368,11 @@ const Chat = memo(() => {
       // The thinking placeholder is removed either way — it must never be
       // left sitting in the thread as if it were a real, permanent message.
       setMessages(previous => previous.filter((m: any) => m._id !== THINKING_MESSAGE_ID));
-      Alert.alert(
-        t("message:coach_unavailable_title", { defaultValue: "Coach unavailable" }),
-        e?.message ?? t("message:coach_unavailable_body", {
-          defaultValue: "Couldn't reach your AI coach. Please try again.",
-        })
-      );
+      showCoachError(e, t, () => (navigate as any)('Subscription'));
     } finally {
       setIsSending(false);
     }
-  }, [isSending, profile, t]);
+  }, [isSending, profile, t, navigate]);
 
   const onSend = React.useCallback(async (outgoing: IMessage[] = []) => {
     const draft = outgoing[0];
@@ -520,14 +534,11 @@ const Chat = memo(() => {
       setMessages(prev => [toGiftedMessage(coachMessage), ...prev.filter((m: any) => m._id !== THINKING_MESSAGE_ID)]);
     } catch (e: any) {
       setMessages(prev => prev.filter((m: any) => m._id !== THINKING_MESSAGE_ID));
-      Alert.alert(
-        t("message:coach_unavailable_title", { defaultValue: "Coach unavailable" }),
-        e?.message ?? t("message:coach_unavailable_body", { defaultValue: "Couldn't reach your AI coach. Please try again." }),
-      );
+      showCoachError(e, t, () => (navigate as any)('Subscription'));
     } finally {
       setIsSending(false);
     }
-  }, [isSending, messages, profile, t]);
+  }, [isSending, messages, profile, t, navigate]);
 
   // The ACTUAL rendered theme decides (light text token => dark surface), not the
   // ThemeContext name, which can disagree with what UI Kitten is really showing

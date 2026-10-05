@@ -906,10 +906,16 @@ const VoiceCoachView = memo(({
         replyText = result.coachMessage.text;
         suggestedAction = result.coachMessage.suggestedAction;
       } catch (e: any) {
-        replyText = i18n.t('message:voice_retry_line', {
-          defaultValue: "Sorry, I didn't catch that — could you say it again?",
-        });
-        showError(e?.message ?? null);
+        if (e?.error === 'coach_limit_reached') {
+          // Basic plan monthly cap: say it out loud and show it, no retry line.
+          replyText = e?.message ?? i18n.t('message:coach_limit_title', {defaultValue: 'Monthly limit reached'});
+          showError(e?.message ?? null);
+        } else {
+          replyText = i18n.t('message:voice_retry_line', {
+            defaultValue: "Sorry, I didn't catch that — could you say it again?",
+          });
+          showError(e?.message ?? null);
+        }
       }
       if (suggestedAction) {
         // Was a per-action hand-written full sentence (4 of them, hardcoded

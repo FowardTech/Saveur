@@ -113,5 +113,7 @@
   "topic_goal_next_step": "What's my next step toward \"{{goal}}\"?",
   "topic_resume_review": "Can you review my resume and suggest improvements?",
   "topic_salary_negotiation": "How should I approach negotiating my salary?",
-  "topic_interview_nerves": "How do I stay calm and confident during interviews?"
+  "topic_interview_nerves": "How do I stay calm and confident during interviews?",
+  "coach_limit_title": "Monthly limit reached",
+  "coach_limit_upgrade": "Upgrade to Premium"
 }
