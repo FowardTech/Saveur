@@ -10,7 +10,7 @@ import {
   Input,
   Spinner,
 } from '@ui-kitten/components';
-import { NavigationProp, RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { NavigationProp, RouteProp, StackActions, useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 
 import Text from 'components/Text';
@@ -100,7 +100,7 @@ const CourseSession = memo(() => {
   const theme = useTheme();
   const { t } = useTranslation(['more', 'common']);
   const styles = useStyleSheet(themedStyles);
-  const { goBack, navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const { goBack, dispatch } = useNavigation<NavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'CourseSession'>>();
   const { profile, isPremium } = React.useContext(AuthContext);
   const { topic, totalModules, level = 'basic' as CourseLevel, coreSubtopics } = route.params;
@@ -378,11 +378,19 @@ const CourseSession = memo(() => {
     // LearningCourses.tsx's own onStartTier does for a manual tier pick.
     const onContinueNextLevel = () => {
       if (!nextLevel) return;
-      navigate('CourseSession', {
-        topic,
-        totalModules: MODULES_PER_LEVEL[nextLevel],
-        level: nextLevel,
-      });
+      // `replace` (not `navigate`): navigating to the route we're already on
+      // only updates its params and keeps this screen's state (isComplete,
+      // moduleIndex, caches), so the learner stayed on the finished tier.
+      // Replace mounts a fresh CourseSession for the next tier.
+      speechService.stopSpeaking();
+      dispatch(
+        StackActions.replace('CourseSession', {
+          topic,
+          totalModules: MODULES_PER_LEVEL[nextLevel],
+          level: nextLevel,
+          coreSubtopics,
+        }),
+      );
     };
     return (
       <Container style={styles.container}>
