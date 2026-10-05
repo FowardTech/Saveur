@@ -178,7 +178,7 @@ const CoverLetterGenerator = memo(() => {
                 <Text category="h9-s" bold status={remaining > 0 ? 'basic' : 'danger'} ml={10} style={globalStyle.flexOne}>
                   {remaining > 0
                     ? t('more:resume_free_actions_remaining', {
-                        defaultValue: `${remaining} free resume tool action${remaining === 1 ? '' : 's'} left this month`,
+                        defaultValue: '{{count}} free resume tool actions left this month',
                         count: remaining,
                       })
                     : t('more:resume_free_actions_used_up', { defaultValue: "You've used all your free resume tool actions this month" })}

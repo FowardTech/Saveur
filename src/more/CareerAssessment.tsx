@@ -232,7 +232,7 @@ const CareerAssessment = memo(() => {
         <Text category="h9" status="placeholder" mt={16} mb={8}>
           {t('more:career_assessment_question_of', {
             current: personalityIndex + 1, total: personalityQuestions.length,
-            defaultValue: `Question ${personalityIndex + 1} of ${personalityQuestions.length}`,
+            defaultValue: 'Question {{current}} of {{total}}',
           })}
         </Text>
         <Text category="h4" bold mb={20}>{question?.text}</Text>
@@ -269,7 +269,7 @@ const CareerAssessment = memo(() => {
           {targetRole
             ? t('more:career_assessment_skills_intro_subtitle_role', {
                 role: targetRole,
-                defaultValue: `5 quick multiple-choice questions on ${targetRole} fundamentals — see where you stand before your first mock interview.`,
+                defaultValue: '5 quick multiple-choice questions on {{role}} fundamentals — see where you stand before your first mock interview.',
               })
             : t('more:career_assessment_skills_intro_subtitle_generic', {
                 defaultValue: '5 quick multiple-choice questions to gauge your readiness before your first mock interview.',
