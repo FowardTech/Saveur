@@ -219,6 +219,11 @@ export async function getShareDetail(shareId: string): Promise<SharedContentDeta
   };
 }
 
+/** Remove (unfollow) an accepted connection. Throws on failure. */
+export async function removeConnection(username: string): Promise<void> {
+  await apiClient.delete(`/api/v1/shares/connections/by-username/${encodeURIComponent(username)}`);
+}
+
 /** GET /api/v1/shares/connections — usernames of accepted connections, for
  * the share picker (select one / select all instead of typing usernames). */
 export async function listConnections(): Promise<string[]> {

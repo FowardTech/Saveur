@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, RefreshControl} from 'react-native';
+import {Alert, RefreshControl, TouchableOpacity} from 'react-native';
 import {
   TopNavigation,
   StyleService,
@@ -304,6 +304,30 @@ const SharedWithMe = memo(() => {
       ))
     );
 
+  const confirmRemove = (username: string) =>
+    Alert.alert(
+      t('more:remove_connection_title', {defaultValue: 'Remove connection?'}),
+      t('more:remove_connection_body', {
+        defaultValue: "@{{username}} will no longer be in your connections and you won't be able to share with each other until you reconnect.",
+        username,
+      }),
+      [
+        {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
+        {
+          text: t('more:remove_connection_confirm', {defaultValue: 'Remove'}),
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await sharesService.removeConnection(username);
+              setConnections(prev => prev.filter(u => u !== username));
+            } catch (e: any) {
+              Alert.alert(e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}));
+            }
+          },
+        },
+      ],
+    );
+
   const renderConnections = () =>
     isLoadingConnections ? (
       <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
@@ -324,6 +348,14 @@ const SharedWithMe = memo(() => {
           <Text category="h9" bold numberOfLines={1} style={{flex: 1, marginLeft: 12}}>
             @{username}
           </Text>
+          <TouchableOpacity
+            onPress={() => confirmRemove(username)}
+            hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
+            style={{paddingHorizontal: 12, paddingVertical: 6, borderRadius: 99, backgroundColor: 'rgba(250,65,105,0.12)'}}>
+            <Text category="h10" bold style={{color: '#FA4169'}}>
+              {t('more:remove_connection', {defaultValue: 'Remove'})}
+            </Text>
+          </TouchableOpacity>
         </Flex>
       ))
     );
