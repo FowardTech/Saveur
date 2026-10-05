@@ -642,6 +642,11 @@ const VoiceCoachView = memo(({
   // swallows late final transcript segments of the user's own last turn.
   // Manual tap-to-interrupt is never affected.
   const aecConvergedRef = React.useRef(false);
+  // Barge-in while the coach is still THINKING (the user wasn't finished): the
+  // pending reply is dropped and the earlier words are carried into the next turn.
+  const sendSeqRef = React.useRef(0);
+  const lastSentRawRef = React.useRef('');
+  const carryOverTextRef = React.useRef('');
   const speakingStartedAtRef = React.useRef(0);
 
   const resetDuplexTranscript = React.useCallback(() => {
@@ -803,7 +808,9 @@ const VoiceCoachView = memo(({
       // turn always starts back at the normal debounce unless a fresh
       // interrupt sets this again.
       isBargeInTurnRef.current = false;
-      const trimmed = finalText.trim();
+      const carried = carryOverTextRef.current;
+      carryOverTextRef.current = '';
+      const trimmed = (carried ? carried + ' ' + finalText : finalText).trim();
       if (!trimmed) {
         setPhase('listening');
         return;
@@ -863,6 +870,8 @@ const VoiceCoachView = memo(({
         // wanted to say" rather than a dead end.
       }
 
+      lastSentRawRef.current = trimmed;
+      const mySeq = ++sendSeqRef.current;
       setPhase('thinking');
       let replyText = '';
       let suggestedAction: SuggestedActionId | undefined;
@@ -890,6 +899,9 @@ const VoiceCoachView = memo(({
         pendingActionRef.current = suggestedAction;
       }
       if (!isActiveRef.current) return;
+      // The user spoke again while this reply was being generated (they had not
+      // finished) -- drop it; their combined words get sent as the next turn.
+      if (sendSeqRef.current !== mySeq) return;
       setLastCoachLine(replyText);
       setPhase('speaking');
 
@@ -1048,6 +1060,24 @@ const VoiceCoachView = memo(({
     if (phase === 'speaking') speakingStartedAtRef.current = Date.now();
   }, [phase]);
 
+  // Barge-in during 'thinking': the user kept talking after a turn was sent.
+  // Cancel the pending reply, go back to listening immediately, give the longer
+  // post-interrupt grace period, and carry the earlier words forward.
+  React.useEffect(() => {
+    if (!duplexSupported || !active || phase !== 'thinking') return;
+    const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
+    if (!liveText) return;
+    if (isEchoOfCoach(liveText, lastCoachLineRef.current)) return;
+    const norm = normWords(liveText).join(' ');
+    const last = lastSentTurnRef.current;
+    if (norm && last.text && last.text.includes(norm)) return; // tail of the sent turn itself
+    sendSeqRef.current += 1; // supersede the in-flight reply
+    carryOverTextRef.current = lastSentRawRef.current;
+    isBargeInTurnRef.current = true;
+    setPhase('listening');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duplexSupported, phase, duplexSegment, active]);
+
   React.useEffect(() => {
     const freshSpeechStarted = speechStartedPulse !== prevSpeechStartedPulseRef.current;
     prevSpeechStartedPulseRef.current = speechStartedPulse;
@@ -1071,12 +1101,11 @@ const VoiceCoachView = memo(({
       const last = lastSentTurnRef.current;
       if (norm && last.text && Date.now() - last.at < 10000 && last.text.includes(norm)) return;
     }
-    // Barge-in stays fully active. While the echo canceller is still settling
-    // (the engine's first utterance, or the first moments of any utterance)
-    // require real evidence of the user's voice -- at least 3 words of
-    // non-echo speech -- instead of reacting to a bare speech-start pulse or a
-    // word or two of bleed-through.
-    const settling = !aecConvergedRef.current || Date.now() - speakingStartedAtRef.current < 1200;
+    // Barge-in stays fully active and immediate. Only while the echo canceller
+    // is still settling (the engine's very first utterance) is real evidence of
+    // the user's voice required -- at least 3 words of non-echo speech --
+    // instead of a bare speech-start pulse or a word or two of bleed-through.
+    const settling = !aecConvergedRef.current;
     if (settling && normWords(liveText).length < 3) return;
     turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
     setPhase('listening');
