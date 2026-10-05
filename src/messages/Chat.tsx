@@ -587,16 +587,21 @@ const Chat = memo(() => {
               // theme["button-basic-color"] (brand blue, #71717a).
               // Hardcoded white (not a theme token) since the ask was for a
               // literal white bubble regardless of light/dark app theme.
-              backgroundColor: props.currentMessage?.image
+              // Dark mode: no fill, just a white outline + white text so it
+              // still reads as the user's message without a bright block.
+              backgroundColor: props.currentMessage?.image || isDarkMode
                 ? "transparent"
                 : theme["background-basic-color-2"],
+              ...(isDarkMode && !props.currentMessage?.image ? { borderWidth: 1, borderColor: "#FFFFFF" } : null),
             },
             { maxWidth: 267 * (width / 375) },
           ],
         }}
         textStyle={{
-          left: styles.leftTextStyle,
-          right: [styles.rightTextStyle, { color: theme["text-basic-color"] }],
+          // styles.leftTextStyle's color was the literal string "text-basic-color"
+          // (not a real color), which rendered black -- invisible in dark mode.
+          left: [styles.leftTextStyle, { color: isDarkMode ? "#FFFFFF" : theme["text-basic-color"] }],
+          right: [styles.rightTextStyle, { color: isDarkMode ? "#FFFFFF" : theme["text-basic-color"] }],
         }}
       />
     );
@@ -634,7 +639,7 @@ const Chat = memo(() => {
     // just above): `theme` was read here but missing from this callback's
     // deps, so message bubble backgrounds froze at whatever theme was
     // active on first mount too.
-  }, [theme, width, messages, copiedId, isSending, onCopyReply, onRateReply, onRetryReply]);
+  }, [theme, isDarkMode, width, messages, copiedId, isSending, onCopyReply, onRateReply, onRetryReply]);
   const renderSend = (props: SendProps<IMessage>) => (
     <Flex itemsCenter>
       {/* SYMPHONY REDESIGN follow-up (product report: "instead of us
