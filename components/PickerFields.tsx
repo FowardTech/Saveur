@@ -8,6 +8,7 @@ import useLayout from 'hooks/useLayout';
 import {globalStyle} from 'styles/globalStyle';
 import {COUNTRIES, countryFlagEmoji} from 'constants/countries';
 import {CITIES_BY_COUNTRY, CURRENCIES} from 'constants/locations';
+import {searchPlaces} from 'services/placesService';
 
 // Dropdown-style selectors: an input-looking field that opens a searchable
 // bottom sheet. Used for every place that used to ask the user to TYPE a
@@ -29,19 +30,45 @@ interface SheetProps {
   onClose: () => void;
   onBack?: () => void;
   header?: React.ReactNode;
+  /** Optional async search (e.g. worldwide towns) merged below the local matches. */
+  onSearch?: (q: string) => Promise<Option[]>;
+  /** Offer the typed text as its own option when nothing matches exactly. */
+  allowCustom?: (q: string) => Option;
 }
 
-const SelectSheet = ({visible, title, options, selected, searchPlaceholder, onSelect, onClose, onBack, header}: SheetProps) => {
+const SelectSheet = ({visible, title, options, selected, searchPlaceholder, onSelect, onClose, onBack, header, onSearch, allowCustom}: SheetProps) => {
   const theme = useTheme();
   const {bottom} = useLayout();
   const [q, setQ] = React.useState('');
   React.useEffect(() => {
     if (!visible) setQ('');
   }, [visible]);
+  const [remote, setRemote] = React.useState<Option[]>([]);
+  React.useEffect(() => {
+    const term = q.trim();
+    if (!onSearch || term.length < 2) {
+      setRemote([]);
+      return;
+    }
+    let cancelled = false;
+    const id = setTimeout(async () => {
+      const res = await onSearch(term);
+      if (!cancelled) setRemote(res);
+    }, 300);
+    return () => {
+      cancelled = true;
+      clearTimeout(id);
+    };
+  }, [q, onSearch]);
   const filtered = React.useMemo(() => {
     const n = q.trim().toLowerCase();
-    return n ? options.filter(o => `${o.label} ${o.value} ${o.hint ?? ''}`.toLowerCase().includes(n)) : options;
-  }, [q, options]);
+    const local = n ? options.filter(o => `${o.label} ${o.value} ${o.hint ?? ''}`.toLowerCase().includes(n)) : options;
+    if (!n) return local;
+    const have = new Set(local.map(o => o.value.toLowerCase()));
+    const merged = [...local, ...remote.filter(o => !have.has(o.value.toLowerCase()))];
+    if (allowCustom && n.length >= 2 && !merged.some(o => o.value.toLowerCase() === n)) merged.push(allowCustom(q.trim()));
+    return merged;
+  }, [q, options, remote, allowCustom]);
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView style={{flex: 1, justifyContent: 'flex-end'}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -216,6 +243,18 @@ export const LocationPickerField = ({value, onChange, placeholder, style, allowR
     () => (country ? (CITIES_BY_COUNTRY[country] ?? []).map(c => ({value: c, label: c})) : []),
     [country],
   );
+  const searchCities = React.useCallback(
+    async (term: string): Promise<Option[]> => {
+      if (!country) return [];
+      const res = await searchPlaces(term, country);
+      return res.map(p => ({value: p.label, label: p.name, hint: p.region && p.region !== p.name ? p.region : undefined}));
+    },
+    [country],
+  );
+  const customCity = React.useCallback(
+    (term: string): Option => ({value: term, label: t('common:use_typed', {defaultValue: 'Use "{{city}}"', city: term})}),
+    [t],
+  );
   const openSheet = () => {
     setCountry(splitLocation(value).country);
     setOpen(true);
@@ -245,7 +284,9 @@ export const LocationPickerField = ({value, onChange, placeholder, style, allowR
         title={step2 ? country! : t('common:select_country', {defaultValue: 'Select country'})}
         options={step2 ? cityOptions : countryOptions}
         selected={step2 ? cur.city : cur.country}
-        searchPlaceholder={step2 ? t('common:search_city', {defaultValue: 'Search city'}) : t('common:search_country', {defaultValue: 'Search country'})}
+        onSearch={step2 ? searchCities : undefined}
+        allowCustom={step2 ? customCity : undefined}
+        searchPlaceholder={step2 ? t('common:search_city', {defaultValue: 'Search any city or town'}) : t('common:search_country', {defaultValue: 'Search country'})}
         onBack={step2 ? () => setCountry(undefined) : undefined}
         header={
           step2 ? (
