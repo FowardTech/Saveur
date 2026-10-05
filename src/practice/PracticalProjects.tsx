@@ -272,7 +272,7 @@ const PracticalProjects = memo(() => {
             />
 
               <CtaButton disabled={creating} onPress={create}>
-                {creating ? () => <Spinner size="small" status="control" /> : t('find:practical_projects_begin', {defaultValue: 'Begin project'})}
+                {creating ? () => <Spinner size="small" status="basic" /> : t('find:practical_projects_begin', {defaultValue: 'Begin project'})}
               </CtaButton>
             </FormSheet>
 
@@ -414,7 +414,7 @@ const PracticalProjects = memo(() => {
                 </Layout>
               ) : (
                 <CtaButton disabled={finishing} onPress={finish}>
-                  {finishing ? () => <Spinner size="small" status="control" /> : t('find:practical_finish', {defaultValue: 'Finish and get final review'})}
+                  {finishing ? () => <Spinner size="small" status="basic" /> : t('find:practical_finish', {defaultValue: 'Finish and get final review'})}
                 </CtaButton>
               )
             ) : null}
@@ -527,7 +527,7 @@ const PracticalProjects = memo(() => {
               })()}
               <CtaButton disabled={submitting || (draft.trim().length < 40 && attachments.length === 0)} onPress={submitStage}>
                 {submitting
-                  ? () => <Spinner size="small" status="control" />
+                  ? () => <Spinner size="small" status="basic" />
                   : t('find:practical_submit_manager', {defaultValue: 'Submit to {{name}}', name: active.state?.persona.name ?? 'manager'})}
               </CtaButton>
             </FormSheet>

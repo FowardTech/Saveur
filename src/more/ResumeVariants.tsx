@@ -228,7 +228,7 @@ const ResumeVariants = memo(() => {
               textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!label.trim() || !targetRole.trim() || isCreating} onPress={onCreate}>
-              {isCreating ? () => <Spinner size="small" status="control" /> : t('more:generate', { defaultValue: 'Generate' })}
+              {isCreating ? () => <Spinner size="small" status="basic" /> : t('more:generate', { defaultValue: 'Generate' })}
             </CtaButton>
             <Button appearance="outline" style={{ marginTop: 12 }} onPress={() => setShowCreate(false)}>
               {t('common:cancel', { defaultValue: 'Cancel' })}

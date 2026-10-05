@@ -339,7 +339,7 @@ const GeneratedDocuments = memo(() => {
               textStyle={globalStyle.inputText}
             />
             <CtaButton disabled={!renameValue.trim() || isSavingRename} onPress={onSaveRename}>
-              {isSavingRename ? () => <Spinner size="small" status="control" /> : t('common:save', { defaultValue: 'Save' })}
+              {isSavingRename ? () => <Spinner size="small" status="basic" /> : t('common:save', { defaultValue: 'Save' })}
             </CtaButton>
             <Button appearance="outline" style={{ marginTop: 12 }} onPress={onCloseRename} disabled={isSavingRename}>
               {t('common:cancel', { defaultValue: 'Cancel' })}
@@ -379,7 +379,7 @@ const GeneratedDocuments = memo(() => {
               style={[[styles.input, styles.editInputWrap, { marginBottom: 20 }], globalStyle.sheetInput]}
             />
             <CtaButton disabled={!editContent.trim() || isSavingEdit} onPress={onSaveEdit}>
-              {isSavingEdit ? () => <Spinner size="small" status="control" /> : t('common:save', { defaultValue: 'Save' })}
+              {isSavingEdit ? () => <Spinner size="small" status="basic" /> : t('common:save', { defaultValue: 'Save' })}
             </CtaButton>
             <Button appearance="outline" style={{ marginTop: 12 }} onPress={onCloseEdit} disabled={isSavingEdit}>
               {t('common:cancel', { defaultValue: 'Cancel' })}

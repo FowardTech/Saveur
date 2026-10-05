@@ -479,7 +479,7 @@ const CareerRoadmap = memo(() => {
                           onPress={() => onCompleteStep(step.order)}
                         >
                           {isCompletingThis
-                            ? () => <Spinner size="small" status="control" />
+                            ? () => <Spinner size="small" status="basic" />
                             : t('more:roadmap_mark_complete', { defaultValue: 'Mark complete' })}
                         </Button>
                       ) : step.status === 'completed' ? (
@@ -574,7 +574,7 @@ const CareerRoadmap = memo(() => {
               onPress={onGenerate}
             >
               {isGenerating
-                ? () => <Spinner size="small" status="control" />
+                ? () => <Spinner size="small" status="basic" />
                 : t('more:roadmap_build_cta', { defaultValue: 'Plan my roadmap' })}
             </CtaButton>
           </View>

@@ -162,7 +162,7 @@ const CompanyIntelligence = memo(() => {
           disabled={!company.trim() || isLoading}
           onPress={onResearch}
         >
-          {isLoading ? () => <Spinner size="small" status="control" /> : t('more:research', { defaultValue: 'Research' })}
+          {isLoading ? () => <Spinner size="small" status="basic" /> : t('more:research', { defaultValue: 'Research' })}
         </CtaButton>
 
         {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}

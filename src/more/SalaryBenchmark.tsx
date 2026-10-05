@@ -181,7 +181,7 @@ const SalaryBenchmark = memo(() => {
         </View>
         <Input placeholder={String(t('more:salary_bm_your_salary', {defaultValue: 'Yearly base salary'}))} keyboardType="numeric" value={salary} onChangeText={setSalary} style={styles.input} />
         <CtaButton disabled={loading || !title.trim() || !location.trim()} onPress={run}>
-          {loading ? () => <Spinner size="small" status="control" /> : t('more:salary_bm_start', {defaultValue: 'Get salary range'})}
+          {loading ? () => <Spinner size="small" status="basic" /> : t('more:salary_bm_start', {defaultValue: 'Get salary range'})}
         </CtaButton>
       </FormSheet>
     </Container>

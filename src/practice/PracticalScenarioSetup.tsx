@@ -171,7 +171,7 @@ const PracticalScenarioSetup = memo(() => {
           onPress={onStart}
         >
           {isStarting
-            ? () => <Spinner size="small" status="control" />
+            ? () => <Spinner size="small" status="basic" />
             : t('find:practical_start_cta', { defaultValue: 'Start scenario' })}
         </CtaButton>
         <Text

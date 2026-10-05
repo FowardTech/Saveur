@@ -247,7 +247,7 @@ const CoverLetterGenerator = memo(() => {
           onPress={onGenerate}
         >
           {isGenerating
-            ? () => <Spinner size="small" status="control" />
+            ? () => <Spinner size="small" status="basic" />
             : t('more:generate_cover_letter', { defaultValue: 'Generate Cover Letter' })}
         </CtaButton>
 

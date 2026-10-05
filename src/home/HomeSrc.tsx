@@ -67,7 +67,7 @@ import { localizeDigits } from 'utils/formatNumber';
 // Defined at module scope (not inline in JSX) so it's a stable component
 // reference across renders — see Subscription.tsx's renderCheckoutSpinner
 // for the same reasoning.
-const renderCheckInSpinner = () => <Spinner size="tiny" status="control" />;
+const renderCheckInSpinner = () => <Spinner size="tiny" status="basic" />;
 
 // Same type -> icon mapping src/more/CareerRoadmap.tsx's own ICONS_BY_TYPE
 // uses (kept as a separate module-level constant here rather than a

@@ -142,7 +142,7 @@ const EmotionalCoach = memo(() => {
           disabled={!selectedMood || isSubmitting}
           onPress={onSubmit}
         >
-          {isSubmitting ? () => <Spinner size="small" status="control" /> : t('more:check_in_cta', { defaultValue: 'Check In' })}
+          {isSubmitting ? () => <Spinner size="small" status="basic" /> : t('more:check_in_cta', { defaultValue: 'Check In' })}
         </CtaButton>
 
         {latest ? (

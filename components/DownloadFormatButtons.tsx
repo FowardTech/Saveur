@@ -37,7 +37,7 @@ const DownloadFormatButtons: React.FC<DownloadFormatButtonsProps> = memo(({downl
         size="small"
         style={globalStyle.flexOne}
         disabled={!!downloadingFormat}
-        accessoryLeft={downloadingFormat === 'pdf' ? () => <Spinner size="small" status="control" /> : undefined}
+        accessoryLeft={downloadingFormat === 'pdf' ? () => <Spinner size="small" status="basic" /> : undefined}
         onPress={() => onDownload('pdf')}>
         {(evaProps: TextProps) => (
           <KittenText {...evaProps} numberOfLines={1}>

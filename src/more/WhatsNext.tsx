@@ -565,7 +565,7 @@ const WhatsNext = memo(() => {
                           onPress={() => onCompletePlanStep(step.order)}
                         >
                           {isCompletingThis
-                            ? () => <Spinner size="small" status="control" />
+                            ? () => <Spinner size="small" status="basic" />
                             : t('more:roadmap_mark_complete', { defaultValue: 'Mark complete' })}
                         </Button>
                       ) : step.status === 'completed' ? (
@@ -718,7 +718,7 @@ const WhatsNext = memo(() => {
                 onPress={onGenerate}
               >
                 {isGenerating
-                  ? () => <Spinner size="small" status="control" />
+                  ? () => <Spinner size="small" status="basic" />
                   : t('more:whats_next_build_cta', { defaultValue: 'Build my plan' })}
               </CtaButton>
               <Button appearance="outline" style={{ marginTop: 12, marginBottom: 8 }} onPress={() => setShowFormSheet(false)}>

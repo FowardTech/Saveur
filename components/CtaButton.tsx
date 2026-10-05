@@ -1,6 +1,6 @@
 import React from 'react';
 import { ActivityIndicator } from 'react-native';
-import { Button, ButtonProps, Text as KittenText, useTheme } from '@ui-kitten/components';
+import { Button, ButtonProps, Spinner, Text as KittenText, useTheme } from '@ui-kitten/components';
 import { globalStyle } from 'styles/globalStyle';
 
 // Primary call-to-action button (full reskin, product request item —
@@ -48,15 +48,34 @@ export interface CtaButtonProps extends Omit<ButtonProps, 'status' | 'appearance
 }
 
 
+// Outlined (non-solid) buttons have a transparent background, so a white
+// "control" Spinner passed as children would be invisible - recolour it.
+const recolorSpinners = (node: React.ReactNode, solid?: boolean): React.ReactNode => {
+  if (solid) return node;
+  return React.Children.map(node, child => {
+    if (React.isValidElement(child) && child.type === Spinner && (child.props as any).status === 'control') {
+      return React.cloneElement(child as React.ReactElement<any>, {status: 'basic'});
+    }
+    return child;
+  });
+};
+
 const CtaButton: React.FC<CtaButtonProps> = ({ loading, solid, disabled, style, accessoryLeft, children, ...rest }) => {
   const theme = useTheme();
   const labelColor = solid ? theme['text-control-color'] : theme['text-basic-color'];
+  // Icons inherit the Button's own (white "control") tint, which is invisible on
+  // an outlined button - force the same colour as the label.
+  const tintAccessory = (acc: any) =>
+    typeof acc === 'function'
+      ? (p: any) => acc({...p, style: [p?.style, {tintColor: labelColor}]})
+      : acc;
   const renderLoadingSpinner = () => <ActivityIndicator size="small" color={labelColor} />;
   return (
     <Button
       {...rest}
+      accessoryRight={tintAccessory((rest as any).accessoryRight)}
       disabled={disabled || loading}
-      accessoryLeft={loading ? renderLoadingSpinner : accessoryLeft}
+      accessoryLeft={loading ? renderLoadingSpinner : tintAccessory(accessoryLeft)}
       style={[
         {
           // theme['color-primary-solid'] and theme['color-primary-500'] are
@@ -135,9 +154,11 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, solid, disabled, style, 
         // text-control-color is the token for that, and isn't affected by
         // text-primary-color's other (correct, intentional) uses elsewhere.
         const labelStyle = [evaProps?.style, { color: labelColor, fontWeight: 'normal' as const }];
-        return typeof children === 'function'
-          ? (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle })
-          : <KittenText {...evaProps} style={labelStyle}>{children as React.ReactNode}</KittenText>;
+        if (typeof children === 'function') {
+          const out = (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle });
+          return recolorSpinners(out, solid) as React.ReactElement;
+        }
+        return <KittenText {...evaProps} style={labelStyle}>{recolorSpinners(children as React.ReactNode, solid)}</KittenText>;
       }}
     </Button>
   );

@@ -554,7 +554,7 @@ const CodingProblemSolve = memo(() => {
             )}
             disabled={runningTests || !problem}
             onPress={onRunTests}
-            accessoryLeft={props => <Icon {...props} pack="assets" name="edit_full" />}
+            accessoryLeft={props => <Icon {...props} pack="eva" name="play-circle-outline" />}
             style={{marginTop: 8}}
           />
         </View>

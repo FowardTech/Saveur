@@ -445,7 +445,7 @@ const StudentVerification = memo(() => {
               disabled={!canSendCode}
               onPress={onSendCode}
             >
-              {isSubmitting ? () => <Spinner size="small" status="control" /> : t('more:send_code', { defaultValue: 'Send Verification Code' })}
+              {isSubmitting ? () => <Spinner size="small" status="basic" /> : t('more:send_code', { defaultValue: 'Send Verification Code' })}
             </CtaButton>
             {fromSignup ? (
               <Button appearance="ghost" status="basic" style={{ marginTop: 12 }} onPress={goToSuccess}>
@@ -476,7 +476,7 @@ const StudentVerification = memo(() => {
               disabled={!code.trim() || isSubmitting}
               onPress={onConfirmCode}
             >
-              {isSubmitting ? () => <Spinner size="small" status="control" /> : t('more:verify_code', { defaultValue: 'Verify' })}
+              {isSubmitting ? () => <Spinner size="small" status="basic" /> : t('more:verify_code', { defaultValue: 'Verify' })}
             </CtaButton>
             <Button appearance="outline" style={{ marginTop: 12 }} onPress={() => setStep('form')}>
               {t('common:back', { defaultValue: 'Back' })}

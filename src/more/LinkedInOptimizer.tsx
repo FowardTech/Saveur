@@ -203,7 +203,7 @@ const LinkedInOptimizer = memo(() => {
           disabled={isLoading || (!headline.trim() && !about.trim() && !bulletsText.trim())}
           onPress={onOptimize}
         >
-          {isLoading ? () => <Spinner size="small" status="control" /> : t('more:optimize', { defaultValue: 'Optimize' })}
+          {isLoading ? () => <Spinner size="small" status="basic" /> : t('more:optimize', { defaultValue: 'Optimize' })}
         </CtaButton>
 
         {error ? <Text category="h9-s" status="danger" mt={16} center>{error}</Text> : null}
