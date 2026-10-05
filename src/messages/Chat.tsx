@@ -204,7 +204,18 @@ const Chat = memo(() => {
   // instead of the distinct pastel accents they are in light mode. See
   // each usage site below for the specific dark-mode value chosen.
   const { theme: appThemeName } = React.useContext(ThemeContext);
-  const isDarkMode = appThemeName === 'dark';
+  // Derived from the ACTUAL active UI Kitten theme (background luminance), not only the
+  // context flag, so bubble colors can never disagree with what is on screen.
+  const isDarkMode = (() => {
+    const bg = String((theme as any)?.['background-basic-color-1'] ?? '');
+    const m = /^#?([0-9a-f]{6})/i.exec(bg);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      const lum = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255;
+      return lum < 0.5;
+    }
+    return appThemeName === 'dark';
+  })();
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
   const chatNavigation: any = useNavigation();
   const route = useRoute<RouteProp<MessagesStackParamList, 'Chat'>>();
@@ -518,6 +529,15 @@ const Chat = memo(() => {
     }
   }, [isSending, messages, profile, t]);
 
+  // The ACTUAL rendered theme decides (light text token => dark surface), not the
+  // ThemeContext name, which can disagree with what UI Kitten is really showing
+  // (e.g. a "system"/stale value) and made light mode pick the dark styles.
+  const isDarkBubble = React.useMemo(() => {
+    const hex = String(theme["text-basic-color"] ?? "").replace("#", "");
+    if (hex.length < 6) return false;
+    const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255 > 0.6;
+  }, [theme]);
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
     // Product request: "I want the AI career coach ... to always detect
     // inappropriate words and caution the user" -- a flagged coach message
@@ -589,10 +609,10 @@ const Chat = memo(() => {
               // literal white bubble regardless of light/dark app theme.
               // Dark mode: no fill, just a white outline + white text so it
               // still reads as the user's message without a bright block.
-              backgroundColor: props.currentMessage?.image || isDarkMode
+              backgroundColor: props.currentMessage?.image || isDarkBubble
                 ? "transparent"
                 : theme["background-basic-color-2"],
-              ...(isDarkMode && !props.currentMessage?.image ? { borderWidth: 1, borderColor: "#A1A1AA" } : null),
+              ...(isDarkBubble && !props.currentMessage?.image ? { borderWidth: 1, borderColor: "#A1A1AA" } : null),
             },
             { maxWidth: 267 * (width / 375) },
           ],
@@ -600,8 +620,8 @@ const Chat = memo(() => {
         textStyle={{
           // styles.leftTextStyle's color was the literal string "text-basic-color"
           // (not a real color), which rendered black -- invisible in dark mode.
-          left: [styles.leftTextStyle, { color: isDarkMode ? "#FFFFFF" : theme["text-basic-color"] }],
-          right: [styles.rightTextStyle, { color: isDarkMode ? "#FFFFFF" : theme["text-basic-color"] }],
+          left: [styles.leftTextStyle, { color: isDarkBubble ? "#FFFFFF" : theme["text-basic-color"] }],
+          right: [styles.rightTextStyle, { color: isDarkBubble ? "#FFFFFF" : theme["text-basic-color"] }],
         }}
       />
     );
@@ -639,7 +659,7 @@ const Chat = memo(() => {
     // just above): `theme` was read here but missing from this callback's
     // deps, so message bubble backgrounds froze at whatever theme was
     // active on first mount too.
-  }, [theme, isDarkMode, width, messages, copiedId, isSending, onCopyReply, onRateReply, onRetryReply]);
+  }, [theme, isDarkBubble, width, messages, copiedId, isSending, onCopyReply, onRateReply, onRetryReply]);
   const renderSend = (props: SendProps<IMessage>) => (
     <Flex itemsCenter>
       {/* SYMPHONY REDESIGN follow-up (product report: "instead of us
