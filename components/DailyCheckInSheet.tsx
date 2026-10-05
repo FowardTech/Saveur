@@ -29,8 +29,15 @@ interface Props {
 // new speech pipeline — tapping the mic starts/stops one-shot dictation
 // into the text field, which stays fully editable before submitting, so a
 // misheard word can just be typed over rather than forcing a re-record.
-const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) => {
+const DailyCheckInSheetInner = memo(({ visible, mode, onSubmit, onDismiss }: Props) => {
   const theme = useTheme();
+  // Soft gray outline (not black) and a faint fill for the answer field.
+  const bg = String(theme['background-basic-color-1'] ?? '');
+  const hex = /^#?([0-9a-f]{6})/i.exec(bg);
+  const n = hex ? parseInt(hex[1], 16) : 0xffffff;
+  const isDarkSurface = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 < 0.5;
+  const softBorder = isDarkSurface ? '#52525B' : '#D4D4D8';
+  const softFill = isDarkSurface ? 'rgba(255,255,255,0.04)' : '#FAFAFA';
   const { t } = useTranslation(['home', 'common']);
   const stt = speechService.useSpeechToText();
   const [text, setText] = React.useState('');
@@ -170,7 +177,7 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
               placeholder={placeholder}
               value={text}
               onChangeText={setText}
-              style={[styles.textInput, globalStyle.sheetInput]}
+              style={[styles.textInput, globalStyle.sheetInput, { borderColor: softBorder, backgroundColor: softFill }]}
               textStyle={styles.textInputInner}
             />
             <TouchableOpacity
@@ -230,6 +237,12 @@ const DailyCheckInSheet = memo(({ visible, mode, onSubmit, onDismiss }: Props) =
     </Modal>
   );
 });
+
+// The speech-to-text hook registers GLOBAL native listeners when it mounts, so only
+// one instance may be alive at a time. Both check-in sheets are always rendered on Home;
+// mounting the hook only while a sheet is open stops one instance from stealing the
+// other's transcripts (which is why dictation never reached the input).
+const DailyCheckInSheet = (props: Props) => (props.visible ? <DailyCheckInSheetInner {...props} /> : null);
 
 export default DailyCheckInSheet;
 

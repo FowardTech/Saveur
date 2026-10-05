@@ -31,8 +31,15 @@ interface Props {
 // different backend models, different triggers, different cadence — reusing
 // the visual shell here is about not rebuilding the same modal chrome a
 // third time, not about these being the same feature.
-const PeriodicCheckInSheet = memo(({ visible, title, subtitle, placeholder, onSubmit, onDismiss }: Props) => {
+const PeriodicCheckInSheetInner = memo(({ visible, title, subtitle, placeholder, onSubmit, onDismiss }: Props) => {
   const theme = useTheme();
+  // Soft gray outline (not black) and a faint fill for the answer field.
+  const bg = String(theme['background-basic-color-1'] ?? '');
+  const hex = /^#?([0-9a-f]{6})/i.exec(bg);
+  const n = hex ? parseInt(hex[1], 16) : 0xffffff;
+  const isDarkSurface = (0.299 * ((n >> 16) & 255) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) / 255 < 0.5;
+  const softBorder = isDarkSurface ? '#52525B' : '#D4D4D8';
+  const softFill = isDarkSurface ? 'rgba(255,255,255,0.04)' : '#FAFAFA';
   const { t } = useTranslation(['home', 'common']);
   const stt = speechService.useSpeechToText();
   const [text, setText] = React.useState('');
@@ -124,7 +131,7 @@ const PeriodicCheckInSheet = memo(({ visible, title, subtitle, placeholder, onSu
               placeholder={placeholder}
               value={text}
               onChangeText={setText}
-              style={[styles.textInput, globalStyle.sheetInput]}
+              style={[styles.textInput, globalStyle.sheetInput, { borderColor: softBorder, backgroundColor: softFill }]}
               textStyle={styles.textInputInner}
             />
             <TouchableOpacity
@@ -175,6 +182,12 @@ const PeriodicCheckInSheet = memo(({ visible, title, subtitle, placeholder, onSu
     </Modal>
   );
 });
+
+// The speech-to-text hook registers GLOBAL native listeners when it mounts, so only
+// one instance may be alive at a time. Both check-in sheets are always rendered on Home;
+// mounting the hook only while a sheet is open stops one instance from stealing the
+// other's transcripts (which is why dictation never reached the input).
+const PeriodicCheckInSheet = (props: Props) => (props.visible ? <PeriodicCheckInSheetInner {...props} /> : null);
 
 export default PeriodicCheckInSheet;
 
