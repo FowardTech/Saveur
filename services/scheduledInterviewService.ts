@@ -44,13 +44,11 @@ const MODE_TO_WIRE: Record<Practice_Mode_Enum, string> = {
   [Practice_Mode_Enum.Voice]: 'voice',
   [Practice_Mode_Enum.Text]: 'text',
   [Practice_Mode_Enum.Video]: 'video',
-  [Practice_Mode_Enum.Coding]: 'coding',
 };
 const WIRE_TO_MODE: Record<string, Practice_Mode_Enum> = {
   voice: Practice_Mode_Enum.Voice,
   text: Practice_Mode_Enum.Text,
   video: Practice_Mode_Enum.Video,
-  coding: Practice_Mode_Enum.Coding,
 };
 
 const TYPE_TO_WIRE: Record<Interview_Type_Enum, string> = Object.fromEntries(
