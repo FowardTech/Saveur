@@ -668,9 +668,34 @@ const VoiceCoachView = memo(({
     // user, etc.) is the actual difference, these logs are what will show
     // it on the next real-device test, instead of guessing blind again.
     if (__DEV__) console.warn('[VoiceCoachView] duplex listeners attached');
+    // INSTANT barge-in: stop the coach's audio straight from the native event,
+    // without waiting for a React state update + effect pass (that round trip is
+    // what made stopping feel slow). Same filters as the barge-in effect below
+    // (echo of the coach, tail of the user's own sent turn, first-utterance
+    // settling), but nothing is delayed.
+    const bargeInNow = (liveText: string, viaPulse: boolean) => {
+      if (!activeRef.current || phaseRef.current !== 'speaking') return;
+      if (isIntroUtteranceRef.current) return;
+      if (!liveText && !viaPulse) return;
+      if (liveText && isEchoOfCoach(liveText, lastCoachLineRef.current)) return;
+      if (liveText) {
+        const norm = normWords(liveText).join(' ');
+        const last = lastSentTurnRef.current;
+        if (norm && last.text && Date.now() - last.at < 10000 && last.text.includes(norm)) return;
+      }
+      if (!aecConvergedRef.current && normWords(liveText).length < 3) return;
+      turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's pending call
+      phaseRef.current = 'listening'; // synchronous, so a second event can't re-enter
+      isBargeInTurnRef.current = true;
+      duplexVoiceService.stopSpeaking().catch(() => {});
+      setPhase('listening');
+    };
     const subs = [
       duplexVoiceService.addTranscriptListener(e => {
         if (__DEV__) console.warn('[VoiceCoachView] onTranscript', JSON.stringify(e));
+        if (duplexSupported && activeRef.current && phaseRef.current === 'speaking') {
+          bargeInNow((duplexCommittedRef.current + ' ' + e.text).trim(), false);
+        }
         // BUG FIX (see the `active` prop's own comment) -- the native
         // engine now keeps transcribing continuously even while Text mode
         // is showing (Voice mode merely inactive, not torn down). Ignoring
@@ -729,6 +754,7 @@ const VoiceCoachView = memo(({
       duplexVoiceService.addSpeechStartedListener(() => {
         if (__DEV__) console.warn('[VoiceCoachView] onSpeechStarted');
         if (!activeRef.current) return;
+        bargeInNow('', true);
         setSpeechStartedPulse(p => p + 1);
       }),
     ];
@@ -1580,7 +1606,6 @@ const VoiceCoachView = memo(({
     : phase === 'speaking' ? t('message:voice_status_speaking', { defaultValue: 'Speaking…' })
     : t('message:voice_status_starting', { defaultValue: 'Starting…' });
 
-  const displayLine = phase === 'listening' && transcript ? transcript : lastCoachLine;
 
   return (
     <View style={styles.body}>
@@ -1681,14 +1706,8 @@ const VoiceCoachView = memo(({
           `body` View has no fixed height (flex:1, centered), so a longer
           transcript just makes this Text taller instead of overflowing or
           getting clipped. */}
-      <Text
-        category="h9-s"
-        center
-        mt={10}
-        maxWidth={300}
-        style={{ color: theme['text-hint-color'] }}>
-        {displayLine}
-      </Text>
+      {/* Caption intentionally not shown in Voice mode: the conversation is already
+          transcribed in the text chat, and showing it here was confusing. */}
 
       {errorMsg ? (
         // BUG FIX (product report: "The 'Are you still there' text should
