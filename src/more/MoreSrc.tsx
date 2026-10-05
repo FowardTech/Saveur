@@ -359,6 +359,7 @@ const MoreSrc = memo(() => {
       status: 'success',
       iconBackgroundColor: ICON_BG,
       iconColor: ICON_GLYPH,
+      featureKey: 'career_success_hub',
       onPress: () => navigate('LifetimeHub'),
     },
     {

@@ -1294,24 +1294,28 @@ const HomeSrc = memo(() => {
         <SectionTitle>
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </SectionTitle>
-        <FeatureCard
-          heroIcon="briefcase-outline"
-          backdrop="#7C5CFF"
-          eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
-          title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
-          subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
-          icons={['briefcase-outline', 'award-outline', 'bar-chart-2-outline']}
-          onPress={() => navigate('CareerGrowth')}
-        />
-        <FeatureCard
-          heroIcon="bar-chart-2-outline"
-          backdrop="#19B87A"
-          eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
-          title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
-          subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
-          icons={['bar-chart-2-outline', 'briefcase-outline', 'search-outline']}
-          onPress={() => navigate('SalaryBenchmark')}
-        />
+        {(configService.isFeatureEnabled('pay_tracking') || configService.isFeatureEnabled('market_check') || configService.isFeatureEnabled('promotion_plan')) ? (
+          <FeatureCard
+            heroIcon="briefcase-outline"
+            backdrop="#7C5CFF"
+            eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
+            title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
+            subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
+            icons={['briefcase-outline', 'award-outline', 'bar-chart-2-outline']}
+            onPress={() => navigate('CareerGrowth')}
+          />
+        ) : null}
+        {configService.isFeatureEnabled('salary_benchmark') ? (
+          <FeatureCard
+            heroIcon="bar-chart-2-outline"
+            backdrop="#19B87A"
+            eyebrow={t('home:salary_benchmark_eyebrow', { defaultValue: 'Know your worth' }).toString()}
+            title={t('home:salary_benchmark_title', { defaultValue: 'Salary Benchmark' }).toString()}
+            subtitle={t('home:salary_benchmark_subtitle', { defaultValue: 'See the market pay range for any role' }).toString()}
+            icons={['bar-chart-2-outline', 'briefcase-outline', 'search-outline']}
+            onPress={() => navigate('SalaryBenchmark')}
+          />
+        ) : null}
         <FeatureCard
           heroIcon="award-outline"
           backdrop="#FF5FA2"

@@ -9,7 +9,20 @@ import {globalStyle} from 'styles/globalStyle';
 import * as svc from 'services/lifetimeService';
 import ProLockGate from 'components/ProLockGate';
 import {AuthContext} from '../../AuthContext';
+import * as configService from 'services/configService';
 import {LifetimeScreen} from './Scaffold';
+import EmptyState from 'components/EmptyState';
+
+const CARD_FLAG: Record<string, any> = {
+  WeeklyCheckin: 'lt_weekly_checkin',
+  BragDocument: 'lt_brag_document',
+  ReviewPrep: 'lt_review_prep',
+  PayWatch: 'lt_pay_watch',
+  MarketWatch: 'lt_market_watch',
+  LeadershipTrack: 'lt_leadership_track',
+  SkillsPlan: 'lt_skills_plan',
+  CareerTimeline: 'lt_career_timeline',
+};
 
 // Entry point for the "after you land the job" features.
 const LifetimeHub = () => {
@@ -88,6 +101,17 @@ const LifetimeHub = () => {
     },
   ];
 
+  if (!configService.isFeatureEnabled('career_success_hub')) {
+    return (
+      <LifetimeScreen title={String(t('more:lt_hub_title', {defaultValue: 'Career Success Hub'}))}>
+        <EmptyState
+          title={String(t('more:lt_hub_unavailable', {defaultValue: 'Career Success Hub is unavailable right now'}))}
+          body={String(t('more:lt_hub_unavailable_body', {defaultValue: 'Please check back soon.'}))}
+        />
+      </LifetimeScreen>
+    );
+  }
+
   if (!isPremium) {
     return (
       <ProLockGate
@@ -105,7 +129,7 @@ const LifetimeHub = () => {
       <Text category="h9-s" status="placeholder" mb={14}>
         {t('more:lt_hub_intro', {defaultValue: 'Tools for every stage, long after you land the job.'})}
       </Text>
-      {cards.map(c => (
+      {cards.filter(c => configService.isFeatureEnabled(CARD_FLAG[c.route])).map(c => (
         <TouchableOpacity
           key={c.route}
           activeOpacity={0.85}

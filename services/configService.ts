@@ -62,6 +62,19 @@ export interface FeatureFlags {
   learning_course_onboarding_banner: boolean;
   job_alerts_onboarding_banner: boolean;
   post_offer_plan: boolean;
+  career_success_hub: boolean;
+  lt_weekly_checkin: boolean;
+  lt_brag_document: boolean;
+  lt_review_prep: boolean;
+  lt_leadership_track: boolean;
+  lt_pay_watch: boolean;
+  lt_market_watch: boolean;
+  lt_skills_plan: boolean;
+  lt_career_timeline: boolean;
+  salary_benchmark: boolean;
+  pay_tracking: boolean;
+  market_check: boolean;
+  promotion_plan: boolean;
   // Job Tracker inbox/calendar auto-scan (product follow-up: "build the
   // calendar-connect one for both and then we can activate and deactivate
   // any from the admin dashboard"). See DEFAULT_CONFIG below for why these
@@ -297,6 +310,19 @@ const DEFAULT_CONFIG: AppConfig = {
     learning_course_onboarding_banner: true,
     job_alerts_onboarding_banner: true,
     post_offer_plan: true,
+    career_success_hub: true,
+    lt_weekly_checkin: true,
+    lt_brag_document: true,
+    lt_review_prep: true,
+    lt_leadership_track: true,
+    lt_pay_watch: true,
+    lt_market_watch: true,
+    lt_skills_plan: true,
+    lt_career_timeline: true,
+    salary_benchmark: true,
+    pay_tracking: true,
+    market_check: true,
+    promotion_plan: true,
     // Deliberately false, unlike every flag above — these gate real
     // external OAuth connections that don't work at all until an admin
     // both registers credentials AND flips the flag on (see the backend

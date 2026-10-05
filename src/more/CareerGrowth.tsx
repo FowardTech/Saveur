@@ -16,6 +16,7 @@ import FormSheet from 'components/FormSheet';
 import {RootStackParamList} from 'navigation/types';
 import * as growth from 'services/growthService';
 import {PayRecord, PaySummary, PromotionPlan} from 'services/growthService';
+import * as configService from 'services/configService';
 
 // Career Growth — the post-hire loop: pay tracking over time (free), market
 // check + raise/promotion plan (paid), quarterly check-in prompt. Mirrors
@@ -57,7 +58,10 @@ const CareerGrowth = memo(() => {
   const styles = useStyleSheet(themedStyles);
   const {t} = useTranslation(['more', 'common']);
 
-  const [tab, setTab] = React.useState<'pay' | 'plan'>('pay');
+  const payOn = configService.isFeatureEnabled('pay_tracking');
+  const planOn = configService.isFeatureEnabled('promotion_plan');
+  const marketOn = configService.isFeatureEnabled('market_check');
+  const [tab, setTab] = React.useState<'pay' | 'plan'>(payOn || !planOn ? 'pay' : 'plan');
   const [payOpen, setPayOpen] = React.useState(false);
   const [planOpen, setPlanOpen] = React.useState(false);
   const [records, setRecords] = React.useState<PayRecord[]>([]);
@@ -191,8 +195,8 @@ const CareerGrowth = memo(() => {
         </FormSheet>
 
         <Flex wrap justify="flex-start" style={{marginHorizontal: -4, marginBottom: 8}}>
-          <Chip label={t('more:growth_tab_pay', {defaultValue: 'Pay tracking'}).toString()} selected={tab === 'pay'} onPress={() => setTab('pay')} />
-          <Chip label={t('more:growth_tab_plan', {defaultValue: 'Raise & promotion plan'}).toString()} selected={tab === 'plan'} onPress={() => setTab('plan')} />
+          {payOn ? <Chip label={t('more:growth_tab_pay', {defaultValue: 'Pay tracking'}).toString()} selected={tab === 'pay'} onPress={() => setTab('pay')} /> : null}
+          {planOn ? <Chip label={t('more:growth_tab_plan', {defaultValue: 'Raise & promotion plan'}).toString()} selected={tab === 'plan'} onPress={() => setTab('plan')} /> : null}
         </Flex>
 
         {tab === 'pay' ? (
@@ -252,7 +256,7 @@ const CareerGrowth = memo(() => {
               </Layout>
             ) : null}
 
-            {records.length > 0 ? (
+            {records.length > 0 && marketOn ? (
               <Layout level="2" style={styles.card}>
                 <Text category="h8" bold mb={4}>{t('more:growth_market_title', {defaultValue: 'Am I paid fairly?'})}</Text>
                 <Text category="h9-s" status="placeholder" mb={8}>
