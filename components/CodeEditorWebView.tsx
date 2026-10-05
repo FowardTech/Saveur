@@ -97,7 +97,21 @@ const EDITOR_HTML = `<!DOCTYPE html>
     }
   }
 
+  var plain = null; // fallback <textarea> editor when the CodeMirror CDN can't load
+
+  function initPlain() {
+    var ta = document.getElementById('editor');
+    ta.style.cssText = 'display:block;width:100%;height:100%;box-sizing:border-box;border:0;outline:0;resize:none;padding:10px;background:#1E1E2E;color:#E6E6F0;font:13px Menlo,"Courier New",monospace;white-space:pre;overflow:auto;';
+    ta.setAttribute('autocapitalize', 'off');
+    ta.setAttribute('autocorrect', 'off');
+    ta.setAttribute('spellcheck', 'false');
+    ta.addEventListener('input', function () { post({type: 'change', content: ta.value}); });
+    plain = ta;
+    post({type: 'ready'});
+  }
+
   function init() {
+    if (typeof CodeMirror === 'undefined') { initPlain(); return; }
     try {
       cm = CodeMirror.fromTextArea(document.getElementById('editor'), {
         lineNumbers: true,
@@ -128,6 +142,15 @@ const EDITOR_HTML = `<!DOCTYPE html>
   function handleMessage(raw) {
     var msg;
     try { msg = JSON.parse(raw); } catch (e) { return; }
+    if (!cm && plain) {
+      if (msg.type === 'setContent') {
+        plain.readOnly = !!msg.readOnly;
+        if (plain.value !== (msg.content || '')) plain.value = msg.content || '';
+      } else if (msg.type === 'setReadOnly') {
+        plain.readOnly = !!msg.readOnly;
+      }
+      return;
+    }
     if (!cm) return;
     if (msg.type === 'setContent') {
       cm.setOption('mode', msg.mode || 'text/plain');
@@ -146,7 +169,10 @@ const EDITOR_HTML = `<!DOCTYPE html>
   document.addEventListener('message', function (e) { handleMessage(e.data); });
   window.addEventListener('message', function (e) { handleMessage(e.data); });
 
-  if (document.readyState === 'complete') { init(); } else { window.addEventListener('load', init); }
+  // Scripts above are loaded synchronously, so everything that is going to
+  // load already has - boot now instead of waiting for the window 'load' event
+  // (which stalls if any single CDN script hangs).
+  init();
 })();
 </script>
 </body>
@@ -165,6 +191,10 @@ const CodeEditorWebView = React.forwardRef<WebView, CodeEditorWebViewProps>(
     // see this file's own module comment for why re-sending that would reset
     // the cursor/undo history on every keystroke).
     const lastSyncedRef = React.useRef<string>('');
+    // Recently emitted edits. A parent's `value` prop echoing an OLDER keystroke
+    // back while the user has already typed more must NOT be re-sent to the page
+    // (that would overwrite the newer text and make typing look frozen).
+    const emittedRef = React.useRef<string[]>([]);
 
     const sendContent = React.useCallback((content: string, mode: string, readOnly: boolean) => {
       lastSyncedRef.current = content;
@@ -184,6 +214,7 @@ const CodeEditorWebView = React.forwardRef<WebView, CodeEditorWebViewProps>(
           sendContent(value, language, !editable);
         } else if (msg.type === 'change') {
           lastSyncedRef.current = msg.content;
+          emittedRef.current = [...emittedRef.current.slice(-30), msg.content];
           onChangeText(msg.content);
         }
       },
@@ -197,6 +228,8 @@ const CodeEditorWebView = React.forwardRef<WebView, CodeEditorWebViewProps>(
     React.useEffect(() => {
       if (!isReadyRef.current) return;
       if (value === lastSyncedRef.current) return;
+      if (emittedRef.current.includes(value)) return;
+      emittedRef.current = [];
       sendContent(value, language, !editable);
     }, [value, language, editable, sendContent]);
 
