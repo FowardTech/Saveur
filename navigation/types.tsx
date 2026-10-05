@@ -318,6 +318,16 @@ export type RootStackParamList = {
   // for the full "complementary, not redundant" reasoning.
   SalaryBenchmark: {kind?: 'offer' | 'current'; title?: string; location?: string; years?: string; salary?: string; currency?: string} | undefined;
   CareerGrowth: undefined;
+  LifetimeHub: undefined;
+  WeeklyCheckin: undefined;
+  BragDocument: undefined;
+  ReviewPrep: undefined;
+  LeadershipTrack: undefined;
+  RolePlay: {scenario: string; context?: string; title?: string};
+  PayWatch: undefined;
+  MarketWatch: undefined;
+  SkillsPlan: undefined;
+  CareerTimeline: undefined;
   // Product report: "the system design should also be added as part of the
   // tools too" + "should also have a AI code review too and result" +
   // "session length should be followed... once the time is up there should

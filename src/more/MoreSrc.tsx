@@ -354,6 +354,14 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('SharedWithMe'),
     },
     {
+      title: t('more:lt_hub_title', {defaultValue: 'Career for Life'}),
+      icon: 'increase',
+      status: 'success',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('LifetimeHub'),
+    },
+    {
       title: t('more:weekly_career_report', {defaultValue: 'Weekly Career Report'}),
       icon: 'stats',
       status: 'success',

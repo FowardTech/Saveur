@@ -8,6 +8,7 @@ import {
   navigateToJobAlertDetails,
   navigateToNotifications,
   navigateToWeeklyCareerReport,
+  navigateToLifetime,
   navigateToDailyIndustryNews,
   navigateToMockInterviewSetup,
   navigateToInterviewFeedback,
@@ -194,6 +195,16 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // its own content (and marks it seen server-side) on mount.
   if (data?.type === 'weekly_career_report') {
     navigateToWeeklyCareerReport();
+    return;
+  }
+  const lifetimeRoutes: Record<string, 'WeeklyCheckin' | 'PayWatch' | 'MarketWatch' | 'SkillsPlan'> = {
+    weekly_checkin: 'WeeklyCheckin',
+    pay_alert: 'PayWatch',
+    market_watch: 'MarketWatch',
+    skill_reminder: 'SkillsPlan',
+  };
+  if (data?.type && lifetimeRoutes[String(data.type)]) {
+    navigateToLifetime(lifetimeRoutes[String(data.type)]);
     return;
   }
   if (data?.type === 'daily_industry_news') {

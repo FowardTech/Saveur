@@ -57,6 +57,16 @@ import AddOns from 'src/more/AddOns';
 import CareerDna from 'src/more/CareerDna';
 import CareerAssessment from 'src/more/CareerAssessment';
 import SalaryBenchmark from 'src/more/SalaryBenchmark';
+import LifetimeHub from 'src/lifetime/LifetimeHub';
+import WeeklyCheckin from 'src/lifetime/WeeklyCheckin';
+import BragDocument from 'src/lifetime/BragDocument';
+import ReviewPrep from 'src/lifetime/ReviewPrep';
+import LeadershipTrack from 'src/lifetime/LeadershipTrack';
+import RolePlay from 'src/lifetime/RolePlay';
+import PayWatch from 'src/lifetime/PayWatch';
+import MarketWatch from 'src/lifetime/MarketWatch';
+import SkillsPlan from 'src/lifetime/SkillsPlan';
+import CareerTimeline from 'src/lifetime/CareerTimeline';
 import CareerGrowth from 'src/more/CareerGrowth';
 import AICareerTwin from 'src/more/AICareerTwin';
 import DailyChallengeScreen from 'src/home/DailyChallengeScreen';
@@ -250,6 +260,16 @@ const AppContainer = () => {
         <Stack.Screen name="CareerDna" component={CareerDna} />
         <Stack.Screen name="CareerAssessment" component={CareerAssessment} />
         <Stack.Screen name="SalaryBenchmark" component={SalaryBenchmark} />
+        <Stack.Screen name="LifetimeHub" component={LifetimeHub} />
+        <Stack.Screen name="WeeklyCheckin" component={WeeklyCheckin} />
+        <Stack.Screen name="BragDocument" component={BragDocument} />
+        <Stack.Screen name="ReviewPrep" component={ReviewPrep} />
+        <Stack.Screen name="LeadershipTrack" component={LeadershipTrack} />
+        <Stack.Screen name="RolePlay" component={RolePlay} />
+        <Stack.Screen name="PayWatch" component={PayWatch} />
+        <Stack.Screen name="MarketWatch" component={MarketWatch} />
+        <Stack.Screen name="SkillsPlan" component={SkillsPlan} />
+        <Stack.Screen name="CareerTimeline" component={CareerTimeline} />
         <Stack.Screen name="CareerGrowth" component={CareerGrowth} />
         <Stack.Screen name="AICareerTwin" component={AICareerTwin} />
         <Stack.Screen name="DailyChallenge" component={DailyChallengeScreen} />

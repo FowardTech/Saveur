@@ -26,6 +26,7 @@ type PendingNavigation =
     }
   | {name: 'Notification'}
   | {name: 'WeeklyCareerReport'}
+  | {name: 'LifetimeHub' | 'WeeklyCheckin' | 'PayWatch' | 'MarketWatch' | 'SkillsPlan'}
   | {name: 'DailyIndustryNews'}
   // Push-tap destinations added for "push notifications aren't navigating to
   // the actual screens" (product request item — previously only job_alert,
@@ -472,4 +473,9 @@ export function flushPendingNavigation(): void {
   const nav = pendingNavigation;
   pendingNavigation = null;
   runNavigation(nav);
+}
+
+/** Lifetime career pushes (weekly_checkin / pay_alert / market_watch / skill_reminder). */
+export function navigateToLifetime(name: 'LifetimeHub' | 'WeeklyCheckin' | 'PayWatch' | 'MarketWatch' | 'SkillsPlan'): void {
+  queueOrNavigate({name});
 }
