@@ -1060,14 +1060,24 @@ const VoiceCoachView = memo(({
     // the coach's own echo than a real barge-in. Manual tap-to-interrupt
     // still works regardless (onInterrupt doesn't check this ref).
     if (isIntroUtteranceRef.current) return;
-    // See aecConvergedRef / speakingStartedAtRef: no automatic barge-in during the
-    // engine's first-ever utterance, nor in the first moments of any utterance.
-    if (!aecConvergedRef.current) return;
-    if (Date.now() - speakingStartedAtRef.current < 1200) return;
     const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
     if (!liveText && !freshSpeechStarted) return;
     // Coach echo, not the user -- don't cut the coach off for it.
     if (liveText && isEchoOfCoach(liveText, lastCoachLineRef.current)) return;
+    // Late transcript of the user's OWN last sentence (just sent as a turn) is
+    // not a new interruption -- acting on it made the coach answer twice.
+    if (liveText) {
+      const norm = normWords(liveText).join(' ');
+      const last = lastSentTurnRef.current;
+      if (norm && last.text && Date.now() - last.at < 10000 && last.text.includes(norm)) return;
+    }
+    // Barge-in stays fully active. While the echo canceller is still settling
+    // (the engine's first utterance, or the first moments of any utterance)
+    // require real evidence of the user's voice -- at least 3 words of
+    // non-echo speech -- instead of reacting to a bare speech-start pulse or a
+    // word or two of bleed-through.
+    const settling = !aecConvergedRef.current || Date.now() - speakingStartedAtRef.current < 1200;
+    if (settling && normWords(liveText).length < 3) return;
     turnTokenRef.current += 1; // supersede speakDuplexFireAndForget's own pending call
     setPhase('listening');
     isBargeInTurnRef.current = true; // see its own comment -- longer silence grace period for this turn
