@@ -8,7 +8,7 @@ import Text from 'components/Text';
 import {globalStyle} from 'styles/globalStyle';
 import * as svc from 'services/lifetimeService';
 import ProLockGate from 'components/ProLockGate';
-import {AuthContext} from 'AuthContext';
+import {AuthContext} from '../../AuthContext';
 import {LifetimeScreen} from './Scaffold';
 
 // Entry point for the "after you land the job" features.
