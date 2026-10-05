@@ -7,18 +7,21 @@ import {useTranslation} from 'react-i18next';
 import Text from 'components/Text';
 import {globalStyle} from 'styles/globalStyle';
 import * as svc from 'services/lifetimeService';
+import ProLockGate from 'components/ProLockGate';
+import {AuthContext} from 'AuthContext';
 import {LifetimeScreen} from './Scaffold';
 
 // Entry point for the "after you land the job" features.
 const LifetimeHub = () => {
   const {t} = useTranslation(['more', 'common']);
   const navigation = useNavigation<NavigationProp<any>>();
+  const {isPremium} = React.useContext(AuthContext);
   const [o, setO] = React.useState<svc.Overview | null>(null);
 
   useFocusEffect(
     React.useCallback(() => {
-      svc.getOverview().then(setO).catch(() => {});
-    }, []),
+      if (isPremium) svc.getOverview().then(setO).catch(() => {});
+    }, [isPremium]),
   );
 
   const cards: {route: string; title: string; body: string; icon: string; color: string; badge?: string}[] = [
@@ -85,8 +88,20 @@ const LifetimeHub = () => {
     },
   ];
 
+  if (!isPremium) {
+    return (
+      <ProLockGate
+        variant="premium"
+        title={String(t('more:lt_hub_title', {defaultValue: 'Career Success Hub'}))}
+        description={String(t('more:lt_hub_gate_description', {
+          defaultValue: 'Weekly check-ins, a brag document, review and promotion prep, pay and market alerts, a leadership track, skills planning and your career timeline - the Career Success Hub is a Premium feature.',
+        }))}
+      />
+    );
+  }
+
   return (
-    <LifetimeScreen title={t('more:lt_hub_title', {defaultValue: 'Career Success Hub'})}>
+    <LifetimeScreen title={String(t('more:lt_hub_title', {defaultValue: 'Career Success Hub'}))}>
       <Text category="h9-s" status="placeholder" mb={14}>
         {t('more:lt_hub_intro', {defaultValue: 'Tools for every stage, long after you land the job.'})}
       </Text>
