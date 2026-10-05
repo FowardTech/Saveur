@@ -354,7 +354,7 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('SharedWithMe'),
     },
     {
-      title: t('more:lt_hub_title', {defaultValue: 'Career for Life'}),
+      title: t('more:lt_hub_title', {defaultValue: 'Career Success Hub'}),
       icon: 'increase',
       status: 'success',
       iconBackgroundColor: ICON_BG,

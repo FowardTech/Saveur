@@ -86,7 +86,7 @@ const LifetimeHub = () => {
   ];
 
   return (
-    <LifetimeScreen title={t('more:lt_hub_title', {defaultValue: 'Career for Life'})}>
+    <LifetimeScreen title={t('more:lt_hub_title', {defaultValue: 'Career Success Hub'})}>
       <Text category="h9-s" status="placeholder" mb={14}>
         {t('more:lt_hub_intro', {defaultValue: 'Tools for every stage, long after you land the job.'})}
       </Text>
