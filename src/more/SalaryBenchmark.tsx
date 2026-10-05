@@ -194,7 +194,7 @@ export default SalaryBenchmark;
 const themedStyles = StyleService.create({
   container: {flex: 1},
   content: {paddingBottom: 80},
-  card: {borderRadius: 14, padding: 16},
+  card: {borderRadius: 20, padding: 16},
   input: {marginBottom: 12},
   chip: {borderWidth: 1, borderColor: 'border-card-default', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, marginRight: 8, overflow: 'hidden'},
   chipOn: {backgroundColor: 'background-basic-color-4'},

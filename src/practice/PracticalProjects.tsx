@@ -551,9 +551,9 @@ const themedStyles = StyleService.create({
   container: {flex: 1},
   content: {paddingBottom: 80},
   chip: {borderWidth: 1.5, borderRadius: 20, paddingVertical: 8, paddingHorizontal: 14, margin: 4},
-  stageCard: {borderRadius: 14, padding: 14, marginBottom: 12},
+  stageCard: {borderRadius: 20, padding: 14, marginBottom: 12},
   stageDot: {width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginRight: 10},
   twist: {marginTop: 10, padding: 10, borderRadius: 10, backgroundColor: 'background-basic-color-3'},
   feedback: {marginTop: 8, padding: 10, borderRadius: 10, backgroundColor: 'background-basic-color-3'},
-  row: {borderRadius: 14, padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'center'},
+  row: {borderRadius: 20, padding: 14, marginBottom: 8, flexDirection: 'row', alignItems: 'center'},
 });

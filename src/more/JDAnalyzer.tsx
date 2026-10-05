@@ -230,7 +230,7 @@ const JDAnalyzer = memo(() => {
             would just be pushing real content further down. See
             src/home/HomeHeroArt.tsx's own comment for the full sweep. */}
         {limitReached ? (
-          <Layout level="2" style={{borderRadius: 14, padding: 16, marginBottom: 16}}>
+          <Layout level="2" style={{borderRadius: 20, padding: 16, marginBottom: 16}}>
             <Text category="h8" bold>
               {t('more:resume_limit_reached_title', { defaultValue: "You've used your free resume tool actions this month" })}
             </Text>

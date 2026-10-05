@@ -238,7 +238,7 @@ const SharedWithMe = memo(() => {
   };
 
   const renderSendRequest = () => (
-    <Layout level="2" style={{borderRadius: 14, padding: 12, marginBottom: 12}}>
+    <Layout level="2" style={{borderRadius: 20, padding: 12, marginBottom: 12}}>
       <Text category="h9" bold mb={8}>
         {t('more:connect_with_user', {defaultValue: 'Connect with another Saveur user'})}
       </Text>

@@ -355,6 +355,6 @@ export default CareerGrowth;
 const themedStyles = StyleService.create({
   container: {flex: 1},
   content: {paddingBottom: 80},
-  card: {borderRadius: 14, padding: 14, marginBottom: 12},
+  card: {borderRadius: 20, padding: 14, marginBottom: 12},
   input: {marginBottom: 8},
 });

@@ -132,7 +132,7 @@ const SharedContentDetail = memo(() => {
           ) : null}
 
           {share.contentType === 'project' ? (
-            <Layout level="2" style={{borderRadius: 14, padding: 14}}>
+            <Layout level="2" style={{borderRadius: 20, padding: 14}}>
               <Text category="h7" bold mb={8}>{String((content as any).name ?? '')}</Text>
               {(((content as any).files as {path: string; content: string}[] | undefined) ?? []).map(f => (
                 <View key={f.path} style={{marginBottom: 12}}>

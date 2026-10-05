@@ -1,6 +1,6 @@
 import React from 'react';
 import {Alert, View} from 'react-native';
-import {TopNavigation, Layout, Spinner, useTheme} from '@ui-kitten/components';
+import {TopNavigation, Layout, useTheme} from '@ui-kitten/components';
 import {useNavigation} from '@react-navigation/native';
 
 import Text from 'components/Text';
@@ -8,6 +8,7 @@ import Content from 'components/Content';
 import Container from 'components/Container';
 import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
+import EmptyState from 'components/EmptyState';
 
 // Shared chrome for the lifetime career screens.
 export const LifetimeScreen = ({title, children, avoidKeyboard}: {title: string; children: React.ReactNode; avoidKeyboard?: boolean}) => {
@@ -23,7 +24,7 @@ export const LifetimeScreen = ({title, children, avoidKeyboard}: {title: string;
 };
 
 export const Card = ({children, style}: {children: React.ReactNode; style?: any}) => (
-  <Layout level="2" style={[{borderRadius: 16, padding: 16, marginBottom: 12}, style]}>
+  <Layout level="2" style={[{borderRadius: 20, padding: 16, marginBottom: 12}, style]}>
     {children}
   </Layout>
 );
@@ -49,11 +50,7 @@ export const Bullets = ({items, color}: {items: string[]; color?: string}) => (
   </View>
 );
 
-export const Loading = () => (
-  <View style={{alignItems: 'center', paddingVertical: 48}}>
-    <Spinner size="large" />
-  </View>
-);
+export const Loading = () => <EmptyState variant="loading" style={{paddingVertical: 48}} />;
 
 export const Pill = ({label, color = '#7C5CFF'}: {label: string; color?: string}) => (
   <View style={{alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: color + '26'}}>

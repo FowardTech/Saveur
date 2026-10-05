@@ -1,5 +1,6 @@
 import React from 'react';
-import {StyleProp, View, ViewStyle} from 'react-native';
+import {StyleProp, TouchableOpacity, View, ViewStyle} from 'react-native';
+import Animated, {FadeInDown} from 'react-native-reanimated';
 import {useTheme} from '@ui-kitten/components';
 import Svg, {Circle, Ellipse, Path, Rect} from 'react-native-svg';
 
@@ -103,7 +104,22 @@ const EmptyState = ({
   if (variant === 'loading') {
     return (
       <Flex vertical itemsCenter justify="center" style={[{paddingVertical: 60}, style]}>
-        <Spinner size="large" />
+        <View
+          style={{
+            width: 84,
+            height: 84,
+            borderRadius: 42,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#7C5CFF1A',
+          }}>
+          <Spinner size="large" />
+        </View>
+        {title ? (
+          <Text category="h9-s" status="placeholder" center mt={14}>
+            {title}
+          </Text>
+        ) : null}
       </Flex>
     );
   }
@@ -113,7 +129,7 @@ const EmptyState = ({
   const badgeBg = isError ? '#FF8A3D1F' : '#7C5CFF1A';
 
   return (
-    <Flex vertical itemsCenter justify="center" style={[{paddingVertical: 56}, style]}>
+    <Animated.View entering={FadeInDown.duration(350)} style={[{alignItems: 'center', justifyContent: 'center', paddingVertical: 56, paddingHorizontal: 24}, style]}>
       <View
         style={{
           width: 116,
@@ -143,11 +159,22 @@ const EmptyState = ({
         </Text>
       ) : null}
       {actionLabel && onAction ? (
-        <Text category="h9" status="link" bold onPress={onAction} mt={16}>
-          {actionLabel}
-        </Text>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={onAction}
+          style={{
+            marginTop: 18,
+            paddingVertical: 11,
+            paddingHorizontal: 22,
+            borderRadius: 99,
+            backgroundColor: isError ? '#FF8A3D26' : '#7C5CFF1F',
+          }}>
+          <Text category="h9" bold style={{color: isError ? '#E0701F' : '#7C5CFF'}}>
+            {actionLabel}
+          </Text>
+        </TouchableOpacity>
       ) : null}
-    </Flex>
+    </Animated.View>
   );
 };
 
