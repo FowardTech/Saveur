@@ -1189,7 +1189,7 @@
   "lt_today": "Today",
   "lt_new_plan": "Plan for a different role",
   "lt_milestones": "Milestones & reminders",
-  "lt_due": "Due {{date}}",
+  "lt_due": "Due",
   "lt_skills_to_build": "Skills to build",
   "lt_certs": "Certifications worth considering",
   "lt_weeks": "weeks",
@@ -1251,5 +1251,10 @@
   "lt_reflection_placeholder": "What went well? What was hard?",
   "lt_start_checkin": "Start my check-in",
   "lt_redo_checkin": "Redo this week’s check-in",
-  "lt_previous": "Previous weeks"
+  "lt_previous": "Previous weeks",
+  "lt_due_date": "Due {{date}}",
+  "lt_ms_cert": "Certification",
+  "lt_ms_project": "Project",
+  "lt_ms_network": "Networking",
+  "lt_ms_skill": "Skill"
 }

@@ -150,7 +150,8 @@ import ThemeContext from '../../ThemeContext';
 // before treating the user's turn as over and sending it. Was 1300ms;
 // lowered to 1000ms as asked. Applies to both the duplex (iOS) and legacy
 // (Android) paths equally, since both share this same debounce effect.
-const SILENCE_DEBOUNCE_MS = 2600;
+const SILENCE_DEBOUNCE_MS = 1100;
+const COMPLETE_SENTENCE_DEBOUNCE_MS = 650;
 
 // Product report ("the AI sometimes cuts the user off with its response...
 // allow some seconds to make sure the user finished talking"): a flat 1s
@@ -158,7 +159,7 @@ const SILENCE_DEBOUNCE_MS = 2600;
 // when the utterance is short (likely mid-thought) and taper to
 // SILENCE_DEBOUNCE_MS once a full sentence has been said. Barge-in
 // (interrupting the coach) is untouched and stays immediate.
-const SHORT_TURN_SILENCE_DEBOUNCE_MS = 4000;
+const SHORT_TURN_SILENCE_DEBOUNCE_MS = 1700;
 // Words that almost never end a finished sentence -- if the user's last word
 // is one of these (or the text ends with a comma), they are mid-thought, so
 // wait longer before treating the turn as over.
@@ -166,7 +167,7 @@ const TRAILING_FILLERS = new Set([
   'and', 'but', 'so', 'because', 'or', 'then', 'that', 'which', 'with', 'to', 'of', 'for', 'in', 'on', 'at',
   'the', 'a', 'an', 'my', 'is', 'are', 'was', 'i', 'if', 'when', 'like', 'um', 'uh', 'umm', 'er', 'well',
 ]);
-const INCOMPLETE_EXTRA_MS = 2200;
+const INCOMPLETE_EXTRA_MS = 1000;
 function getNormalDebounceMs(liveText: string): number {
   const trimmed = liveText.trim();
   const words = trimmed.split(/\s+/).filter(Boolean);
@@ -179,6 +180,7 @@ function getNormalDebounceMs(liveText: string): number {
   }
   const last = (words[words.length - 1] || '').toLowerCase().replace(/[.!?]+$/, '');
   if (/[,;:]$/.test(trimmed) || TRAILING_FILLERS.has(last.replace(/[,;:]+$/, ''))) ms += INCOMPLETE_EXTRA_MS;
+  else if (words.length >= 4 && /[.!?]$/.test(trimmed)) ms = COMPLETE_SENTENCE_DEBOUNCE_MS;
   return ms;
 }
 

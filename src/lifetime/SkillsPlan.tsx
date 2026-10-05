@@ -20,6 +20,15 @@ const SkillsPlan = () => {
     svc.getSkillPlan().then(setPlan).catch(() => setPlan(null));
   }, []);
 
+  const typeLabel = (k: string) =>
+    k === 'cert'
+      ? t('more:lt_ms_cert', {defaultValue: 'Certification'})
+      : k === 'project'
+      ? t('more:lt_ms_project', {defaultValue: 'Project'})
+      : k === 'network'
+      ? t('more:lt_ms_network', {defaultValue: 'Networking'})
+      : t('more:lt_ms_skill', {defaultValue: 'Skill'});
+
   const build = () =>
     run(async () => {
       setPlan(await svc.buildSkillPlan(target.trim(), current.trim(), 24));
@@ -84,7 +93,7 @@ const SkillsPlan = () => {
                     {m.title}
                   </Text>
                   <Text category="h10" status="placeholder">
-                    {t('more:lt_due', {defaultValue: 'Due {{date}}', date: m.due})} · {m.type}
+                    {t('more:lt_due_date', {defaultValue: 'Due {{date}}', date: m.due})} · {typeLabel(m.type)}
                   </Text>
                 </View>
               </Card>

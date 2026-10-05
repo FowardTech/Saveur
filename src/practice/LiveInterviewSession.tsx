@@ -108,7 +108,7 @@ const ADVANCE_INTERVAL_SEC = 50;
 // mode only — Video mode has no live transcript to react to, see this
 // file's own header comment) for where this is used; ADVANCE_INTERVAL_SEC
 // above still runs as a backstop for both modes.
-const SILENCE_DEBOUNCE_MS = 1500;
+const SILENCE_DEBOUNCE_MS = 1100;
 // Falls back to this if a caller ever reaches this screen without a
 // durationMin param (only MockInterviewSetup does today, and it always
 // passes one) — better to enforce a sane default than to run unbounded.
@@ -462,10 +462,12 @@ const LiveInterviewSession = memo(() => {
       let requiresWhiteboard = false;
       let isClosing = false;
       if (sessionId) {
-        // Natural beat before the interviewer responds (1.5-2.7s).
-        await new Promise<void>(resolve => setTimeout(resolve, 1500 + Math.random() * 1200));
+        // Natural beat before the interviewer responds. Runs IN PARALLEL with
+        // the question request (it used to be added on top of it), so the
+        // wait is whichever is longer, not the sum.
+        const beat = new Promise<void>(resolve => setTimeout(resolve, 350 + Math.random() * 350));
         try {
-          const next = await interviewService.getNextQuestion(sessionId);
+          const [next] = await Promise.all([interviewService.getNextQuestion(sessionId), beat]);
           nextText = next.text;
           nextId = next.questionId ?? null;
           requiresWhiteboard = !!next.requiresWhiteboard;
