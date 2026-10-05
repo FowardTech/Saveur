@@ -60,8 +60,35 @@ const recolorSpinners = (node: React.ReactNode, solid?: boolean): React.ReactNod
   });
 };
 
-const CtaButton: React.FC<CtaButtonProps> = ({ loading, solid, disabled, style, accessoryLeft, children, ...rest }) => {
+const CtaButton: React.FC<CtaButtonProps> = ({ loading: loadingProp, solid, disabled, style, accessoryLeft, children, onPress, ...rest }) => {
   const theme = useTheme();
+  // Automatic busy state: if the onPress handler returns a Promise (any async
+  // handler, or an arrow that returns one), show the spinner and block extra
+  // taps until it settles -- so no button silently "does nothing" while a
+  // request runs. An explicit `loading` prop still wins.
+  const [pending, setPending] = React.useState(false);
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const handlePress = React.useCallback(
+    (e: any) => {
+      if (!onPress) return;
+      const result: any = (onPress as any)(e);
+      if (result && typeof result.then === 'function') {
+        setPending(true);
+        const done = () => {
+          if (mountedRef.current) setPending(false);
+        };
+        result.then(done, done);
+      }
+    },
+    [onPress],
+  );
+  const loading = loadingProp || pending;
   const labelColor = solid ? theme['text-control-color'] : theme['text-basic-color'];
   // Icons inherit the Button's own (white "control") tint, which is invisible on
   // an outlined button - force the same colour as the label.
@@ -73,6 +100,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading, solid, disabled, style, 
   return (
     <Button
       {...rest}
+      onPress={onPress ? handlePress : undefined}
       accessoryRight={tintAccessory((rest as any).accessoryRight)}
       disabled={disabled || loading}
       accessoryLeft={loading ? renderLoadingSpinner : tintAccessory(accessoryLeft)}
