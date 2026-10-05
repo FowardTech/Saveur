@@ -610,21 +610,21 @@ const Chat = memo(() => {
         {bubble}
         <View style={{ flexDirection: "row", alignItems: "center", marginTop: -4, marginBottom: 12 }}>
           <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onCopyReply(idStr, cur.text)} style={{ marginRight: 18 }}>
-            <Icon pack="eva" name={copiedId === idStr ? "checkmark-outline" : "copy-outline"} style={[globalStyle.icon20, { tintColor: copiedId === idStr ? activeColor : iconColor }]} />
+            <Icon pack="eva" name={copiedId === idStr ? "checkmark-outline" : "copy-outline"} style={[globalStyle.icon16, { tintColor: copiedId === idStr ? activeColor : iconColor }]} />
           </TouchableOpacity>
           {persisted ? (
             <>
               <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onRateReply(idStr, cur.feedback, "up")} style={{ marginRight: 18 }}>
-                <Icon pack="eva" name="thumbs-up-outline" style={[globalStyle.icon20, { tintColor: cur.feedback === "up" ? "#7C5CFF" : iconColor }]} />
+                <Icon pack="eva" name="thumbs-up-outline" style={[globalStyle.icon16, { tintColor: cur.feedback === "up" ? "#7C5CFF" : iconColor }]} />
               </TouchableOpacity>
               <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onRateReply(idStr, cur.feedback, "down")} style={{ marginRight: 18 }}>
-                <Icon pack="eva" name="thumbs-down-outline" style={[globalStyle.icon20, { tintColor: cur.feedback === "down" ? "#FF5FA2" : iconColor }]} />
+                <Icon pack="eva" name="thumbs-down-outline" style={[globalStyle.icon16, { tintColor: cur.feedback === "down" ? "#FF5FA2" : iconColor }]} />
               </TouchableOpacity>
             </>
           ) : null}
           {latestCoach && latestCoach._id === cur._id && persisted ? (
             <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} disabled={isSending} onPress={() => onRetryReply(idStr)}>
-              <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon20, { tintColor: iconColor }]} />
+              <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon16, { tintColor: iconColor }]} />
             </TouchableOpacity>
           ) : null}
         </View>
