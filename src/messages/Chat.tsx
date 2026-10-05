@@ -592,7 +592,7 @@ const Chat = memo(() => {
               backgroundColor: props.currentMessage?.image || isDarkMode
                 ? "transparent"
                 : theme["background-basic-color-2"],
-              ...(isDarkMode && !props.currentMessage?.image ? { borderWidth: 1, borderColor: "#FFFFFF" } : null),
+              ...(isDarkMode && !props.currentMessage?.image ? { borderWidth: 1, borderColor: "#A1A1AA" } : null),
             },
             { maxWidth: 267 * (width / 375) },
           ],
