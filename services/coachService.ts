@@ -114,6 +114,7 @@ interface CoachMessageWire {
   suggested_course_topic?: string | null;
   image_url?: string | null;
   created_at?: string | null;
+  feedback?: 'up' | 'down';
 }
 
 function fromWire(m: CoachMessageWire): CoachChatMessageProps {
@@ -124,6 +125,7 @@ function fromWire(m: CoachMessageWire): CoachChatMessageProps {
     createdAt: m.created_at ? Date.parse(m.created_at) || Date.now() : Date.now(),
     suggestedCourseTopic: m.suggested_course_topic || undefined,
     imageUrl: m.image_url || undefined,
+    feedback: m.feedback,
   };
 }
 
@@ -198,6 +200,9 @@ export async function sendMessage(
   // system prompt, the same "attach it, don't paste it into the visible
   // message" shape `imageUrl` above already established for photos.
   codingProjectId?: string,
+  // "Retry": regenerate the reply to `text` (the server replaces the previous
+  // coach reply instead of storing the question again).
+  regenerate?: boolean,
 ): Promise<{userMessage: CoachChatMessageProps; coachMessage: CoachChatMessageProps}> {
   const userMessage: CoachChatMessageProps = {
     id: `msg_${Date.now()}_u`,
@@ -213,6 +218,7 @@ export async function sendMessage(
   let suggestedCourseTopic: string | undefined;
   let suggestedAction: SuggestedActionId | undefined;
   let flagged = false;
+  let serverMessageId: string | undefined;
   try {
     const {data} = await apiClient.post<{
       reply?: string;
@@ -222,6 +228,7 @@ export async function sendMessage(
       suggested_course?: string | null;
       suggested_action?: SuggestedActionId | null;
       flagged?: boolean;
+      message_id?: string | null;
     }>('/api/v1/coach/advice', {
       question: text,
       history: recentTurns,
@@ -231,6 +238,7 @@ export async function sendMessage(
       // app/api/coach.py's advice() docstring for why this flag exists
       // (askOneOff below deliberately omits it).
       persist_to_history: true,
+      regenerate: regenerate || undefined,
       image_url: imageUrl,
       coding_project_id: codingProjectId,
       profile_context: context
@@ -248,6 +256,7 @@ export async function sendMessage(
     suggestedCourseTopic = data.suggested_course || undefined;
     suggestedAction = data.suggested_action || undefined;
     flagged = !!data.flagged;
+    serverMessageId = data.message_id || undefined;
   } catch (e) {
     // At least keep the user's own message in the in-memory cache before
     // propagating the error — Chat.tsx already shows it optimistically, so
@@ -260,7 +269,7 @@ export async function sendMessage(
   }
 
   const coachMessage: CoachChatMessageProps = {
-    id: `msg_${Date.now()}_c`,
+    id: serverMessageId ?? `msg_${Date.now()}_c`,
     role: 'coach',
     text: replyText,
     createdAt: Date.now() + 1,
@@ -276,7 +285,13 @@ export async function sendMessage(
     flagged,
   };
 
-  cachedThread = [...cachedThread, userMessage, coachMessage];
+  if (regenerate) {
+    const lastCoach = [...cachedThread].reverse().findIndex(m => m.role === 'coach');
+    const idx = lastCoach < 0 ? -1 : cachedThread.length - 1 - lastCoach;
+    cachedThread = idx < 0 ? [...cachedThread, coachMessage] : [...cachedThread.slice(0, idx), coachMessage, ...cachedThread.slice(idx + 1)];
+  } else {
+    cachedThread = [...cachedThread, userMessage, coachMessage];
+  }
   // App Store review prompt trigger condition: "finished a conversation
   // with the AI coach" — see utils/appRating.ts's header comment for the
   // full 3-way OR. A real reply came back at this point (the try block
@@ -284,6 +299,11 @@ export async function sendMessage(
   // exchange, not a failed send.
   notifyCoachConversationExchanged().catch(() => {});
   return {userMessage, coachMessage};
+}
+
+/** Thumbs up/down (or null to clear) on a persisted coach reply. */
+export async function setMessageFeedback(id: string, value: 'up' | 'down' | null): Promise<void> {
+  await apiClient.post(`/api/v1/coach/messages/${id}/feedback`, {value});
 }
 
 /**

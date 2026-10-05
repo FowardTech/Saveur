@@ -984,6 +984,8 @@ export interface VideoAnalysisMetrics {
 // ---- AI Interview Coach additions (coach chat) ----
 export interface CoachChatMessageProps {
   id: string;
+  // The user's thumbs rating of this coach reply (persisted server-side).
+  feedback?: 'up' | 'down';
   role: 'user' | 'coach';
   text: string;
   createdAt: number;

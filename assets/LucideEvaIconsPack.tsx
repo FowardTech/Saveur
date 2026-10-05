@@ -1,6 +1,9 @@
 import {IconPack} from '@ui-kitten/components';
 import {
   Activity,
+  AudioLines,
+  ThumbsDown,
+  ThumbsUp,
   AlertCircle,
   ArrowLeftRight,
   ArrowRight,
@@ -140,6 +143,9 @@ const LucideEvaIconsPack: IconPack<any> = {
   name: 'eva',
   icons: {
     'activity-outline': lucideIcon(Activity),
+    'audio-lines-outline': lucideIcon(AudioLines),
+    'thumbs-up-outline': lucideIcon(ThumbsUp),
+    'thumbs-down-outline': lucideIcon(ThumbsDown),
     'alert-circle-outline': lucideIcon(AlertCircle),
     'arrow-forward-outline': lucideIcon(ArrowRight),
     'arrow-right-outline': lucideIcon(ArrowRight),

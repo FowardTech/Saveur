@@ -62,6 +62,7 @@ import ThemeContext from "../../ThemeContext";
 import VoiceCoachView from "./VoiceCoachView";
 import * as configService from "services/configService";
 import i18n from "i18next";
+import Clipboard from "@react-native-clipboard/clipboard";
 import { Images } from "assets/images";
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
@@ -92,6 +93,7 @@ interface CoachIMessage extends IMessage {
   // services/coachService.ts's flagged field and renderBubble below, which
   // gives a flagged coach message a distinct amber caution style.
   flagged?: boolean;
+  feedback?: 'up' | 'down';
 }
 
 // Same module/tier length "Learn Anything" custom topics use — see
@@ -141,6 +143,7 @@ const toGiftedMessage = (msg: CoachChatMessageProps): CoachIMessage => ({
   suggestedCourseTopic: msg.suggestedCourseTopic,
   suggestedAction: msg.suggestedAction,
   flagged: msg.flagged,
+  feedback: msg.feedback,
   // Product report: "The AI chat can't process images yet" -- gifted-chat's
   // own IMessage.image is already rendered by its built-in MessageImage
   // (see this screen's own renderMessageImage below, and MessageImage's own
@@ -454,6 +457,58 @@ const Chat = memo(() => {
     setShowGreeting(false);
   }, []);
 
+  // --- AI reply actions: copy / thumbs up-down / retry --------------------
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  const onCopyReply = React.useCallback((id: string, text: string) => {
+    Clipboard.setString(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(cur => (cur === id ? null : cur)), 1500);
+  }, []);
+
+  const onRateReply = React.useCallback((id: string, current: 'up' | 'down' | undefined, value: 'up' | 'down') => {
+    const next = current === value ? undefined : value;
+    setMessages(prev => prev.map((m: any) => (m._id === id ? { ...m, feedback: next } : m)));
+    coachService.setMessageFeedback(id, next ?? null).catch(() => {
+      setMessages(prev => prev.map((m: any) => (m._id === id ? { ...m, feedback: current } : m)));
+    });
+  }, []);
+
+  const onRetryReply = React.useCallback(async (replyId: string) => {
+    if (isSending) return;
+    // messages is newest-first: the question is the user message right after the reply.
+    const idx = messages.findIndex((m: any) => m._id === replyId);
+    const question = messages.slice(idx + 1).find((m: any) => m.user?._id === ME_USER._id);
+    if (idx < 0 || !question?.text) return;
+    setMessages(prev => [
+      buildThinkingMessage(t("message:ai_thinking", { defaultValue: "AI is thinking…" })) as CoachIMessage,
+      ...prev.filter((m: any) => m._id !== replyId),
+    ]);
+    setIsSending(true);
+    try {
+      const { coachMessage } = await coachService.sendMessage(
+        question.text,
+        {
+          goals: profile?.goals,
+          industries: profile?.industries,
+          desiredRoles: profile?.desiredRoles,
+          preferredCountries: profile?.preferredCountries,
+        },
+        undefined,
+        undefined,
+        true,
+      );
+      setMessages(prev => [toGiftedMessage(coachMessage), ...prev.filter((m: any) => m._id !== THINKING_MESSAGE_ID)]);
+    } catch (e: any) {
+      setMessages(prev => prev.filter((m: any) => m._id !== THINKING_MESSAGE_ID));
+      Alert.alert(
+        t("message:coach_unavailable_title", { defaultValue: "Coach unavailable" }),
+        e?.message ?? t("message:coach_unavailable_body", { defaultValue: "Couldn't reach your AI coach. Please try again." }),
+      );
+    } finally {
+      setIsSending(false);
+    }
+  }, [isSending, messages, profile, t]);
+
   const renderBubble = React.useCallback((props: BubbleProps<IMessage>) => {
     // Product request: "I want the AI career coach ... to always detect
     // inappropriate words and caution the user" -- a flagged coach message
@@ -482,7 +537,10 @@ const Chat = memo(() => {
         />
       );
     }
-    return (
+    const cur = props.currentMessage as CoachIMessage | undefined;
+    const isCoachReply = !!cur && cur.user?._id === COACH_USER._id && !cur.image && cur._id !== THINKING_MESSAGE_ID && !!cur.text;
+    const latestCoach = (messages as any[]).find(m => m.user?._id === COACH_USER._id && m._id !== THINKING_MESSAGE_ID);
+    const bubble = (
       <Bubble
         {...props}
         // BUG FIX (product report: "there should be space between the
@@ -506,14 +564,11 @@ const Chat = memo(() => {
           right: styles.bubbleContainerStyle,
         }}
         wrapperStyle={{
+          // AI replies have no bubble (ChatGPT-style): plain full-width text.
           left: [
             styles.wrapperLeftStyle,
-            {
-              backgroundColor: props.currentMessage?.image
-                ? "transparent"
-                : theme["background-basic-color-4"],
-            },
-            { maxWidth: 267 * (width / 375) },
+            { backgroundColor: "transparent", paddingHorizontal: 0, borderRadius: 0 },
+            { maxWidth: width - 32 - 40 },
           ],
           right: [
             styles.wrapperRightStyle,
@@ -536,11 +591,41 @@ const Chat = memo(() => {
         }}
       />
     );
+    if (!isCoachReply || !cur) return bubble;
+    const idStr = String(cur._id);
+    const persisted = /^\d+$/.test(idStr);
+    const iconColor = theme["text-hint-color"];
+    const activeColor = theme["text-basic-color"];
+    return (
+      <View>
+        {bubble}
+        <View style={{ flexDirection: "row", alignItems: "center", marginTop: -4, marginBottom: 12 }}>
+          <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onCopyReply(idStr, cur.text)} style={{ marginRight: 18 }}>
+            <Icon pack="eva" name={copiedId === idStr ? "checkmark-outline" : "copy-outline"} style={[globalStyle.icon20, { tintColor: copiedId === idStr ? activeColor : iconColor }]} />
+          </TouchableOpacity>
+          {persisted ? (
+            <>
+              <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onRateReply(idStr, cur.feedback, "up")} style={{ marginRight: 18 }}>
+                <Icon pack="eva" name="thumbs-up-outline" style={[globalStyle.icon20, { tintColor: cur.feedback === "up" ? "#7C5CFF" : iconColor }]} />
+              </TouchableOpacity>
+              <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onRateReply(idStr, cur.feedback, "down")} style={{ marginRight: 18 }}>
+                <Icon pack="eva" name="thumbs-down-outline" style={[globalStyle.icon20, { tintColor: cur.feedback === "down" ? "#FF5FA2" : iconColor }]} />
+              </TouchableOpacity>
+            </>
+          ) : null}
+          {latestCoach && latestCoach._id === cur._id && persisted ? (
+            <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} disabled={isSending} onPress={() => onRetryReply(idStr)}>
+              <Icon pack="eva" name="refresh-outline" style={[globalStyle.icon20, { tintColor: iconColor }]} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
+    );
     // BUG FIX (same stale-closure class as renderInputToolbar's own fix
     // just above): `theme` was read here but missing from this callback's
     // deps, so message bubble backgrounds froze at whatever theme was
     // active on first mount too.
-  }, [theme, width]);
+  }, [theme, width, messages, copiedId, isSending, onCopyReply, onRateReply, onRetryReply]);
   const renderSend = (props: SendProps<IMessage>) => (
     <Flex itemsCenter>
       {/* SYMPHONY REDESIGN follow-up (product report: "instead of us
@@ -566,7 +651,7 @@ const Chat = memo(() => {
               closest existing match to that. */}
           <Icon
             pack="eva"
-            name="activity-outline"
+            name="audio-lines-outline"
             style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]}
           />
           <Text
@@ -1441,7 +1526,7 @@ const themedStyles = StyleService.create({
   // here to match the reference, not the app's usual flat look.
   chatInputCard: {
     backgroundColor: "background-basic-color-2",
-    borderRadius: 20,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: "border-card-default",
     marginHorizontal: 16,

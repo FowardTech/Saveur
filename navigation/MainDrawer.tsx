@@ -305,6 +305,9 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
   // so there is no visible gray band behind the nav.
   const barWrapBg = appTheme === 'dark' ? theme['background-basic-color-1'] : theme['background-page-body'];
   const activeName = state.routes[state.index]?.name;
+  // Chat-style screen (AI Coach): no bottom navigation, like ChatGPT - the
+  // header menu / drawer is the way to other sections.
+  if (activeName === 'Coach') return null;
   return (
     <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom - 12, 12), paddingTop: 0, backgroundColor: barWrapBg}}>
       <View
