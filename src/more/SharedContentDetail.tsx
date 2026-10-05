@@ -28,6 +28,7 @@ import {SharedContentDetailProps} from 'services/sharesService';
 import {getInterviewTypeLabel} from 'utils/interviewTypeLabels';
 import {formatMs} from 'services/interviewReplayService';
 import CtaButton from 'components/CtaButton';
+import SharedProjectView from './SharedProjectView';
 import StarRating, {percentToStars} from 'components/StarRating';
 import { SkeletonList } from 'components/Skeleton';
 
@@ -132,16 +133,10 @@ const SharedContentDetail = memo(() => {
           ) : null}
 
           {share.contentType === 'project' ? (
-            <Layout level="2" style={{borderRadius: 20, padding: 14}}>
-              <Text category="h7" bold mb={8}>{String((content as any).name ?? '')}</Text>
-              {(((content as any).files as {path: string; content: string}[] | undefined) ?? []).map(f => (
-                <View key={f.path} style={{marginBottom: 12}}>
-                  <Text category="h10" bold status="link" mb={4}>{f.path}</Text>
-                  <Text category="h10" style={{fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace'}}>{f.content}</Text>
-                </View>
-              ))}
-              <Text category="h10" status="placeholder">{t('more:share_read_only', {defaultValue: 'Read-only view.'})}</Text>
-            </Layout>
+            <SharedProjectView
+              name={String((content as any).name ?? '')}
+              files={((content as any).files as {path: string; content: string}[] | undefined) ?? []}
+            />
           ) : share.contentType === 'job' ? (
             <Layout level="2" style={styles.card}>
               <Flex justify="flex-start" mb={12}>

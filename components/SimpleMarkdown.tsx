@@ -34,6 +34,24 @@ const SimpleMarkdown = memo(({text}: {text: string}) => {
             </Text>
           );
         }
+        const plus = line.match(/^\s*\+\s+(.*)$/);
+        const arrow = line.match(/^\s*(?:→|->)\s+(.*)$/);
+        const num = line.match(/^\s*(\d+)[.)]\s+(.*)$/);
+        if (plus || arrow || num) {
+          const mark = plus ? '+' : arrow ? '→' : `${num![1]}.`;
+          const txt = plus ? plus[1] : arrow ? arrow[1] : num![2];
+          const color = plus ? '#19B87A' : arrow ? '#0063F8' : undefined;
+          return (
+            <View key={i} style={{flexDirection: 'row', marginTop: 2}}>
+              <Text category="h9-s" bold style={{marginRight: 8, color}}>
+                {mark}
+              </Text>
+              <Text category="h9-s" style={{flex: 1}}>
+                {inline(txt)}
+              </Text>
+            </View>
+          );
+        }
         const b = line.match(/^\s*[*-]\s+(.*)$/);
         if (b) {
           return (
