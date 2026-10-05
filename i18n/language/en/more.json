@@ -1027,7 +1027,7 @@
   "resume_limit_reached_subtitle": "Upgrade to Saveur Basic or above for unlimited access.",
   "share_read_only": "Read-only view.",
   "growth_paid_title": "Paid feature",
-  "growth_paywall": "The market check and promotion plan are available on paid plans.",
+  "growth_paywall": "Pay tracking is available on paid plans.",
   "career_growth": "Career Growth",
   "growth_subtitle": "Track your pay over time, check if you're paid fairly, and prepare for your next raise or promotion.",
   "growth_checkin_title": "Quarterly check-in",
@@ -1257,5 +1257,8 @@
   "lt_ms_project": "Project",
   "lt_ms_network": "Networking",
   "lt_ms_skill": "Skill",
-  "lt_hub_gate_description": "Weekly check-ins, a brag document, review and promotion prep, pay and market alerts, a leadership track, skills planning and your career timeline - the Career Success Hub is a Premium feature."
+  "lt_hub_gate_description": "Weekly check-ins, a brag document, review and promotion prep, pay and market alerts, a leadership track, skills planning and your career timeline - the Career Success Hub is a Premium feature.",
+  "growth_premium_title": "Premium feature",
+  "growth_premium_body": "The market check and promotion plan are Premium features. Upgrade to Premium to unlock them.",
+  "growth_upgrade_premium": "Upgrade to Premium"
 }

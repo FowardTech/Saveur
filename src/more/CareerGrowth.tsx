@@ -82,15 +82,15 @@ const CareerGrowth = memo(() => {
   const [planning, setPlanning] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    try {
-      const [p, pl, c] = await Promise.all([growth.listPay(), growth.getPromotionPlan(), growth.getPendingCheckin()]);
-      setRecords(p.records);
-      setSummary(p.summary);
-      setPlan(pl);
-      setCheckinId(c?.id ?? null);
-    } catch {
-      // leave empty state
+    // Independent loads: the promotion plan is Premium-only, so a Basic user's 402 there
+    // must not stop their pay records from loading.
+    const [p, pl, c] = await Promise.allSettled([growth.listPay(), growth.getPromotionPlan(), growth.getPendingCheckin()]);
+    if (p.status === 'fulfilled') {
+      setRecords(p.value.records);
+      setSummary(p.value.summary);
     }
+    if (pl.status === 'fulfilled') setPlan(pl.value);
+    if (c.status === 'fulfilled') setCheckinId(c.value?.id ?? null);
   }, []);
   React.useEffect(() => {
     load();
@@ -98,12 +98,21 @@ const CareerGrowth = memo(() => {
 
   const onError = (e: any) => {
     if (e?.status === 402 || e?.status === 403) {
+      // premium_required => market check / promotion plan (Premium); otherwise a Basic-plan feature.
+      const premium = e?.error === 'premium_required';
       Alert.alert(
-        t('more:growth_paid_title', {defaultValue: 'Paid feature'}),
-        t('more:growth_paywall', {defaultValue: 'The market check and promotion plan are available on paid plans.'}).toString(),
+        premium
+          ? t('more:growth_premium_title', {defaultValue: 'Premium feature'})
+          : t('more:growth_paid_title', {defaultValue: 'Paid feature'}),
+        premium
+          ? t('more:growth_premium_body', {defaultValue: 'The market check and promotion plan are Premium features. Upgrade to Premium to unlock them.'}).toString()
+          : t('more:growth_paywall', {defaultValue: 'Pay tracking is available on paid plans.'}).toString(),
         [
           {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
-          {text: t('more:upgrade', {defaultValue: 'Upgrade'}), onPress: () => navigate('Subscription')},
+          {
+            text: premium ? t('more:growth_upgrade_premium', {defaultValue: 'Upgrade to Premium'}) : t('more:upgrade', {defaultValue: 'Upgrade'}),
+            onPress: () => navigate('Subscription'),
+          },
         ],
       );
     } else {
