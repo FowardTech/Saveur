@@ -973,7 +973,7 @@ const themedStyles = StyleService.create({
     // Same as customCard above — renders via <Layout level="2" .../>.
   },
   categoryPill: {
-    backgroundColor: 'background-basic-color-4',
+    backgroundColor: 'rgba(0, 99, 248, 0.12)',
     borderRadius: 99,
     paddingVertical: 4,
     paddingHorizontal: 10,
