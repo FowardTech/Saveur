@@ -98,14 +98,14 @@ const CareerGrowth = memo(() => {
 
   const onError = (e: any) => {
     if (e?.status === 402 || e?.status === 403) {
-      // premium_required => market check / promotion plan (Premium); otherwise a Basic-plan feature.
+      // premium_required => promotion plan (Premium); otherwise a Basic-plan feature.
       const premium = e?.error === 'premium_required';
       Alert.alert(
         premium
           ? t('more:growth_premium_title', {defaultValue: 'Premium feature'})
           : t('more:growth_paid_title', {defaultValue: 'Paid feature'}),
         premium
-          ? t('more:growth_premium_body', {defaultValue: 'The market check and promotion plan are Premium features. Upgrade to Premium to unlock them.'}).toString()
+          ? t('more:growth_premium_body', {defaultValue: 'The promotion plan is a Premium feature. Upgrade to Premium to unlock it.'}).toString()
           : t('more:growth_paywall', {defaultValue: 'Pay tracking is available on paid plans.'}).toString(),
         [
           {text: t('common:cancel', {defaultValue: 'Cancel'}), style: 'cancel'},
