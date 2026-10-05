@@ -630,6 +630,19 @@ const VoiceCoachView = memo(({
   // "Tap to interrupt" button (onInterrupt) is untouched, so a user who
   // genuinely wants to cut the greeting off still can.
   const isIntroUtteranceRef = React.useRef(false);
+  // BUG FIX ("the first AI response always acts as a barge-in, making the AI
+  // respond twice"): the guard above only covered the greeting, which is
+  // spoken ONLY on a user's very first ever visit. On every other visit the
+  // first REPLY is the first audio this engine renders, so the echo canceller
+  // has not converged and the coach's own voice (or the tail of the user's
+  // just-finished sentence) was taken as an interruption. This generalises the
+  // guard: automatic speech-triggered barge-in is ignored until the engine has
+  // finished playing ONE full utterance (aecConvergedRef), and for a short
+  // grace window after any utterance starts (speakingStartedAtRef), which also
+  // swallows late final transcript segments of the user's own last turn.
+  // Manual tap-to-interrupt is never affected.
+  const aecConvergedRef = React.useRef(false);
+  const speakingStartedAtRef = React.useRef(0);
 
   const resetDuplexTranscript = React.useCallback(() => {
     duplexCommittedRef.current = '';
@@ -690,6 +703,7 @@ const VoiceCoachView = memo(({
         // every later reply normally. See isIntroUtteranceRef's own
         // comment above.
         isIntroUtteranceRef.current = false;
+        aecConvergedRef.current = true;
         const postAction = postSpeechActionRef.current;
         postSpeechActionRef.current = null;
         if (postAction) {
@@ -1031,6 +1045,10 @@ const VoiceCoachView = memo(({
   // wrongly looking "fresh" again the next time phase becomes 'speaking'
   // for an unrelated later turn.
   React.useEffect(() => {
+    if (phase === 'speaking') speakingStartedAtRef.current = Date.now();
+  }, [phase]);
+
+  React.useEffect(() => {
     const freshSpeechStarted = speechStartedPulse !== prevSpeechStartedPulseRef.current;
     prevSpeechStartedPulseRef.current = speechStartedPulse;
     if (!duplexSupported) return;
@@ -1042,6 +1060,10 @@ const VoiceCoachView = memo(({
     // the coach's own echo than a real barge-in. Manual tap-to-interrupt
     // still works regardless (onInterrupt doesn't check this ref).
     if (isIntroUtteranceRef.current) return;
+    // See aecConvergedRef / speakingStartedAtRef: no automatic barge-in during the
+    // engine's first-ever utterance, nor in the first moments of any utterance.
+    if (!aecConvergedRef.current) return;
+    if (Date.now() - speakingStartedAtRef.current < 1200) return;
     const liveText = (duplexCommittedRef.current + ' ' + duplexSegment).trim();
     if (!liveText && !freshSpeechStarted) return;
     // Coach echo, not the user -- don't cut the coach off for it.
@@ -1089,6 +1111,7 @@ const VoiceCoachView = memo(({
           // onSpeakingState listener ever clears this), a fresh mount
           // shouldn't inherit a stuck "suppress barge-in" state.
           isIntroUtteranceRef.current = false;
+          aecConvergedRef.current = false;
           duplexVoiceService.stop().catch(() => {});
         } else {
           stt.stop();
