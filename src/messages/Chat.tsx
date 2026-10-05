@@ -206,6 +206,7 @@ const Chat = memo(() => {
   const { theme: appThemeName } = React.useContext(ThemeContext);
   const isDarkMode = appThemeName === 'dark';
   const { navigate } = useNavigation<NavigationProp<RootStackParamList>>();
+  const chatNavigation: any = useNavigation();
   const route = useRoute<RouteProp<MessagesStackParamList, 'Chat'>>();
   const { initialPrompt, openTopicsSheet, codingProjectId } = route.params ?? {};
   const { profile } = React.useContext(AuthContext);
@@ -365,8 +366,13 @@ const Chat = memo(() => {
   // by a ref (not state) so this only ever fires once per screen visit,
   // even though `messages` above updates asynchronously right after mount.
   React.useEffect(() => {
+    // The Coach tab stays mounted, so this runs again for every NEW prompt
+    // another screen navigates here with (e.g. drilling a company interview
+    // question) - not just the first one. The param is cleared after sending
+    // so the same text can be sent again later.
     if (!initialPrompt || hasSentInitialPromptRef.current) return;
     hasSentInitialPromptRef.current = true;
+    setMode('text');
     // Calls sendDraft directly (not onSend) so codingProjectId -- set only
     // by CodingProjectEditor.tsx's "Analyze with your coach" button, see
     // navigation/types.tsx's own comment -- has somewhere to go; onSend's
@@ -376,7 +382,10 @@ const Chat = memo(() => {
       { _id: `topic_${Date.now()}`, text: initialPrompt, createdAt: Date.now(), user: ME_USER },
       undefined,
       codingProjectId,
-    );
+    ).finally(() => {
+      hasSentInitialPromptRef.current = false;
+      chatNavigation.setParams?.({ initialPrompt: undefined, codingProjectId: undefined });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt]);
 
