@@ -400,18 +400,54 @@ const LearningCourses = memo(() => {
               {t('more:your_badges', { defaultValue: 'Your Badges' })}
             </SectionTitle>
             {certificates.map(c => (
-              <Flex key={c.code} justify="flex-start" itemsCenter mb={8}>
-                <Icon pack="eva" name="award-outline" style={[globalStyle.icon20, { tintColor: theme['text-basic-color'] }]} />
-                <View style={{ marginLeft: 10, flex: 1 }}>
-                  <Text category="h9" bold>{c.topic}</Text>
-                  <Text category="h10" status="placeholder">
-                    {t('more:badge_tiers_code', {
-                      defaultValue: 'Basic · Intermediate · Advanced — {{code}}',
-                      code: c.code,
-                    })}
-                  </Text>
+              <View
+                key={c.code}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 14,
+                  marginBottom: 10,
+                  borderRadius: 16,
+                  backgroundColor: 'rgba(245,176,0,0.10)',
+                  borderWidth: 1,
+                  borderColor: 'rgba(245,176,0,0.28)',
+                }}>
+                <View
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'rgba(245,176,0,0.22)',
+                  }}>
+                  <Icon pack="eva" name="award" style={[globalStyle.icon24, { tintColor: '#F5B000' }]} />
                 </View>
-              </Flex>
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <Text category="h8" bold numberOfLines={2}>{c.topic}</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 }}>
+                    {[
+                      { label: String(t('more:course_level_basic', { defaultValue: 'Basic' })), color: '#CD7F32' },
+                      { label: String(t('more:course_level_intermediate', { defaultValue: 'Intermediate' })), color: '#8E9AAF' },
+                      { label: String(t('more:course_level_advanced', { defaultValue: 'Advanced' })), color: '#F5B000' },
+                    ].map(tier => (
+                      <View
+                        key={tier.color}
+                        style={{
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                          borderRadius: 10,
+                          marginRight: 6,
+                          marginBottom: 4,
+                          backgroundColor: tier.color + '26',
+                        }}>
+                        <Text category="h10" bold style={{ color: tier.color }}>{tier.label}</Text>
+                      </View>
+                    ))}
+                  </View>
+                  <Text category="h10" status="placeholder">{c.code}</Text>
+                </View>
+              </View>
             ))}
           </Layout>
         ) : null}
