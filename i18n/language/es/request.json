@@ -180,5 +180,6 @@
   "when": "Cuándo",
   "where": "Dónde",
   "withdraw_application_failed": "No se pudo retirar la postulación",
-  "withdrawing": "Retirando…"
+  "withdrawing": "Retirando…",
+  "find_jobs_cta": "Buscar empleos"
 }

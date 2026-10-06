@@ -108,5 +108,12 @@
   "voice_status_thinking": "Думаю…",
   "voice_tap_to_interrupt": "Нажмите, чтобы прервать",
   "suggested_action_title_offer_analyzer": "Анализатор предложений",
-  "suggested_action_title_career_growth": "Карьерный рост"
+  "suggested_action_title_career_growth": "Карьерный рост",
+  "topic_role_prep": "На чём мне сосредоточиться, чтобы подготовиться к собеседованию на должность {{role}}?",
+  "topic_goal_next_step": "Каков мой следующий шаг к цели «{{goal}}»?",
+  "topic_resume_review": "Можете просмотреть моё резюме и предложить улучшения?",
+  "topic_salary_negotiation": "Как лучше подойти к переговорам о зарплате?",
+  "topic_interview_nerves": "Как сохранять спокойствие и уверенность на собеседованиях?",
+  "coach_limit_title": "Достигнут месячный лимит",
+  "coach_limit_upgrade": "Перейти на Premium"
 }

@@ -180,5 +180,6 @@
   "when": "الموعد",
   "where": "المكان",
   "withdraw_application_failed": "تعذّر سحب الطلب",
-  "withdrawing": "جارٍ السحب…"
+  "withdrawing": "جارٍ السحب…",
+  "find_jobs_cta": "ابحث عن وظائف"
 }

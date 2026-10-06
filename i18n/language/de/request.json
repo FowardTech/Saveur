@@ -180,5 +180,6 @@
   "when": "Wann",
   "where": "Wo",
   "withdraw_application_failed": "Bewerbung konnte nicht zurückgezogen werden",
-  "withdrawing": "Wird zurückgezogen…"
+  "withdrawing": "Wird zurückgezogen…",
+  "find_jobs_cta": "Jobs finden"
 }

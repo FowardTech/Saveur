@@ -108,5 +108,12 @@
   "voice_status_thinking": "생각 중…",
   "voice_tap_to_interrupt": "탭하여 중단",
   "suggested_action_title_offer_analyzer": "오퍼 분석기",
-  "suggested_action_title_career_growth": "커리어 성장"
+  "suggested_action_title_career_growth": "커리어 성장",
+  "topic_role_prep": "{{role}} 면접을 준비하려면 무엇에 집중해야 하나요?",
+  "topic_goal_next_step": "\"{{goal}}\"을(를) 향한 다음 단계는 무엇인가요?",
+  "topic_resume_review": "제 이력서를 검토하고 개선점을 제안해 주실 수 있나요?",
+  "topic_salary_negotiation": "연봉 협상은 어떻게 접근해야 하나요?",
+  "topic_interview_nerves": "면접 중에 침착하고 자신감 있게 있으려면 어떻게 해야 하나요?",
+  "coach_limit_title": "월간 한도에 도달했습니다",
+  "coach_limit_upgrade": "Premium으로 업그레이드"
 }

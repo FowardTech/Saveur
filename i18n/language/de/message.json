@@ -108,5 +108,12 @@
   "voice_status_thinking": "Denke nach…",
   "voice_tap_to_interrupt": "Zum Unterbrechen tippen",
   "suggested_action_title_offer_analyzer": "den Angebots-Analysator",
-  "suggested_action_title_career_growth": "Karriereentwicklung"
+  "suggested_action_title_career_growth": "Karriereentwicklung",
+  "topic_role_prep": "Worauf sollte ich mich konzentrieren, um mich auf ein Vorstellungsgespräch als {{role}} vorzubereiten?",
+  "topic_goal_next_step": "Was ist mein nächster Schritt in Richtung „{{goal}}“?",
+  "topic_resume_review": "Kannst du meinen Lebenslauf prüfen und Verbesserungen vorschlagen?",
+  "topic_salary_negotiation": "Wie gehe ich die Verhandlung meines Gehalts am besten an?",
+  "topic_interview_nerves": "Wie bleibe ich in Vorstellungsgesprächen ruhig und selbstbewusst?",
+  "coach_limit_title": "Monatslimit erreicht",
+  "coach_limit_upgrade": "Auf Premium upgraden"
 }

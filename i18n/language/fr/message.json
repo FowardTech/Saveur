@@ -108,5 +108,12 @@
   "voice_status_thinking": "Réflexion en cours…",
   "voice_tap_to_interrupt": "Touchez pour interrompre",
   "suggested_action_title_offer_analyzer": "l'Analyseur d'offres",
-  "suggested_action_title_career_growth": "Évolution de carrière"
+  "suggested_action_title_career_growth": "Évolution de carrière",
+  "topic_role_prep": "Sur quoi dois-je me concentrer pour préparer un entretien de {{role}} ?",
+  "topic_goal_next_step": "Quelle est ma prochaine étape vers « {{goal}} » ?",
+  "topic_resume_review": "Pouvez-vous relire mon CV et suggérer des améliorations ?",
+  "topic_salary_negotiation": "Comment aborder la négociation de mon salaire ?",
+  "topic_interview_nerves": "Comment rester calme et confiant pendant les entretiens ?",
+  "coach_limit_title": "Limite mensuelle atteinte",
+  "coach_limit_upgrade": "Passer à Premium"
 }

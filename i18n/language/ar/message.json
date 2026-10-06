@@ -108,5 +108,12 @@
   "voice_status_thinking": "أفكر…",
   "voice_tap_to_interrupt": "اضغط للمقاطعة",
   "suggested_action_title_offer_analyzer": "محلل العروض",
-  "suggested_action_title_career_growth": "النمو المهني"
+  "suggested_action_title_career_growth": "النمو المهني",
+  "topic_role_prep": "على ماذا يجب أن أركّز للاستعداد لمقابلة {{role}}؟",
+  "topic_goal_next_step": "ما خطوتي التالية نحو \"{{goal}}\"؟",
+  "topic_resume_review": "هل يمكنك مراجعة سيرتي الذاتية واقتراح تحسينات؟",
+  "topic_salary_negotiation": "كيف أتعامل مع التفاوض على راتبي؟",
+  "topic_interview_nerves": "كيف أحافظ على هدوئي وثقتي أثناء المقابلات؟",
+  "coach_limit_title": "تم بلوغ الحد الشهري",
+  "coach_limit_upgrade": "الترقية إلى Premium"
 }

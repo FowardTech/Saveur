@@ -108,5 +108,12 @@
   "voice_status_thinking": "思考中…",
   "voice_tap_to_interrupt": "点按以打断",
   "suggested_action_title_offer_analyzer": "薪资Offer分析器",
-  "suggested_action_title_career_growth": "职业成长"
+  "suggested_action_title_career_growth": "职业成长",
+  "topic_role_prep": "为准备{{role}}面试，我应该重点关注什么？",
+  "topic_goal_next_step": "我朝着“{{goal}}”迈出的下一步是什么？",
+  "topic_resume_review": "你能审阅我的简历并提出改进建议吗？",
+  "topic_salary_negotiation": "我该如何谈判薪资？",
+  "topic_interview_nerves": "如何在面试中保持冷静和自信？",
+  "coach_limit_title": "已达到每月上限",
+  "coach_limit_upgrade": "升级到 Premium"
 }

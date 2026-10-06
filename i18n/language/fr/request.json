@@ -180,5 +180,6 @@
   "when": "Quand",
   "where": "Où",
   "withdraw_application_failed": "Impossible de retirer la candidature",
-  "withdrawing": "Retrait en cours…"
+  "withdrawing": "Retrait en cours…",
+  "find_jobs_cta": "Trouver des emplois"
 }

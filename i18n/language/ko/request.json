@@ -180,5 +180,6 @@
   "when": "일시",
   "where": "장소",
   "withdraw_application_failed": "지원을 철회할 수 없습니다",
-  "withdrawing": "철회하는 중…"
+  "withdrawing": "철회하는 중…",
+  "find_jobs_cta": "채용 공고 찾기"
 }

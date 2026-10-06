@@ -180,5 +180,6 @@
   "when": "Когда",
   "where": "Где",
   "withdraw_application_failed": "Не удалось отозвать заявку",
-  "withdrawing": "Отзыв заявки…"
+  "withdrawing": "Отзыв заявки…",
+  "find_jobs_cta": "Найти работу"
 }

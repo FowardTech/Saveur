@@ -108,5 +108,12 @@
   "voice_status_thinking": "考え中…",
   "voice_tap_to_interrupt": "タップして中断",
   "suggested_action_title_offer_analyzer": "オファーアナライザー",
-  "suggested_action_title_career_growth": "キャリア成長"
+  "suggested_action_title_career_growth": "キャリア成長",
+  "topic_role_prep": "{{role}}の面接に備えるには、何に集中すべきですか？",
+  "topic_goal_next_step": "「{{goal}}」に向けた次のステップは何ですか？",
+  "topic_resume_review": "私の履歴書を見て、改善点を提案してもらえますか？",
+  "topic_salary_negotiation": "給与交渉はどのように進めるべきですか？",
+  "topic_interview_nerves": "面接中に落ち着いて自信を保つにはどうすればいいですか？",
+  "coach_limit_title": "今月の上限に達しました",
+  "coach_limit_upgrade": "Premiumにアップグレード"
 }

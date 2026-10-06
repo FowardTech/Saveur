@@ -180,5 +180,6 @@
   "when": "日時",
   "where": "場所",
   "withdraw_application_failed": "応募を取り下げできませんでした",
-  "withdrawing": "取り下げ中…"
+  "withdrawing": "取り下げ中…",
+  "find_jobs_cta": "求人を探す"
 }

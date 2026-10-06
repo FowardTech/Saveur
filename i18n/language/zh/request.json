@@ -180,5 +180,6 @@
   "when": "时间",
   "where": "地点",
   "withdraw_application_failed": "无法撤回申请",
-  "withdrawing": "撤回中…"
+  "withdrawing": "撤回中…",
+  "find_jobs_cta": "查找职位"
 }

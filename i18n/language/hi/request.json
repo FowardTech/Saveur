@@ -180,5 +180,6 @@
   "when": "कब",
   "where": "कहाँ",
   "withdraw_application_failed": "आवेदन वापस नहीं लिया जा सका",
-  "withdrawing": "वापस लिया जा रहा है…"
+  "withdrawing": "वापस लिया जा रहा है…",
+  "find_jobs_cta": "नौकरियाँ खोजें"
 }
