@@ -161,5 +161,6 @@
   "search_country": "국가 검색",
   "use_country_only": "{{country}}만 사용(도시 없음)",
   "upgrade_required": "업그레이드 필요",
-  "upgrade_required_body": "이 기능은 유료 요금제에 포함되어 있습니다."
+  "upgrade_required_body": "이 기능은 유료 요금제에 포함되어 있습니다.",
+  "use_typed": "\"{{city}}\" 사용"
 }

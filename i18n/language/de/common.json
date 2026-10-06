@@ -161,5 +161,6 @@
   "search_country": "Land suchen",
   "use_country_only": "Nur {{country}} verwenden (keine Stadt)",
   "upgrade_required": "Upgrade erforderlich",
-  "upgrade_required_body": "Diese Funktion ist Teil eines kostenpflichtigen Tarifs."
+  "upgrade_required_body": "Diese Funktion ist Teil eines kostenpflichtigen Tarifs.",
+  "use_typed": "„{{city}}“ verwenden"
 }

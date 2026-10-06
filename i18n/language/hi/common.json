@@ -161,5 +161,6 @@
   "search_country": "देश खोजें",
   "use_country_only": "केवल {{country}} का उपयोग करें (शहर के बिना)",
   "upgrade_required": "अपग्रेड ज़रूरी है",
-  "upgrade_required_body": "यह सुविधा सशुल्क प्लान का हिस्सा है।"
+  "upgrade_required_body": "यह सुविधा सशुल्क प्लान का हिस्सा है।",
+  "use_typed": "\"{{city}}\" का उपयोग करें"
 }

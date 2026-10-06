@@ -161,5 +161,6 @@
   "search_country": "ابحث عن دولة",
   "use_country_only": "استخدام {{country}} فقط (بدون مدينة)",
   "upgrade_required": "الترقية مطلوبة",
-  "upgrade_required_body": "هذه الميزة جزء من باقة مدفوعة."
+  "upgrade_required_body": "هذه الميزة جزء من باقة مدفوعة.",
+  "use_typed": "استخدام \"{{city}}\""
 }

@@ -161,5 +161,6 @@
   "search_country": "Rechercher un pays",
   "use_country_only": "Utiliser uniquement {{country}} (sans ville)",
   "upgrade_required": "Mise à niveau requise",
-  "upgrade_required_body": "Cette fonctionnalité fait partie d'une offre payante."
+  "upgrade_required_body": "Cette fonctionnalité fait partie d'une offre payante.",
+  "use_typed": "Utiliser « {{city}} »"
 }

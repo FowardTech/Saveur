@@ -161,5 +161,6 @@
   "search_country": "Search country",
   "use_country_only": "Use {{country}} only (no city)",
   "upgrade_required": "Upgrade required",
-  "upgrade_required_body": "This feature is part of a paid plan."
+  "upgrade_required_body": "This feature is part of a paid plan.",
+  "use_typed": "Use \"{{city}}\""
 }

@@ -161,5 +161,6 @@
   "search_country": "Поиск страны",
   "use_country_only": "Использовать только {{country}} (без города)",
   "upgrade_required": "Требуется обновление тарифа",
-  "upgrade_required_body": "Эта функция входит в платный тариф."
+  "upgrade_required_body": "Эта функция входит в платный тариф.",
+  "use_typed": "Использовать «{{city}}»"
 }

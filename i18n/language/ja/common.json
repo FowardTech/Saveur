@@ -161,5 +161,6 @@
   "search_country": "国を検索",
   "use_country_only": "{{country}}のみを使用（都市なし）",
   "upgrade_required": "アップグレードが必要です",
-  "upgrade_required_body": "この機能は有料プランに含まれています。"
+  "upgrade_required_body": "この機能は有料プランに含まれています。",
+  "use_typed": "「{{city}}」を使用"
 }

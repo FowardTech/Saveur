@@ -161,5 +161,6 @@
   "search_country": "搜索国家",
   "use_country_only": "仅使用{{country}}（不选城市）",
   "upgrade_required": "需要升级",
-  "upgrade_required_body": "此功能属于付费套餐。"
+  "upgrade_required_body": "此功能属于付费套餐。",
+  "use_typed": "使用“{{city}}”"
 }
