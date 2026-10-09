@@ -34,8 +34,8 @@ const CoachSetupModal = memo(({ visible, readiness, onStart, onLater }: Props) =
       <Pressable style={styles.backdrop} onPress={onLater}>
         <Pressable onPress={e => e.stopPropagation()}>
           <Layout level="1" style={[styles.card, { width: width - 32, maxWidth: 420 }]}>
-            <View style={[styles.badge, { backgroundColor: theme['color-primary-100'] }]}>
-              <Icon pack="eva" name="flash-outline" style={{ width: 24, height: 24, tintColor: theme['color-primary-500'] }} />
+            <View style={[styles.badge, { backgroundColor: theme['color-badge-info-bg'] }]}>
+              <Icon pack="eva" name="flash-outline" style={{ width: 24, height: 24, tintColor: theme['color-badge-info-text'] }} />
             </View>
             <Text category="h6" bold mt={14}>
               {t('home:coach_readiness_prompt_title', { defaultValue: 'One thing to do first' })}

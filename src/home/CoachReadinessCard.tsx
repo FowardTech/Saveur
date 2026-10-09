@@ -61,7 +61,7 @@ const CoachReadinessCard = memo(({ readiness }: { readiness: CoachReadiness }) =
             progress={percent}
             size={52}
             strokeWidth={6}
-            color={allDone ? theme['color-success-500'] : theme['color-primary-500']}
+            color={allDone ? theme['color-success-500'] : theme['color-primary-100']}
           >
             <Text category="h9" bold>
               {`${percent}%`}
@@ -110,7 +110,7 @@ const CoachReadinessCard = memo(({ readiness }: { readiness: CoachReadiness }) =
                     backgroundColor: step.done
                       ? theme['color-tile-mint-bg']
                       : isNext
-                        ? theme['color-primary-500']
+                        ? theme['color-primary-100']
                         : theme['background-basic-color-3'],
                   },
                 ]}
@@ -161,7 +161,7 @@ const themedStyles = StyleService.create({
     marginTop: 12,
     backgroundColor: 'background-basic-color-2',
     borderWidth: 1,
-    borderColor: 'color-primary-200',
+    borderColor: 'color-primary-100',
   },
   headText: { marginLeft: 12 },
   steps: { marginTop: 14 },
@@ -174,7 +174,7 @@ const themedStyles = StyleService.create({
     marginTop: 8,
     backgroundColor: 'background-basic-color-1',
   },
-  stepNext: { borderWidth: 1, borderColor: 'color-primary-300' },
+  stepNext: { borderWidth: 1, borderColor: 'color-primary-100' },
   stepDone: { opacity: 0.75 },
   stepBadge: {
     width: 30,
@@ -186,7 +186,7 @@ const themedStyles = StyleService.create({
   stepText: { marginLeft: 10, marginRight: 6 },
   struck: { textDecorationLine: 'line-through' },
   startPill: {
-    backgroundColor: 'color-primary-500',
+    backgroundColor: 'color-primary-100',
     borderRadius: 999,
     paddingHorizontal: 9,
     paddingVertical: 4,

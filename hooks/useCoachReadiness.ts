@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { AuthContext } from '../AuthContext';
 import * as documentsService from 'services/documentsService';
+import * as resumeService from 'services/resumeService';
 import * as onboardingAssessmentService from 'services/onboardingAssessmentService';
 
 // "Coach readiness" — product report: "when users login for the first time
@@ -54,10 +55,22 @@ export default function useCoachReadiness(): CoachReadiness {
       // `uid`), so waiting on it would leave this card stuck loading forever.
       if (!hasProfile) return undefined;
       let cancelled = false;
-      documentsService
-        .listDocuments()
-        .then(docs => !cancelled && setHasResume(docs.some(d => d.kind === 'resume')))
-        .catch(() => !cancelled && setHasResume(prev => prev ?? false));
+      // A "resume" here is any file the user uploaded in My Documents (that
+      // screen uploads with no doc_type, which the backend stores as kind
+      // "document" — so matching only kind === "resume" never ticked this off),
+      // or one imported through the Resume Builder. Profile photos (kind
+      // "avatar") and other typed files like certificates don't count.
+      const RESUME_KINDS = [null, undefined, '', 'document', 'resume', 'resume_variant'];
+      Promise.all([
+        documentsService
+          .listDocuments()
+          .then(docs => docs.some(d => RESUME_KINDS.includes(d.kind)))
+          .catch(() => false),
+        resumeService
+          .getImportedSources()
+          .then(sources => Object.keys(sources ?? {}).length > 0)
+          .catch(() => false),
+      ]).then(([fromDocs, fromBuilder]) => !cancelled && setHasResume(fromDocs || fromBuilder));
       onboardingAssessmentService
         .getStatus()
         .then(s => !cancelled && setAssessmentDone(s.personalityCompleted))

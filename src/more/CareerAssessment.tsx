@@ -314,7 +314,7 @@ const CareerAssessment = memo(() => {
           <View key={d.questionId} style={[styles.recapRow, {borderColor: theme['background-basic-color-4']}]}>
             <Icon
               pack="eva"
-              name={d.correct ? 'checkmark-circle-2' : 'close-circle'}
+              name={d.correct ? 'checkmark-circle-2' : 'close-circle-outline'}
               style={[globalStyle.icon20, {tintColor: d.correct ? theme['color-success-500'] : theme['color-danger-500'], marginTop: 2}]}
             />
             <View style={styles.recapTextWrap}>
