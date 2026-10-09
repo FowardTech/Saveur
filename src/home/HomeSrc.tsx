@@ -12,7 +12,6 @@ import AnnouncementBanner from './AnnouncementBanner';
 import ActionCard from 'components/ActionCard';
 import FeatureCard from 'components/FeatureCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
-import * as onboardingAssessmentService from 'services/onboardingAssessmentService';
 import { DailyChallenge } from 'services/dailyChallengeService';
 import * as gamificationService from 'services/gamificationService';
 import { GamificationStreakProps } from 'constants/Types';
@@ -45,6 +44,9 @@ import { getInterviewTypeLabel } from 'utils/interviewTypeLabels';
 import { navigateToJobAlertDetails } from 'navigation/navigationRef';
 import AdPopupModal from 'components/AdPopupModal';
 import WelcomeModal from './WelcomeModal';
+import CoachReadinessCard from './CoachReadinessCard';
+import CoachSetupModal from './CoachSetupModal';
+import useCoachReadiness from 'hooks/useCoachReadiness';
 import AppTour from 'components/AppTour';
 import CoachingReportCard from 'components/CoachingReportCard';
 import ContinueLearningCard from './ContinueLearningCard';
@@ -303,7 +305,7 @@ const HomeSrc = memo(() => {
   // -- on a brand new account this and 'tour' can both be due on the very
   // first Home focus, and welcome is the introduction the tour itself
   // assumes has already happened, so it has to win that race and go first.
-  const OVERLAY_PRIORITY = ['welcome', 'tour', 'assessment', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
+  const OVERLAY_PRIORITY = ['welcome', 'tour', 'coachSetup', 'assessment', 'checkin', 'studentCheckin', 'rating', 'ad'] as const;
   type AutoOverlayKey = (typeof OVERLAY_PRIORITY)[number];
   const [activeOverlay, setActiveOverlay] = React.useState<AutoOverlayKey | null>(null);
   const activeOverlayRef = React.useRef<AutoOverlayKey | null>(null);
@@ -372,54 +374,38 @@ const HomeSrc = memo(() => {
     AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.appTourSeen, profile?.uid), '1').catch(() => { });
   }, [releaseOverlay, profile?.uid]);
 
-  // Product request: "I want us to add prep test and many other
-  // personality test during onboarding and also when user enters the
-  // dashboard for the first time" — a ONE-TIME automatic nudge into
-  // src/more/CareerAssessment.tsx on the first Home focus for anyone who
-  // skipped it at signup (SignupThirdStep's SuccessScr already offers it
-  // directly, so most users never hit this path at all). Unlike
-  // welcome/tour above, this is a full-screen navigation, not an in-place
-  // modal — it still goes through the same overlay queue so it can't fire
-  // in the same tick as the welcome modal or app tour, but releases the
-  // slot immediately after navigating away rather than waiting for a
-  // "close" callback, since leaving Home already ends this overlay's turn.
-  // GET /api/v1/onboarding/status is checked (not just the local
-  // "prompted before" flag) so an existing user who already completed the
-  // assessment some other way (e.g. a future Settings entry point) never
-  // gets nagged just because this specific local flag was never set.
-  useFocusEffect(
-    React.useCallback(() => {
-      let cancelled = false;
-      AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.careerAssessmentPromptSeen, profile?.uid)).then(async seen => {
-        if (seen || cancelled) return;
-        try {
-          const status = await onboardingAssessmentService.getStatus();
-          if (cancelled || status.personalityCompleted) return;
-        } catch {
-          return; // offline/failed status check — don't nag this visit, try again next time
-        }
-        if (cancelled) return;
-        requestOverlay('assessment');
-      });
-      return () => { cancelled = true; };
-    }, [requestOverlay, profile?.uid]),
-  );
-  // Separate from the request above: only actually navigate once
-  // 'assessment' has genuinely won the queue (i.e. no higher-priority
-  // welcome/tour modal is currently showing over Home) — requestOverlay
-  // above only enqueues it, same as every other overlay here. The local
-  // "don't ask again" flag is set right away, before the user has actually
-  // seen the screen — same posture as welcome/tour's own "seen" flags,
-  // which are set on close rather than completion; skipping still counts
-  // as "prompted", the whole point of this being a one-time nudge, not a
-  // gate.
+  // Product report: new users aren't told what to do first so the AI coach
+  // can help them as much as possible. Replaces the old one-time automatic
+  // jump into CareerAssessment (the assessment is now just ONE of the four
+  // essential coach-setup steps — see hooks/useCoachReadiness.ts): a single
+  // "one thing to do first" popup (src/home/CoachSetupModal.tsx) shown once
+  // per account, queued AFTER the welcome card and app tour, only while an
+  // essential step is still missing. The persistent card at the top of Home
+  // (CoachReadinessCard.tsx) remains afterwards. 'assessment' is kept in
+  // OVERLAY_PRIORITY only so its slot/ordering history stays readable.
+  const coachReadiness = useCoachReadiness();
+  const [showCoachSetup, setShowCoachSetup] = React.useState(false);
+  const coachSetupChecked = React.useRef(false);
   React.useEffect(() => {
-    if (activeOverlay !== 'assessment') return;
-    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.careerAssessmentPromptSeen, profile?.uid), '1').catch(() => { });
-    releaseOverlay('assessment');
-    navigate('CareerAssessment', {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeOverlay]);
+    if (coachReadiness.loading || coachReadiness.allDone || coachSetupChecked.current) return;
+    coachSetupChecked.current = true;
+    AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.coachSetupPromptSeen, profile?.uid)).then(seen => {
+      if (!seen) {
+        setShowCoachSetup(true);
+        requestOverlay('coachSetup');
+      }
+    });
+  }, [coachReadiness.loading, coachReadiness.allDone, requestOverlay, profile?.uid]);
+  const closeCoachSetup = React.useCallback(() => {
+    setShowCoachSetup(false);
+    releaseOverlay('coachSetup');
+    AsyncStorage.setItem(accountScopedKey(EKeyAsyncStorage.coachSetupPromptSeen, profile?.uid), '1').catch(() => { });
+  }, [releaseOverlay, profile?.uid]);
+  const startCoachSetup = React.useCallback(() => {
+    const step = coachReadiness.next;
+    closeCoachSetup();
+    if (step) (navigate as unknown as (...args: unknown[]) => void)(step.route, step.route === 'CareerAssessment' ? {} : undefined);
+  }, [closeCoachSetup, coachReadiness.next, navigate]);
 
   // Regular QA rating prompt (product request item: "a regular if not
   // weekly or monthly app rating that will pop up as modal... for quality
@@ -1031,6 +1017,8 @@ const HomeSrc = memo(() => {
         notification={unreadCount}
       />
       <Content contentContainerStyle={styles.content} padder>
+        {/* Coach readiness — the first thing new users see. See CoachReadinessCard.tsx. */}
+        <CoachReadinessCard readiness={coachReadiness} />
         {/* SYMPHONY REDESIGN (explicit product request, with reference
             screenshots: "that homescreen has too much content... make it
             simple... just have 3 or 4 horizontal cards, that's enough...
@@ -1347,6 +1335,12 @@ const HomeSrc = memo(() => {
       />
       <WelcomeModal visible={showWelcome && activeOverlay === 'welcome'} onDismiss={onCloseWelcome} />
       <AppTour visible={showTour && activeOverlay === 'tour'} onClose={onCloseTour} />
+      <CoachSetupModal
+        visible={showCoachSetup && activeOverlay === 'coachSetup'}
+        readiness={coachReadiness}
+        onStart={startCoachSetup}
+        onLater={closeCoachSetup}
+      />
       <AppRatingModal
         visible={showRatingPrompt && activeOverlay === 'rating'}
         onSubmit={onSubmitRating}

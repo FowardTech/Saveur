@@ -256,5 +256,22 @@
   "salary_benchmark_title": "مقارنة الرواتب",
   "salary_benchmark_subtitle": "اطّلع على نطاق الرواتب في السوق لأي وظيفة",
   "leaderboard_eyebrow": "نافِس",
-  "leaderboard_title": "لوحة المتصدرين"
+  "leaderboard_title": "لوحة المتصدرين",
+  "coach_readiness_resume_label": "ارفع سيرتك الذاتية",
+  "coach_readiness_resume_why": "يقرأها مدربك ليخصّص النصائح وفق خبرتك الفعلية ودرجة ATS الخاصة بك.",
+  "coach_readiness_roles_label": "اختر وظائفك ودولك المستهدفة",
+  "coach_readiness_roles_why": "تدعم مطابقة الوظائف وخارطة طريقك وتدريب المقابلات الخاص بكل وظيفة.",
+  "coach_readiness_goal_label": "اختر هدفك المهني",
+  "coach_readiness_goal_why": "يحدد توجّه التدريب والنصائح اليومية والخطة التي نبنيها لك.",
+  "coach_readiness_assessment_label": "أكمل التقييم المهني",
+  "coach_readiness_assessment_why": "يبني Career DNA الخاص بك لتناسب النصائح نقاط قوتك وأسلوب عملك.",
+  "coach_readiness_done_title": "مدربك الذكي جاهز",
+  "coach_readiness_done_subtitle": "أصبح لدى Saveur ما يحتاجه لتخصيص التدريب والممارسة والتوصيات لك.",
+  "coach_readiness_title": "أعدّ مدربك المهني الذكي",
+  "coach_readiness_subtitle": "أكمل هذه الخطوات ({{count}}) أولاً — سيقدّم لك مدربك مساعدة أفضل وأكثر تخصيصاً بعد أن يتعرف عليك.",
+  "coach_readiness_start_here": "ابدأ من هنا",
+  "coach_readiness_prompt_title": "أول شيء عليك فعله",
+  "coach_readiness_prompt_body": "مدربك الذكي مفيد بقدر ما يعرفه عنك. أكمل هذه الخطوات السريعة ({{count}}) ليقدّم لك المساعدة الأدق والأكثر تخصيصاً.",
+  "coach_readiness_prompt_cta": "ابدأ: {{step}}",
+  "coach_readiness_prompt_later": "سأفعل ذلك لاحقاً"
 }

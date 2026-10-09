@@ -204,6 +204,14 @@ export enum EKeyAsyncStorage {
   // whether the feature itself is reachable (it's always reachable from
   // Settings to retake).
   careerAssessmentPromptSeen = 'careerAssessmentPromptSeen',
+  // Product report: new users aren't told what to do first so the AI coach
+  // can help them as much as possible. Both per-account (accountScopedKey):
+  // `coachSetupPromptSeen` = the one-time first-login "one thing to do first"
+  // popup (src/home/CoachSetupModal.tsx) has been shown; `coachReadinessClosed`
+  // = the user closed the "your coach is ready" state of the Home readiness
+  // card (src/home/CoachReadinessCard.tsx). An UNFINISHED card can't be closed.
+  coachSetupPromptSeen = 'coachSetupPromptSeen',
+  coachReadinessClosed = 'coachReadinessClosed',
 }
 
 // BUG FIX (product report: "the tour guide always shows every time the

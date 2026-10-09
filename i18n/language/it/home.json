@@ -256,5 +256,22 @@
   "salary_benchmark_title": "Confronto salariale",
   "salary_benchmark_subtitle": "Scopri la fascia retributiva di mercato per qualsiasi ruolo",
   "leaderboard_eyebrow": "Competi",
-  "leaderboard_title": "Classifica"
+  "leaderboard_title": "Classifica",
+  "coach_readiness_resume_label": "Carica il tuo CV",
+  "coach_readiness_resume_why": "Il tuo coach lo legge per adattare i consigli alla tua esperienza reale e al tuo punteggio ATS.",
+  "coach_readiness_roles_label": "Scegli ruoli e paesi target",
+  "coach_readiness_roles_why": "Alimenta le offerte di lavoro, la tua roadmap e la pratica dei colloqui per ruolo.",
+  "coach_readiness_goal_label": "Scegli il tuo obiettivo di carriera",
+  "coach_readiness_goal_why": "Dà forma al tuo coaching, ai consigli giornalieri e al piano che creiamo per te.",
+  "coach_readiness_assessment_label": "Fai la valutazione di carriera",
+  "coach_readiness_assessment_why": "Crea il tuo Career DNA così i consigli si adattano ai tuoi punti di forza e al tuo stile di lavoro.",
+  "coach_readiness_done_title": "Il tuo coach IA è pronto",
+  "coach_readiness_done_subtitle": "Saveur ora ha ciò che serve per personalizzare coaching, pratica e consigli.",
+  "coach_readiness_title": "Configura il tuo coach di carriera IA",
+  "coach_readiness_subtitle": "Completa prima questi {{count}} passaggi: il tuo coach ti aiuterà molto meglio e in modo più personale quando ti conoscerà.",
+  "coach_readiness_start_here": "Inizia da qui",
+  "coach_readiness_prompt_title": "La prima cosa da fare",
+  "coach_readiness_prompt_body": "Il tuo coach IA è valido quanto ciò che sa di te. Completa questi {{count}} passaggi rapidi per ricevere un aiuto più preciso e personale.",
+  "coach_readiness_prompt_cta": "Inizia: {{step}}",
+  "coach_readiness_prompt_later": "Lo farò più tardi"
 }

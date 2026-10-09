@@ -256,5 +256,22 @@
   "salary_benchmark_title": "Сравнение зарплат",
   "salary_benchmark_subtitle": "Узнайте рыночный диапазон зарплат для любой должности",
   "leaderboard_eyebrow": "Соревнуйтесь",
-  "leaderboard_title": "Рейтинг"
+  "leaderboard_title": "Рейтинг",
+  "coach_readiness_resume_label": "Загрузите резюме",
+  "coach_readiness_resume_why": "Ваш коуч читает его, чтобы адаптировать советы к вашему реальному опыту и баллу ATS.",
+  "coach_readiness_roles_label": "Выберите целевые роли и страны",
+  "coach_readiness_roles_why": "Влияет на подбор вакансий, вашу дорожную карту и практику собеседований по ролям.",
+  "coach_readiness_goal_label": "Выберите карьерную цель",
+  "coach_readiness_goal_why": "Определяет коучинг, ежедневные советы и план, который мы для вас строим.",
+  "coach_readiness_assessment_label": "Пройдите карьерную оценку",
+  "coach_readiness_assessment_why": "Создаёт ваш Career DNA, чтобы советы соответствовали вашим сильным сторонам и стилю работы.",
+  "coach_readiness_done_title": "Ваш ИИ-коуч готов",
+  "coach_readiness_done_subtitle": "Теперь у Saveur есть всё, чтобы персонализировать коучинг, практику и рекомендации.",
+  "coach_readiness_title": "Настройте своего ИИ-карьерного коуча",
+  "coach_readiness_subtitle": "Сначала выполните эти шаги ({{count}}) — коуч поможет гораздо лучше и персональнее, когда узнает вас.",
+  "coach_readiness_start_here": "Начните здесь",
+  "coach_readiness_prompt_title": "Первое, что нужно сделать",
+  "coach_readiness_prompt_body": "ИИ-коуч полезен ровно настолько, насколько он знает вас. Выполните эти быстрые шаги ({{count}}), чтобы он мог помогать точнее и персональнее.",
+  "coach_readiness_prompt_cta": "Начать: {{step}}",
+  "coach_readiness_prompt_later": "Сделаю позже"
 }

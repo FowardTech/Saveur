@@ -256,5 +256,22 @@
   "salary_benchmark_title": "Referência salarial",
   "salary_benchmark_subtitle": "Veja a faixa salarial de mercado para qualquer cargo",
   "leaderboard_eyebrow": "Compita",
-  "leaderboard_title": "Ranking"
+  "leaderboard_title": "Ranking",
+  "coach_readiness_resume_label": "Envie seu currículo",
+  "coach_readiness_resume_why": "Seu coach o lê para adaptar os conselhos à sua experiência real e à sua pontuação ATS.",
+  "coach_readiness_roles_label": "Escolha seus cargos e países-alvo",
+  "coach_readiness_roles_why": "Alimenta as vagas, seu roteiro e a prática de entrevistas por cargo.",
+  "coach_readiness_goal_label": "Escolha seu objetivo de carreira",
+  "coach_readiness_goal_why": "Molda seu coaching, as dicas diárias e o plano que criamos para você.",
+  "coach_readiness_assessment_label": "Faça a avaliação de carreira",
+  "coach_readiness_assessment_why": "Cria seu Career DNA para que os conselhos combinem com seus pontos fortes e estilo de trabalho.",
+  "coach_readiness_done_title": "Seu coach de IA está pronto",
+  "coach_readiness_done_subtitle": "O Saveur agora tem o que precisa para personalizar seu coaching, prática e recomendações.",
+  "coach_readiness_title": "Configure seu coach de carreira de IA",
+  "coach_readiness_subtitle": "Conclua primeiro estas {{count}} etapas: seu coach ajuda muito mais e de forma mais pessoal quando conhece você.",
+  "coach_readiness_start_here": "Comece aqui",
+  "coach_readiness_prompt_title": "A primeira coisa a fazer",
+  "coach_readiness_prompt_body": "Seu coach de IA é tão bom quanto o que sabe sobre você. Conclua estas {{count}} etapas rápidas para ele dar a ajuda mais precisa e pessoal.",
+  "coach_readiness_prompt_cta": "Começar: {{step}}",
+  "coach_readiness_prompt_later": "Farei isso depois"
 }

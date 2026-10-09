@@ -256,5 +256,22 @@
   "salary_benchmark_title": "給与ベンチマーク",
   "salary_benchmark_subtitle": "あらゆる職種の市場給与レンジを確認",
   "leaderboard_eyebrow": "競う",
-  "leaderboard_title": "ランキング"
+  "leaderboard_title": "ランキング",
+  "coach_readiness_resume_label": "履歴書をアップロード",
+  "coach_readiness_resume_why": "コーチが読み取り、あなたの実際の経験とATSスコアに合わせてアドバイスします。",
+  "coach_readiness_roles_label": "希望職種と国を選ぶ",
+  "coach_readiness_roles_why": "求人マッチ、ロードマップ、職種別の面接練習に活用されます。",
+  "coach_readiness_goal_label": "キャリア目標を選ぶ",
+  "coach_readiness_goal_why": "コーチング、毎日のヒント、作成するプランの方向性を決めます。",
+  "coach_readiness_assessment_label": "キャリア診断を受ける",
+  "coach_readiness_assessment_why": "Career DNAを作成し、あなたの強みや働き方に合ったアドバイスにします。",
+  "coach_readiness_done_title": "AIコーチの準備が整いました",
+  "coach_readiness_done_subtitle": "Saveurがコーチング、練習、おすすめをパーソナライズするために必要な情報が揃いました。",
+  "coach_readiness_title": "AIキャリアコーチを設定しましょう",
+  "coach_readiness_subtitle": "まずこの{{count}}ステップを完了してください。コーチがあなたを知るほど、より的確で個人に合ったサポートができます。",
+  "coach_readiness_start_here": "ここから開始",
+  "coach_readiness_prompt_title": "最初にやること",
+  "coach_readiness_prompt_body": "AIコーチはあなたについて知っている分だけ役に立ちます。この{{count}}つの簡単なステップを完了すると、最も正確でパーソナルなサポートが受けられます。",
+  "coach_readiness_prompt_cta": "開始：{{step}}",
+  "coach_readiness_prompt_later": "あとでやる"
 }

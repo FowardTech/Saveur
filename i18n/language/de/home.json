@@ -256,5 +256,22 @@
   "salary_benchmark_title": "Gehaltsvergleich",
   "salary_benchmark_subtitle": "Sieh die marktübliche Gehaltsspanne für jede Rolle",
   "leaderboard_eyebrow": "Miteinander messen",
-  "leaderboard_title": "Bestenliste"
+  "leaderboard_title": "Bestenliste",
+  "coach_readiness_resume_label": "Lebenslauf hochladen",
+  "coach_readiness_resume_why": "Dein Coach liest ihn, um Ratschläge an deine tatsächliche Erfahrung und deinen ATS-Score anzupassen.",
+  "coach_readiness_roles_label": "Zielrollen und -länder wählen",
+  "coach_readiness_roles_why": "Steuert Jobvorschläge, deine Roadmap und rollenspezifisches Interviewtraining.",
+  "coach_readiness_goal_label": "Karriereziel auswählen",
+  "coach_readiness_goal_why": "Prägt dein Coaching, die täglichen Tipps und den Plan, den wir für dich erstellen.",
+  "coach_readiness_assessment_label": "Karriere-Assessment machen",
+  "coach_readiness_assessment_why": "Erstellt deine Career DNA, damit die Ratschläge zu deinen Stärken und deinem Arbeitsstil passen.",
+  "coach_readiness_done_title": "Dein KI-Coach ist bereit",
+  "coach_readiness_done_subtitle": "Saveur hat jetzt, was es braucht, um Coaching, Training und Empfehlungen zu personalisieren.",
+  "coach_readiness_title": "Richte deinen KI-Karrierecoach ein",
+  "coach_readiness_subtitle": "Schließe zuerst diese {{count}} Schritte ab – dein Coach hilft dir deutlich besser und persönlicher, wenn er dich kennt.",
+  "coach_readiness_start_here": "Hier starten",
+  "coach_readiness_prompt_title": "Als Erstes zu tun",
+  "coach_readiness_prompt_body": "Dein KI-Coach ist nur so gut wie das, was er über dich weiß. Erledige diese {{count}} kurzen Schritte, damit er dir die genaueste, persönlichste Hilfe geben kann.",
+  "coach_readiness_prompt_cta": "Starten: {{step}}",
+  "coach_readiness_prompt_later": "Später erledigen"
 }

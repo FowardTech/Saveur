@@ -256,5 +256,22 @@
   "salary_benchmark_title": "薪资基准",
   "salary_benchmark_subtitle": "查看任意职位的市场薪资范围",
   "leaderboard_eyebrow": "一较高下",
-  "leaderboard_title": "排行榜"
+  "leaderboard_title": "排行榜",
+  "coach_readiness_resume_label": "上传你的简历",
+  "coach_readiness_resume_why": "你的教练会阅读它，根据你的真实经历和 ATS 分数来定制建议。",
+  "coach_readiness_roles_label": "选择目标职位和国家",
+  "coach_readiness_roles_why": "为职位推荐、你的路线图和针对职位的面试练习提供支持。",
+  "coach_readiness_goal_label": "选择你的职业目标",
+  "coach_readiness_goal_why": "决定你的辅导方向、每日提示以及我们为你制定的计划。",
+  "coach_readiness_assessment_label": "完成职业测评",
+  "coach_readiness_assessment_why": "生成你的 Career DNA，让建议契合你的优势和工作风格。",
+  "coach_readiness_done_title": "你的 AI 教练已就绪",
+  "coach_readiness_done_subtitle": "Saveur 现在已掌握所需信息，可以个性化你的辅导、练习和推荐。",
+  "coach_readiness_title": "设置你的 AI 职业教练",
+  "coach_readiness_subtitle": "请先完成这 {{count}} 个步骤——教练了解你之后，会给出好得多、更个性化的帮助。",
+  "coach_readiness_start_here": "从这里开始",
+  "coach_readiness_prompt_title": "首先要做的一件事",
+  "coach_readiness_prompt_body": "AI 教练能帮你多少，取决于它对你的了解。完成这 {{count}} 个简单步骤，它就能给你最准确、最个性化的帮助。",
+  "coach_readiness_prompt_cta": "开始：{{step}}",
+  "coach_readiness_prompt_later": "稍后再做"
 }

@@ -256,5 +256,22 @@
   "salary_benchmark_title": "Salary Benchmark",
   "salary_benchmark_subtitle": "See the market pay range for any role",
   "leaderboard_eyebrow": "Compete",
-  "leaderboard_title": "Leaderboard"
+  "leaderboard_title": "Leaderboard",
+  "coach_readiness_resume_label": "Upload your resume",
+  "coach_readiness_resume_why": "Your coach reads it to tailor advice to your real experience and ATS score.",
+  "coach_readiness_roles_label": "Choose your target roles & countries",
+  "coach_readiness_roles_why": "Powers job matches, your roadmap and role-specific interview practice.",
+  "coach_readiness_goal_label": "Pick your career goal",
+  "coach_readiness_goal_why": "Shapes your coaching, daily tips and the plan we build for you.",
+  "coach_readiness_assessment_label": "Take the career assessment",
+  "coach_readiness_assessment_why": "Builds your Career DNA so advice fits your strengths and work style.",
+  "coach_readiness_done_title": "Your AI coach is ready",
+  "coach_readiness_done_subtitle": "Saveur now has what it needs to personalize your coaching, practice and recommendations.",
+  "coach_readiness_title": "Set up your AI career coach",
+  "coach_readiness_subtitle": "Complete these {{count}} steps first — your coach gives much better, more personal help once it knows you.",
+  "coach_readiness_start_here": "Start here",
+  "coach_readiness_prompt_title": "One thing to do first",
+  "coach_readiness_prompt_body": "Your AI coach is only as good as what it knows about you. Finish these {{count}} quick steps so it can give you the most accurate, personal help.",
+  "coach_readiness_prompt_cta": "Start: {{step}}",
+  "coach_readiness_prompt_later": "I'll do it later"
 }
