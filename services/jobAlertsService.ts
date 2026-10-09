@@ -23,6 +23,7 @@ function currentLanguage(): string {
 //                                       goalTipsService.getTodayTips).
 //   POST /api/v1/job-alerts/read     — {ids: [...]} mark as read
 //   POST /api/v1/job-alerts/refresh  — manual re-scan, for pull-to-refresh
+//   POST /api/v1/job-alerts/ensure-fresh — silent "keep alerts coming" ping on app open/foreground
 //                                       (see src/more/JobAlerts.tsx)
 //
 // This app never crawls/searches for jobs itself — that's backend-owned. The
@@ -233,6 +234,22 @@ export async function markJobAlertsRead(ids: string[]): Promise<void> {
   if (cached) {
     const idSet = new Set(ids);
     await writeCache(cached.map(a => (idSet.has(a.id) ? {...a, read: true} : a)));
+  }
+}
+
+/**
+ * POST /api/v1/job-alerts/ensure-fresh — product report: job alerts only
+ * arrived after the user opened the Job Alerts screen. Called silently from
+ * Home on launch and on every foreground return so discovery no longer
+ * depends on visiting that screen. The backend rate-limits this per user to
+ * once per admin refresh interval and returns immediately; it never throws
+ * here (non-subscribers get a 402/403, offline fails) — it's best-effort.
+ */
+export async function ensureJobAlertsFresh(): Promise<void> {
+  try {
+    await apiClient.post('/api/v1/job-alerts/ensure-fresh');
+  } catch {
+    // best-effort
   }
 }
 

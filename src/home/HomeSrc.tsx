@@ -14,6 +14,7 @@ import FeatureCard from 'components/FeatureCard';
 import * as dailyChallengeService from 'services/dailyChallengeService';
 import { DailyChallenge } from 'services/dailyChallengeService';
 import * as gamificationService from 'services/gamificationService';
+import { ensureJobAlertsFresh } from 'services/jobAlertsService';
 import { GamificationStreakProps } from 'constants/Types';
 import { useTranslation } from 'react-i18next';
 import { RootStackParamList } from 'navigation/types';
@@ -628,6 +629,20 @@ const HomeSrc = memo(() => {
     });
     return () => listener.remove();
   }, [loadUnreadCount]);
+
+  // Keep job alerts coming without the user ever opening the Job Alerts
+  // screen (product report: alerts only arrived after navigating there).
+  // Silent, best-effort ping on Home mount and on every foreground return;
+  // the backend rate-limits it per user to once per refresh interval, and new
+  // matches reach the user as a push + unread badge as usual.
+  React.useEffect(() => {
+    if (!profile) return undefined;
+    ensureJobAlertsFresh();
+    const listener = AppState.addEventListener('change', nextState => {
+      if (nextState === 'active') ensureJobAlertsFresh();
+    });
+    return () => listener.remove();
+  }, [profile]);
 
   // Non-blocking "verify your email" banner — see AuthContext.emailVerified's
   // doc comment. Deliberately NOT a hard gate on the rest of the app: an
