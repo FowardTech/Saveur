@@ -41,6 +41,7 @@ export interface CoachReadiness {
 export default function useCoachReadiness(): CoachReadiness {
   const { t } = useTranslation(['home']);
   const { profile } = React.useContext(AuthContext);
+  const hasProfile = !!profile;
   const [hasResume, setHasResume] = React.useState<boolean | undefined>(undefined);
   const [assessmentDone, setAssessmentDone] = React.useState<boolean | undefined>(undefined);
 
@@ -48,7 +49,10 @@ export default function useCoachReadiness(): CoachReadiness {
   // is reflected the moment the user comes back.
   useFocusEffect(
     React.useCallback(() => {
-      if (!profile?.uid) return undefined;
+      // NOTE: gate on `profile` itself, not `profile.uid` — the mobile profile's
+      // `uid` is never populated (the backend sends `id`, authService only maps
+      // `uid`), so waiting on it would leave this card stuck loading forever.
+      if (!hasProfile) return undefined;
       let cancelled = false;
       documentsService
         .listDocuments()
@@ -61,7 +65,7 @@ export default function useCoachReadiness(): CoachReadiness {
       return () => {
         cancelled = true;
       };
-    }, [profile?.uid]),
+    }, [hasProfile]),
   );
 
   return React.useMemo(() => {

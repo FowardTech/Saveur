@@ -37,11 +37,11 @@ const CoachReadinessCard = memo(({ readiness }: { readiness: CoachReadiness }) =
   const [closed, setClosed] = React.useState<boolean | undefined>(undefined);
 
   React.useEffect(() => {
-    if (!profile?.uid) return;
+    if (!profile) return; // not gated on profile.uid — it's never populated on mobile
     AsyncStorage.getItem(accountScopedKey(EKeyAsyncStorage.coachReadinessClosed, profile.uid))
       .then(v => setClosed(!!v))
       .catch(() => setClosed(false));
-  }, [profile?.uid]);
+  }, [profile]);
 
   const onClose = React.useCallback(() => {
     setClosed(true);
