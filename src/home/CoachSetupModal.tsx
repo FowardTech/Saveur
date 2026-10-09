@@ -53,7 +53,7 @@ const CoachSetupModal = memo(({ visible, readiness, onStart, onLater }: Props) =
                 <Flex key={s.key} justify="flex-start" itemsCenter style={styles.row}>
                   <Icon
                     pack="eva"
-                    name={s.done ? 'checkmark-circle-2' : 'arrow-circle-right-outline'}
+                    name={s.done ? 'checkmark-circle-2' : 'radio-button-off-outline'}
                     style={{
                       width: 18,
                       height: 18,
