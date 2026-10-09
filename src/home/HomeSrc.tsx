@@ -1242,7 +1242,7 @@ const HomeSrc = memo(() => {
         ) : (
           <FeatureCard
             heroIcon="flash-outline"
-          backdrop="#7C5CFF"
+            backdrop="#19B87A"
             eyebrow={t('home:mission_eyebrow', { defaultValue: 'Up next' }).toString()}
             title={missionHero.title}
             subtitle={missionHero.subtitle}
