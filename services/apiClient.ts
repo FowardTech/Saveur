@@ -1,3 +1,4 @@
+import {Platform} from 'react-native';
 import axios, {AxiosError} from 'axios';
 import auth from '@react-native-firebase/auth';
 import i18n from 'i18next';
@@ -46,6 +47,8 @@ apiClient.interceptors.request.use(async config => {
   // Tells the backend which language to return stored / external content in.
   config.headers = config.headers ?? {};
   (config.headers as Record<string, string>)['X-App-Language'] = i18n.language || 'en';
+  // Which client this is (admin console's Platform column) -- 'ios' | 'android'.
+  (config.headers as Record<string, string>)['X-Client-Platform'] = Platform.OS;
   const user = auth().currentUser;
   if (user) {
     // Firebase caches the ID token locally and only makes a network call to
