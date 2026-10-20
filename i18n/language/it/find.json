@@ -527,5 +527,7 @@
   "stdin_needed_body": "Le esecuzioni qui non sono un terminale interattivo: digita sotto tutto ciò che il programma chiederà, un valore per riga e nell'ordine richiesto, poi premi Esegui.",
   "stdin_hint_blank": "(input)",
   "stdin_label": "Input del programma (stdin) — un valore per riga",
-  "stdin_missing_hint": "Il tuo programma ha provato a leggere un input non fornito. Chiudi, digita l'input (un valore per riga) nella schermata di esecuzione e riesegui."
+  "stdin_missing_hint": "Il tuo programma ha provato a leggere un input non fornito. Chiudi, digita l'input (un valore per riga) nella schermata di esecuzione e riesegui.",
+  "console_input_placeholder": "Scrivi la risposta e premi Invio",
+  "stdin_prefill_label": "Input precompilato (facoltativo) — un valore per riga"
 }

@@ -1,5 +1,5 @@
 import React, {memo} from 'react';
-import {Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, TouchableOpacity, View} from 'react-native';
+import {Alert, KeyboardAvoidingView, Modal, Platform, ScrollView, TextInput, TouchableOpacity, View} from 'react-native';
 import {TopNavigation, StyleService, useStyleSheet, useTheme, Icon, Input, Spinner} from '@ui-kitten/components';
 import {NavigationProp, RouteProp, useNavigation, useRoute} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
@@ -18,7 +18,7 @@ import * as codingProjectsService from 'services/codingProjectsService';
 import {CodingProjectDetail, ProjectRunResult} from 'services/codingProjectsService';
 import * as projectActions from 'services/projectActionsService';
 import ShareToUserModal from 'components/ShareToUserModal';
-import {needsStdin, pythonInputPrompts, looksLikeMissingInput} from 'utils/stdinNeeds';
+import {advance, needsUpfrontInput, InteractiveState} from 'utils/interactiveRun';
 import CodeEditorWebView, {codeMirrorModeForPath} from 'components/CodeEditorWebView';
 
 // Coding Projects editor — the actual multi-file/folder code workspace
@@ -445,36 +445,36 @@ const CodingProjectEditor = memo(() => {
     );
   };
 
-  // Product report: a Python script calling input() failed with "EOFError: EOF
-  // when reading a line" — runs aren't an interactive terminal, so the input
-  // must be supplied up front. Ask for it before running (a second press with
-  // the field still empty just runs).
+  // Terminal-style interactive run (utils/interactiveRun.ts): the program is
+  // replayed with each answer the user types, so a Python/Java script that
+  // calls input()/Scanner works like in a real terminal. Product report: a
+  // Python script calling input() failed with "EOFError: EOF when reading a
+  // line" because runs aren't interactive and no input was supplied.
+  const [session, setSession] = React.useState<InteractiveState | null>(null);
+  const [consoleLine, setConsoleLine] = React.useState('');
+  // Languages that can't prompt live (C, C++, Go, JS, ...): ask for all the
+  // input up front. A second Run tap with the box still empty just runs.
   const [inputAsked, setInputAsked] = React.useState(false);
   const runEntryLanguage = runEntry ? runLanguageForPath(runEntry) : '';
   const runEntryContent = runEntry ? files.find(f => f.path === runEntry)?.content ?? '' : '';
-  const entryNeedsInput = !!runEntry && needsStdin(runEntryLanguage, runEntryContent);
-  const inputRequired = entryNeedsInput && runStdin.trim() === '';
-  const inputHints = runEntryLanguage === 'python' ? pythonInputPrompts(runEntryContent) : [];
+  const inputRequired = !!runEntry && needsUpfrontInput(runEntryLanguage, runEntryContent) && runStdin.trim() === '';
   React.useEffect(() => {
     setInputAsked(false);
   }, [runEntry]);
 
-  const onRun = async () => {
-    if (running || !runEntry) return;
-    if (inputRequired && !inputAsked) {
-      setInputAsked(true);
-      return;
-    }
+  const runSession = async (answers: string[], snapshots: string[]) => {
+    if (!runEntry) return;
     setRunning(true);
-    setRunResult(null);
     try {
-      const result = await codingProjectsService.runProject(
-        projectId,
-        runEntry,
-        runLanguageForPath(runEntry),
-        runStdin || undefined,
+      const next = await advance(
+        stdinText => codingProjectsService.runProject(projectId, runEntry, runEntryLanguage, stdinText || undefined),
+        runEntryLanguage,
+        answers,
+        snapshots,
+        runEntryContent,
       );
-      setRunResult(result);
+      setSession(next);
+      setRunResult(next.last as ProjectRunResult | null);
       setRunPickerVisible(false);
       setRunResultVisible(true);
     } catch (e: any) {
@@ -485,6 +485,27 @@ const CodingProjectEditor = memo(() => {
     } finally {
       setRunning(false);
     }
+  };
+
+  const onRun = async () => {
+    if (running || !runEntry) return;
+    if (inputRequired && !inputAsked) {
+      setInputAsked(true);
+      return;
+    }
+    setRunResult(null);
+    setSession(null);
+    setConsoleLine('');
+    // Anything typed in the optional "pre-filled input" box seeds the answers.
+    const seeded = runStdin.trim() === '' ? [] : runStdin.replace(/\r/g, '').replace(/\n+$/, '').split('\n');
+    await runSession(seeded, []);
+  };
+
+  const onSubmitConsoleLine = () => {
+    if (!session || !session.waiting || running) return;
+    const line = consoleLine;
+    setConsoleLine('');
+    runSession([...session.answers, line], session.snapshots);
   };
 
   const previewHtml = React.useMemo(() => {
@@ -805,15 +826,10 @@ const CodingProjectEditor = memo(() => {
                     "Runs here aren't an interactive terminal, so type everything the program will ask for below — one value per line, in the order it asks — then tap Run.",
                 })}
               </Text>
-              {inputHints.map((h, i) => (
-                <Text key={i} category="h10" mt={2} style={{color: '#92400E'}}>
-                  {`${i + 1}. ${h || t('find:stdin_hint_blank', {defaultValue: '(input)'})}`}
-                </Text>
-              ))}
             </View>
           ) : null}
           <Text category="h10" bold status="placeholder" mb={4}>
-            {t('find:stdin_label', {defaultValue: 'Program input (stdin) — one value per line'})}
+            {t('find:stdin_prefill_label', {defaultValue: 'Pre-filled input (optional) — one value per line'})}
           </Text>
           <Input
             placeholder={t('find:stdin_placeholder', {defaultValue: 'Anything your program reads from stdin'}).toString()}
@@ -835,6 +851,7 @@ const CodingProjectEditor = memo(() => {
 
       {/* --- Run result --- */}
       <Modal visible={runResultVisible} animationType="slide" transparent onRequestClose={() => setRunResultVisible(false)}>
+        <KeyboardAvoidingView style={styles.kavFill} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={() => setRunResultVisible(false)} />
         <View style={[styles.sheet, {backgroundColor: '#1E1E2E'}]}>
           <Flex justify="space-between" itemsCenter mb={12}>
@@ -869,25 +886,17 @@ const CodingProjectEditor = memo(() => {
                   style={{color: runResult.stderr ? '#FF6B6B' : '#5FE38E', fontFamily: MONO_FONT}}>
                   {runResult.status ?? (runResult.stderr ? t('find:error_status', {defaultValue: 'Error'}) : t('find:success_status', {defaultValue: 'Success'}))}
                 </Text>
-                {runResult.stdout ? (
+                {(session ? session.transcript : runResult.stdout) ? (
                   <Text category="h9-s" style={{color: '#E4E4F0', fontFamily: MONO_FONT}}>
-                    {runResult.stdout}
+                    {session ? session.transcript : runResult.stdout}
                   </Text>
                 ) : null}
-                {runResult.stderr ? (
+                {runResult.stderr && !session?.waiting ? (
                   <Text category="h9-s" mt={8} style={{color: '#FF6B6B', fontFamily: MONO_FONT}}>
                     {runResult.stderr}
                   </Text>
                 ) : null}
-                {looksLikeMissingInput(runResult.stderr) ? (
-                  <Text category="h9" bold mt={10} style={{color: '#F5C26B'}}>
-                    {t('find:stdin_missing_hint', {
-                      defaultValue:
-                        'Your program tried to read input that was not provided. Close this, type the input (one value per line) in the Run sheet, then run again.',
-                    })}
-                  </Text>
-                ) : null}
-                {!runResult.stdout && !runResult.stderr ? (
+                {!session?.transcript && !runResult.stdout && !runResult.stderr ? (
                   <Text category="h9-s" style={{color: '#8B8BA7', fontFamily: MONO_FONT}}>
                     {t('find:no_output', {defaultValue: '(no output)'})}
                   </Text>
@@ -895,7 +904,34 @@ const CodingProjectEditor = memo(() => {
               </>
             ) : null}
           </ScrollView>
+          {session?.waiting ? (
+            <View style={styles.consoleRow}>
+              <Text category="h9" bold style={{color: '#5FE38E', fontFamily: MONO_FONT}}>
+                {'>'}
+              </Text>
+              <TextInput
+                value={consoleLine}
+                onChangeText={setConsoleLine}
+                onSubmitEditing={onSubmitConsoleLine}
+                editable={!running}
+                autoFocus
+                autoCapitalize="none"
+                autoCorrect={false}
+                returnKeyType="send"
+                blurOnSubmit={false}
+                placeholder={t('find:console_input_placeholder', {defaultValue: 'Type your answer and press Return'}).toString()}
+                placeholderTextColor="#6B7280"
+                style={styles.consoleInput}
+              />
+            </View>
+          ) : null}
+          {running ? (
+            <Text category="h10" mt={8} style={{color: '#8B8BA7', fontFamily: MONO_FONT}}>
+              {t('find:running', {defaultValue: 'Running…'})}
+            </Text>
+          ) : null}
         </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* --- Web preview --- */}
@@ -983,6 +1019,9 @@ const themedStyles = StyleService.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  kavFill: {
+    flex: 1,
+  },
   sheetBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
@@ -1003,6 +1042,22 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  consoleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#33334D',
+  },
+  consoleInput: {
+    flex: 1,
+    marginLeft: 8,
+    paddingVertical: 6,
+    color: '#E4E4F0',
+    fontFamily: MONO_FONT,
+    fontSize: 14,
   },
   inputWarning: {
     backgroundColor: '#FEF3C7',

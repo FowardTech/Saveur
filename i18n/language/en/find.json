@@ -527,5 +527,7 @@
   "stdin_needed_body": "Runs here aren't an interactive terminal, so type everything the program will ask for below — one value per line, in the order it asks — then press Run.",
   "stdin_hint_blank": "(input)",
   "stdin_label": "Program input (stdin) — one value per line",
-  "stdin_missing_hint": "Your program tried to read input that was not provided. Close this, type the input (one value per line) in the Run sheet, then run again."
+  "stdin_missing_hint": "Your program tried to read input that was not provided. Close this, type the input (one value per line) in the Run sheet, then run again.",
+  "console_input_placeholder": "Type your answer and press Enter",
+  "stdin_prefill_label": "Pre-filled input (optional) — one value per line"
 }

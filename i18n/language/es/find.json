@@ -527,5 +527,7 @@
   "stdin_needed_body": "Las ejecuciones aquí no son una terminal interactiva: escribe abajo todo lo que el programa pedirá, un valor por línea y en el orden en que lo pide, y luego pulsa Ejecutar.",
   "stdin_hint_blank": "(entrada)",
   "stdin_label": "Entrada del programa (stdin) — un valor por línea",
-  "stdin_missing_hint": "Tu programa intentó leer datos de entrada que no se proporcionaron. Cierra esto, escribe la entrada (un valor por línea) en la hoja de ejecución y vuelve a ejecutar."
+  "stdin_missing_hint": "Tu programa intentó leer datos de entrada que no se proporcionaron. Cierra esto, escribe la entrada (un valor por línea) en la hoja de ejecución y vuelve a ejecutar.",
+  "console_input_placeholder": "Escribe tu respuesta y pulsa Intro",
+  "stdin_prefill_label": "Entrada prellenada (opcional) — un valor por línea"
 }

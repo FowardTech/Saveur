@@ -527,5 +527,7 @@
   "stdin_needed_body": "Les exécutions ici ne sont pas un terminal interactif : saisissez ci-dessous tout ce que le programme demandera, une valeur par ligne et dans l'ordre demandé, puis appuyez sur Exécuter.",
   "stdin_hint_blank": "(saisie)",
   "stdin_label": "Entrée du programme (stdin) — une valeur par ligne",
-  "stdin_missing_hint": "Votre programme a essayé de lire une entrée qui n'a pas été fournie. Fermez ceci, saisissez l'entrée (une valeur par ligne) dans la feuille d'exécution, puis relancez."
+  "stdin_missing_hint": "Votre programme a essayé de lire une entrée qui n'a pas été fournie. Fermez ceci, saisissez l'entrée (une valeur par ligne) dans la feuille d'exécution, puis relancez.",
+  "console_input_placeholder": "Saisissez votre réponse et appuyez sur Entrée",
+  "stdin_prefill_label": "Entrée pré-remplie (facultatif) — une valeur par ligne"
 }
