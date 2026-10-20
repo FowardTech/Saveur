@@ -522,5 +522,10 @@
   "practical_attach_too_large": "Esse arquivo é grande demais. O tamanho máximo é 200 MB.",
   "practical_attach_max_size": "Tamanho máximo do arquivo: 200 MB.",
   "practical_project_completed": "Concluído",
-  "practical_project_in_progress": "Em andamento · {{done}}/{{total}}"
+  "practical_project_in_progress": "Em andamento · {{done}}/{{total}}",
+  "stdin_needed_title": "Este programa está aguardando entrada",
+  "stdin_needed_body": "As execuções aqui não são um terminal interativo: digite abaixo tudo o que o programa vai pedir, um valor por linha e na ordem em que pede, e depois toque em Executar.",
+  "stdin_hint_blank": "(entrada)",
+  "stdin_label": "Entrada do programa (stdin) — um valor por linha",
+  "stdin_missing_hint": "Seu programa tentou ler uma entrada que não foi fornecida. Feche isto, digite a entrada (um valor por linha) na tela de execução e execute novamente."
 }

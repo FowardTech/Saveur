@@ -522,5 +522,10 @@
   "practical_attach_too_large": "파일이 너무 큽니다. 최대 크기는 200MB입니다.",
   "practical_attach_max_size": "최대 파일 크기: 200MB.",
   "practical_project_completed": "완료됨",
-  "practical_project_in_progress": "진행 중 · {{done}}/{{total}}"
+  "practical_project_in_progress": "진행 중 · {{done}}/{{total}}",
+  "stdin_needed_title": "이 프로그램이 입력을 기다리고 있습니다",
+  "stdin_needed_body": "여기서의 실행은 대화형 터미널이 아닙니다. 프로그램이 요청할 내용을 한 줄에 하나씩, 요청하는 순서대로 아래에 입력한 뒤 실행을 누르세요.",
+  "stdin_hint_blank": "(입력)",
+  "stdin_label": "프로그램 입력(stdin) — 한 줄에 하나씩",
+  "stdin_missing_hint": "프로그램이 제공되지 않은 입력을 읽으려고 했습니다. 이 창을 닫고 실행 시트에 입력(한 줄에 하나씩)을 적은 뒤 다시 실행하세요."
 }

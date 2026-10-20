@@ -18,6 +18,7 @@ import * as codingProjectsService from 'services/codingProjectsService';
 import {CodingProjectDetail, ProjectRunResult} from 'services/codingProjectsService';
 import * as projectActions from 'services/projectActionsService';
 import ShareToUserModal from 'components/ShareToUserModal';
+import {needsStdin, pythonInputPrompts, looksLikeMissingInput} from 'utils/stdinNeeds';
 import CodeEditorWebView, {codeMirrorModeForPath} from 'components/CodeEditorWebView';
 
 // Coding Projects editor — the actual multi-file/folder code workspace
@@ -444,8 +445,26 @@ const CodingProjectEditor = memo(() => {
     );
   };
 
+  // Product report: a Python script calling input() failed with "EOFError: EOF
+  // when reading a line" — runs aren't an interactive terminal, so the input
+  // must be supplied up front. Ask for it before running (a second press with
+  // the field still empty just runs).
+  const [inputAsked, setInputAsked] = React.useState(false);
+  const runEntryLanguage = runEntry ? runLanguageForPath(runEntry) : '';
+  const runEntryContent = runEntry ? files.find(f => f.path === runEntry)?.content ?? '' : '';
+  const entryNeedsInput = !!runEntry && needsStdin(runEntryLanguage, runEntryContent);
+  const inputRequired = entryNeedsInput && runStdin.trim() === '';
+  const inputHints = runEntryLanguage === 'python' ? pythonInputPrompts(runEntryContent) : [];
+  React.useEffect(() => {
+    setInputAsked(false);
+  }, [runEntry]);
+
   const onRun = async () => {
     if (running || !runEntry) return;
+    if (inputRequired && !inputAsked) {
+      setInputAsked(true);
+      return;
+    }
     setRunning(true);
     setRunResult(null);
     try {
@@ -775,14 +794,38 @@ const CodingProjectEditor = memo(() => {
               </TouchableOpacity>
             ))}
           </ScrollView>
+          {inputRequired && inputAsked ? (
+            <View style={styles.inputWarning}>
+              <Text category="h9" bold style={{color: '#92400E'}}>
+                {t('find:stdin_needed_title', {defaultValue: 'This program is waiting for input'})}
+              </Text>
+              <Text category="h10" mt={2} style={{color: '#92400E'}}>
+                {t('find:stdin_needed_body', {
+                  defaultValue:
+                    "Runs here aren't an interactive terminal, so type everything the program will ask for below — one value per line, in the order it asks — then tap Run.",
+                })}
+              </Text>
+              {inputHints.map((h, i) => (
+                <Text key={i} category="h10" mt={2} style={{color: '#92400E'}}>
+                  {`${i + 1}. ${h || t('find:stdin_hint_blank', {defaultValue: '(input)'})}`}
+                </Text>
+              ))}
+            </View>
+          ) : null}
+          <Text category="h10" bold status="placeholder" mb={4}>
+            {t('find:stdin_label', {defaultValue: 'Program input (stdin) — one value per line'})}
+          </Text>
           <Input
             placeholder={t('find:stdin_placeholder', {defaultValue: 'Anything your program reads from stdin'}).toString()}
             value={runStdin}
             onChangeText={setRunStdin}
             autoCapitalize="none"
             autoCorrect={false}
+            multiline
+            textAlignVertical="top"
+            numberOfLines={4}
             style={[globalStyle.inputField, {marginBottom: 16}]}
-            textStyle={globalStyle.inputText}
+            textStyle={[globalStyle.inputText, {minHeight: 80}]}
           />
           <CtaButton loading={running} disabled={!runEntry} onPress={onRun}>
             {t('find:coding_project_run_cta', {defaultValue: 'Run {{entry}}', entry: runEntry ?? ''}).toString()}
@@ -834,6 +877,14 @@ const CodingProjectEditor = memo(() => {
                 {runResult.stderr ? (
                   <Text category="h9-s" mt={8} style={{color: '#FF6B6B', fontFamily: MONO_FONT}}>
                     {runResult.stderr}
+                  </Text>
+                ) : null}
+                {looksLikeMissingInput(runResult.stderr) ? (
+                  <Text category="h9" bold mt={10} style={{color: '#F5C26B'}}>
+                    {t('find:stdin_missing_hint', {
+                      defaultValue:
+                        'Your program tried to read input that was not provided. Close this, type the input (one value per line) in the Run sheet, then run again.',
+                    })}
                   </Text>
                 ) : null}
                 {!runResult.stdout && !runResult.stderr ? (
@@ -952,6 +1003,12 @@ const themedStyles = StyleService.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  inputWarning: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
   },
   backdrop: {
     flex: 1,

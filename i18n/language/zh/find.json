@@ -522,5 +522,10 @@
   "practical_attach_too_large": "该文件过大。最大为 200 MB。",
   "practical_attach_max_size": "文件大小上限：200 MB。",
   "practical_project_completed": "已完成",
-  "practical_project_in_progress": "进行中 · {{done}}/{{total}}"
+  "practical_project_in_progress": "进行中 · {{done}}/{{total}}",
+  "stdin_needed_title": "此程序正在等待输入",
+  "stdin_needed_body": "这里的运行不是交互式终端，请在下方输入程序会询问的所有内容——每行一个值，按它询问的顺序——然后点击运行。",
+  "stdin_hint_blank": "（输入）",
+  "stdin_label": "程序输入（stdin）——每行一个值",
+  "stdin_missing_hint": "你的程序尝试读取未提供的输入。请关闭此窗口，在运行面板中输入内容（每行一个值），然后重新运行。"
 }

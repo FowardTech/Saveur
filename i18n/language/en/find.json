@@ -522,5 +522,10 @@
   "practical_attach_too_large": "That file is too large. The maximum size is 200 MB.",
   "practical_attach_max_size": "Maximum file size: 200 MB.",
   "practical_project_completed": "Completed",
-  "practical_project_in_progress": "In progress · {{done}}/{{total}}"
+  "practical_project_in_progress": "In progress · {{done}}/{{total}}",
+  "stdin_needed_title": "This program is waiting for input",
+  "stdin_needed_body": "Runs here aren't an interactive terminal, so type everything the program will ask for below — one value per line, in the order it asks — then press Run.",
+  "stdin_hint_blank": "(input)",
+  "stdin_label": "Program input (stdin) — one value per line",
+  "stdin_missing_hint": "Your program tried to read input that was not provided. Close this, type the input (one value per line) in the Run sheet, then run again."
 }

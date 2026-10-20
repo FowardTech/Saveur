@@ -522,5 +522,10 @@
   "practical_attach_too_large": "Diese Datei ist zu groß. Die maximale Größe beträgt 200 MB.",
   "practical_attach_max_size": "Maximale Dateigröße: 200 MB.",
   "practical_project_completed": "Abgeschlossen",
-  "practical_project_in_progress": "In Bearbeitung · {{done}}/{{total}}"
+  "practical_project_in_progress": "In Bearbeitung · {{done}}/{{total}}",
+  "stdin_needed_title": "Dieses Programm wartet auf eine Eingabe",
+  "stdin_needed_body": "Ausführungen hier sind kein interaktives Terminal: Gib unten alles ein, was das Programm abfragt – ein Wert pro Zeile, in der abgefragten Reihenfolge – und drücke dann auf Ausführen.",
+  "stdin_hint_blank": "(Eingabe)",
+  "stdin_label": "Programmeingabe (stdin) – ein Wert pro Zeile",
+  "stdin_missing_hint": "Dein Programm hat versucht, eine nicht bereitgestellte Eingabe zu lesen. Schließe dies, gib die Eingabe (ein Wert pro Zeile) im Ausführen-Bereich ein und führe es erneut aus."
 }
