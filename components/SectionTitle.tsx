@@ -13,7 +13,7 @@ interface SectionTitleProps {
   style?: StyleProp<TextStyle>;
 }
 
-const SectionTitle: React.FC<SectionTitleProps> = ({children, mt = 8, mb = 14, ml, style}) => (
+const SectionTitle: React.FC<SectionTitleProps> = ({children, mt = 12, mb = 10, ml, style}) => (
   <Text category="h5" bold mt={mt} mb={mb} ml={ml} style={[styles.title, style]}>
     {children}
   </Text>
@@ -22,5 +22,5 @@ const SectionTitle: React.FC<SectionTitleProps> = ({children, mt = 8, mb = 14, m
 export default SectionTitle;
 
 const styles = StyleSheet.create({
-  title: {fontSize: 24, lineHeight: 30, letterSpacing: -0.3},
+  title: {fontSize: 20, lineHeight: 26, letterSpacing: -0.2},
 });

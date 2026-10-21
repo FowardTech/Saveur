@@ -1178,6 +1178,10 @@ const HomeSrc = memo(() => {
             there). Conditional rendering/behavior is unchanged -- still
             renders nothing at all when there's no real scheduled
             session, just earlier in the page now. */}
+        {/* Indeed-style tinted section (product request: "I want more
+            Indeed UI"): the Today cards sit on a soft light-blue panel, white
+            cards inside, like Indeed's "Manage your applications" band. */}
+        <View style={[styles.todayPanel, { backgroundColor: 'rgba(0,99,248,0.07)' }]}>
         <SectionTitle>
           {t('home:section_today', { defaultValue: 'Today' }).toString()}
         </SectionTitle>
@@ -1265,6 +1269,7 @@ const HomeSrc = memo(() => {
             onPress={missionHero.onPress}
           />
         )}
+        </View>
 
         <DailyTipsBanner />
 
@@ -1411,6 +1416,13 @@ const themedStyles = StyleService.create({
   // language now used throughout this screen (see QuickActionGrid.tsx's
   // own comment), rather than the outlined-card treatment other design
   // systems favor for alerts.
+  todayPanel: {
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingTop: 4,
+    paddingBottom: 0,
+    marginBottom: 12,
+  },
   verifyBanner: {
     borderRadius: 16,
     padding: 16,
