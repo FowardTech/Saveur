@@ -806,7 +806,7 @@ const CodingProjectEditor = memo(() => {
               <TouchableOpacity key={path} activeOpacity={0.7} onPress={() => setRunEntry(path)} style={styles.entryRow}>
                 <Icon
                   pack="eva"
-                  name={runEntry === path ? 'radio-button-on' : 'radio-button-off-outline'}
+                  name={runEntry === path ? 'radio-button-on-outline' : 'radio-button-off-outline'}
                   style={[globalStyle.icon16, {tintColor: runEntry === path ? theme['color-primary-500'] : theme['text-hint-color']}]}
                 />
                 <Text category="h9" ml={8} numberOfLines={1}>
