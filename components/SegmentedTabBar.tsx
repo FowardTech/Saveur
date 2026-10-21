@@ -26,6 +26,10 @@ interface Props {
 const SegmentedTabBar = memo(({ tabs, activeIndex, onChange }: Props) => {
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
+  // Indeed-style filter pills (product request: "make the mobile app also
+  // have this kind of UI"): the active one is a solid dark pill with white
+  // text, the rest are white pills with a hairline border -- replaces the
+  // old plain-text tabs with an underline.
   return (
     <View style={styles.wrapper}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
@@ -36,19 +40,19 @@ const SegmentedTabBar = memo(({ tabs, activeIndex, onChange }: Props) => {
               key={tab}
               activeOpacity={0.7}
               onPress={() => onChange(i)}
-              style={styles.tab}>
+              style={[
+                styles.pill,
+                {
+                  backgroundColor: isActive ? theme['text-basic-color'] : theme['background-basic-color-2'],
+                  borderColor: isActive ? theme['text-basic-color'] : theme['border-card-default'],
+                },
+              ]}>
               <Text
                 category="h9"
                 bold={isActive}
-                style={{ color: isActive ? theme['text-basic-color'] : theme['text-hint-color'] }}>
+                style={{ color: isActive ? theme['background-basic-color-2'] : theme['text-basic-color'] }}>
                 {tab}
               </Text>
-              <View
-                style={[
-                  styles.underline,
-                  { backgroundColor: isActive ? theme['color-primary-500'] : 'transparent' },
-                ]}
-              />
             </TouchableOpacity>
           );
         })}
@@ -61,22 +65,17 @@ export default SegmentedTabBar;
 
 const themedStyles = StyleService.create({
   wrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'border-basic-color-3',
+    paddingVertical: 4,
   },
   row: {
     flexDirection: 'row',
+    paddingVertical: 4,
   },
-  tab: {
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingBottom: 10,
-    marginRight: 6,
-  },
-  underline: {
-    height: 3,
-    borderRadius: 2,
-    alignSelf: 'stretch',
-    marginTop: 8,
+  pill: {
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 8,
   },
 });

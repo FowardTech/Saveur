@@ -202,7 +202,7 @@ export const globalStyle = StyleSheet.create({
   // here rather than deleted so a future shadow reintroduction is a
   // one-line change again, not a re-hunt across ~60+ call sites.
   card: {
-    borderRadius: 20,
+    borderRadius: 16,
     ...cardShadow,
   },
   // SYMPHONY REDESIGN: emptied out -- "no borders" was explicit in this
