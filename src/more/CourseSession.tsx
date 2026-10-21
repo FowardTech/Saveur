@@ -648,7 +648,7 @@ const CourseSession = memo(() => {
             </Text>
 
             {currentImage ? (
-              <Image source={{ uri: currentImage }} style={styles.visual} resizeMode="cover" />
+              <Image source={{ uri: currentImage }} style={styles.visual} resizeMode="contain" />
             ) : null}
 
             {mode === 'voice' && isSpeaking ? (
@@ -836,9 +836,10 @@ const themedStyles = StyleService.create({
   },
   visual: {
     width: '100%',
-    height: 180,
+    height: 220,
     borderRadius: 16,
     marginBottom: 16,
+    backgroundColor: 'rgba(128,128,128,0.08)',
   },
   checkCard: {
     ...globalStyle.card,
