@@ -1284,5 +1284,6 @@
   "upload_progress_percent": "अपलोड हो रहा है… {{percent}}%",
   "upload_processing": "अपलोड पूरा — प्रोसेस हो रहा है…",
   "upload_done": "सफलतापूर्वक अपलोड हुआ",
-  "coupon_already_used": "आप यह कोड पहले ही इस्तेमाल कर चुके हैं।"
+  "coupon_already_used": "आप यह कोड पहले ही इस्तेमाल कर चुके हैं।",
+  "course_illustration_loading": "चित्र तैयार हो रहा है…"
 }

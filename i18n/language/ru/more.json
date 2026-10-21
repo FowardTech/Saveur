@@ -1286,5 +1286,6 @@
   "upload_progress_percent": "Загрузка… {{percent}}%",
   "upload_processing": "Загрузка завершена — обработка…",
   "upload_done": "Успешно загружено",
-  "coupon_already_used": "Вы уже использовали этот код."
+  "coupon_already_used": "Вы уже использовали этот код.",
+  "course_illustration_loading": "Подготовка иллюстрации…"
 }

@@ -111,7 +111,6 @@ const CourseSession = memo(() => {
   const [moduleIndex, setModuleIndex] = React.useState(0);
   const [hasResumed, setHasResumed] = React.useState(false);
   const [moduleCache, setModuleCache] = React.useState<Record<number, CourseModule>>({});
-  const [imageCache, setImageCache] = React.useState<Record<number, string | null>>({});
   const [isLoadingModule, setIsLoadingModule] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = React.useState(false);
@@ -202,16 +201,22 @@ const CourseSession = memo(() => {
         const saved = await learningService.getSavedModuleContent(courseId, index);
         if (saved) {
           setModuleCache(prev => ({ ...prev, [index]: saved.module }));
-          if (saved.imageUrl) setImageCache(prev => ({ ...prev, [index]: saved.imageUrl }));
           return;
         }
         const mod = await learningService.generateModule(topic, index, totalModules, titles[index], context, level);
         setModuleCache(prev => ({ ...prev, [index]: mod }));
-        // Best-effort, non-blocking — don't wait on the image to show text.
-        learningService.generateVisual(`${topic}: ${titles[index]}`).then(url => {
-          setImageCache(prev => ({ ...prev, [index]: url }));
-          learningService.saveModuleContent(courseId, index, mod, url);
-        });
+        // The lesson text (with a placeholder at each illustration marker)
+        // is already showing. Generate the inline photos/diagrams in the
+        // background, swap them in, then save the finished lesson.
+        if (learningService.hasPendingVisuals(mod.body)) {
+          learningService.resolveVisuals(mod.body, topic).then(body => {
+            const finished = { ...mod, body };
+            setModuleCache(prev => ({ ...prev, [index]: finished }));
+            learningService.saveModuleContent(courseId, index, finished, null);
+          });
+        } else {
+          learningService.saveModuleContent(courseId, index, mod, null);
+        }
       } catch (e: any) {
         setLoadError(e?.message ?? t('more:course_load_error', { defaultValue: 'Could not load this module.' }));
       } finally {
@@ -228,7 +233,6 @@ const CourseSession = memo(() => {
   }, [syllabus, moduleIndex]);
 
   const currentModule = moduleCache[moduleIndex];
-  const currentImage = imageCache[moduleIndex];
 
   // Recommended videos (product request item: "after each lesson/module,
   // auto-suggest real matching videos... play inside a custom in-app
@@ -255,7 +259,7 @@ const CourseSession = memo(() => {
     (async () => {
       setIsSpeaking(true);
       try {
-        await speechService.speak(currentModule.body);
+        await speechService.speak(learningService.lessonTextOnly(currentModule.body));
         if (!cancelled && currentModule.checkQuestion) {
           await speechService.speak(currentModule.checkQuestion);
         }
@@ -647,10 +651,6 @@ const CourseSession = memo(() => {
               {currentModule.title}
             </Text>
 
-            {currentImage ? (
-              <Image source={{ uri: currentImage }} style={styles.visual} resizeMode="contain" />
-            ) : null}
-
             {mode === 'voice' && isSpeaking ? (
               <Flex justify="flex-start" itemsCenter mb={12}>
                 <Icon pack="eva" name="volume-up-outline" style={[globalStyle.icon16, { tintColor: theme['text-basic-color'] }]} />
@@ -679,6 +679,33 @@ const CourseSession = memo(() => {
                   language={segment.language}
                   style={{marginBottom: 20}}
                 />
+              ) : /!\[|\[\[visual:/.test(segment.content) ? (
+                // Prose with inline illustrations: render each paragraph,
+                // image (with caption) or loading placeholder in order.
+                <View key={i}>
+                  {learningService.parseLessonBlocks(segment.content).map((block, j) =>
+                    block.type === 'image' ? (
+                      <View key={j} style={styles.figure}>
+                        <Image source={{ uri: block.url }} style={styles.visual} resizeMode="contain" />
+                        {block.caption ? (
+                          <Text category="h10" status="placeholder" center mt={6}>
+                            {block.caption}
+                          </Text>
+                        ) : null}
+                      </View>
+                    ) : block.type === 'pending' ? (
+                      <View key={j} style={[styles.visual, styles.visualPending]}>
+                        <Text category="h10" status="placeholder">
+                          {t('more:course_illustration_loading', { defaultValue: 'Preparing illustration…' })}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text key={j} category="h9-s" mb={20}>
+                        {block.text}
+                      </Text>
+                    ),
+                  )}
+                </View>
               ) : (
                 <Text key={i} category="h9-s" mb={20}>
                   {segment.content}
@@ -838,8 +865,15 @@ const themedStyles = StyleService.create({
     width: '100%',
     height: 220,
     borderRadius: 16,
-    marginBottom: 16,
     backgroundColor: 'rgba(128,128,128,0.08)',
+  },
+  figure: {
+    marginBottom: 20,
+  },
+  visualPending: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
   },
   checkCard: {
     ...globalStyle.card,

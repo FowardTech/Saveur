@@ -1284,5 +1284,6 @@
   "upload_progress_percent": "正在上传… {{percent}}%",
   "upload_processing": "上传完成 — 正在处理…",
   "upload_done": "上传成功",
-  "coupon_already_used": "你已经使用过此优惠码。"
+  "coupon_already_used": "你已经使用过此优惠码。",
+  "course_illustration_loading": "正在准备插图…"
 }

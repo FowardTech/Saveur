@@ -1284,5 +1284,6 @@
   "upload_progress_percent": "Caricamento… {{percent}}%",
   "upload_processing": "Caricamento completato — elaborazione…",
   "upload_done": "Caricato con successo",
-  "coupon_already_used": "Hai già usato questo codice."
+  "coupon_already_used": "Hai già usato questo codice.",
+  "course_illustration_loading": "Preparazione dell'illustrazione…"
 }

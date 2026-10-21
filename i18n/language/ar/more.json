@@ -1288,5 +1288,6 @@
   "upload_progress_percent": "جارٍ الرفع… {{percent}}%",
   "upload_processing": "اكتمل الرفع — جارٍ المعالجة…",
   "upload_done": "تم الرفع بنجاح",
-  "coupon_already_used": "لقد استخدمت هذا الرمز من قبل."
+  "coupon_already_used": "لقد استخدمت هذا الرمز من قبل.",
+  "course_illustration_loading": "جارٍ تجهيز الرسم التوضيحي…"
 }

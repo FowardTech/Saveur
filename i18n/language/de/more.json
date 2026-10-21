@@ -1284,5 +1284,6 @@
   "upload_progress_percent": "Wird hochgeladen… {{percent}} %",
   "upload_processing": "Upload abgeschlossen — wird verarbeitet…",
   "upload_done": "Erfolgreich hochgeladen",
-  "coupon_already_used": "Du hast diesen Code bereits verwendet."
+  "coupon_already_used": "Du hast diesen Code bereits verwendet.",
+  "course_illustration_loading": "Illustration wird vorbereitet…"
 }

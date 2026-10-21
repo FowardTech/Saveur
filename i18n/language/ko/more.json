@@ -1284,5 +1284,6 @@
   "upload_progress_percent": "업로드 중… {{percent}}%",
   "upload_processing": "업로드 완료 — 처리 중…",
   "upload_done": "업로드 완료",
-  "coupon_already_used": "이미 사용한 코드입니다."
+  "coupon_already_used": "이미 사용한 코드입니다.",
+  "course_illustration_loading": "일러스트 준비 중…"
 }

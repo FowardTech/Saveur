@@ -1284,5 +1284,6 @@
   "upload_progress_percent": "アップロード中… {{percent}}%",
   "upload_processing": "アップロード完了 — 処理中…",
   "upload_done": "アップロードしました",
-  "coupon_already_used": "このコードはすでに使用済みです。"
+  "coupon_already_used": "このコードはすでに使用済みです。",
+  "course_illustration_loading": "イラストを準備中…"
 }
