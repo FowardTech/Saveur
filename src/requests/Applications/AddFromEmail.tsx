@@ -11,6 +11,7 @@ import NavigationAction from 'components/NavigationAction';
 import CtaButton from 'components/CtaButton';
 import Flex from 'components/Flex';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
+import {brandLogoUrl} from 'utils/companyLogo';
 import {globalStyle} from 'styles/globalStyle';
 import {RootStackParamList} from 'navigation/types';
 import {EmailConnectionProps, CalendarConnectionProps} from 'constants/Types';
@@ -42,7 +43,7 @@ const PROVIDER_LOGO_DOMAIN: Record<'gmail' | 'outlook_mail' | 'google_calendar' 
   outlook_calendar: 'outlook.com',
 };
 const providerLogoUrl = (key: keyof typeof PROVIDER_LOGO_DOMAIN) =>
-  `https://geticon.dev/?url=${PROVIDER_LOGO_DOMAIN[key]}`;
+  brandLogoUrl(PROVIDER_LOGO_DOMAIN[key]);
 
 // Premium Job Tracker feature (product follow-up: "auto-detect status
 // changes by scanning the user's inbox... the direct answer to 'why pay for

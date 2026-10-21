@@ -2,6 +2,7 @@ import React, {memo, useState} from 'react';
 import {Image, ImageStyle} from 'react-native';
 import {Button, Icon, StyleService, useStyleSheet} from '@ui-kitten/components';
 import Text from 'components/Text';
+import {brandLogoUrl} from 'utils/companyLogo';
 
 // Product report (Login.tsx + SignupThirdStep.tsx, verbatim): "in the
 // signup and login the google and linkedIn buttons should have border,
@@ -33,8 +34,8 @@ import Text from 'components/Text';
 // screen's original generic icon so a network hiccup degrades to
 // "some icon" rather than a broken image.
 const LOGO_URL: Record<'google' | 'linkedin', string> = {
-  google: 'https://geticon.dev/?url=google.com',
-  linkedin: 'https://geticon.dev/?url=linkedin.com',
+  google: brandLogoUrl('google.com'),
+  linkedin: brandLogoUrl('linkedin.com'),
 };
 
 const FALLBACK_ICON: Record<'google' | 'linkedin', string> = {

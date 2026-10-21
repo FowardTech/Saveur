@@ -21,6 +21,8 @@
 // matching fix + its own comment on why that specific replacement, not
 // logo.dev) and added verified domains for the major companies most likely
 // to actually show up here, ahead of the generic slug-guessing fallback.
+import {API_BASE_URL} from 'constants/env';
+
 const KNOWN_DOMAIN_OVERRIDES: Record<string, string> = {
   'boston consulting group': 'bcg.com',
   'johnson & johnson': 'jnj.com',
@@ -113,30 +115,32 @@ const KNOWN_DOMAIN_OVERRIDES: Record<string, string> = {
   ebay: 'ebay.com',
 };
 
-const CORPORATE_SUFFIXES = new Set([
-  'incorporated', 'corporation', 'holdings', 'limited', 'company', 'group',
-  'worldwide', 'global', 'international', 'technologies', 'solutions',
-  'services', 'partners', 'llc', 'inc', 'ltd', 'corp', 'co', 'plc', 'gmbh',
-  'sa', 'ag', 'nv', 'pty',
-]);
-
-function guessCompanyDomain(company: string): string | null {
-  const name = company.trim().toLowerCase();
+/** Live logo URL for a company, served by the backend (Saveur-Backend's
+ * /api/v1/company-logos/img). The backend resolves the company's real domain,
+ * pulls the actual brand icon from the company's own site (favicon service as
+ * fallback), caches it and returns a normal PNG/JPEG/WebP -- so logos are
+ * always fetched fresh, nothing is bundled in this app, and (unlike the old
+ * SVG-returning geticon.dev URLs) React Native can actually render them.
+ * Always pass the result through components/CompanyLogoAvatar.tsx, which
+ * falls back to an icon when a logo can't be found. */
+export function guessCompanyLogoUrl(company?: string | null): string | null {
+  const name = (company ?? '').trim();
   if (!name) return null;
-  const override = KNOWN_DOMAIN_OVERRIDES[name];
-  if (override) return override;
-  const words = (name.match(/[a-z0-9]+/g) ?? []).filter(w => !CORPORATE_SUFFIXES.has(w));
-  const slug = words.join('');
-  return slug ? `${slug}.com` : null;
+  const domain = KNOWN_DOMAIN_OVERRIDES[name.toLowerCase()];
+  return liveLogoUrl(name, domain);
 }
 
-/** Best-effort geticon.dev logo URL for a company name, or null when
- * nothing usable could be guessed (e.g. an empty string). Always pass the
- * result through components/CompanyLogoAvatar.tsx rather than an Image
- * directly — it handles the "guess was wrong, logo 404s" fallback to an
- * icon (never initials). */
-export function guessCompanyLogoUrl(company?: string | null): string | null {
-  if (!company) return null;
-  const domain = guessCompanyDomain(company);
-  return domain ? `https://geticon.dev/?url=${encodeURIComponent(domain)}` : null;
+/** Logo for a fixed brand domain (Gmail/Outlook/Google sign-in buttons...).
+ * `favicon` prefers the high-res favicon over scraping the homepage, which
+ * gives the correct per-product icon for subdomains like mail.google.com. */
+export function brandLogoUrl(domain: string): string {
+  return liveLogoUrl('', domain, true);
+}
+
+function liveLogoUrl(name: string, domain?: string | null, favicon = false): string {
+  const qs: string[] = [];
+  if (name) qs.push(`name=${encodeURIComponent(name.slice(0, 100))}`);
+  if (domain) qs.push(`domain=${encodeURIComponent(domain)}`);
+  if (favicon) qs.push('prefer=favicon');
+  return `${API_BASE_URL}/api/v1/company-logos/img?${qs.join('&')}`;
 }
