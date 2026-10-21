@@ -1283,5 +1283,6 @@
   "lt_checkin_intro_body": "Vamos usar seu Diário de carreira, suas metas e conquistas e dar um próximo passo concreto. Mais alguma coisa em mente? (opcional)",
   "upload_progress_percent": "Enviando… {{percent}}%",
   "upload_processing": "Envio concluído — processando…",
-  "upload_done": "Enviado com sucesso"
+  "upload_done": "Enviado com sucesso",
+  "coupon_already_used": "Você já usou este código."
 }

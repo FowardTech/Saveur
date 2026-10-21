@@ -1283,5 +1283,6 @@
   "lt_checkin_intro_body": "我们会结合您的职业日记、目标和成就，为您提供一个具体的下一步。还有其他想补充的吗？（可选）",
   "upload_progress_percent": "正在上传… {{percent}}%",
   "upload_processing": "上传完成 — 正在处理…",
-  "upload_done": "上传成功"
+  "upload_done": "上传成功",
+  "coupon_already_used": "你已经使用过此优惠码。"
 }

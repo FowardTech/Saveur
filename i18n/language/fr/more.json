@@ -1283,5 +1283,6 @@
   "lt_checkin_intro_body": "Nous utiliserons votre Journal de carrière, vos objectifs et vos réussites, puis vous donnerons une prochaine étape concrète. Autre chose en tête ? (facultatif)",
   "upload_progress_percent": "Téléversement… {{percent}} %",
   "upload_processing": "Téléversement terminé — traitement en cours…",
-  "upload_done": "Téléversé avec succès"
+  "upload_done": "Téléversé avec succès",
+  "coupon_already_used": "Vous avez déjà utilisé ce code."
 }

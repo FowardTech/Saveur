@@ -753,6 +753,8 @@ const Subscription = memo(() => {
             ? t('more:coupon_inactive', { defaultValue: 'That code is no longer active.' })
             : result.errorCode === 'coupon_redemption_limit_reached'
             ? t('more:coupon_redemption_limit_reached', { defaultValue: 'That code has already been fully redeemed.' })
+            : result.errorCode === 'coupon_already_used'
+            ? t('more:coupon_already_used', { defaultValue: "You've already used this code." })
             : result.errorCode === 'coupon_not_valid_for_country'
             ? t('more:coupon_not_valid_for_country', { defaultValue: "That code isn't valid in your country." })
             : t('more:coupon_invalid', { defaultValue: "That code isn't valid." })

@@ -1283,5 +1283,6 @@
   "lt_checkin_intro_body": "Wir nutzen dein Karrieretagebuch, deine Ziele und Erfolge und geben dir einen konkreten nächsten Schritt. Beschäftigt dich noch etwas? (optional)",
   "upload_progress_percent": "Wird hochgeladen… {{percent}} %",
   "upload_processing": "Upload abgeschlossen — wird verarbeitet…",
-  "upload_done": "Erfolgreich hochgeladen"
+  "upload_done": "Erfolgreich hochgeladen",
+  "coupon_already_used": "Du hast diesen Code bereits verwendet."
 }
