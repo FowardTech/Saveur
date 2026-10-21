@@ -1,4 +1,5 @@
 import React, {memo} from 'react';
+import ThemeContext from '../ThemeContext';
 import {AppState, ScrollView, StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon, useTheme} from '@ui-kitten/components';
 import {useTranslation} from 'react-i18next';
@@ -298,30 +299,31 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
   const theme = useTheme();
   const {t} = useTranslation(['common']);
   const {bottom} = useLayout();
+  const {theme: appTheme} = React.useContext(ThemeContext);
   // No panel of its own: the strip around the pill takes exactly the page
   // background the screens above it use (same rule as components/Container),
   // so there is no visible gray band behind the nav.
+  const barWrapBg = appTheme === 'dark' ? theme['background-basic-color-1'] : theme['background-page-body'];
   const activeName = state.routes[state.index]?.name;
   // Chat-style screen (AI Coach): no bottom navigation, like ChatGPT - the
   // header menu / drawer is the way to other sections.
   if (activeName === 'Coach') return null;
-  // Indeed-style bottom bar (product request: "I love how clean and not too
-  // much color in these Indeed mobile app UI... make the mobile app also have
-  // this kind of UI"): a flat, full-width white bar with a hairline top
-  // border, plain line icons + labels, and the active tab marked by the brand
-  // blue (icon, label and a thin bar across the top of the tab) -- replaces
-  // the floating rounded pill with a gray "selected" blob.
-  const activeColor = theme['color-primary-100'];
   return (
-    <View
-      pointerEvents="box-none"
-      style={{
-        backgroundColor: theme['background-basic-color-2'],
-        borderTopWidth: 1,
-        borderTopColor: theme['border-card-default'],
-        paddingBottom: Math.max(bottom - 8, 8),
-      }}>
-      <View style={{flexDirection: 'row'}}>
+    <View pointerEvents="box-none" style={{paddingHorizontal: 20, paddingBottom: Math.max(bottom - 12, 12), paddingTop: 0, backgroundColor: barWrapBg}}>
+      <View
+        style={{
+          flexDirection: 'row',
+          backgroundColor: theme['background-basic-color-2'],
+          borderRadius: 32,
+          padding: 6,
+          borderWidth: 1,
+          borderColor: theme['border-card-default'],
+          shadowColor: '#000',
+          shadowOffset: {width: 0, height: 4},
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
+        }}>
         {BAR_TABS.map(tab => {
           const focused = activeName === tab.route;
           const badge =
@@ -330,27 +332,27 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
               : tab.route === 'Profile'
               ? (badges?.dailyIndustryNewsUnread ? 1 : 0) + (badges?.weeklyCareerReportUnread ? 1 : 0)
               : 0;
-          const color = focused ? activeColor : theme['text-basic-color'];
           return (
             <TouchableOpacity
               key={tab.route}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
-              style={{flex: 1, height: 56, alignItems: 'center', justifyContent: 'center'}}
+              style={{
+                flex: 1,
+                height: 58,
+                borderRadius: 26,
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: focused ? theme['background-basic-color-3'] : 'transparent',
+              }}
               onPress={() => navigation.navigate(tab.route)}>
-              <View
-                style={{
-                  position: 'absolute',
-                  top: -1,
-                  left: 0,
-                  right: 0,
-                  height: 3,
-                  backgroundColor: focused ? activeColor : 'transparent',
-                }}
-              />
               <View>
-                <Icon pack="eva" name={tab.icon} style={{width: 24, height: 24, tintColor: color}} />
+                <Icon
+                  pack="eva"
+                  name={tab.icon}
+                  style={{width: 24, height: 24, tintColor: theme['text-basic-color']}}
+                />
                 {badge ? (
                   <View
                     style={{
@@ -360,7 +362,7 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
                       width: 9,
                       height: 9,
                       borderRadius: 5,
-                      backgroundColor: theme['color-danger-100'],
+                      backgroundColor: theme['text-basic-color'],
                     }}
                   />
                 ) : null}
@@ -369,7 +371,7 @@ const BottomBar = memo(({state, navigation, badges}: any) => {
                 category="h10"
                 bold={focused}
                 numberOfLines={1}
-                style={{fontSize: 11, lineHeight: 14, marginTop: 3, color}}>
+                style={{fontSize: 11, lineHeight: 14, marginTop: 3, color: theme['text-basic-color'], opacity: focused ? 1 : 0.7}}>
                 {t(`common:${tab.key}`, {defaultValue: tab.label}).toString()}
               </Text>
             </TouchableOpacity>
