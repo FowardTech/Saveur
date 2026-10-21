@@ -1306,7 +1306,15 @@ const Chat = memo(() => {
                 <UploadStatusBar status={upload.status} onDismiss={upload.dismiss} />
               </View>
             ) : null}
+            {/* BUG FIX (product report: after switching light<->dark the coach's
+                reply text was dark-on-dark / unreadable and the user bubble kept
+                its old look): gifted-chat memoizes each <Message> on the message
+                data, so a new renderBubble (new theme colors) never re-rendered
+                the existing rows. Keying on the actual rendered theme remounts
+                the list when the theme flips so every bubble picks up the new
+                colors. */}
             <GiftedChat
+              key={isDarkBubble ? 'chat-dark' : 'chat-light'}
               user={{ _id: 1 }}
               messages={giftedChatMessages}
               onSend={onSend}
