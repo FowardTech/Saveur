@@ -66,7 +66,7 @@ const WeeklyCheckin = () => {
                 {current.learnings.length ? (
                   <>
                     <H>{t('more:lt_learnings', {defaultValue: 'What you learned'})}</H>
-                    <Bullets items={current.learnings} color="#7C5CFF" />
+                    <Bullets items={current.learnings} color="#0063f8" />
                   </>
                 ) : null}
                 {current.focus_next_week ? (
@@ -76,7 +76,7 @@ const WeeklyCheckin = () => {
                   </>
                 ) : null}
               </Card>
-              <Card style={{backgroundColor: '#7C5CFF'}}>
+              <Card style={{backgroundColor: '#0063f8'}}>
                 <Pill label={t('more:lt_next_step', {defaultValue: 'Your one next step'})} color="#FFFFFF" />
                 <Text category="h7" bold mt={10} style={{color: '#FFFFFF'}}>
                   {current.next_step.title}

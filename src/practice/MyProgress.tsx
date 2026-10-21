@@ -319,7 +319,7 @@ const MyProgress = memo(() => {
                       strokeWidth={7}
                       trackColor={theme['background-basic-color-3']}
                       gradientFrom="#9DBFEF"
-                      gradientTo="#7EA8E2"
+                      gradientTo="#0063f8"
                       style={{ marginRight: 16 }}>
                       <Text category="h8" bold style={{ color: theme['text-basic-color'] }}>
                         {localizeDigits(t('find:goal_progress_percent', { defaultValue: '{{percent}}%', percent: roadmapPercent }))}

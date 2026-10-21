@@ -898,7 +898,7 @@ const HomeSrc = memo(() => {
         // exactly as it already was.
         heroIconImage: undefined,
         heroIcon: 'flash-outline',
-        heroIconGradientColors: ['#F5B430', '#FFC94A'],
+        heroIconGradientColors: ['#F5B430', '#0063f8'],
         onPress: () => navigate('DailyChallenge'),
       };
     }
@@ -1284,7 +1284,7 @@ const HomeSrc = memo(() => {
         </SectionTitle>
         <FeatureCard
           heroIcon="trending-up-outline"
-          backdrop="#FF8A3D"
+          backdrop="#0063f8"
           eyebrow={t('home:progress_eyebrow', { defaultValue: 'Keep going' }).toString()}
           title={t('home:progress_card_title', { defaultValue: 'My Progress' }).toString()}
           subtitle={
@@ -1305,7 +1305,7 @@ const HomeSrc = memo(() => {
         {(configService.isFeatureEnabled('pay_tracking') || configService.isFeatureEnabled('market_check') || configService.isFeatureEnabled('promotion_plan')) ? (
           <FeatureCard
             heroIcon="briefcase-outline"
-            backdrop="#7C5CFF"
+            backdrop="#0063f8"
             eyebrow={t('home:career_eyebrow', { defaultValue: 'Level up' }).toString()}
             title={t('home:career_growth_title', { defaultValue: 'Career Growth' }).toString()}
             subtitle={t('home:career_growth_subtitle', { defaultValue: 'Track pay, plan your next promotion' }).toString()}
@@ -1326,7 +1326,7 @@ const HomeSrc = memo(() => {
         ) : null}
         <FeatureCard
           heroIcon="award-outline"
-          backdrop="#FF5FA2"
+          backdrop="#0063f8"
           eyebrow={t('home:leaderboard_eyebrow', { defaultValue: 'Compete' }).toString()}
           title={t('home:leaderboard_title', { defaultValue: 'Leaderboard' }).toString()}
           subtitle={t('home:leaderboard_subtitle', { defaultValue: 'See how you rank this week' }).toString()}

@@ -175,7 +175,7 @@ const MoreSrc = memo(() => {
   // reused across ~15 rows rather than one unique color per row.
   const ICON_GRADIENTS: [string, string][] = [
     ['#2d76dbff', '#3B9DFF'], // blue
-    ['#dc5d2bff', '#FB923C'], // orange
+    ['#dc5d2bff', '#0063f8'], // orange
     ['#28b35bff', '#4ADE80'], // green
     ['#8449e2ff', '#A78BFA'], // purple
     ['#d6355dff', '#FB7185'], // red/pink

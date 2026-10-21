@@ -219,7 +219,7 @@ const themedStyles = StyleService.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#7EA8E2',
+    backgroundColor: '#0063f8',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -247,7 +247,7 @@ const themedStyles = StyleService.create({
   progressFill: {
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#7EA8E2',
+    backgroundColor: '#0063f8',
   },
   responseInput: {
     ...globalStyle.inputField,

@@ -1677,13 +1677,13 @@ const VoiceCoachView = memo(({
             the GIF this pass is now undoing).
             FOLLOW-UP (explicit product request: "Lets remove the orange
             color and lets use just default blue and light blue only")
-            -- was ['#71717a', '#7EA8E2', '#FB923C'] (blue -> light blue
+            -- was ['#71717a', '#0063f8', '#0063f8'] (blue -> light blue
             -> orange); the orange stop is dropped, leaving a plain
-            two-stop blue -> light-blue blend (#71717a -> #7EA8E2, the
+            two-stop blue -> light-blue blend (#71717a -> #0063f8, the
             same two non-orange colors this orb already had). */}
         <Animated.View style={[styles.orb, orbStyle]}>
           <LinearGradient
-            colors={['#7C5CFF', '#A592FF']}
+            colors={['#0063f8', '#0063f8']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.orbGradientFill}

@@ -58,7 +58,7 @@ const ApplicationAnalytics = memo(() => {
     {key: 'applied', label: Application_Stage_Enum.Applied, color: '#71717a'},
     {key: 'interviewing', label: Application_Stage_Enum.Interviewing, color: '#F59E0B'},
     {key: 'offer', label: Application_Stage_Enum.Offer, color: '#10B981'},
-    {key: 'rejected', label: Application_Stage_Enum.Rejected, color: '#EC4899'},
+    {key: 'rejected', label: Application_Stage_Enum.Rejected, color: '#0063f8'},
   ];
 
   return (

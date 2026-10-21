@@ -292,7 +292,7 @@ const Leaderboard = memo(() => {
                   and professional" history (see this file's header
                   comment), so the rollout here is intentionally light-
                   touch: just the ring's own stroke tone brought in line
-                  with the same soft blue (#7EA8E2) Home's streak hero,
+                  with the same soft blue (#0063f8) Home's streak hero,
                   Daily Challenge, and the Coach tab now use, not a new
                   gradient card fill or the mint/blue/orange podium palette
                   (styles/tileColors.ts) being touched. */}
@@ -302,7 +302,7 @@ const Leaderboard = memo(() => {
                 strokeWidth={6}
                 trackColor="#7EA8E21f"
                 gradientFrom="#517fc0ff"
-                gradientTo="#7EA8E2"
+                gradientTo="#0063f8"
                 style={styles.yourStatsRing}>
                 <Text category="h9" bold style={{ color: theme['text-basic-color'] }}>
                   {streak.streakDays}

@@ -1,3 +1,4 @@
+import FeatureCard from 'components/FeatureCard';
 import React from 'react';
 import {TouchableOpacity, View} from 'react-native';
 import {Icon} from '@ui-kitten/components';
@@ -41,7 +42,7 @@ const LifetimeHub = () => {
     {
       route: 'WeeklyCheckin',
       icon: 'checkmark-circle-2',
-      color: '#7C5CFF',
+      color: '#0063f8',
       title: t('more:lt_weekly_title', {defaultValue: 'Weekly Check-in'}),
       body: o?.weekly_next_step ?? t('more:lt_weekly_card', {defaultValue: 'Review your week and get one concrete next step.'}),
       badge: o && !o.weekly_checkin_done ? t('more:lt_badge_due', {defaultValue: 'Due'}) : undefined,
@@ -57,7 +58,7 @@ const LifetimeHub = () => {
     {
       route: 'ReviewPrep',
       icon: 'file-text-outline',
-      color: '#FF8A3D',
+      color: '#0063f8',
       title: t('more:lt_review_title', {defaultValue: 'Review & Promotion Prep'}),
       body: t('more:lt_review_card', {defaultValue: 'Self-review draft, evidence and a manager rehearsal.'}),
     },
@@ -79,7 +80,7 @@ const LifetimeHub = () => {
     {
       route: 'LeadershipTrack',
       icon: 'people-outline',
-      color: '#FF5FA2',
+      color: '#0063f8',
       title: t('more:lt_leadership_title', {defaultValue: 'Leadership Track'}),
       body: t('more:lt_leadership_card', {defaultValue: '1:1 prep, feedback scripts and difficult conversations.'}),
     },
@@ -130,30 +131,14 @@ const LifetimeHub = () => {
         {t('more:lt_hub_intro', {defaultValue: 'Tools for every stage, long after you land the job.'})}
       </Text>
       {cards.filter(c => configService.isFeatureEnabled(CARD_FLAG[c.route])).map(c => (
-        <TouchableOpacity
+        <FeatureCard
           key={c.route}
-          activeOpacity={0.85}
+          heroIcon={c.icon}
+          eyebrow={c.badge ? String(c.badge) : undefined}
+          title={c.title}
+          subtitle={c.body}
           onPress={() => navigation.navigate(c.route)}
-          style={{backgroundColor: c.color, borderRadius: 24, padding: 18, marginBottom: 14, flexDirection: 'row', alignItems: 'center'}}>
-          <View style={{width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center'}}>
-            <Icon pack="eva" name={c.icon} style={[globalStyle.icon24, {tintColor: '#FFFFFF'}]} />
-          </View>
-          <View style={{flex: 1, marginLeft: 14}}>
-            <Text category="h7" bold style={{color: '#FFFFFF'}}>
-              {c.title}
-            </Text>
-            <Text category="h9-s" mt={2} style={{color: 'rgba(255,255,255,0.92)'}} numberOfLines={2}>
-              {c.body}
-            </Text>
-          </View>
-          {c.badge ? (
-            <View style={{backgroundColor: 'rgba(255,255,255,0.25)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginLeft: 8}}>
-              <Text category="h10" bold style={{color: '#FFFFFF'}}>
-                {c.badge}
-              </Text>
-            </View>
-          ) : null}
-        </TouchableOpacity>
+        />
       ))}
     </LifetimeScreen>
   );

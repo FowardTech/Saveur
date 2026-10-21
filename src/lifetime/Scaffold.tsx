@@ -52,7 +52,7 @@ export const Bullets = ({items, color}: {items: string[]; color?: string}) => (
 
 export const Loading = () => <EmptyState variant="loading" style={{paddingVertical: 48}} />;
 
-export const Pill = ({label, color = '#7C5CFF'}: {label: string; color?: string}) => (
+export const Pill = ({label, color = '#0063f8'}: {label: string; color?: string}) => (
   <View style={{alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, backgroundColor: color + '26'}}>
     <Text category="h10" bold style={{color}}>
       {label}

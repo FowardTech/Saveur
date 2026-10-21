@@ -82,7 +82,7 @@ const SharedProjectView = ({name, files}: {name: string; files: ProjectFile[]}) 
         <Text category="h6" bold>{name}</Text>
         <View style={{flexDirection: 'row', flexWrap: 'wrap', marginTop: 10}}>
           {state.industry ? <Chip label={state.industry} bg="rgba(0,99,248,0.14)" color="#0063F8" /> : null}
-          {state.role ? <Chip label={state.role} bg="rgba(124,92,255,0.16)" color="#7C5CFF" /> : null}
+          {state.role ? <Chip label={state.role} bg="rgba(124,92,255,0.16)" color="#0063f8" /> : null}
           {stages.length ? (
             <Chip
               label={t('more:share_stages_done', {defaultValue: '{{done}} of {{total}} stages complete', done, total: stages.length})}
@@ -122,7 +122,7 @@ const SharedProjectView = ({name, files}: {name: string; files: ProjectFile[]}) 
                   justifyContent: 'center',
                   backgroundColor: typeof fb?.score === 'number' ? (good ? 'rgba(25,184,122,0.18)' : 'rgba(255,138,61,0.18)') : theme['background-basic-color-3'],
                 }}>
-                <Text category="h8" bold style={{color: typeof fb?.score === 'number' ? (good ? '#19B87A' : '#E0701F') : theme['text-hint-color']}}>
+                <Text category="h8" bold style={{color: typeof fb?.score === 'number' ? (good ? '#19B87A' : '#0063f8') : theme['text-hint-color']}}>
                   {typeof fb?.score === 'number' ? fb.score : st.n}
                 </Text>
               </View>
@@ -134,7 +134,7 @@ const SharedProjectView = ({name, files}: {name: string; files: ProjectFile[]}) 
                 <Chip
                   label={st.status === 'done' ? t('more:share_status_done', {defaultValue: 'Completed'}) : t('more:share_status_progress', {defaultValue: 'In progress'})}
                   bg={st.status === 'done' ? 'rgba(25,184,122,0.16)' : 'rgba(255,138,61,0.16)'}
-                  color={st.status === 'done' ? '#19B87A' : '#E0701F'}
+                  color={st.status === 'done' ? '#19B87A' : '#0063f8'}
                 />
               ) : null}
             </View>

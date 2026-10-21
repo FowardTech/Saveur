@@ -489,7 +489,7 @@ const PracticalProjects = memo(() => {
                             style={{
                               height: 6,
                               borderRadius: 3,
-                              backgroundColor: '#7C5CFF',
+                              backgroundColor: '#0063f8',
                               width: `${uploadPct === null || uploadPct >= 100 ? 100 : uploadPct}%`,
                               opacity: uploadPct === null || uploadPct >= 100 ? 0.5 : 1,
                             }}

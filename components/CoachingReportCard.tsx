@@ -34,7 +34,7 @@ const PANELS: Panel[] = [
   {key: 'performingWell', icon: 'checkmark-circle-2-outline', color: '#10B981', titleKey: 'home:coaching_report_performing_well', titleDefault: 'Performing Well'},
   {key: 'keyInsights', icon: 'bulb-outline', color: '#71717a', titleKey: 'home:coaching_report_key_insights', titleDefault: 'Key Insights'},
   {key: 'areasToImprove', icon: 'flag-outline', color: '#F59E0B', titleKey: 'home:coaching_report_areas_to_improve', titleDefault: 'Areas to Improve'},
-  {key: 'whatsNext', icon: 'arrow-forward-outline', color: '#EC4899', titleKey: 'home:coaching_report_whats_next', titleDefault: "What's Next"},
+  {key: 'whatsNext', icon: 'arrow-forward-outline', color: '#0063f8', titleKey: 'home:coaching_report_whats_next', titleDefault: "What's Next"},
 ];
 
 const CoachingReportCard = () => {

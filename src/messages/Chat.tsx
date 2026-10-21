@@ -653,10 +653,10 @@ const Chat = memo(() => {
           {persisted ? (
             <>
               <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onRateReply(idStr, cur.feedback, "up")} style={{ marginRight: 18 }}>
-                <Icon pack="eva" name="thumbs-up-outline" style={[globalStyle.icon16, { tintColor: cur.feedback === "up" ? "#7C5CFF" : iconColor }]} />
+                <Icon pack="eva" name="thumbs-up-outline" style={[globalStyle.icon16, { tintColor: cur.feedback === "up" ? "#0063f8" : iconColor }]} />
               </TouchableOpacity>
               <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} onPress={() => onRateReply(idStr, cur.feedback, "down")} style={{ marginRight: 18 }}>
-                <Icon pack="eva" name="thumbs-down-outline" style={[globalStyle.icon16, { tintColor: cur.feedback === "down" ? "#FF5FA2" : iconColor }]} />
+                <Icon pack="eva" name="thumbs-down-outline" style={[globalStyle.icon16, { tintColor: cur.feedback === "down" ? "#0063f8" : iconColor }]} />
               </TouchableOpacity>
             </>
           ) : null}

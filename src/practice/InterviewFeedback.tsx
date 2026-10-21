@@ -48,10 +48,10 @@ const scoreRingColors = (score: number, theme: Record<string, string>) => {
 // pair (#71717a -> #71717a) — same stale pair Leaderboard.tsx's "Your
 // standing" ring and MyProgress.tsx's roadmap ring carried before this
 // session's redesign pass moved them to the new soft-blue tone
-// (#9DBFEF -> #7EA8E2). This was the last leftover instance of the old
+// (#9DBFEF -> #0063f8). This was the last leftover instance of the old
 // pair; brought in line so every non-threshold progress ring in the app
 // now reads the same soft blue.
-const PRIMARY_RING_GRADIENT = { progressGradientFrom: '#9DBFEF', progressGradientTo: '#7EA8E2' };
+const PRIMARY_RING_GRADIENT = { progressGradientFrom: '#9DBFEF', progressGradientTo: '#0063f8' };
 
 // Post-interview feedback. The session has already been finalized by the
 // time this screen mounts (LiveInterviewSession/CodingInterview both call

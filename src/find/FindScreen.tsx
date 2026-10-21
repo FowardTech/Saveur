@@ -238,7 +238,7 @@ const FindScreen = memo(() => {
           icon: 'code-outline',
           onPress: () => setShowCodingDifficultyPicker(true),
           loading: isStartingCoding,
-          tint: { bg: '#7C5CFF', fg: '#FFFFFF', text: '#FFFFFF', wrap: 'rgba(255,255,255,0.22)' },
+          tint: { bg: '#0063f8', fg: '#FFFFFF', text: '#FFFFFF', wrap: 'rgba(255,255,255,0.22)' },
         }]
       : []),
     // Admin-configurable (product request: "I want to be able to activate

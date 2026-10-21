@@ -60,7 +60,7 @@ const PayWatch = () => {
               <Card>
                 <Pill
                   label={p.behind ? t('more:lt_pay_behind', {defaultValue: 'Behind the market'}) : t('more:lt_pay_ok', {defaultValue: 'In line with the market'})}
-                  color={p.behind ? '#FF8A3D' : '#19B87A'}
+                  color={p.behind ? '#0063f8' : '#19B87A'}
                 />
                 <Text category="h4" bold mt={10}>
                   {fmt(p.current_base, p.currency)}

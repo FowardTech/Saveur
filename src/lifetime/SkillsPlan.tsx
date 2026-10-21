@@ -86,7 +86,7 @@ const SkillsPlan = () => {
                 <Icon
                   pack="eva"
                   name={m.done ? 'checkmark-circle-2' : 'radio-button-off-outline'}
-                  style={[globalStyle.icon24, {tintColor: m.done ? '#19B87A' : '#7C5CFF'}]}
+                  style={[globalStyle.icon24, {tintColor: m.done ? '#19B87A' : '#0063f8'}]}
                 />
                 <View style={{flex: 1, marginLeft: 12}}>
                   <Text category="h9" bold style={{textDecorationLine: m.done ? 'line-through' : 'none'}}>

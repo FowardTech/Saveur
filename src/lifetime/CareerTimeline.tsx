@@ -11,10 +11,10 @@ import {LifetimeScreen, Card, Loading, PrimaryButton, useAsyncAction} from './Sc
 
 const KIND_META: Record<string, {color: string; icon: string}> = {
   win: {color: '#19B87A', icon: 'award-outline'},
-  role: {color: '#7C5CFF', icon: 'briefcase-outline'},
-  raise: {color: '#FF8A3D', icon: 'trending-up-outline'},
+  role: {color: '#0063f8', icon: 'briefcase-outline'},
+  raise: {color: '#0063f8', icon: 'trending-up-outline'},
   certificate: {color: '#2F6BFF', icon: 'award-outline'},
-  milestone: {color: '#FF5FA2', icon: 'flag-outline'},
+  milestone: {color: '#0063f8', icon: 'flag-outline'},
   review: {color: '#F5B000', icon: 'file-text-outline'},
 };
 const KINDS = ['win', 'role', 'raise', 'certificate', 'milestone', 'review'];

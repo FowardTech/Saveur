@@ -25,7 +25,7 @@ const StageProgressBar = ({current, total, label}: Props) => {
             key={i}
             style={[
               styles.seg,
-              {backgroundColor: i < done ? '#7C5CFF' : theme['background-basic-color-3']},
+              {backgroundColor: i < done ? '#0063f8' : theme['background-basic-color-3']},
             ]}
           />
         ))}

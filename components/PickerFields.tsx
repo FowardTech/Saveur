@@ -126,7 +126,7 @@ const SelectSheet = ({visible, title, options, selected, searchPlaceholder, onSe
                       {item.hint}
                     </Text>
                   ) : null}
-                  {on ? <Icon pack="eva" name="checkmark-circle-2" style={[globalStyle.icon20, {tintColor: '#7C5CFF'}]} /> : null}
+                  {on ? <Icon pack="eva" name="checkmark-circle-2" style={[globalStyle.icon20, {tintColor: '#0063f8'}]} /> : null}
                 </TouchableOpacity>
               );
             }}

@@ -44,7 +44,7 @@ const ReviewPrep = () => {
           <TouchableOpacity
             key={k}
             onPress={() => setKind(k)}
-            style={{marginRight: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: kind === k ? '#7C5CFF' : 'rgba(124,92,255,0.25)', backgroundColor: kind === k ? 'rgba(124,92,255,0.12)' : 'transparent'}}>
+            style={{marginRight: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: kind === k ? '#0063f8' : 'rgba(124,92,255,0.25)', backgroundColor: kind === k ? 'rgba(124,92,255,0.12)' : 'transparent'}}>
             <Text category="h9" bold={kind === k}>
               {k === 'promotion' ? t('more:lt_kind_promotion', {defaultValue: 'Promotion'}) : t('more:lt_kind_review', {defaultValue: 'Performance review'})}
             </Text>
@@ -88,7 +88,7 @@ const ReviewPrep = () => {
           ) : null}
           <Card>
             <H>{t('more:lt_talking_points', {defaultValue: 'Talking points'})}</H>
-            <Bullets items={prep.talking_points} color="#7C5CFF" />
+            <Bullets items={prep.talking_points} color="#0063f8" />
             {prep.ask ? (
               <Text category="h9" bold mt={12}>
                 {t('more:lt_the_ask', {defaultValue: 'Your ask'})}: <Text category="h9-s">{prep.ask}</Text>
@@ -113,7 +113,7 @@ const ReviewPrep = () => {
           {prep.gaps.length ? (
             <Card>
               <H>{t('more:lt_gaps', {defaultValue: 'Evidence still to collect'})}</H>
-              <Bullets items={prep.gaps} color="#FF8A3D" />
+              <Bullets items={prep.gaps} color="#0063f8" />
             </Card>
           ) : null}
           <PrimaryButton label={t('more:lt_rehearse_manager', {defaultValue: 'Rehearse with your manager'})} onPress={rehearse} />

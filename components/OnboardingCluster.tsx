@@ -17,7 +17,7 @@ interface OnboardingClusterBadge {
 // to do with a decorative avatar/icon cluster.
 export const CLUSTER_COLORS = {
   blue: '#71717a',
-  pink: '#EC4899',
+  pink: '#0063f8',
   green: '#10B981',
   orange: '#F5A623',
 } as const;

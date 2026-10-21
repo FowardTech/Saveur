@@ -63,7 +63,7 @@ const RolePlay = () => {
             <H>{t('more:lt_strengths', {defaultValue: 'What worked'})}</H>
             <Bullets items={feedback.strengths} color="#19B87A" />
             <H>{t('more:lt_improve', {defaultValue: 'To improve'})}</H>
-            <Bullets items={feedback.improvements} color="#FF8A3D" />
+            <Bullets items={feedback.improvements} color="#0063f8" />
           </Card>
           {feedback.better_phrasing.map((b, i) => (
             <Card key={i}>
@@ -103,7 +103,7 @@ const RolePlay = () => {
                   maxWidth: '88%',
                   padding: 12,
                   borderRadius: 16,
-                  backgroundColor: m.role === 'user' ? '#7C5CFF' : undefined,
+                  backgroundColor: m.role === 'user' ? '#0063f8' : undefined,
                   borderWidth: m.role === 'user' ? 0 : 1,
                   borderColor: 'rgba(124,92,255,0.35)',
                 }}>

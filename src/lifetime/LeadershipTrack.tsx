@@ -49,7 +49,7 @@ const LeadershipTrack = () => {
               setKind(k);
               setPrep(null);
             }}
-            style={{marginRight: 8, marginBottom: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: kind === k ? '#7C5CFF' : 'rgba(124,92,255,0.25)', backgroundColor: kind === k ? 'rgba(124,92,255,0.12)' : 'transparent'}}>
+            style={{marginRight: 8, marginBottom: 8, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: kind === k ? '#0063f8' : 'rgba(124,92,255,0.25)', backgroundColor: kind === k ? 'rgba(124,92,255,0.12)' : 'transparent'}}>
             <Text category="h9" bold={kind === k}>
               {labels[k]}
             </Text>
@@ -77,7 +77,7 @@ const LeadershipTrack = () => {
           {prep.sections.map((s, i) => (
             <Card key={i}>
               <H>{s.heading}</H>
-              <Bullets items={s.points} color="#7C5CFF" />
+              <Bullets items={s.points} color="#0063f8" />
             </Card>
           ))}
           {prep.script ? (
@@ -91,7 +91,7 @@ const LeadershipTrack = () => {
           {prep.avoid.length ? (
             <Card>
               <H>{t('more:lt_avoid', {defaultValue: 'Avoid'})}</H>
-              <Bullets items={prep.avoid} color="#FF5FA2" />
+              <Bullets items={prep.avoid} color="#0063f8" />
             </Card>
           ) : null}
           <PrimaryButton
