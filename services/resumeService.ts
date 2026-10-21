@@ -238,6 +238,7 @@ const writeCache = async (
 export async function importSource(
   sourceKey: ResumeImportSourceKey,
   file: ImportedFileInfo,
+  onProgress?: (percent: number) => void,
 ): Promise<void> {
   const formData = new FormData();
   formData.append('source_key', sourceKey);
@@ -246,7 +247,11 @@ export async function importSource(
     name: file.name,
     type: file.mimeType ?? 'application/octet-stream',
   });
-  await apiClient.post('/api/v1/resume/upload', formData);
+  await apiClient.post('/api/v1/resume/upload', formData, {
+    onUploadProgress: e => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+    },
+  });
 
   // Best-effort local echo so the "Uploaded" badge flips immediately without
   // waiting on a refetch; getImportedSources() below is still the real

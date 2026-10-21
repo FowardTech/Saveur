@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "Trasforma il tuo Diario di carriera in risultati pronti per la promozione, da incollare nelle valutazioni e nel CV.",
   "lt_hub_unavailable": "Il Centro successi di carriera non è disponibile al momento",
   "lt_hub_unavailable_body": "Riprova a breve.",
-  "lt_checkin_intro_body": "Useremo il tuo Diario di carriera, i tuoi obiettivi e i tuoi successi, poi ti daremo un prossimo passo concreto. Altro che vuoi aggiungere? (facoltativo)"
+  "lt_checkin_intro_body": "Useremo il tuo Diario di carriera, i tuoi obiettivi e i tuoi successi, poi ti daremo un prossimo passo concreto. Altro che vuoi aggiungere? (facoltativo)",
+  "upload_progress_percent": "Caricamento… {{percent}}%",
+  "upload_processing": "Caricamento completato — elaborazione…",
+  "upload_done": "Caricato con successo"
 }

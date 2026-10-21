@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "Transforma seu Diário de carreira em conquistas prontas para promoção, que você pode colar em avaliações e no seu currículo.",
   "lt_hub_unavailable": "A Central de sucesso na carreira está indisponível no momento",
   "lt_hub_unavailable_body": "Volte em breve.",
-  "lt_checkin_intro_body": "Vamos usar seu Diário de carreira, suas metas e conquistas e dar um próximo passo concreto. Mais alguma coisa em mente? (opcional)"
+  "lt_checkin_intro_body": "Vamos usar seu Diário de carreira, suas metas e conquistas e dar um próximo passo concreto. Mais alguma coisa em mente? (opcional)",
+  "upload_progress_percent": "Enviando… {{percent}}%",
+  "upload_processing": "Envio concluído — processando…",
+  "upload_done": "Enviado com sucesso"
 }

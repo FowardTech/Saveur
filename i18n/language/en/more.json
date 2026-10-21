@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "Turns your Career Diary into promotion-ready achievements you can paste into reviews and your resume.",
   "lt_hub_unavailable": "Career Success Hub is unavailable right now",
   "lt_hub_unavailable_body": "Please check back soon.",
-  "lt_checkin_intro_body": "We'll use your Career Diary, goals and wins, then give you one concrete next step. Anything else on your mind? (optional)"
+  "lt_checkin_intro_body": "We'll use your Career Diary, goals and wins, then give you one concrete next step. Anything else on your mind? (optional)",
+  "upload_progress_percent": "Uploading… {{percent}}%",
+  "upload_processing": "Upload complete — processing…",
+  "upload_done": "Uploaded successfully"
 }

@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "Macht aus deinem Karrieretagebuch beförderungsreife Erfolge, die du in Beurteilungen und in deinen Lebenslauf einfügen kannst.",
   "lt_hub_unavailable": "Das Karriere-Erfolgszentrum ist derzeit nicht verfügbar",
   "lt_hub_unavailable_body": "Bitte versuche es bald wieder.",
-  "lt_checkin_intro_body": "Wir nutzen dein Karrieretagebuch, deine Ziele und Erfolge und geben dir einen konkreten nächsten Schritt. Beschäftigt dich noch etwas? (optional)"
+  "lt_checkin_intro_body": "Wir nutzen dein Karrieretagebuch, deine Ziele und Erfolge und geben dir einen konkreten nächsten Schritt. Beschäftigt dich noch etwas? (optional)",
+  "upload_progress_percent": "Wird hochgeladen… {{percent}} %",
+  "upload_processing": "Upload abgeschlossen — wird verarbeitet…",
+  "upload_done": "Erfolgreich hochgeladen"
 }

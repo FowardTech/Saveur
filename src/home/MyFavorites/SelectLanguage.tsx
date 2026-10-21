@@ -11,6 +11,8 @@ import {
 import {useNavigation} from '@react-navigation/native';
 import useLayout from 'hooks/useLayout';
 import i18n from 'i18next';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {EKeyAsyncStorage} from 'constants/Types';
 
 import Container from 'components/Container';
 import {useTranslation} from 'react-i18next';
@@ -30,10 +32,22 @@ const SelectLanguage = memo(() => {
   const {bottom} = useLayout();
   const theme = useTheme();
   const styles = useStyleSheet(themedStyles);
-  const {t} = useTranslation(['filter', 'common']);
+  const {t, i18n: i18nHook} = useTranslation(['filter', 'common']);
   const {updateProfile} = React.useContext(AuthContext);
 
-  const [selectedCode, setSelectedCode] = React.useState(i18n.language?.startsWith('es') ? 'es' : 'en');
+  // BUG FIX (product report: "when I switch from english to any other
+  // language and then come back to this screen it goes back to english"):
+  // the checked row was seeded with `startsWith('es') ? 'es' : 'en'`, so any
+  // of the other 10 supported languages (fr, de, pt, it, zh, ja, ko, ar, hi,
+  // ru) re-opened with English ticked. Now derived straight from the live
+  // i18next language (base code, e.g. 'fr-FR' -> 'fr'), and kept in sync via
+  // the useTranslation() instance so it also follows changes made elsewhere
+  // (profile locale sync, onboarding picker).
+  const currentCode = (i18nHook.language || i18n.language || 'en').split('-')[0];
+  const [selectedCode, setSelectedCode] = React.useState(currentCode);
+  React.useEffect(() => {
+    setSelectedCode(currentCode);
+  }, [currentCode]);
 
   // Switches the app's UI text immediately (i18next), and separately
   // persists the choice to the account (PATCH /api/users/me `locale` — see
@@ -46,6 +60,9 @@ const SelectLanguage = memo(() => {
   const onSelect = (code: string) => {
     setSelectedCode(code);
     i18n.changeLanguage(code);
+    // Persist locally right away so the choice survives a restart (and a
+    // failed/slow PATCH) -- i18n/config.ts's cold-start restore reads this.
+    AsyncStorage.setItem(EKeyAsyncStorage.preferredLocale, code).catch(() => {});
     updateProfile({locale: code}).catch(() => {});
   };
 

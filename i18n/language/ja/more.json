@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "キャリア日記を、評価や履歴書に貼り付けられる昇進向けの成果に変えます。",
   "lt_hub_unavailable": "キャリアサクセスハブは現在ご利用いただけません",
   "lt_hub_unavailable_body": "しばらくしてからもう一度お試しください。",
-  "lt_checkin_intro_body": "キャリア日記、目標、成果をもとに、具体的な次のステップを1つお届けします。ほかに気になることはありますか？（任意）"
+  "lt_checkin_intro_body": "キャリア日記、目標、成果をもとに、具体的な次のステップを1つお届けします。ほかに気になることはありますか？（任意）",
+  "upload_progress_percent": "アップロード中… {{percent}}%",
+  "upload_processing": "アップロード完了 — 処理中…",
+  "upload_done": "アップロードしました"
 }

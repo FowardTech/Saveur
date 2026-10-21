@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "Convierte tu Diario profesional en logros listos para un ascenso que puedes pegar en evaluaciones y en tu currículum.",
   "lt_hub_unavailable": "El Centro de éxito profesional no está disponible por ahora",
   "lt_hub_unavailable_body": "Vuelve a intentarlo pronto.",
-  "lt_checkin_intro_body": "Usaremos tu Diario profesional, tus metas y logros, y te daremos un siguiente paso concreto. ¿Algo más en tu mente? (opcional)"
+  "lt_checkin_intro_body": "Usaremos tu Diario profesional, tus metas y logros, y te daremos un siguiente paso concreto. ¿Algo más en tu mente? (opcional)",
+  "upload_progress_percent": "Subiendo… {{percent}}%",
+  "upload_processing": "Subida completa — procesando…",
+  "upload_done": "Subido correctamente"
 }

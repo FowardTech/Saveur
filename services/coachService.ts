@@ -465,7 +465,7 @@ export async function uploadChatImage(file: {
   uri: string;
   name: string;
   mimeType?: string | null;
-}): Promise<string> {
+}, onProgress?: (percent: number) => void): Promise<string> {
   const formData = new FormData();
   // React Native's global FormData accepts a {uri, name, type} object for
   // streaming a file from disk (same shape resumeService.ts's own
@@ -478,7 +478,11 @@ export async function uploadChatImage(file: {
     name: file.name,
     type: file.mimeType ?? 'image/jpeg',
   } as unknown as Blob);
-  const {data} = await apiClient.post<{url: string}>('/api/v1/coach/messages/image', formData);
+  const {data} = await apiClient.post<{url: string}>('/api/v1/coach/messages/image', formData, {
+    onUploadProgress: e => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+    },
+  });
   return data.url;
 }
 

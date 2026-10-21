@@ -56,6 +56,8 @@ import * as coachService from "services/coachService";
 import { SuggestedTopic } from "services/coachService";
 import { ACTION_META, actionTitle, runSuggestedAction } from "services/suggestedActions";
 import * as resumeService from "services/resumeService";
+import UploadStatusBar from "components/UploadStatusBar";
+import { useUploadStatus } from "hooks/useUploadStatus";
 import { ImportedFileInfo } from "services/resumeService";
 import { AuthContext } from "../../AuthContext";
 import ThemeContext from "../../ThemeContext";
@@ -736,30 +738,33 @@ const Chat = memo(() => {
   }, [t]);
 
   const [isAttaching, setIsAttaching] = React.useState(false);
+  const upload = useUploadStatus();
   const uploadAttachment = React.useCallback(
     async (file: ImportedFileInfo | null, key: 'resume' | 'portfolio') => {
       if (!file || isAttaching) return;
       setIsAttaching(true);
+      upload.begin(file.name, file.sizeBytes);
       try {
         // Reused from the same real upload path as ResumeBuilder's import
         // cards (POST /resume/upload — see services/resumeService.ts) —
         // there's no separate "chat attachment" endpoint, so a file shared
         // here becomes part of the user's resume/portfolio sources the AI
         // coach and resume tools can already reference.
-        await resumeService.importSource(key, file);
+        await resumeService.importSource(key, file, upload.progress);
+        upload.done();
         appendAttachmentNotice(file);
       } catch (e: any) {
-        Alert.alert(
-          t("more:upload_failed", { defaultValue: "Upload failed" }),
-          e?.message ?? t("common:something_went_wrong", {
-            defaultValue: "Something went wrong. Please try again.",
-          }),
-        );
+        const msg = e?.message ?? t("common:something_went_wrong", {
+          defaultValue: "Something went wrong. Please try again.",
+        });
+        upload.fail(msg);
+        Alert.alert(t("more:upload_failed", { defaultValue: "Upload failed" }), msg);
       } finally {
         setIsAttaching(false);
       }
     },
-    [isAttaching, appendAttachmentNotice, t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [isAttaching, appendAttachmentNotice, t, upload.begin, upload.progress, upload.done, upload.fail],
   );
 
   const onAttach = React.useCallback(async () => {
@@ -799,12 +804,15 @@ const Chat = memo(() => {
   const onImagePicked = React.useCallback(async (asset: {uri: string; fileName?: string; type?: string}) => {
     if (isAttaching || isSending) return;
     setIsAttaching(true);
+    const photoName = asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" });
+    upload.begin(photoName);
     try {
       const imageUrl = await coachService.uploadChatImage({
         uri: asset.uri,
-        name: asset.fileName ?? t("message:photo_fallback_name", { defaultValue: "Photo.jpg" }),
+        name: photoName,
         mimeType: asset.type,
-      });
+      }, upload.progress);
+      upload.done();
       const draft: CoachIMessage = {
         _id: `msg_${Date.now()}_img`,
         text: t("message:sent_photo_caption", { defaultValue: "📷 Sent a photo" }),
@@ -814,16 +822,16 @@ const Chat = memo(() => {
       } as unknown as CoachIMessage;
       await sendDraft(draft, imageUrl);
     } catch (e: any) {
-      Alert.alert(
-        t("more:upload_failed", { defaultValue: "Upload failed" }),
-        e?.message ?? t("common:something_went_wrong", {
-          defaultValue: "Something went wrong. Please try again.",
-        }),
-      );
+      const msg = e?.message ?? t("common:something_went_wrong", {
+        defaultValue: "Something went wrong. Please try again.",
+      });
+      upload.fail(msg);
+      Alert.alert(t("more:upload_failed", { defaultValue: "Upload failed" }), msg);
     } finally {
       setIsAttaching(false);
     }
-  }, [isAttaching, isSending, sendDraft, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAttaching, isSending, sendDraft, t, upload.begin, upload.progress, upload.done, upload.fail]);
 
   const onCamera = React.useCallback(() => {
     ImagePicker.launchCamera({ mediaType: 'photo', saveToPhotos: false }, response => {
@@ -1293,6 +1301,11 @@ const Chat = memo(() => {
           visible." A plain View has no scroll-container conflict and lets
           GiftedChat's internal handling do its job unopposed. */}
           <View style={styles.container}>
+            {upload.status ? (
+              <View style={{ paddingHorizontal: 12, paddingTop: 8 }}>
+                <UploadStatusBar status={upload.status} onDismiss={upload.dismiss} />
+              </View>
+            ) : null}
             <GiftedChat
               user={{ _id: 1 }}
               messages={giftedChatMessages}

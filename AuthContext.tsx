@@ -696,7 +696,12 @@ export const AuthProvider: React.FC = ({children}) => {
   const updateProfile = React.useCallback(async (partial: Partial<UserProfileProps>) => {
     const nextProfile = await authService.updateProfile(partial);
     setProfile(nextProfile);
-    syncLanguageFromProfile(nextProfile);
+    // A locale change was already applied locally and instantly by the
+    // caller (Settings -> Language). Re-applying the server's echo here
+    // raced with quick successive picks (fr then de: fr's PATCH response
+    // arrived after de was chosen and flipped the app back to fr), so only
+    // pull the account locale down for updates that did NOT set it.
+    if (!('locale' in partial)) syncLanguageFromProfile(nextProfile);
   }, []);
 
   // Re-fetches the profile without going through updateProfile's PATCH —

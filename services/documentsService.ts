@@ -86,7 +86,7 @@ function fromWire(wire: DocumentWire): DocumentRecord {
  * @react-native-documents/picker like ResumeBuilder.tsx does for resume
  * sources). Returns the stored document's id + a fetchable URL.
  */
-export async function uploadDocument(file: UploadableFile): Promise<DocumentRecord> {
+export async function uploadDocument(file: UploadableFile, onProgress?: (percent: number) => void): Promise<DocumentRecord> {
   const formData = new FormData();
   if (file.docType) formData.append('doc_type', file.docType);
   formData.append('file', {
@@ -94,7 +94,11 @@ export async function uploadDocument(file: UploadableFile): Promise<DocumentReco
     name: file.name,
     type: file.mimeType ?? 'application/octet-stream',
   });
-  const {data} = await apiClient.post<DocumentWire>('/api/v1/documents/upload', formData);
+  const {data} = await apiClient.post<DocumentWire>('/api/v1/documents/upload', formData, {
+    onUploadProgress: e => {
+      if (onProgress && e.total) onProgress(Math.round((e.loaded / e.total) * 100));
+    },
+  });
   return fromWire(data);
 }
 

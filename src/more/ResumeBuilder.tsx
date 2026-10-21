@@ -30,6 +30,8 @@ import { ImportedFileInfo, ResumeImportSourceKey, RewriteBulletResult } from 'se
 import { DocumentRecord } from 'services/documentsService';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import UploadStatusBar from 'components/UploadStatusBar';
+import {useUploadStatus} from 'hooks/useUploadStatus';
 import { accentColorForKey } from 'utils/accentPalette';
 
 // BUG FIX (product report: "resume builder screen — some content still in
@@ -84,6 +86,7 @@ const ResumeBuilder = memo(() => {
 
   const [imported, setImported] = React.useState<Record<string, ImportedFileInfo>>({});
   const [importingKey, setImportingKey] = React.useState<ResumeImportSourceKey | null>(null);
+  const upload = useUploadStatus();
   const [analyzed, setAnalyzed] = React.useState(false);
   const [isAnalyzing, setIsAnalyzing] = React.useState(false);
   const [atsScore, setAtsScore] = React.useState(0);
@@ -126,19 +129,21 @@ const ResumeBuilder = memo(() => {
   const runImport = React.useCallback(
     async (key: ResumeImportSourceKey, file: ImportedFileInfo) => {
       setImportingKey(key);
+      upload.begin(file.name, file.sizeBytes);
       try {
-        await resumeService.importSource(key, file);
+        await resumeService.importSource(key, file, upload.progress);
         setImported(prev => ({ ...prev, [key]: file }));
+        upload.done();
       } catch (e: any) {
-        Alert.alert(
-          t('more:upload_failed', { defaultValue: 'Upload failed' }),
-          e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'}),
-        );
+        const msg = e?.message ?? t('common:something_went_wrong', {defaultValue: 'Something went wrong. Please try again.'});
+        upload.fail(msg);
+        Alert.alert(t('more:upload_failed', { defaultValue: 'Upload failed' }), msg);
       } finally {
         setImportingKey(null);
       }
     },
-    [t],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [t, upload.begin, upload.progress, upload.done, upload.fail],
   );
 
   // Was: straight to the device file picker, every time. Now offers a
@@ -251,6 +256,7 @@ const ResumeBuilder = memo(() => {
         <Text category="h8" bold status="placeholder" mb={16}>
           {t('more:import_from', { defaultValue: 'Import from' })}
         </Text>
+        <UploadStatusBar status={upload.status} onDismiss={upload.dismiss} />
         <View style={styles.importGrid}>
           {IMPORT_OPTIONS.map(opt => {
             // Product follow-up ("the color style and blend is not

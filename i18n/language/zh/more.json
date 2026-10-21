@@ -1280,5 +1280,8 @@
   "lt_brag_intro": "将您的职业日记转化为可用于晋升的成就，您可以粘贴到评估和简历中。",
   "lt_hub_unavailable": "职业成就中心暂时不可用",
   "lt_hub_unavailable_body": "请稍后再来看看。",
-  "lt_checkin_intro_body": "我们会结合您的职业日记、目标和成就，为您提供一个具体的下一步。还有其他想补充的吗？（可选）"
+  "lt_checkin_intro_body": "我们会结合您的职业日记、目标和成就，为您提供一个具体的下一步。还有其他想补充的吗？（可选）",
+  "upload_progress_percent": "正在上传… {{percent}}%",
+  "upload_processing": "上传完成 — 正在处理…",
+  "upload_done": "上传成功"
 }

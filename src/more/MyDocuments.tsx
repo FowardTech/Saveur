@@ -26,6 +26,8 @@ import {DocumentRecord} from 'services/documentsService';
 import CtaButton from 'components/CtaButton';
 import { SkeletonList } from 'components/Skeleton';
 import {RootStackParamList} from 'navigation/types';
+import UploadStatusBar from 'components/UploadStatusBar';
+import {useUploadStatus} from 'hooks/useUploadStatus';
 
 function formatSize(bytes?: number | null): string {
   if (!bytes || bytes <= 0) return '';
@@ -53,6 +55,7 @@ const MyDocuments = memo(() => {
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
+  const upload = useUploadStatus();
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
   // OS Share Sheet integration (product request: "Ability to share files
   // to Saveur from the device and it will go directly to the document
@@ -139,19 +142,26 @@ const MyDocuments = memo(() => {
         type: [documentTypes.pdf, documentTypes.doc, documentTypes.docx, documentTypes.plainText, documentTypes.images],
       });
       setIsUploading(true);
-      const doc = await documentsService.uploadDocument({
-        uri: result.uri,
-        name: result.name ?? t('more:documents_selected_file_fallback', {defaultValue: 'Selected file'}),
-        sizeBytes: result.size,
-        mimeType: result.type,
-      });
+      upload.begin(
+        result.name ?? t('more:documents_selected_file_fallback', {defaultValue: 'Selected file'}).toString(),
+        result.size,
+      );
+      const doc = await documentsService.uploadDocument(
+        {
+          uri: result.uri,
+          name: result.name ?? t('more:documents_selected_file_fallback', {defaultValue: 'Selected file'}),
+          sizeBytes: result.size,
+          mimeType: result.type,
+        },
+        upload.progress,
+      );
       setDocuments(prev => [doc, ...prev]);
+      upload.done();
     } catch (e: any) {
       if (isErrorWithCode(e) && e.code === errorCodes.OPERATION_CANCELED) return;
-      Alert.alert(
-        t('more:documents_upload_failed_title', {defaultValue: 'Upload failed'}),
-        e?.message ?? t('more:documents_upload_failed_body', {defaultValue: 'Something went wrong. Please try again.'}),
-      );
+      const msg = e?.message ?? t('more:documents_upload_failed_body', {defaultValue: 'Something went wrong. Please try again.'});
+      upload.fail(msg);
+      Alert.alert(t('more:documents_upload_failed_title', {defaultValue: 'Upload failed'}), msg);
     } finally {
       setIsUploading(false);
     }
@@ -215,6 +225,7 @@ const MyDocuments = memo(() => {
           onPress={onUpload}
           style={[globalStyle.shadowBtn, {marginBottom: 20}]}
         />
+        <UploadStatusBar status={upload.status} onDismiss={upload.dismiss} />
 
         {isLoading ? (
           <SkeletonList count={3} style={{ paddingHorizontal: 16 }} />
