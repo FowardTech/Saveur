@@ -28,6 +28,7 @@ import { getSessionEntitlement, hasAddon, addonCodeForInterviewType } from 'serv
 import { getInterviewTypeLabel, getPracticeModeLabel, getPracticeModeDescription, getDifficultyLabel } from 'utils/interviewTypeLabels';
 import { AuthContext } from '../../AuthContext';
 import CtaButton from 'components/CtaButton';
+import CreditCostHint from 'components/CreditCostHint';
 import PersonaDetailModal from 'components/PersonaDetailModal';
 import LockBadge from 'components/LockBadge';
 import CompanyLogoAvatar from 'components/CompanyLogoAvatar';
@@ -855,6 +856,17 @@ const MockInterviewSetup = memo(() => {
           onPress={onStart}
           disabled={isStarting}
           style={globalStyle.shadowBtn}
+        />
+        <CreditCostHint
+          action={
+            interviewType === Interview_Type_Enum.Coding || interviewType === Interview_Type_Enum.SystemDesign
+              ? 'coding_session'
+              : mode === Practice_Mode_Enum.Video
+                ? 'interview_video'
+                : mode === Practice_Mode_Enum.Voice
+                  ? 'interview_voice'
+                  : 'interview_text'
+          }
         />
       </Content>
 

@@ -713,6 +713,7 @@ function fromAddonWire(wire: AddonWire): AddonProps {
 export type IapVerifyResult =
   | (SubscriptionStatusProps & {kind: 'subscription'})
   | {kind: 'addon'; addonCode: string; unlocked: boolean; unlockedAddons: string[]}
+  | {kind: 'credits'; creditsGranted: number}
   | {kind: 'error'; error: string}
   // The user backed out of the native purchase sheet themselves — not a
   // failure, see iapService.ts's purchase() for why this is its own kind
@@ -721,7 +722,8 @@ export type IapVerifyResult =
 
 interface IapVerifyWire {
   error?: string;
-  kind?: 'subscription' | 'addon';
+  kind?: 'subscription' | 'addon' | 'credits';
+  credits_granted?: number;
   addon_code?: string;
   unlocked?: boolean;
   unlocked_addons?: string[];
@@ -731,6 +733,7 @@ interface IapVerifyWire {
 
 function fromIapVerifyWire(wire: IapVerifyWire): IapVerifyResult {
   if (wire.error) return {kind: 'error', error: wire.error};
+  if (wire.kind === 'credits') return {kind: 'credits', creditsGranted: wire.credits_granted ?? 0};
   if (wire.kind === 'addon') {
     return {
       kind: 'addon',

@@ -4,6 +4,7 @@ import auth from '@react-native-firebase/auth';
 import i18n from 'i18next';
 
 import {API_BASE_URL} from 'constants/env';
+import {emitInsufficientCredits, markCreditsStale} from './creditsStore';
 
 // ---------------------------------------------------------------------------
 // apiClient — the one shared axios instance every services/*.ts file should
@@ -78,10 +79,27 @@ export interface ApiError {
 // this rejection propagate — screens can catch it and read `.message`
 // directly instead of each one re-deriving a user-facing string.
 apiClient.interceptors.response.use(
-  response => response,
-  (error: AxiosError<{message?: string; detail?: string; code?: string; error?: string}>) => {
+  response => {
+    // Any successful write may have spent credits -> refresh the balance.
+    const method = (response.config?.method ?? 'get').toLowerCase();
+    if (method !== 'get') markCreditsStale();
+    return response;
+  },
+  (error: AxiosError<{message?: string; detail?: string; code?: string; error?: string; required?: number; available?: number}>) => {
+    // Out of AI credits (backend 402 `insufficient_credits`): open the global
+    // "buy credits" prompt, and surface the error as status 429 -- many
+    // screens read any 402 as "this needs a paid plan" and would otherwise
+    // show a paywall to a user who simply ran out of credits.
+    const out = error.response?.status === 402 && error.response?.data?.error === 'insufficient_credits';
+    if (out) {
+      emitInsufficientCredits({
+        message: error.response?.data?.message,
+        required: error.response?.data?.required,
+        available: error.response?.data?.available,
+      });
+    }
     const apiError: ApiError = {
-      status: error.response?.status,
+      status: out ? 429 : error.response?.status,
       error: error.response?.data?.error,
       // Backend error bodies are NOT consistent about the field name —
       // roughly 60% of endpoints use {"detail": "..."} (e.g. billing.py's

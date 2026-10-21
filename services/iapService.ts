@@ -148,7 +148,7 @@ async function verifyPurchaseServerSide(
  * purchaseUpdatedListener below for why finishing itself no longer has to
  * finish *before* this promise resolves.
  */
-export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerifyResult> {
+export function purchase(sku: string, type: 'subs' | 'in-app', consumable = false): Promise<IapVerifyResult> {
   return new Promise((resolve, reject) => {
     let updateSub: {remove: () => void} | undefined;
     let errorSub: {remove: () => void} | undefined;
@@ -194,7 +194,7 @@ export function purchase(sku: string, type: 'subs' | 'in-app'): Promise<IapVerif
         // check), which finishes it again — harmless, unlike skipping
         // verification itself.
         settle(() => resolve(result));
-        RNIap.finishTransaction({purchase: purchased, isConsumable: false}).catch(finishErr => {
+        RNIap.finishTransaction({purchase: purchased, isConsumable: consumable}).catch(finishErr => {
           console.warn('[iapService] finishTransaction failed (will retry via the store replaying it later):', finishErr);
         });
       } catch (err) {
@@ -256,6 +256,14 @@ export function purchaseSubscription(sku: string): Promise<IapVerifyResult> {
 
 export function purchaseAddon(sku: string): Promise<IapVerifyResult> {
   return purchase(sku, 'in-app');
+}
+
+/** AI-credit top-up pack: a CONSUMABLE in-app product (can be bought again
+ * and again), so the transaction is finished as consumable. The backend
+ * grants the credits when it verifies the transaction (idempotent on the
+ * store's transaction id). */
+export function purchaseCreditPack(sku: string): Promise<IapVerifyResult> {
+  return purchase(sku, 'in-app', true);
 }
 
 /**

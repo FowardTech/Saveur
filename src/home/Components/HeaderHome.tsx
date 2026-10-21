@@ -10,6 +10,7 @@ import DrawerMenuButton from 'components/DrawerMenuButton';
 import {RootStackParamList} from 'navigation/types';
 import {globalStyle} from 'styles/globalStyle';
 import {useTranslation} from 'react-i18next';
+import {useCredits} from 'services/creditsService';
 
 // Was hardcoded to "Good morning!" regardless of actual time of day.
 // Standard 3-way split: before noon / before 6pm / after — uses the
@@ -47,6 +48,7 @@ const HeaderHome = memo(
     const _onReferral = () => navigate('ReferralProgram');
     const {t} = useTranslation(['home', 'common']);
     const theme = useTheme();
+    const {credits} = useCredits();
     return (
       <Flex justify="space-between" itemsCenter mh={24} mt={0} mb={8}>
         {/* SYMPHONY REDESIGN (drawer nav shell) — Home is one of the 3
@@ -87,6 +89,14 @@ const HeaderHome = memo(
             destination is still reachable from the "For You" row's own
             Leaderboard pill (see HomeSrc.tsx), so nothing is lost, just
             this one duplicate entry point here. */}
+        {credits?.enabled ? (
+          <Flex onPress={() => navigate('Credits')} itemsCenter style={styles.creditsChip}>
+            <Icon pack="eva" name="flash-outline" style={[globalStyle.icon16, {tintColor: theme['color-primary-500']}]} />
+            <Text category="h10" bold ml={4}>
+              {credits.total}
+            </Text>
+          </Flex>
+        ) : null}
         <Flex onPress={_onReferral} style={[styles.button, styles.headerIconButton]}>
           <Icon pack="eva" name="gift-outline" style={[styles.headerIcon, {tintColor: theme['text-basic-color']}]} />
         </Flex>
@@ -129,6 +139,16 @@ const HeaderHome = memo(
 export default HeaderHome;
 
 const themedStyles = StyleService.create({
+  creditsChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    height: 32,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'border-card-default',
+  },
   // SYMPHONY REDESIGN follow-up (explicit product request, 2nd round:
   // "give the greeting a margin top so that it moves down a bit to be on
   // the same horizontal level with the menu thumbnail"). The FIRST attempt

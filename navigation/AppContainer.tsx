@@ -29,6 +29,7 @@ import MyProgress from 'src/practice/MyProgress';
 import Leaderboard from 'src/home/Leaderboard';
 import ScheduleInterview from 'src/practice/ScheduleInterview';
 import UpcomingSessions from 'src/practice/UpcomingSessions';
+import Credits from 'src/more/Credits';
 import LiveInterviewSession from 'src/practice/LiveInterviewSession';
 import CodingInterview from 'src/practice/CodingInterview';
 import CodingPracticeHub from 'src/practice/CodingPracticeHub';
@@ -105,6 +106,8 @@ import TwoFactorVerify from 'src/auth/TwoFactorVerify';
 import BiometricLockScreen from 'src/auth/BiometricLockScreen';
 import * as biometricAuthService from 'services/biometricAuthService';
 import {navigationRef, flushPendingNavigation} from './navigationRef';
+import i18n from 'i18next';
+import * as creditsService from 'services/creditsService';
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -125,6 +128,24 @@ const AppContainer = () => {
   // we don't want to yank a signed-in user back to Intro if they sign out
   // deeper in the app (SignOut already navigates explicitly where needed).
   const {isInitialized, isSignedIn, twoFactorPending} = React.useContext(AuthContext);
+
+  // AI credits: show the "buy credits" prompt whenever an API call fails with
+  // insufficient_credits (see services/apiClient.ts), and keep the balance in
+  // step with sign-in/out.
+  React.useEffect(() => {
+    creditsService.setInsufficientCreditsHandler(p =>
+      creditsService.showOutOfCreditsAlert(
+        p,
+        (k, o) => String(i18n.t(k, o as any)),
+        () => navigationRef.isReady() && (navigationRef as any).navigate('Credits'),
+      ),
+    );
+    return () => creditsService.setInsufficientCreditsHandler(null);
+  }, []);
+  React.useEffect(() => {
+    if (isSignedIn && !twoFactorPending) creditsService.refreshCredits();
+    else if (!isSignedIn) creditsService.clearCredits();
+  }, [isSignedIn, twoFactorPending]);
 
   // Device-wide biometric app-lock (see services/biometricAuthService.ts) —
   // checked once per isSignedIn/twoFactorPending transition (i.e. cold start
@@ -233,6 +254,7 @@ const AppContainer = () => {
         <Stack.Screen name="MockInterviewSetup" component={MockInterviewSetup} />
         <Stack.Screen name="ScheduleInterview" component={ScheduleInterview} />
         <Stack.Screen name="UpcomingSessions" component={UpcomingSessions} />
+        <Stack.Screen name="Credits" component={Credits} />
         <Stack.Screen name="LiveInterviewSession" component={LiveInterviewSession} />
         <Stack.Screen name="CodingInterview" component={CodingInterview} />
         <Stack.Screen name="CodingPracticeHub" component={CodingPracticeHub} />

@@ -487,6 +487,14 @@ const MoreSrc = memo(() => {
       onPress: () => navigate('AddOns'),
     },
     {
+      title: t('common:drawer_credits', {defaultValue: 'Credits'}),
+      icon: 'premiumAcc',
+      status: 'twitter',
+      iconBackgroundColor: ICON_BG,
+      iconColor: ICON_GLYPH,
+      onPress: () => navigate('Credits'),
+    },
+    {
       title: t('more:subscription', {defaultValue: 'Subscription'}),
       icon: 'premiumAcc',
       status: 'success',
