@@ -162,5 +162,13 @@
   "use_country_only": "केवल {{country}} का उपयोग करें (शहर के बिना)",
   "upgrade_required": "अपग्रेड ज़रूरी है",
   "upgrade_required_body": "यह सुविधा सशुल्क प्लान का हिस्सा है।",
-  "use_typed": "\"{{city}}\" का उपयोग करें"
+  "use_typed": "\"{{city}}\" का उपयोग करें",
+  "drawer_upcoming": "आगामी",
+  "upcoming_title": "आगामी सत्र",
+  "upcoming_today": "आज",
+  "upcoming_tomorrow": "कल",
+  "upcoming_empty_title": "कोई आगामी सत्र नहीं",
+  "upcoming_empty_body": "एक मॉक इंटरव्यू शेड्यूल करें, वह यहाँ दिखेगा।",
+  "upcoming_schedule_cta": "सत्र शेड्यूल करें",
+  "upcoming_min": "मिनट"
 }

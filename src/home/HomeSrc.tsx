@@ -1185,7 +1185,9 @@ const HomeSrc = memo(() => {
         <SectionTitle style={{ color: '#FFFFFF' }}>
           {t('home:section_today', { defaultValue: 'Today' }).toString()}
         </SectionTitle>
-        {nextSession ? (
+        {/* Only a session scheduled for TODAY lives in this card; later ones
+            are listed on the drawer's Upcoming screen (UpcomingSessions.tsx). */}
+        {nextSession && isSameLocalDay(nextSession.scheduledAt, Date.now()) ? (
           <ActionCard
             icon="calendar-outline"
             title={getInterviewTypeLabel(nextSession.interviewType, t)}
@@ -1387,6 +1389,8 @@ const HomeSrc = memo(() => {
     </Container>
   );
 });
+
+const isSameLocalDay = (a: number, b: number) => new Date(a).toDateString() === new Date(b).toDateString();
 
 export default HomeSrc;
 

@@ -162,5 +162,13 @@
   "use_country_only": "{{country}}만 사용(도시 없음)",
   "upgrade_required": "업그레이드 필요",
   "upgrade_required_body": "이 기능은 유료 요금제에 포함되어 있습니다.",
-  "use_typed": "\"{{city}}\" 사용"
+  "use_typed": "\"{{city}}\" 사용",
+  "drawer_upcoming": "예정",
+  "upcoming_title": "예정된 세션",
+  "upcoming_today": "오늘",
+  "upcoming_tomorrow": "내일",
+  "upcoming_empty_title": "예정된 세션이 없습니다",
+  "upcoming_empty_body": "모의 면접을 예약하면 여기에 표시됩니다.",
+  "upcoming_schedule_cta": "세션 예약",
+  "upcoming_min": "분"
 }

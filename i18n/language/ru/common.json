@@ -162,5 +162,13 @@
   "use_country_only": "Использовать только {{country}} (без города)",
   "upgrade_required": "Требуется обновление тарифа",
   "upgrade_required_body": "Эта функция входит в платный тариф.",
-  "use_typed": "Использовать «{{city}}»"
+  "use_typed": "Использовать «{{city}}»",
+  "drawer_upcoming": "Предстоящие",
+  "upcoming_title": "Предстоящие сессии",
+  "upcoming_today": "Сегодня",
+  "upcoming_tomorrow": "Завтра",
+  "upcoming_empty_title": "Нет предстоящих сессий",
+  "upcoming_empty_body": "Запланируйте пробное собеседование, и оно появится здесь.",
+  "upcoming_schedule_cta": "Запланировать сессию",
+  "upcoming_min": "мин"
 }

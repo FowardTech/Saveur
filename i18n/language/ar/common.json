@@ -162,5 +162,13 @@
   "use_country_only": "استخدام {{country}} فقط (بدون مدينة)",
   "upgrade_required": "الترقية مطلوبة",
   "upgrade_required_body": "هذه الميزة جزء من باقة مدفوعة.",
-  "use_typed": "استخدام \"{{city}}\""
+  "use_typed": "استخدام \"{{city}}\"",
+  "drawer_upcoming": "القادمة",
+  "upcoming_title": "الجلسات القادمة",
+  "upcoming_today": "اليوم",
+  "upcoming_tomorrow": "غدًا",
+  "upcoming_empty_title": "لا توجد جلسات قادمة",
+  "upcoming_empty_body": "حدد موعدًا لمقابلة تجريبية وستظهر هنا.",
+  "upcoming_schedule_cta": "جدولة جلسة",
+  "upcoming_min": "د"
 }

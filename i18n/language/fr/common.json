@@ -162,5 +162,13 @@
   "use_country_only": "Utiliser uniquement {{country}} (sans ville)",
   "upgrade_required": "Mise à niveau requise",
   "upgrade_required_body": "Cette fonctionnalité fait partie d'une offre payante.",
-  "use_typed": "Utiliser « {{city}} »"
+  "use_typed": "Utiliser « {{city}} »",
+  "drawer_upcoming": "À venir",
+  "upcoming_title": "Séances à venir",
+  "upcoming_today": "Aujourd'hui",
+  "upcoming_tomorrow": "Demain",
+  "upcoming_empty_title": "Aucune séance à venir",
+  "upcoming_empty_body": "Planifiez un entretien simulé et il apparaîtra ici.",
+  "upcoming_schedule_cta": "Planifier une séance",
+  "upcoming_min": "min"
 }

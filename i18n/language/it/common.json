@@ -162,5 +162,13 @@
   "use_country_only": "Usa solo {{country}} (senza città)",
   "upgrade_required": "Aggiornamento necessario",
   "upgrade_required_body": "Questa funzione fa parte di un piano a pagamento.",
-  "use_typed": "Usa \"{{city}}\""
+  "use_typed": "Usa \"{{city}}\"",
+  "drawer_upcoming": "In arrivo",
+  "upcoming_title": "Sessioni in arrivo",
+  "upcoming_today": "Oggi",
+  "upcoming_tomorrow": "Domani",
+  "upcoming_empty_title": "Nessuna sessione in arrivo",
+  "upcoming_empty_body": "Pianifica un colloquio simulato e apparirà qui.",
+  "upcoming_schedule_cta": "Pianifica una sessione",
+  "upcoming_min": "min"
 }

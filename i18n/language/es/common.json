@@ -162,5 +162,13 @@
   "use_country_only": "Usar solo {{country}} (sin ciudad)",
   "upgrade_required": "Actualización necesaria",
   "upgrade_required_body": "Esta función forma parte de un plan de pago.",
-  "use_typed": "Usar \"{{city}}\""
+  "use_typed": "Usar \"{{city}}\"",
+  "drawer_upcoming": "Próximas",
+  "upcoming_title": "Próximas sesiones",
+  "upcoming_today": "Hoy",
+  "upcoming_tomorrow": "Mañana",
+  "upcoming_empty_title": "No hay sesiones próximas",
+  "upcoming_empty_body": "Programa una entrevista simulada y aparecerá aquí.",
+  "upcoming_schedule_cta": "Programar una sesión",
+  "upcoming_min": "min"
 }

@@ -71,6 +71,7 @@ export type RootStackParamList = {
     durationMin?: number;
   };
   ScheduleInterview: undefined;
+  UpcomingSessions: undefined;
   LiveInterviewSession: {
     sessionId: string;
     interviewType?: Interview_Type_Enum;

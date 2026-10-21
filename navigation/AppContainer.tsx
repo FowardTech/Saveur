@@ -28,6 +28,7 @@ import MockInterviewSetup from 'src/practice/MockInterviewSetup';
 import MyProgress from 'src/practice/MyProgress';
 import Leaderboard from 'src/home/Leaderboard';
 import ScheduleInterview from 'src/practice/ScheduleInterview';
+import UpcomingSessions from 'src/practice/UpcomingSessions';
 import LiveInterviewSession from 'src/practice/LiveInterviewSession';
 import CodingInterview from 'src/practice/CodingInterview';
 import CodingPracticeHub from 'src/practice/CodingPracticeHub';
@@ -231,6 +232,7 @@ const AppContainer = () => {
         {/* AI Interview Coach — practice & career-tools screens */}
         <Stack.Screen name="MockInterviewSetup" component={MockInterviewSetup} />
         <Stack.Screen name="ScheduleInterview" component={ScheduleInterview} />
+        <Stack.Screen name="UpcomingSessions" component={UpcomingSessions} />
         <Stack.Screen name="LiveInterviewSession" component={LiveInterviewSession} />
         <Stack.Screen name="CodingInterview" component={CodingInterview} />
         <Stack.Screen name="CodingPracticeHub" component={CodingPracticeHub} />

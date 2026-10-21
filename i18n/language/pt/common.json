@@ -162,5 +162,13 @@
   "use_country_only": "Usar apenas {{country}} (sem cidade)",
   "upgrade_required": "Upgrade necessário",
   "upgrade_required_body": "Este recurso faz parte de um plano pago.",
-  "use_typed": "Usar \"{{city}}\""
+  "use_typed": "Usar \"{{city}}\"",
+  "drawer_upcoming": "Próximas",
+  "upcoming_title": "Próximas sessões",
+  "upcoming_today": "Hoje",
+  "upcoming_tomorrow": "Amanhã",
+  "upcoming_empty_title": "Nenhuma sessão próxima",
+  "upcoming_empty_body": "Agende uma entrevista simulada e ela aparecerá aqui.",
+  "upcoming_schedule_cta": "Agendar uma sessão",
+  "upcoming_min": "min"
 }

@@ -162,5 +162,13 @@
   "use_country_only": "{{country}}のみを使用（都市なし）",
   "upgrade_required": "アップグレードが必要です",
   "upgrade_required_body": "この機能は有料プランに含まれています。",
-  "use_typed": "「{{city}}」を使用"
+  "use_typed": "「{{city}}」を使用",
+  "drawer_upcoming": "予定",
+  "upcoming_title": "予定されているセッション",
+  "upcoming_today": "今日",
+  "upcoming_tomorrow": "明日",
+  "upcoming_empty_title": "予定されているセッションはありません",
+  "upcoming_empty_body": "模擬面接を予約すると、ここに表示されます。",
+  "upcoming_schedule_cta": "セッションを予約",
+  "upcoming_min": "分"
 }

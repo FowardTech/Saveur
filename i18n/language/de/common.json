@@ -162,5 +162,13 @@
   "use_country_only": "Nur {{country}} verwenden (keine Stadt)",
   "upgrade_required": "Upgrade erforderlich",
   "upgrade_required_body": "Diese Funktion ist Teil eines kostenpflichtigen Tarifs.",
-  "use_typed": "„{{city}}“ verwenden"
+  "use_typed": "„{{city}}“ verwenden",
+  "drawer_upcoming": "Anstehend",
+  "upcoming_title": "Anstehende Sitzungen",
+  "upcoming_today": "Heute",
+  "upcoming_tomorrow": "Morgen",
+  "upcoming_empty_title": "Keine anstehenden Sitzungen",
+  "upcoming_empty_body": "Plane ein Probe-Interview und es erscheint hier.",
+  "upcoming_schedule_cta": "Sitzung planen",
+  "upcoming_min": "Min."
 }

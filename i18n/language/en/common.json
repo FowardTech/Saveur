@@ -162,5 +162,13 @@
   "use_country_only": "Use {{country}} only (no city)",
   "upgrade_required": "Upgrade required",
   "upgrade_required_body": "This feature is part of a paid plan.",
-  "use_typed": "Use \"{{city}}\""
+  "use_typed": "Use \"{{city}}\"",
+  "drawer_upcoming": "Upcoming",
+  "upcoming_title": "Upcoming",
+  "upcoming_today": "Today",
+  "upcoming_tomorrow": "Tomorrow",
+  "upcoming_empty_title": "No upcoming sessions",
+  "upcoming_empty_body": "Schedule a mock interview and it will show up here.",
+  "upcoming_schedule_cta": "Schedule a session",
+  "upcoming_min": "min"
 }

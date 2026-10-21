@@ -162,5 +162,13 @@
   "use_country_only": "仅使用{{country}}（不选城市）",
   "upgrade_required": "需要升级",
   "upgrade_required_body": "此功能属于付费套餐。",
-  "use_typed": "使用“{{city}}”"
+  "use_typed": "使用“{{city}}”",
+  "drawer_upcoming": "即将到来",
+  "upcoming_title": "即将进行的面试",
+  "upcoming_today": "今天",
+  "upcoming_tomorrow": "明天",
+  "upcoming_empty_title": "暂无即将进行的面试",
+  "upcoming_empty_body": "安排一场模拟面试，它会显示在这里。",
+  "upcoming_schedule_cta": "安排面试",
+  "upcoming_min": "分钟"
 }
