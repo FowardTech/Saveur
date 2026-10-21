@@ -198,6 +198,7 @@ const themedStyles = StyleService.create({
   empty: {alignItems: 'center', paddingTop: 80, paddingHorizontal: 32},
   row: {
     ...globalStyle.card,
+    backgroundColor: 'background-basic-color-2',
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
