@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "Применено как бесплатные дни доступа к Saveur Basic в дополнение к вашей подписке App Store/Play Store.",
   "referral_credit_earned": "Получено {{amount}} $ кредита",
   "referral_have_code": "Есть код от друга?",
-  "referral_hero_description": "Поделитесь своей ссылкой. Когда приглашённый вами человек оформит любую платную подписку, вы оба получите скидку {{reward}} на следующую подписку.",
+  "referral_hero_description": "Поделитесь ссылкой. Когда приглашённый вами человек оформит платную подписку, вы оба получите кредит {{reward}} на следующий счёт. Подписались через Apple или Google? Вместо этого вы получите бонусные дни.",
   "referral_hero_title": "Подарите {{reward}}, получите {{reward}}",
   "referral_load_failed": "Не удалось загрузить информацию о рефералах.",
   "referral_share_button": "Поделиться моей ссылкой",

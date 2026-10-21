@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "تم تطبيقه كأيام وصول مجاني إلى Saveur Basic، بالإضافة إلى اشتراكك في App Store/Play Store.",
   "referral_credit_earned": "تم كسب {{amount}}$ كرصيد",
   "referral_have_code": "لديك رمز من صديق؟",
-  "referral_hero_description": "شارك رابطك. عندما يشترك شخص دعوته في أي خطة مدفوعة، يحصل كلاكما على خصم {{reward}} على اشتراككما التالي.",
+  "referral_hero_description": "شارك رابطك. عندما يشترك شخص دعوتَه في خطة مدفوعة، يحصل كلاكما على رصيد {{reward}} في فاتورتكما التالية. هل اشتركت عبر Apple أو Google؟ ستحصل على أيام إضافية بدلاً من ذلك.",
   "referral_hero_title": "امنح {{reward}}، واحصل على {{reward}}",
   "referral_load_failed": "تعذّر تحميل معلومات الإحالة الخاصة بك.",
   "referral_share_button": "شارك رابطي",

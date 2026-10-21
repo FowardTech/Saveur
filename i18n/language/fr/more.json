@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "Appliqué comme jours d'accès gratuits à Saveur Basic, en plus de votre abonnement App Store/Play Store.",
   "referral_credit_earned": "{{amount}} $ de crédit gagné",
   "referral_have_code": "Vous avez un code d'un ami ?",
-  "referral_hero_description": "Partagez votre lien. Lorsque quelqu'un que vous invitez s'abonne à un plan payant, vous obtenez tous les deux {{reward}} de réduction sur votre prochain abonnement.",
+  "referral_hero_description": "Partagez votre lien. Quand une personne invitée souscrit à un forfait payant, vous recevez tous les deux {{reward}} de crédit sur votre prochaine facture. Abonné via Apple ou Google ? Vous recevez des jours bonus à la place.",
   "referral_hero_title": "Offrez {{reward}}, Recevez {{reward}}",
   "referral_load_failed": "Impossible de charger vos informations de parrainage.",
   "referral_share_button": "Partager mon lien",

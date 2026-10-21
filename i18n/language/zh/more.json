@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "已作为免费Saveur Basic权益天数应用，叠加在您的App Store/Play商店订阅之上。",
   "referral_credit_earned": "已获得 ${{amount}} 积分",
   "referral_have_code": "有朋友给的代码吗？",
-  "referral_hero_description": "分享您的链接。当您邀请的人订阅任何付费套餐后，双方都可在下次订阅时获得 {{reward}} 优惠。",
+  "referral_hero_description": "分享你的链接。当你邀请的人订阅付费方案后，你们双方的下一期账单都将获得 {{reward}} 的抵扣额度。如果你通过 Apple 或 Google 订阅，则会获得额外的使用天数。",
   "referral_hero_title": "赠送 {{reward}}，获得 {{reward}}",
   "referral_load_failed": "无法加载您的推荐信息。",
   "referral_share_button": "分享我的链接",

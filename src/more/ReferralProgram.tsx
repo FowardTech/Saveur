@@ -148,7 +148,7 @@ const ReferralProgram = memo(() => {
               <Text category="h9-s" status="placeholder" center mt={8} mb={20}>
                 {t('more:referral_hero_description', {
                   defaultValue:
-                    'Share your link. When someone you invite subscribes to any paid plan, you both get {{reward}} off your next subscription.',
+                    'Share your link. When someone you invite subscribes to a paid plan, you both get {{reward}} credit on your next bill. Subscribed through Apple or Google? You get bonus days instead.',
                   reward: rewardLabel,
                 })}
               </Text>

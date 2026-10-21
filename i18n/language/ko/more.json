@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "App Store/Play 스토어 구독에 더해 무료 Saveur Basic 이용 일수로 적용되었습니다.",
   "referral_credit_earned": "${{amount}} 크레딧 획득",
   "referral_have_code": "친구에게 받은 코드가 있으신가요?",
-  "referral_hero_description": "링크를 공유하세요. 초대한 사람이 유료 플랜을 구독하면 두 분 모두 다음 구독에서 {{reward}} 할인을 받습니다.",
+  "referral_hero_description": "링크를 공유하세요. 초대한 사람이 유료 요금제를 구독하면 두 분 모두 다음 결제에서 {{reward}} 크레딧을 받습니다. Apple 또는 Google로 구독 중이라면 보너스 일수가 대신 지급됩니다.",
   "referral_hero_title": "{{reward}} 주고, {{reward}} 받기",
   "referral_load_failed": "추천 정보를 불러올 수 없습니다.",
   "referral_share_button": "내 링크 공유",

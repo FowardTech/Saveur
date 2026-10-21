@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "Applied as free Saveur Basic access days, on top of your App Store/Play Store subscription.",
   "referral_credit_earned": "${{amount}} in credit earned",
   "referral_have_code": "Have a code from a friend?",
-  "referral_hero_description": "Share your link. When someone you invite subscribes to any paid plan, you both get {{reward}} off your next subscription.",
+  "referral_hero_description": "Share your link. When someone you invite subscribes to a paid plan, you both get {{reward}} credit on your next bill. Subscribed through Apple or Google? You get bonus days instead.",
   "referral_hero_title": "Give {{reward}}, Get {{reward}}",
   "referral_load_failed": "Could not load your referral info.",
   "referral_share_button": "Share My Link",

@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "Als kostenlose Saveur-Basic-Zugangstage zusätzlich zu deinem App Store-/Play Store-Abo angewendet.",
   "referral_credit_earned": "{{amount}} $ Guthaben verdient",
   "referral_have_code": "Hast du einen Code von einem Freund?",
-  "referral_hero_description": "Teile deinen Link. Wenn jemand, den du einlädst, ein kostenpflichtiges Abo abschließt, erhaltet ihr beide {{reward}} Rabatt auf euer nächstes Abo.",
+  "referral_hero_description": "Teile deinen Link. Wenn jemand, den du einlädst, ein kostenpflichtiges Abo abschließt, erhaltet ihr beide {{reward}} Guthaben auf eure nächste Rechnung. Über Apple oder Google abonniert? Dann bekommst du stattdessen Bonustage.",
   "referral_hero_title": "Gib {{reward}}, erhalte {{reward}}",
   "referral_load_failed": "Deine Empfehlungsinfos konnten nicht geladen werden.",
   "referral_share_button": "Meinen Link teilen",

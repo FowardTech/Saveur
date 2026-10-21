@@ -642,7 +642,7 @@
   "referral_credit_bonus_days_generic": "आपकी App Store/Play Store सदस्यता के अतिरिक्त, मुफ़्त Saveur Basic एक्सेस दिनों के रूप में लागू किया गया।",
   "referral_credit_earned": "${{amount}} क्रेडिट अर्जित",
   "referral_have_code": "किसी दोस्त से कोड मिला है?",
-  "referral_hero_description": "अपना लिंक साझा करें। जब आपके आमंत्रित व्यक्ति किसी भी पेड प्लान की सदस्यता लेते हैं, तो आप दोनों को अपनी अगली सदस्यता पर {{reward}} की छूट मिलती है।",
+  "referral_hero_description": "अपना लिंक शेयर करें। जब आपके बुलाए हुए व्यक्ति पेड प्लान लेते हैं, तो आप दोनों को अगले बिल पर {{reward}} का क्रेडिट मिलता है। Apple या Google से सब्सक्राइब किया है? तब आपको इसके बदले बोनस दिन मिलते हैं।",
   "referral_hero_title": "{{reward}} दें, {{reward}} पाएं",
   "referral_load_failed": "आपकी रेफ़रल जानकारी लोड नहीं हो सकी।",
   "referral_share_button": "मेरा लिंक साझा करें",
