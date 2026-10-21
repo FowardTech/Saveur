@@ -159,6 +159,7 @@ const themedStyles = StyleService.create({
     borderRadius: 20,
     padding: 16,
     marginTop: 12,
+    marginBottom: 16,
     backgroundColor: 'background-basic-color-2',
     borderWidth: 1,
     borderColor: 'color-primary-100',

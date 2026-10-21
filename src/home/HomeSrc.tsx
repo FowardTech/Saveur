@@ -1181,8 +1181,8 @@ const HomeSrc = memo(() => {
         {/* Indeed-style tinted section (product request: "I want more
             Indeed UI"): the Today cards sit on a soft light-blue panel, white
             cards inside, like Indeed's "Manage your applications" band. */}
-        <View style={[styles.todayPanel, { backgroundColor: 'rgba(0,99,248,0.07)' }]}>
-        <SectionTitle>
+        <View style={[styles.todayPanel, { backgroundColor: theme['color-primary-100'] }]}>
+        <SectionTitle style={{ color: '#FFFFFF' }}>
           {t('home:section_today', { defaultValue: 'Today' }).toString()}
         </SectionTitle>
         {nextSession ? (
@@ -1419,15 +1419,15 @@ const themedStyles = StyleService.create({
   todayPanel: {
     borderRadius: 20,
     paddingHorizontal: 12,
-    paddingTop: 4,
-    paddingBottom: 0,
+    paddingTop: 8,
+    paddingBottom: 4,
     marginBottom: 12,
   },
   verifyBanner: {
     borderRadius: 16,
     padding: 16,
     marginTop: 16,
-    backgroundColor: 'rgba(180, 83, 9, 0.1)',
+    backgroundColor: '#FFFFFF',
   },
   verifyBannerText: {
     marginHorizontal: 10,

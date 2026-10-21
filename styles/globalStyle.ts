@@ -203,6 +203,10 @@ export const globalStyle = StyleSheet.create({
   // one-line change again, not a re-hunt across ~60+ call sites.
   card: {
     borderRadius: 16,
+    // Indeed-style: a barely-there hairline so white cards stay defined on
+    // the gray page without a shadow.
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(0,0,0,0.08)',
     ...cardShadow,
   },
   // SYMPHONY REDESIGN: emptied out -- "no borders" was explicit in this

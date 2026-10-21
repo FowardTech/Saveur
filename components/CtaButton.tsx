@@ -89,7 +89,9 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading: loadingProp, solid, disa
     [onPress],
   );
   const loading = loadingProp || pending;
-  const labelColor = solid ? theme['text-control-color'] : theme['text-basic-color'];
+  // Indeed-style: solid = brand-blue fill + white label; default (outlined) =
+  // thin gray outline + bold brand-blue label.
+  const labelColor = solid ? theme['text-control-color'] : theme['color-primary-100'];
   // Icons inherit the Button's own (white "control") tint, which is invisible on
   // an outlined button - force the same colour as the label.
   const tintAccessory = (acc: any) =>
@@ -112,7 +114,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading: loadingProp, solid, disa
           // every other direct color-primary-100 reference already in the
           // app (see that token's own comment history).
           backgroundColor: solid ? theme['color-primary-solid'] : 'transparent',
-          borderColor: solid ? theme['color-primary-solid'] : theme['border-input-color'],
+          borderColor: solid ? theme['color-primary-solid'] : theme['border-card-default'],
           borderWidth: 1.5,
           opacity: disabled ? 0.5 : 1,
           // SYMPHONY REDESIGN follow-up (explicit product request: "all
