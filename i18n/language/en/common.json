@@ -237,5 +237,6 @@
   "credits_action_lifetime_generate": "Career report",
   "credits_action_networking_message": "Networking message",
   "credits_action_followup_draft": "Follow-up draft",
-  "credits_action_daily_challenge_submit": "Daily challenge"
+  "credits_action_daily_challenge_submit": "Daily challenge",
+  "drawer_coaching_report": "Coaching Report"
 }

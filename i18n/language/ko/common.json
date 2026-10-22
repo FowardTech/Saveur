@@ -237,5 +237,6 @@
   "credits_action_lifetime_generate": "커리어 리포트",
   "credits_action_networking_message": "네트워킹 메시지",
   "credits_action_followup_draft": "후속 메시지 초안",
-  "credits_action_daily_challenge_submit": "일일 챌린지"
+  "credits_action_daily_challenge_submit": "일일 챌린지",
+  "drawer_coaching_report": "코칭 리포트"
 }

@@ -30,6 +30,7 @@ import Leaderboard from 'src/home/Leaderboard';
 import ScheduleInterview from 'src/practice/ScheduleInterview';
 import UpcomingSessions from 'src/practice/UpcomingSessions';
 import Credits from 'src/more/Credits';
+import CoachingReportScreen from 'src/more/CoachingReportScreen';
 import LiveInterviewSession from 'src/practice/LiveInterviewSession';
 import CodingInterview from 'src/practice/CodingInterview';
 import CodingPracticeHub from 'src/practice/CodingPracticeHub';
@@ -255,6 +256,7 @@ const AppContainer = () => {
         <Stack.Screen name="ScheduleInterview" component={ScheduleInterview} />
         <Stack.Screen name="UpcomingSessions" component={UpcomingSessions} />
         <Stack.Screen name="Credits" component={Credits} />
+        <Stack.Screen name="CoachingReport" component={CoachingReportScreen} />
         <Stack.Screen name="LiveInterviewSession" component={LiveInterviewSession} />
         <Stack.Screen name="CodingInterview" component={CodingInterview} />
         <Stack.Screen name="CodingPracticeHub" component={CodingPracticeHub} />

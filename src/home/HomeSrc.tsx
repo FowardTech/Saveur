@@ -49,7 +49,6 @@ import CoachReadinessCard from './CoachReadinessCard';
 import CoachSetupModal from './CoachSetupModal';
 import useCoachReadiness from 'hooks/useCoachReadiness';
 import AppTour from 'components/AppTour';
-import CoachingReportCard from 'components/CoachingReportCard';
 import ContinueLearningCard from './ContinueLearningCard';
 import DailyTipsBanner from './DailyTipsBanner';
 import AppRatingModal from 'components/AppRatingModal';
@@ -1298,8 +1297,6 @@ const HomeSrc = memo(() => {
           onPress={() => navigate('MyProgress')}
         />
         <ContinueLearningCard />
-
-        <CoachingReportCard />
 
         <SectionTitle>
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}

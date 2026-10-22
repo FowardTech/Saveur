@@ -237,5 +237,6 @@
   "credits_action_lifetime_generate": "职业报告",
   "credits_action_networking_message": "人脉消息",
   "credits_action_followup_draft": "跟进草稿",
-  "credits_action_daily_challenge_submit": "每日挑战"
+  "credits_action_daily_challenge_submit": "每日挑战",
+  "drawer_coaching_report": "辅导报告"
 }

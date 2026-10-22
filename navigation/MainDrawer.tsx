@@ -127,7 +127,7 @@ const Tab = createBottomTabNavigator<MainBottomTabStackParamList>();
 // list per this file's own top comment) with its Practice History pill
 // tab pre-selected instead of the Applications tab it otherwise defaults
 // to (see RequestsSrc.tsx's own initialTab param comment).
-type DrawerRoute = 'Home' | 'Growth' | 'Practice' | 'Coach' | 'RecentInterviews' | 'Upcoming' | 'Credits' | 'SalaryNegotiation' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
+type DrawerRoute = 'Home' | 'Growth' | 'Practice' | 'Coach' | 'RecentInterviews' | 'Upcoming' | 'Credits' | 'CoachingReport' | 'SalaryNegotiation' | 'CareerGrowth' | 'DreamCompanies' | 'Jobs' | 'CareerEvents' | 'Profile';
 interface DrawerNavItem {
   route: DrawerRoute;
   label: string;
@@ -201,6 +201,11 @@ const CustomDrawerContent = memo(({activeRoute, onNavigate, badges}: CustomDrawe
       route: 'Upcoming',
       label: t('common:drawer_upcoming', {defaultValue: 'Upcoming'}).toString(),
       icon: 'play-circle-outline',
+    },
+    {
+      route: 'CoachingReport',
+      label: t('common:drawer_coaching_report', {defaultValue: 'Coaching Report'}).toString(),
+      icon: 'bar-chart-2-outline',
     },
     {
       route: 'Credits',
@@ -459,6 +464,8 @@ const MainDrawerContent = memo(() => {
         navigationRef.navigate('UpcomingSessions');
       } else if (route === 'Credits') {
         navigationRef.navigate('Credits');
+      } else if (route === 'CoachingReport') {
+        navigationRef.navigate('CoachingReport');
       } else if (route === 'SalaryNegotiation') {
         navigationRef.navigate('SalaryNegotiation');
       } else if (route === 'CareerGrowth') {

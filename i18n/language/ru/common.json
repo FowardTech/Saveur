@@ -237,5 +237,6 @@
   "credits_action_lifetime_generate": "Карьерный отчёт",
   "credits_action_networking_message": "Сообщение для нетворкинга",
   "credits_action_followup_draft": "Черновик напоминания",
-  "credits_action_daily_challenge_submit": "Ежедневный челлендж"
+  "credits_action_daily_challenge_submit": "Ежедневный челлендж",
+  "drawer_coaching_report": "Отчёт коучинга"
 }
