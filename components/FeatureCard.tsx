@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   icon: {width: 24, height: 24},
   texts: {flex: 1, marginHorizontal: 14},
   chip: {alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 6},
-  title: {fontSize: 17, lineHeight: 22},
+  title: {fontSize: 15, lineHeight: 20},
   subtitle: {marginTop: 2},
   chevron: {width: 22, height: 22},
 });

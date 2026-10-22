@@ -89,15 +89,15 @@ const getLineHeight = (
     case 'h4':
       return 30;
     case 'h5':
-      return 28;
+      return 26;
     case 'h6':
-      return 25;
+      return 24;
     case 'h6-s':
-      return 25;
+      return 24;
     case 'h7':
-      return 24;
+      return 23;
     case 'h7-s':
-      return 24;
+      return 23;
     case 'h8':
       return 24;
     case 'h8-s':

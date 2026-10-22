@@ -97,7 +97,7 @@ const JobAlertsOnboarding = memo(({ onGetStarted }: JobAlertsOnboardingProps) =>
             accentColor={CLUSTER_COLORS.orange}
             size={clusterSize}
           />
-          <Text category="h2" bold center mh={32} mt={28} fontSize={24} lineHeight={30} style={styles.heroTitle}>
+          <Text category="h2" bold center mh={32} mt={28} fontSize={28} lineHeight={34} style={styles.heroTitle}>
             {t('more:job_alerts_onboarding_title', { defaultValue: 'Saveur brings jobs to you' })}
           </Text>
           <Text category="h8" status="placeholder" center mh={32} mt={10}>
@@ -142,8 +142,8 @@ const themedStyles = StyleService.create({
     paddingBottom: 140,
   },
   heroTitle: {
-    fontSize: 24,
-    lineHeight: 30,
+    fontSize: 30,
+    lineHeight: 38,
   },
   ctaWrap: {
     position: 'absolute',

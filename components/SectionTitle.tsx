@@ -22,5 +22,5 @@ const SectionTitle: React.FC<SectionTitleProps> = ({children, mt = 12, mb = 10, 
 export default SectionTitle;
 
 const styles = StyleSheet.create({
-  title: {fontSize: 20, lineHeight: 26, letterSpacing: -0.2},
+  title: {fontSize: 17, lineHeight: 22, letterSpacing: -0.2},
 });

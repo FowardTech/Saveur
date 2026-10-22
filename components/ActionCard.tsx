@@ -186,7 +186,7 @@ const ActionCard: React.FC<ActionCardProps> = memo(
               the subtitle without needing a size change on every other
               ActionCard call site (MoreSrc.tsx rows included, since this
               is the one shared component both screens render through). */}
-          <Text category="h7" bold numberOfLines={1} style={isGradient ? styles.titleOnGradient : undefined}>
+          <Text category="h7" bold fontSize={15} lineHeight={20} numberOfLines={1} style={isGradient ? styles.titleOnGradient : undefined}>
             {title}
           </Text>
           {subtitle ? (
