@@ -66,6 +66,7 @@ import * as configService from "services/configService";
 import i18n from "i18next";
 import Clipboard from "@react-native-clipboard/clipboard";
 import { Images } from "assets/images";
+import {fontStyle} from 'constants/theme/platformFonts';
 
 // No avatar image asset — the coach's avatar is the live-drawn Saveur brand
 // orb (see renderAvatar below), same mark used on the Login screen and
@@ -1672,9 +1673,8 @@ const themedStyles = StyleService.create({
   leftTextStyle: {
     color: "text-basic-color",
     fontSize: 15,
-    fontWeight: "500",
     lineHeight: 24,
-    fontFamily: "System",
+    ...fontStyle('medium'),
   },
   rightTextStyle: {
     // BUG FIX (product request: "i want the user bubble to be white
@@ -1685,9 +1685,8 @@ const themedStyles = StyleService.create({
     // is the legible choice against the new white fill.
     color: "#000000",
     fontSize: 15,
-    fontWeight: "500",
     lineHeight: 24,
-    fontFamily: "System",
+    ...fontStyle('medium'),
   },
   wrapperLeftStyle: {
     borderBottomLeftRadius: 4,
@@ -1788,8 +1787,7 @@ const themedStyles = StyleService.create({
   emptyHeadline: {
     color: 'text-basic-color',
     paddingHorizontal: 12,
-    fontFamily: 'System',
-    fontWeight: '500',
+    ...fontStyle('medium'),
   },
   // Product follow-up: "place the suggested topics pill at the top right
   // so that it will be on the same level with the AI career Coach title"

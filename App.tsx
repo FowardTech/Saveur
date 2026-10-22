@@ -6,8 +6,12 @@ import { Appearance, AppState, Linking, LogBox, StatusBar } from 'react-native';
 import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
 import { default as darkTheme } from 'constants/theme/dark.json';
 import { default as lightTheme } from 'constants/theme/light.json';
-import { default as customTheme } from 'constants/theme/appTheme.json';
-import { default as customMapping } from 'constants/theme/mapping.json';
+import { default as rawTheme } from 'constants/theme/appTheme.json';
+import { default as rawMapping } from 'constants/theme/mapping.json';
+import { platformMapping, platformTheme } from 'constants/theme/platformFonts';
+
+const customTheme = platformTheme(rawTheme);
+const customMapping = platformMapping(rawMapping);
 // Was @ui-kitten/eva-icons' EvaIconsPack (Eva's own outline icon set) --
 // replaced with a lucide-react-native-backed pack registered under the same
 // 'eva' name (see assets/LucideEvaIconsPack.tsx's own comment) per explicit

@@ -34,6 +34,16 @@ export interface ApplicationItemProps {
 // getApplicationStageLabel (utils/interviewTypeLabels.ts) still handles the
 // actual per-stage text/translation.
 
+// Status colors (product request: "the application status should change color
+// as the status changes"): tinted background + matching text per stage.
+const STAGE_COLORS: Record<string, {bg: string; fg: string}> = {
+  Applied: {bg: 'rgba(59,130,246,0.15)', fg: '#2563EB'},
+  Interviewing: {bg: 'rgba(139,92,246,0.15)', fg: '#7C3AED'},
+  Offer: {bg: 'rgba(16,185,129,0.16)', fg: '#059669'},
+  Rejected: {bg: 'rgba(244,63,94,0.15)', fg: '#E11D48'},
+};
+const stageColors = (stage?: string) => STAGE_COLORS[stage ?? ''] ?? STAGE_COLORS.Applied;
+
 const ApplicationItem = ({item}: ApplicationItemProps) => {
   const {navigate} = useNavigation<NavigationProp<RootStackParamList>>();
   const styles = useStyleSheet(themedStyles);
@@ -71,7 +81,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
               {item.company}
             </Text>
           </View>
-          <View style={styles.stageTag}>
+          <View style={[styles.stageTag, {backgroundColor: stageColors(item.stage).bg}]}>
             {/* BUG FIX (product report: "make sure everything internally
                 must be auto translated") -- was the raw backend enum
                 literal (e.g. always "Applied" in English on every
@@ -79,7 +89,7 @@ const ApplicationItem = ({item}: ApplicationItemProps) => {
                 RequestsInPass.tsx already avoided by going through
                 getApplicationStageLabel (utils/interviewTypeLabels.ts),
                 which this render site had never been switched to. */}
-            <Text category="h9" bold>
+            <Text category="h9" bold style={{color: stageColors(item.stage).fg}}>
               {getApplicationStageLabel(item.stage, t)}
             </Text>
           </View>

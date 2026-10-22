@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Platform } from 'react-native';
 import { Button, ButtonProps, Spinner, Text as KittenText, useTheme } from '@ui-kitten/components';
 import { globalStyle } from 'styles/globalStyle';
 
@@ -183,7 +183,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading: loadingProp, solid, disa
         // is meant to always be white-on-blue regardless of theme --
         // text-control-color is the token for that, and isn't affected by
         // text-primary-color's other (correct, intentional) uses elsewhere.
-        const labelStyle = [evaProps?.style, { color: labelColor, fontWeight: '600' as const }];
+        const labelStyle = [evaProps?.style, { color: labelColor, fontWeight: (Platform.OS === 'android' ? 'normal' : '600') as 'normal' | '600' }];
         if (typeof children === 'function') {
           const out = (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle });
           return recolorSpinners(out, solid) as React.ReactElement;

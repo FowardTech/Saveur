@@ -12,6 +12,7 @@ import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Stop } from 're
 import { useTheme } from '@ui-kitten/components';
 import Flex from './Flex';
 import Text from './Text';
+import {fontStyle} from 'constants/theme/platformFonts';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 interface CircleProps {
@@ -128,7 +129,6 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: 'System',
-    fontWeight: '500',
+    ...fontStyle('medium'),
   },
 });

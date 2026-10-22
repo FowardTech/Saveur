@@ -1,6 +1,7 @@
 import React, {memo} from 'react';
 import {StyleProp, TextStyle} from 'react-native';
 import {Text, TextProps} from '@ui-kitten/components';
+import {fontStyle as platformFontStyle} from 'constants/theme/platformFonts';
 import {EvaStatus} from '@ui-kitten/components/devsupport';
 
 export interface MyTextProps extends TextProps {
@@ -253,8 +254,7 @@ export default memo(
             // flag.
             // System font (San Francisco on iOS, the platform default on
             // Android): one family, weight picks the face.
-            fontFamily: 'System',
-            fontWeight: bold ? '700' : medium ? '500' : '400',
+            ...platformFontStyle(bold ? 'bold' : medium ? 'medium' : 'regular'),
           },
           style,
         ]}

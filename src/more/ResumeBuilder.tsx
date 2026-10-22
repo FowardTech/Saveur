@@ -33,6 +33,7 @@ import CtaButton from 'components/CtaButton';
 import UploadStatusBar from 'components/UploadStatusBar';
 import {useUploadStatus} from 'hooks/useUploadStatus';
 import { accentColorForKey } from 'utils/accentPalette';
+import {fontStyle} from 'constants/theme/platformFonts';
 
 // BUG FIX (product report: "resume builder screen — some content still in
 // English regardless of language"): these titles were plain hardcoded
@@ -555,7 +556,7 @@ const themedStyles = StyleService.create({
     minHeight: 80,
   },
   bulletInputText: {
-    fontFamily: 'System',
+    ...fontStyle('regular'),
     fontSize: 13,
     minHeight: 64,
     textAlignVertical: 'top',
