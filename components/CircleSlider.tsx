@@ -128,6 +128,7 @@ const styles = StyleSheet.create({
   progressText: {
     fontSize: 20,
     lineHeight: 24,
-    fontFamily: 'Inter-Medium',
+    fontFamily: 'System',
+    fontWeight: '500',
   },
 });

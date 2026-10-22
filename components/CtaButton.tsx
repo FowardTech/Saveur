@@ -183,7 +183,7 @@ const CtaButton: React.FC<CtaButtonProps> = ({ loading: loadingProp, solid, disa
         // is meant to always be white-on-blue regardless of theme --
         // text-control-color is the token for that, and isn't affected by
         // text-primary-color's other (correct, intentional) uses elsewhere.
-        const labelStyle = [evaProps?.style, { color: labelColor, fontWeight: 'normal' as const }];
+        const labelStyle = [evaProps?.style, { color: labelColor, fontWeight: '600' as const }];
         if (typeof children === 'function') {
           const out = (children as (props: { style?: unknown }) => React.ReactElement)({ style: labelStyle });
           return recolorSpinners(out, solid) as React.ReactElement;

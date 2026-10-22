@@ -1672,9 +1672,9 @@ const themedStyles = StyleService.create({
   leftTextStyle: {
     color: "text-basic-color",
     fontSize: 15,
-    fontWeight: "normal",
+    fontWeight: "500",
     lineHeight: 24,
-    fontFamily: "Inter-Medium",
+    fontFamily: "System",
   },
   rightTextStyle: {
     // BUG FIX (product request: "i want the user bubble to be white
@@ -1685,9 +1685,9 @@ const themedStyles = StyleService.create({
     // is the legible choice against the new white fill.
     color: "#000000",
     fontSize: 15,
-    fontWeight: "normal",
+    fontWeight: "500",
     lineHeight: 24,
-    fontFamily: "Inter-Medium",
+    fontFamily: "System",
   },
   wrapperLeftStyle: {
     borderBottomLeftRadius: 4,
@@ -1788,8 +1788,8 @@ const themedStyles = StyleService.create({
   emptyHeadline: {
     color: 'text-basic-color',
     paddingHorizontal: 12,
-    fontFamily: 'Inter-Medium',
-    fontWeight: 'normal',
+    fontFamily: 'System',
+    fontWeight: '500',
   },
   // Product follow-up: "place the suggested topics pill at the top right
   // so that it will be on the same level with the AI career Coach title"

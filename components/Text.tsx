@@ -251,12 +251,10 @@ export default memo(
             // the actual bold *look* still comes from loading the real
             // PlusJakartaSans-Bold.ttf file by name, not from the weight
             // flag.
-            fontFamily: bold
-              ? 'Inter-Bold'
-              : medium
-              ? 'Inter-Medium'
-              : 'Inter-Regular',
-            fontWeight: 'normal',
+            // System font (San Francisco on iOS, the platform default on
+            // Android): one family, weight picks the face.
+            fontFamily: 'System',
+            fontWeight: bold ? '700' : medium ? '500' : '400',
           },
           style,
         ]}
