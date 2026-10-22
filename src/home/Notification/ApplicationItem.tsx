@@ -53,6 +53,7 @@ const KIND_STYLE: Record<string, {icon: string; gradient: [string, string]}> = {
   job_alert: {icon: 'briefcase-outline', gradient: ['#2d76dbff', '#3B9DFF']}, // blue
   goal_tip: {icon: 'bulb-outline', gradient: ['#dd8039ff', '#FBBF24']}, // amber
   feedback_ready: {icon: 'checkmark-circle-2-outline', gradient: ['#28b35bff', '#4ADE80']}, // green
+  application_update: {icon: 'file-text-outline', gradient: ['#6a4ff0ff', '#8B7CFF']}, // violet
   admin_broadcast: {icon: 'radio-outline', gradient: ['#1ca3c8ff', '#22D3EE']}, // teal/cyan
 };
 const FALLBACK_GRADIENT: [string, string] = ['#5d636eff', '#9CA3AF']; // slate/gray

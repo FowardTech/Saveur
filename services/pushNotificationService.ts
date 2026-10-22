@@ -290,6 +290,16 @@ export function handleDataTap(data: FirebaseMessagingTypes.RemoteMessage['data']
   // separated list) — previously unhandled entirely, same gap the audit
   // pass before launch caught. One application -> its detail screen
   // directly; more than one -> the Application Tracker list tab.
+  // Tracked application changed status / was auto-detected (Saveur-Backend's
+  // application_notify.py): straight to that application's detail screen.
+  if (data?.type === 'application_update') {
+    if (data.application_id) {
+      navigateToApplicationDetails(data.application_id);
+    } else {
+      navigateToApplicationsList();
+    }
+    return;
+  }
   if (data?.type === 'stale_applications') {
     const ids = (data.application_ids ?? '').split(',').map((s: string) => s.trim()).filter(Boolean);
     if (ids.length === 1) {
