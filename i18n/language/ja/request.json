@@ -181,5 +181,12 @@
   "where": "場所",
   "withdraw_application_failed": "応募を取り下げできませんでした",
   "withdrawing": "取り下げ中…",
-  "find_jobs_cta": "求人を探す"
+  "find_jobs_cta": "求人を探す",
+  "sync_now": "今すぐ同期",
+  "syncing": "同期中…",
+  "sync_title": "同期",
+  "sync_throttled": "先ほど同期したばかりです。1 分後にもう一度お試しください。",
+  "sync_failed": "現在同期できません。アカウントを再接続してみてください。",
+  "sync_tracked": "応募の更新が {{count}} 件見つかりました。",
+  "sync_none": "最新の状態です。新しい応募メールはありません。"
 }

@@ -82,6 +82,36 @@ const AddFromEmail = memo(() => {
   const [connectingCalendarProvider, setConnectingCalendarProvider] = React.useState<CalendarProvider | null>(null);
   const [disconnectingCalendarProvider, setDisconnectingCalendarProvider] = React.useState<CalendarProvider | null>(null);
 
+  const [isSyncing, setIsSyncing] = React.useState(false);
+  const anyConnected =
+    !!emailConnections?.some(c => c.isActive) || !!calendarConnections?.some(c => c.isActive);
+  const onSyncNow = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const r = await emailConnectionService.syncNow();
+      let message: string;
+      if (r.throttled) {
+        message = t('request:sync_throttled', {defaultValue: 'Just synced — try again in a minute.'});
+      } else if (r.errors.length > 0 && r.tracked === 0) {
+        message = t('request:sync_failed', {defaultValue: "Couldn't sync right now. Try reconnecting your account."});
+      } else if (r.tracked > 0) {
+        message = t('request:sync_tracked', {defaultValue: 'Found {{count}} application update(s).', count: r.tracked});
+      } else {
+        message = t('request:sync_none', {defaultValue: 'All caught up — no new application emails.'});
+      }
+      Alert.alert(t('request:sync_title', {defaultValue: 'Sync'}), message);
+      loadConnections();
+    } catch (e: any) {
+      Alert.alert(
+        t('request:sync_title', {defaultValue: 'Sync'}),
+        e?.message ?? t('request:sync_failed', {defaultValue: "Couldn't sync right now. Try reconnecting your account."}),
+      );
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const loadConnections = React.useCallback(() => {
     emailConnectionService.listConnections().then(setEmailConnections).catch(() => setEmailConnections([]));
     calendarConnectionService.listConnections().then(setCalendarConnections).catch(() => setCalendarConnections([]));
@@ -334,6 +364,20 @@ const AddFromEmail = memo(() => {
             {rows.map((row, i) => (
               <React.Fragment key={i}>{row}</React.Fragment>
             ))}
+
+            {anyConnected ? (
+              <Button
+                appearance="outline"
+                size="small"
+                disabled={isSyncing}
+                onPress={onSyncNow}
+                accessoryLeft={isSyncing ? () => <Spinner size="tiny" /> : undefined}
+                style={{alignSelf: 'flex-start', marginTop: 4}}>
+                {isSyncing
+                  ? t('request:syncing', {defaultValue: 'Syncing…'}).toString()
+                  : t('request:sync_now', {defaultValue: 'Sync now'}).toString()}
+              </Button>
+            ) : null}
 
             <Flex justify="flex-start" itemsCenter mt={24} mb={12}>
               <View style={styles.orLine} />

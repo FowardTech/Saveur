@@ -181,5 +181,12 @@
   "where": "Où",
   "withdraw_application_failed": "Impossible de retirer la candidature",
   "withdrawing": "Retrait en cours…",
-  "find_jobs_cta": "Trouver des emplois"
+  "find_jobs_cta": "Trouver des emplois",
+  "sync_now": "Synchroniser maintenant",
+  "syncing": "Synchronisation…",
+  "sync_title": "Synchronisation",
+  "sync_throttled": "Déjà synchronisé — réessayez dans une minute.",
+  "sync_failed": "Impossible de synchroniser pour le moment. Essayez de reconnecter votre compte.",
+  "sync_tracked": "{{count}} mise(s) à jour de candidature trouvée(s).",
+  "sync_none": "Tout est à jour — aucun nouvel e-mail de candidature."
 }

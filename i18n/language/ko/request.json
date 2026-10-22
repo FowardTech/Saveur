@@ -181,5 +181,12 @@
   "where": "장소",
   "withdraw_application_failed": "지원을 철회할 수 없습니다",
   "withdrawing": "철회하는 중…",
-  "find_jobs_cta": "채용 공고 찾기"
+  "find_jobs_cta": "채용 공고 찾기",
+  "sync_now": "지금 동기화",
+  "syncing": "동기화 중…",
+  "sync_title": "동기화",
+  "sync_throttled": "방금 동기화했습니다. 1분 후에 다시 시도하세요.",
+  "sync_failed": "지금은 동기화할 수 없습니다. 계정을 다시 연결해 보세요.",
+  "sync_tracked": "지원 업데이트 {{count}}건을 찾았습니다.",
+  "sync_none": "모두 최신 상태입니다. 새로운 지원 이메일이 없습니다."
 }

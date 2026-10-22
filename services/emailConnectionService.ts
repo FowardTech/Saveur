@@ -132,6 +132,22 @@ export async function listConnections(): Promise<EmailConnectionProps[]> {
 /** DELETE /api/v1/email-connections/{provider} — stops auto-scanning that
  * inbox immediately (the poll job only ever reads active connections) and
  * best-effort revokes the token on Google's side for Gmail. */
+export interface SyncResult {
+  connected: boolean;
+  synced: number;
+  tracked: number;
+  throttled: boolean;
+  errors: string[];
+}
+
+/** POST /api/v1/email-connections/sync — "Sync now": runs the same scan the
+ * background job does (about every 15 minutes) right away for every connected
+ * inbox and calendar. Premium only; the server rate-limits repeat taps. */
+export async function syncNow(): Promise<SyncResult> {
+  const {data} = await apiClient.post<SyncResult>('/api/v1/email-connections/sync', {});
+  return data;
+}
+
 export async function disconnect(provider: EmailProvider): Promise<void> {
   await apiClient.delete(`/api/v1/email-connections/${provider}`);
 }

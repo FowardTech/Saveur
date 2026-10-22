@@ -181,5 +181,12 @@
   "where": "Dove",
   "withdraw_application_failed": "Impossibile ritirare la candidatura",
   "withdrawing": "Ritiro in corso…",
-  "find_jobs_cta": "Trova lavori"
+  "find_jobs_cta": "Trova lavori",
+  "sync_now": "Sincronizza ora",
+  "syncing": "Sincronizzazione…",
+  "sync_title": "Sincronizzazione",
+  "sync_throttled": "Appena sincronizzato — riprova tra un minuto.",
+  "sync_failed": "Impossibile sincronizzare ora. Prova a ricollegare il tuo account.",
+  "sync_tracked": "Trovati {{count}} aggiornamento/i di candidatura.",
+  "sync_none": "Tutto aggiornato — nessuna nuova email di candidatura."
 }

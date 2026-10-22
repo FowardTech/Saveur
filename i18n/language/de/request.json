@@ -181,5 +181,12 @@
   "where": "Wo",
   "withdraw_application_failed": "Bewerbung konnte nicht zurückgezogen werden",
   "withdrawing": "Wird zurückgezogen…",
-  "find_jobs_cta": "Jobs finden"
+  "find_jobs_cta": "Jobs finden",
+  "sync_now": "Jetzt synchronisieren",
+  "syncing": "Synchronisiere…",
+  "sync_title": "Synchronisierung",
+  "sync_throttled": "Gerade erst synchronisiert — versuche es in einer Minute erneut.",
+  "sync_failed": "Synchronisierung derzeit nicht möglich. Verbinde dein Konto erneut.",
+  "sync_tracked": "{{count}} Bewerbungs-Update(s) gefunden.",
+  "sync_none": "Alles aktuell — keine neuen Bewerbungs-E-Mails."
 }

@@ -181,5 +181,12 @@
   "where": "地点",
   "withdraw_application_failed": "无法撤回申请",
   "withdrawing": "撤回中…",
-  "find_jobs_cta": "查找职位"
+  "find_jobs_cta": "查找职位",
+  "sync_now": "立即同步",
+  "syncing": "正在同步…",
+  "sync_title": "同步",
+  "sync_throttled": "刚刚同步过 — 请一分钟后再试。",
+  "sync_failed": "暂时无法同步。请尝试重新连接你的账户。",
+  "sync_tracked": "发现 {{count}} 条申请更新。",
+  "sync_none": "已是最新 — 没有新的申请邮件。"
 }

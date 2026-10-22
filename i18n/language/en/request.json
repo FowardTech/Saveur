@@ -181,5 +181,12 @@
   "where": "Where",
   "withdraw_application_failed": "Could not withdraw application",
   "withdrawing": "Withdrawing…",
-  "find_jobs_cta": "Find jobs"
+  "find_jobs_cta": "Find jobs",
+  "sync_now": "Sync now",
+  "syncing": "Syncing…",
+  "sync_title": "Sync",
+  "sync_throttled": "Just synced — try again in a minute.",
+  "sync_failed": "Couldn't sync right now. Try reconnecting your account.",
+  "sync_tracked": "Found {{count}} application update(s).",
+  "sync_none": "All caught up — no new application emails."
 }

@@ -181,5 +181,12 @@
   "where": "Dónde",
   "withdraw_application_failed": "No se pudo retirar la postulación",
   "withdrawing": "Retirando…",
-  "find_jobs_cta": "Buscar empleos"
+  "find_jobs_cta": "Buscar empleos",
+  "sync_now": "Sincronizar ahora",
+  "syncing": "Sincronizando…",
+  "sync_title": "Sincronizar",
+  "sync_throttled": "Ya se sincronizó — inténtalo de nuevo en un minuto.",
+  "sync_failed": "No se pudo sincronizar ahora. Prueba a volver a conectar tu cuenta.",
+  "sync_tracked": "Se encontraron {{count}} actualización(es) de solicitudes.",
+  "sync_none": "Todo al día — no hay correos de solicitudes nuevos."
 }
