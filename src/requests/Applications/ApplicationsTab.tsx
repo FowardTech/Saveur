@@ -1,7 +1,7 @@
 import React, {memo} from 'react';
 import {ScrollView, View} from 'react-native';
 import {StyleService, useStyleSheet, useTheme, Icon, Button, Input} from '@ui-kitten/components';
-import {NavigationProp, useNavigation} from '@react-navigation/native';
+import {NavigationProp, useFocusEffect, useNavigation} from '@react-navigation/native';
 import {useTranslation} from 'react-i18next';
 
 import Text from 'components/Text';
@@ -14,6 +14,8 @@ import {getApplicationStageLabel} from 'utils/interviewTypeLabels';
 import {MainBottomTabStackParamList, RootStackParamList} from 'navigation/types';
 import {Application_Stage_Enum, JobApplicationProps, Request_Type_Enum} from 'constants/Types';
 import * as applicationsService from 'services/applicationsService';
+import * as emailConnectionService from 'services/emailConnectionService';
+import * as calendarConnectionService from 'services/calendarConnectionService';
 import {AuthContext} from '../../../AuthContext';
 import CtaButton from 'components/CtaButton';
 
@@ -72,6 +74,41 @@ const ApplicationsTab = memo(() => {
       cancelled = true;
     };
   }, [isPro]);
+
+  // Auto-sync: whenever this tab is on screen and a Gmail/Outlook inbox or
+  // calendar is connected, ask the server to scan it right away (it also scans
+  // on its own every few minutes) and refresh the list, then repeat every 2
+  // minutes while the tab stays focused. The server rate-limits repeat calls,
+  // so this is cheap; failures are silent (no alert popups for a background
+  // refresh).
+  useFocusEffect(
+    React.useCallback(() => {
+      if (!isPro) return undefined;
+      let cancelled = false;
+      const run = async () => {
+        try {
+          const [emails, calendars] = await Promise.all([
+            emailConnectionService.listConnections().catch(() => []),
+            calendarConnectionService.listConnections().catch(() => []),
+          ]);
+          const anyConnected = emails.some(c => c.isActive) || calendars.some(c => c.isActive);
+          if (anyConnected) {
+            await emailConnectionService.syncNow().catch(() => undefined);
+          }
+          const result = await applicationsService.listApplications();
+          if (!cancelled) setApplications(result);
+        } catch {
+          // silent
+        }
+      };
+      run();
+      const id = setInterval(run, 120000);
+      return () => {
+        cancelled = true;
+        clearInterval(id);
+      };
+    }, [isPro]),
+  );
 
   // Client-side search — matches company, role, location, or the stage's
   // display label (not the raw enum value, for the same translated-locale
