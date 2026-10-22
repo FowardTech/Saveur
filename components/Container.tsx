@@ -2,6 +2,7 @@ import React from "react";
 import { Layout, LayoutProps, useTheme } from "@ui-kitten/components";
 import useLayout from "hooks/useLayout";
 import ThemeContext from "../ThemeContext";
+import LinearGradient from "react-native-linear-gradient";
 
 interface ContainerProps extends LayoutProps {
   useSafeArea?: boolean;
@@ -107,6 +108,22 @@ const Container: React.FC<ContainerProps> = ({
         style,
       ]}
     >
+      {/* Indeed-style soft blue wash in the top corner behind the header area,
+          fading to the plain page color lower down -- same look as the web
+          app's page background. Sits behind everything and never intercepts
+          touches. */}
+      <LinearGradient
+        pointerEvents="none"
+        colors={
+          appTheme === "dark"
+            ? ["rgba(39,115,238,0.16)", "rgba(39,115,238,0.05)", "rgba(39,115,238,0)"]
+            : ["rgba(39,115,238,0.13)", "rgba(39,115,238,0.05)", "rgba(39,115,238,0)"]
+        }
+        locations={[0, 0.45, 1]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0.75, y: 1 }}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, height: 440 }}
+      />
       {children}
     </Layout>
   );

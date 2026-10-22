@@ -3,20 +3,17 @@ import {Platform} from 'react-native';
 // Font handling per platform.
 // - iOS: the system font (San Francisco, Apple's own typeface) -- families are
 //   "System" and the weight picks the face.
-// - Android: Apple's San Francisco can't be bundled in an Android app (Apple's
-//   font license restricts it to Apple platforms), so Android uses Inter -- the
-//   open-source typeface designed to look like SF -- as the closest match.
-//   Android resolves a custom font by file name, so the weight is encoded in
-//   the family name (Inter-Regular / -Medium / -SemiBold / -Bold) and every
-//   numeric weight is reset to normal.
+// - Android: Plus Jakarta Sans (bundled; Apple's San Francisco can't be shipped
+//   in an Android app). Android resolves a custom font by file name, so the
+//   weight is encoded in the family name (PlusJakartaSans-Regular / -Medium /
+//   -Bold) and every numeric weight is reset to normal.
 const isAndroid = Platform.OS === 'android';
 
 const familyForWeight = (w: string | number | undefined): string => {
   const n = Number(w);
-  if (n >= 700) return 'Inter-Bold';
-  if (n >= 600) return 'Inter-SemiBold';
-  if (n >= 500) return 'Inter-Medium';
-  return 'Inter-Regular';
+  if (n >= 700) return 'PlusJakartaSans-Bold';
+  if (n >= 500) return 'PlusJakartaSans-Medium';
+  return 'PlusJakartaSans-Regular';
 };
 
 const isNumericWeight = (v: unknown) => typeof v === 'string' && /^\d{3}$/.test(v);
@@ -33,8 +30,8 @@ export function platformMapping<T>(mapping: T): T {
         walk(val);
         continue;
       }
-      if (key === 'text-font-family') node[key] = 'Inter-Regular';
-      else if (key === 'text-font-family-medium') node[key] = 'Inter-SemiBold';
+      if (key === 'text-font-family') node[key] = 'PlusJakartaSans-Regular';
+      else if (key === 'text-font-family-medium') node[key] = 'PlusJakartaSans-Medium';
       else if (/FontFamily$/.test(key) && val === 'System') {
         const wKey = key.replace(/FontFamily$/, 'FontWeight');
         node[key] = familyForWeight(isNumericWeight(node[wKey]) ? node[wKey] : undefined);
@@ -56,7 +53,7 @@ export function platformTheme<T>(theme: T): T {
   for (const key of Object.keys(clone)) {
     if (!/font-family/.test(key) || clone[key] !== 'System') continue;
     const semibold = key === 'text-font-family-medium' || /heading-\d+-font-family$/.test(key) || /subtitle/.test(key);
-    clone[key] = semibold ? 'Inter-SemiBold' : 'Inter-Regular';
+    clone[key] = semibold ? 'PlusJakartaSans-Medium' : 'PlusJakartaSans-Regular';
   }
   return clone;
 }
@@ -64,7 +61,8 @@ export function platformTheme<T>(theme: T): T {
 /** For the shared Text component and a few fixed styles. */
 export function fontStyle(weight: 'regular' | 'medium' | 'bold') {
   if (isAndroid) {
-    const fontFamily = weight === 'bold' ? 'Inter-Bold' : weight === 'medium' ? 'Inter-Medium' : 'Inter-Regular';
+    const fontFamily =
+      weight === 'bold' ? 'PlusJakartaSans-Bold' : weight === 'medium' ? 'PlusJakartaSans-Medium' : 'PlusJakartaSans-Regular';
     return {fontFamily, fontWeight: 'normal' as const};
   }
   return {fontFamily: 'System', fontWeight: (weight === 'bold' ? '700' : weight === 'medium' ? '500' : '400') as '700' | '500' | '400'};
