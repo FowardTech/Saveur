@@ -1674,7 +1674,7 @@ const themedStyles = StyleService.create({
     fontSize: 15,
     fontWeight: "normal",
     lineHeight: 24,
-    fontFamily: "PlusJakartaSans-Medium",
+    fontFamily: "Inter-Medium",
   },
   rightTextStyle: {
     // BUG FIX (product request: "i want the user bubble to be white
@@ -1687,7 +1687,7 @@ const themedStyles = StyleService.create({
     fontSize: 15,
     fontWeight: "normal",
     lineHeight: 24,
-    fontFamily: "PlusJakartaSans-Medium",
+    fontFamily: "Inter-Medium",
   },
   wrapperLeftStyle: {
     borderBottomLeftRadius: 4,
@@ -1788,7 +1788,7 @@ const themedStyles = StyleService.create({
   emptyHeadline: {
     color: 'text-basic-color',
     paddingHorizontal: 12,
-    fontFamily: 'PlusJakartaSans-Medium',
+    fontFamily: 'Inter-Medium',
     fontWeight: 'normal',
   },
   // Product follow-up: "place the suggested topics pill at the top right

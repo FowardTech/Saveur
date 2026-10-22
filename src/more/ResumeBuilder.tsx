@@ -555,7 +555,7 @@ const themedStyles = StyleService.create({
     minHeight: 80,
   },
   bulletInputText: {
-    fontFamily: 'PlusJakartaSans-Regular',
+    fontFamily: 'Inter-Regular',
     fontSize: 13,
     minHeight: 64,
     textAlignVertical: 'top',

@@ -1,8 +1,8 @@
 {
   "version": 1.0,
   "strict": {
-    "text-font-family": "PlusJakartaSans-Regular",
-    "text-font-family-medium": "PlusJakartaSans-Medium",
+    "text-font-family": "Inter-Regular",
+    "text-font-family-medium": "Inter-Medium",
     "text-font-primary-bold": "DCondensed-Bold",
     "text-heading-1-font-size": 30,
     "text-heading-1-font-weight": "400",
@@ -6206,7 +6206,7 @@
             "backgroundColor": "transparent",
             "titleFontSize": 17,
             "titleFontWeight": "text-heading-6-font-weight",
-            "titleFontFamily": "PlusJakartaSans-Bold",
+            "titleFontFamily": "Inter-Bold",
             "titleColor": "text-basic-color",
             "subtitleFontSize": "text-caption-1-font-size",
             "subtitleFontWeight": "text-caption-1-font-weight",
@@ -6234,7 +6234,7 @@
             "backgroundColor": "background-basic-color-2",
             "titleFontSize": 17,
             "titleFontWeight": "text-heading-6-font-weight",
-            "titleFontFamily": "PlusJakartaSans-Bold",
+            "titleFontFamily": "Inter-Bold",
             "titleColor": "text-basic-color",
             "subtitleFontSize": "text-caption-1-font-size",
             "subtitleFontWeight": "text-caption-1-font-weight",

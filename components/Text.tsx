@@ -226,7 +226,7 @@ export default memo(
             // especially on Android, which generally won't fake-bold a
             // custom typeface the way it does the system font. Referencing
             // the actual bold TTF by name is the standard, reliable
-            // cross-platform fix — see assets/fonts/PlusJakartaSans-*.ttf
+            // cross-platform fix — see assets/fonts/Inter-*.ttf (same family as the web app; was PlusJakartaSans — see git history to revert)
             // (SIL Open Font License, via Google Fonts) and
             // react-native.config.js's asset link. Was Roboto before this;
             // switched at the user's request to more closely match a
@@ -252,10 +252,10 @@ export default memo(
             // PlusJakartaSans-Bold.ttf file by name, not from the weight
             // flag.
             fontFamily: bold
-              ? 'PlusJakartaSans-Bold'
+              ? 'Inter-Bold'
               : medium
-              ? 'PlusJakartaSans-Medium'
-              : 'PlusJakartaSans-Regular',
+              ? 'Inter-Medium'
+              : 'Inter-Regular',
             fontWeight: 'normal',
           },
           style,

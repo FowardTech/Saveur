@@ -114,6 +114,10 @@
 		<string>PlusJakartaSans-Regular.ttf</string>
 		<string>PlusJakartaSans-Medium.ttf</string>
 		<string>PlusJakartaSans-Bold.ttf</string>
+		<string>Inter-Regular.ttf</string>
+		<string>Inter-Medium.ttf</string>
+		<string>Inter-SemiBold.ttf</string>
+		<string>Inter-Bold.ttf</string>
 	</array>
 	<!-- Pruned to only what's actually used (see AppDelegate.swift /
 	     package.json — @react-native-firebase/messaging for push,

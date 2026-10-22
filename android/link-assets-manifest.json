@@ -14,6 +14,22 @@
       "sha1": "4747880718b9b417a627a6c76cbd20084877961e"
     },
     {
+      "path": "assets/fonts/Inter-Bold.ttf",
+      "sha1": "3cdfad917e2a44673f45de927221b112d1b20f82"
+    },
+    {
+      "path": "assets/fonts/Inter-Medium.ttf",
+      "sha1": "473114f7bd866676292ebb88517c2360fa3e0cca"
+    },
+    {
+      "path": "assets/fonts/Inter-Regular.ttf",
+      "sha1": "feb1606a834e48d761cfbfc362aef5d72e40ace0"
+    },
+    {
+      "path": "assets/fonts/Inter-SemiBold.ttf",
+      "sha1": "2ea6c90f8dcd5240b034a75de38ee1f4c72be942"
+    },
+    {
       "path": "assets/fonts/MontserratAlternates-Black.ttf",
       "sha1": "ddfe711ee7b948f4105986d363e00f98b192d52c"
     },
