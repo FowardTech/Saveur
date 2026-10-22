@@ -81,23 +81,23 @@ const getLineHeight = (
   // now-larger text instead of feeling cramped.
   switch (category) {
     case 'h1':
-      return 54;
+      return 40;
     case 'h2':
-      return 42;
+      return 33;
     case 'h3':
-      return 36;
+      return 29;
     case 'h4':
-      return 39;
+      return 30;
     case 'h5':
-      return 30;
-    case 'h6':
-      return 30;
-    case 'h6-s':
-      return 30;
-    case 'h7':
       return 28;
+    case 'h6':
+      return 25;
+    case 'h6-s':
+      return 25;
+    case 'h7':
+      return 24;
     case 'h7-s':
-      return 30;
+      return 24;
     case 'h8':
       return 24;
     case 'h8-s':

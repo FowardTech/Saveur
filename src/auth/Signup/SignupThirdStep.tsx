@@ -279,7 +279,7 @@ const SignupThirdStep = memo(() => {
               the real PlusJakartaSans-Bold.ttf file `bold` already selects
               — see Text.tsx's comment for the full mechanism. Removed; the
               Bold font file itself is already the boldest cut available. */}
-          <Text mt={8} mb={16} category="h2" bold fontSize={28} lineHeight={34}>
+          <Text mt={8} mb={16} category="h2" bold fontSize={24} lineHeight={30}>
             {t('auth:title_signup_3')}
           </Text>
           <Text mt={8} mb={48}>
