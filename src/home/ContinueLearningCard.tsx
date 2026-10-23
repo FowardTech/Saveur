@@ -185,7 +185,7 @@ const ContinueLearningCard = memo(({ style, onVisibilityChange }: {
           </GradientIconBadge>
         )}
         <View style={globalStyle.flexOne}>
-          <Text category="h10" bold numberOfLines={1}>
+          <Text category="h10" medium numberOfLines={1}>
             {primary.title}
           </Text>
           <Text category="h10" status="placeholder" numberOfLines={1} mt={1}>

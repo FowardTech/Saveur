@@ -111,7 +111,7 @@ const DailyChallengeCard = memo(({ style }: { style?: StyleProp<ViewStyle> } = {
       onPress={() => navigate('DailyChallenge')}>
       <Flex justify="flex-start" itemsCenter mb={8}>
         <Icon pack="eva" name="gift-outline" style={[globalStyle.icon20, { tintColor: theme['color-primary-500'] }]} />
-        <Text category="h9" bold ml={8} style={globalStyle.flexOne}>
+        <Text category="h9" medium ml={8} style={globalStyle.flexOne}>
           {t('home:daily_challenge_title', { defaultValue: "Today's Surprise Challenge" })}
         </Text>
       </Flex>

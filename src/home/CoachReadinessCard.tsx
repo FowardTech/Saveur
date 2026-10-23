@@ -68,7 +68,7 @@ const CoachReadinessCard = memo(({ readiness }: { readiness: CoachReadiness }) =
             </Text>
           </CircularProgress>
           <View style={[globalStyle.flexOne, styles.headText]}>
-            <Text category="h8" bold>
+            <Text category="h8" medium>
               {allDone
                 ? t('home:coach_readiness_done_title', { defaultValue: 'Your AI coach is ready' })
                 : t('home:coach_readiness_title', { defaultValue: 'Set up your AI career coach' })}

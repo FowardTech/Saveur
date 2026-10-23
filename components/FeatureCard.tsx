@@ -43,7 +43,8 @@ const FeatureCard: React.FC<FeatureCardProps> = memo(({heroIcon, eyebrow, title,
               </Text>
             </View>
           ) : null}
-          <Text category="h7" bold style={styles.title} numberOfLines={2}>
+          {/* Medium (not bold) weight -- product feedback: card titles read too heavy. */}
+          <Text category="h7" medium style={styles.title} numberOfLines={2}>
             {title}
           </Text>
           {subtitle ? (
