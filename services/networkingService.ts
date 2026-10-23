@@ -10,108 +10,111 @@ function currentLanguage(): string {
 }
 
 // ---------------------------------------------------------------------------
-// networkingService — partial real backend implementation.
+// networkingService — real backend implementation.
 //
-// Backs src/more/NetworkingAssistant.tsx: a simple contacts tracker (name,
-// company, role, last-contacted date, note) plus AI-generated outreach
-// messages. Per this task's endpoint contract, only message *generation* is
-// a real backend call — POST /api/v1/networking/message (see
-// generateOutreachMessage below). The contacts tracker itself (list/add/
-// update/delete) has no corresponding endpoint in this pass, so it stays
-// local/mocked exactly as before — seeded from static mock data on first
-// read, then persisted to AsyncStorage so adds/edits/deletes stick.
+// Backs src/more/NetworkingAssistant.tsx: a contacts tracker (name, company,
+// role, last-contacted date, note) plus AI-generated outreach messages.
+// Contacts are stored in the database (Saveur-Backend app/api/networking.py:
+// GET/POST /networking/contacts, PATCH/DELETE /networking/contacts/{id},
+// POST /networking/contacts/import) so they survive reinstalls/new devices
+// and sync with the web app. They used to live only in AsyncStorage; any
+// contacts still there are uploaded once (see migrateLocalContacts).
 // ---------------------------------------------------------------------------
 
-const FAKE_LATENCY_MS = 450;
-const delay = (ms: number = FAKE_LATENCY_MS) =>
-  new Promise<void>(resolve => setTimeout(resolve, ms));
+type ContactsBody = {data?: NetworkingContactProps[]} | NetworkingContactProps[];
 
-const readAll = async (): Promise<NetworkingContactProps[]> => {
-  const raw = await AsyncStorage.getItem(EKeyAsyncStorage.networkingContacts);
-  if (raw) {
-    try {
-      return JSON.parse(raw) as NetworkingContactProps[];
-    } catch {
-      // Corrupted/partial write — fall through and start empty rather than
-      // crash the Networking Assistant screen.
-    }
-  }
-  // Used to seed 3 fake sample contacts (Priya Natarajan/Marcus Feld/Dana
-  // Whitfield from constants/Data.ts's DATA_NETWORKING_CONTACTS) on first
-  // read — every new user saw someone else's made-up contact list instead
-  // of a blank slate. This is a personal contacts tracker; it should start
-  // empty and only ever contain people the user actually added themselves.
-  return [];
+const unwrapList = (body: ContactsBody | undefined): NetworkingContactProps[] =>
+  Array.isArray(body) ? body : body?.data ?? [];
+
+// Epoch ms (what the server stores/returns) for a number | Date | null.
+const toWireDate = (value: NetworkingContactProps['lastContactedDate'] | undefined): number | null => {
+  if (value == null) return null;
+  const ms = value instanceof Date ? value.getTime() : Number(value);
+  return Number.isFinite(ms) && ms > 0 ? ms : null;
 };
 
-const writeAll = async (contacts: NetworkingContactProps[]): Promise<void> => {
-  await AsyncStorage.setItem(EKeyAsyncStorage.networkingContacts, JSON.stringify(contacts));
+const toWire = (c: Partial<Omit<NetworkingContactProps, 'id'>>) => {
+  const wire: Record<string, unknown> = {};
+  if (c.name !== undefined) wire.name = c.name;
+  if (c.company !== undefined) wire.company = c.company;
+  if (c.role !== undefined) wire.role = c.role;
+  if (c.note !== undefined) wire.note = c.note;
+  if (c.lastContactedDate !== undefined) wire.lastContactedDate = toWireDate(c.lastContactedDate);
+  return wire;
+};
+
+// One-time upload of contacts saved on this device before contacts moved to
+// the server. The server skips duplicates, so a failed/retried attempt is
+// safe; the local copy is only removed once the upload succeeds.
+const migrateLocalContacts = async (): Promise<NetworkingContactProps[] | null> => {
+  let raw: string | null = null;
+  try {
+    raw = await AsyncStorage.getItem(EKeyAsyncStorage.networkingContacts);
+  } catch {
+    return null;
+  }
+  if (!raw) return null;
+  let local: NetworkingContactProps[] = [];
+  try {
+    const parsed = JSON.parse(raw);
+    local = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    // Corrupted legacy data — nothing recoverable; drop it.
+    await AsyncStorage.removeItem(EKeyAsyncStorage.networkingContacts).catch(() => {});
+    return null;
+  }
+  if (!local.length) {
+    await AsyncStorage.removeItem(EKeyAsyncStorage.networkingContacts).catch(() => {});
+    return null;
+  }
+  const {data} = await apiClient.post<ContactsBody>('/api/v1/networking/contacts/import', {
+    contacts: local.map(c => ({...toWire(c)})),
+  });
+  await AsyncStorage.removeItem(EKeyAsyncStorage.networkingContacts).catch(() => {});
+  return unwrapList(data);
 };
 
 /**
- * List all tracked networking contacts, most recently contacted first.
- *
- * BACKEND TODO: GET /networking/contacts — returns NetworkingContactProps[]
- *   for the current user.
+ * List all tracked networking contacts, most recently contacted first
+ * (the server already sorts them). Uploads any legacy on-device contacts
+ * first. Throws if the server can't be reached — callers show an error
+ * instead of an empty list that would look like data loss.
  */
 export async function listContacts(): Promise<NetworkingContactProps[]> {
-  await delay();
-  const all = await readAll();
-  return [...all].sort((a, b) => Number(b.lastContactedDate ?? 0) - Number(a.lastContactedDate ?? 0));
+  try {
+    const migrated = await migrateLocalContacts();
+    if (migrated) return migrated;
+  } catch {
+    // Upload failed (offline etc.) — keep the local copy and retry next
+    // time; fall through to a normal fetch below.
+  }
+  const {data} = await apiClient.get<ContactsBody>('/api/v1/networking/contacts');
+  return unwrapList(data);
 }
 
-/**
- * Add a new tracked contact.
- *
- * BACKEND TODO: POST /networking/contacts
- *   request:  Omit<NetworkingContactProps, 'id'>
- *   response: NetworkingContactProps (with server-assigned id)
- */
+/** Add a new tracked contact (POST /api/v1/networking/contacts). */
 export async function addContact(
   contact: Omit<NetworkingContactProps, 'id'>,
 ): Promise<NetworkingContactProps> {
-  await delay();
-  const all = await readAll();
-  const newContact: NetworkingContactProps = {...contact, id: `contact_${Date.now()}`};
-  await writeAll([newContact, ...all]);
-  return newContact;
+  const {data} = await apiClient.post<NetworkingContactProps>('/api/v1/networking/contacts', toWire(contact));
+  return data;
 }
 
 /**
- * Update an existing contact (e.g. after a follow-up — update
- * lastContactedDate/note).
- *
- * BACKEND TODO: PATCH /networking/contacts/{id}
- *   request:  Partial<NetworkingContactProps>
- *   response: NetworkingContactProps (updated)
+ * Update an existing contact, e.g. after a follow-up — lastContactedDate/note
+ * (PATCH /api/v1/networking/contacts/{id}).
  */
 export async function updateContact(
   id: NetworkingContactProps['id'],
   partial: Partial<Omit<NetworkingContactProps, 'id'>>,
 ): Promise<NetworkingContactProps | null> {
-  await delay();
-  const all = await readAll();
-  let updated: NetworkingContactProps | null = null;
-  const next = all.map(item => {
-    if (item.id === id) {
-      updated = {...item, ...partial};
-      return updated;
-    }
-    return item;
-  });
-  await writeAll(next);
-  return updated;
+  const {data} = await apiClient.patch<NetworkingContactProps>(`/api/v1/networking/contacts/${id}`, toWire(partial));
+  return data ?? null;
 }
 
-/**
- * Remove a tracked contact.
- *
- * BACKEND TODO: DELETE /networking/contacts/{id}
- */
+/** Remove a tracked contact (DELETE /api/v1/networking/contacts/{id}). */
 export async function deleteContact(id: NetworkingContactProps['id']): Promise<void> {
-  await delay(300);
-  const all = await readAll();
-  await writeAll(all.filter(item => item.id !== id));
+  await apiClient.delete(`/api/v1/networking/contacts/${id}`);
 }
 
 // ---- POST /api/v1/networking/message ---------------------------------------

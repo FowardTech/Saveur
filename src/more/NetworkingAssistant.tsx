@@ -196,14 +196,22 @@ const NetworkingAssistant = memo(() => {
   const [isGeneratingMessage, setIsGeneratingMessage] = React.useState(false);
   const [generateMessageError, setGenerateMessageError] = React.useState<string | null>(null);
 
+  const showContactError = () =>
+    Alert.alert(String(t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' })));
+
   const loadContacts = React.useCallback(async () => {
     setIsLoadingContacts(true);
     try {
       const list = await networkingService.listContacts();
       setContacts(list);
+    } catch {
+      // Contacts now live on the server -- keep whatever is already shown
+      // rather than replacing it with an empty list that looks like data loss.
+      Alert.alert(String(t('common:something_went_wrong', { defaultValue: 'Something went wrong. Please try again.' })));
     } finally {
       setIsLoadingContacts(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
@@ -248,19 +256,29 @@ const NetworkingAssistant = memo(() => {
       }
       await loadContacts();
       onCancelForm();
+    } catch {
+      showContactError();
     } finally {
       setIsSaving(false);
     }
   };
 
   const onDelete = async (id: NetworkingContactProps['id']) => {
-    await networkingService.deleteContact(id);
-    await loadContacts();
+    try {
+      await networkingService.deleteContact(id);
+      await loadContacts();
+    } catch {
+      showContactError();
+    }
   };
 
   const onMarkContactedToday = async (contact: NetworkingContactProps) => {
-    await networkingService.updateContact(contact.id, {lastContactedDate: Date.now()});
-    await loadContacts();
+    try {
+      await networkingService.updateContact(contact.id, {lastContactedDate: Date.now()});
+      await loadContacts();
+    } catch {
+      showContactError();
+    }
   };
 
   const onOpenGenerateMessage = (contact: NetworkingContactProps) => {
