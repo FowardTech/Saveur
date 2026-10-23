@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import { TouchableOpacity, View } from 'react-native';
-import { StyleService, useStyleSheet, useTheme, Icon } from '@ui-kitten/components';
+import { TouchableOpacity } from 'react-native';
+import { StyleService, useStyleSheet, Icon } from '@ui-kitten/components';
 import { useTranslation } from 'react-i18next';
 import i18n from 'i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
@@ -30,7 +30,6 @@ import { GoalTipProps } from 'constants/Types';
 // self-contained Home card follows.
 const DailyTipsBanner = memo(() => {
   const styles = useStyleSheet(themedStyles);
-  const theme = useTheme();
   const { t } = useTranslation(['home', 'common']);
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
   const { navigate } = navigation;
@@ -66,23 +65,21 @@ const DailyTipsBanner = memo(() => {
   if (!tips || tips.length === 0) return null;
   const primary = tips[0];
 
+  // Product request: the full "Today's tip" card is gone -- it's now a small
+  // pill button at the right end of the "Today" heading (see HomeSrc.tsx),
+  // still opening GoalTipDetail.
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      style={styles.card}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      accessibilityRole="button"
+      accessibilityLabel={primary.tip}
+      style={styles.pill}
       onPress={() => navigate('GoalTipDetail')}>
-      <View style={styles.iconWrap}>
-        <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: '#f59e0b' }]} />
-      </View>
-      <View style={globalStyle.flexOne}>
-        <Text category="h10" bold numberOfLines={1}>
-          {t('home:daily_tip_banner_title', { defaultValue: "Today's tip" })}
-        </Text>
-        <Text category="h10" status="placeholder" numberOfLines={1} mt={1}>
-          {primary.tip}
-        </Text>
-      </View>
-      <Icon pack="eva" name="arrow-forward-outline" style={[globalStyle.icon16, { tintColor: theme['text-hint-color'] }]} />
+      <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: '#f59e0b' }]} />
+      <Text category="h10-s" bold numberOfLines={1} style={styles.pillText}>
+        {t('home:daily_tip_banner_title', { defaultValue: "Today's tip" })}
+      </Text>
     </TouchableOpacity>
   );
 });
@@ -110,23 +107,17 @@ const themedStyles = StyleService.create({
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language. Slightly smaller than the grid tiles'
   // own 24px since this is a much shorter single-row card.
-  card: {
-    ...globalStyle.card,
-    borderRadius: 16,
+  // White pill so it reads against the blue Today panel it sits in.
+  pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    borderRadius: 999,
+    paddingVertical: 6,
     paddingHorizontal: 12,
     backgroundColor: 'background-basic-color-2',
-    marginTop: 12,
   },
-  iconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    marginRight: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(245, 158, 11, 0.12)',
+  pillText: {
+    marginLeft: 6,
+    flexShrink: 1,
   },
 });

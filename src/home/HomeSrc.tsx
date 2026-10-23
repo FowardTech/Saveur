@@ -1181,9 +1181,14 @@ const HomeSrc = memo(() => {
             Indeed UI"): the Today cards sit on a soft light-blue panel, white
             cards inside, like Indeed's "Manage your applications" band. */}
         <View style={[styles.todayPanel, { backgroundColor: theme['color-primary-100'] }]}>
-        <SectionTitle style={{ color: '#FFFFFF' }}>
-          {t('home:section_today', { defaultValue: 'Today' }).toString()}
-        </SectionTitle>
+        <View style={styles.todayHeaderRow}>
+          <SectionTitle style={{ color: '#FFFFFF' }}>
+            {t('home:section_today', { defaultValue: 'Today' }).toString()}
+          </SectionTitle>
+          {/* "Today's tip" pill (was a separate card below this panel);
+              renders nothing when the user has no goals/tips. */}
+          <DailyTipsBanner />
+        </View>
         {/* Only a session scheduled for TODAY lives in this card; later ones
             are listed on the drawer's Upcoming screen (UpcomingSessions.tsx). */}
         {nextSession && isSameLocalDay(nextSession.scheduledAt, Date.now()) ? (
@@ -1271,8 +1276,6 @@ const HomeSrc = memo(() => {
           />
         )}
         </View>
-
-        <DailyTipsBanner />
 
         {/* SYMPHONY REDESIGN follow-up (product request, with 4 reference
             icon images: "replace the icons used for the daily challenge,
@@ -1417,6 +1420,11 @@ const themedStyles = StyleService.create({
   // language now used throughout this screen (see QuickActionGrid.tsx's
   // own comment), rather than the outlined-card treatment other design
   // systems favor for alerts.
+  todayHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   todayPanel: {
     borderRadius: 20,
     paddingHorizontal: 12,
