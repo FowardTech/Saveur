@@ -1182,7 +1182,7 @@ const HomeSrc = memo(() => {
             cards inside, like Indeed's "Manage your applications" band. */}
         <View style={[styles.todayPanel, { backgroundColor: theme['color-primary-100'] }]}>
         <View style={styles.todayHeaderRow}>
-          <SectionTitle style={{ color: '#FFFFFF' }}>
+          <SectionTitle mt={2} mb={8} style={{ color: '#FFFFFF' }}>
             {t('home:section_today', { defaultValue: 'Today' }).toString()}
           </SectionTitle>
           {/* "Today's tip" pill (was a separate card below this panel);
@@ -1283,7 +1283,9 @@ const HomeSrc = memo(() => {
             each of these 3 always-visible cards gets its own full-color
             gradient icon now instead of a tinted eva glyph (see
             components/ActionCard.tsx's `iconImage` prop). */}
-        <SectionTitle>
+        {/* mt={0}: the card above already has a 12px bottom margin, so the
+            default 12px top margin doubled the gap above each section. */}
+        <SectionTitle mt={0} mb={8}>
           {t('home:section_progress', { defaultValue: 'Your progress' }).toString()}
         </SectionTitle>
         <FeatureCard
@@ -1301,7 +1303,7 @@ const HomeSrc = memo(() => {
         />
         <ContinueLearningCard />
 
-        <SectionTitle>
+        <SectionTitle mt={0} mb={8}>
           {t('home:section_career', { defaultValue: 'Career growth' }).toString()}
         </SectionTitle>
         {(configService.isFeatureEnabled('pay_tracking') || configService.isFeatureEnabled('market_check') || configService.isFeatureEnabled('promotion_plan')) ? (
