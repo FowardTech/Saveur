@@ -468,11 +468,11 @@ const Leaderboard = memo(() => {
                       {entry.name}
                       {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                     </Text>
-                    {/* Product request: XP pill background should be gray (was the
-                        near-black rank tone, #3F3F46). */}
-                    <View style={[styles.scorePill, { backgroundColor: '#71717a' }]}>
-                      <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: colors.pillText }]} />
-                      <Text category="h10" bold ml={4} style={{ color: colors.pillText }}>
+                    {/* Product request: XP pill is LIGHT gray (was the near-black
+                        rank tone), so the star/number switch to dark for contrast. */}
+                    <View style={[styles.scorePill, { backgroundColor: '#E4E4E7' }]}>
+                      <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: '#3F3F46' }]} />
+                      <Text category="h10" bold ml={4} style={{ color: '#3F3F46' }}>
                         {entry.xp}
                       </Text>
                     </View>
