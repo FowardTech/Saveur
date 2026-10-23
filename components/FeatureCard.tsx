@@ -62,12 +62,15 @@ export default FeatureCard;
 
 const styles = StyleSheet.create({
   wrap: {borderRadius: 16, marginBottom: 12, padding: 16},
-  row: {flexDirection: 'row', alignItems: 'center'},
+  // flex-start so the icon tile's top lines up with the top of the pill/title
+  // block (product request) instead of floating at the card's vertical
+  // middle; the chevron stays centered via its own alignSelf.
+  row: {flexDirection: 'row', alignItems: 'flex-start'},
   iconTile: {width: 48, height: 48, borderRadius: 12, alignItems: 'center', justifyContent: 'center'},
   icon: {width: 24, height: 24},
   texts: {flex: 1, marginHorizontal: 14},
   chip: {alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 6},
   title: {fontSize: 15, lineHeight: 20},
   subtitle: {marginTop: 2},
-  chevron: {width: 22, height: 22},
+  chevron: {width: 22, height: 22, alignSelf: 'center'},
 });
