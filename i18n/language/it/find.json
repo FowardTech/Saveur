@@ -529,5 +529,6 @@
   "stdin_label": "Input del programma (stdin) — un valore per riga",
   "stdin_missing_hint": "Il tuo programma ha provato a leggere un input non fornito. Chiudi, digita l'input (un valore per riga) nella schermata di esecuzione e riesegui.",
   "console_input_placeholder": "Scrivi la risposta e premi Invio",
-  "stdin_prefill_label": "Input precompilato (facoltativo) — un valore per riga"
+  "stdin_prefill_label": "Input precompilato (facoltativo) — un valore per riga",
+  "company_any": "Altra / Qualsiasi azienda"
 }

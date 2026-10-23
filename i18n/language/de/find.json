@@ -529,5 +529,6 @@
   "stdin_label": "Programmeingabe (stdin) – ein Wert pro Zeile",
   "stdin_missing_hint": "Dein Programm hat versucht, eine nicht bereitgestellte Eingabe zu lesen. Schließe dies, gib die Eingabe (ein Wert pro Zeile) im Ausführen-Bereich ein und führe es erneut aus.",
   "console_input_placeholder": "Antwort eingeben und Enter drücken",
-  "stdin_prefill_label": "Vorab eingetragene Eingabe (optional) – ein Wert pro Zeile"
+  "stdin_prefill_label": "Vorab eingetragene Eingabe (optional) – ein Wert pro Zeile",
+  "company_any": "Andere / Beliebiges Unternehmen"
 }

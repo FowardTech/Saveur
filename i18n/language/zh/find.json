@@ -529,5 +529,6 @@
   "stdin_label": "程序输入（stdin）——每行一个值",
   "stdin_missing_hint": "你的程序尝试读取未提供的输入。请关闭此窗口，在运行面板中输入内容（每行一个值），然后重新运行。",
   "console_input_placeholder": "输入你的答案并按回车",
-  "stdin_prefill_label": "预填输入（可选）——每行一个值"
+  "stdin_prefill_label": "预填输入（可选）——每行一个值",
+  "company_any": "其他 / 任意公司"
 }

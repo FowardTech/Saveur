@@ -529,5 +529,6 @@
   "stdin_label": "プログラム入力（stdin）— 1行に1つの値",
   "stdin_missing_hint": "プログラムが、渡されていない入力を読み取ろうとしました。これを閉じ、実行パネルに入力（1行に1つの値）を入力して、もう一度実行してください。",
   "console_input_placeholder": "回答を入力してEnterを押してください",
-  "stdin_prefill_label": "事前入力（任意）— 1行に1つの値"
+  "stdin_prefill_label": "事前入力（任意）— 1行に1つの値",
+  "company_any": "その他／どの企業でも"
 }

@@ -238,5 +238,8 @@
   "credits_action_networking_message": "人脉消息",
   "credits_action_followup_draft": "跟进草稿",
   "credits_action_daily_challenge_submit": "每日挑战",
-  "drawer_coaching_report": "辅导报告"
+  "drawer_coaching_report": "辅导报告",
+  "student_personal_email_block": "这是个人邮箱服务商——请改用学校官方邮箱。",
+  "student_email_domain_warn": "这看起来不像 {{school}} 的邮箱——应以 @{{domain}} 结尾。",
+  "credit_topups_mobile_only": "积分充值仅在 iOS 和 Android 应用中提供。"
 }

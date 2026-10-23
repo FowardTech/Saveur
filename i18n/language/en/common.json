@@ -238,5 +238,8 @@
   "credits_action_networking_message": "Networking message",
   "credits_action_followup_draft": "Follow-up draft",
   "credits_action_daily_challenge_submit": "Daily challenge",
-  "drawer_coaching_report": "Coaching Report"
+  "drawer_coaching_report": "Coaching Report",
+  "student_personal_email_block": "That's a personal email provider — please use your official school email instead.",
+  "student_email_domain_warn": "This doesn't look like a {{school}} email — expected it to end in @{{domain}}.",
+  "credit_topups_mobile_only": "Credit top-ups are available in the iOS and Android apps."
 }

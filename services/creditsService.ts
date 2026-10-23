@@ -1,4 +1,5 @@
 import React from 'react';
+import i18n from 'i18next';
 import {Alert, Platform} from 'react-native';
 import apiClient from './apiClient';
 import * as iapService from './iapService';
@@ -90,7 +91,7 @@ export type PackPurchaseResult = {kind: 'credits'; creditsGranted: number} | {ki
 
 export async function purchasePack(pack: CreditPack): Promise<PackPurchaseResult> {
   if (Platform.OS !== 'ios' && Platform.OS !== 'android') {
-    throw new Error('Credit top-ups are available in the iOS and Android apps.');
+    throw new Error(String(i18n.t('common:credit_topups_mobile_only', {defaultValue: 'Credit top-ups are available in the iOS and Android apps.'})));
   }
   const result = await iapService.purchaseCreditPack(pack.code);
   if (result.kind === 'cancelled') return {kind: 'cancelled'};

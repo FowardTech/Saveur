@@ -684,7 +684,7 @@ const MockInterviewSetup = memo(() => {
                   />
                 ) : null}
                 <Text category="h9" bold status={active ? 'control' : 'basic'}>
-                  {name}
+                  {isRealCompany ? name : t('find:company_any', { defaultValue: 'Other / Any Company' })}
                 </Text>
               </TouchableOpacity>
             );

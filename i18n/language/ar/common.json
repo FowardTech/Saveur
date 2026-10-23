@@ -238,5 +238,8 @@
   "credits_action_networking_message": "رسالة تواصل مهني",
   "credits_action_followup_draft": "مسودة متابعة",
   "credits_action_daily_challenge_submit": "التحدي اليومي",
-  "drawer_coaching_report": "تقرير التدريب"
+  "drawer_coaching_report": "تقرير التدريب",
+  "student_personal_email_block": "هذا مزوّد بريد شخصي — يرجى استخدام بريد مدرستك الرسمي بدلًا منه.",
+  "student_email_domain_warn": "لا يبدو هذا بريدًا إلكترونيًا لـ {{school}} — يجب أن ينتهي بـ @{{domain}}.",
+  "credit_topups_mobile_only": "شحن الأرصدة متاح في تطبيقي iOS وAndroid."
 }

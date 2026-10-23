@@ -238,5 +238,8 @@
   "credits_action_networking_message": "네트워킹 메시지",
   "credits_action_followup_draft": "후속 메시지 초안",
   "credits_action_daily_challenge_submit": "일일 챌린지",
-  "drawer_coaching_report": "코칭 리포트"
+  "drawer_coaching_report": "코칭 리포트",
+  "student_personal_email_block": "개인 이메일 서비스입니다. 학교 공식 이메일을 사용해 주세요.",
+  "student_email_domain_warn": "{{school}} 이메일이 아닌 것 같습니다. @{{domain}}(으)로 끝나야 합니다.",
+  "credit_topups_mobile_only": "크레딧 충전은 iOS 및 Android 앱에서 이용할 수 있습니다."
 }

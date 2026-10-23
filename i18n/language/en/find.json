@@ -529,5 +529,6 @@
   "stdin_label": "Program input (stdin) — one value per line",
   "stdin_missing_hint": "Your program tried to read input that was not provided. Close this, type the input (one value per line) in the Run sheet, then run again.",
   "console_input_placeholder": "Type your answer and press Enter",
-  "stdin_prefill_label": "Pre-filled input (optional) — one value per line"
+  "stdin_prefill_label": "Pre-filled input (optional) — one value per line",
+  "company_any": "Other / Any Company"
 }

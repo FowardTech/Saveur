@@ -238,5 +238,8 @@
   "credits_action_networking_message": "Mensagem de networking",
   "credits_action_followup_draft": "Rascunho de acompanhamento",
   "credits_action_daily_challenge_submit": "Desafio diário",
-  "drawer_coaching_report": "Relatório de coaching"
+  "drawer_coaching_report": "Relatório de coaching",
+  "student_personal_email_block": "Esse é um provedor de e-mail pessoal — use o e-mail oficial da sua escola.",
+  "student_email_domain_warn": "Isso não parece um e-mail de {{school}} — deveria terminar em @{{domain}}.",
+  "credit_topups_mobile_only": "As recargas de créditos estão disponíveis nos apps iOS e Android."
 }

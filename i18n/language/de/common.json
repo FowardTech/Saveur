@@ -238,5 +238,8 @@
   "credits_action_networking_message": "Networking-Nachricht",
   "credits_action_followup_draft": "Nachfass-Entwurf",
   "credits_action_daily_challenge_submit": "Tägliche Challenge",
-  "drawer_coaching_report": "Coaching-Bericht"
+  "drawer_coaching_report": "Coaching-Bericht",
+  "student_personal_email_block": "Das ist ein privater E-Mail-Anbieter – bitte verwende stattdessen deine offizielle Schul-E-Mail-Adresse.",
+  "student_email_domain_warn": "Das sieht nicht nach einer E-Mail-Adresse von {{school}} aus – sie sollte auf @{{domain}} enden.",
+  "credit_topups_mobile_only": "Guthaben-Aufladungen sind in den iOS- und Android-Apps verfügbar."
 }

@@ -238,5 +238,8 @@
   "credits_action_networking_message": "ネットワーキングメッセージ",
   "credits_action_followup_draft": "フォローアップ下書き",
   "credits_action_daily_challenge_submit": "デイリーチャレンジ",
-  "drawer_coaching_report": "コーチングレポート"
+  "drawer_coaching_report": "コーチングレポート",
+  "student_personal_email_block": "これは個人用のメールサービスです。代わりに学校の公式メールアドレスを使用してください。",
+  "student_email_domain_warn": "{{school}} のメールアドレスではないようです。@{{domain}} で終わる必要があります。",
+  "credit_topups_mobile_only": "クレジットのチャージは iOS／Android アプリで利用できます。"
 }

@@ -529,5 +529,6 @@
   "stdin_label": "프로그램 입력(stdin) — 한 줄에 하나씩",
   "stdin_missing_hint": "프로그램이 제공되지 않은 입력을 읽으려고 했습니다. 이 창을 닫고 실행 시트에 입력(한 줄에 하나씩)을 적은 뒤 다시 실행하세요.",
   "console_input_placeholder": "답변을 입력하고 Enter를 누르세요",
-  "stdin_prefill_label": "미리 채울 입력(선택) — 한 줄에 하나씩"
+  "stdin_prefill_label": "미리 채울 입력(선택) — 한 줄에 하나씩",
+  "company_any": "기타 / 모든 회사"
 }
