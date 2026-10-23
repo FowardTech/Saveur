@@ -6,7 +6,6 @@ import i18n from 'i18next';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 
 import Text from 'components/Text';
-import { globalStyle } from 'styles/globalStyle';
 import { RootStackParamList } from 'navigation/types';
 import * as goalTipsService from 'services/goalTipsService';
 import { GoalTipProps } from 'constants/Types';
@@ -76,7 +75,7 @@ const DailyTipsBanner = memo(() => {
       accessibilityLabel={primary.tip}
       style={styles.pill}
       onPress={() => navigate('GoalTipDetail')}>
-      <Icon pack="eva" name="bulb-outline" style={[globalStyle.icon16, { tintColor: '#f59e0b' }]} />
+      <Icon pack="eva" name="bulb-outline" style={styles.pillIcon} />
       <Text category="h10-s" bold numberOfLines={1} style={styles.pillText}>
         {t('home:daily_tip_banner_title', { defaultValue: "Today's tip" })}
       </Text>
@@ -107,17 +106,28 @@ const themedStyles = StyleService.create({
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language. Slightly smaller than the grid tiles'
   // own 24px since this is a much shorter single-row card.
-  // White pill so it reads against the blue Today panel it sits in.
+  // Small outlined pill: transparent fill, white border + white text, to sit
+  // on the blue Today panel.
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 999,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: 'background-basic-color-2',
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'transparent',
+    paddingVertical: 3,
+    paddingHorizontal: 9,
+  },
+  pillIcon: {
+    width: 12,
+    height: 12,
+    tintColor: '#FFFFFF',
   },
   pillText: {
-    marginLeft: 6,
+    marginLeft: 4,
     flexShrink: 1,
+    color: '#FFFFFF',
+    fontSize: 11,
+    lineHeight: 14,
   },
 });
