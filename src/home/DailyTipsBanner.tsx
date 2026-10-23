@@ -79,6 +79,7 @@ const DailyTipsBanner = memo(() => {
       <Text category="h10-s" bold numberOfLines={1} style={styles.pillText}>
         {t('home:daily_tip_banner_title', { defaultValue: "Today's tip" })}
       </Text>
+      <Icon pack="eva" name="chevron-right-outline" style={styles.pillChevron} />
     </TouchableOpacity>
   );
 });
@@ -106,17 +107,20 @@ const themedStyles = StyleService.create({
   // src/home/QuickActionGrid.tsx's own comment) to match this screen's
   // larger, softer corner language. Slightly smaller than the grid tiles'
   // own 24px since this is a much shorter single-row card.
-  // Small outlined pill: transparent fill, white border + white text, to sit
-  // on the blue Today panel.
+  // Borderless, transparent: white icon + text and a trailing chevron that
+  // signals it's tappable, sitting on the blue Today panel.
   pill: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
     backgroundColor: 'transparent',
     paddingVertical: 3,
-    paddingHorizontal: 9,
+    paddingLeft: 4,
+  },
+  pillChevron: {
+    width: 14,
+    height: 14,
+    marginLeft: 2,
+    tintColor: '#FFFFFF',
   },
   pillIcon: {
     width: 12,
