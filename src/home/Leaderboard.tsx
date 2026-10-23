@@ -468,7 +468,9 @@ const Leaderboard = memo(() => {
                       {entry.name}
                       {entry.isCurrentUser ? ` (${t('home:you', { defaultValue: 'You' })})` : ''}
                     </Text>
-                    <View style={[styles.scorePill, { backgroundColor: theme[colors.pill] }]}>
+                    {/* Product request: XP pill background should be gray (was the
+                        near-black rank tone, #3F3F46). */}
+                    <View style={[styles.scorePill, { backgroundColor: '#71717a' }]}>
                       <Icon pack="eva" name="star" style={[globalStyle.icon16, { tintColor: colors.pillText }]} />
                       <Text category="h10" bold ml={4} style={{ color: colors.pillText }}>
                         {entry.xp}
