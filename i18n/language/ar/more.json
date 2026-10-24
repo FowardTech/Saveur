@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "الافتراضي هو 30 دقيقة. اختر أي قيمة من 5 إلى 1440 (24 ساعة).",
   "job_alerts_refresh_interval_label": "تحقق من التنبيهات الجديدة كل",
   "job_alerts_remote_only_filter": "عن بُعد فقط",
-  "job_alerts_retention_notice": "تُحذف تنبيهات الوظائف تلقائيًا بعد أسبوع واحد. اضغط على أيقونة التثبيت للاحتفاظ بها لمدة 30 يومًا بدلاً من ذلك.",
+  "job_alerts_retention_notice": "تُحذف تنبيهات الوظائف تلقائيًا بعد شهر واحد. اضغط على أيقونة التثبيت للاحتفاظ بها لمدة 6 أشهر بدلاً من ذلك.",
   "job_alerts_role_placeholder": "مثال: مدير منتج",
   "job_alerts_save_preferences": "حفظ التفضيلات",
   "job_alerts_save_prefs_failed_title": "تعذّر حفظ التفضيلات",

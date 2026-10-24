@@ -568,7 +568,7 @@ const JobAlerts = memo(() => {
           />
           <Text category="h10" status="placeholder" style={globalStyle.flexOne}>
             {t('more:job_alerts_retention_notice', {
-              defaultValue: 'Job alerts auto-delete after 1 week. Tap the pin icon on one to keep it for 30 days instead.',
+              defaultValue: 'Job alerts auto-delete after 1 month. Tap the pin icon on one to keep it for 6 months instead.',
             })}
           </Text>
         </Layout>

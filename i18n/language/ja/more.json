@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "デフォルトは30分です。5〜1440（24時間）の範囲で選択できます。",
   "job_alerts_refresh_interval_label": "新しいアラートを確認する間隔",
   "job_alerts_remote_only_filter": "リモートのみ",
-  "job_alerts_retention_notice": "求人アラートは1週間後に自動的に削除されます。ピンアイコンをタップすると、代わりに30日間保持されます。",
+  "job_alerts_retention_notice": "求人アラートは1か月後に自動的に削除されます。ピンアイコンをタップすると、代わりに6か月間保持されます。",
   "job_alerts_role_placeholder": "例：プロダクトマネージャー",
   "job_alerts_save_preferences": "設定を保存",
   "job_alerts_save_prefs_failed_title": "設定を保存できませんでした",

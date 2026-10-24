@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "डिफ़ॉल्ट 30 मिनट है। 5 से 1440 (24 घंटे) के बीच कोई भी मान चुनें।",
   "job_alerts_refresh_interval_label": "हर इतने समय में नए अलर्ट जांचें",
   "job_alerts_remote_only_filter": "केवल रिमोट",
-  "job_alerts_retention_notice": "जॉब अलर्ट 1 सप्ताह के बाद अपने आप हट जाते हैं। इसके बजाय 30 दिनों तक रखने के लिए पिन आइकन पर टैप करें।",
+  "job_alerts_retention_notice": "जॉब अलर्ट 1 महीने के बाद अपने आप हट जाते हैं। इसके बजाय 6 महीने तक रखने के लिए पिन आइकन पर टैप करें।",
   "job_alerts_role_placeholder": "उदा. प्रोडक्ट मैनेजर",
   "job_alerts_save_preferences": "प्राथमिकताएं सहेजें",
   "job_alerts_save_prefs_failed_title": "प्राथमिकताएं सहेजी नहीं जा सकीं",

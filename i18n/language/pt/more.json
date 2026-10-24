@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "O padrão é 30 minutos. Escolha entre 5 e 1440 (24 horas).",
   "job_alerts_refresh_interval_label": "Verificar novos alertas a cada",
   "job_alerts_remote_only_filter": "Somente remoto",
-  "job_alerts_retention_notice": "Os alertas de emprego são excluídos automaticamente após 1 semana. Toque no ícone de fixar para mantê-lo por 30 dias.",
+  "job_alerts_retention_notice": "Os alertas de emprego são excluídos automaticamente após 1 mês. Toque no ícone de fixar para mantê-lo por 6 meses.",
   "job_alerts_role_placeholder": "ex. Gerente de Produto",
   "job_alerts_save_preferences": "Salvar preferências",
   "job_alerts_save_prefs_failed_title": "Não foi possível salvar as preferências",

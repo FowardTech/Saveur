@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "Standard sind 30 Minuten. Wähle einen Wert zwischen 5 und 1440 (24 Stunden).",
   "job_alerts_refresh_interval_label": "Auf neue Benachrichtigungen prüfen alle",
   "job_alerts_remote_only_filter": "Nur Remote",
-  "job_alerts_retention_notice": "Job-Benachrichtigungen werden nach 1 Woche automatisch gelöscht. Tippe auf das Pin-Symbol, um eine stattdessen 30 Tage lang zu behalten.",
+  "job_alerts_retention_notice": "Job-Benachrichtigungen werden nach 1 Monat automatisch gelöscht. Tippe auf das Pin-Symbol, um eine stattdessen 6 Monate lang zu behalten.",
   "job_alerts_role_placeholder": "z. B. Produktmanager",
   "job_alerts_save_preferences": "Einstellungen speichern",
   "job_alerts_save_prefs_failed_title": "Einstellungen konnten nicht gespeichert werden",

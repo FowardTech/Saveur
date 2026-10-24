@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "默认是30分钟。可选择5到1440（24小时）之间的任意值。",
   "job_alerts_refresh_interval_label": "每隔多久检查新提醒",
   "job_alerts_remote_only_filter": "仅限远程",
-  "job_alerts_retention_notice": "职位提醒会在1周后自动删除。点击图钉图标可改为保留30天。",
+  "job_alerts_retention_notice": "职位提醒会在1个月后自动删除。点击图钉图标可改为保留6个月。",
   "job_alerts_role_placeholder": "例如：产品经理",
   "job_alerts_save_preferences": "保存偏好设置",
   "job_alerts_save_prefs_failed_title": "无法保存偏好设置",

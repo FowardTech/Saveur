@@ -473,7 +473,7 @@
   "job_alerts_refresh_interval_hint": "Default is 30 minutes. Choose anywhere from 5 to 1440 (24 hours).",
   "job_alerts_refresh_interval_label": "Check for new alerts every",
   "job_alerts_remote_only_filter": "Remote only",
-  "job_alerts_retention_notice": "Job alerts auto-delete after 1 week. Tap the pin icon on one to keep it for 30 days instead.",
+  "job_alerts_retention_notice": "Job alerts auto-delete after 1 month. Tap the pin icon on one to keep it for 6 months instead.",
   "job_alerts_role_placeholder": "e.g. Product Manager",
   "job_alerts_save_preferences": "Save preferences",
   "job_alerts_save_prefs_failed_title": "Couldn't save preferences",
